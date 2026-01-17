@@ -123,13 +123,21 @@ export function Footer() {
           <p className="text-xs text-muted-foreground font-sans">
             © {new Date().getFullYear()} Drop Dead Salon. All rights reserved.
           </p>
-          <Link
-            to="/booking"
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-sans text-foreground hover:opacity-70 transition-opacity"
-          >
-            Book Your Experience
-            <ArrowUpRight size={12} />
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link
+              to="/stylists#careers"
+              className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-sans text-foreground/60 hover:text-foreground transition-colors"
+            >
+              Work at Drop Dead
+            </Link>
+            <Link
+              to="/booking"
+              className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-sans text-foreground hover:opacity-70 transition-opacity"
+            >
+              Book Your Experience
+              <ArrowUpRight size={12} />
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
