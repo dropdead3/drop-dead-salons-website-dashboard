@@ -14,6 +14,12 @@ export function HeroSection() {
   // Transform scroll progress to opacity and blur
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const blur = useTransform(scrollYProgress, [0, 0.5], [0, 20]);
+  
+  // Parallax transforms - different speeds for depth effect
+  const taglineY = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const headlineY = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const subheadlineY = useTransform(scrollYProgress, [0, 1], [0, -150]);
+  const ctaY = useTransform(scrollYProgress, [0, 1], [0, -200]);
 
   const scrollToContent = () => {
     window.scrollTo({
@@ -23,22 +29,21 @@ export function HeroSection() {
   };
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen flex flex-col">
+    <section ref={sectionRef} className="relative min-h-screen flex flex-col overflow-hidden">
       <div className="flex-1 flex items-center justify-center py-24 lg:py-32">
         <div className="container mx-auto px-6 lg:px-12">
-          <motion.div 
-            className="max-w-5xl mx-auto text-center"
-            style={{ 
-              opacity,
-              filter: useTransform(blur, (v) => `blur(${v}px)`)
-            }}
-          >
+          <div className="max-w-5xl mx-auto text-center">
             {/* Tagline */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="text-xs uppercase tracking-[0.4em] text-muted-foreground font-sans mb-8"
+              style={{ 
+                opacity,
+                y: taglineY,
+                filter: useTransform(blur, (v) => `blur(${v}px)`)
+              }}
             >
               Hair • Color • Artistry
             </motion.p>
@@ -49,6 +54,11 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
               className="font-serif text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-normal tracking-tight text-foreground leading-[0.95]"
+              style={{ 
+                opacity,
+                y: headlineY,
+                filter: useTransform(blur, (v) => `blur(${v}px)`)
+              }}
             >
               Drop Dead
               <br />
@@ -61,6 +71,11 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
               className="mt-10 text-base md:text-lg text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
+              style={{ 
+                opacity,
+                y: subheadlineY,
+                filter: useTransform(blur, (v) => `blur(${v}px)`)
+              }}
             >
               Step into a world where science meets artistry.
               <br />
@@ -73,6 +88,11 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5 }}
               className="mt-12 flex flex-col items-center gap-4"
+              style={{ 
+                opacity,
+                y: ctaY,
+                filter: useTransform(blur, (v) => `blur(${v}px)`)
+              }}
             >
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
@@ -93,7 +113,7 @@ export function HeroSection() {
                 <p>Returning clients are free to book their known services</p>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
