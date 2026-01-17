@@ -7,6 +7,7 @@ import { PopularServices } from "@/components/home/PopularServices";
 import { NewClientSection } from "@/components/home/NewClientSection";
 import { GallerySection } from "@/components/home/GallerySection";
 import { TestimonialSection } from "@/components/home/TestimonialSection";
+import { FAQSection } from "@/components/home/FAQSection";
 import { CTASection } from "@/components/home/CTASection";
 
 const Index = () => {
@@ -24,6 +25,7 @@ const Index = () => {
       <NewClientSection />
       <GallerySection />
       <TestimonialSection />
+      <FAQSection />
       <CTASection />
     </Layout>
   );
