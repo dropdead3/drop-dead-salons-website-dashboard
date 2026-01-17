@@ -25,7 +25,6 @@ const Index = () => {
       <BrandStatement />
       <ServicesPreview />
       <BrandsSection />
-      <DrinkMenuSection />
       <PopularServices />
       <NewClientSection />
       <GallerySection />
@@ -41,6 +40,7 @@ const Index = () => {
       </div>
       <CTASection />
       <StylistsSection />
+      <DrinkMenuSection />
     </Layout>
   );
 };

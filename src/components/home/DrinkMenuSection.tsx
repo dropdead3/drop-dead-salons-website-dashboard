@@ -87,7 +87,7 @@ export function DrinkMenuSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: index * 0.1 }}
-            className="flex flex-col items-center gap-4 px-8 md:px-12"
+            className="flex flex-col items-center gap-4 px-16 md:px-24 lg:px-32"
           >
             <DrinkIcon colors={drink.colors} />
             <h3 className="font-serif text-lg md:text-xl lg:text-2xl text-foreground whitespace-nowrap">
@@ -100,7 +100,7 @@ export function DrinkMenuSection() {
         {drinks.map((drink) => (
           <div
             key={`dup-${drink.id}`}
-            className="flex flex-col items-center gap-4 px-8 md:px-12"
+            className="flex flex-col items-center gap-4 px-16 md:px-24 lg:px-32"
             aria-hidden="true"
           >
             <DrinkIcon colors={drink.colors} />
