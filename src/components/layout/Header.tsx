@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ArrowUpRight } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -39,9 +39,10 @@ export function Header() {
           </p>
           <a 
             href="#" 
-            className="text-xs md:text-sm font-medium text-foreground uppercase tracking-wider underline underline-offset-4 hover:opacity-70 transition-opacity"
+            className="group inline-flex items-center gap-1.5 text-xs md:text-sm font-medium text-foreground uppercase tracking-wider hover:opacity-70 transition-opacity"
           >
             Shop Our Extensions Here
+            <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
           </a>
         </div>
       </div>
