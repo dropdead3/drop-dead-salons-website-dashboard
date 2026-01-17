@@ -72,7 +72,7 @@ export function ServicesPreview() {
     setCurrentIndex(index);
   }, [prefersReducedMotion]);
 
-  // Auto-advance animation when in view
+  // Auto-advance animation when in view - every 4 seconds
   useEffect(() => {
     if (!isInView || hasUserScrolled || prefersReducedMotion) return;
 
@@ -83,13 +83,13 @@ export function ServicesPreview() {
       if (currentCard < services.length - 1) {
         currentCard++;
         scrollToCard(currentCard);
-        // Pause 800ms before next card
-        timeoutId = setTimeout(advanceCard, 1600);
+        // Wait 4 seconds before next card
+        timeoutId = setTimeout(advanceCard, 4000);
       }
     };
 
-    // Initial delay before starting
-    timeoutId = setTimeout(advanceCard, 1200);
+    // Initial delay before starting (4 seconds)
+    timeoutId = setTimeout(advanceCard, 4000);
 
     return () => clearTimeout(timeoutId);
   }, [isInView, hasUserScrolled, prefersReducedMotion, scrollToCard]);
