@@ -172,17 +172,26 @@
   display: flex;
   overflow: hidden;
   width: 100%;
+  cursor: default;
 }
 
 .marquee-content {
   display: flex;
   flex-shrink: 0;
   animation: scroll 20s linear infinite;
-  transition: animation-duration 0.3s ease;
+  will-change: transform;
 }
 
 .marquee-container:hover .marquee-content {
-  animation-duration: 60s;
+  animation-play-state: paused;
+}
+
+.marquee-content span {
+  transition: opacity 0.3s ease;
+}
+
+.marquee-container:hover .marquee-content span {
+  opacity: 0.7;
 }
 
 @keyframes scroll {
