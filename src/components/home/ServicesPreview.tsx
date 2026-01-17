@@ -39,10 +39,11 @@ export function ServicesPreview() {
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [hasUserScrolled, setHasUserScrolled] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const isAutoScrolling = useRef(false);
 
   // Editorial easing - slow start, smooth middle, gentle stop
   const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
@@ -58,18 +59,24 @@ export function ServicesPreview() {
 
     const containerRect = container.getBoundingClientRect();
     const cardRect = card.getBoundingClientRect();
-    const scrollLeft = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
+    const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
 
+    isAutoScrolling.current = true;
+    
     if (smooth && !prefersReducedMotion) {
       setIsAnimating(true);
       container.scrollTo({
-        left: Math.max(0, scrollLeft),
+        left: Math.max(0, scrollLeftPos),
         behavior: 'smooth'
       });
       // Wait for scroll to complete
-      setTimeout(() => setIsAnimating(false), 800);
+      setTimeout(() => {
+        setIsAnimating(false);
+        isAutoScrolling.current = false;
+      }, 800);
     } else {
-      container.scrollLeft = Math.max(0, scrollLeft);
+      container.scrollLeft = Math.max(0, scrollLeftPos);
+      isAutoScrolling.current = false;
     }
     
     setCurrentIndex(index);
@@ -77,28 +84,25 @@ export function ServicesPreview() {
 
   // Auto-advance animation when in view - every 4 seconds, loops continuously
   useEffect(() => {
-    if (!isInView || prefersReducedMotion) return;
+    if (!isInView || isPaused || prefersReducedMotion) return;
 
-    let intervalId: NodeJS.Timeout;
-    
-    const advanceCard = () => {
-      if (hasUserScrolled) return; // Skip if user has interacted
+    const intervalId = setInterval(() => {
       setCurrentIndex(prev => {
         const nextIndex = (prev + 1) % services.length;
         scrollToCard(nextIndex);
         return nextIndex;
       });
-    };
-
-    // Start auto-scroll after 4 seconds, then every 4 seconds
-    intervalId = setInterval(advanceCard, 4000);
+    }, 4000);
 
     return () => clearInterval(intervalId);
-  }, [isInView, hasUserScrolled, prefersReducedMotion, scrollToCard]);
+  }, [isInView, isPaused, prefersReducedMotion, scrollToCard]);
 
-  // Detect user scroll
+  // Detect user scroll (only manual scrolls, not programmatic)
   const handleUserScroll = useCallback(() => {
-    setHasUserScrolled(true);
+    // Only pause if this is a user-initiated scroll, not our programmatic scroll
+    if (!isAutoScrolling.current) {
+      setIsPaused(true);
+    }
     
     if (!scrollContainerRef.current) return;
     
@@ -124,13 +128,13 @@ export function ServicesPreview() {
   }, []);
 
   const goToPrevious = () => {
-    setHasUserScrolled(true);
+    setIsPaused(true);
     const newIndex = Math.max(0, currentIndex - 1);
     scrollToCard(newIndex);
   };
 
   const goToNext = () => {
-    setHasUserScrolled(true);
+    setIsPaused(true);
     const newIndex = Math.min(services.length - 1, currentIndex + 1);
     scrollToCard(newIndex);
   };
@@ -141,7 +145,7 @@ export function ServicesPreview() {
     setIsDragging(true);
     setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
     setScrollLeft(scrollContainerRef.current.scrollLeft);
-    setHasUserScrolled(true);
+    setIsPaused(true);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -166,7 +170,7 @@ export function ServicesPreview() {
     setIsDragging(true);
     setStartX(e.touches[0].pageX - scrollContainerRef.current.offsetLeft);
     setScrollLeft(scrollContainerRef.current.scrollLeft);
-    setHasUserScrolled(true);
+    setIsPaused(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -397,7 +401,7 @@ export function ServicesPreview() {
           <button
             key={index}
             onClick={() => {
-              setHasUserScrolled(true);
+              setIsPaused(true);
               scrollToCard(index);
             }}
             className={`h-1 transition-all duration-500 ${
