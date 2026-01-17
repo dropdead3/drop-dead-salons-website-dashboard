@@ -28,13 +28,13 @@ export function HeroSection() {
     });
   };
 
-  // Floating decorative elements config
+  // Floating decorative elements config - alternating oat and foreground tints
   const floatingElements = [
-    { size: 300, x: "10%", y: "20%", duration: 20, delay: 0 },
-    { size: 200, x: "85%", y: "15%", duration: 25, delay: 2 },
-    { size: 150, x: "75%", y: "70%", duration: 18, delay: 4 },
-    { size: 250, x: "5%", y: "65%", duration: 22, delay: 1 },
-    { size: 100, x: "50%", y: "80%", duration: 15, delay: 3 },
+    { size: 300, x: "10%", y: "20%", duration: 20, delay: 0, color: "oat" },
+    { size: 200, x: "85%", y: "15%", duration: 25, delay: 2, color: "foreground" },
+    { size: 150, x: "75%", y: "70%", duration: 18, delay: 4, color: "oat" },
+    { size: 250, x: "5%", y: "65%", duration: 22, delay: 1, color: "foreground" },
+    { size: 100, x: "50%", y: "80%", duration: 15, delay: 3, color: "oat" },
   ];
 
   return (
@@ -50,7 +50,9 @@ export function HeroSection() {
               height: el.size,
               left: el.x,
               top: el.y,
-              background: `radial-gradient(circle, hsl(var(--foreground) / 0.03) 0%, transparent 70%)`,
+              background: el.color === "oat" 
+                ? `radial-gradient(circle, hsl(var(--oat) / 0.15) 0%, transparent 70%)`
+                : `radial-gradient(circle, hsl(var(--foreground) / 0.03) 0%, transparent 70%)`,
             }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ 

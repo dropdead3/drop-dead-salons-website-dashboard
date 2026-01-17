@@ -43,6 +43,8 @@ export function SectionHeader({
         className
       )}
     >
+      {/* Oat accent line */}
+      <div className="w-12 h-0.5 bg-oat mb-6 mx-auto" style={{ marginLeft: align === "left" ? 0 : undefined }} />
       <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground">
         {title}
       </h2>
