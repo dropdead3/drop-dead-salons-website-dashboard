@@ -16,9 +16,6 @@ export function BrandStatement() {
           animate={isInView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.8 }}
         >
-          <span className="text-xs font-sans tracking-[0.2em] text-background/50 block mb-4">
-            01
-          </span>
           <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]">
             Not Your
             <br />
