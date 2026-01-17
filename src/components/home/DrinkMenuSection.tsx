@@ -72,10 +72,12 @@ const MAX_CHARS = 45;
 
 const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: DrinkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const needsTruncation = drink.ingredients.length > MAX_CHARS;
+  const ingredientsList = drink.ingredients.split(", ");
+  const maxVisible = 3;
+  const needsTruncation = ingredientsList.length > maxVisible;
   const displayedIngredients = isExpanded || !needsTruncation 
-    ? drink.ingredients 
-    : drink.ingredients.slice(0, MAX_CHARS) + "...";
+    ? ingredientsList 
+    : ingredientsList.slice(0, maxVisible);
 
   const Wrapper = animated ? motion.div : 'div';
   const wrapperProps = animated ? {
@@ -106,13 +108,21 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-oat-foreground/60 font-sans">Ingredients</p>
-            <motion.p 
+            <motion.ul 
               layout
-              className="text-sm font-serif whitespace-normal leading-relaxed"
+              className="text-sm font-serif leading-relaxed text-left space-y-1"
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              {displayedIngredients}
-            </motion.p>
+              {displayedIngredients.map((ingredient, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-oat-foreground/50 mt-1">•</span>
+                  <span>{ingredient.trim()}</span>
+                </li>
+              ))}
+              {needsTruncation && !isExpanded && (
+                <li className="text-oat-foreground/50">...</li>
+              )}
+            </motion.ul>
             {needsTruncation && (
               <motion.button 
                 layout
