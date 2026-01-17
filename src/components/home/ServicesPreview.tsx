@@ -72,7 +72,7 @@ export function ServicesPreview() {
     setCurrentIndex(index);
   }, [prefersReducedMotion]);
 
-  // Auto-advance animation when in view - every 4 seconds
+  // Auto-advance animation when in view - every 4 seconds, loops continuously
   useEffect(() => {
     if (!isInView || hasUserScrolled || prefersReducedMotion) return;
 
@@ -80,12 +80,10 @@ export function ServicesPreview() {
     let currentCard = 0;
 
     const advanceCard = () => {
-      if (currentCard < services.length - 1) {
-        currentCard++;
-        scrollToCard(currentCard);
-        // Wait 4 seconds before next card
-        timeoutId = setTimeout(advanceCard, 4000);
-      }
+      currentCard = (currentCard + 1) % services.length;
+      scrollToCard(currentCard);
+      // Wait 4 seconds before next card
+      timeoutId = setTimeout(advanceCard, 4000);
     };
 
     // Initial delay before starting (4 seconds)
