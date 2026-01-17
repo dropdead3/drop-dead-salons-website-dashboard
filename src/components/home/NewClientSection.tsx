@@ -29,7 +29,7 @@ export const NewClientSection = () => {
               transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
               className="text-3xl md:text-4xl lg:text-5xl font-serif mb-6"
             >
-              New clients can <em className="not-italic font-serif italic">get <TypewriterText text="started" isInView={isInView} delay={600} /> here...</em>
+              New clients can get<br /><em className="not-italic font-serif italic"><TypewriterText text="started" isInView={isInView} delay={600} /> here...</em>
             </motion.h2>
             
             <motion.p
