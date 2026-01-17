@@ -12,7 +12,7 @@ const drinks = [
     id: 2,
     name: "Creme De Dead",
     colors: "from-yellow-300 via-teal-400 to-cyan-500",
-    ingredients: "Mango, blue curaçao, coconut cream, pineapple",
+    ingredients: "Mango, blue curaçao, coconut cream, pineapple, lime zest, vanilla bean, sparkling water",
   },
   {
     id: 3,
