@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, ArrowUpRight, X } from "lucide-react";
+import { ChevronDown, ArrowUpRight, AlertCircle } from "lucide-react";
 
 interface ConsultationFormDialogProps {
   open: boolean;
@@ -99,21 +99,53 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-background border-border p-0">
-        <DialogHeader className="p-6 pb-0 sticky top-0 bg-background z-10">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans block mb-2">
-                New Client
-              </span>
-              <DialogTitle className="font-serif text-2xl md:text-3xl font-normal text-foreground">
-                Book a Consultation
-              </DialogTitle>
-            </div>
+        <DialogHeader className="p-6 pb-4 sticky top-0 bg-background z-10">
+          <div>
+            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans block mb-2">
+              New Client
+            </span>
+            <DialogTitle className="font-serif text-2xl md:text-3xl font-normal text-foreground">
+              Schedule Your
+              <br />
+              <span className="italic font-light">Initial Consultation</span>
+            </DialogTitle>
           </div>
-          <p className="text-sm text-muted-foreground font-sans font-light mt-2">
-            Share a few details and we'll be in touch to schedule your complimentary consultation.
+          <p className="text-sm text-muted-foreground font-sans font-light mt-3 leading-relaxed">
+            Share a few details about yourself and your hair goals, and we'll be in touch to schedule your complimentary consultation.
           </p>
         </DialogHeader>
+        
+        <div className="px-6 space-y-4">
+          {/* New clients notice */}
+          <div className="p-4 bg-secondary border border-border">
+            <div className="flex items-start gap-3">
+              <AlertCircle size={18} className="text-foreground flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-xs uppercase tracking-[0.15em] text-foreground font-sans mb-1.5">
+                  New Clients
+                </h3>
+                <p className="text-xs text-muted-foreground font-sans font-light leading-relaxed">
+                  First-time clients are typically required to complete a consultation before any services are booked. This helps ensure we're all on the same page and can achieve your desired result.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Returning client callout */}
+          <div className="p-4 bg-background border border-border">
+            <p className="text-xs text-muted-foreground font-sans mb-2">
+              Are you a returning client? You don't need a new-client consult.
+            </p>
+            <a
+              href="https://booking.dropdeadsalon.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.1em] font-sans font-medium text-foreground hover:opacity-70 transition-opacity"
+            >
+              Book your known services here →
+            </a>
+          </div>
+        </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
