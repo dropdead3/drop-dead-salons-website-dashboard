@@ -211,7 +211,7 @@ export function ServicesPreview() {
           transition={{ duration: 0.6, ease: editorialEasing }}
         >
           <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans">
-            Explore Our Treatments ↘
+            Explore Our Services ↘
           </span>
         </motion.div>
         
