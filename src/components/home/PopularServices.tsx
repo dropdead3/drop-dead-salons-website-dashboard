@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
+import { ArrowUpRight } from "lucide-react";
 
 const popularServices = [
   "Hidden Beaded Row Weft Extension Installs",
@@ -46,9 +47,13 @@ export function PopularServices() {
             >
               <Link
                 to="/services"
-                className="inline-block px-5 py-2.5 text-sm font-sans text-foreground bg-card border border-border transition-all duration-300 ease-out hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105 hover:shadow-lg"
+                className="group/btn inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-sans text-foreground bg-card border border-border transition-all duration-300 ease-out hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105 hover:shadow-lg"
               >
                 {service}
+                <ArrowUpRight 
+                  size={14} 
+                  className="opacity-0 -ml-1.5 group-hover/btn:opacity-100 group-hover/btn:ml-0 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-all duration-300" 
+                />
               </Link>
             </motion.div>
           ))}
