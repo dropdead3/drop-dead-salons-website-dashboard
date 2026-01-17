@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Marquee } from "./Marquee";
 
 export function HeroSection() {
   return (
@@ -65,9 +64,6 @@ export function HeroSection() {
           </div>
         </div>
       </div>
-
-      {/* Marquee at bottom */}
-      <Marquee />
     </section>
   );
 }
