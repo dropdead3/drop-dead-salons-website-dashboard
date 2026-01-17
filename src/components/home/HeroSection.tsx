@@ -1,8 +1,20 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import { useRef } from "react";
 
 export function HeroSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"]
+  });
+
+  // Transform scroll progress to opacity and blur
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const blur = useTransform(scrollYProgress, [0, 0.5], [0, 20]);
+
   const scrollToContent = () => {
     window.scrollTo({
       top: window.innerHeight - 100,
@@ -11,10 +23,16 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative min-h-screen flex flex-col">
+    <section ref={sectionRef} className="relative min-h-screen flex flex-col">
       <div className="flex-1 flex items-center justify-center py-24 lg:py-32">
         <div className="container mx-auto px-6 lg:px-12">
-          <div className="max-w-5xl mx-auto text-center">
+          <motion.div 
+            className="max-w-5xl mx-auto text-center"
+            style={{ 
+              opacity,
+              filter: useTransform(blur, (v) => `blur(${v}px)`)
+            }}
+          >
             {/* Tagline */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -75,7 +93,7 @@ export function HeroSection() {
                 <p>Returning clients are free to book their known services</p>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -87,6 +105,7 @@ export function HeroSection() {
         onClick={scrollToContent}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         aria-label="Scroll down"
+        style={{ opacity }}
       >
         <span className="text-xs uppercase tracking-[0.2em] font-sans">Scroll</span>
         <motion.div
