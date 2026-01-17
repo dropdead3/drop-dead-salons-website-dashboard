@@ -7,7 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Booking from "./pages/Booking";
-import NewClientConsultation from "./pages/NewClientConsultation";
+
 import Stylists from "./pages/Stylists";
 import NotFound from "./pages/NotFound";
 
@@ -24,7 +24,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/services" element={<Services />} />
             <Route path="/booking" element={<Booking />} />
-            <Route path="/new-client" element={<NewClientConsultation />} />
+            
             <Route path="/stylists" element={<Stylists />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
