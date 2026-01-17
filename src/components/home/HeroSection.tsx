@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
+import { TypewriterText } from "@/components/ui/TypewriterText";
 
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -149,7 +150,7 @@ export function HeroSection() {
                 filter: useTransform(blur, (v) => `blur(${v}px)`)
               }}
             >
-              Hair • Color • Artistry
+              <TypewriterText text="Hair" isInView={true} delay={300} speed={100} /> • <TypewriterText text="Color" isInView={true} delay={900} speed={100} /> • <TypewriterText text="Artistry" isInView={true} delay={1500} speed={100} />
             </motion.p>
 
             {/* Main headline */}
