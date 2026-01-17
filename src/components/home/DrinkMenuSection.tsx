@@ -86,16 +86,16 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
         {drink.name}
       </h3>
       
-      {/* Hover tooltip */}
-      <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-10">
-        <div className="bg-foreground text-background px-4 py-3 text-center whitespace-nowrap shadow-lg">
+      {/* Hover tooltip - positioned to the right */}
+      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-8 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-10">
+        <div className="bg-foreground text-background px-4 py-3 text-center shadow-lg">
           <p className="text-xs uppercase tracking-wider mb-1 text-background/70">Ingredients</p>
-          <p className="text-sm font-light max-w-[200px] whitespace-normal">
+          <p className="text-sm font-light max-w-[180px] whitespace-normal">
             {drink.ingredients}
           </p>
         </div>
-        {/* Arrow */}
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-foreground" />
+        {/* Arrow pointing left */}
+        <div className="absolute top-1/2 -translate-y-1/2 -left-2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-transparent border-r-foreground" />
       </div>
     </Wrapper>
   );
