@@ -178,10 +178,11 @@
   display: flex;
   flex-shrink: 0;
   animation: scroll 20s linear infinite;
+  transition: animation-duration 0.3s ease;
 }
 
 .marquee-container:hover .marquee-content {
-  animation-play-state: paused;
+  animation-duration: 60s;
 }
 
 @keyframes scroll {
