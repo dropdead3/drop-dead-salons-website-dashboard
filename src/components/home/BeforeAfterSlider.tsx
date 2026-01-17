@@ -172,8 +172,8 @@ export function BeforeAfterSlider({
         </motion.div>
       </div>
 
-      {/* Labels */}
-      <div className="absolute bottom-4 left-4 z-20">
+      {/* Labels - positioned at top corners */}
+      <div className="absolute top-4 left-4 z-20">
         <span 
           className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 text-foreground"
           style={{ opacity: sliderPosition > 20 ? 1 : 0, transition: 'opacity 0.2s' }}
@@ -181,7 +181,7 @@ export function BeforeAfterSlider({
           {beforeLabel}
         </span>
       </div>
-      <div className="absolute bottom-4 right-4 z-20">
+      <div className="absolute top-4 right-4 z-20">
         <span 
           className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 text-foreground"
           style={{ opacity: sliderPosition < 80 ? 1 : 0, transition: 'opacity 0.2s' }}
@@ -190,8 +190,8 @@ export function BeforeAfterSlider({
         </span>
       </div>
 
-      {/* Drag hint */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+      {/* Drag hint - positioned below the labels */}
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
         <motion.span 
           className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-black/50 text-white/90 backdrop-blur-sm"
           initial={{ opacity: 1 }}
