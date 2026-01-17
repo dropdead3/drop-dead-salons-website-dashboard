@@ -50,7 +50,7 @@ const stylists: Stylist[] = [
     name: "Kristi D.",
     instagram: "@dropdeadkristi",
     level: "LEVEL III STYLIST",
-    specialties: ["BLONDING", "VIVIDS", "EXTENSIONS"],
+    specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1595959183082-7b570b7e1daf?w=600&h=800&fit=crop",
     location: "val-vista-lakes"
   },
@@ -59,7 +59,7 @@ const stylists: Stylist[] = [
     name: "Sarina L.",
     instagram: "@hairdidbysarina_",
     level: "LEVEL II STYLIST",
-    specialties: ["EXTENSIONS", "BLONDING", "VIVIDS"],
+    specialties: ["EXTENSIONS", "BLONDING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&h=800&fit=crop",
     location: "val-vista-lakes"
   },
@@ -68,7 +68,7 @@ const stylists: Stylist[] = [
     name: "Hayleigh H.",
     instagram: "@lucky7studios_",
     level: "LEVEL II STYLIST",
-    specialties: ["BLONDING", "VIVIDS", "EXTENSIONS"],
+    specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=600&h=800&fit=crop",
     location: "val-vista-lakes"
   },
@@ -95,7 +95,7 @@ const stylists: Stylist[] = [
     name: "Jordan T.",
     instagram: "@jordantcuts",
     level: "LEVEL I STYLIST",
-    specialties: ["BLONDING", "VIVIDS", "CUSTOM CUTS"],
+    specialties: ["BLONDING", "CREATIVE COLOR", "CUSTOM CUTS"],
     imageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&h=800&fit=crop",
     location: "north-mesa"
   }
