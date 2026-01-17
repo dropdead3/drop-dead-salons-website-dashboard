@@ -395,23 +395,28 @@ export function ServicesPreview() {
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ duration: 0.6, delay: 0.5 }}
-        className="flex justify-center gap-2 mt-8"
+        className="flex justify-center items-center gap-4 mt-8"
       >
-        {services.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setIsPaused(true);
-              scrollToCard(index);
-            }}
-            className={`h-1 transition-all duration-500 ${
-              index === currentIndex 
-                ? 'w-8 bg-foreground' 
-                : 'w-4 bg-border hover:bg-muted-foreground'
-            }`}
-            aria-label={`Go to service ${index + 1}`}
-          />
-        ))}
+        <div className="flex items-center gap-2">
+          {services.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                setIsPaused(true);
+                scrollToCard(index);
+              }}
+              className={`h-1 transition-all duration-500 ${
+                index === currentIndex 
+                  ? 'w-8 bg-foreground' 
+                  : 'w-2 bg-foreground/30 hover:bg-foreground/50'
+              }`}
+              aria-label={`Go to service ${index + 1}`}
+            />
+          ))}
+        </div>
+        <span className="text-sm text-muted-foreground">
+          {currentIndex + 1} / {services.length}
+        </span>
       </motion.div>
     </Section>
   );
