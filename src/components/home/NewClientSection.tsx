@@ -96,12 +96,12 @@ export const NewClientSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1], delay: 0.25 }}
-            className="flex-shrink-0 w-full lg:w-auto"
+            className="flex-shrink-0 w-full lg:w-auto lg:max-w-sm"
           >
-            <p className="text-xs uppercase tracking-[0.15em] text-foreground/60 mb-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-foreground/50 mb-5">
               Visit us at one of our locations
             </p>
-            <div className="flex flex-col sm:flex-row lg:flex-col gap-4">
+            <div className="flex flex-col gap-0">
               {locations.map((location, index) => (
                 <motion.div
                   key={location.name}
@@ -112,19 +112,19 @@ export const NewClientSection = () => {
                     ease: [0.25, 0.1, 0.25, 1], 
                     delay: 0.35 + index * 0.1 
                   }}
-                  className="bg-background border border-border p-6 min-w-[280px]"
+                  className="border border-border p-6 -mt-px first:mt-0"
                 >
-                  <div className="flex items-start gap-3 mb-4">
-                    <MapPin className="w-5 h-5 text-foreground/70 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="font-medium text-foreground mb-1">{location.name}</h3>
-                      <p className="text-sm text-foreground/70">{location.address}</p>
-                      <p className="text-sm text-foreground/70">{location.city}</p>
-                    </div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <MapPin className="w-4 h-4 text-foreground/60 flex-shrink-0" />
+                    <h3 className="font-serif text-lg text-foreground">{location.name}</h3>
+                  </div>
+                  <div className="pl-7 mb-4">
+                    <p className="text-sm text-foreground/70">{location.address}</p>
+                    <p className="text-sm text-foreground/70">{location.city}</p>
                   </div>
                   <Link
                     to={location.bookingUrl}
-                    className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-foreground/70 transition-colors group"
+                    className="inline-flex items-center gap-2 pl-7 text-sm font-medium text-foreground hover:text-foreground/70 transition-colors group"
                   >
                     <span>Book at this location</span>
                     <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
