@@ -315,9 +315,29 @@ export function StylistsSection() {
 
             {/* Level/Price Filter */}
             <div>
-              <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
-                VIEW BY LEVEL & PRICE
-              </p>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <p className="text-xs tracking-[0.2em] text-muted-foreground">
+                  VIEW BY LEVEL & PRICE
+                </p>
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[280px] p-4 bg-background text-foreground border border-border">
+                      <p className="font-medium mb-2">Stylist Level System</p>
+                      <ul className="text-xs space-y-1.5 text-foreground/80">
+                        <li><span className="font-medium text-foreground">Level I ($):</span> Rising talent building their craft</li>
+                        <li><span className="font-medium text-foreground">Level II ($$):</span> Skilled stylist with proven expertise</li>
+                        <li><span className="font-medium text-foreground">Level III ($$$):</span> Master artist & senior specialist</li>
+                      </ul>
+                      <p className="text-xs text-muted-foreground mt-2">Higher levels reflect experience, training, and demand.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <div className="flex flex-wrap justify-center gap-2">
                 <motion.button
                   onClick={() => setSelectedLevel(null)}
