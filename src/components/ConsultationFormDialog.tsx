@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, ArrowUpRight, AlertCircle } from "lucide-react";
+import { ChevronDown, ArrowUpRight, AlertCircle, X } from "lucide-react";
 
 interface ConsultationFormDialogProps {
   open: boolean;
@@ -99,6 +99,15 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-background border-border p-0">
+        {/* Close button */}
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground transition-colors z-20"
+          aria-label="Close"
+        >
+          <X size={20} />
+        </button>
+        
         <DialogHeader className="p-6 pb-4 sticky top-0 bg-background z-10">
           <div>
             <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans block mb-2">
