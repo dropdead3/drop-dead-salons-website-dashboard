@@ -187,7 +187,7 @@ export function ExtensionsSection() {
               transition={{ duration: 0.8, delay: 0.8 }}
               className="absolute bottom-6 left-6 right-6 bg-background/95 backdrop-blur-sm p-5 z-30"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center justify-between gap-6">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <Award className="w-5 h-5 text-oat-foreground" />
