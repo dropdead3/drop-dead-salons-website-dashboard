@@ -23,32 +23,62 @@ export function BeforeAfterSlider({
   const containerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
 
-  // Auto-animate slider to demonstrate functionality
+  // Auto-animate slider once to demonstrate functionality, then settle to middle
   useEffect(() => {
-    if (hasInteracted || !isAnimating) return;
+    if (hasInteracted) return;
 
+    const keyframes = [
+      { position: 50, duration: 0 },      // Start at middle
+      { position: 25, duration: 800 },    // Slide left
+      { position: 75, duration: 1200 },   // Slide right
+      { position: 50, duration: 1000 },   // Settle back to middle
+    ];
+
+    let currentIndex = 0;
     let startTime: number | null = null;
-    const duration = 2000; // 2 seconds per cycle
-    const minPos = 25;
-    const maxPos = 75;
+    let startPosition = 50;
 
     const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progress = (elapsed % duration) / duration;
+      if (hasInteracted) return;
       
-      // Ease in-out sine wave animation
-      const eased = (Math.sin(progress * Math.PI * 2 - Math.PI / 2) + 1) / 2;
-      const newPosition = minPos + eased * (maxPos - minPos);
+      if (currentIndex >= keyframes.length - 1) {
+        setSliderPosition(50);
+        setIsAnimating(false);
+        return;
+      }
+
+      if (!startTime) {
+        startTime = timestamp;
+        startPosition = keyframes[currentIndex].position;
+      }
+
+      const targetFrame = keyframes[currentIndex + 1];
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / targetFrame.duration, 1);
+      
+      // Ease out cubic for smooth deceleration
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const newPosition = startPosition + (targetFrame.position - startPosition) * eased;
       
       setSliderPosition(newPosition);
-      animationRef.current = requestAnimationFrame(animate);
+
+      if (progress >= 1) {
+        currentIndex++;
+        startTime = null;
+        startPosition = targetFrame.position;
+      }
+
+      if (currentIndex < keyframes.length - 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        setIsAnimating(false);
+      }
     };
 
     // Start animation after a short delay
     const timeout = setTimeout(() => {
       animationRef.current = requestAnimationFrame(animate);
-    }, 500);
+    }, 800);
 
     return () => {
       clearTimeout(timeout);
@@ -56,7 +86,7 @@ export function BeforeAfterSlider({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [hasInteracted, isAnimating]);
+  }, [hasInteracted]);
 
   const handleMove = useCallback((clientX: number) => {
     if (!containerRef.current) return;
@@ -127,12 +157,6 @@ export function BeforeAfterSlider({
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white flex items-center justify-center cursor-ew-resize shadow-lg border border-black/10"
           onMouseDown={handleMouseDown}
           onTouchStart={handleMouseDown}
-          animate={!hasInteracted ? { scale: [1, 1.08, 1] } : {}}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
         >
           <div className="flex items-center gap-1.5">
             <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-foreground">
