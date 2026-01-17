@@ -120,7 +120,7 @@ export function ServicesPreview() {
         scrollToCard(nextIndex);
         return nextIndex;
       });
-    }, 4000);
+    }, 3000);
 
     return () => clearInterval(intervalId);
   }, [isInView, isPaused, prefersReducedMotion, scrollToCard]);
