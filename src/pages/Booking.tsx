@@ -412,8 +412,7 @@ export default function Booking() {
                     Hours
                   </h3>
                   <div className="text-muted-foreground font-sans font-light space-y-1">
-                    <p>Tuesday – Friday: 10am – 7pm</p>
-                    <p>Saturday: 9am – 5pm</p>
+                    <p>Tuesday – Saturday: 10am – 6pm</p>
                     <p>Sunday – Monday: Closed</p>
                   </div>
                 </div>
