@@ -132,10 +132,10 @@ export function Footer() {
               <ArrowUpRight size={12} />
             </Link>
             <Link
-              to="/booking"
+              to="/gift-cards"
               className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-sans text-foreground hover:opacity-70 transition-opacity"
             >
-              Book Your Experience
+              Buy a Gift Card
               <ArrowUpRight size={12} />
             </Link>
           </div>
