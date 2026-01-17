@@ -8,41 +8,38 @@ export function BrandStatement() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <Section className="bg-secondary">
-      <div ref={ref} className="max-w-4xl mx-auto text-center">
-        <motion.h2
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="font-serif text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground"
-        >
-          Not Your Typical Salon.
-        </motion.h2>
-
+    <Section className="bg-foreground text-background">
+      <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        {/* Left side - Editorial number and title */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-8 space-y-4"
+          initial={{ opacity: 0, x: -30 }}
+          animate={isInView ? { opacity: 1, x: 0 } : {}}
+          transition={{ duration: 0.8 }}
         >
-          <p className="text-lg md:text-xl text-muted-foreground font-sans font-light leading-relaxed">
-            We're a modern luxury salon built for clients who want more than the ordinary.
-          </p>
-          <p className="text-lg md:text-xl text-muted-foreground font-sans font-light leading-relaxed">
-            Every service is intentional. Every detail matters.
-          </p>
-          <p className="text-lg md:text-xl text-foreground/80 font-sans font-light leading-relaxed">
-            This is hair as art, delivered at the highest level.
-          </p>
+          <span className="text-xs font-sans tracking-[0.2em] text-background/50 block mb-4">
+            01
+          </span>
+          <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]">
+            Not Your
+            <br />
+            <span className="italic font-light">Typical Salon.</span>
+          </h2>
         </motion.div>
 
-        {/* Decorative line */}
+        {/* Right side - Description */}
         <motion.div
-          initial={{ scaleX: 0 }}
-          animate={isInView ? { scaleX: 1 } : {}}
-          transition={{ duration: 1, delay: 0.4 }}
-          className="mt-12 w-24 h-[1px] bg-border mx-auto"
-        />
+          initial={{ opacity: 0, x: 30 }}
+          animate={isInView ? { opacity: 1, x: 0 } : {}}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="space-y-6"
+        >
+          <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
+            In a captivating world where the realms of beauty seamlessly intertwine with the wonders of science, embark on an extraordinary and transformative journey to rejuvenate your hair.
+          </p>
+          <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
+            Experience an extensive range of innovative treatments meticulously crafted by our artist-led team.
+          </p>
+        </motion.div>
       </div>
     </Section>
   );

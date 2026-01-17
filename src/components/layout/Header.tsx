@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ArrowUpRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
-  { href: "/booking", label: "Book" },
+  { href: "/booking", label: "Contact" },
 ];
 
 export function Header() {
@@ -41,9 +41,9 @@ export function Header() {
           {/* Logo */}
           <Link
             to="/"
-            className="font-serif text-xl lg:text-2xl font-medium tracking-tight text-foreground hover:opacity-70 transition-opacity"
+            className="font-serif text-xl lg:text-2xl font-normal tracking-tight text-foreground hover:opacity-70 transition-opacity"
           >
-            Drop Dead Salon
+            Drop Dead
           </Link>
 
           {/* Desktop Navigation */}
@@ -53,7 +53,7 @@ export function Header() {
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "text-sm uppercase tracking-[0.2em] font-sans font-light link-underline transition-opacity",
+                  "text-sm uppercase tracking-[0.15em] font-sans font-normal link-underline transition-opacity",
                   location.pathname === link.href
                     ? "opacity-100"
                     : "opacity-60 hover:opacity-100"
@@ -64,9 +64,10 @@ export function Header() {
             ))}
             <Link
               to="/booking"
-              className="ml-4 px-6 py-3 text-sm uppercase tracking-[0.15em] font-sans font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="ml-4 inline-flex items-center gap-2 px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 transition-colors"
             >
               Book Now
+              <ArrowUpRight size={14} />
             </Link>
           </nav>
 
@@ -108,9 +109,10 @@ export function Header() {
               ))}
               <Link
                 to="/booking"
-                className="mt-4 w-full text-center px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-medium bg-primary text-primary-foreground"
+                className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background"
               >
                 Book Now
+                <ArrowUpRight size={14} />
               </Link>
             </nav>
           </motion.div>

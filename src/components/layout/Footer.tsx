@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Instagram } from "lucide-react";
+import { Instagram, ArrowUpRight } from "lucide-react";
 
 const footerLinks = [
   { href: "/services", label: "Services" },
@@ -8,19 +8,19 @@ const footerLinks = [
 
 export function Footer() {
   return (
-    <footer className="bg-secondary border-t border-border">
+    <footer className="bg-background border-t border-border">
       <div className="container mx-auto px-6 lg:px-12 py-16 lg:py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
           {/* Brand */}
           <div className="space-y-6">
             <Link
               to="/"
-              className="font-serif text-2xl font-medium tracking-tight text-foreground"
+              className="font-serif text-2xl font-normal tracking-tight text-foreground"
             >
               Drop Dead Salon
             </Link>
-            <p className="text-sm text-muted-foreground font-sans leading-relaxed max-w-xs">
-              Luxury without compromise.
+            <p className="text-sm text-muted-foreground font-sans font-light leading-relaxed max-w-xs">
+              Luxury without compromise. Where artistry lives.
             </p>
           </div>
 
@@ -34,7 +34,7 @@ export function Footer() {
                 <Link
                   key={link.href}
                   to={link.href}
-                  className="text-sm font-sans text-foreground/80 hover:text-foreground transition-colors link-underline w-fit"
+                  className="text-sm font-sans font-light text-foreground/80 hover:text-foreground transition-colors link-underline w-fit"
                 >
                   {link.label}
                 </Link>
@@ -47,7 +47,7 @@ export function Footer() {
             <h4 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
               Connect
             </h4>
-            <div className="space-y-3 text-sm font-sans text-foreground/80">
+            <div className="space-y-3 text-sm font-sans font-light text-foreground/80">
               <p>123 Luxury Lane</p>
               <p>Los Angeles, CA 90001</p>
               <a
@@ -61,7 +61,7 @@ export function Footer() {
               href="https://instagram.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-sans text-foreground/60 hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-sans font-light text-foreground/60 hover:text-foreground transition-colors"
               aria-label="Instagram"
             >
               <Instagram size={18} />
@@ -75,9 +75,13 @@ export function Footer() {
           <p className="text-xs text-muted-foreground font-sans">
             © {new Date().getFullYear()} Drop Dead Salon. All rights reserved.
           </p>
-          <p className="text-xs text-muted-foreground font-sans italic">
-            Where artistry lives.
-          </p>
+          <Link
+            to="/booking"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-sans text-foreground hover:opacity-70 transition-opacity"
+          >
+            Book Your Experience
+            <ArrowUpRight size={12} />
+          </Link>
         </div>
       </div>
     </footer>

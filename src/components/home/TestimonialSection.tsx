@@ -15,12 +15,13 @@ export function TestimonialSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <Section>
-      <div ref={ref} className="max-w-3xl mx-auto text-center">
+    <Section className="bg-secondary">
+      <div ref={ref} className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.8 }}
+          className="mb-8"
         >
           <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans">
             Client Experience
@@ -31,7 +32,6 @@ export function TestimonialSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-8"
         >
           <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light italic text-foreground leading-relaxed">
             "{testimonial.quote}"
@@ -42,20 +42,19 @@ export function TestimonialSection() {
           initial={{ opacity: 0, y: 10 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-8"
+          className="mt-10 flex items-center gap-4"
         >
-          <p className="text-sm font-sans font-medium text-foreground">
-            {testimonial.author}
-          </p>
-          <p className="text-xs text-muted-foreground font-sans mt-1">
-            {testimonial.service}
-          </p>
+          {/* Avatar placeholder */}
+          <div className="w-12 h-12 rounded-full bg-muted" />
+          <div>
+            <p className="text-sm font-sans font-medium text-foreground">
+              {testimonial.author}
+            </p>
+            <p className="text-xs text-muted-foreground font-sans mt-0.5">
+              {testimonial.service}
+            </p>
+          </div>
         </motion.div>
-
-        {/* Decorative quotes */}
-        <div className="absolute top-0 left-0 text-8xl font-serif text-muted/20 select-none hidden lg:block">
-          "
-        </div>
       </div>
     </Section>
   );

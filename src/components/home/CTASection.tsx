@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
+import { ArrowUpRight } from "lucide-react";
 
 export function CTASection() {
   const ref = useRef(null);
@@ -10,31 +11,45 @@ export function CTASection() {
   return (
     <section
       ref={ref}
-      className="py-24 lg:py-32 bg-gradient-to-b from-background to-secondary"
+      className="py-24 lg:py-32 bg-foreground text-background"
     >
-      <div className="container mx-auto px-6 lg:px-12 text-center">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="font-serif text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground"
-        >
-          Ready for Something Better?
-        </motion.h2>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-10"
-        >
-          <Link
-            to="/booking"
-            className="inline-block px-12 py-4 text-sm uppercase tracking-[0.2em] font-sans font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+      <div className="container mx-auto px-6 lg:px-12">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8 }}
+            className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
           >
-            Book Now
-          </Link>
-        </motion.div>
+            Ready for Something
+            <br />
+            <span className="italic font-light">Better?</span>
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="mt-6 text-base text-background/70 font-sans font-light max-w-md mx-auto"
+          >
+            Experience the difference of a salon that truly cares about artistry and results.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <Link
+              to="/booking"
+              className="inline-flex items-center gap-2 px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans border border-background text-background hover:bg-background hover:text-foreground transition-all duration-300"
+            >
+              Book Now
+              <ArrowUpRight size={16} />
+            </Link>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
