@@ -21,7 +21,7 @@ export function Marquee() {
       <div className="w-full bg-foreground pt-14 pb-10">
         {/* Slanted marquee bar */}
         <div className="-rotate-2 -mx-8 scale-x-125">
-          <div className="bg-foreground border-y border-background/20 py-4">
+          <div className="bg-foreground py-4">
             <div className="animate-marquee whitespace-nowrap flex">
               {/* Duplicate items for seamless loop */}
               {[...marqueeItems, ...marqueeItems].map((item, index) => (
