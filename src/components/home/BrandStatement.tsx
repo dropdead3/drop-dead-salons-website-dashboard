@@ -34,10 +34,10 @@ export function BrandStatement() {
           className="space-y-6"
         >
           <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
-            In a captivating world where the realms of beauty seamlessly intertwine with the wonders of science, embark on an extraordinary and transformative journey to rejuvenate your hair.
+            Located in the heart of Mesa and Gilbert, Arizona, Drop Dead Salon has become the Phoenix Valley's destination for transformative hair experiences. Clients travel from Scottsdale, Chandler, Tempe, and across the East Valley to experience our artistry.
           </p>
           <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
-            Experience an extensive range of innovative treatments meticulously crafted by our artist-led team.
+            Experience an extensive range of innovative treatments meticulously crafted by our artist-led team—where science meets beauty in Arizona's premier luxury salon.
           </p>
         </motion.div>
       </div>

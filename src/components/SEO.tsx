@@ -11,15 +11,15 @@ interface SEOProps {
 // Salon business info - update with real details
 const BUSINESS_INFO = {
   name: "Drop Dead Salon",
-  description: "Luxury hair salon specializing in color, extensions, cutting & styling. Expert artistry meets science for transformative hair experiences.",
+  description: "Premier hair salon in Mesa & Gilbert, Arizona serving the entire Phoenix Valley. Specializing in color, extensions, cutting & styling with expert artistry.",
   address: {
     street: "123 Main Street",
-    city: "Los Angeles",
-    state: "CA",
-    zip: "90001",
+    city: "Mesa",
+    state: "AZ",
+    zip: "85201",
     country: "US",
   },
-  phone: "(555) 123-4567",
+  phone: "(480) 123-4567",
   email: "hello@dropdeadsalon.com",
   url: "https://dropdeadsalon.com",
   image: "/og-image.jpg",
@@ -28,6 +28,7 @@ const BUSINESS_INFO = {
     "Mo-Fr 09:00-19:00",
     "Sa 09:00-17:00",
   ],
+  areaServed: ["Mesa", "Gilbert", "Chandler", "Tempe", "Scottsdale", "Phoenix", "Queen Creek", "Apache Junction"],
 };
 
 export function SEO({
@@ -115,7 +116,7 @@ export function SEO({
       <title>{fullTitle}</title>
       <meta name="title" content={fullTitle} />
       <meta name="description" content={description} />
-      <meta name="keywords" content="hair salon, hair color, balayage, extensions, cutting, styling, luxury salon, Los Angeles salon, hair treatments, bridal hair" />
+      <meta name="keywords" content="hair salon Mesa AZ, hair salon Gilbert Arizona, Phoenix Valley hair stylist, balayage Mesa, hair extensions Gilbert, hair color Chandler, Scottsdale hair salon, luxury salon Arizona, bridal hair Phoenix, Tempe hair stylist" />
       
       {/* Canonical URL */}
       <link rel="canonical" href={url} />
