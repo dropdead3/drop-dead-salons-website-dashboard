@@ -1,19 +1,21 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Phone } from "lucide-react";
 
 const locations = [
   {
     name: "West Hollywood",
     address: "8715 Santa Monica Blvd",
     city: "West Hollywood, CA 90069",
+    phone: "(323) 555-0123",
     bookingUrl: "/booking?location=weho"
   },
   {
     name: "Studio City",
     address: "12345 Ventura Blvd",
     city: "Studio City, CA 91604",
+    phone: "(818) 555-0456",
     bookingUrl: "/booking?location=studio-city"
   }
 ];
@@ -60,10 +62,17 @@ export function LocationsSection() {
               <h3 className="font-serif text-2xl md:text-3xl text-foreground mb-4">
                 {location.name}
               </h3>
-              <div className="space-y-1 mb-8">
+              <div className="space-y-1 mb-6">
                 <p className="text-foreground/70">{location.address}</p>
                 <p className="text-foreground/70">{location.city}</p>
               </div>
+              <a
+                href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
+                className="inline-flex items-center gap-2 text-foreground/70 hover:text-foreground transition-colors mb-6"
+              >
+                <Phone className="w-4 h-4" />
+                <span>{location.phone}</span>
+              </a>
               <Link
                 to={location.bookingUrl}
                 className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.15em] font-medium text-foreground hover:text-foreground/70 transition-colors group/link"
