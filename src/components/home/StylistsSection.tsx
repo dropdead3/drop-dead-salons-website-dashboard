@@ -278,7 +278,7 @@ export function StylistsSection() {
             {/* Specialty Filter */}
             <div>
               <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
-                FILTER BY SPECIALTY
+                VIEW BY SPECIALTY
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 <button
@@ -310,7 +310,7 @@ export function StylistsSection() {
             {/* Level/Price Filter */}
             <div>
               <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
-                FILTER BY LEVEL & PRICE
+                VIEW BY LEVEL & PRICE
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 <button
