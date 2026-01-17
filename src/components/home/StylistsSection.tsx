@@ -137,8 +137,8 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      whileHover={{ y: -6 }}
-      className="group relative aspect-[3/4] bg-muted overflow-hidden flex-shrink-0 w-[280px] md:w-[300px] shadow-lg hover:shadow-2xl transition-shadow duration-500"
+      whileHover={{ y: -4 }}
+      className="group relative aspect-[3/4] bg-muted overflow-hidden flex-shrink-0 w-[280px] md:w-[300px] shadow-md hover:shadow-lg transition-shadow duration-500"
     >
       <ImageWithSkeleton
         src={stylist.imageUrl}
@@ -448,7 +448,7 @@ export function StylistsSection() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex gap-4 overflow-x-auto py-6 -my-6"
+              className="flex gap-4 overflow-x-auto py-8 -my-8"
               style={{
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
