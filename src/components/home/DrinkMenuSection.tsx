@@ -94,30 +94,34 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
       {...wrapperProps}
       className="group relative flex flex-col items-center gap-4 px-16 md:px-24 lg:px-32 cursor-pointer"
     >
-      <DrinkIcon colors={drink.colors} />
+      {/* Drink icon container with tooltip */}
+      <div className="relative">
+        <DrinkIcon colors={drink.colors} />
+        
+        {/* Hover tooltip - positioned to the right of the icon */}
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-8 md:ml-12 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto z-10">
+          <div className="bg-oat text-oat-foreground px-5 py-4 text-center shadow-lg border border-border/50 w-[180px] min-h-[120px] flex flex-col justify-center">
+            <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-oat-foreground/60 font-sans">Ingredients</p>
+            <p className="text-sm font-serif whitespace-normal leading-relaxed">
+              {displayedIngredients}
+            </p>
+            {needsTruncation && (
+              <button 
+                onClick={handleToggle}
+                className="mt-2 text-[10px] uppercase tracking-[0.15em] text-oat-foreground/70 hover:text-oat-foreground transition-colors font-sans underline underline-offset-2"
+              >
+                {isExpanded ? "See less" : "See more"}
+              </button>
+            )}
+          </div>
+          {/* Arrow pointing left */}
+          <div className="absolute top-1/2 -translate-y-1/2 -left-2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-transparent border-r-oat" />
+        </div>
+      </div>
+      
       <h3 className="font-serif text-lg md:text-xl lg:text-2xl text-foreground whitespace-nowrap">
         {drink.name}
       </h3>
-      
-      {/* Hover tooltip - positioned to the right, centered in gap */}
-      <div className="absolute left-[85%] top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto z-10">
-        <div className="bg-oat text-oat-foreground px-5 py-4 text-center shadow-lg border border-border/50 w-[180px] min-h-[120px] flex flex-col justify-center">
-          <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-oat-foreground/60 font-sans">Ingredients</p>
-          <p className="text-sm font-serif whitespace-normal leading-relaxed">
-            {displayedIngredients}
-          </p>
-          {needsTruncation && (
-            <button 
-              onClick={handleToggle}
-              className="mt-2 text-[10px] uppercase tracking-[0.15em] text-oat-foreground/70 hover:text-oat-foreground transition-colors font-sans underline underline-offset-2"
-            >
-              {isExpanded ? "See less" : "See more"}
-            </button>
-          )}
-        </div>
-        {/* Arrow pointing left */}
-        <div className="absolute top-1/2 -translate-y-1/2 -left-2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-transparent border-r-oat" />
-      </div>
     </Wrapper>
   );
 };
