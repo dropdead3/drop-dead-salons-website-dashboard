@@ -25,7 +25,6 @@ const Index = () => {
       <ServicesPreview />
       <PopularServices />
       <NewClientSection />
-      <StylistsSection />
       <GallerySection />
       {/* Combined Reviews & FAQ Section with Gradient */}
       <div 
@@ -39,6 +38,7 @@ const Index = () => {
       </div>
       <BrandsSection />
       <CTASection />
+      <StylistsSection />
     </Layout>
   );
 };
