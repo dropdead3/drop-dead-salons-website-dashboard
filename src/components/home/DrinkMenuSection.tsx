@@ -119,9 +119,6 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
                   <span>{ingredient.trim()}</span>
                 </li>
               ))}
-              {needsTruncation && !isExpanded && (
-                <li className="text-oat-foreground/50">...</li>
-              )}
             </motion.ul>
             {needsTruncation && (
               <motion.button 
