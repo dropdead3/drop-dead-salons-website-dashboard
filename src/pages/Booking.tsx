@@ -98,8 +98,8 @@ export default function Booking() {
   return (
     <Layout>
       <SEO 
-        title="Book Your Appointment"
-        description="Schedule your hair appointment at Drop Dead Salon. Contact us for consultations, color services, extensions, cuts, and treatments in Los Angeles."
+        title="Schedule Your Initial Consultation"
+        description="Schedule your initial consultation at Drop Dead Salon. New clients begin with a complimentary consultation to discuss your hair goals."
       />
       {/* Hero */}
       <section className="pt-32 lg:pt-40 pb-16 lg:pb-20">
@@ -111,7 +111,7 @@ export default function Booking() {
               transition={{ duration: 0.6 }}
               className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-6"
             >
-              Contact Us
+              New Clients
             </motion.span>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -119,9 +119,9 @@ export default function Booking() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-[1.1]"
             >
-              Book Your
+              Schedule Your
               <br />
-              <span className="italic font-light">Appointment</span>
+              <span className="italic font-light">Initial Consultation</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -129,8 +129,26 @@ export default function Booking() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-8 text-base md:text-lg text-muted-foreground font-sans font-light max-w-lg"
             >
-              Select your service, share a few details, and we'll be in touch.
+              Share a few details about yourself and your hair goals, and we'll be in touch to schedule your complimentary consultation.
             </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="mt-8 p-5 bg-secondary border border-border inline-block"
+            >
+              <p className="text-sm text-muted-foreground font-sans">
+                Are you a returning client? You don't need a new-client consult.
+              </p>
+              <a
+                href="https://booking.dropdeadsalon.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-2 text-sm uppercase tracking-[0.1em] font-sans font-medium text-foreground hover:opacity-70 transition-opacity"
+              >
+                Book your known services here →
+              </a>
+            </motion.div>
           </div>
         </div>
       </section>
