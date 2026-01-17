@@ -1,50 +1,7 @@
 import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import { Section } from "@/components/ui/section";
-
-// Typewriter component for the word "Typical"
-function TypewriterText({ text, isInView, delay = 0 }: { text: string; isInView: boolean; delay?: number }) {
-  const [displayedText, setDisplayedText] = useState("");
-  const [hasStarted, setHasStarted] = useState(false);
-
-  useEffect(() => {
-    if (isInView && !hasStarted) {
-      const startTimeout = setTimeout(() => {
-        setHasStarted(true);
-      }, delay);
-      return () => clearTimeout(startTimeout);
-    }
-  }, [isInView, delay, hasStarted]);
-
-  useEffect(() => {
-    if (!hasStarted) return;
-
-    let currentIndex = 0;
-    const interval = setInterval(() => {
-      if (currentIndex <= text.length) {
-        setDisplayedText(text.slice(0, currentIndex));
-        currentIndex++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 80); // Speed of typing
-
-    return () => clearInterval(interval);
-  }, [hasStarted, text]);
-
-  return (
-    <span className="inline-block">
-      {displayedText}
-      {hasStarted && displayedText.length < text.length && (
-        <motion.span
-          animate={{ opacity: [1, 0] }}
-          transition={{ duration: 0.5, repeat: Infinity }}
-          className="inline-block w-[3px] h-[0.9em] bg-current ml-0.5 align-middle"
-        />
-      )}
-    </span>
-  );
-}
+import { TypewriterText } from "@/components/ui/TypewriterText";
 
 export function BrandStatement() {
   const ref = useRef(null);
