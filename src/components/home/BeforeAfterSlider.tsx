@@ -109,17 +109,13 @@ export function BeforeAfterSlider({
     }
   };
 
-  const handleMouseUp = useCallback(() => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    
-    // Animate back to center
+  const animateToCenter = useCallback(() => {
     const startPosition = sliderPosition;
     const targetPosition = 50;
     const duration = 600; // ms
     let startTime: number | null = null;
 
-    const animateToCenter = (timestamp: number) => {
+    const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
@@ -131,31 +127,50 @@ export function BeforeAfterSlider({
       setSliderPosition(newPosition);
 
       if (progress < 1) {
-        animationRef.current = requestAnimationFrame(animateToCenter);
+        animationRef.current = requestAnimationFrame(animate);
       }
     };
 
-    animationRef.current = requestAnimationFrame(animateToCenter);
-  }, [isDragging, sliderPosition]);
-  
-  const handleMouseMove = (e: React.MouseEvent) => {
+    animationRef.current = requestAnimationFrame(animate);
+  }, [sliderPosition]);
+
+  // Handle global mouse events for dragging outside container
+  useEffect(() => {
     if (!isDragging) return;
-    handleMove(e.clientX);
-  };
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      handleMove(e.clientX);
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      animateToCenter();
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, handleMove, animateToCenter]);
 
   const handleTouchMove = (e: React.TouchEvent) => {
     handleMove(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    animateToCenter();
   };
 
   return (
     <div
       ref={containerRef}
       className={`relative aspect-[3/4] overflow-hidden cursor-ew-resize select-none ${className}`}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
       onTouchMove={handleTouchMove}
-      onTouchEnd={handleMouseUp}
+      onTouchEnd={handleTouchEnd}
     >
       {/* After Image (Background) */}
       <div className="absolute inset-0">
