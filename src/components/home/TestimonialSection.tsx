@@ -244,10 +244,10 @@ export function TestimonialSection() {
                   setIsPaused(true);
                   scrollToCard(index);
                 }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
+                className={`h-1 transition-all duration-500 ${
                   index === currentIndex
-                    ? 'w-6 bg-foreground'
-                    : 'w-1.5 bg-foreground/30 hover:bg-foreground/50'
+                    ? 'w-8 bg-foreground'
+                    : 'w-2 bg-foreground/30 hover:bg-foreground/50'
                 }`}
                 aria-label={`Go to review ${index + 1}`}
               />
@@ -317,22 +317,27 @@ export function TestimonialSection() {
       </div>
 
       {/* Progress Dots - Mobile */}
-      <div className="md:hidden flex justify-center gap-2 mt-6">
-        {reviews.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setIsPaused(true);
-              scrollToCard(index);
-            }}
-            className={`h-1.5 transition-all duration-300 ${
-              index === currentIndex
-                ? 'w-6 bg-foreground'
-                : 'w-1.5 bg-foreground/30'
-            }`}
-            aria-label={`Go to review ${index + 1}`}
-          />
-        ))}
+      <div className="md:hidden flex justify-center items-center gap-4 mt-6">
+        <div className="flex items-center gap-2">
+          {reviews.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                setIsPaused(true);
+                scrollToCard(index);
+              }}
+              className={`h-1 transition-all duration-500 ${
+                index === currentIndex
+                  ? 'w-8 bg-foreground'
+                  : 'w-2 bg-foreground/30'
+              }`}
+              aria-label={`Go to review ${index + 1}`}
+            />
+          ))}
+        </div>
+        <span className="text-sm text-muted-foreground">
+          {currentIndex + 1} / {reviews.length}
+        </span>
       </div>
     </section>
   );
