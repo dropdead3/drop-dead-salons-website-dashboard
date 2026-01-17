@@ -106,6 +106,11 @@ const locations = [
   { id: "north-mesa" as Location, name: "North Mesa" }
 ];
 
+// Extract all unique specialties
+const allSpecialties = Array.from(
+  new Set(stylists.flatMap((s) => s.specialties))
+).sort();
+
 const applicationSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
   email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
@@ -188,12 +193,15 @@ export function StylistsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [selectedLocation, setSelectedLocation] = useState<Location>("val-vista-lakes");
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredStylists = stylists.filter(
-    (s) => s.location === selectedLocation
-  );
+  const filteredStylists = stylists.filter((s) => {
+    const matchesLocation = s.location === selectedLocation;
+    const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
+    return matchesLocation && matchesSpecialty;
+  });
 
   const form = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
@@ -255,6 +263,38 @@ export function StylistsSection() {
               </button>
             ))}
           </div>
+
+          {/* Specialty Filter */}
+          <div className="mt-8">
+            <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
+              FILTER BY SPECIALTY
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button
+                onClick={() => setSelectedSpecialty(null)}
+                className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
+                  selectedSpecialty === null
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-background text-foreground border-border hover:border-foreground/50"
+                }`}
+              >
+                ALL
+              </button>
+              {allSpecialties.map((specialty) => (
+                <button
+                  key={specialty}
+                  onClick={() => setSelectedSpecialty(specialty)}
+                  className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
+                    selectedSpecialty === specialty
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-background text-foreground border-border hover:border-foreground/50"
+                  }`}
+                >
+                  {specialty}
+                </button>
+              ))}
+            </div>
+          </div>
         </motion.div>
 
         {/* Title with count */}
@@ -275,7 +315,7 @@ export function StylistsSection() {
       <div className="relative">
         <AnimatePresence mode="wait">
           <motion.div
-            key={selectedLocation}
+            key={`${selectedLocation}-${selectedSpecialty}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
