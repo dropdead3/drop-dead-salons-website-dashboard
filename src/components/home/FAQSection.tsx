@@ -172,7 +172,7 @@ export function FAQSection() {
                     >
                       <AccordionItem
                         value={`item-${index}`}
-                        className="bg-background border border-border px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:border-foreground/30 hover:shadow-sm"
+                        className="bg-background border border-border px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:bg-secondary hover:border-foreground/20 hover:shadow-md"
                       >
                         <AccordionTrigger className="text-left text-base md:text-lg font-medium py-5 hover:no-underline group">
                           {highlightText(faq.question, searchQuery)}
