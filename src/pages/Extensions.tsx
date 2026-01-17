@@ -424,13 +424,13 @@ export default function Extensions() {
 
       {/* FAQ Section */}
       <Section sectionRef={faqRef}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+        {/* Header Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 mb-12">
           {/* Left Column - Intro */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={faqInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-            className="lg:sticky lg:top-32 lg:self-start"
           >
             <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
               Questions
@@ -456,80 +456,89 @@ export default function Extensions() {
             </Link>
           </motion.div>
 
-          {/* Right Column - Search & Accordion */}
+          {/* Right Column - Search */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={faqInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
+            className="flex items-start"
           >
-            {/* Search Input */}
-            <div className="relative mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search extension questions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-12 py-4 bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Results count */}
-            {searchQuery && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-sm text-muted-foreground mb-4"
-              >
-                {filteredFaqs.length} {filteredFaqs.length === 1 ? 'result' : 'results'} found
-              </motion.p>
-            )}
-
-            {/* FAQ Accordion */}
-            <Accordion type="single" collapsible className="space-y-3">
-              {filteredFaqs.length > 0 ? (
-                filteredFaqs.map((faq, index) => (
-                  <motion.div
-                    key={faq.question}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, delay: index * 0.05 }}
+            <div className="w-full">
+              {/* Search Input */}
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search extension questions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-12 py-4 bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Clear search"
                   >
-                    <AccordionItem
-                      value={`item-${index}`}
-                      className="bg-background border border-border px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:bg-secondary hover:border-foreground/20"
-                    >
-                      <AccordionTrigger className="text-left text-base md:text-lg font-medium py-5 hover:no-underline">
-                        {highlightText(faq.question, searchQuery)}
-                      </AccordionTrigger>
-                      <AccordionContent className="text-foreground/80 pb-5 leading-relaxed">
-                        {highlightText(faq.answer, searchQuery)}
-                      </AccordionContent>
-                    </AccordionItem>
-                  </motion.div>
-                ))
-              ) : (
-                <motion.div
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Results count */}
+              {searchQuery && (
+                <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center py-12 text-muted-foreground"
+                  className="text-sm text-muted-foreground mt-4"
                 >
-                  <p className="text-lg mb-2">No matching questions found</p>
-                  <p className="text-sm">Try adjusting your search terms</p>
-                </motion.div>
+                  {filteredFaqs.length} {filteredFaqs.length === 1 ? 'result' : 'results'} found
+                </motion.p>
               )}
-            </Accordion>
+            </div>
           </motion.div>
         </div>
+
+        {/* Full Width FAQ Accordion */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={faqInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1], delay: 0.3 }}
+        >
+          <Accordion type="single" collapsible className="space-y-3">
+            {filteredFaqs.length > 0 ? (
+              filteredFaqs.map((faq, index) => (
+                <motion.div
+                  key={faq.question}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: index * 0.05 }}
+                >
+                  <AccordionItem
+                    value={`item-${index}`}
+                    className="bg-background border border-border px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:bg-secondary hover:border-foreground/20"
+                  >
+                    <AccordionTrigger className="text-left text-base md:text-lg font-medium py-5 hover:no-underline">
+                      {highlightText(faq.question, searchQuery)}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-foreground/80 pb-5 leading-relaxed">
+                      {highlightText(faq.answer, searchQuery)}
+                    </AccordionContent>
+                  </AccordionItem>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-12 text-muted-foreground"
+              >
+                <p className="text-lg mb-2">No matching questions found</p>
+                <p className="text-sm">Try adjusting your search terms</p>
+              </motion.div>
+            )}
+          </Accordion>
+        </motion.div>
       </Section>
     </Layout>
   );
