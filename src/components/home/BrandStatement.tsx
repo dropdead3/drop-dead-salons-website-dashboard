@@ -3,8 +3,8 @@ import { useRef } from "react";
 import { Section } from "@/components/ui/section";
 import { TypewriterText } from "@/components/ui/TypewriterText";
 
-// Arizona state outline path
-const arizonaPath = "M2.5 2.5L2.5 85L15 85L15 95L35 115L50 115L55 110L65 110L70 105L85 105L85 2.5L2.5 2.5Z";
+// Arizona state outline path (accurate shape)
+const arizonaPath = "M186.8,41.3L186.6,122.9L188.1,205.8L152.4,199.8L114.6,193.2L76.1,185.8L37.1,177.5L0,168.1L12.7,119.4L24.7,72.5L35.3,29.3L49.2,31.2L48.5,42L60.4,43.7L60.8,53.5L89.4,57.2L98.5,51.4L103.5,39.9L116.5,30.9L122.5,21.7L132.3,17.4L145.5,17.5L154.5,6.9L157.6,0L167.9,7.3L176.1,20.4L186.8,41.3Z";
 
 export function BrandStatement() {
   const ref = useRef(null);
@@ -22,11 +22,11 @@ export function BrandStatement() {
           {/* Arizona outline */}
           <div className="mb-6">
             <svg
-              width="48"
-              height="64"
-              viewBox="0 0 90 120"
+              width="44"
+              height="52"
+              viewBox="0 0 190 210"
               fill="none"
-              className="text-background/30"
+              className="text-background/40"
             >
               <motion.path
                 d={arizonaPath}
