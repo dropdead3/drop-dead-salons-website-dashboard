@@ -40,6 +40,9 @@ export function ServicesPreview() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [hasUserScrolled, setHasUserScrolled] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   // Editorial easing - slow start, smooth middle, gentle stop
   const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
@@ -131,6 +134,31 @@ export function ServicesPreview() {
     scrollToCard(newIndex);
   };
 
+  // Drag to scroll handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    setHasUserScrolled(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // Scroll speed multiplier
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
   // Card animation variants
   const cardVariants: Variants = {
     hidden: { 
@@ -202,7 +230,11 @@ export function ServicesPreview() {
         <div
           ref={scrollContainerRef}
           onScroll={handleUserScroll}
-          className="flex gap-8 overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          className={`flex gap-8 overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {services.map((service, index) => (
