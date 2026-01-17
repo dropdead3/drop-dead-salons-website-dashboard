@@ -11,13 +11,17 @@ const locations = [
     name: "West Hollywood",
     address: "8715 Santa Monica Blvd",
     city: "West Hollywood, CA 90069",
+    phone: "(323) 555-0123",
   },
   {
     name: "Studio City",
     address: "12345 Ventura Blvd",
     city: "Studio City, CA 91604",
+    phone: "(818) 555-0456",
   }
 ];
+
+const hours = "Tue–Sat: 10am–6pm";
 
 export function Footer() {
   return (
@@ -62,22 +66,30 @@ export function Footer() {
             </h4>
             <div className="space-y-5">
               {locations.map((location) => (
-                <a 
-                  key={location.name} 
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start gap-2 group"
-                >
-                  <MapPin className="w-4 h-4 text-foreground/50 group-hover:text-foreground flex-shrink-0 mt-0.5 transition-colors" />
-                  <div className="text-sm font-sans font-light text-foreground/80 group-hover:text-foreground transition-colors">
-                    <p className="font-medium text-foreground">{location.name}</p>
-                    <p>{location.address}</p>
-                    <p>{location.city}</p>
-                  </div>
-                </a>
+                <div key={location.name} className="space-y-1">
+                  <a 
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-2 group"
+                  >
+                    <MapPin className="w-4 h-4 text-foreground/50 group-hover:text-foreground flex-shrink-0 mt-0.5 transition-colors" />
+                    <div className="text-sm font-sans font-light text-foreground/80 group-hover:text-foreground transition-colors">
+                      <p className="font-medium text-foreground">{location.name}</p>
+                      <p>{location.address}</p>
+                      <p>{location.city}</p>
+                    </div>
+                  </a>
+                  <a 
+                    href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
+                    className="text-sm font-sans font-light text-foreground/60 hover:text-foreground transition-colors ml-6"
+                  >
+                    {location.phone}
+                  </a>
+                </div>
               ))}
             </div>
+            <p className="text-xs text-foreground/50 mt-4">{hours}</p>
           </div>
 
           {/* Contact */}
