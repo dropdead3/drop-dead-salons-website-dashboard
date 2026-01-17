@@ -31,6 +31,10 @@
     --accent: 40 25% 90%;
     --accent-foreground: 0 0% 8%;
 
+    /* Oat/Tan accent - soft warm neutral */
+    --oat: 35 35% 82%;
+    --oat-foreground: 30 20% 25%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
@@ -72,6 +76,10 @@
 
     --accent: 40 30% 85%;
     --accent-foreground: 0 0% 4%;
+
+    /* Oat/Tan accent - dark mode */
+    --oat: 35 25% 30%;
+    --oat-foreground: 35 30% 85%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 20% 92%;
