@@ -14,32 +14,36 @@ export function CTASection() {
       className="py-24 lg:py-32 bg-foreground text-background"
     >
       <div className="container mx-auto px-6 lg:px-12">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8 }}
-            className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
-          >
-            Ready for Something
-            <br />
-            <span className="italic font-light">Better?</span>
-          </motion.h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
+          {/* Left - Text */}
+          <div>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8 }}
+              className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
+            >
+              Ready for Something
+              <br />
+              <span className="italic font-light">Better?</span>
+            </motion.h2>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.1 }}
-            className="mt-6 text-base text-background/70 font-sans font-light max-w-md mx-auto"
-          >
-            Experience the difference of a salon that truly cares about artistry and results.
-          </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="mt-6 text-base text-background/70 font-sans font-light max-w-md"
+            >
+              Experience the difference of a salon that truly cares about artistry and results.
+            </motion.p>
+          </div>
 
+          {/* Right - Button */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="mt-10 flex flex-col items-center gap-4"
+            className="flex flex-col items-start lg:items-end gap-4"
           >
             <Link
               to="/booking"
@@ -54,7 +58,7 @@ export function CTASection() {
                 <ArrowUpRight size={16} />
               </motion.span>
             </Link>
-            <p className="text-xs text-background/60 font-sans">
+            <p className="text-xs text-background/60 font-sans lg:text-right">
               We start every journey with a personalized consultation
             </p>
           </motion.div>
