@@ -31,16 +31,19 @@ export function TypewriterText({
     if (!hasStarted) return;
 
     let currentIndex = 0;
-    const interval = setInterval(() => {
+    
+    const typeNextChar = () => {
       if (currentIndex <= text.length) {
         setDisplayedText(text.slice(0, currentIndex));
         currentIndex++;
-      } else {
-        clearInterval(interval);
+        // Vary speed by ±30% for natural feel
+        const variance = speed * 0.3;
+        const nextDelay = speed + (Math.random() * variance * 2 - variance);
+        setTimeout(typeNextChar, nextDelay);
       }
-    }, speed);
-
-    return () => clearInterval(interval);
+    };
+    
+    typeNextChar();
   }, [hasStarted, text, speed]);
 
   return (
