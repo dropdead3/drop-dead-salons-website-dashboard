@@ -99,15 +99,23 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
       
-      {/* Specialty Tags */}
+      {/* Specialty Tags - EXTENSIONS first as we're an extension salon */}
       <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
-        {stylist.specialties.map((specialty, index) => (
+        {[...stylist.specialties].sort((a, b) => {
+          if (a === "EXTENSIONS") return -1;
+          if (b === "EXTENSIONS") return 1;
+          return 0;
+        }).map((specialty, index) => (
           <motion.span
             key={index}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="px-3 py-1.5 bg-background/90 backdrop-blur-sm text-foreground text-xs font-medium tracking-wide"
+            className={`px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
+              specialty === "EXTENSIONS"
+                ? "bg-primary text-primary-foreground"
+                : "bg-background/90 text-foreground"
+            }`}
           >
             {specialty}
           </motion.span>
