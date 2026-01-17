@@ -351,21 +351,60 @@ export default function Booking() {
               Visit the Salon
             </h2>
 
-            <div className="space-y-8">
-              <div className="flex items-start gap-4">
-                <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
-                    Location
-                  </h3>
-                  <p className="text-muted-foreground font-sans font-light">
-                    123 Luxury Lane
-                    <br />
-                    Los Angeles, CA 90001
-                  </p>
+            <div className="space-y-10">
+              {/* West Hollywood Location */}
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
+                      West Hollywood
+                    </h3>
+                    <p className="text-muted-foreground font-sans font-light">
+                      8715 Santa Monica Blvd
+                      <br />
+                      West Hollywood, CA 90069
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 ml-9">
+                  <Phone size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <a
+                    href="tel:+13235550123"
+                    className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors text-sm"
+                  >
+                    (323) 555-0123
+                  </a>
                 </div>
               </div>
 
+              {/* Studio City Location */}
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
+                      Studio City
+                    </h3>
+                    <p className="text-muted-foreground font-sans font-light">
+                      12345 Ventura Blvd
+                      <br />
+                      Studio City, CA 91604
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 ml-9">
+                  <Phone size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <a
+                    href="tel:+18185550456"
+                    className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors text-sm"
+                  >
+                    (818) 555-0456
+                  </a>
+                </div>
+              </div>
+
+              {/* Hours */}
               <div className="flex items-start gap-4">
                 <Clock size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
                 <div>
@@ -380,6 +419,7 @@ export default function Booking() {
                 </div>
               </div>
 
+              {/* Email */}
               <div className="flex items-start gap-4">
                 <Mail size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
                 <div>
@@ -391,21 +431,6 @@ export default function Booking() {
                     className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors"
                   >
                     hello@dropdeadsalon.com
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <Phone size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
-                    Phone
-                  </h3>
-                  <a
-                    href="tel:+15551234567"
-                    className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors"
-                  >
-                    (555) 123-4567
                   </a>
                 </div>
               </div>
