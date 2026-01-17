@@ -270,36 +270,29 @@ export function StylistsSection() {
           
           <div className="inline-flex items-center border border-border bg-background">
             {locations.map((location) => (
-              <div 
-                key={location.id} 
-                className={`flex items-center transition-all duration-300 ${
+              <button
+                key={location.id}
+                onClick={() => setSelectedLocation(location.id)}
+                className={`flex items-center gap-2 px-4 md:px-6 py-3 md:py-4 text-sm md:text-base font-medium transition-all duration-300 ${
                   selectedLocation === location.id
-                    ? "bg-primary"
-                    : ""
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:bg-muted"
                 }`}
               >
-                <button
-                  onClick={() => setSelectedLocation(location.id)}
-                  className={`pl-4 md:pl-6 pr-2 py-3 md:py-4 text-sm md:text-base font-medium transition-all duration-300 ${
-                    selectedLocation === location.id
-                      ? "text-primary-foreground"
-                      : "text-foreground hover:bg-muted"
-                  }`}
-                >
-                  {location.name}
-                </button>
+                <span>{location.name}</span>
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button 
-                        className={`pr-4 md:pr-6 py-3 md:py-4 transition-colors ${
+                      <span 
+                        className={`transition-colors ${
                           selectedLocation === location.id
                             ? "text-primary-foreground/70 hover:text-primary-foreground"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <Info className="w-3.5 h-3.5" />
-                      </button>
+                      </span>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="p-3 bg-background text-foreground border border-border">
                       <p className="text-xs font-medium mb-1">{location.name}</p>
@@ -307,7 +300,7 @@ export function StylistsSection() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              </div>
+              </button>
             ))}
           </div>
 
