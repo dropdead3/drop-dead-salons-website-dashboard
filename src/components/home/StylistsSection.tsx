@@ -192,7 +192,7 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
           href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-white/70 hover:text-white transition-colors duration-200 mb-4 inline-block"
+          className="text-sm text-white/70 hover:text-white transition-colors duration-200 block mb-4"
         >
           {stylist.instagram}
         </a>
