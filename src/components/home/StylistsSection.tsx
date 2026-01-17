@@ -106,10 +106,14 @@ const locations = [
   { id: "north-mesa" as Location, name: "North Mesa", address: "5678 N Mesa Dr, Mesa, AZ 85201" }
 ];
 
-// Extract all unique specialties
+// Extract all unique specialties - with EXTENSIONS first as we're an extension salon
 const allSpecialties = Array.from(
   new Set(stylists.flatMap((s) => s.specialties))
-).sort();
+).sort((a, b) => {
+  if (a === "EXTENSIONS") return -1;
+  if (b === "EXTENSIONS") return 1;
+  return a.localeCompare(b);
+});
 
 // Stylist levels with price indicators
 const stylistLevels = [
@@ -152,13 +156,22 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
       
       <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
-        {stylist.specialties.map((specialty, idx) => (
+        {/* Sort specialties with EXTENSIONS first */}
+        {[...stylist.specialties].sort((a, b) => {
+          if (a === "EXTENSIONS") return -1;
+          if (b === "EXTENSIONS") return 1;
+          return 0;
+        }).map((specialty, idx) => (
           <motion.span
             key={idx}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 + index * 0.1 }}
-            className="px-3 py-1.5 bg-background/90 backdrop-blur-sm text-foreground text-xs font-medium tracking-wide"
+            className={`px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
+              specialty === "EXTENSIONS"
+                ? "bg-primary text-primary-foreground"
+                : "bg-background/90 text-foreground"
+            }`}
           >
             {specialty}
           </motion.span>
