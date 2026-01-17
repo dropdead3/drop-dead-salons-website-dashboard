@@ -55,6 +55,44 @@ export function TestimonialSection() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const isAutoScrolling = useRef(false);
+  
+  // Momentum tracking
+  const velocityRef = useRef(0);
+  const lastXRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const momentumRef = useRef<number | null>(null);
+
+  // Apply momentum after drag release
+  const applyMomentum = useCallback(() => {
+    if (!scrollContainerRef.current) return;
+    
+    const container = scrollContainerRef.current;
+    const friction = 0.95; // Decay rate
+    const minVelocity = 0.5; // Stop threshold
+    
+    const animate = () => {
+      if (Math.abs(velocityRef.current) < minVelocity) {
+        momentumRef.current = null;
+        container.style.scrollBehavior = 'smooth';
+        return;
+      }
+      
+      container.scrollLeft -= velocityRef.current;
+      velocityRef.current *= friction;
+      momentumRef.current = requestAnimationFrame(animate);
+    };
+    
+    momentumRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  // Stop momentum when starting new drag
+  const stopMomentum = useCallback(() => {
+    if (momentumRef.current) {
+      cancelAnimationFrame(momentumRef.current);
+      momentumRef.current = null;
+    }
+    velocityRef.current = 0;
+  }, []);
 
   const scrollToCard = useCallback((index: number, smooth = true) => {
     if (!scrollContainerRef.current) return;
@@ -146,59 +184,94 @@ export function TestimonialSection() {
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
     e.preventDefault();
+    stopMomentum();
     setIsDragging(true);
     setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
     setScrollLeft(scrollContainerRef.current.scrollLeft);
     setIsPaused(true);
-    // Remove smooth scroll while dragging
+    lastXRef.current = e.pageX;
+    lastTimeRef.current = Date.now();
     scrollContainerRef.current.style.scrollBehavior = 'auto';
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !scrollContainerRef.current) return;
     e.preventDefault();
+    
+    const now = Date.now();
+    const dt = now - lastTimeRef.current;
+    
+    if (dt > 0) {
+      velocityRef.current = (e.pageX - lastXRef.current) / dt * 16; // Normalize to ~60fps
+    }
+    
+    lastXRef.current = e.pageX;
+    lastTimeRef.current = now;
+    
     const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Increased multiplier for faster drag
+    const walk = (x - startX) * 2;
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
   };
 
   const handleMouseUp = () => {
-    if (scrollContainerRef.current) {
+    setIsDragging(false);
+    if (Math.abs(velocityRef.current) > 1) {
+      applyMomentum();
+    } else if (scrollContainerRef.current) {
       scrollContainerRef.current.style.scrollBehavior = 'smooth';
     }
-    setIsDragging(false);
   };
 
   const handleMouseLeave = () => {
-    if (isDragging && scrollContainerRef.current) {
-      scrollContainerRef.current.style.scrollBehavior = 'smooth';
+    if (isDragging) {
+      setIsDragging(false);
+      if (Math.abs(velocityRef.current) > 1) {
+        applyMomentum();
+      } else if (scrollContainerRef.current) {
+        scrollContainerRef.current.style.scrollBehavior = 'smooth';
+      }
     }
-    setIsDragging(false);
     setIsPaused(false);
   };
 
   // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!scrollContainerRef.current) return;
+    stopMomentum();
     setIsDragging(true);
     setStartX(e.touches[0].pageX - scrollContainerRef.current.offsetLeft);
     setScrollLeft(scrollContainerRef.current.scrollLeft);
     setIsPaused(true);
+    lastXRef.current = e.touches[0].pageX;
+    lastTimeRef.current = Date.now();
     scrollContainerRef.current.style.scrollBehavior = 'auto';
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !scrollContainerRef.current) return;
+    
+    const now = Date.now();
+    const dt = now - lastTimeRef.current;
+    
+    if (dt > 0) {
+      velocityRef.current = (e.touches[0].pageX - lastXRef.current) / dt * 16;
+    }
+    
+    lastXRef.current = e.touches[0].pageX;
+    lastTimeRef.current = now;
+    
     const x = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
     const walk = (x - startX) * 2;
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
   };
 
   const handleTouchEnd = () => {
-    if (scrollContainerRef.current) {
+    setIsDragging(false);
+    if (Math.abs(velocityRef.current) > 1) {
+      applyMomentum();
+    } else if (scrollContainerRef.current) {
       scrollContainerRef.current.style.scrollBehavior = 'smooth';
     }
-    setIsDragging(false);
   };
 
   return (
