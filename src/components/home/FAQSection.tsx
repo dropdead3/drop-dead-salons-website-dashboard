@@ -167,12 +167,14 @@ export function FAQSection() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2, delay: index * 0.05 }}
+                      whileHover={{ scale: 1.01, x: 4 }}
+                      className="cursor-pointer"
                     >
                       <AccordionItem
                         value={`item-${index}`}
-                        className="bg-background border border-border px-6 data-[state=open]:border-foreground/20"
+                        className="bg-background border border-border px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:border-foreground/30 hover:shadow-sm"
                       >
-                        <AccordionTrigger className="text-left text-base md:text-lg font-medium py-5 hover:no-underline">
+                        <AccordionTrigger className="text-left text-base md:text-lg font-medium py-5 hover:no-underline group">
                           {highlightText(faq.question, searchQuery)}
                         </AccordionTrigger>
                         <AccordionContent className="text-foreground/80 pb-5 leading-relaxed">
