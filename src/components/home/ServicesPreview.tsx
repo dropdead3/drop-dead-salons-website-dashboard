@@ -51,6 +51,7 @@ export function ServicesPreview() {
   const [swipeStartX, setSwipeStartX] = useState(0);
   const isAutoScrolling = useRef(false);
   const hasInitialized = useRef(false);
+  const extendedIndex = useRef(CLONE_COUNT); // Track position in extended array
 
   // Editorial easing - slow start, smooth middle, gentle stop
   const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
@@ -71,17 +72,16 @@ export function ServicesPreview() {
       const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
       container.scrollLeft = Math.max(0, scrollLeftPos);
       hasInitialized.current = true;
+      extendedIndex.current = CLONE_COUNT;
     }
   }, [isInView]);
 
-  const scrollToCard = useCallback((realIndex: number, smooth = true) => {
+  const scrollToExtendedIndex = useCallback((targetExtIndex: number, smooth = true) => {
     if (!scrollContainerRef.current) return;
     
     const container = scrollContainerRef.current;
     const cards = container.querySelectorAll('[data-card]');
-    // Always scroll to the middle set
-    const targetIndex = CLONE_COUNT + realIndex;
-    const card = cards[targetIndex] as HTMLElement;
+    const card = cards[targetExtIndex] as HTMLElement;
     
     if (!card) return;
 
@@ -97,33 +97,49 @@ export function ServicesPreview() {
         left: Math.max(0, scrollLeftPos),
         behavior: 'smooth'
       });
-      // Wait for scroll to complete
+      // Wait for scroll to complete, then check if we need to reset position
       setTimeout(() => {
         setIsAnimating(false);
         isAutoScrolling.current = false;
+        
+        // If we've scrolled past the middle set, silently reset to middle
+        if (targetExtIndex >= CLONE_COUNT * 2) {
+          const resetIndex = CLONE_COUNT + (targetExtIndex % services.length);
+          const resetCard = cards[resetIndex] as HTMLElement;
+          if (resetCard) {
+            const resetScrollPos = resetCard.offsetLeft - (containerRect.width / 2) + (resetCard.offsetWidth / 2);
+            container.scrollLeft = resetScrollPos;
+            extendedIndex.current = resetIndex;
+          }
+        }
       }, 800);
     } else {
       container.scrollLeft = Math.max(0, scrollLeftPos);
       isAutoScrolling.current = false;
     }
     
-    setCurrentIndex(realIndex);
+    extendedIndex.current = targetExtIndex;
+    setCurrentIndex(targetExtIndex % services.length);
   }, [prefersReducedMotion]);
 
-  // Auto-advance animation when in view - every 4 seconds, loops continuously
+  // Keep scrollToCard for manual navigation (arrows)
+  const scrollToCard = useCallback((realIndex: number, smooth = true) => {
+    const targetExtIndex = CLONE_COUNT + realIndex;
+    extendedIndex.current = targetExtIndex;
+    scrollToExtendedIndex(targetExtIndex, smooth);
+  }, [scrollToExtendedIndex]);
+
+  // Auto-advance animation when in view - every 3 seconds, loops continuously
   useEffect(() => {
     if (!isInView || isPaused || prefersReducedMotion) return;
 
     const intervalId = setInterval(() => {
-      setCurrentIndex(prev => {
-        const nextIndex = (prev + 1) % services.length;
-        scrollToCard(nextIndex);
-        return nextIndex;
-      });
+      const nextExtIndex = extendedIndex.current + 1;
+      scrollToExtendedIndex(nextExtIndex);
     }, 3000);
 
     return () => clearInterval(intervalId);
-  }, [isInView, isPaused, prefersReducedMotion, scrollToCard]);
+  }, [isInView, isPaused, prefersReducedMotion, scrollToExtendedIndex]);
 
   // Detect user scroll and handle infinite loop reset
   const handleUserScroll = useCallback(() => {
