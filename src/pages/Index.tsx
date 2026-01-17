@@ -18,8 +18,8 @@ const Index = () => {
   return (
     <Layout>
       <SEO 
-        title="Luxury Hair Salon in Los Angeles"
-        description="Drop Dead Salon offers expert hair color, extensions, cutting & styling in Los Angeles. Experience transformative hair artistry where science meets beauty."
+        title="Premier Hair Salon in Mesa & Gilbert, Arizona"
+        description="Drop Dead Salon is the Phoenix Valley's premier destination for expert hair color, extensions, cutting & styling. Serving Mesa, Gilbert, Chandler, Scottsdale, and the entire East Valley. Book your transformation today."
         type="local_business"
       />
       <HeroSection />
