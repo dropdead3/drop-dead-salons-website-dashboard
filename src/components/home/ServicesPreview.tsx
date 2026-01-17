@@ -305,10 +305,9 @@ export function ServicesPreview() {
                 <div className="flex gap-3">
                   <Link
                     to="/services"
-                    className="inline-flex items-center gap-2 px-6 py-3 text-xs uppercase tracking-[0.1em] font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 group/btn whitespace-nowrap"
+                    className="inline-flex items-center px-6 py-3 text-xs uppercase tracking-[0.1em] font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 whitespace-nowrap"
                   >
                     Learn More
-                    <ArrowUpRight size={14} className="opacity-0 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-all duration-300" />
                   </Link>
                   <Link
                     to="/booking"
