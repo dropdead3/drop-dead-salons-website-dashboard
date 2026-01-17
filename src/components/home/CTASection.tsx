@@ -43,10 +43,16 @@ export function CTASection() {
           >
             <Link
               to="/booking"
-              className="inline-flex items-center gap-2 px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans border border-background text-background hover:bg-background hover:text-foreground transition-all duration-300"
+              className="group inline-flex items-center gap-2 px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans border border-background text-background hover:bg-background hover:text-foreground transition-all duration-300 active:scale-[0.98]"
             >
-              Book Now
-              <ArrowUpRight size={16} />
+              <span>Book Now</span>
+              <motion.span
+                className="inline-block"
+                whileHover={{ x: 4, y: -4 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <ArrowUpRight size={16} />
+              </motion.span>
             </Link>
           </motion.div>
         </div>

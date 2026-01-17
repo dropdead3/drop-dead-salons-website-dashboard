@@ -87,31 +87,35 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4 }}
-      className="group relative aspect-[3/4] bg-muted overflow-hidden"
+      whileHover={{ y: -8 }}
+      className="group relative aspect-[3/4] bg-muted overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-500"
     >
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
         style={{ backgroundImage: `url(${stylist.imageUrl})` }}
       />
       
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
       
       {/* Specialty Tags */}
       <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
         {stylist.specialties.map((specialty, index) => (
-          <span
+          <motion.span
             key={index}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
             className="px-3 py-1.5 bg-background/90 backdrop-blur-sm text-foreground text-xs font-medium tracking-wide"
           >
             {specialty}
-          </span>
+          </motion.span>
         ))}
       </div>
       
       {/* Stylist Info */}
-      <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+      <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform transition-transform duration-500 group-hover:translate-y-[-4px]">
         <p className="text-xs tracking-[0.2em] text-white/70 mb-1">{stylist.level}</p>
         <h3 className="text-xl font-serif mb-1">{stylist.name}</h3>
         <a 
@@ -125,7 +129,7 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
         
         <Link
           to="/booking"
-          className="inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-white/90 transition-colors duration-300 group/btn"
+          className="inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
         >
           <span>Book a service</span>
           <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
