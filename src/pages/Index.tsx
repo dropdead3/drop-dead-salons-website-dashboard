@@ -7,7 +7,6 @@ import { PopularServices } from "@/components/home/PopularServices";
 import { NewClientSection } from "@/components/home/NewClientSection";
 import { LocationsSection } from "@/components/home/LocationsSection";
 import { StylistsSection } from "@/components/home/StylistsSection";
-import { JoinTeamSection } from "@/components/home/JoinTeamSection";
 import { GallerySection } from "@/components/home/GallerySection";
 import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { FAQSection } from "@/components/home/FAQSection";
@@ -43,7 +42,6 @@ const Index = () => {
       </div>
       <CTASection />
       <StylistsSection />
-      <JoinTeamSection />
       <DrinkMenuSection />
     </Layout>
   );
