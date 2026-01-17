@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Phone, ChevronLeft, ChevronRight } from "lucide-react";
+import { Phone, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 const locations = [
   {
@@ -15,6 +15,13 @@ const locations = [
 
 export function StickyPhoneSidebar() {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+
+  const handleLocationClick = (locationName: string) => {
+    setSelectedLocation(selectedLocation === locationName ? null : locationName);
+  };
+
+  const selectedLocationData = locations.find(l => l.name === selectedLocation);
 
   return (
     <div className="fixed right-0 top-1/2 -translate-y-1/2 z-40 hidden lg:block">
@@ -37,24 +44,54 @@ export function StickyPhoneSidebar() {
               <ChevronRight size={16} />
             </button>
 
-            {/* Phone numbers - vertical layout */}
-            <div className="flex flex-col gap-6">
+            {/* Location names - vertical layout */}
+            <div className="flex flex-col gap-4">
               {locations.map((location) => (
-                <a
+                <button
                   key={location.name}
-                  href={`tel:${location.phone.replace(/[^0-9]/g, "")}`}
-                  className="flex flex-col items-center gap-2 group"
+                  onClick={() => handleLocationClick(location.name)}
+                  className={`flex flex-col items-center gap-2 group transition-colors ${
+                    selectedLocation === location.name ? "text-background" : "text-background/60 hover:text-background"
+                  }`}
                 >
-                  <Phone size={16} className="text-background/60 group-hover:text-background transition-colors" />
+                  <Phone size={16} />
                   <span
-                    className="text-xs uppercase tracking-wider font-sans text-background/80 group-hover:text-background transition-colors"
+                    className="text-xs uppercase tracking-wider font-sans"
                     style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
                   >
                     {location.name}
                   </span>
-                </a>
+                </button>
               ))}
             </div>
+
+            {/* Phone number reveal */}
+            <AnimatePresence>
+              {selectedLocationData && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="border-t border-background/20 pt-4 flex flex-col items-center gap-2"
+                >
+                  <a
+                    href={`tel:${selectedLocationData.phone.replace(/[^0-9]/g, "")}`}
+                    className="text-xs font-sans text-background hover:text-background/80 transition-colors whitespace-nowrap"
+                    style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+                  >
+                    {selectedLocationData.phone}
+                  </a>
+                  <button
+                    onClick={() => setSelectedLocation(null)}
+                    className="text-background/40 hover:text-background transition-colors mt-2"
+                    aria-label="Close phone number"
+                  >
+                    <X size={12} />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         ) : (
           <motion.button
