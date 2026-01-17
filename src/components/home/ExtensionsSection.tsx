@@ -134,21 +134,30 @@ export function ExtensionsSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.7 }}
-              className="flex flex-wrap gap-4 pt-4"
+              className="space-y-4 pt-4"
             >
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  to="/booking"
+                  className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-6 py-3.5 text-sm font-medium tracking-wide hover:bg-oat/90 transition-all duration-300"
+                >
+                  <span>BOOK EXTENSION CONSULT</span>
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  to="/services"
+                  className="group inline-flex items-center gap-3 border border-background/30 text-background px-6 py-3.5 text-sm font-medium tracking-wide hover:bg-background/10 transition-all duration-300"
+                >
+                  <span>LEARN MORE</span>
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              </div>
               <Link
-                to="/booking"
-                className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-6 py-3.5 text-sm font-medium tracking-wide hover:bg-oat/90 transition-all duration-300"
+                to="/education"
+                className="group inline-flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors duration-300"
               >
-                <span>BOOK EXTENSION CONSULT</span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-              <Link
-                to="/services"
-                className="group inline-flex items-center gap-3 border border-background/30 text-background px-6 py-3.5 text-sm font-medium tracking-wide hover:bg-background/10 transition-all duration-300"
-              >
-                <span>LEARN MORE</span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                <span>Are you a stylist wanting to learn our method?</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
             </motion.div>
           </div>
