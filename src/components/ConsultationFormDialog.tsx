@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, ArrowUpRight, AlertCircle, X, Clock } from "lucide-react";
+import { ChevronDown, ArrowUpRight, AlertCircle, X } from "lucide-react";
 
 interface ConsultationFormDialogProps {
   open: boolean;
@@ -122,10 +122,6 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
           <p className="text-sm text-muted-foreground font-sans font-light mt-3 leading-relaxed">
             Share a few details about yourself and your hair goals, and we'll be in touch to schedule your complimentary consultation.
           </p>
-          <div className="flex items-center gap-2 mt-3 text-xs text-foreground/80 font-sans">
-            <Clock size={14} className="text-foreground/60" />
-            <span>We can often get you in within <strong className="font-medium">1 business day</strong></span>
-          </div>
         </DialogHeader>
         
         <div className="px-6 space-y-4">
@@ -139,6 +135,9 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
                 </h3>
                 <p className="text-xs text-muted-foreground font-sans font-light leading-relaxed">
                   First-time clients are typically required to complete a consultation before any services are booked. This helps ensure we're all on the same page and can achieve your desired result.
+                </p>
+                <p className="text-xs text-foreground font-sans font-semibold leading-relaxed mt-2 ml-2">
+                  We can often get you in within 1 business day.
                 </p>
               </div>
             </div>
