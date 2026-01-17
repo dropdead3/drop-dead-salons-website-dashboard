@@ -87,7 +87,7 @@ export function TestimonialSection() {
     setCurrentIndex(index);
   }, [prefersReducedMotion]);
 
-  // Auto-advance every 4 seconds
+  // Auto-advance every 3 seconds
   useEffect(() => {
     if (!isInView || isPaused || prefersReducedMotion) return;
 
@@ -97,7 +97,7 @@ export function TestimonialSection() {
         scrollToCard(nextIndex);
         return nextIndex;
       });
-    }, 4000);
+    }, 3000);
 
     return () => clearInterval(intervalId);
   }, [isInView, isPaused, prefersReducedMotion, scrollToCard]);
@@ -236,20 +236,23 @@ export function TestimonialSection() {
       <div
         ref={scrollContainerRef}
         onScroll={handleUserScroll}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="flex gap-4 overflow-x-auto scrollbar-minimal cursor-grab active:cursor-grabbing scroll-smooth pb-4"
+        className="flex gap-4 overflow-x-auto cursor-grab active:cursor-grabbing scroll-smooth pb-4"
         style={{
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
           scrollBehavior: 'smooth',
           paddingLeft: 'max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem))',
-          paddingRight: '1.5rem'
+          paddingRight: '1.5rem',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
         }}
       >
         {reviews.map((review, index) => (
