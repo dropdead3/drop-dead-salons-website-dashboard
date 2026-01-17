@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion, useInView, useAnimation, useReducedMotion } from "framer-motion";
+import { motion, useInView, useReducedMotion, type Variants } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Section } from "@/components/ui/section";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
@@ -36,7 +36,6 @@ export function ServicesPreview() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const prefersReducedMotion = useReducedMotion();
-  const controls = useAnimation();
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -135,7 +134,7 @@ export function ServicesPreview() {
   };
 
   // Card animation variants
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { 
       opacity: 0, 
       x: 100,
@@ -146,7 +145,7 @@ export function ServicesPreview() {
       transition: {
         duration: 0.8,
         delay: i * 0.15,
-        ease: editorialEasing,
+        ease: [0.25, 0.1, 0.25, 1] as const,
       }
     })
   };
