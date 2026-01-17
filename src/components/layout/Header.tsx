@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
-  { href: "/stylists", label: "Stylists" },
-  { href: "/booking", label: "Contact" },
+  { href: "/about", label: "About" },
+  { href: "/extensions", label: "Hair Extensions" },
+  { href: "/careers", label: "Join The Team" },
+  { href: "/gallery", label: "Gallery" },
 ];
 
 export function Header() {
@@ -29,96 +30,128 @@ export function Header() {
   }, [location]);
 
   return (
-    <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-        isScrolled
-          ? "bg-background/95 backdrop-blur-sm border-b border-border"
-          : "bg-transparent"
-      )}
-    >
-      <div className="container mx-auto px-6 lg:px-12">
-        <div className="flex items-center justify-between h-20 lg:h-24">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="font-serif text-xl lg:text-2xl font-normal tracking-tight text-foreground hover:opacity-70 transition-opacity"
+    <>
+      {/* Top Announcement Bar */}
+      <div className="bg-secondary py-2.5 px-6">
+        <div className="container mx-auto flex items-center justify-between">
+          <p className="text-xs md:text-sm text-foreground/80">
+            Are you a salon <em>professional</em> looking for our extensions?
+          </p>
+          <a 
+            href="#" 
+            className="text-xs md:text-sm font-medium text-foreground uppercase tracking-wider underline underline-offset-4 hover:opacity-70 transition-opacity"
           >
-            Drop Dead
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8 lg:gap-12">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={cn(
-                  "text-sm uppercase tracking-[0.15em] font-sans font-normal link-underline transition-opacity",
-                  location.pathname === link.href
-                    ? "opacity-100"
-                    : "opacity-60 hover:opacity-100"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Link
-              to="/booking"
-              className="ml-4 inline-flex items-center gap-2 px-5 py-2.5 text-xs uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 transition-colors"
-            >
-              Book Now
-              <ArrowUpRight size={14} />
-            </Link>
-          </nav>
-
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-foreground"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+            Shop Our Extensions Here
+          </a>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden bg-background border-b border-border overflow-hidden"
-          >
-            <nav className="container mx-auto px-6 py-8 flex flex-col gap-6">
+      {/* Main Header */}
+      <header
+        className={cn(
+          "sticky top-0 left-0 right-0 z-50 transition-all duration-500 border-b border-border",
+          isScrolled
+            ? "bg-background/95 backdrop-blur-sm"
+            : "bg-background"
+        )}
+      >
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="flex items-center justify-between h-16 lg:h-20">
+            {/* Logo */}
+            <Link
+              to="/"
+              className="font-serif text-xl lg:text-2xl font-bold tracking-tight text-foreground hover:opacity-70 transition-opacity uppercase"
+            >
+              Drop Dead
+            </Link>
+
+            {/* Desktop Navigation - Center */}
+            <nav className="hidden lg:flex items-center gap-6 xl:gap-10">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "text-lg font-serif tracking-wide transition-opacity",
+                    "text-sm tracking-wide font-sans font-normal link-underline transition-opacity",
                     location.pathname === link.href
                       ? "opacity-100"
-                      : "opacity-60"
+                      : "opacity-70 hover:opacity-100"
                   )}
                 >
                   {link.label}
                 </Link>
               ))}
+            </nav>
+
+            {/* Right Side - Contact & Book */}
+            <div className="hidden md:flex items-center gap-6">
+              <Link
+                to="/contact"
+                className="text-sm tracking-wide font-sans font-normal opacity-70 hover:opacity-100 transition-opacity"
+              >
+                Contact Us
+              </Link>
               <Link
                 to="/booking"
-                className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
               >
                 Book Now
-                <ArrowUpRight size={14} />
               </Link>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 text-foreground"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="lg:hidden bg-background border-t border-border overflow-hidden"
+            >
+              <nav className="container mx-auto px-6 py-8 flex flex-col gap-6">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className={cn(
+                      "text-lg font-serif tracking-wide transition-opacity",
+                      location.pathname === link.href
+                        ? "opacity-100"
+                        : "opacity-60"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <Link
+                  to="/contact"
+                  className="text-lg font-serif tracking-wide opacity-60"
+                >
+                  Contact Us
+                </Link>
+                <Link
+                  to="/booking"
+                  className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-medium bg-foreground text-background"
+                >
+                  Book Now
+                </Link>
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
+    </>
   );
 }
