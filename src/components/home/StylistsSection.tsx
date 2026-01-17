@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { SEO } from "@/components/SEO";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -79,15 +78,14 @@ const locations = [
   { id: "north-mesa" as Location, name: "North Mesa" }
 ];
 
-const StylistCard = ({ stylist }: { stylist: Stylist }) => {
+const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) => {
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4 }}
-      className="group relative aspect-[3/4] bg-muted overflow-hidden"
+      transition={{ duration: 0.4, delay: index * 0.1 }}
+      className="group relative aspect-[3/4] bg-muted overflow-hidden flex-shrink-0 w-[280px] md:w-[300px]"
     >
       {/* Background Image */}
       <div 
@@ -100,9 +98,9 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
       
       {/* Specialty Tags */}
       <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
-        {stylist.specialties.map((specialty, index) => (
+        {stylist.specialties.map((specialty, idx) => (
           <span
-            key={index}
+            key={idx}
             className="px-3 py-1.5 bg-background/90 backdrop-blur-sm text-foreground text-xs font-medium tracking-wide"
           >
             {specialty}
@@ -128,82 +126,108 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
   );
 };
 
-const Stylists = () => {
+export function StylistsSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [selectedLocation, setSelectedLocation] = useState<Location>("val-vista-lakes");
 
   const filteredStylists = stylists.filter(
     (s) => s.location === selectedLocation
   );
 
-  const stylistCount = filteredStylists.length;
-
   return (
-    <Layout>
-      <SEO
-        title="Our Stylists | Drop Dead Salon"
-        description="Meet our talented team of hair stylists. From color specialists to extension experts, find the perfect stylist for your hair goals."
-      />
-
-      <section className="pt-32 pb-20 md:pt-40 md:pb-28">
-        <div className="container mx-auto px-6">
+    <section ref={sectionRef} className="py-20 lg:py-32 bg-secondary overflow-hidden">
+      <div className="container mx-auto px-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif mb-4">
+            Meet our <em className="not-italic italic">stylists</em>
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+            Our talented team of artists are ready to help you achieve your hair goals. 
+            Each stylist brings their own unique expertise and creative vision.
+          </p>
+          
           {/* Location Toggle */}
-          <div className="text-center mb-12">
-            <p className="text-xs tracking-[0.2em] text-muted-foreground mb-6">
-              VIEW STYLISTS BY LOCATION
-            </p>
-            
-            <div className="inline-flex border border-border bg-background">
-              {locations.map((location) => (
-                <button
-                  key={location.id}
-                  onClick={() => setSelectedLocation(location.id)}
-                  className={`px-8 py-4 text-base font-medium transition-all duration-300 ${
-                    selectedLocation === location.id
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-muted"
-                  }`}
-                >
-                  {location.name}
-                </button>
-              ))}
-            </div>
+          <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
+            VIEW STYLISTS BY LOCATION
+          </p>
+          
+          <div className="inline-flex border border-border bg-background">
+            {locations.map((location) => (
+              <button
+                key={location.id}
+                onClick={() => setSelectedLocation(location.id)}
+                className={`px-6 md:px-8 py-3 md:py-4 text-sm md:text-base font-medium transition-all duration-300 ${
+                  selectedLocation === location.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:bg-muted"
+                }`}
+              >
+                {location.name}
+              </button>
+            ))}
           </div>
+        </motion.div>
 
-          {/* Title with count */}
-          <div className="mb-10 border-b border-border">
-            <h1 className="pb-4 text-2xl md:text-3xl font-serif">
-              Drop Dead Salon Stylists
-              <span className="ml-3 text-lg text-muted-foreground font-sans">({stylistCount})</span>
-            </h1>
-          </div>
+        {/* Title with count */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-8"
+        >
+          <p className="text-base font-medium">
+            Drop Dead Salon Stylists
+            <span className="ml-2 text-muted-foreground">({filteredStylists.length})</span>
+          </p>
+        </motion.div>
+      </div>
 
-          {/* Stylist Grid */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={selectedLocation}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-            >
-              {filteredStylists.length > 0 ? (
-                filteredStylists.map((stylist) => (
-                  <StylistCard key={stylist.id} stylist={stylist} />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-20">
-                  <p className="text-muted-foreground text-lg">
-                    No stylists found for this location.
-                  </p>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </section>
-    </Layout>
+      {/* Scrolling Cards */}
+      <div className="relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedLocation}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex gap-4 overflow-x-auto pb-4"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              paddingLeft: 'max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem))',
+              paddingRight: '1.5rem'
+            }}
+          >
+            {filteredStylists.map((stylist, index) => (
+              <StylistCard key={stylist.id} stylist={stylist} index={index} />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* View All Link */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        className="container mx-auto px-6 mt-10 text-center"
+      >
+        <Link
+          to="/stylists"
+          className="inline-flex items-center gap-2 text-sm font-medium link-underline group"
+        >
+          View all stylists
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </Link>
+      </motion.div>
+    </section>
   );
-};
-
-export default Stylists;
+}
