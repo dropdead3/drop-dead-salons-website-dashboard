@@ -71,7 +71,7 @@ export function StickyBookButton() {
                 width: "100%",
               }}
             />
-            <span className="relative z-10">Book Now</span>
+            <span className="relative z-10">Book Consult</span>
             <ArrowUpRight size={14} className="relative z-10" />
           </Link>
         </motion.div>

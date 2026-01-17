@@ -314,7 +314,7 @@ export function ServicesPreview() {
                     to="/booking"
                     className="inline-flex items-center gap-2 px-5 py-3 text-xs uppercase tracking-[0.1em] font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300"
                   >
-                    Book Now
+                    Book Consult
                   </Link>
                 </div>
               </div>
@@ -380,7 +380,7 @@ export function ServicesPreview() {
                   to="/booking"
                   className="inline-flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-[0.1em] font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300"
                 >
-                  Book Now
+                  Book Consult
                 </Link>
               </div>
             </motion.div>

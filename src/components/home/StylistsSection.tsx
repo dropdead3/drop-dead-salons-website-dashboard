@@ -199,7 +199,7 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
           to="/booking"
           className="inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
         >
-          <span>Book a service</span>
+          <span>Book Consult</span>
           <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
         </Link>
       </div>
