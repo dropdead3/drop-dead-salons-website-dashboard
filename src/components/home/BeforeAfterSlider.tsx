@@ -18,6 +18,7 @@ export function BeforeAfterSlider({
 }: BeforeAfterSliderProps) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMove = useCallback((clientX: number) => {
@@ -29,7 +30,10 @@ export function BeforeAfterSlider({
     setSliderPosition(percentage);
   }, []);
 
-  const handleMouseDown = () => setIsDragging(true);
+  const handleMouseDown = () => {
+    setIsDragging(true);
+    setHasInteracted(true);
+  };
   const handleMouseUp = () => setIsDragging(false);
   
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -81,20 +85,38 @@ export function BeforeAfterSlider({
         transition={{ duration: 0.3 }}
       >
         {/* Slider Handle */}
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-foreground flex items-center justify-center cursor-ew-resize shadow-lg"
+        <motion.div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-foreground flex items-center justify-center cursor-ew-resize shadow-lg"
           onMouseDown={handleMouseDown}
           onTouchStart={handleMouseDown}
+          animate={!hasInteracted ? {
+            x: [0, -8, 8, -8, 8, 0],
+            scale: [1, 1.05, 1.05, 1.05, 1.05, 1],
+          } : {}}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            repeatDelay: 2,
+            ease: "easeInOut",
+          }}
         >
-          <div className="flex items-center gap-1">
-            <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-background">
+          <div className="flex items-center gap-1.5">
+            <motion.svg 
+              width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-background"
+              animate={!hasInteracted ? { x: [-2, 0] } : {}}
+              transition={{ duration: 0.75, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+            >
               <path d="M5 1L1 5L5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-background">
+            </motion.svg>
+            <motion.svg 
+              width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-background"
+              animate={!hasInteracted ? { x: [2, 0] } : {}}
+              transition={{ duration: 0.75, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+            >
               <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            </motion.svg>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* Labels */}
