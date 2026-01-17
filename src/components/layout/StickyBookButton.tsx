@@ -5,6 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 
 export function StickyBookButton() {
   const [isVisible, setIsVisible] = useState(false);
+  const [shine, setShine] = useState(false);
   const location = useLocation();
   const isBookingPage = location.pathname === "/booking";
 
@@ -17,6 +18,27 @@ export function StickyBookButton() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Shine animation every 6 seconds
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    const interval = setInterval(() => {
+      setShine(true);
+      setTimeout(() => setShine(false), 800);
+    }, 6000);
+
+    // Trigger initial shine after a short delay
+    const initialTimeout = setTimeout(() => {
+      setShine(true);
+      setTimeout(() => setShine(false), 800);
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(initialTimeout);
+    };
+  }, [isVisible]);
 
   if (isBookingPage) return null;
 
@@ -32,10 +54,20 @@ export function StickyBookButton() {
         >
           <Link
             to="/booking"
-            className="inline-flex items-center gap-2 px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-2xl"
+            className="relative inline-flex items-center gap-2 px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-2xl overflow-hidden"
           >
-            Book Now
-            <ArrowUpRight size={14} />
+            {/* Shine effect */}
+            <span
+              className={`absolute inset-0 transition-transform duration-700 ease-out ${
+                shine ? "translate-x-full" : "-translate-x-full"
+              }`}
+              style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)",
+                width: "100%",
+              }}
+            />
+            <span className="relative z-10">Book Now</span>
+            <ArrowUpRight size={14} className="relative z-10" />
           </Link>
         </motion.div>
       )}
