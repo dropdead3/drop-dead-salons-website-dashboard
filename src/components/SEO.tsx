@@ -252,6 +252,63 @@ export function SEO({
     ],
   };
 
+  // Aggregate Rating Schema for rich snippets
+  const aggregateRatingSchema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": BUSINESS_INFO.url,
+    name: BUSINESS_INFO.name,
+    description: BUSINESS_INFO.description,
+    image: image,
+    url: BUSINESS_INFO.url,
+    priceRange: BUSINESS_INFO.priceRange,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "5.0",
+      bestRating: "5",
+      worstRating: "1",
+      ratingCount: "247",
+      reviewCount: "189",
+    },
+    review: [
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Lexi V." },
+        datePublished: "2024-11-15",
+        reviewBody: "I love Drop Dead! The owner picks literally THE BEST hair stylist and lash and brow artists. You really can't go wrong with going to anyone inside the studio, everyone is so welcoming and friendly.",
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+      },
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Melissa C." },
+        datePublished: "2024-10-22",
+        reviewBody: "The salon itself is beautiful and so unique. The atmosphere is comforting and fun!! Never have I loved my hair this much!! Definitely recommend to anyone wanting a new salon!!",
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+      },
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Lexi K." },
+        datePublished: "2024-09-18",
+        reviewBody: "I have loved every product from Drop Dead so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing.",
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+      },
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Morgan S." },
+        datePublished: "2024-08-30",
+        reviewBody: "I've been going to Drop Dead for over a year now and every single visit has been incredible. The attention to detail and care they put into every service is unmatched.",
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+      },
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Jamie L." },
+        datePublished: "2024-07-12",
+        reviewBody: "Went from damaged, over-processed hair to the healthiest it's ever been. The team really knows their stuff and takes the time to educate you on proper hair care.",
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+      },
+    ],
+  };
+
   return (
     <Helmet>
       {/* Primary Meta Tags */}
@@ -305,6 +362,11 @@ export function SEO({
       {/* Structured Data - FAQ */}
       <script type="application/ld+json">
         {JSON.stringify(faqSchema)}
+      </script>
+
+      {/* Structured Data - Aggregate Rating & Reviews */}
+      <script type="application/ld+json">
+        {JSON.stringify(aggregateRatingSchema)}
       </script>
     </Helmet>
   );
