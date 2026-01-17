@@ -5,6 +5,7 @@ import { BrandStatement } from "@/components/home/BrandStatement";
 import { ServicesPreview } from "@/components/home/ServicesPreview";
 import { PopularServices } from "@/components/home/PopularServices";
 import { NewClientSection } from "@/components/home/NewClientSection";
+import { StylistsSection } from "@/components/home/StylistsSection";
 import { GallerySection } from "@/components/home/GallerySection";
 import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { FAQSection } from "@/components/home/FAQSection";
@@ -23,6 +24,7 @@ const Index = () => {
       <ServicesPreview />
       <PopularServices />
       <NewClientSection />
+      <StylistsSection />
       <GallerySection />
       {/* Combined Reviews & FAQ Section with Gradient */}
       <div 
