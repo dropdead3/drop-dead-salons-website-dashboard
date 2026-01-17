@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 
 interface BeforeAfterSliderProps {
   beforeImage: string;
@@ -22,10 +22,13 @@ export function BeforeAfterSlider({
   const [isAnimating, setIsAnimating] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
+  
+  // Only trigger animation when in view
+  const isInView = useInView(containerRef, { once: true, margin: "-100px" });
 
   // Auto-animate slider once to demonstrate functionality, then settle to middle
   useEffect(() => {
-    if (hasInteracted) return;
+    if (hasInteracted || !isInView) return;
 
     const keyframes = [
       { position: 50, duration: 0 },      // Start at middle
@@ -86,7 +89,7 @@ export function BeforeAfterSlider({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [hasInteracted]);
+  }, [hasInteracted, isInView]);
 
   const handleMove = useCallback((clientX: number) => {
     if (!containerRef.current) return;
