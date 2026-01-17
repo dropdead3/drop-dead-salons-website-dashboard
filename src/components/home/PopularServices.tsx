@@ -46,7 +46,7 @@ export function PopularServices() {
             >
               <Link
                 to="/services"
-                className="inline-block px-5 py-2.5 text-sm font-sans text-foreground bg-card border border-border rounded-full transition-all duration-300 ease-out hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105 hover:shadow-lg"
+                className="inline-block px-5 py-2.5 text-sm font-sans text-foreground bg-card border border-border transition-all duration-300 ease-out hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105 hover:shadow-lg"
               >
                 {service}
               </Link>
