@@ -215,24 +215,50 @@ export function TestimonialSection() {
         </div>
       </div>
 
-      {/* Navigation Arrows - Desktop */}
-      <div className="hidden md:block container mx-auto px-6 mb-6">
-        <div className="flex gap-2">
-          <button
-            onClick={goToPrevious}
-            className="p-3 border border-border bg-background hover:bg-muted transition-colors"
-            aria-label="Previous review"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={goToNext}
-            className="p-3 border border-border bg-background hover:bg-muted transition-colors"
-            aria-label="Next review"
-          >
-            <ArrowRight className="w-4 h-4" />
-          </button>
+      {/* Navigation Arrows & Progress - Desktop */}
+      <div className="hidden md:flex container mx-auto px-6 mb-6 items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2">
+            <button
+              onClick={goToPrevious}
+              className="p-3 border border-border bg-background hover:bg-muted transition-colors"
+              aria-label="Previous review"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={goToNext}
+              className="p-3 border border-border bg-background hover:bg-muted transition-colors"
+              aria-label="Next review"
+            >
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Progress Dots - Desktop */}
+          <div className="flex items-center gap-2">
+            {reviews.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setIsPaused(true);
+                  scrollToCard(index);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  index === currentIndex
+                    ? 'w-6 bg-foreground'
+                    : 'w-1.5 bg-foreground/30 hover:bg-foreground/50'
+                }`}
+                aria-label={`Go to review ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
+
+        {/* Review Counter */}
+        <span className="text-sm text-muted-foreground">
+          {currentIndex + 1} / {reviews.length}
+        </span>
       </div>
 
       {/* Scrolling Cards */}
