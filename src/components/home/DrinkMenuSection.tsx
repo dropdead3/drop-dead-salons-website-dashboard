@@ -1,4 +1,4 @@
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
 
 const drinks = [
@@ -100,20 +100,29 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
         
         {/* Hover tooltip - positioned to the right of the icon */}
         <div className="absolute left-full top-1/2 -translate-y-1/2 ml-8 md:ml-12 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out pointer-events-none group-hover:pointer-events-auto z-10">
-          <div className="bg-oat text-oat-foreground px-5 py-4 text-center shadow-lg border border-border/50 w-[180px] min-h-[120px] flex flex-col justify-center transition-all duration-300 ease-out">
+          <motion.div 
+            layout
+            className="bg-oat text-oat-foreground px-5 py-4 text-center shadow-lg border border-border/50 w-[180px] min-h-[120px] flex flex-col justify-center"
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
             <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-oat-foreground/60 font-sans">Ingredients</p>
-            <p className="text-sm font-serif whitespace-normal leading-relaxed">
+            <motion.p 
+              layout
+              className="text-sm font-serif whitespace-normal leading-relaxed"
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
               {displayedIngredients}
-            </p>
+            </motion.p>
             {needsTruncation && (
-              <button 
+              <motion.button 
+                layout
                 onClick={handleToggle}
                 className="mt-2 text-[10px] uppercase tracking-[0.15em] text-oat-foreground/70 hover:text-oat-foreground transition-colors font-sans underline underline-offset-2"
               >
                 {isExpanded ? "See less" : "See more"}
-              </button>
+              </motion.button>
             )}
-          </div>
+          </motion.div>
           {/* Arrow pointing left */}
           <div className="absolute top-1/2 -translate-y-1/2 -left-2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-transparent border-r-oat" />
         </div>
