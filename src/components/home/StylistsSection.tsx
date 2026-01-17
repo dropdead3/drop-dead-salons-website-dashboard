@@ -273,8 +273,8 @@ export function StylistsSection() {
             ))}
           </div>
 
-          {/* Filters Row */}
-          <div className="mt-8 flex flex-col lg:flex-row gap-8 lg:gap-12 justify-center">
+          {/* Filters */}
+          <div className="mt-8 flex flex-col gap-8 items-center">
             {/* Specialty Filter */}
             <div>
               <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
