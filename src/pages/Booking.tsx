@@ -23,7 +23,14 @@ export default function Booking() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Reset stylist selection when location changes
+    if (name === "location") {
+      setFormData({ ...formData, location: value, stylist: "" });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,13 +68,14 @@ export default function Booking() {
   ];
 
   const stylistOptions = [
-    { name: "Soonest Available", level: "" },
-    { name: "No Preference", level: "" },
-    { name: "Sarah Mitchell", level: "Master Stylist" },
-    { name: "Jordan Lee", level: "Senior Colorist" },
-    { name: "Alex Rivera", level: "Extension Specialist" },
-    { name: "Morgan Chen", level: "Stylist" },
-    { name: "Taylor Brooks", level: "Junior Stylist" },
+    { name: "Soonest Available", level: "", location: "all" },
+    { name: "No Preference", level: "", location: "all" },
+    { name: "Sarah Mitchell", level: "Master Stylist", location: "West Hollywood" },
+    { name: "Jordan Lee", level: "Senior Colorist", location: "West Hollywood" },
+    { name: "Alex Rivera", level: "Extension Specialist", location: "Studio City" },
+    { name: "Morgan Chen", level: "Stylist", location: "Studio City" },
+    { name: "Taylor Brooks", level: "Junior Stylist", location: "West Hollywood" },
+    { name: "Casey Kim", level: "Colorist", location: "Studio City" },
   ];
 
   const referralOptions = [
@@ -255,14 +263,21 @@ export default function Booking() {
                   name="stylist"
                   value={formData.stylist}
                   onChange={handleChange}
-                  className="w-full px-4 py-4 pr-12 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none cursor-pointer"
+                  disabled={!formData.location}
+                  className="w-full px-4 py-4 pr-12 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select a stylist</option>
-                  {stylistOptions.map((stylist) => (
-                    <option key={stylist.name} value={stylist.name}>
-                      {stylist.name}{stylist.level ? ` — ${stylist.level}` : ""}
-                    </option>
-                  ))}
+                  <option value="">{formData.location ? "Select a stylist" : "Please select a location first"}</option>
+                  {stylistOptions
+                    .filter(stylist => 
+                      stylist.location === "all" || 
+                      stylist.location === formData.location ||
+                      formData.location === "No Preference"
+                    )
+                    .map((stylist) => (
+                      <option key={stylist.name} value={stylist.name}>
+                        {stylist.name}{stylist.level ? ` — ${stylist.level}` : ""}
+                      </option>
+                    ))}
                 </select>
                 <ChevronDown size={18} className="absolute right-4 top-[calc(50%+12px)] -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
