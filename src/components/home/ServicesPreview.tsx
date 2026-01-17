@@ -64,7 +64,7 @@ export function ServicesPreview() {
           >
             {/* Icon placeholder */}
             <div className="w-12 h-12 rounded-full bg-foreground flex items-center justify-center mb-6">
-              <span className="text-background text-lg transition-transform duration-300 group-hover:rotate-90">✦</span>
+              <span className="text-background text-lg transition-transform duration-300 ease-in-out group-hover:rotate-90">✦</span>
             </div>
 
             <h3 className="font-serif text-xl lg:text-2xl font-normal text-foreground mb-2">
