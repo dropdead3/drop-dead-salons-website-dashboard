@@ -223,6 +223,26 @@
   animation-play-state: paused;
 }
 
+/* Drink menu scroll animation */
+@keyframes drink-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-drink-scroll {
+  display: flex;
+  animation: drink-scroll 30s linear infinite;
+  will-change: transform;
+}
+
+.animate-drink-scroll:hover {
+  animation-play-state: paused;
+}
+
 /* Custom scrollbar */
 @layer utilities {
   .scrollbar-minimal::-webkit-scrollbar {

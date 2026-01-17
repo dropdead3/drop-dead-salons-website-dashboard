@@ -11,6 +11,7 @@ import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { FAQSection } from "@/components/home/FAQSection";
 import { CTASection } from "@/components/home/CTASection";
 import { BrandsSection } from "@/components/home/BrandsSection";
+import { DrinkMenuSection } from "@/components/home/DrinkMenuSection";
 
 const Index = () => {
   return (
@@ -24,6 +25,7 @@ const Index = () => {
       <BrandStatement />
       <ServicesPreview />
       <BrandsSection />
+      <DrinkMenuSection />
       <PopularServices />
       <NewClientSection />
       <GallerySection />
