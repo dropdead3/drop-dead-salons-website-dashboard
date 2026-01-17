@@ -67,7 +67,7 @@ export function Header() {
             {/* Logo */}
             <Link
               to="/"
-              className="font-serif text-xl lg:text-2xl font-bold tracking-tight text-foreground hover:opacity-70 transition-opacity uppercase"
+              className="font-serif text-xl lg:text-2xl font-bold tracking-tight text-foreground hover:opacity-70 transition-opacity uppercase leading-none"
             >
               Drop Dead
             </Link>
@@ -79,7 +79,7 @@ export function Header() {
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "text-sm tracking-wide font-sans font-normal link-underline transition-opacity",
+                    "text-sm tracking-wide font-sans font-normal link-underline transition-opacity leading-none",
                     location.pathname === link.href
                       ? "opacity-100"
                       : "opacity-70 hover:opacity-100"
