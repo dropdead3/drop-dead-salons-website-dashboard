@@ -54,29 +54,34 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5 }}
-              className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4"
+              className="mt-12 flex flex-col items-center gap-4"
             >
-              <Link
-                to="/booking"
-                className="group w-full sm:w-auto px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300 text-center relative overflow-hidden"
-              >
-                <span className="relative z-10">Book Consult</span>
-              </Link>
-              <Link
-                to="/services"
-                className="group w-full sm:w-auto px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98]"
-              >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  View Services
-                  <motion.span
-                    className="inline-block"
-                    animate={{ x: [0, 4, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    →
-                  </motion.span>
-                </span>
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  to="/booking"
+                  className="group w-full sm:w-auto px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300 text-center relative overflow-hidden"
+                >
+                  <span className="relative z-10">Book Consult</span>
+                </Link>
+                <Link
+                  to="/services"
+                  className="group w-full sm:w-auto px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98]"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    View Services
+                    <motion.span
+                      className="inline-block"
+                      animate={{ x: [0, 4, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      →
+                    </motion.span>
+                  </span>
+                </Link>
+              </div>
+              <p className="text-xs text-muted-foreground font-sans">
+                All new clients begin with a complimentary consultation
+              </p>
             </motion.div>
           </div>
         </div>

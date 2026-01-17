@@ -39,7 +39,7 @@ export function CTASection() {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="mt-10 flex flex-col items-center gap-4"
           >
             <Link
               to="/booking"
@@ -54,6 +54,9 @@ export function CTASection() {
                 <ArrowUpRight size={16} />
               </motion.span>
             </Link>
+            <p className="text-xs text-background/60 font-sans">
+              We start every journey with a personalized consultation
+            </p>
           </motion.div>
         </div>
       </div>
