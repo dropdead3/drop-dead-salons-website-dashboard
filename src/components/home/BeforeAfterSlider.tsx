@@ -108,7 +108,35 @@ export function BeforeAfterSlider({
       cancelAnimationFrame(animationRef.current);
     }
   };
-  const handleMouseUp = () => setIsDragging(false);
+
+  const handleMouseUp = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    
+    // Animate back to center
+    const startPosition = sliderPosition;
+    const targetPosition = 50;
+    const duration = 600; // ms
+    let startTime: number | null = null;
+
+    const animateToCenter = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Ease out cubic for smooth deceleration
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const newPosition = startPosition + (targetPosition - startPosition) * eased;
+      
+      setSliderPosition(newPosition);
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animateToCenter);
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(animateToCenter);
+  }, [isDragging, sliderPosition]);
   
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
