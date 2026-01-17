@@ -28,7 +28,7 @@ export function ServicesPreview() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <Section>
+    <Section className="pb-8 lg:pb-12">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
