@@ -25,7 +25,6 @@ const Index = () => {
       />
       <HeroSection />
       <BrandStatement />
-      <ExtensionsSection />
       <ServicesPreview />
       <PopularServices />
       <BrandsSection />
@@ -43,6 +42,7 @@ const Index = () => {
         <FAQSection />
       </div>
       <CTASection />
+      <ExtensionsSection />
       <StylistsSection />
       <DrinkMenuSection />
     </Layout>
