@@ -102,8 +102,8 @@ const stylists: Stylist[] = [
 ];
 
 const locations = [
-  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes" },
-  { id: "north-mesa" as Location, name: "North Mesa" }
+  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes", address: "1234 E Val Vista Lakes Blvd, Gilbert, AZ 85296" },
+  { id: "north-mesa" as Location, name: "North Mesa", address: "5678 N Mesa Dr, Mesa, AZ 85201" }
 ];
 
 // Extract all unique specialties
@@ -257,19 +257,39 @@ export function StylistsSection() {
             VIEW STYLISTS BY LOCATION
           </p>
           
-          <div className="inline-flex border border-border bg-background">
+          <div className="inline-flex items-center border border-border bg-background">
             {locations.map((location) => (
-              <button
-                key={location.id}
-                onClick={() => setSelectedLocation(location.id)}
-                className={`px-6 md:px-8 py-3 md:py-4 text-sm md:text-base font-medium transition-all duration-300 ${
-                  selectedLocation === location.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-muted"
-                }`}
-              >
-                {location.name}
-              </button>
+              <div key={location.id} className="flex items-center">
+                <button
+                  onClick={() => setSelectedLocation(location.id)}
+                  className={`px-4 md:px-6 py-3 md:py-4 text-sm md:text-base font-medium transition-all duration-300 ${
+                    selectedLocation === location.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {location.name}
+                </button>
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button 
+                        className={`pr-3 md:pr-4 transition-colors ${
+                          selectedLocation === location.id
+                            ? "text-primary-foreground/70 hover:text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="p-3 bg-background text-foreground border border-border">
+                      <p className="text-xs font-medium mb-1">{location.name}</p>
+                      <p className="text-xs text-muted-foreground">{location.address}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             ))}
           </div>
 
