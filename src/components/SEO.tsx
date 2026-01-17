@@ -12,14 +12,6 @@ interface SEOProps {
 const BUSINESS_INFO = {
   name: "Drop Dead Salon",
   description: "Premier hair salon in Mesa & Gilbert, Arizona serving the entire Phoenix Valley. Specializing in color, extensions, cutting & styling with expert artistry.",
-  address: {
-    street: "123 Main Street",
-    city: "Mesa",
-    state: "AZ",
-    zip: "85201",
-    country: "US",
-  },
-  phone: "(480) 123-4567",
   email: "hello@dropdeadsalon.com",
   url: "https://dropdeadsalon.com",
   image: "/og-image.jpg",
@@ -29,6 +21,28 @@ const BUSINESS_INFO = {
     "Sa 09:00-17:00",
   ],
   areaServed: ["Mesa", "Gilbert", "Chandler", "Tempe", "Scottsdale", "Phoenix", "Queen Creek", "Apache Junction"],
+  locations: [
+    {
+      name: "Drop Dead Salon - Mesa",
+      street: "1234 E Main Street",
+      city: "Mesa",
+      state: "AZ",
+      zip: "85201",
+      country: "US",
+      phone: "(480) 555-1234",
+      geo: { latitude: 33.4152, longitude: -111.8315 },
+    },
+    {
+      name: "Drop Dead Salon - Gilbert",
+      street: "5678 S Gilbert Road",
+      city: "Gilbert",
+      state: "AZ",
+      zip: "85296",
+      country: "US",
+      phone: "(480) 555-5678",
+      geo: { latitude: 33.3528, longitude: -111.7890 },
+    },
+  ],
 };
 
 export function SEO({
@@ -42,38 +56,94 @@ export function SEO({
     ? `${title} | ${BUSINESS_INFO.name}` 
     : `${BUSINESS_INFO.name} | Luxury Hair Salon`;
 
-  // Local Business JSON-LD structured data
-  const localBusinessSchema = {
+  // Generate opening hours specification
+  const openingHoursSpec = BUSINESS_INFO.openingHours.map((hours) => {
+    const [days, time] = hours.split(" ");
+    const [open, close] = time.split("-");
+    return {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: days,
+      opens: open,
+      closes: close,
+    };
+  });
+
+  // Multi-location schema - each location as separate HairSalon
+  const locationsSchema = BUSINESS_INFO.locations.map((location) => ({
     "@context": "https://schema.org",
     "@type": "HairSalon",
-    name: BUSINESS_INFO.name,
+    name: location.name,
     description: BUSINESS_INFO.description,
     image: image,
     url: url,
-    telephone: BUSINESS_INFO.phone,
+    telephone: location.phone,
     email: BUSINESS_INFO.email,
     priceRange: BUSINESS_INFO.priceRange,
     address: {
       "@type": "PostalAddress",
-      streetAddress: BUSINESS_INFO.address.street,
-      addressLocality: BUSINESS_INFO.address.city,
-      addressRegion: BUSINESS_INFO.address.state,
-      postalCode: BUSINESS_INFO.address.zip,
-      addressCountry: BUSINESS_INFO.address.country,
+      streetAddress: location.street,
+      addressLocality: location.city,
+      addressRegion: location.state,
+      postalCode: location.zip,
+      addressCountry: location.country,
     },
-    openingHoursSpecification: BUSINESS_INFO.openingHours.map((hours) => {
-      const [days, time] = hours.split(" ");
-      const [open, close] = time.split("-");
-      return {
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: days,
-        opens: open,
-        closes: close,
-      };
-    }),
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: location.geo.latitude,
+      longitude: location.geo.longitude,
+    },
+    openingHoursSpecification: openingHoursSpec,
+    areaServed: BUSINESS_INFO.areaServed.map((area) => ({
+      "@type": "City",
+      name: area,
+      "@id": `https://en.wikipedia.org/wiki/${area},_Arizona`,
+    })),
     sameAs: [
       "https://instagram.com/dropdeadsalon",
-      // Add other social media URLs
+      "https://facebook.com/dropdeadsalon",
+      "https://tiktok.com/@dropdeadsalon",
+    ],
+  }));
+
+  // Organization schema linking all locations
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: BUSINESS_INFO.name,
+    description: BUSINESS_INFO.description,
+    url: BUSINESS_INFO.url,
+    logo: image,
+    email: BUSINESS_INFO.email,
+    areaServed: {
+      "@type": "State",
+      name: "Arizona",
+      containsPlace: BUSINESS_INFO.areaServed.map((area) => ({
+        "@type": "City",
+        name: area,
+      })),
+    },
+    location: BUSINESS_INFO.locations.map((location) => ({
+      "@type": "Place",
+      name: location.name,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: location.street,
+        addressLocality: location.city,
+        addressRegion: location.state,
+        postalCode: location.zip,
+        addressCountry: location.country,
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: location.geo.latitude,
+        longitude: location.geo.longitude,
+      },
+      telephone: location.phone,
+    })),
+    sameAs: [
+      "https://instagram.com/dropdeadsalon",
+      "https://facebook.com/dropdeadsalon",
+      "https://tiktok.com/@dropdeadsalon",
     ],
   };
 
@@ -140,13 +210,22 @@ export function SEO({
       {/* Additional SEO */}
       <meta name="robots" content="index, follow" />
       <meta name="author" content={BUSINESS_INFO.name} />
-      <meta name="geo.region" content={`${BUSINESS_INFO.address.country}-${BUSINESS_INFO.address.state}`} />
-      <meta name="geo.placename" content={BUSINESS_INFO.address.city} />
+      <meta name="geo.region" content="US-AZ" />
+      <meta name="geo.placename" content="Mesa, Gilbert, Arizona" />
 
-      {/* Structured Data */}
+      {/* Structured Data - Organization */}
       <script type="application/ld+json">
-        {JSON.stringify(localBusinessSchema)}
+        {JSON.stringify(organizationSchema)}
       </script>
+
+      {/* Structured Data - Individual Locations */}
+      {locationsSchema.map((locationSchema, index) => (
+        <script key={index} type="application/ld+json">
+          {JSON.stringify(locationSchema)}
+        </script>
+      ))}
+
+      {/* Structured Data - Services */}
       <script type="application/ld+json">
         {JSON.stringify(servicesSchema)}
       </script>
