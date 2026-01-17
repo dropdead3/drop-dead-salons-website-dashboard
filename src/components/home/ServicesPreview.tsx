@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion, useInView, useReducedMotion, type Variants } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Section } from "@/components/ui/section";
-import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Pause } from "lucide-react";
 
 const services = [
   {
@@ -376,10 +376,20 @@ export function ServicesPreview() {
 
       {/* Desktop: Horizontal Scroll Carousel */}
       <div 
-        className="hidden md:block -mx-6 lg:-mx-12"
+        className="hidden md:block -mx-6 lg:-mx-12 relative"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
+        {/* Pause indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isPaused ? 1 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="absolute top-4 right-12 z-10 flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-sm border border-border rounded-full pointer-events-none"
+        >
+          <Pause size={12} className="text-muted-foreground" />
+          <span className="text-xs text-muted-foreground font-sans uppercase tracking-wider">Paused</span>
+        </motion.div>
         <div
           ref={scrollContainerRef}
           onScroll={handleUserScroll}
