@@ -166,6 +166,13 @@ export function ServicesPreview() {
 
   const handleMouseLeave = () => {
     setIsDragging(false);
+    // Resume auto-scroll when mouse leaves
+    setIsPaused(false);
+  };
+
+  const handleMouseEnter = () => {
+    // Pause auto-scroll when mouse enters
+    setIsPaused(true);
   };
 
   // Touch/swipe handlers (mobile) - for desktop carousel
@@ -299,14 +306,17 @@ export function ServicesPreview() {
       </div>
 
       {/* Desktop: Horizontal Scroll Carousel */}
-      <div className="hidden md:block -mx-6 lg:-mx-12">
+      <div 
+        className="hidden md:block -mx-6 lg:-mx-12"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         <div
           ref={scrollContainerRef}
           onScroll={handleUserScroll}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
