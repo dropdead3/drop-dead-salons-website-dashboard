@@ -34,7 +34,7 @@ export function BrandsSection() {
         >
           <div className="flex animate-brand-scroll">
             {/* First set */}
-            <div className="flex items-center gap-12 md:gap-20 pr-12 md:pr-20">
+            <div className="flex items-center gap-16 md:gap-28 lg:gap-36 pr-16 md:pr-28 lg:pr-36">
               {brandLogos.map((brand, index) => (
                 <span
                   key={index}
@@ -46,7 +46,7 @@ export function BrandsSection() {
               ))}
             </div>
             {/* Duplicate set for seamless loop */}
-            <div className="flex items-center gap-12 md:gap-20 pr-12 md:pr-20" aria-hidden="true">
+            <div className="flex items-center gap-16 md:gap-28 lg:gap-36 pr-16 md:pr-28 lg:pr-36" aria-hidden="true">
               {brandLogos.map((brand, index) => (
                 <span
                   key={`dup-${index}`}
