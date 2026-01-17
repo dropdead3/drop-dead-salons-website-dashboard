@@ -124,6 +124,7 @@ const applicationSchema = z.object({
   phone: z.string().trim().min(10, "Please enter a valid phone number").max(20, "Phone number is too long"),
   instagram: z.string().trim().max(50, "Instagram handle is too long").optional(),
   experience: z.string().min(1, "Please select your experience level"),
+  clientBook: z.string().min(1, "Please select your current client book size"),
   specialties: z.string().trim().min(1, "Please tell us about your specialties").max(500, "Specialties must be less than 500 characters"),
   message: z.string().trim().max(1000, "Message must be less than 1000 characters").optional(),
 });
@@ -231,6 +232,7 @@ export function StylistsSection() {
       phone: "",
       instagram: "",
       experience: "",
+      clientBook: "",
       specialties: "",
       message: "",
     },
@@ -622,6 +624,31 @@ export function StylistsSection() {
                           )}
                         />
                       </div>
+
+                      <FormField
+                        control={form.control}
+                        name="clientBook"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs uppercase tracking-wider">Do you currently have a book of clients? *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="less-than-10">Less than 10</SelectItem>
+                                <SelectItem value="10-20">Yes - 10-20 clients</SelectItem>
+                                <SelectItem value="20-30">Yes - 20-30 clients</SelectItem>
+                                <SelectItem value="30-50">Yes - 30-50 clients</SelectItem>
+                                <SelectItem value="50+">Yes - 50+ clients</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
                       <FormField
                         control={form.control}
