@@ -1,7 +1,15 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 
 export function HeroSection() {
+  const scrollToContent = () => {
+    window.scrollTo({
+      top: window.innerHeight - 100,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <section className="relative min-h-screen flex flex-col">
       <div className="flex-1 flex items-center justify-center py-24 lg:py-32">
@@ -64,6 +72,28 @@ export function HeroSection() {
           </div>
         </div>
       </div>
+
+      {/* Scroll Indicator */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: 1 }}
+        onClick={scrollToContent}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        aria-label="Scroll down"
+      >
+        <span className="text-xs uppercase tracking-[0.2em] font-sans">Scroll</span>
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ 
+            duration: 1.5, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+        >
+          <ChevronDown size={20} />
+        </motion.div>
+      </motion.button>
     </section>
   );
 }
