@@ -70,9 +70,10 @@ export function HeroSection() {
                   <span className="relative z-10">I Am a Returning Client</span>
                 </Link>
               </div>
-              <p className="text-xs text-muted-foreground font-sans">
-                All new clients begin with a complimentary consultation
-              </p>
+              <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground font-sans">
+                <p>New clients begin with a complimentary consultation</p>
+                <p>Returning clients are free to book their known services</p>
+              </div>
             </motion.div>
           </div>
         </div>
