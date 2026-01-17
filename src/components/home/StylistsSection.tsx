@@ -182,7 +182,14 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
           </TooltipProvider>
         </div>
         <h3 className="text-xl font-serif mb-1">{stylist.name}</h3>
-        <p className="text-sm text-white/70 mb-4">{stylist.instagram}</p>
+        <a 
+          href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-white/70 hover:text-white transition-colors duration-200 mb-4 inline-block"
+        >
+          {stylist.instagram}
+        </a>
         
         <Link
           to="/booking"
