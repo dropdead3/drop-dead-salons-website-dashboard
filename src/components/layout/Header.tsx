@@ -50,10 +50,10 @@ export function Header() {
       {/* Main Header */}
       <header
         className={cn(
-          "sticky top-0 left-0 right-0 z-50 transition-all duration-500 border-b border-border",
+          "sticky top-0 left-0 right-0 z-50 transition-all duration-500 border-b",
           isScrolled
-            ? "bg-background/95 backdrop-blur-sm"
-            : "bg-background"
+            ? "bg-background/95 backdrop-blur-md border-border shadow-sm"
+            : "bg-background border-transparent"
         )}
       >
         <div className="container mx-auto px-6 lg:px-12">
@@ -88,13 +88,13 @@ export function Header() {
             <div className="hidden md:flex items-center gap-6">
               <Link
                 to="/contact"
-                className="text-sm tracking-wide font-sans font-normal opacity-70 hover:opacity-100 transition-opacity"
+                className="text-sm tracking-wide font-sans font-normal opacity-70 hover:opacity-100 transition-all duration-300 link-underline"
               >
                 Contact Us
               </Link>
               <Link
                 to="/booking"
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium bg-foreground text-background hover:bg-foreground/90 hover:shadow-lg transition-all duration-300 active:scale-[0.98]"
               >
                 Book Now
               </Link>
