@@ -8,8 +8,14 @@ export function BrandStatement() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <Section className="bg-foreground text-background">
-      <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+    <div className="relative">
+      {/* Slanted top edge */}
+      <div 
+        className="absolute -top-12 left-0 right-0 h-16 bg-foreground"
+        style={{ clipPath: 'polygon(0 100%, 100% 0, 100% 100%, 0 100%)' }}
+      />
+      <Section className="bg-foreground text-background pt-16">
+        <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
         {/* Left side - Editorial number and title */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
@@ -40,7 +46,8 @@ export function BrandStatement() {
             Experience an extensive range of innovative treatments meticulously crafted by our artist-led team.
           </p>
         </motion.div>
-      </div>
-    </Section>
+        </div>
+      </Section>
+    </div>
   );
 }
