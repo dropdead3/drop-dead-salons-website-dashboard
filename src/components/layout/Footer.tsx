@@ -1,16 +1,29 @@
 import { Link } from "react-router-dom";
-import { Instagram, ArrowUpRight } from "lucide-react";
+import { Instagram, ArrowUpRight, MapPin } from "lucide-react";
 
 const footerLinks = [
   { href: "/services", label: "Services" },
   { href: "/booking", label: "Book" },
 ];
 
+const locations = [
+  {
+    name: "West Hollywood",
+    address: "8715 Santa Monica Blvd",
+    city: "West Hollywood, CA 90069",
+  },
+  {
+    name: "Studio City",
+    address: "12345 Ventura Blvd",
+    city: "Studio City, CA 91604",
+  }
+];
+
 export function Footer() {
   return (
     <footer className="bg-background border-t border-border">
       <div className="container mx-auto px-6 lg:px-12 py-16 lg:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
           {/* Brand */}
           <div className="space-y-6">
             <Link
@@ -42,14 +55,31 @@ export function Footer() {
             </nav>
           </div>
 
+          {/* Locations */}
+          <div className="space-y-6">
+            <h4 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
+              Locations
+            </h4>
+            <div className="space-y-5">
+              {locations.map((location) => (
+                <div key={location.name} className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-foreground/50 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm font-sans font-light text-foreground/80">
+                    <p className="font-medium text-foreground">{location.name}</p>
+                    <p>{location.address}</p>
+                    <p>{location.city}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Contact */}
           <div className="space-y-6">
             <h4 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
               Connect
             </h4>
             <div className="space-y-3 text-sm font-sans font-light text-foreground/80">
-              <p>123 Luxury Lane</p>
-              <p>Los Angeles, CA 90001</p>
               <a
                 href="mailto:hello@dropdeadsalon.com"
                 className="block hover:text-foreground transition-colors"
