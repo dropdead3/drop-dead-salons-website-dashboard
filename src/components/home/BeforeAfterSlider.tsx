@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
+import { Play, X } from "lucide-react";
 
 interface BeforeAfterSliderProps {
   beforeImage: string;
@@ -7,6 +8,7 @@ interface BeforeAfterSliderProps {
   beforeLabel?: string;
   afterLabel?: string;
   className?: string;
+  videoUrl?: string;
 }
 
 export function BeforeAfterSlider({ 
@@ -14,13 +16,16 @@ export function BeforeAfterSlider({
   afterImage,
   beforeLabel = "Before", 
   afterLabel = "After",
-  className = ""
+  className = "",
+  videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4" // Default demo video
 }: BeforeAfterSliderProps) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(true);
+  const [isVideoMode, setIsVideoMode] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const animationRef = useRef<number | null>(null);
   
   // Only trigger animation when in view
@@ -28,7 +33,7 @@ export function BeforeAfterSlider({
 
   // Auto-animate slider once to demonstrate functionality, then settle to middle
   useEffect(() => {
-    if (hasInteracted || !isInView) return;
+    if (hasInteracted || !isInView || isVideoMode) return;
 
     const keyframes = [
       { position: 50, duration: 0 },      // Start at middle
@@ -89,7 +94,7 @@ export function BeforeAfterSlider({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [hasInteracted, isInView]);
+  }, [hasInteracted, isInView, isVideoMode]);
 
   const handleMove = useCallback((clientX: number) => {
     if (!containerRef.current) return;
@@ -165,85 +170,147 @@ export function BeforeAfterSlider({
     animateToCenter();
   };
 
+  const handlePlayVideo = () => {
+    setIsVideoMode(true);
+    setHasInteracted(true);
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+    // Auto-play video when switching to video mode
+    setTimeout(() => {
+      videoRef.current?.play();
+    }, 100);
+  };
+
+  const handleCloseVideo = () => {
+    setIsVideoMode(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
   return (
     <div
       ref={containerRef}
-      className={`relative aspect-[3/4] overflow-hidden cursor-ew-resize select-none ${className}`}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      className={`relative aspect-[3/4] overflow-hidden select-none ${isVideoMode ? '' : 'cursor-ew-resize'} ${className}`}
+      onTouchMove={!isVideoMode ? handleTouchMove : undefined}
+      onTouchEnd={!isVideoMode ? handleTouchEnd : undefined}
     >
-      {/* After Image (Background) */}
-      <div className="absolute inset-0">
-        <img 
-          src={afterImage} 
-          alt="After transformation" 
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      {/* Before Image (Clipped) */}
-      <div 
-        className="absolute inset-0"
-        style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
-      >
-        <img 
-          src={beforeImage} 
-          alt="Before transformation" 
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      {/* Slider Line */}
-      <div
-        className="absolute top-0 bottom-0 w-0.5 bg-white/90 z-10 shadow-sm"
-        style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
-      >
-        {/* Slider Handle */}
+      {/* Video Mode */}
+      {isVideoMode ? (
         <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white flex items-center justify-center cursor-ew-resize shadow-lg border border-black/10"
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleMouseDown}
-        >
-          <div className="flex items-center gap-1.5">
-            <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-foreground">
-              <path d="M5 1L1 5L5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-foreground">
-              <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Labels - positioned at top corners */}
-      <div className="absolute top-4 left-4 z-20">
-        <span 
-          className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 text-foreground"
-          style={{ opacity: sliderPosition > 20 ? 1 : 0, transition: 'opacity 0.2s' }}
-        >
-          {beforeLabel}
-        </span>
-      </div>
-      <div className="absolute top-4 right-4 z-20">
-        <span 
-          className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 text-foreground"
-          style={{ opacity: sliderPosition < 80 ? 1 : 0, transition: 'opacity 0.2s' }}
-        >
-          {afterLabel}
-        </span>
-      </div>
-
-      {/* Drag hint - positioned below the labels */}
-      <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-        <motion.span 
-          className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-black/50 text-white/90 backdrop-blur-sm"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: hasInteracted ? 0 : 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
+          className="absolute inset-0 bg-black z-30"
         >
-          Drag to Compare
-        </motion.span>
-      </div>
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className="w-full h-full object-cover"
+            controls
+            playsInline
+          />
+          {/* Close button */}
+          <button
+            onClick={handleCloseVideo}
+            className="absolute top-4 right-4 w-10 h-10 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center z-40 hover:bg-background transition-colors duration-200"
+          >
+            <X className="w-5 h-5 text-foreground" />
+          </button>
+        </motion.div>
+      ) : (
+        <>
+          {/* After Image (Background) */}
+          <div className="absolute inset-0">
+            <img 
+              src={afterImage} 
+              alt="After transformation" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Before Image (Clipped) */}
+          <div 
+            className="absolute inset-0"
+            style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
+          >
+            <img 
+              src={beforeImage} 
+              alt="Before transformation" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Slider Line */}
+          <div
+            className="absolute top-0 bottom-0 w-0.5 bg-white/90 z-10 shadow-sm"
+            style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
+          >
+            {/* Slider Handle */}
+            <motion.div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white flex items-center justify-center cursor-ew-resize shadow-lg border border-black/10"
+              onMouseDown={handleMouseDown}
+              onTouchStart={handleMouseDown}
+            >
+              <div className="flex items-center gap-1.5">
+                <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-foreground">
+                  <path d="M5 1L1 5L5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <svg width="6" height="10" viewBox="0 0 6 10" fill="none" className="text-foreground">
+                  <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Play Video Button */}
+          <motion.button
+            onClick={handlePlayVideo}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 bg-background/90 backdrop-blur-sm text-foreground hover:bg-background transition-colors duration-200"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Play className="w-4 h-4 fill-current" />
+            <span className="text-xs uppercase tracking-[0.15em] font-medium">Watch Video</span>
+          </motion.button>
+
+          {/* Labels - positioned at top corners */}
+          <div className="absolute top-4 left-4 z-20">
+            <span 
+              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 text-foreground"
+              style={{ opacity: sliderPosition > 20 ? 1 : 0, transition: 'opacity 0.2s' }}
+            >
+              {beforeLabel}
+            </span>
+          </div>
+          <div className="absolute top-4 right-4 z-20">
+            <span 
+              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 text-foreground"
+              style={{ opacity: sliderPosition < 80 ? 1 : 0, transition: 'opacity 0.2s' }}
+            >
+              {afterLabel}
+            </span>
+          </div>
+
+          {/* Drag hint - positioned below the labels */}
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+            <motion.span 
+              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-black/50 text-white/90 backdrop-blur-sm"
+              initial={{ opacity: 1 }}
+              animate={{ opacity: hasInteracted ? 0 : 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              Drag to Compare
+            </motion.span>
+          </div>
+        </>
+      )}
     </div>
   );
 }
