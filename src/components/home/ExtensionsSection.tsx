@@ -1,13 +1,14 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
-import { ArrowRight, Star, Award, MapPin } from "lucide-react";
+import { ArrowRight, Star, Award, MapPin, Play } from "lucide-react";
 import { Link } from "react-router-dom";
-import { BeforeAfterSlider } from "./BeforeAfterSlider";
+import { BeforeAfterSlider, BeforeAfterSliderHandle } from "./BeforeAfterSlider";
 
 export function ExtensionsSection() {
   const ref = useRef(null);
   const featuresRef = useRef(null);
+  const sliderRef = useRef<BeforeAfterSliderHandle>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const featuresInView = useInView(featuresRef, { once: true, margin: "-50px" });
 
@@ -170,27 +171,40 @@ export function ExtensionsSection() {
             className="relative"
           >
             <BeforeAfterSlider
+              ref={sliderRef}
               beforeImage="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600&h=750&fit=crop"
               afterImage="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=750&fit=crop"
               beforeLabel="Before"
               afterLabel="After Extensions"
               className="aspect-[4/5]"
+              hideDefaultVideoButton={true}
             />
               
-            {/* Floating badge */}
+            {/* Floating badge with integrated play button */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.8 }}
               className="absolute bottom-6 left-6 right-6 bg-background/95 backdrop-blur-sm p-5 z-30"
             >
-              <div className="flex items-center gap-3 mb-2">
-                <Award className="w-5 h-5 text-oat-foreground" />
-                <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationally Recognized</span>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Award className="w-5 h-5 text-oat-foreground" />
+                    <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationally Recognized</span>
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    Salons across the country travel to learn and proudly showcase the Drop Dead Method.
+                  </p>
+                </div>
+                <button
+                  onClick={() => sliderRef.current?.playVideo()}
+                  className="flex-shrink-0 w-12 h-12 bg-foreground text-background rounded-full flex items-center justify-center hover:bg-foreground/90 transition-colors duration-200"
+                  aria-label="Watch video"
+                >
+                  <Play className="w-5 h-5 fill-current ml-0.5" />
+                </button>
               </div>
-              <p className="text-sm text-foreground leading-relaxed">
-                Salons across the country travel to learn and proudly showcase the Drop Dead Method.
-              </p>
             </motion.div>
 
             {/* Decorative element */}

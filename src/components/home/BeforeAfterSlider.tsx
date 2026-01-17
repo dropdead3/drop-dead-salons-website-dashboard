@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 import { motion, useInView } from "framer-motion";
 import { Play, X } from "lucide-react";
 
@@ -9,16 +9,24 @@ interface BeforeAfterSliderProps {
   afterLabel?: string;
   className?: string;
   videoUrl?: string;
+  hideDefaultVideoButton?: boolean;
 }
 
-export function BeforeAfterSlider({ 
+export interface BeforeAfterSliderHandle {
+  playVideo: () => void;
+  closeVideo: () => void;
+  isVideoMode: boolean;
+}
+
+export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfterSliderProps>(({ 
   beforeImage,
   afterImage,
   beforeLabel = "Before", 
   afterLabel = "After",
   className = "",
-  videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4" // Default demo video
-}: BeforeAfterSliderProps) {
+  videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4",
+  hideDefaultVideoButton = false
+}, ref) => {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -30,6 +38,7 @@ export function BeforeAfterSlider({
   
   // Only trigger animation when in view
   const isInView = useInView(containerRef, { once: true, margin: "-100px" });
+
 
   // Auto-animate slider once to demonstrate functionality, then settle to middle
   useEffect(() => {
@@ -190,6 +199,13 @@ export function BeforeAfterSlider({
     }
   };
 
+  // Expose imperative methods to parent
+  useImperativeHandle(ref, () => ({
+    playVideo: handlePlayVideo,
+    closeVideo: handleCloseVideo,
+    isVideoMode
+  }), [isVideoMode]);
+
   return (
     <div
       ref={containerRef}
@@ -266,19 +282,21 @@ export function BeforeAfterSlider({
             </motion.div>
           </div>
 
-          {/* Play Video Button */}
-          <motion.button
-            onClick={handlePlayVideo}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 bg-background/90 backdrop-blur-sm text-foreground hover:bg-background transition-colors duration-200"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Play className="w-4 h-4 fill-current" />
-            <span className="text-xs uppercase tracking-[0.15em] font-medium">Watch Video</span>
-          </motion.button>
+          {/* Play Video Button - only show if not hidden */}
+          {!hideDefaultVideoButton && (
+            <motion.button
+              onClick={handlePlayVideo}
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 bg-background/90 backdrop-blur-sm text-foreground hover:bg-background transition-colors duration-200"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Play className="w-4 h-4 fill-current" />
+              <span className="text-xs uppercase tracking-[0.15em] font-medium">Watch Video</span>
+            </motion.button>
+          )}
 
           {/* Labels - positioned at top corners */}
           <div className="absolute top-4 left-4 z-20">
@@ -313,4 +331,4 @@ export function BeforeAfterSlider({
       )}
     </div>
   );
-}
+});
