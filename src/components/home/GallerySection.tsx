@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
+import { Link } from "react-router-dom";
 import { Section } from "@/components/ui/section";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { Images, ArrowRight } from "lucide-react";
 
 // Gallery images - replace with real salon work
 const galleryImages = [
@@ -46,14 +48,24 @@ export function GallerySection() {
           <br />
           <span className="italic font-light">for Itself.</span>
         </motion.h2>
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-sm text-muted-foreground font-sans max-w-xs"
+          className="flex flex-col gap-4"
         >
-          Real clients. Real transformations. See our artistry in action.
-        </motion.p>
+          <p className="text-sm text-muted-foreground font-sans max-w-xs">
+            Real clients. Real transformations. See our artistry in action.
+          </p>
+          <Link
+            to="/gallery"
+            className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.15em] font-medium text-foreground hover:text-foreground/70 transition-colors group w-fit"
+          >
+            <Images className="w-4 h-4" />
+            <span>View Gallery</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
+        </motion.div>
       </div>
 
       <div
