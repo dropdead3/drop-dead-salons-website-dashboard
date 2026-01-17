@@ -4,7 +4,7 @@ import { Section } from "@/components/ui/section";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Clock, Mail, Phone, ArrowUpRight, ChevronDown } from "lucide-react";
+import { MapPin, Clock, Mail, Phone, ArrowUpRight, ChevronDown, AlertCircle } from "lucide-react";
 
 export default function Booking() {
   const { toast } = useToast();
@@ -131,11 +131,32 @@ export default function Booking() {
             >
               Share a few details about yourself and your hair goals, and we'll be in touch to schedule your complimentary consultation.
             </motion.p>
+            {/* New clients notice */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="mt-8 p-5 bg-secondary border border-border inline-block"
+              className="mt-8 p-5 bg-secondary border border-border"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle size={20} className="text-foreground flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
+                    New Clients
+                  </h3>
+                  <p className="text-sm text-muted-foreground font-sans font-light leading-relaxed">
+                    First-time clients may be required to book a consultation prior to service. Some specialized services require approval before booking.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Returning client callout */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="mt-6 p-5 bg-background border border-border inline-block"
             >
               <p className="text-sm text-muted-foreground font-sans">
                 Are you a returning client? You don't need a new-client consult.
@@ -453,16 +474,6 @@ export default function Booking() {
               </div>
             </div>
 
-            {/* Note for new clients */}
-            <div className="mt-12 p-6 bg-secondary border border-border">
-              <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-3">
-                New Clients
-              </h3>
-              <p className="text-sm text-muted-foreground font-sans font-light leading-relaxed">
-                First-time clients may be required to book a consultation prior to
-                service. Some specialized services require approval before booking.
-              </p>
-            </div>
           </motion.div>
         </div>
       </Section>
