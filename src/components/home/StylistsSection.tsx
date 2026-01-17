@@ -281,28 +281,34 @@ export function StylistsSection() {
                 VIEW BY SPECIALTY
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                <button
+                <motion.button
                   onClick={() => setSelectedSpecialty(null)}
-                  className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
-                    selectedSpecialty === null
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-background text-foreground border-border hover:border-foreground/50"
-                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  animate={{
+                    backgroundColor: selectedSpecialty === null ? "hsl(var(--foreground))" : "hsl(var(--background))",
+                    color: selectedSpecialty === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
+                  }}
+                  transition={{ duration: 0.2 }}
+                  className="px-4 py-2 text-xs tracking-wide font-medium border border-border"
                 >
                   ALL
-                </button>
+                </motion.button>
                 {allSpecialties.map((specialty) => (
-                  <button
+                  <motion.button
                     key={specialty}
                     onClick={() => setSelectedSpecialty(specialty)}
-                    className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
-                      selectedSpecialty === specialty
-                        ? "bg-foreground text-background border-foreground"
-                        : "bg-background text-foreground border-border hover:border-foreground/50"
-                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    animate={{
+                      backgroundColor: selectedSpecialty === specialty ? "hsl(var(--foreground))" : "hsl(var(--background))",
+                      color: selectedSpecialty === specialty ? "hsl(var(--background))" : "hsl(var(--foreground))",
+                    }}
+                    transition={{ duration: 0.2 }}
+                    className="px-4 py-2 text-xs tracking-wide font-medium border border-border"
                   >
                     {specialty}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
@@ -313,29 +319,35 @@ export function StylistsSection() {
                 VIEW BY LEVEL & PRICE
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                <button
+                <motion.button
                   onClick={() => setSelectedLevel(null)}
-                  className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
-                    selectedLevel === null
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-background text-foreground border-border hover:border-foreground/50"
-                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  animate={{
+                    backgroundColor: selectedLevel === null ? "hsl(var(--foreground))" : "hsl(var(--background))",
+                    color: selectedLevel === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
+                  }}
+                  transition={{ duration: 0.2 }}
+                  className="px-4 py-2 text-xs tracking-wide font-medium border border-border"
                 >
                   ALL LEVELS
-                </button>
+                </motion.button>
                 {stylistLevels.map((level) => (
-                  <button
+                  <motion.button
                     key={level.id}
                     onClick={() => setSelectedLevel(level.id)}
-                    className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
-                      selectedLevel === level.id
-                        ? "bg-foreground text-background border-foreground"
-                        : "bg-background text-foreground border-border hover:border-foreground/50"
-                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    animate={{
+                      backgroundColor: selectedLevel === level.id ? "hsl(var(--foreground))" : "hsl(var(--background))",
+                      color: selectedLevel === level.id ? "hsl(var(--background))" : "hsl(var(--foreground))",
+                    }}
+                    transition={{ duration: 0.2 }}
+                    className="px-4 py-2 text-xs tracking-wide font-medium border border-border"
                   >
                     <span>{level.name}</span>
                     <span className="ml-2 opacity-60">{level.price}</span>
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
