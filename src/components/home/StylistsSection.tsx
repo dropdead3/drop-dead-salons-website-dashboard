@@ -439,7 +439,7 @@ export function StylistsSection() {
       </div>
 
       {/* Scrolling Cards */}
-      <div className="relative">
+      <div className="relative overflow-visible">
         <AnimatePresence mode="wait">
           {filteredStylists.length > 0 ? (
             <motion.div
@@ -448,7 +448,7 @@ export function StylistsSection() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex gap-4 overflow-x-auto pb-4"
+              className="flex gap-4 overflow-x-auto py-6 -my-6"
               style={{
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
