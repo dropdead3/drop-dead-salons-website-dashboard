@@ -24,8 +24,16 @@ const Index = () => {
       <PopularServices />
       <NewClientSection />
       <GallerySection />
-      <TestimonialSection />
-      <FAQSection />
+      {/* Combined Reviews & FAQ Section with Gradient */}
+      <div 
+        className="relative"
+        style={{ 
+          background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(40 25% 95%) 30%, hsl(40 30% 94%) 70%, hsl(40 20% 92%) 100%)' 
+        }}
+      >
+        <TestimonialSection />
+        <FAQSection />
+      </div>
       <CTASection />
     </Layout>
   );

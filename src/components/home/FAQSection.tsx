@@ -77,7 +77,7 @@ export function FAQSection() {
   return (
     <section 
       ref={sectionRef}
-      className="py-20 lg:py-32 bg-secondary"
+      className="py-20 lg:py-32"
     >
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
