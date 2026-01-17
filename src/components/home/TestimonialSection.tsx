@@ -1,61 +1,307 @@
-import { motion } from "framer-motion";
-import { useInView } from "framer-motion";
-import { useRef } from "react";
-import { Section } from "@/components/ui/section";
+import { motion, useInView, useReducedMotion } from "framer-motion";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { Star, ArrowRight, ArrowLeft } from "lucide-react";
 
-const testimonial = {
-  quote:
-    "From the consultation to the final result, everything felt intentional and elevated. This is the only salon that truly understands what luxury should feel like.",
-  author: "Sarah M.",
-  service: "Color & Extensions",
-};
+const reviews = [
+  {
+    title: "Love this place!",
+    author: "Lexi V.",
+    text: "I love Drop Dead! The owner picks literally THE BEST hair stylist and lash and brow artists. You really can't go wrong with going to anyone inside the studio, everyone is so welcoming and friendly.",
+  },
+  {
+    title: "You won't be disappointed",
+    author: "Melissa C.",
+    text: "The salon itself is beautiful and so unique. The atmosphere is comforting and fun!! Never have I loved my hair this much!! Definitely recommend to anyone wanting to a new salon!! You won't be disappointed.",
+  },
+  {
+    title: "Best wefts ever!!",
+    author: "Lexi K.",
+    text: "I have loved every product from Drop Dead so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing. So comfortable, flat, customizable and easy to color!",
+  },
+  {
+    title: "Best extensions",
+    author: "Darian F.",
+    text: "These extensions were so easily filled my clients hair long. It took very little cutting with the hair and I'm obsessed with the product.",
+  },
+  {
+    title: "Absolutely stunning results",
+    author: "Morgan S.",
+    text: "I've been going to Drop Dead for over a year now and every single visit has been incredible. The attention to detail and care they put into every service is unmatched.",
+  },
+  {
+    title: "Hair transformation goals",
+    author: "Jamie L.",
+    text: "Went from damaged, over-processed hair to the healthiest it's ever been. The team really knows their stuff and takes the time to educate you on proper hair care.",
+  },
+];
+
+const StarRating = () => (
+  <div className="flex gap-0.5">
+    {[...Array(5)].map((_, i) => (
+      <Star key={i} className="w-4 h-4 fill-foreground text-foreground" />
+    ))}
+  </div>
+);
 
 export function TestimonialSection() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const sectionRef = useRef<HTMLElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const prefersReducedMotion = useReducedMotion();
+  
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const isAutoScrolling = useRef(false);
+
+  const scrollToCard = useCallback((index: number, smooth = true) => {
+    if (!scrollContainerRef.current) return;
+    
+    const container = scrollContainerRef.current;
+    const cards = container.querySelectorAll('[data-review-card]');
+    const card = cards[index] as HTMLElement;
+    
+    if (!card) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
+
+    isAutoScrolling.current = true;
+    
+    if (smooth && !prefersReducedMotion) {
+      container.scrollTo({
+        left: Math.max(0, scrollLeftPos),
+        behavior: 'smooth'
+      });
+      setTimeout(() => {
+        isAutoScrolling.current = false;
+      }, 800);
+    } else {
+      container.scrollLeft = Math.max(0, scrollLeftPos);
+      isAutoScrolling.current = false;
+    }
+    
+    setCurrentIndex(index);
+  }, [prefersReducedMotion]);
+
+  // Auto-advance every 4 seconds
+  useEffect(() => {
+    if (!isInView || isPaused || prefersReducedMotion) return;
+
+    const intervalId = setInterval(() => {
+      setCurrentIndex(prev => {
+        const nextIndex = (prev + 1) % reviews.length;
+        scrollToCard(nextIndex);
+        return nextIndex;
+      });
+    }, 4000);
+
+    return () => clearInterval(intervalId);
+  }, [isInView, isPaused, prefersReducedMotion, scrollToCard]);
+
+  const handleUserScroll = useCallback(() => {
+    if (!isAutoScrolling.current) {
+      setIsPaused(true);
+    }
+    
+    if (!scrollContainerRef.current) return;
+    
+    const container = scrollContainerRef.current;
+    const cards = container.querySelectorAll('[data-review-card]');
+    const containerCenter = container.scrollLeft + container.offsetWidth / 2;
+    
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+    
+    cards.forEach((card, index) => {
+      const cardElement = card as HTMLElement;
+      const cardCenter = cardElement.offsetLeft + cardElement.offsetWidth / 2;
+      const distance = Math.abs(containerCenter - cardCenter);
+      
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    
+    setCurrentIndex(closestIndex);
+  }, []);
+
+  const goToPrevious = () => {
+    setIsPaused(true);
+    const newIndex = currentIndex === 0 ? reviews.length - 1 : currentIndex - 1;
+    scrollToCard(newIndex);
+  };
+
+  const goToNext = () => {
+    setIsPaused(true);
+    const newIndex = (currentIndex + 1) % reviews.length;
+    scrollToCard(newIndex);
+  };
+
+  // Mouse drag handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    setIsPaused(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Touch handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.touches[0].pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    setIsPaused(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    const x = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
 
   return (
-    <Section className="bg-secondary">
-      <div ref={ref} className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.8 }}
-          className="mb-8"
-        >
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans">
-            Client Experience
-          </span>
-        </motion.div>
-
-        <motion.blockquote
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light italic text-foreground leading-relaxed">
-            "{testimonial.quote}"
-          </p>
-        </motion.blockquote>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-10 flex items-center gap-4"
-        >
-          {/* Avatar placeholder */}
-          <div className="w-12 h-12 rounded-full bg-muted" />
-          <div>
-            <p className="text-sm font-sans font-medium text-foreground">
-              {testimonial.author}
-            </p>
-            <p className="text-xs text-muted-foreground font-sans mt-0.5">
-              {testimonial.service}
-            </p>
-          </div>
-        </motion.div>
+    <section ref={sectionRef} className="py-20 lg:py-32 bg-secondary overflow-hidden">
+      {/* Header */}
+      <div className="container mx-auto px-6 mb-10">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+            className="text-3xl md:text-4xl lg:text-5xl font-serif"
+          >
+            Hundreds of happy 5-star reviews
+          </motion.h2>
+          
+          <motion.a
+            href="https://g.page/r/YOUR_GOOGLE_REVIEW_LINK"
+            target="_blank"
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, y: 10 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="inline-flex items-center gap-2 text-sm font-medium link-underline group"
+          >
+            Leave a review
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </motion.a>
+        </div>
       </div>
-    </Section>
+
+      {/* Navigation Arrows - Desktop */}
+      <div className="hidden md:block container mx-auto px-6 mb-6">
+        <div className="flex gap-2">
+          <button
+            onClick={goToPrevious}
+            className="p-3 border border-border bg-background hover:bg-muted transition-colors"
+            aria-label="Previous review"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={goToNext}
+            className="p-3 border border-border bg-background hover:bg-muted transition-colors"
+            aria-label="Next review"
+          >
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Scrolling Cards */}
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleUserScroll}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="flex gap-4 overflow-x-auto scrollbar-minimal cursor-grab active:cursor-grabbing scroll-smooth pb-4"
+        style={{
+          scrollSnapType: 'x mandatory',
+          WebkitOverflowScrolling: 'touch',
+          scrollBehavior: 'smooth',
+          paddingLeft: 'max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem))',
+          paddingRight: '1.5rem'
+        }}
+      >
+        {reviews.map((review, index) => (
+          <motion.div
+            key={index}
+            data-review-card
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{
+              duration: 0.6,
+              delay: 0.1 * index,
+              ease: [0.25, 0.1, 0.25, 1]
+            }}
+            className="flex-shrink-0 w-[320px] md:w-[380px] bg-background border border-border p-6 md:p-8"
+            style={{ scrollSnapAlign: 'center' }}
+          >
+            <h3 className="text-xl md:text-2xl font-serif mb-4">{review.title}</h3>
+            
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-sm font-medium">{review.author}</span>
+              <span className="text-xs text-muted-foreground">Verified Customer</span>
+            </div>
+            
+            <div className="mb-4">
+              <StarRating />
+            </div>
+            
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              {review.text}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Progress Dots - Mobile */}
+      <div className="md:hidden flex justify-center gap-2 mt-6">
+        {reviews.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              setIsPaused(true);
+              scrollToCard(index);
+            }}
+            className={`h-1.5 transition-all duration-300 ${
+              index === currentIndex
+                ? 'w-6 bg-foreground'
+                : 'w-1.5 bg-foreground/30'
+            }`}
+            aria-label={`Go to review ${index + 1}`}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
