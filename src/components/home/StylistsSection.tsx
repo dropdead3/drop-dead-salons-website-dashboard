@@ -275,6 +275,38 @@ export function StylistsSection() {
 
           {/* Filters Row */}
           <div className="mt-8 flex flex-col lg:flex-row gap-8 lg:gap-12 justify-center">
+            {/* Specialty Filter */}
+            <div>
+              <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
+                FILTER BY SPECIALTY
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  onClick={() => setSelectedSpecialty(null)}
+                  className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
+                    selectedSpecialty === null
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-background text-foreground border-border hover:border-foreground/50"
+                  }`}
+                >
+                  ALL
+                </button>
+                {allSpecialties.map((specialty) => (
+                  <button
+                    key={specialty}
+                    onClick={() => setSelectedSpecialty(specialty)}
+                    className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
+                      selectedSpecialty === specialty
+                        ? "bg-foreground text-background border-foreground"
+                        : "bg-background text-foreground border-border hover:border-foreground/50"
+                    }`}
+                  >
+                    {specialty}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Level/Price Filter */}
             <div>
               <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
@@ -303,38 +335,6 @@ export function StylistsSection() {
                   >
                     <span>{level.name}</span>
                     <span className="ml-2 opacity-60">{level.price}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Specialty Filter */}
-            <div>
-              <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
-                FILTER BY SPECIALTY
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                <button
-                  onClick={() => setSelectedSpecialty(null)}
-                  className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
-                    selectedSpecialty === null
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-background text-foreground border-border hover:border-foreground/50"
-                  }`}
-                >
-                  ALL
-                </button>
-                {allSpecialties.map((specialty) => (
-                  <button
-                    key={specialty}
-                    onClick={() => setSelectedSpecialty(specialty)}
-                    className={`px-4 py-2 text-xs tracking-wide font-medium transition-all duration-300 border ${
-                      selectedSpecialty === specialty
-                        ? "bg-foreground text-background border-foreground"
-                        : "bg-background text-foreground border-border hover:border-foreground/50"
-                    }`}
-                  >
-                    {specialty}
                   </button>
                 ))}
               </div>
