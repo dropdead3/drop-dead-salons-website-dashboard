@@ -1,5 +1,5 @@
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 const drinks = [
   {
@@ -68,13 +68,26 @@ interface DrinkCardProps {
   animated?: boolean;
 }
 
+const MAX_CHARS = 45;
+
 const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: DrinkCardProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const needsTruncation = drink.ingredients.length > MAX_CHARS;
+  const displayedIngredients = isExpanded || !needsTruncation 
+    ? drink.ingredients 
+    : drink.ingredients.slice(0, MAX_CHARS) + "...";
+
   const Wrapper = animated ? motion.div : 'div';
   const wrapperProps = animated ? {
     initial: { opacity: 0, y: 30 },
     animate: isInView ? { opacity: 1, y: 0 } : {},
     transition: { duration: 0.6, delay: index * 0.1 },
   } : {};
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
 
   return (
     <Wrapper
@@ -87,12 +100,20 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
       </h3>
       
       {/* Hover tooltip - positioned to the right, centered in gap */}
-      <div className="absolute left-[85%] top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-10">
-        <div className="bg-oat text-oat-foreground px-5 py-4 text-center shadow-lg border border-border/50">
+      <div className="absolute left-[85%] top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto z-10">
+        <div className="bg-oat text-oat-foreground px-5 py-4 text-center shadow-lg border border-border/50 w-[180px] min-h-[120px] flex flex-col justify-center">
           <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-oat-foreground/60 font-sans">Ingredients</p>
-          <p className="text-sm font-serif max-w-[160px] whitespace-normal leading-relaxed">
-            {drink.ingredients}
+          <p className="text-sm font-serif whitespace-normal leading-relaxed">
+            {displayedIngredients}
           </p>
+          {needsTruncation && (
+            <button 
+              onClick={handleToggle}
+              className="mt-2 text-[10px] uppercase tracking-[0.15em] text-oat-foreground/70 hover:text-oat-foreground transition-colors font-sans underline underline-offset-2"
+            >
+              {isExpanded ? "See less" : "See more"}
+            </button>
+          )}
         </div>
         {/* Arrow pointing left */}
         <div className="absolute top-1/2 -translate-y-1/2 -left-2 w-0 h-0 border-t-8 border-b-8 border-r-8 border-transparent border-r-oat" />
