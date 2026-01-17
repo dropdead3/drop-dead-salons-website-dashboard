@@ -134,7 +134,7 @@ export function ServicesPreview() {
     scrollToCard(newIndex);
   };
 
-  // Drag to scroll handlers
+  // Drag to scroll handlers (mouse)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
     setIsDragging(true);
@@ -156,6 +156,26 @@ export function ServicesPreview() {
   };
 
   const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  // Touch/swipe handlers (mobile)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.touches[0].pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+    setHasUserScrolled(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    const x = e.touches[0].pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleTouchEnd = () => {
     setIsDragging(false);
   };
 
@@ -234,6 +254,9 @@ export function ServicesPreview() {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           className={`flex gap-8 overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
@@ -297,59 +320,69 @@ export function ServicesPreview() {
         </div>
       </div>
 
-      {/* Mobile: Stacked Cards with Fade */}
-      <div className="md:hidden space-y-12">
-        {services.map((service, index) => (
-          <motion.div
-            key={service.title}
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ 
-              duration: 0.6, 
-              delay: prefersReducedMotion ? 0 : index * 0.1,
-              ease: editorialEasing 
-            }}
-            className="group"
-          >
-            {/* Image placeholder */}
-            <div className="relative aspect-[4/5] bg-secondary/50 border border-border mb-6 overflow-hidden">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-6xl text-muted-foreground/30">✦</span>
+      {/* Mobile: Horizontal Swipeable Carousel */}
+      <div className="md:hidden -mx-6">
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+        >
+          {services.map((service, index) => (
+            <motion.div
+              key={service.title}
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ 
+                duration: 0.6, 
+                delay: prefersReducedMotion ? 0 : index * 0.1,
+                ease: editorialEasing 
+              }}
+              className="group flex-shrink-0 w-[85vw] snap-center"
+            >
+              {/* Image placeholder */}
+              <div className="relative aspect-[4/5] bg-secondary/50 border border-border mb-6 overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-6xl text-muted-foreground/30">✦</span>
+                </div>
               </div>
-            </div>
 
-            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans block mb-2">
-              {service.category}
-            </span>
-            
-            <h3 className="font-serif text-2xl font-normal text-foreground mb-2">
-              {service.title}
-            </h3>
-            
-            <p className="text-sm text-muted-foreground font-sans mb-4">
-              {service.price}
-            </p>
+              <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans block mb-2">
+                {service.category}
+              </span>
+              
+              <h3 className="font-serif text-2xl font-normal text-foreground mb-2">
+                {service.title}
+              </h3>
+              
+              <p className="text-sm text-muted-foreground font-sans mb-4">
+                {service.price}
+              </p>
 
-            <p className="text-sm text-muted-foreground font-sans font-light leading-relaxed mb-6">
-              {service.description}
-            </p>
+              <p className="text-sm text-muted-foreground font-sans font-light leading-relaxed mb-6">
+                {service.description}
+              </p>
 
-            <div className="flex gap-3">
-              <Link
-                to="/services"
-                className="inline-flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-[0.1em] font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300"
-              >
-                Learn more
-              </Link>
-              <Link
-                to="/booking"
-                className="inline-flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-[0.1em] font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300"
-              >
-                Book Now
-              </Link>
-            </div>
-          </motion.div>
-        ))}
+              <div className="flex gap-3">
+                <Link
+                  to="/services"
+                  className="inline-flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-[0.1em] font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300"
+                >
+                  Learn more
+                </Link>
+                <Link
+                  to="/booking"
+                  className="inline-flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-[0.1em] font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300"
+                >
+                  Book Now
+                </Link>
+              </div>
+            </motion.div>
+          ))}
+          {/* Spacer for last card */}
+          <div className="flex-shrink-0 w-4" />
+        </div>
       </div>
 
       {/* Progress Indicators */}
@@ -357,7 +390,7 @@ export function ServicesPreview() {
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ duration: 0.6, delay: 0.5 }}
-        className="hidden md:flex justify-center gap-2 mt-8"
+        className="flex justify-center gap-2 mt-8"
       >
         {services.map((_, index) => (
           <button
