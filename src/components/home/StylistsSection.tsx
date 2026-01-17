@@ -1,9 +1,30 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Location = "val-vista-lakes" | "north-mesa";
 
@@ -79,6 +100,18 @@ const locations = [
   { id: "north-mesa" as Location, name: "North Mesa" }
 ];
 
+const applicationSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  phone: z.string().trim().min(10, "Please enter a valid phone number").max(20, "Phone number is too long"),
+  instagram: z.string().trim().max(50, "Instagram handle is too long").optional(),
+  experience: z.string().min(1, "Please select your experience level"),
+  specialties: z.string().trim().min(1, "Please tell us about your specialties").max(500, "Specialties must be less than 500 characters"),
+  message: z.string().trim().max(1000, "Message must be less than 1000 characters").optional(),
+});
+
+type ApplicationFormData = z.infer<typeof applicationSchema>;
+
 const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) => {
   return (
     <motion.div
@@ -88,7 +121,6 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
       transition={{ duration: 0.4, delay: index * 0.1 }}
       className="group relative aspect-[3/4] bg-muted overflow-hidden flex-shrink-0 w-[280px] md:w-[300px]"
     >
-      {/* Background Image with Skeleton */}
       <ImageWithSkeleton
         src={stylist.imageUrl}
         alt={`${stylist.name} - ${stylist.level}`}
@@ -96,10 +128,8 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
         wrapperClassName="absolute inset-0"
       />
       
-      {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       
-      {/* Specialty Tags */}
       <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
         {stylist.specialties.map((specialty, idx) => (
           <span
@@ -111,7 +141,6 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
         ))}
       </div>
       
-      {/* Stylist Info */}
       <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
         <p className="text-xs tracking-[0.2em] text-white/70 mb-1">{stylist.level}</p>
         <h3 className="text-xl font-serif mb-1">{stylist.name}</h3>
@@ -133,10 +162,35 @@ export function StylistsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [selectedLocation, setSelectedLocation] = useState<Location>("val-vista-lakes");
+  const [isFormExpanded, setIsFormExpanded] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredStylists = stylists.filter(
     (s) => s.location === selectedLocation
   );
+
+  const form = useForm<ApplicationFormData>({
+    resolver: zodResolver(applicationSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      instagram: "",
+      experience: "",
+      specialties: "",
+      message: "",
+    },
+  });
+
+  const onSubmit = async (data: ApplicationFormData) => {
+    setIsSubmitting(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Application submitted:", data);
+    toast.success("Application submitted! We'll be in touch soon.");
+    form.reset();
+    setIsSubmitting(false);
+    setIsFormExpanded(false);
+  };
 
   return (
     <section ref={sectionRef} className="py-20 lg:py-32 bg-secondary overflow-hidden">
@@ -156,7 +210,6 @@ export function StylistsSection() {
             Each stylist brings their own unique expertise and creative vision.
           </p>
           
-          {/* Location Toggle */}
           <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
             VIEW STYLISTS BY LOCATION
           </p>
@@ -231,6 +284,191 @@ export function StylistsSection() {
           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </motion.div>
+
+      {/* Join Our Team - Collapsible */}
+      <div className="container mx-auto px-6 mt-16 pt-12 border-t border-border/50">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="text-center"
+        >
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-foreground/50" />
+            <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
+              Join Our Team
+            </p>
+          </div>
+          <h3 className="text-2xl md:text-3xl font-serif mb-3">
+            Work at <em className="italic">Drop Dead</em>
+          </h3>
+          <p className="text-foreground/60 text-sm max-w-md mx-auto mb-5">
+            Passionate stylist looking for your next opportunity? We'd love to hear from you.
+          </p>
+          
+          <button
+            onClick={() => setIsFormExpanded(!isFormExpanded)}
+            className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.15em] font-medium text-foreground hover:text-foreground/70 transition-colors group"
+          >
+            <span>{isFormExpanded ? "Close" : "Apply Now"}</span>
+            <ChevronDown 
+              className={`w-4 h-4 transition-transform duration-300 ${isFormExpanded ? "rotate-180" : ""}`} 
+            />
+          </button>
+        </motion.div>
+
+        {/* Collapsible Form */}
+        <AnimatePresence>
+          {isFormExpanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="pt-8 max-w-2xl mx-auto">
+                <div className="bg-background p-6 md:p-8">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs uppercase tracking-wider">Full Name *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs uppercase tracking-wider">Email *</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="you@email.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs uppercase tracking-wider">Phone *</FormLabel>
+                              <FormControl>
+                                <Input type="tel" placeholder="(555) 555-5555" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="instagram"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs uppercase tracking-wider">Instagram</FormLabel>
+                              <FormControl>
+                                <Input placeholder="@yourusername" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="experience"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs uppercase tracking-wider">Experience *</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="0-2">0-2 years</SelectItem>
+                                  <SelectItem value="2-5">2-5 years</SelectItem>
+                                  <SelectItem value="5-10">5-10 years</SelectItem>
+                                  <SelectItem value="10+">10+ years</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="specialties"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs uppercase tracking-wider">Your Specialties *</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="e.g., balayage, extensions, vivid colors..." 
+                                {...field} 
+                                className="resize-none"
+                                rows={2}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs uppercase tracking-wider">Message (optional)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Anything else you'd like us to know?" 
+                                {...field} 
+                                className="resize-none"
+                                rows={2}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button 
+                        type="submit" 
+                        disabled={isSubmitting}
+                        className="w-full group"
+                      >
+                        <span>{isSubmitting ? "Submitting..." : "Submit Application"}</span>
+                        <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                      </Button>
+                    </form>
+                  </Form>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </section>
   );
 }
