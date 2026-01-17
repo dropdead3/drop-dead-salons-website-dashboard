@@ -428,18 +428,6 @@ export function StylistsSection() {
           </div>
         </motion.div>
 
-        {/* Title with count */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-8"
-        >
-          <p className="text-base font-medium">
-            Drop Dead Salon Stylists
-            <span className="ml-2 text-muted-foreground">({filteredStylists.length})</span>
-          </p>
-        </motion.div>
       </div>
 
       {/* Scrolling Cards */}
