@@ -21,7 +21,7 @@ const locations = [
   }
 ];
 
-const hours = "Tue–Sat: 10am–6pm";
+const hours = "Tue–Sat: 10am–6pm · Closed Sun & Mon";
 
 export function Footer() {
   return (
