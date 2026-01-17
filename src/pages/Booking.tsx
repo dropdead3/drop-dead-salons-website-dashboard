@@ -426,10 +426,10 @@ export default function Booking() {
                     Email
                   </h3>
                   <a
-                    href="mailto:hello@dropdeadsalon.com"
+                    href="mailto:contact@dropdeadsalon.com"
                     className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors"
                   >
-                    hello@dropdeadsalon.com
+                    contact@dropdeadsalon.com
                   </a>
                 </div>
               </div>

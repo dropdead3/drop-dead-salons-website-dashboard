@@ -99,10 +99,10 @@ export function Footer() {
             </h4>
             <div className="space-y-3 text-sm font-sans font-light text-foreground/80">
               <a
-                href="mailto:hello@dropdeadsalon.com"
+                href="mailto:contact@dropdeadsalon.com"
                 className="block hover:text-foreground transition-colors"
               >
-                hello@dropdeadsalon.com
+                contact@dropdeadsalon.com
               </a>
             </div>
             <a
