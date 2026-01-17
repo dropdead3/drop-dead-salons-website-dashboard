@@ -12,7 +12,7 @@ interface SEOProps {
 const BUSINESS_INFO = {
   name: "Drop Dead Salon",
   description: "Premier hair salon in Mesa & Gilbert, Arizona serving the entire Phoenix Valley. Specializing in color, extensions, cutting & styling with expert artistry.",
-  email: "hello@dropdeadsalon.com",
+  email: "contact@dropdeadsalon.com",
   url: "https://dropdeadsalon.com",
   image: "/og-image.jpg",
   priceRange: "$$$",
