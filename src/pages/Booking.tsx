@@ -4,7 +4,7 @@ import { Section } from "@/components/ui/section";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Clock, Mail, Phone, ArrowUpRight } from "lucide-react";
+import { MapPin, Clock, Mail, Phone, ArrowUpRight, ChevronDown } from "lucide-react";
 
 export default function Booking() {
   const { toast } = useToast();
@@ -185,7 +185,7 @@ export default function Booking() {
                 />
               </div>
 
-              <div>
+              <div className="relative">
                 <label
                   htmlFor="service"
                   className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
@@ -198,7 +198,7 @@ export default function Booking() {
                   value={formData.service}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none"
+                  className="w-full px-4 py-4 pr-12 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none cursor-pointer"
                 >
                   <option value="">Select a service</option>
                   {serviceOptions.map((service) => (
@@ -207,9 +207,10 @@ export default function Booking() {
                     </option>
                   ))}
                 </select>
+                <ChevronDown size={18} className="absolute right-4 top-[calc(50%+12px)] -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
 
-              <div>
+              <div className="relative">
                 <label
                   htmlFor="stylist"
                   className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
@@ -221,7 +222,7 @@ export default function Booking() {
                   name="stylist"
                   value={formData.stylist}
                   onChange={handleChange}
-                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none"
+                  className="w-full px-4 py-4 pr-12 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none cursor-pointer"
                 >
                   <option value="">Select a stylist</option>
                   {stylistOptions.map((stylist) => (
@@ -230,9 +231,10 @@ export default function Booking() {
                     </option>
                   ))}
                 </select>
+                <ChevronDown size={18} className="absolute right-4 top-[calc(50%+12px)] -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
 
-              <div>
+              <div className="relative">
                 <label
                   htmlFor="referralSource"
                   className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
@@ -244,7 +246,7 @@ export default function Booking() {
                   name="referralSource"
                   value={formData.referralSource}
                   onChange={handleChange}
-                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none"
+                  className="w-full px-4 py-4 pr-12 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none cursor-pointer"
                 >
                   <option value="">Select an option</option>
                   {referralOptions.map((option) => (
@@ -253,6 +255,7 @@ export default function Booking() {
                     </option>
                   ))}
                 </select>
+                <ChevronDown size={18} className="absolute right-4 top-[calc(50%+12px)] -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
 
               <div>
