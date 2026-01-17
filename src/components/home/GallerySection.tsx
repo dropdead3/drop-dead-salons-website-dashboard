@@ -28,7 +28,13 @@ const galleryImages = [
 
 // Before/after transformations
 const transformations = [
-  { id: 1, beforeLabel: "Before", afterLabel: "Balayage" },
+  { 
+    id: 1, 
+    beforeImage: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=800&fit=crop",
+    afterImage: "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=600&h=800&fit=crop",
+    beforeLabel: "Before", 
+    afterLabel: "Balayage" 
+  },
 ];
 
 export function GallerySection() {
@@ -81,6 +87,8 @@ export function GallerySection() {
             transition={{ duration: 0.6, delay: index * 0.1 }}
           >
             <BeforeAfterSlider
+              beforeImage={transform.beforeImage}
+              afterImage={transform.afterImage}
               beforeLabel={transform.beforeLabel}
               afterLabel={transform.afterLabel}
             />
