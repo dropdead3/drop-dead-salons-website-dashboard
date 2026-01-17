@@ -23,7 +23,7 @@ export function BrandStatement() {
             Not Your
             <br />
             <span className="italic font-light">
-              <TypewriterText text="Typical" isInView={isInView} delay={600} /> Salon.
+              <TypewriterText text="Average" isInView={isInView} delay={600} /> Salon.
             </span>
           </h2>
         </motion.div>
