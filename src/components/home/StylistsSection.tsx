@@ -351,6 +351,25 @@ export function StylistsSection() {
                 ))}
               </div>
             </div>
+
+            {/* Clear Filters Button */}
+            <AnimatePresence>
+              {(selectedSpecialty || selectedLevel) && (
+                <motion.button
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => {
+                    setSelectedSpecialty(null);
+                    setSelectedLevel(null);
+                  }}
+                  className="text-xs tracking-wide text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+                >
+                  Clear filters
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
 
