@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, ChevronDown, Info } from "lucide-react";
+import { ArrowRight, Sparkles, ChevronDown, Info, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -167,12 +167,13 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 + index * 0.1 }}
-            className={`px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
               specialty === "EXTENSIONS"
-                ? "bg-primary text-primary-foreground"
-                : "bg-background/90 text-foreground"
+                ? "bg-oat/85 text-oat-foreground"
+                : "bg-background/70 text-foreground"
             }`}
           >
+            {specialty === "EXTENSIONS" && <Star className="w-3 h-3 fill-current" />}
             {specialty}
           </motion.span>
         ))}
@@ -200,24 +201,7 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-xl font-serif">{stylist.name}</h3>
-          {stylist.specialties.includes("EXTENSIONS") && (
-            <TooltipProvider delayDuration={100}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold tracking-wide uppercase">
-                    <Sparkles className="w-3 h-3" />
-                    Ext
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-background text-foreground border border-border">
-                  <p className="text-xs font-medium">Extension Specialist</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
+        <h3 className="text-xl font-serif mb-1">{stylist.name}</h3>
         <a 
           href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
           target="_blank"

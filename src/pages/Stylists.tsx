@@ -2,14 +2,8 @@ import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import { Link } from "react-router-dom";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 type Location = "val-vista-lakes" | "north-mesa";
 
@@ -117,12 +111,13 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className={`px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
               specialty === "EXTENSIONS"
-                ? "bg-primary text-primary-foreground"
-                : "bg-background/90 text-foreground"
+                ? "bg-oat/85 text-oat-foreground"
+                : "bg-background/70 text-foreground"
             }`}
           >
+            {specialty === "EXTENSIONS" && <Star className="w-3 h-3 fill-current" />}
             {specialty}
           </motion.span>
         ))}
@@ -131,24 +126,7 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
       {/* Stylist Info */}
       <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform transition-transform duration-500 group-hover:translate-y-[-4px]">
         <p className="text-xs tracking-[0.2em] text-white/70 mb-1">{stylist.level}</p>
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-xl font-serif">{stylist.name}</h3>
-          {stylist.specialties.includes("EXTENSIONS") && (
-            <TooltipProvider delayDuration={100}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold tracking-wide uppercase">
-                    <Sparkles className="w-3 h-3" />
-                    Ext
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="bg-background text-foreground border border-border">
-                  <p className="text-xs font-medium">Extension Specialist</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
+        <h3 className="text-xl font-serif mb-1">{stylist.name}</h3>
         <a 
           href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
           target="_blank"
