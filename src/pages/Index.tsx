@@ -24,8 +24,8 @@ const Index = () => {
       <HeroSection />
       <BrandStatement />
       <ServicesPreview />
-      <BrandsSection />
       <PopularServices />
+      <BrandsSection />
       <NewClientSection />
       <GallerySection />
       {/* Combined Reviews & FAQ Section with Gradient */}
