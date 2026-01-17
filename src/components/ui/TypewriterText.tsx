@@ -12,7 +12,7 @@ export function TypewriterText({
   text, 
   isInView, 
   delay = 0, 
-  speed = 120, 
+  speed = 220, 
   className = ""
 }: TypewriterTextProps) {
   const [displayedText, setDisplayedText] = useState("");
