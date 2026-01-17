@@ -129,13 +129,15 @@ export function ServicesPreview() {
 
   const goToPrevious = () => {
     setIsPaused(true);
-    const newIndex = Math.max(0, currentIndex - 1);
+    // Wrap to last item if at beginning
+    const newIndex = currentIndex === 0 ? services.length - 1 : currentIndex - 1;
     scrollToCard(newIndex);
   };
 
   const goToNext = () => {
     setIsPaused(true);
-    const newIndex = Math.min(services.length - 1, currentIndex + 1);
+    // Wrap to first item if at end
+    const newIndex = currentIndex === services.length - 1 ? 0 : currentIndex + 1;
     scrollToCard(newIndex);
   };
 
@@ -232,7 +234,7 @@ export function ServicesPreview() {
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={goToPrevious}
-              disabled={currentIndex === 0 || isAnimating}
+              disabled={isAnimating}
               className="w-12 h-12 rounded-full border border-border flex items-center justify-center text-foreground transition-all duration-300 hover:bg-foreground hover:text-background disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-foreground"
               aria-label="Previous service"
             >
@@ -240,7 +242,7 @@ export function ServicesPreview() {
             </button>
             <button
               onClick={goToNext}
-              disabled={currentIndex === services.length - 1 || isAnimating}
+              disabled={isAnimating}
               className="w-12 h-12 rounded-full border border-border flex items-center justify-center text-foreground transition-all duration-300 hover:bg-foreground hover:text-background disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-foreground"
               aria-label="Next service"
             >
