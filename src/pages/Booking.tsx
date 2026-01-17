@@ -14,6 +14,8 @@ export default function Booking() {
     email: "",
     phone: "",
     service: "",
+    stylist: "",
+    referralSource: "",
     message: "",
   });
 
@@ -40,6 +42,8 @@ export default function Booking() {
       email: "",
       phone: "",
       service: "",
+      stylist: "",
+      referralSource: "",
       message: "",
     });
     setIsSubmitting(false);
@@ -52,6 +56,27 @@ export default function Booking() {
     "Treatments & Care",
     "Consultation",
     "Not sure yet",
+  ];
+
+  const stylistOptions = [
+    { name: "Soonest Available", level: "" },
+    { name: "No Preference", level: "" },
+    { name: "Sarah Mitchell", level: "Master Stylist" },
+    { name: "Jordan Lee", level: "Senior Colorist" },
+    { name: "Alex Rivera", level: "Extension Specialist" },
+    { name: "Morgan Chen", level: "Stylist" },
+    { name: "Taylor Brooks", level: "Junior Stylist" },
+  ];
+
+  const referralOptions = [
+    "Instagram",
+    "TikTok",
+    "Google Search",
+    "Friend or Family",
+    "Yelp",
+    "Another Stylist",
+    "Walk-in",
+    "Other",
   ];
 
   return (
@@ -179,6 +204,52 @@ export default function Booking() {
                   {serviceOptions.map((service) => (
                     <option key={service} value={service}>
                       {service}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="stylist"
+                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                >
+                  Preferred Stylist
+                </label>
+                <select
+                  id="stylist"
+                  name="stylist"
+                  value={formData.stylist}
+                  onChange={handleChange}
+                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none"
+                >
+                  <option value="">Select a stylist</option>
+                  {stylistOptions.map((stylist) => (
+                    <option key={stylist.name} value={stylist.name}>
+                      {stylist.name}{stylist.level ? ` — ${stylist.level}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="referralSource"
+                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                >
+                  How Did You Hear About Us?
+                </label>
+                <select
+                  id="referralSource"
+                  name="referralSource"
+                  value={formData.referralSource}
+                  onChange={handleChange}
+                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none"
+                >
+                  <option value="">Select an option</option>
+                  {referralOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
                     </option>
                   ))}
                 </select>
