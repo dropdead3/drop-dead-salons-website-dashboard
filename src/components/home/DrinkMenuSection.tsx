@@ -6,36 +6,42 @@ const drinks = [
     id: 1,
     name: "Tropical Death",
     colors: "from-purple-400 via-pink-400 to-purple-600",
+    ingredients: "Passion fruit, butterfly pea, lychee, sparkling water",
   },
   {
     id: 2,
     name: "Creme De Dead",
     colors: "from-yellow-300 via-teal-400 to-cyan-500",
+    ingredients: "Mango, blue curaçao, coconut cream, pineapple",
   },
   {
     id: 3,
     name: "Scary Stories",
     colors: "from-cyan-400 via-blue-500 to-purple-500",
+    ingredients: "Blueberry, lavender, vanilla, oat milk",
   },
   {
     id: 4,
     name: "Stay Awhile",
     colors: "from-pink-300 via-rose-400 to-red-400",
+    ingredients: "Strawberry, rose water, hibiscus, honey",
   },
   {
     id: 5,
     name: "Drop Dead Gorgeous",
     colors: "from-emerald-300 via-teal-400 to-cyan-500",
+    ingredients: "Matcha, mint, cucumber, lime, agave",
   },
   {
     id: 6,
     name: "Sweet Dreams",
     colors: "from-violet-400 via-purple-500 to-indigo-500",
+    ingredients: "Grape, elderflower, chamomile, sparkling water",
   },
 ];
 
 const DrinkIcon = ({ colors }: { colors: string }) => (
-  <div className="relative w-20 h-28 md:w-24 md:h-32">
+  <div className="relative w-20 h-28 md:w-24 md:h-32 transition-transform duration-300 group-hover:scale-110">
     {/* Cup */}
     <div 
       className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-24 md:w-20 md:h-28 rounded-b-lg bg-gradient-to-b ${colors} opacity-90`}
@@ -54,6 +60,46 @@ const DrinkIcon = ({ colors }: { colors: string }) => (
     <div className="absolute -top-2 right-1 w-1.5 h-4 bg-green-600 rotate-45 rounded-full" />
   </div>
 );
+
+interface DrinkCardProps {
+  drink: typeof drinks[0];
+  index?: number;
+  isInView?: boolean;
+  animated?: boolean;
+}
+
+const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: DrinkCardProps) => {
+  const Wrapper = animated ? motion.div : 'div';
+  const wrapperProps = animated ? {
+    initial: { opacity: 0, y: 30 },
+    animate: isInView ? { opacity: 1, y: 0 } : {},
+    transition: { duration: 0.6, delay: index * 0.1 },
+  } : {};
+
+  return (
+    <Wrapper
+      {...wrapperProps}
+      className="group relative flex flex-col items-center gap-4 px-16 md:px-24 lg:px-32 cursor-pointer"
+    >
+      <DrinkIcon colors={drink.colors} />
+      <h3 className="font-serif text-lg md:text-xl lg:text-2xl text-foreground whitespace-nowrap">
+        {drink.name}
+      </h3>
+      
+      {/* Hover tooltip */}
+      <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-10">
+        <div className="bg-foreground text-background px-4 py-3 text-center whitespace-nowrap shadow-lg">
+          <p className="text-xs uppercase tracking-wider mb-1 text-background/70">Ingredients</p>
+          <p className="text-sm font-light max-w-[200px] whitespace-normal">
+            {drink.ingredients}
+          </p>
+        </div>
+        {/* Arrow */}
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-foreground" />
+      </div>
+    </Wrapper>
+  );
+};
 
 export function DrinkMenuSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -82,32 +128,22 @@ export function DrinkMenuSection() {
       >
         {/* First set */}
         {drinks.map((drink, index) => (
-          <motion.div
-            key={drink.id}
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
-            className="flex flex-col items-center gap-4 px-16 md:px-24 lg:px-32"
-          >
-            <DrinkIcon colors={drink.colors} />
-            <h3 className="font-serif text-lg md:text-xl lg:text-2xl text-foreground whitespace-nowrap">
-              {drink.name}
-            </h3>
-          </motion.div>
+          <DrinkCard 
+            key={drink.id} 
+            drink={drink} 
+            index={index} 
+            isInView={isInView} 
+            animated={true}
+          />
         ))}
         
         {/* Duplicate set for seamless loop */}
         {drinks.map((drink) => (
-          <div
-            key={`dup-${drink.id}`}
-            className="flex flex-col items-center gap-4 px-16 md:px-24 lg:px-32"
-            aria-hidden="true"
-          >
-            <DrinkIcon colors={drink.colors} />
-            <h3 className="font-serif text-lg md:text-xl lg:text-2xl text-foreground whitespace-nowrap">
-              {drink.name}
-            </h3>
-          </div>
+          <DrinkCard 
+            key={`dup-${drink.id}`} 
+            drink={drink} 
+            animated={false}
+          />
         ))}
       </div>
     </section>
