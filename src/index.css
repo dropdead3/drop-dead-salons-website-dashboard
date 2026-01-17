@@ -203,6 +203,26 @@
   }
 }
 
+/* Brand scroll animation - right to left */
+@keyframes brand-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-brand-scroll {
+  display: flex;
+  animation: brand-scroll 25s linear infinite;
+  will-change: transform;
+}
+
+.animate-brand-scroll:hover {
+  animation-play-state: paused;
+}
+
 /* Custom scrollbar */
 @layer utilities {
   .scrollbar-minimal::-webkit-scrollbar {

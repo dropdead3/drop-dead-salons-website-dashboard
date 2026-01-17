@@ -10,6 +10,7 @@ import { GallerySection } from "@/components/home/GallerySection";
 import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { FAQSection } from "@/components/home/FAQSection";
 import { CTASection } from "@/components/home/CTASection";
+import { BrandsSection } from "@/components/home/BrandsSection";
 
 const Index = () => {
   return (
@@ -36,6 +37,7 @@ const Index = () => {
         <TestimonialSection />
         <FAQSection />
       </div>
+      <BrandsSection />
       <CTASection />
     </Layout>
   );
