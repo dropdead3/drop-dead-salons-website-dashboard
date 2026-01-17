@@ -150,7 +150,7 @@ export function HeroSection() {
                 filter: useTransform(blur, (v) => `blur(${v}px)`)
               }}
             >
-              <TypewriterText text="Hair" isInView={true} delay={300} speed={100} />
+              <TypewriterText text="Hair" isInView={true} delay={300} speed={180} />
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -158,15 +158,15 @@ export function HeroSection() {
               >
                 {" "}•{" "}
               </motion.span>
-              <TypewriterText text="Color" isInView={true} delay={900} speed={100} />
+              <TypewriterText text="Color" isInView={true} delay={1200} speed={180} />
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 1.4 }}
+                transition={{ duration: 0.4, delay: 2.2 }}
               >
                 {" "}•{" "}
               </motion.span>
-              <TypewriterText text="Artistry" isInView={true} delay={1500} speed={100} />
+              <TypewriterText text="Artistry" isInView={true} delay={2400} speed={180} />
             </motion.p>
 
             {/* Main headline */}
