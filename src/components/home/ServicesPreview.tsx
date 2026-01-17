@@ -34,6 +34,7 @@ const services = [
 export function ServicesPreview() {
   const sectionRef = useRef<HTMLElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const mobileScrollRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const prefersReducedMotion = useReducedMotion();
   
@@ -43,6 +44,7 @@ export function ServicesPreview() {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [swipeStartX, setSwipeStartX] = useState(0);
   const isAutoScrolling = useRef(false);
 
   // Editorial easing - slow start, smooth middle, gentle stop
@@ -166,7 +168,7 @@ export function ServicesPreview() {
     setIsDragging(false);
   };
 
-  // Touch/swipe handlers (mobile)
+  // Touch/swipe handlers (mobile) - for desktop carousel
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!scrollContainerRef.current) return;
     setIsDragging(true);
@@ -185,6 +187,50 @@ export function ServicesPreview() {
   const handleTouchEnd = () => {
     setIsDragging(false);
   };
+
+  // Mobile infinite swipe handlers
+  const handleMobileSwipeStart = (e: React.TouchEvent) => {
+    setSwipeStartX(e.touches[0].clientX);
+    setIsPaused(true);
+  };
+
+  const handleMobileSwipeEnd = (e: React.TouchEvent) => {
+    const swipeEndX = e.changedTouches[0].clientX;
+    const swipeDiff = swipeStartX - swipeEndX;
+    const swipeThreshold = 50; // Minimum swipe distance
+
+    if (Math.abs(swipeDiff) > swipeThreshold) {
+      if (swipeDiff > 0) {
+        // Swiped left - go to next
+        const newIndex = currentIndex === services.length - 1 ? 0 : currentIndex + 1;
+        setCurrentIndex(newIndex);
+        scrollToMobileCard(newIndex);
+      } else {
+        // Swiped right - go to previous
+        const newIndex = currentIndex === 0 ? services.length - 1 : currentIndex - 1;
+        setCurrentIndex(newIndex);
+        scrollToMobileCard(newIndex);
+      }
+    }
+  };
+
+  const scrollToMobileCard = useCallback((index: number) => {
+    if (!mobileScrollRef.current) return;
+    const container = mobileScrollRef.current;
+    const cards = container.querySelectorAll('[data-mobile-card]');
+    const card = cards[index] as HTMLElement;
+    
+    if (!card) return;
+    
+    const containerWidth = container.offsetWidth;
+    const cardWidth = card.offsetWidth;
+    const scrollLeftPos = card.offsetLeft - (containerWidth / 2) + (cardWidth / 2);
+    
+    container.scrollTo({
+      left: Math.max(0, scrollLeftPos),
+      behavior: prefersReducedMotion ? 'auto' : 'smooth'
+    });
+  }, [prefersReducedMotion]);
 
   // Card animation variants
   const cardVariants: Variants = {
@@ -326,13 +372,13 @@ export function ServicesPreview() {
         </div>
       </div>
 
-      {/* Mobile: Horizontal Swipeable Carousel */}
+      {/* Mobile: Horizontal Swipeable Carousel with Infinite Loop */}
       <div className="md:hidden -mx-6">
         <div
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory"
+          ref={mobileScrollRef}
+          onTouchStart={handleMobileSwipeStart}
+          onTouchEnd={handleMobileSwipeEnd}
+          className="flex gap-4 overflow-x-auto px-6 pb-4 snap-x snap-mandatory scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
         >
           {services.map((service, index) => (
@@ -346,6 +392,7 @@ export function ServicesPreview() {
                 ease: editorialEasing 
               }}
               className="group flex-shrink-0 w-[85vw] snap-center"
+              data-mobile-card
             >
               {/* Image placeholder */}
               <div className="relative aspect-[4/5] bg-secondary/50 border border-border mb-6 overflow-hidden">
