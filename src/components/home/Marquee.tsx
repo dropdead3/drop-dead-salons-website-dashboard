@@ -11,35 +11,36 @@ const marqueeItems = [
 
 export function Marquee() {
   return (
-    <div className="relative w-full overflow-hidden bg-foreground">
-      {/* Cream slanted overlay - uses same rotation as marquee */}
+    <div className="relative w-full overflow-hidden">
+      {/* Cream slanted overlay on top */}
       <div 
-        className="absolute -top-8 left-0 right-0 h-24 bg-background -rotate-2 origin-top-right -mx-4 scale-x-110 z-10"
+        className="absolute -top-4 left-0 right-0 h-20 bg-background -rotate-2 origin-top-left -mx-8 scale-x-125 z-10"
       />
       
-      {/* Black background with slanted marquee - same rotation */}
-      <div className="w-full pt-16 pb-8">
-        <div 
-          className="-rotate-2 -mx-4 scale-x-110 py-4"
-        >
-          <div className="animate-marquee whitespace-nowrap flex text-background">
-            {/* Duplicate items for seamless loop */}
-            {[...marqueeItems, ...marqueeItems].map((item, index) => (
-              <span
-                key={index}
-                className="mx-8 text-sm uppercase tracking-[0.25em] font-sans font-light"
-              >
-                {item}
-              </span>
-            ))}
-            {[...marqueeItems, ...marqueeItems].map((item, index) => (
-              <span
-                key={`dup-${index}`}
-                className="mx-8 text-sm uppercase tracking-[0.25em] font-sans font-light"
-              >
-                {item}
-              </span>
-            ))}
+      {/* Black section background */}
+      <div className="w-full bg-foreground pt-14 pb-10">
+        {/* Slanted marquee bar */}
+        <div className="-rotate-2 -mx-8 scale-x-125">
+          <div className="bg-foreground border-y border-background/20 py-4">
+            <div className="animate-marquee whitespace-nowrap flex">
+              {/* Duplicate items for seamless loop */}
+              {[...marqueeItems, ...marqueeItems].map((item, index) => (
+                <span
+                  key={index}
+                  className="mx-8 text-sm uppercase tracking-[0.25em] font-sans font-light text-background"
+                >
+                  {item}
+                </span>
+              ))}
+              {[...marqueeItems, ...marqueeItems].map((item, index) => (
+                <span
+                  key={`dup-${index}`}
+                  className="mx-8 text-sm uppercase tracking-[0.25em] font-sans font-light text-background"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
