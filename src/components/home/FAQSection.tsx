@@ -1,6 +1,7 @@
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { Search, X } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -28,12 +29,32 @@ const faqs = [
   {
     question: "What is your cancellation policy?",
     answer: "We require 48 hours notice for cancellations or rescheduling. Late cancellations or no-shows may result in a fee equal to 50% of the scheduled service. We understand life happens—just communicate with us as early as possible."
+  },
+  {
+    question: "How do I book an appointment?",
+    answer: "You can book directly through our website by visiting the booking page, or reach out to us via email or phone. New clients should fill out our consultation form first so we can match you with the perfect stylist."
+  },
+  {
+    question: "What payment methods do you accept?",
+    answer: "We accept all major credit cards, debit cards, Apple Pay, Google Pay, and cash. A deposit may be required for certain services at the time of booking."
   }
 ];
 
 export function FAQSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredFaqs = useMemo(() => {
+    if (!searchQuery.trim()) return faqs;
+    
+    const query = searchQuery.toLowerCase();
+    return faqs.filter(
+      faq => 
+        faq.question.toLowerCase().includes(query) ||
+        faq.answer.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
   return (
     <section 
@@ -79,27 +100,80 @@ export function FAQSection() {
             </div>
           </motion.div>
 
-          {/* Right Column - Accordion */}
+          {/* Right Column - Search & Accordion */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
           >
-            <Accordion type="single" collapsible className="space-y-3">
-              {faqs.map((faq, index) => (
-                <AccordionItem
-                  key={index}
-                  value={`item-${index}`}
-                  className="bg-background border border-border px-6 data-[state=open]:border-foreground/20"
+            {/* Search Input */}
+            <div className="relative mb-6">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search questions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-12 py-4 bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Clear search"
                 >
-                  <AccordionTrigger className="text-left text-base md:text-lg font-medium py-5 hover:no-underline">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-foreground/80 pb-5 leading-relaxed">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Results count */}
+            {searchQuery && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-sm text-muted-foreground mb-4"
+              >
+                {filteredFaqs.length} {filteredFaqs.length === 1 ? 'result' : 'results'} found
+              </motion.p>
+            )}
+
+            {/* FAQ Accordion */}
+            <Accordion type="single" collapsible className="space-y-3">
+              <AnimatePresence mode="popLayout">
+                {filteredFaqs.length > 0 ? (
+                  filteredFaqs.map((faq, index) => (
+                    <motion.div
+                      key={faq.question}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
+                    >
+                      <AccordionItem
+                        value={`item-${index}`}
+                        className="bg-background border border-border px-6 data-[state=open]:border-foreground/20"
+                      >
+                        <AccordionTrigger className="text-left text-base md:text-lg font-medium py-5 hover:no-underline">
+                          {faq.question}
+                        </AccordionTrigger>
+                        <AccordionContent className="text-foreground/80 pb-5 leading-relaxed">
+                          {faq.answer}
+                        </AccordionContent>
+                      </AccordionItem>
+                    </motion.div>
+                  ))
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-center py-12 text-muted-foreground"
+                  >
+                    <p className="text-lg mb-2">No matching questions found</p>
+                    <p className="text-sm">Try adjusting your search terms</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </Accordion>
           </motion.div>
         </div>
