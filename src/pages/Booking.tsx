@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -55,6 +56,10 @@ export default function Booking() {
 
   return (
     <Layout>
+      <SEO 
+        title="Book Your Appointment"
+        description="Schedule your hair appointment at Drop Dead Salon. Contact us for consultations, color services, extensions, cuts, and treatments in Los Angeles."
+      />
       {/* Hero */}
       <section className="pt-32 lg:pt-40 pb-16 lg:pb-20">
         <div className="container mx-auto px-6 lg:px-12">

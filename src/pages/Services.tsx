@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -75,6 +76,10 @@ const services = [
 export default function Services() {
   return (
     <Layout>
+      <SEO 
+        title="Hair Services - Color, Extensions, Cutting & Treatments"
+        description="Explore our luxury hair services including custom color, blonding, extensions, precision cuts, and restorative treatments. Book your transformation today."
+      />
       {/* Hero */}
       <section className="pt-32 lg:pt-40 pb-16 lg:pb-20">
         <div className="container mx-auto px-6 lg:px-12">
