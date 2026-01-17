@@ -77,22 +77,23 @@ export function ServicesPreview() {
 
   // Auto-advance animation when in view - every 4 seconds, loops continuously
   useEffect(() => {
-    if (!isInView || hasUserScrolled || prefersReducedMotion) return;
+    if (!isInView || prefersReducedMotion) return;
 
-    let timeoutId: NodeJS.Timeout;
-    let currentCard = 0;
-
+    let intervalId: NodeJS.Timeout;
+    
     const advanceCard = () => {
-      currentCard = (currentCard + 1) % services.length;
-      scrollToCard(currentCard);
-      // Wait 4 seconds before next card
-      timeoutId = setTimeout(advanceCard, 4000);
+      if (hasUserScrolled) return; // Skip if user has interacted
+      setCurrentIndex(prev => {
+        const nextIndex = (prev + 1) % services.length;
+        scrollToCard(nextIndex);
+        return nextIndex;
+      });
     };
 
-    // Initial delay before starting (4 seconds)
-    timeoutId = setTimeout(advanceCard, 4000);
+    // Start auto-scroll after 4 seconds, then every 4 seconds
+    intervalId = setInterval(advanceCard, 4000);
 
-    return () => clearTimeout(timeoutId);
+    return () => clearInterval(intervalId);
   }, [isInView, hasUserScrolled, prefersReducedMotion, scrollToCard]);
 
   // Detect user scroll
@@ -257,8 +258,8 @@ export function ServicesPreview() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex gap-8 overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className={`flex gap-8 overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}
         >
           {services.map((service, index) => (
             <motion.div
