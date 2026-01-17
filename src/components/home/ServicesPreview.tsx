@@ -143,10 +143,8 @@ export function ServicesPreview() {
 
   // Detect user scroll and handle infinite loop reset
   const handleUserScroll = useCallback(() => {
-    // Only pause if this is a user-initiated scroll, not our programmatic scroll
-    if (!isAutoScrolling.current) {
-      setIsPaused(true);
-    }
+    // Don't pause here - let mouse enter/leave handle pausing
+    // This prevents race conditions with auto-scroll
     
     if (!scrollContainerRef.current) return;
     
