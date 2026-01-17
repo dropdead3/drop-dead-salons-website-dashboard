@@ -31,6 +31,10 @@ const services = [
   },
 ];
 
+// Create extended array for infinite scroll (duplicate cards)
+const extendedServices = [...services, ...services, ...services];
+const CLONE_COUNT = services.length;
+
 export function ServicesPreview() {
   const sectionRef = useRef<HTMLElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -46,16 +50,38 @@ export function ServicesPreview() {
   const [scrollLeft, setScrollLeft] = useState(0);
   const [swipeStartX, setSwipeStartX] = useState(0);
   const isAutoScrolling = useRef(false);
+  const hasInitialized = useRef(false);
 
   // Editorial easing - slow start, smooth middle, gentle stop
   const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
-  const scrollToCard = useCallback((index: number, smooth = true) => {
+  // Initialize scroll position to middle set (so we can scroll left or right infinitely)
+  useEffect(() => {
+    if (!scrollContainerRef.current || hasInitialized.current) return;
+    
+    const container = scrollContainerRef.current;
+    const cards = container.querySelectorAll('[data-card]');
+    // Start at the first card of the middle set
+    const middleStartIndex = CLONE_COUNT;
+    const card = cards[middleStartIndex] as HTMLElement;
+    
+    if (card) {
+      const containerRect = container.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
+      container.scrollLeft = Math.max(0, scrollLeftPos);
+      hasInitialized.current = true;
+    }
+  }, [isInView]);
+
+  const scrollToCard = useCallback((realIndex: number, smooth = true) => {
     if (!scrollContainerRef.current) return;
     
     const container = scrollContainerRef.current;
     const cards = container.querySelectorAll('[data-card]');
-    const card = cards[index] as HTMLElement;
+    // Always scroll to the middle set
+    const targetIndex = CLONE_COUNT + realIndex;
+    const card = cards[targetIndex] as HTMLElement;
     
     if (!card) return;
 
@@ -81,7 +107,7 @@ export function ServicesPreview() {
       isAutoScrolling.current = false;
     }
     
-    setCurrentIndex(index);
+    setCurrentIndex(realIndex);
   }, [prefersReducedMotion]);
 
   // Auto-advance animation when in view - every 4 seconds, loops continuously
@@ -99,7 +125,7 @@ export function ServicesPreview() {
     return () => clearInterval(intervalId);
   }, [isInView, isPaused, prefersReducedMotion, scrollToCard]);
 
-  // Detect user scroll (only manual scrolls, not programmatic)
+  // Detect user scroll and handle infinite loop reset
   const handleUserScroll = useCallback(() => {
     // Only pause if this is a user-initiated scroll, not our programmatic scroll
     if (!isAutoScrolling.current) {
@@ -126,7 +152,36 @@ export function ServicesPreview() {
       }
     });
     
-    setCurrentIndex(closestIndex);
+    // Convert extended index to real index
+    const realIndex = closestIndex % services.length;
+    setCurrentIndex(realIndex);
+    
+    // If scrolled into the first or last set, silently jump to middle set
+    if (!isAutoScrolling.current && closestIndex < CLONE_COUNT) {
+      // Scrolled into first clone set - jump to middle
+      const middleIndex = CLONE_COUNT + realIndex;
+      const card = cards[middleIndex] as HTMLElement;
+      if (card) {
+        const containerRect = container.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
+        requestAnimationFrame(() => {
+          container.scrollLeft = scrollLeftPos;
+        });
+      }
+    } else if (!isAutoScrolling.current && closestIndex >= CLONE_COUNT * 2) {
+      // Scrolled into last clone set - jump to middle
+      const middleIndex = CLONE_COUNT + realIndex;
+      const card = cards[middleIndex] as HTMLElement;
+      if (card) {
+        const containerRect = container.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
+        requestAnimationFrame(() => {
+          container.scrollLeft = scrollLeftPos;
+        });
+      }
+    }
   }, []);
 
   const goToPrevious = () => {
@@ -323,11 +378,11 @@ export function ServicesPreview() {
           className={`flex gap-16 overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}
         >
-          {services.map((service, index) => (
+          {extendedServices.map((service, index) => (
             <motion.div
-              key={service.title}
+              key={`${service.title}-${index}`}
               data-card
-              custom={index}
+              custom={index % services.length}
               variants={cardVariants}
               initial="hidden"
               animate={isInView ? "visible" : "hidden"}
@@ -377,8 +432,6 @@ export function ServicesPreview() {
               </div>
             </motion.div>
           ))}
-          {/* Spacer for last card */}
-          <div className="flex-shrink-0 w-8" />
         </div>
       </div>
 
