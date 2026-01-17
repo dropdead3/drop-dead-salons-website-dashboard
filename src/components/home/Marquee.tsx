@@ -21,22 +21,24 @@ export function Marquee() {
       <div className="w-full bg-foreground pt-14 pb-10">
         {/* Slanted marquee bar */}
         <div className="-rotate-2 -mx-8 scale-x-125 overflow-hidden">
-          <div className="py-4 whitespace-nowrap">
-            <div className="animate-marquee">
+          <div className="py-4 marquee-container">
+            {/* First set */}
+            <div className="marquee-content gap-0">
               {marqueeItems.map((item, index) => (
                 <span
                   key={index}
-                  className="mx-8 text-sm uppercase tracking-[0.25em] font-sans font-light text-background inline-block"
+                  className="px-8 text-sm uppercase tracking-[0.25em] font-sans font-light text-background whitespace-nowrap"
                 >
                   {item}
                 </span>
               ))}
             </div>
-            <div className="animate-marquee" aria-hidden="true">
+            {/* Duplicate set for seamless loop */}
+            <div className="marquee-content gap-0" aria-hidden="true">
               {marqueeItems.map((item, index) => (
                 <span
                   key={`dup-${index}`}
-                  className="mx-8 text-sm uppercase tracking-[0.25em] font-sans font-light text-background inline-block"
+                  className="px-8 text-sm uppercase tracking-[0.25em] font-sans font-light text-background whitespace-nowrap"
                 >
                   {item}
                 </span>
