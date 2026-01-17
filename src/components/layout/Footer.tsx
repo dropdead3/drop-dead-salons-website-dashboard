@@ -119,7 +119,7 @@ export function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="mt-16 pt-8 border-t border-oat/50 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted-foreground font-sans">
             © {new Date().getFullYear()} Drop Dead Salon. All rights reserved.
           </p>

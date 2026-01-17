@@ -65,7 +65,7 @@ export function FAQSection() {
     
     return parts.map((part, index) => 
       regex.test(part) ? (
-        <mark key={index} className="bg-primary/20 text-foreground px-0.5 rounded-sm">
+        <mark key={index} className="bg-oat/50 text-foreground px-0.5 rounded-sm">
           {part}
         </mark>
       ) : (

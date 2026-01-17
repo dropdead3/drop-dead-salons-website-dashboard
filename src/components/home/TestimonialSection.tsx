@@ -38,7 +38,7 @@ const reviews = [
 const StarRating = () => (
   <div className="flex gap-0.5">
     {[...Array(5)].map((_, i) => (
-      <Star key={i} className="w-4 h-4 fill-foreground text-foreground" />
+      <Star key={i} className="w-4 h-4 fill-oat text-oat" />
     ))}
   </div>
 );
