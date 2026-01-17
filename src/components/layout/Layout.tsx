@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { StickyBookButton } from "./StickyBookButton";
+import { StickyPhoneSidebar } from "./StickyPhoneSidebar";
 import { PageTransition } from "./PageTransition";
 
 interface LayoutProps {
@@ -17,6 +18,7 @@ export function Layout({ children }: LayoutProps) {
       </main>
       <Footer />
       <StickyBookButton />
+      <StickyPhoneSidebar />
     </div>
   );
 }
