@@ -99,7 +99,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
         <DrinkIcon colors={drink.colors} />
         
         {/* Hover tooltip - positioned to the right of the icon */}
-        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-8 md:ml-12 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto z-10">
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-8 md:ml-12 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out pointer-events-none group-hover:pointer-events-auto z-10">
           <div className="bg-oat text-oat-foreground px-5 py-4 text-center shadow-lg border border-border/50 w-[180px] min-h-[120px] flex flex-col justify-center">
             <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-oat-foreground/60 font-sans">Ingredients</p>
             <p className="text-sm font-serif whitespace-normal leading-relaxed">
