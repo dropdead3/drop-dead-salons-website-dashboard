@@ -36,8 +36,8 @@ export function TypewriterText({
       if (currentIndex <= text.length) {
         setDisplayedText(text.slice(0, currentIndex));
         currentIndex++;
-        // Vary speed by ±30% for natural feel
-        const variance = speed * 0.3;
+        // Vary speed by ±60% for more natural feel
+        const variance = speed * 0.6;
         const nextDelay = speed + (Math.random() * variance * 2 - variance);
         setTimeout(typeNextChar, nextDelay);
       }
