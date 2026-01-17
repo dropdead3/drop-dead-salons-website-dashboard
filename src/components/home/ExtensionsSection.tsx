@@ -6,7 +6,9 @@ import { Link } from "react-router-dom";
 
 export function ExtensionsSection() {
   const ref = useRef(null);
+  const featuresRef = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const featuresInView = useInView(featuresRef, { once: true, margin: "-50px" });
 
   const features = [
     {
@@ -72,30 +74,60 @@ export function ExtensionsSection() {
               that move and feel like your own hair.
             </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="space-y-4"
-            >
+            <div ref={featuresRef} className="space-y-5">
               {features.map((feature, index) => (
                 <motion.div
                   key={feature.title}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                  className="flex items-start gap-4"
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={featuresInView ? { opacity: 1, x: 0 } : {}}
+                  transition={{ 
+                    duration: 0.6, 
+                    delay: index * 0.15,
+                    ease: [0.25, 0.1, 0.25, 1]
+                  }}
+                  className="flex items-start gap-4 group"
                 >
-                  <div className="flex-shrink-0 w-10 h-10 bg-oat/20 flex items-center justify-center">
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={featuresInView ? { scale: 1, opacity: 1 } : {}}
+                    transition={{ 
+                      duration: 0.5, 
+                      delay: index * 0.15 + 0.1,
+                      ease: "easeOut"
+                    }}
+                    className="flex-shrink-0 w-12 h-12 bg-oat/20 flex items-center justify-center transition-colors duration-300 group-hover:bg-oat/30"
+                  >
                     <feature.icon className="w-5 h-5 text-oat" />
-                  </div>
+                  </motion.div>
                   <div>
-                    <h3 className="font-medium text-background mb-1">{feature.title}</h3>
-                    <p className="text-sm text-background/60">{feature.description}</p>
+                    <motion.h3 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={featuresInView ? { opacity: 1, y: 0 } : {}}
+                      transition={{ 
+                        duration: 0.5, 
+                        delay: index * 0.15 + 0.15,
+                        ease: "easeOut"
+                      }}
+                      className="font-medium text-background mb-1"
+                    >
+                      {feature.title}
+                    </motion.h3>
+                    <motion.p 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={featuresInView ? { opacity: 1, y: 0 } : {}}
+                      transition={{ 
+                        duration: 0.5, 
+                        delay: index * 0.15 + 0.2,
+                        ease: "easeOut"
+                      }}
+                      className="text-sm text-background/60"
+                    >
+                      {feature.description}
+                    </motion.p>
                   </div>
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
