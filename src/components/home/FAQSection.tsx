@@ -56,6 +56,24 @@ export function FAQSection() {
     );
   }, [searchQuery]);
 
+  // Highlight matching text
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <mark key={index} className="bg-primary/20 text-foreground px-0.5 rounded-sm">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
+
   return (
     <section 
       ref={sectionRef}
@@ -155,10 +173,10 @@ export function FAQSection() {
                         className="bg-background border border-border px-6 data-[state=open]:border-foreground/20"
                       >
                         <AccordionTrigger className="text-left text-base md:text-lg font-medium py-5 hover:no-underline">
-                          {faq.question}
+                          {highlightText(faq.question, searchQuery)}
                         </AccordionTrigger>
                         <AccordionContent className="text-foreground/80 pb-5 leading-relaxed">
-                          {faq.answer}
+                          {highlightText(faq.answer, searchQuery)}
                         </AccordionContent>
                       </AccordionItem>
                     </motion.div>
