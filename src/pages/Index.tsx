@@ -12,6 +12,7 @@ import { FAQSection } from "@/components/home/FAQSection";
 import { CTASection } from "@/components/home/CTASection";
 import { BrandsSection } from "@/components/home/BrandsSection";
 import { DrinkMenuSection } from "@/components/home/DrinkMenuSection";
+import { LocationsSection } from "@/components/home/LocationsSection";
 
 const Index = () => {
   return (
@@ -22,8 +23,8 @@ const Index = () => {
         type="local_business"
       />
       <HeroSection />
+      <LocationsSection />
       <BrandStatement />
-      <ServicesPreview />
       <BrandsSection />
       <PopularServices />
       <NewClientSection />
