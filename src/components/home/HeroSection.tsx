@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { TypewriterText } from "@/components/ui/TypewriterText";
+import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 
 export function HeroSection() {
+  const [consultationOpen, setConsultationOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   
   const { scrollYProgress } = useScroll({
@@ -213,12 +215,12 @@ export function HeroSection() {
               }}
             >
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  to="/new-client-consultation"
+                <button
+                  onClick={() => setConsultationOpen(true)}
                   className="group w-full sm:w-auto px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98]"
                 >
                   <span className="relative z-10">I Am a New Client</span>
-                </Link>
+                </button>
                 <Link
                   to="/booking"
                   className="group w-full sm:w-auto px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300 text-center relative overflow-hidden"
@@ -257,6 +259,9 @@ export function HeroSection() {
           <ChevronDown size={20} />
         </motion.div>
       </motion.button>
+
+      {/* Consultation Form Dialog */}
+      <ConsultationFormDialog open={consultationOpen} onOpenChange={setConsultationOpen} />
     </section>
   );
 }
