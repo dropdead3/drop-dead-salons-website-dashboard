@@ -62,14 +62,20 @@ export function Footer() {
             </h4>
             <div className="space-y-5">
               {locations.map((location) => (
-                <div key={location.name} className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-foreground/50 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm font-sans font-light text-foreground/80">
+                <a 
+                  key={location.name} 
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-2 group"
+                >
+                  <MapPin className="w-4 h-4 text-foreground/50 group-hover:text-foreground flex-shrink-0 mt-0.5 transition-colors" />
+                  <div className="text-sm font-sans font-light text-foreground/80 group-hover:text-foreground transition-colors">
                     <p className="font-medium text-foreground">{location.name}</p>
                     <p>{location.address}</p>
                     <p>{location.city}</p>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </div>
