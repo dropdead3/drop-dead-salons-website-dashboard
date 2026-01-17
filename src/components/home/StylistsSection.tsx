@@ -359,24 +359,39 @@ export function StylistsSection() {
       {/* Scrolling Cards */}
       <div className="relative">
         <AnimatePresence mode="wait">
-          <motion.div
-            key={`${selectedLocation}-${selectedSpecialty}-${selectedLevel}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex gap-4 overflow-x-auto pb-4"
-            style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              paddingLeft: 'max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem))',
-              paddingRight: '1.5rem'
-            }}
-          >
-            {filteredStylists.map((stylist, index) => (
-              <StylistCard key={stylist.id} stylist={stylist} index={index} />
-            ))}
-          </motion.div>
+          {filteredStylists.length > 0 ? (
+            <motion.div
+              key={`${selectedLocation}-${selectedSpecialty}-${selectedLevel}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex gap-4 overflow-x-auto pb-4"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                paddingLeft: 'max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem))',
+                paddingRight: '1.5rem'
+              }}
+            >
+              {filteredStylists.map((stylist, index) => (
+                <StylistCard key={stylist.id} stylist={stylist} index={index} />
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="no-results"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-center py-16 px-6"
+            >
+              <p className="text-lg text-muted-foreground">
+                No stylists match your selected filters
+              </p>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
