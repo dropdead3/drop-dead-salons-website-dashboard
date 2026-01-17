@@ -68,18 +68,20 @@ export function LocationsSection() {
               </div>
               <a
                 href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
-                className="inline-flex items-center gap-2 text-foreground/70 hover:text-foreground transition-colors mb-6"
+                className="flex items-center justify-center gap-2 text-foreground/70 hover:text-foreground transition-colors mb-6"
               >
                 <Phone className="w-4 h-4" />
                 <span>{location.phone}</span>
               </a>
-              <Link
-                to={location.bookingUrl}
-                className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.15em] font-medium text-foreground hover:text-foreground/70 transition-colors group/link"
-              >
-                <span>Book Here</span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
-              </Link>
+              <div>
+                <Link
+                  to={location.bookingUrl}
+                  className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.15em] font-medium text-foreground hover:text-foreground/70 transition-colors group/link"
+                >
+                  <span>Book Here</span>
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
+                </Link>
+              </div>
             </motion.div>
           ))}
         </div>
