@@ -145,7 +145,7 @@ export default function Booking() {
                     New Clients
                   </h3>
                   <p className="text-sm text-muted-foreground font-sans font-light leading-relaxed">
-                    First-time clients may be required to book a consultation prior to service. Some specialized services require approval before booking.
+                    First-time clients are typically required to do a consultation before any services are booked and performed. This helps everyone get on the same page and achieve the end result.
                   </p>
                 </div>
               </div>
