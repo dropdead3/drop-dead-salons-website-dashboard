@@ -2,13 +2,18 @@ import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
+import { BeforeAfterSlider } from "./BeforeAfterSlider";
 
 // Placeholder images - will be replaced with real salon work
 const galleryImages = [
   { id: 1, aspect: "portrait" },
   { id: 2, aspect: "portrait" },
   { id: 3, aspect: "portrait" },
-  { id: 4, aspect: "portrait" },
+];
+
+// Before/after transformations
+const transformations = [
+  { id: 1, beforeLabel: "Before", afterLabel: "Balayage" },
 ];
 
 export function GallerySection() {
@@ -42,12 +47,28 @@ export function GallerySection() {
         ref={ref}
         className="grid grid-cols-2 md:grid-cols-4 gap-4"
       >
+        {/* Before/After Slider - Featured */}
+        {transformations.map((transform, index) => (
+          <motion.div
+            key={`transform-${transform.id}`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: index * 0.1 }}
+          >
+            <BeforeAfterSlider
+              beforeLabel={transform.beforeLabel}
+              afterLabel={transform.afterLabel}
+            />
+          </motion.div>
+        ))}
+
+        {/* Regular Gallery Images */}
         {galleryImages.map((image, index) => (
           <motion.div
             key={image.id}
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
+            transition={{ duration: 0.6, delay: (index + transformations.length) * 0.1 }}
             className="relative aspect-[3/4] overflow-hidden group cursor-pointer"
           >
             {/* Placeholder with gradient */}
