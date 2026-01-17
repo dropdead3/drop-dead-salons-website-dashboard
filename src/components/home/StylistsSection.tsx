@@ -3,6 +3,7 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 
 type Location = "val-vista-lakes" | "north-mesa";
 
@@ -87,10 +88,12 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
       transition={{ duration: 0.4, delay: index * 0.1 }}
       className="group relative aspect-[3/4] bg-muted overflow-hidden flex-shrink-0 w-[280px] md:w-[300px]"
     >
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-        style={{ backgroundImage: `url(${stylist.imageUrl})` }}
+      {/* Background Image with Skeleton */}
+      <ImageWithSkeleton
+        src={stylist.imageUrl}
+        alt={`${stylist.name} - ${stylist.level}`}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        wrapperClassName="absolute inset-0"
       />
       
       {/* Gradient Overlay */}

@@ -3,12 +3,25 @@ import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
+import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 
-// Placeholder images - will be replaced with real salon work
+// Gallery images - replace with real salon work
 const galleryImages = [
-  { id: 1, aspect: "portrait" },
-  { id: 2, aspect: "portrait" },
-  { id: 3, aspect: "portrait" },
+  { 
+    id: 1, 
+    src: "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=600&h=800&fit=crop",
+    alt: "Blonde balayage transformation"
+  },
+  { 
+    id: 2, 
+    src: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&h=800&fit=crop",
+    alt: "Creative color work"
+  },
+  { 
+    id: 3, 
+    src: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=800&fit=crop",
+    alt: "Styled hair finish"
+  },
 ];
 
 // Before/after transformations
@@ -62,7 +75,7 @@ export function GallerySection() {
           </motion.div>
         ))}
 
-        {/* Regular Gallery Images */}
+        {/* Regular Gallery Images with Skeleton */}
         {galleryImages.map((image, index) => (
           <motion.div
             key={image.id}
@@ -71,22 +84,19 @@ export function GallerySection() {
             transition={{ duration: 0.6, delay: (index + transformations.length) * 0.1 }}
             className="relative aspect-[3/4] overflow-hidden group cursor-pointer"
           >
-            {/* Placeholder with gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-muted to-secondary" />
+            <ImageWithSkeleton
+              src={image.src}
+              alt={image.alt}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              wrapperClassName="absolute inset-0"
+            />
             
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors duration-500" />
-            
-            {/* Placeholder text */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60 font-sans">
-                Image {image.id}
-              </span>
-            </div>
 
             {/* Hover reveal */}
             <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-              <span className="text-xs uppercase tracking-[0.15em] text-foreground font-sans">
+              <span className="text-xs uppercase tracking-[0.15em] text-background font-sans bg-foreground px-2 py-1">
                 View
               </span>
             </div>
