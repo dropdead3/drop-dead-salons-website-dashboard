@@ -13,6 +13,7 @@ export default function Booking() {
     name: "",
     email: "",
     phone: "",
+    location: "",
     service: "",
     stylist: "",
     referralSource: "",
@@ -41,6 +42,7 @@ export default function Booking() {
       name: "",
       email: "",
       phone: "",
+      location: "",
       service: "",
       stylist: "",
       referralSource: "",
@@ -77,6 +79,12 @@ export default function Booking() {
     "Another Stylist",
     "Walk-in",
     "Other",
+  ];
+
+  const locationOptions = [
+    { name: "West Hollywood", address: "8715 Santa Monica Blvd, West Hollywood, CA 90069" },
+    { name: "Studio City", address: "12345 Ventura Blvd, Studio City, CA 91604" },
+    { name: "No Preference", address: "" },
   ];
 
   return (
@@ -183,6 +191,31 @@ export default function Booking() {
                   className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground transition-colors"
                   placeholder="(555) 123-4567"
                 />
+              </div>
+
+              <div className="relative">
+                <label
+                  htmlFor="location"
+                  className="block text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3"
+                >
+                  Which Location Do You Prefer?
+                </label>
+                <select
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-4 pr-12 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none cursor-pointer"
+                >
+                  <option value="">Select a location</option>
+                  {locationOptions.map((loc) => (
+                    <option key={loc.name} value={loc.name}>
+                      {loc.name}{loc.address ? ` — ${loc.address}` : ""}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={18} className="absolute right-4 top-[calc(50%+12px)] -translate-y-1/2 text-muted-foreground pointer-events-none" />
               </div>
 
               <div className="relative">
