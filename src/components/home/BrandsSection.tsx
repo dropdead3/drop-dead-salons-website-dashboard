@@ -1,10 +1,8 @@
 const brandLogos = [
   { name: "Kevin Murphy", text: "KEVIN.MURPHY" },
-  { name: "Nutrafol", text: "NUTRAFOL" },
   { name: "AIIR", text: "AIIR" },
-  { name: "Oribe", text: "ORIBE" },
-  { name: "Redken", text: "REDKEN" },
-  { name: "L'Oreal", text: "L'ORÉAL" },
+  { name: "Nutrafol", text: "NUTRAFOL" },
+  { name: "Drop Dead Professional", text: "DROP DEAD PROFESSIONAL" },
 ];
 
 export function BrandsSection() {
