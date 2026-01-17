@@ -146,8 +146,7 @@ export function HeroSection() {
               className="text-xs uppercase tracking-[0.4em] text-muted-foreground font-sans mb-8"
               style={{ 
                 opacity,
-                y: taglineY,
-                filter: useTransform(blur, (v) => `blur(${v}px)`)
+                y: taglineY
               }}
             >
               <TypewriterText text="Hair" isInView={true} delay={300} speed={280} />
@@ -194,8 +193,7 @@ export function HeroSection() {
               className="mt-10 text-base md:text-lg text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
               style={{ 
                 opacity,
-                y: subheadlineY,
-                filter: useTransform(blur, (v) => `blur(${v}px)`)
+                y: subheadlineY
               }}
             >
               Step into a world where science meets artistry.
@@ -211,8 +209,7 @@ export function HeroSection() {
               className="mt-12 flex flex-col items-center gap-4"
               style={{ 
                 opacity,
-                y: ctaY,
-                filter: useTransform(blur, (v) => `blur(${v}px)`)
+                y: ctaY
               }}
             >
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
