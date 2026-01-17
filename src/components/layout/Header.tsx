@@ -79,13 +79,19 @@ export function Header() {
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "text-sm tracking-wide font-sans font-normal link-underline transition-opacity leading-none",
+                    "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-normal transition-opacity leading-none",
                     location.pathname === link.href
                       ? "opacity-100"
                       : "opacity-70 hover:opacity-100"
                   )}
                 >
-                  {link.label}
+                  <span className="transition-transform duration-300 group-hover:-translate-x-1">
+                    {link.label}
+                  </span>
+                  <ArrowRight 
+                    size={14} 
+                    className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" 
+                  />
                 </Link>
               ))}
             </nav>
