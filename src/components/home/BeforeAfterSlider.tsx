@@ -2,12 +2,16 @@ import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 
 interface BeforeAfterSliderProps {
+  beforeImage: string;
+  afterImage: string;
   beforeLabel?: string;
   afterLabel?: string;
   className?: string;
 }
 
 export function BeforeAfterSlider({ 
+  beforeImage,
+  afterImage,
   beforeLabel = "Before", 
   afterLabel = "After",
   className = ""
@@ -48,24 +52,24 @@ export function BeforeAfterSlider({
       onTouchEnd={handleMouseUp}
     >
       {/* After Image (Background) */}
-      <div className="absolute inset-0 bg-gradient-to-br from-secondary to-muted">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60 font-sans">
-            After
-          </span>
-        </div>
+      <div className="absolute inset-0">
+        <img 
+          src={afterImage} 
+          alt="After transformation" 
+          className="w-full h-full object-cover"
+        />
       </div>
 
       {/* Before Image (Clipped) */}
       <div 
-        className="absolute inset-0 bg-gradient-to-tl from-muted to-secondary"
+        className="absolute inset-0"
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60 font-sans">
-            Before
-          </span>
-        </div>
+        <img 
+          src={beforeImage} 
+          alt="Before transformation" 
+          className="w-full h-full object-cover"
+        />
       </div>
 
       {/* Slider Line */}

@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { Section } from "@/components/ui/section";
 import { ArrowRight, Star, Award, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import { BeforeAfterSlider } from "./BeforeAfterSlider";
 
 export function ExtensionsSection() {
   const ref = useRef(null);
@@ -152,37 +153,36 @@ export function ExtensionsSection() {
             </motion.div>
           </div>
 
-          {/* Right side - Visual */}
+          {/* Right side - Before/After Slider */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 1, delay: 0.3 }}
             className="relative"
           >
-            <div className="relative aspect-[4/5] overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=1000&fit=crop"
-                alt="Beautiful hair extensions by Drop Dead Salon"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 via-transparent to-transparent" />
+            <BeforeAfterSlider
+              beforeImage="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600&h=750&fit=crop"
+              afterImage="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=750&fit=crop"
+              beforeLabel="Before"
+              afterLabel="After Extensions"
+              className="aspect-[4/5]"
+            />
               
-              {/* Floating badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: 0.8 }}
-                className="absolute bottom-6 left-6 right-6 bg-background/95 backdrop-blur-sm p-5"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <Award className="w-5 h-5 text-oat-foreground" />
-                  <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationwide Educators</span>
-                </div>
-                <p className="text-sm text-foreground leading-relaxed">
-                  Salons across the country travel to learn and proudly showcase the Drop Dead Method.
-                </p>
-              </motion.div>
-            </div>
+            {/* Floating badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="absolute bottom-6 left-6 right-6 bg-background/95 backdrop-blur-sm p-5 z-30"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <Award className="w-5 h-5 text-oat-foreground" />
+                <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationwide Educators</span>
+              </div>
+              <p className="text-sm text-foreground leading-relaxed">
+                Salons across the country travel to learn and proudly showcase the Drop Dead Method.
+              </p>
+            </motion.div>
 
             {/* Decorative element */}
             <motion.div
