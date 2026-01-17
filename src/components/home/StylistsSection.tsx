@@ -225,9 +225,9 @@ export function StylistsSection() {
       >
         <Link
           to="/stylists"
-          className="inline-flex items-center gap-2 text-sm font-medium link-underline group"
+          className="inline-flex items-center gap-2 text-sm font-medium group"
         >
-          View all stylists
+          <span className="link-underline">View all stylists</span>
           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </motion.div>
