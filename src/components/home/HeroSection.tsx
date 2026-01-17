@@ -28,9 +28,111 @@ export function HeroSection() {
     });
   };
 
+  // Floating decorative elements config
+  const floatingElements = [
+    { size: 300, x: "10%", y: "20%", duration: 20, delay: 0 },
+    { size: 200, x: "85%", y: "15%", duration: 25, delay: 2 },
+    { size: 150, x: "75%", y: "70%", duration: 18, delay: 4 },
+    { size: 250, x: "5%", y: "65%", duration: 22, delay: 1 },
+    { size: 100, x: "50%", y: "80%", duration: 15, delay: 3 },
+  ];
+
   return (
     <section ref={sectionRef} className="relative min-h-screen flex flex-col overflow-hidden">
-      <div className="flex-1 flex items-center justify-center py-24 lg:py-32">
+      {/* Floating Decorative Elements */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {floatingElements.map((el, index) => (
+          <motion.div
+            key={index}
+            className="absolute rounded-full"
+            style={{
+              width: el.size,
+              height: el.size,
+              left: el.x,
+              top: el.y,
+              background: `radial-gradient(circle, hsl(var(--foreground) / 0.03) 0%, transparent 70%)`,
+            }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ 
+              opacity: [0.3, 0.6, 0.3],
+              scale: [1, 1.1, 1],
+              x: [0, 30, -20, 0],
+              y: [0, -40, 20, 0],
+            }}
+            transition={{
+              duration: el.duration,
+              delay: el.delay,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+        
+        {/* Subtle gradient orbs */}
+        <motion.div
+          className="absolute w-[600px] h-[600px] -top-[200px] -right-[200px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, hsl(var(--foreground) / 0.02) 0%, transparent 60%)",
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.5, 0.8, 0.5],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute w-[500px] h-[500px] -bottom-[150px] -left-[150px] rounded-full"
+          style={{
+            background: "radial-gradient(circle, hsl(var(--foreground) / 0.02) 0%, transparent 60%)",
+          }}
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.6, 0.4, 0.6],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Thin floating lines */}
+        <motion.div
+          className="absolute w-[1px] h-32 bg-gradient-to-b from-transparent via-foreground/10 to-transparent"
+          style={{ left: "20%", top: "30%" }}
+          animate={{
+            y: [0, 50, 0],
+            opacity: [0, 0.5, 0],
+            rotate: [0, 5, 0],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute w-[1px] h-24 bg-gradient-to-b from-transparent via-foreground/10 to-transparent"
+          style={{ right: "25%", top: "40%" }}
+          animate={{
+            y: [0, -40, 0],
+            opacity: [0, 0.4, 0],
+            rotate: [0, -5, 0],
+          }}
+          transition={{
+            duration: 10,
+            delay: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
+      <div className="flex-1 flex items-center justify-center py-24 lg:py-32 relative z-10">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-5xl mx-auto text-center">
             {/* Tagline */}
