@@ -1,29 +1,26 @@
-import { ReactNode, forwardRef } from "react";
+import { ReactNode, RefObject } from "react";
 import { cn } from "@/lib/utils";
 
 interface SectionProps {
   children: ReactNode;
   className?: string;
   id?: string;
+  sectionRef?: RefObject<HTMLElement>;
 }
 
-export const Section = forwardRef<HTMLElement, SectionProps>(
-  ({ children, className, id }, ref) => {
-    return (
-      <section
-        ref={ref}
-        id={id}
-        className={cn("py-20 lg:py-32", className)}
-      >
-        <div className="container mx-auto px-6 lg:px-12">
-          {children}
-        </div>
-      </section>
-    );
-  }
-);
-
-Section.displayName = "Section";
+export function Section({ children, className, id, sectionRef }: SectionProps) {
+  return (
+    <section
+      ref={sectionRef}
+      id={id}
+      className={cn("py-20 lg:py-32", className)}
+    >
+      <div className="container mx-auto px-6 lg:px-12">
+        {children}
+      </div>
+    </section>
+  );
+}
 
 interface SectionHeaderProps {
   title: string;
