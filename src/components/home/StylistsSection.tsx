@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles, ChevronDown, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -25,6 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Location = "val-vista-lakes" | "north-mesa";
 
@@ -142,7 +148,27 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
       </div>
       
       <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-        <p className="text-xs tracking-[0.2em] text-white/70 mb-1">{stylist.level}</p>
+        <div className="flex items-center gap-1.5 mb-1">
+          <p className="text-xs tracking-[0.2em] text-white/70">{stylist.level}</p>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="text-white/50 hover:text-white/90 transition-colors">
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[280px] p-4 bg-background text-foreground border border-border">
+                <p className="font-medium mb-2">Stylist Level System</p>
+                <ul className="text-xs space-y-1.5 text-foreground/80">
+                  <li><span className="font-medium text-foreground">Level I:</span> Rising talent building their craft</li>
+                  <li><span className="font-medium text-foreground">Level II:</span> Skilled stylist with proven expertise</li>
+                  <li><span className="font-medium text-foreground">Level III:</span> Master artist & senior specialist</li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-2">Higher levels reflect experience, training, and demand.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <h3 className="text-xl font-serif mb-1">{stylist.name}</h3>
         <p className="text-sm text-white/70 mb-4">{stylist.instagram}</p>
         
