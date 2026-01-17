@@ -60,7 +60,7 @@ export function HeroSection() {
                 to="/booking"
                 className="group w-full sm:w-auto px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300 text-center relative overflow-hidden"
               >
-                <span className="relative z-10">Book Appointment</span>
+                <span className="relative z-10">Book Consult</span>
               </Link>
               <Link
                 to="/services"

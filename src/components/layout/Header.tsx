@@ -96,7 +96,7 @@ export function Header() {
                 to="/booking"
                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium bg-foreground text-background hover:bg-foreground/90 hover:shadow-lg transition-all duration-300 active:scale-[0.98]"
               >
-                Book Now
+                Book Consult
               </Link>
             </div>
 
@@ -146,7 +146,7 @@ export function Header() {
                   to="/booking"
                   className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-medium bg-foreground text-background"
                 >
-                  Book Now
+                  Book Consult
                 </Link>
               </nav>
             </motion.div>
