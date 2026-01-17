@@ -184,7 +184,11 @@ export function TestimonialSection() {
   };
 
   return (
-    <section ref={sectionRef} className="py-20 lg:py-32 bg-secondary overflow-hidden">
+    <section 
+      ref={sectionRef} 
+      className="py-20 lg:py-32 overflow-hidden"
+      style={{ background: 'linear-gradient(to bottom, hsl(0 0% 100%), hsl(40 30% 96%))' }}
+    >
       {/* Header */}
       <div className="container mx-auto px-6 mb-10">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
