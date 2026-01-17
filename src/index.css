@@ -2,13 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Drop Dead Salon - Dark Editorial Luxury Design System
+/* Drop Dead Salon - Cream Editorial Luxury Design System
+   Inspired by La Modé aesthetic
    All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Dark luxury palette - inverted for dark-first design */
+    /* Light cream luxury palette */
+    --background: 40 30% 96%;
+    --foreground: 0 0% 8%;
+
+    --card: 40 25% 98%;
+    --card-foreground: 0 0% 8%;
+
+    --popover: 40 25% 98%;
+    --popover-foreground: 0 0% 8%;
+
+    --primary: 0 0% 8%;
+    --primary-foreground: 40 30% 96%;
+
+    --secondary: 40 20% 92%;
+    --secondary-foreground: 0 0% 8%;
+
+    --muted: 40 15% 88%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 40 25% 90%;
+    --accent-foreground: 0 0% 8%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 40 30% 96%;
+
+    --border: 40 15% 85%;
+    --input: 40 15% 90%;
+    --ring: 0 0% 8%;
+
+    --radius: 0rem;
+
+    /* Sidebar (if needed) */
+    --sidebar-background: 40 25% 97%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 0 0% 8%;
+    --sidebar-primary-foreground: 40 30% 96%;
+    --sidebar-accent: 40 20% 92%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 40 15% 85%;
+    --sidebar-ring: 0 0% 8%;
+  }
+
+  .dark {
     --background: 0 0% 4%;
     --foreground: 40 20% 92%;
 
@@ -36,48 +79,6 @@
     --border: 0 0% 18%;
     --input: 0 0% 12%;
     --ring: 40 20% 92%;
-
-    --radius: 0rem;
-
-    /* Sidebar (if needed) */
-    --sidebar-background: 0 0% 6%;
-    --sidebar-foreground: 40 20% 92%;
-    --sidebar-primary: 40 20% 92%;
-    --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 40 20% 92%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 40 20% 92%;
-  }
-
-  .light {
-    --background: 40 20% 96%;
-    --foreground: 0 0% 8%;
-
-    --card: 40 20% 98%;
-    --card-foreground: 0 0% 8%;
-
-    --popover: 40 20% 98%;
-    --popover-foreground: 0 0% 8%;
-
-    --primary: 0 0% 8%;
-    --primary-foreground: 40 20% 96%;
-
-    --secondary: 40 15% 90%;
-    --secondary-foreground: 0 0% 8%;
-
-    --muted: 40 10% 88%;
-    --muted-foreground: 0 0% 40%;
-
-    --accent: 0 0% 15%;
-    --accent-foreground: 40 20% 96%;
-
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 40 20% 96%;
-
-    --border: 40 10% 85%;
-    --input: 40 10% 85%;
-    --ring: 0 0% 8%;
   }
 }
 
@@ -166,7 +167,21 @@
   }
 }
 
-/* Custom scrollbar for dark theme */
+/* Marquee animation */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Custom scrollbar */
 @layer utilities {
   .scrollbar-minimal::-webkit-scrollbar {
     width: 4px;

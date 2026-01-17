@@ -1,8 +1,8 @@
 import { Layout } from "@/components/layout/Layout";
-import { Section, SectionHeader } from "@/components/ui/section";
+import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 const services = [
   {
@@ -77,23 +77,35 @@ export default function Services() {
     <Layout>
       {/* Hero */}
       <section className="pt-32 lg:pt-40 pb-16 lg:pb-20">
-        <div className="container mx-auto px-6 lg:px-12 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-foreground"
-          >
-            Services & Experiences
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="mt-6 text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto"
-          >
-            Every appointment begins with intention and ends with transformation.
-          </motion.p>
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="max-w-3xl">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-6"
+            >
+              Our Services
+            </motion.span>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-[1.1]"
+            >
+              Services &
+              <br />
+              <span className="italic font-light">Experiences</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mt-8 text-base md:text-lg text-muted-foreground font-sans font-light max-w-lg"
+            >
+              Every appointment begins with intention and ends with transformation.
+            </motion.p>
+          </div>
         </div>
       </section>
 
@@ -108,7 +120,7 @@ export default function Services() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.6, delay: categoryIndex * 0.1 }}
             >
-              <h2 className="font-serif text-2xl md:text-3xl font-medium text-foreground mb-8 pb-4 border-b border-border">
+              <h2 className="font-serif text-2xl md:text-3xl font-normal text-foreground mb-8 pb-4 border-b border-border">
                 {category.category}
               </h2>
 
@@ -118,7 +130,7 @@ export default function Services() {
                     key={service.name}
                     className="group grid grid-cols-1 md:grid-cols-[1fr,2fr] gap-4 md:gap-8 items-start"
                   >
-                    <h3 className="font-serif text-lg font-medium text-foreground">
+                    <h3 className="font-serif text-lg font-normal text-foreground">
                       {service.name}
                     </h3>
                     <div>
@@ -140,9 +152,9 @@ export default function Services() {
       </Section>
 
       {/* Policy Note */}
-      <Section className="bg-secondary py-12 lg:py-16">
+      <Section className="bg-foreground text-background py-16 lg:py-20">
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-sm text-muted-foreground font-sans leading-relaxed">
+          <p className="text-sm font-sans font-light leading-relaxed text-background/80">
             Appointments are reserved specifically for you.
             <br />
             Please review our booking and cancellation policies prior to scheduling.
@@ -152,16 +164,19 @@ export default function Services() {
 
       {/* CTA */}
       <Section>
-        <div className="text-center">
-          <h2 className="font-serif text-2xl md:text-3xl font-medium text-foreground mb-8">
-            Ready to Begin?
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="font-serif text-3xl md:text-4xl font-normal text-foreground mb-4">
+            Ready to <span className="italic font-light">Begin?</span>
           </h2>
+          <p className="text-muted-foreground font-sans font-light mb-8">
+            Book your consultation and let's discuss your vision.
+          </p>
           <Link
             to="/booking"
-            className="inline-flex items-center gap-3 px-10 py-4 text-sm uppercase tracking-[0.2em] font-sans font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300"
           >
             Book a Consultation
-            <ArrowRight size={16} />
+            <ArrowUpRight size={14} />
           </Link>
         </div>
       </Section>

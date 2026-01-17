@@ -1,33 +1,41 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUpRight } from "lucide-react";
 
 export function StickyBookButton() {
   const [isVisible, setIsVisible] = useState(false);
+  const location = useLocation();
+  const isBookingPage = location.pathname === "/booking";
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsVisible(window.scrollY > 400);
+      // Show after scrolling past hero
+      setIsVisible(window.scrollY > window.innerHeight * 0.5);
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  if (isBookingPage) return null;
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.9 }}
           transition={{ duration: 0.3 }}
-          className="fixed bottom-6 right-6 z-50 md:hidden"
+          className="fixed bottom-8 right-8 z-40"
         >
           <Link
             to="/booking"
-            className="flex items-center justify-center w-14 h-14 bg-primary text-primary-foreground shadow-lg text-xs font-sans font-medium uppercase tracking-wider"
+            className="inline-flex items-center gap-2 px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-2xl"
           >
-            Book
+            Book Now
+            <ArrowUpRight size={14} />
           </Link>
         </motion.div>
       )}

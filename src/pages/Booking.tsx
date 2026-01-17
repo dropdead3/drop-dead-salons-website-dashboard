@@ -3,7 +3,7 @@ import { Section } from "@/components/ui/section";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Clock, Mail, Phone } from "lucide-react";
+import { MapPin, Clock, Mail, Phone, ArrowUpRight } from "lucide-react";
 
 export default function Booking() {
   const { toast } = useToast();
@@ -57,23 +57,35 @@ export default function Booking() {
     <Layout>
       {/* Hero */}
       <section className="pt-32 lg:pt-40 pb-16 lg:pb-20">
-        <div className="container mx-auto px-6 lg:px-12 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-foreground"
-          >
-            Book Your Appointment
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="mt-6 text-lg text-muted-foreground font-sans font-light max-w-xl mx-auto"
-          >
-            Select your service, share a few details, and we'll be in touch.
-          </motion.p>
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="max-w-3xl">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-6"
+            >
+              Contact Us
+            </motion.span>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-[1.1]"
+            >
+              Book Your
+              <br />
+              <span className="italic font-light">Appointment</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mt-8 text-base md:text-lg text-muted-foreground font-sans font-light max-w-lg"
+            >
+              Select your service, share a few details, and we'll be in touch.
+            </motion.p>
+          </div>
         </div>
       </section>
 
@@ -82,9 +94,9 @@ export default function Booking() {
         <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Form */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -101,7 +113,7 @@ export default function Booking() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-4 bg-card border border-border text-foreground font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:border-muted-foreground transition-colors"
+                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground transition-colors"
                   placeholder="Your name"
                 />
               </div>
@@ -120,7 +132,7 @@ export default function Booking() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-4 bg-card border border-border text-foreground font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:border-muted-foreground transition-colors"
+                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground transition-colors"
                   placeholder="your@email.com"
                 />
               </div>
@@ -138,7 +150,7 @@ export default function Booking() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-4 bg-card border border-border text-foreground font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:border-muted-foreground transition-colors"
+                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground transition-colors"
                   placeholder="(555) 123-4567"
                 />
               </div>
@@ -156,7 +168,7 @@ export default function Booking() {
                   value={formData.service}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-4 bg-card border border-border text-foreground font-sans focus:outline-none focus:border-muted-foreground transition-colors appearance-none"
+                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light focus:outline-none focus:border-foreground transition-colors appearance-none"
                 >
                   <option value="">Select a service</option>
                   {serviceOptions.map((service) => (
@@ -180,7 +192,7 @@ export default function Booking() {
                   value={formData.message}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full px-4 py-4 bg-card border border-border text-foreground font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:border-muted-foreground transition-colors resize-none"
+                  className="w-full px-4 py-4 bg-background border border-border text-foreground font-sans font-light placeholder:text-muted-foreground/50 focus:outline-none focus:border-foreground transition-colors resize-none"
                   placeholder="Tell us about your hair goals..."
                 />
               </div>
@@ -188,13 +200,14 @@ export default function Booking() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-8 py-4 text-sm uppercase tracking-[0.2em] font-sans font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors"
               >
                 {isSubmitting ? "Sending..." : "Request Appointment"}
+                {!isSubmitting && <ArrowUpRight size={14} />}
               </button>
             </form>
 
-            <p className="mt-6 text-sm text-muted-foreground font-sans text-center">
+            <p className="mt-6 text-sm text-muted-foreground font-sans font-light text-center">
               Not sure what to book?{" "}
               <span className="text-foreground">Start with a consultation.</span>
             </p>
@@ -202,12 +215,12 @@ export default function Booking() {
 
           {/* Salon Details */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="lg:pl-8 lg:border-l lg:border-border"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="lg:pl-12 lg:border-l lg:border-border"
           >
-            <h2 className="font-serif text-2xl font-medium text-foreground mb-8">
+            <h2 className="font-serif text-2xl font-normal text-foreground mb-8">
               Visit the Salon
             </h2>
 
