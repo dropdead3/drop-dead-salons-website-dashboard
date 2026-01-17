@@ -177,7 +177,7 @@ export function ExtensionsSection() {
             >
               <div className="flex items-center gap-3 mb-2">
                 <Award className="w-5 h-5 text-oat-foreground" />
-                <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationwide Educators</span>
+                <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationally Recognized</span>
               </div>
               <p className="text-sm text-foreground leading-relaxed">
                 Salons across the country travel to learn and proudly showcase the Drop Dead Method.
