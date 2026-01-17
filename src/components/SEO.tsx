@@ -180,6 +180,78 @@ export function SEO({
     ],
   };
 
+  // FAQ Schema for rich search results
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "Do the salons accept walk-ins?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "At this time, we do not accept walk-ins. All appointments must be scheduled in advance, and an initial consultation is required or must be waived by the stylist matched to you. This ensures you're paired with the right artist and receive the personalized service you deserve.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Will I need a consultation?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "For most color services, extensions, and major transformations, yes. Consultations help us understand your hair history, assess its current condition, and create a personalized plan. Some services like trims or blowouts may not require one—your stylist will let you know.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Does it matter which location I arrive at for my appointment?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes! Please arrive at the specific location where your appointment is booked. Our stylists work at designated locations, so showing up at the correct salon ensures you're seen on time by your scheduled artist.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What's the vibe like at each salon?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Both locations share the same commitment to quality and creativity, but each has its own unique atmosphere. Val Vista Lakes has a more intimate, boutique feel, while North Mesa offers a larger, energetic space. We recommend visiting both to see which vibe resonates with you!",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What is your cancellation policy?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "We require 48 hours notice for cancellations or rescheduling. Late cancellations or no-shows may result in a fee equal to 50% of the scheduled service. We understand life happens—just communicate with us as early as possible.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How do I book an appointment at Drop Dead Salon in Mesa or Gilbert?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "You can book directly through our website by visiting the booking page, or reach out to us via email or phone. New clients should fill out our consultation form first so we can match you with the perfect stylist at our Mesa or Gilbert location.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What payment methods do you accept?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "We accept all major credit cards, debit cards, Apple Pay, Google Pay, and cash. A deposit may be required for certain services at the time of booking.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Where is Drop Dead Salon located in Arizona?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Drop Dead Salon has two convenient locations in the Phoenix Valley: one in Mesa, Arizona and one in Gilbert, Arizona. We proudly serve clients from across the East Valley including Chandler, Tempe, Scottsdale, Queen Creek, and the greater Phoenix area.",
+        },
+      },
+    ],
+  };
+
   return (
     <Helmet>
       {/* Primary Meta Tags */}
@@ -228,6 +300,11 @@ export function SEO({
       {/* Structured Data - Services */}
       <script type="application/ld+json">
         {JSON.stringify(servicesSchema)}
+      </script>
+
+      {/* Structured Data - FAQ */}
+      <script type="application/ld+json">
+        {JSON.stringify(faqSchema)}
       </script>
     </Helmet>
   );
