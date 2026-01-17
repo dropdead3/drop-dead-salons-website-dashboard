@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Phone, Info } from "lucide-react";
+import { ArrowRight, Phone, Info, MapPin } from "lucide-react";
 
 const locations = [
   {
@@ -80,10 +80,18 @@ export function LocationsSection() {
               <h3 className="font-serif text-2xl md:text-3xl text-foreground mb-4">
                 {location.name}
               </h3>
-              <div className="space-y-1 mb-6">
-                <p className="text-foreground/70">{location.address}</p>
-                <p className="text-foreground/70">{location.city}</p>
-              </div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex flex-col items-center gap-1 mb-6 text-foreground/70 hover:text-foreground transition-colors group/maps"
+              >
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4" />
+                  <span>{location.address}</span>
+                </span>
+                <span>{location.city}</span>
+              </a>
               <a
                 href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
                 className="flex items-center justify-center gap-2 text-foreground/70 hover:text-foreground transition-colors mb-6"
