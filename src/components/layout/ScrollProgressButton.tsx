@@ -40,8 +40,9 @@ export function ScrollProgressButton() {
             damping: 15,
           }}
           onClick={scrollToTop}
-          className="relative w-16 h-16 flex items-center justify-center bg-background border border-border hover:bg-muted transition-colors shadow-lg rounded-full"
+          className="relative w-16 h-16 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer mix-blend-difference"
           aria-label="Back to top"
+          style={{ background: "transparent" }}
         >
           {/* SVG with rotating text and progress */}
           <svg
@@ -63,9 +64,9 @@ export function ScrollProgressButton() {
               cy="32"
               r="26"
               fill="none"
-              stroke="currentColor"
+              stroke="white"
               strokeWidth="1"
-              className="text-muted/30"
+              opacity="0.3"
             />
             
             {/* Progress circle */}
@@ -74,10 +75,9 @@ export function ScrollProgressButton() {
               cy="32"
               r="26"
               fill="none"
-              stroke="currentColor"
+              stroke="white"
               strokeWidth="1.5"
               strokeLinecap="round"
-              className="text-foreground"
               style={{
                 strokeDasharray: circumference,
                 strokeDashoffset,
@@ -97,7 +97,8 @@ export function ScrollProgressButton() {
               style={{ transformOrigin: "center" }}
             >
               <text
-                className="fill-foreground text-[7px] uppercase tracking-[0.3em] font-sans"
+                fill="white"
+                className="text-[7px] uppercase tracking-[0.3em] font-sans"
               >
                 <textPath href="#textCircle" startOffset="0%">
                   BACK TO TOP • BACK TO TOP • 
@@ -107,7 +108,7 @@ export function ScrollProgressButton() {
           </svg>
           
           {/* Arrow icon */}
-          <ArrowUp size={16} className="relative z-10 text-foreground" />
+          <ArrowUp size={16} className="relative z-10 text-white" />
         </motion.button>
       )}
     </AnimatePresence>
