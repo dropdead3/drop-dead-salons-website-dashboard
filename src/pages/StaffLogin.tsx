@@ -14,6 +14,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
+import { z } from 'zod';
+
+const emailSchema = z.string().trim().email({ message: 'Please enter a valid email address' });
 
 type AppRole = 'admin' | 'manager' | 'stylist' | 'receptionist' | 'assistant';
 
@@ -36,6 +39,7 @@ export default function StaffLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
   
   const { signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
@@ -46,6 +50,15 @@ export default function StaffLogin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError(null);
+
+    // Validate email
+    const emailValidation = emailSchema.safeParse(email);
+    if (!emailValidation.success) {
+      setEmailError(emailValidation.error.errors[0].message);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -190,11 +203,17 @@ export default function StaffLogin() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError(null);
+                }}
                 placeholder="you@dropdeadsalon.com"
                 required
-                className="h-12 bg-card border-border"
+                className={`h-12 bg-card border-border ${emailError ? 'border-destructive' : ''}`}
               />
+              {emailError && (
+                <p className="text-xs text-destructive">{emailError}</p>
+              )}
             </div>
 
             {!isForgotPassword && (
