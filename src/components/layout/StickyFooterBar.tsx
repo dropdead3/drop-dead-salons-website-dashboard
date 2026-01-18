@@ -24,7 +24,17 @@ export function StickyFooterBar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsVisible(window.scrollY > window.innerHeight * 0.5);
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      
+      // Show after scrolling past 50% of first viewport
+      const pastThreshold = scrollY > windowHeight * 0.5;
+      
+      // Hide when near bottom (within 1.5 viewport heights of the bottom)
+      const nearBottom = scrollY + windowHeight > documentHeight - windowHeight * 1.5;
+      
+      setIsVisible(pastThreshold && !nearBottom);
     };
 
     window.addEventListener("scroll", handleScroll);
