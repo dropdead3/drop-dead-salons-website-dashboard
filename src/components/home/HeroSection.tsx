@@ -36,8 +36,8 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
     });
   };
 
-  // Shared easing for smooth animations
-  const ease: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+  // Shared spring config for organic animations
+  const springTransition = { type: "spring" as const, stiffness: 50, damping: 20 };
 
   return (
     <section ref={sectionRef} data-theme="light" className="relative min-h-screen flex flex-col overflow-hidden">
@@ -47,7 +47,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
           className="absolute inset-0 z-0"
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5, ease }}
+          transition={{ duration: 1.5 }}
         >
           <video
             autoPlay
@@ -106,7 +106,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             <motion.div
               initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 1.2, delay: 0.2, ease }}
+              transition={{ ...springTransition, delay: 0.2 }}
               style={{ 
                 opacity,
                 y: taglineY
@@ -130,7 +130,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 className="whitespace-nowrap inline-block"
                 initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ duration: 1.4, delay: 0.4, ease }}
+                transition={{ ...springTransition, delay: 0.4 }}
               >
                 Drop Dead
               </motion.span>
@@ -139,7 +139,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 className="inline-block"
                 initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ duration: 1.4, delay: 0.65, ease }}
+                transition={{ ...springTransition, delay: 0.65 }}
               >
                 Salon
               </motion.span>
@@ -149,7 +149,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             <motion.p
               initial={{ opacity: 0, y: 25, filter: "blur(6px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 1.2, delay: 0.95, ease }}
+              transition={{ ...springTransition, delay: 0.95 }}
               className="mt-10 text-base md:text-lg text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
               style={{ 
                 opacity,
@@ -173,7 +173,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 <motion.button
                   initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  transition={{ duration: 1.0, delay: 1.25, ease }}
+                  transition={{ ...springTransition, delay: 1.25 }}
                   onClick={() => setConsultationOpen(true)}
                   className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
                 >
@@ -183,7 +183,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 <motion.div
                   initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  transition={{ duration: 1.0, delay: 1.4, ease }}
+                  transition={{ ...springTransition, delay: 1.4 }}
                 >
                   <Link
                     to="/booking"
@@ -197,7 +197,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               <motion.div 
                 initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ duration: 1.0, delay: 1.6, ease }}
+                transition={{ ...springTransition, delay: 1.6 }}
                 className="flex flex-col items-center gap-1 text-sm text-muted-foreground font-sans"
               >
                 <p>New clients begin with a $15 consultation</p>
@@ -212,7 +212,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
       <motion.button
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 2.7, ease }}
+        transition={{ ...springTransition, delay: 2.2 }}
         onClick={scrollToContent}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-20"
         aria-label="Scroll down"
