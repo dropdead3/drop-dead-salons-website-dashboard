@@ -3,6 +3,8 @@ import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Phone, Info, MapPin } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import mapNorthMesa from "@/assets/map-north-mesa.jpg";
+import mapValVista from "@/assets/map-val-vista.jpg";
 
 const locations = [
   {
@@ -11,7 +13,8 @@ const locations = [
     city: "Mesa, AZ 85203",
     phone: "(480) 548-1886",
     bookingUrl: "/booking?location=north-mesa",
-    mapQuery: "2036+N+Gilbert+Rd+Ste+1,+Mesa,+AZ+85203"
+    mapImage: mapNorthMesa,
+    mapsUrl: "https://www.google.com/maps/search/?api=1&query=2036+N+Gilbert+Rd+Ste+1,+Mesa,+AZ+85203"
   },
   {
     name: "Val Vista Lakes",
@@ -19,7 +22,8 @@ const locations = [
     city: "Gilbert, AZ 85234",
     phone: "(480) 548-1886",
     bookingUrl: "/booking?location=val-vista-lakes",
-    mapQuery: "3641+E+Baseline+Rd+Suite+Q-103,+Gilbert,+AZ+85234"
+    mapImage: mapValVista,
+    mapsUrl: "https://www.google.com/maps/search/?api=1&query=3641+E+Baseline+Rd+Suite+Q-103,+Gilbert,+AZ+85234"
   },
 ];
 
@@ -63,22 +67,25 @@ export function LocationsSection() {
               }}
               className="group relative bg-secondary hover:bg-secondary/80 transition-colors duration-300 overflow-hidden"
             >
-              {/* Google Maps Embed */}
-              <div className="w-full h-40 md:h-48 bg-muted relative overflow-hidden">
-                <iframe
-                  src={`https://www.google.com/maps?q=${location.mapQuery}&output=embed&z=15`}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title={`Map of ${location.name}`}
-                  className="grayscale contrast-[1.1] brightness-[1.05] saturate-0 hover:saturate-100 hover:grayscale-0 hover:contrast-100 hover:brightness-100 transition-all duration-500"
+              {/* Custom Styled Map Image */}
+              <a 
+                href={location.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full h-40 md:h-48 bg-muted relative overflow-hidden group/map"
+              >
+                <img
+                  src={location.mapImage}
+                  alt={`Map of ${location.name}`}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover/map:scale-105"
                 />
-                {/* Subtle overlay for cleaner look */}
-                <div className="absolute inset-0 bg-secondary/10 pointer-events-none mix-blend-overlay" />
-              </div>
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-foreground/0 group-hover/map:bg-foreground/5 transition-colors duration-300 flex items-center justify-center">
+                  <span className="opacity-0 group-hover/map:opacity-100 transition-opacity duration-300 text-xs font-medium text-foreground bg-background/90 px-3 py-1.5">
+                    Open in Maps
+                  </span>
+                </div>
+              </a>
 
               <div className="p-8 md:p-10 text-center">
                 {/* Location Title with Info Icon */}
