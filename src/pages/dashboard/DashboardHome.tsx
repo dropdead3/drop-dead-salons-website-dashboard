@@ -257,7 +257,7 @@ export default function DashboardHome() {
             <div className="flex items-center gap-4">
               <img 
                 src={DD75Logo} 
-                alt="Drop Dead 75" 
+                alt="Drop Dead 75: Client Engine Program" 
                 className="h-5 w-auto"
               />
               <p className="text-sm text-muted-foreground font-sans">
