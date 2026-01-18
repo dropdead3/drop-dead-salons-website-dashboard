@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -40,6 +41,8 @@ import {
   Contact,
   Globe,
   Shield,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -102,18 +105,26 @@ const coachNavItems: NavItem[] = [
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, isCoach, roles, signOut } = useAuth();
+  const { user, isCoach, roles: actualRoles, signOut } = useAuth();
+  const { viewAsRole, setViewAsRole, isViewingAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
 
+  // Use simulated role if viewing as, otherwise use actual roles
+  const roles = isViewingAs && viewAsRole ? [viewAsRole] : actualRoles;
+  const isAdmin = actualRoles.includes('admin');
+  // isCoach should use simulated roles for nav visibility
+  const effectiveIsCoach = isViewingAs ? (viewAsRole === 'admin' || viewAsRole === 'manager') : isCoach;
+
   const handleSignOut = async () => {
+    setViewAsRole(null); // Clear view as on sign out
     await signOut();
     navigate('/staff-login');
   };
 
-  // Filter nav items based on user roles
+  // Filter nav items based on user roles (uses effective roles)
   const filterNavItems = (items: NavItem[]) => {
     return items.filter(item => {
       if (!item.roles) return true; // No roles specified = visible to all
@@ -237,7 +248,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </>
         )}
 
-        {isCoach && filterNavItems(coachNavItems).length > 0 && (
+        {effectiveIsCoach && filterNavItems(coachNavItems).length > 0 && (
           <>
             <div className="my-4 px-4">
               <div className="h-px bg-border" />
@@ -340,13 +351,87 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleToggleRole = (role: AppRole) => {
     if (!user) return;
-    const hasRole = roles.includes(role);
+    const hasRole = actualRoles.includes(role);
     toggleRole.mutate({ userId: user.id, role, hasRole });
+  };
+
+  // View As Component for admins - allows viewing dashboard as different roles
+  const ViewAsToggle = () => {
+    if (!isAdmin) return null;
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant={isViewingAs ? "default" : "outline"} 
+            size="sm" 
+            className={cn(
+              "gap-2",
+              isViewingAs && "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
+            )}
+          >
+            {isViewingAs ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            <span className="hidden sm:inline">
+              {isViewingAs ? `Viewing as ${ROLE_LABELS[viewAsRole!]}` : 'View As'}
+            </span>
+            {isViewingAs && (
+              <Badge 
+                variant="secondary" 
+                className={cn("text-xs px-1.5 py-0 ml-1", roleColors[viewAsRole!])}
+              >
+                {ROLE_LABELS[viewAsRole!]?.charAt(0)}
+              </Badge>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel className="flex items-center gap-2">
+            <Eye className="w-4 h-4" />
+            View Dashboard As
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {isViewingAs && (
+            <>
+              <DropdownMenuItem
+                onClick={() => setViewAsRole(null)}
+                className="flex items-center gap-2 cursor-pointer text-amber-600 dark:text-amber-400"
+              >
+                <X className="w-4 h-4" />
+                Exit View As Mode
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {ALL_ROLES.filter(role => role !== 'admin').map(role => (
+            <DropdownMenuItem
+              key={role}
+              onClick={() => setViewAsRole(role)}
+              className={cn(
+                "flex items-center justify-between cursor-pointer",
+                viewAsRole === role && "bg-accent"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant="secondary" 
+                  className={cn("text-xs", roleColors[role])}
+                >
+                  {ROLE_LABELS[role]}
+                </Badge>
+              </div>
+              {viewAsRole === role && (
+                <Eye className="w-4 h-4 text-amber-500" />
+              )}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   };
 
   // Role Toggle Component for admins
   const RoleToggle = () => {
-    if (!roles.includes('admin')) return null;
+    if (!isAdmin) return null;
 
     return (
       <DropdownMenu>
@@ -355,7 +440,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <Shield className="w-4 h-4" />
             <span className="hidden sm:inline">My Roles</span>
             <div className="flex gap-1">
-              {roles.slice(0, 2).map(role => (
+              {actualRoles.slice(0, 2).map(role => (
                 <Badge 
                   key={role} 
                   variant="secondary" 
@@ -364,9 +449,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   {ROLE_LABELS[role as AppRole]?.charAt(0)}
                 </Badge>
               ))}
-              {roles.length > 2 && (
+              {actualRoles.length > 2 && (
                 <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                  +{roles.length - 2}
+                  +{actualRoles.length - 2}
                 </Badge>
               )}
             </div>
@@ -376,7 +461,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <DropdownMenuLabel>Toggle My Roles</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {ALL_ROLES.map(role => {
-            const hasRole = roles.includes(role);
+            const hasRole = actualRoles.includes(role);
             return (
               <DropdownMenuItem
                 key={role}
@@ -431,13 +516,36 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <img src={Logo} alt="Drop Dead" className="h-4 w-auto" />
         </Link>
 
-        <RoleToggle />
+        <div className="flex items-center gap-2">
+          <ViewAsToggle />
+          <RoleToggle />
+        </div>
       </header>
 
+      {/* View As Banner */}
+      {isViewingAs && (
+        <div className="bg-amber-500 text-white text-center py-2 px-4 text-sm font-medium lg:pl-64">
+          <div className="flex items-center justify-center gap-2">
+            <Eye className="w-4 h-4" />
+            <span>Viewing as <strong>{ROLE_LABELS[viewAsRole!]}</strong> – This is a preview only</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setViewAsRole(null)}
+              className="h-6 px-2 text-white hover:bg-amber-600 hover:text-white ml-2"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Exit
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Desktop Top Bar (for admins) */}
-      {roles.includes('admin') && (
+      {isAdmin && (
         <div className="hidden lg:block lg:pl-64">
-          <div className="sticky top-0 z-30 flex items-center justify-end h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
+          <div className="sticky top-0 z-30 flex items-center justify-end gap-2 h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
+            <ViewAsToggle />
             <RoleToggle />
           </div>
         </div>
@@ -445,7 +553,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Main Content */}
       <main className="lg:pl-64">
-        <div className={cn("min-h-screen", roles.includes('admin') && "lg:pt-0")}>
+        <div className={cn("min-h-screen", isAdmin && "lg:pt-0")}>
           {children}
         </div>
       </main>
