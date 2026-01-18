@@ -5,10 +5,11 @@ import { Loader2 } from 'lucide-react';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireCoach?: boolean;
+  requiredPermission?: string;
 }
 
-export function ProtectedRoute({ children, requireCoach = false }: ProtectedRouteProps) {
-  const { user, loading, isCoach } = useAuth();
+export function ProtectedRoute({ children, requireCoach = false, requiredPermission }: ProtectedRouteProps) {
+  const { user, loading, isCoach, hasPermission, permissions } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -23,6 +24,12 @@ export function ProtectedRoute({ children, requireCoach = false }: ProtectedRout
     return <Navigate to="/staff-login" state={{ from: location }} replace />;
   }
 
+  // Check permission-based access
+  if (requiredPermission && !hasPermission(requiredPermission)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Legacy coach check (fallback for routes without specific permissions)
   if (requireCoach && !isCoach) {
     return <Navigate to="/dashboard" replace />;
   }
