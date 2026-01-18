@@ -336,6 +336,7 @@ export type Database = {
       employee_profiles: {
         Row: {
           created_at: string
+          dd_certified: boolean | null
           display_name: string | null
           email: string | null
           emergency_contact: string | null
@@ -360,6 +361,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dd_certified?: boolean | null
           display_name?: string | null
           email?: string | null
           emergency_contact?: string | null
@@ -384,6 +386,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dd_certified?: boolean | null
           display_name?: string | null
           email?: string | null
           emergency_contact?: string | null

@@ -39,6 +39,7 @@ export default function MyProfile() {
     location_id: '',
     stylist_level: '',
     specialties: [] as string[],
+    dd_certified: false,
     emergency_contact: '',
     emergency_phone: '',
   });
@@ -54,6 +55,7 @@ export default function MyProfile() {
         location_id: profile.location_id || '',
         stylist_level: profile.stylist_level || '',
         specialties: profile.specialties || [],
+        dd_certified: profile.dd_certified || false,
         emergency_contact: profile.emergency_contact || '',
         emergency_phone: profile.emergency_phone || '',
       });
@@ -110,12 +112,18 @@ export default function MyProfile() {
   };
 
   const toggleSpecialty = (specialty: string) => {
-    setFormData(prev => ({
-      ...prev,
-      specialties: prev.specialties.includes(specialty)
-        ? prev.specialties.filter(s => s !== specialty)
-        : [...prev.specialties, specialty],
-    }));
+    setFormData(prev => {
+      const isSelected = prev.specialties.includes(specialty);
+      if (isSelected) {
+        return { ...prev, specialties: prev.specialties.filter(s => s !== specialty) };
+      }
+      // Limit to 4 specialties
+      if (prev.specialties.length >= 4) {
+        toast.error('You can select up to 4 specialties');
+        return prev;
+      }
+      return { ...prev, specialties: [...prev.specialties, specialty] };
+    });
   };
 
   if (isLoading) {
@@ -378,18 +386,55 @@ export default function MyProfile() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Specialties</Label>
+                  <Label>Specialties <span className="text-muted-foreground text-xs font-normal">(select up to 4)</span></Label>
                   <div className="flex flex-wrap gap-2">
-                    {specialtyOptions.map(specialty => (
-                      <Badge
-                        key={specialty}
-                        variant={formData.specialties.includes(specialty) ? 'default' : 'outline'}
-                        className="cursor-pointer"
-                        onClick={() => toggleSpecialty(specialty)}
-                      >
-                        {specialty}
-                      </Badge>
-                    ))}
+                    {specialtyOptions.map(specialty => {
+                      const isSelected = formData.specialties.includes(specialty);
+                      const isDisabled = !isSelected && formData.specialties.length >= 4;
+                      return (
+                        <Badge
+                          key={specialty}
+                          variant={isSelected ? 'default' : 'outline'}
+                          className={cn(
+                            "cursor-pointer transition-all",
+                            isDisabled && "opacity-50 cursor-not-allowed"
+                          )}
+                          onClick={() => !isDisabled && toggleSpecialty(specialty)}
+                        >
+                          {specialty}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                  {formData.specialties.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {formData.specialties.length}/4 selected
+                    </p>
+                  )}
+                </div>
+
+                {/* Drop Dead Certified */}
+                <div className="pt-4 border-t">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1">
+                      <Label htmlFor="dd_certified" className="flex items-center gap-2 cursor-pointer">
+                        <img 
+                          src="/assets/dd75-icon.svg" 
+                          alt="Drop Dead" 
+                          className="w-5 h-5"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                        Drop Dead Certified
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        I have completed the Drop Dead Extensions training program.
+                      </p>
+                    </div>
+                    <Switch
+                      id="dd_certified"
+                      checked={formData.dd_certified}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, dd_certified: checked }))}
+                    />
                   </div>
                 </div>
               </CardContent>
