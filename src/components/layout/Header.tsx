@@ -46,26 +46,30 @@ export function Header() {
   // Section theme detection using data-theme attributes
   useEffect(() => {
     const detectTheme = () => {
-      // We want the section *behind* the header, so sample just below it.
+      // Sample the DOM *behind* the sticky header using elementFromPoint,
+      // then walk up to the nearest ancestor with data-theme.
       const headerEl = headerRef.current;
+
       let sampleY = 120; // fallback
       if (headerEl) {
         const headerRect = headerEl.getBoundingClientRect();
         sampleY = headerRect.bottom + 1;
       }
-      
-      const sections = document.querySelectorAll("[data-theme]");
-      
-      for (const section of Array.from(sections)) {
-        const rect = section.getBoundingClientRect();
-        if (rect.top <= sampleY && rect.bottom >= sampleY) {
-          const theme = section.getAttribute("data-theme");
+
+      const sampleX = Math.min(window.innerWidth - 2, Math.max(2, window.innerWidth / 2));
+      const elBehind = document.elementFromPoint(sampleX, sampleY);
+
+      let cur: Element | null = elBehind;
+      while (cur && cur !== document.body) {
+        if (cur instanceof HTMLElement && cur.hasAttribute("data-theme")) {
+          const theme = cur.getAttribute("data-theme");
           setIsOverDark(theme === "dark");
           return;
         }
+        cur = cur.parentElement;
       }
-      
-      // Default to light if no themed section found at header position
+
+      // Default to light if we can't find a themed container
       setIsOverDark(false);
     };
 
