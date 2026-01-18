@@ -156,7 +156,7 @@ export function Header() {
                     transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                     className={cn(
                       "h-5 lg:h-6 w-auto",
-                      isOverDark ? "invert" : ""
+                      isOverDark ? "" : "invert"
                     )}
                   />
                 ) : (
