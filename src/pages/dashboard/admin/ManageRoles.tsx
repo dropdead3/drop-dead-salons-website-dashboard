@@ -68,8 +68,8 @@ export default function ManageRoles() {
           <Alert className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800 dark:text-amber-200">
-              <strong>Limited Permissions:</strong> Only Super Admins can assign or remove the Admin role. 
-              Contact your account owner to request Super Admin status.
+              <strong>Limited Permissions:</strong> Only Full Access Admins can assign or remove the Admin role. 
+              Contact your account owner to request Full Access Admin status.
             </AlertDescription>
           </Alert>
         )}
@@ -81,6 +81,16 @@ export default function ManageRoles() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {/* Full Access Admin - Special status */}
+              <div className="flex items-start gap-2">
+                <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300 text-xs shrink-0 gap-1">
+                  <Crown className="w-3 h-3" />
+                  Full Access Admin
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  Super user with ability to approve admin roles
+                </span>
+              </div>
               {ALL_ROLES.map(role => (
                 <div key={role} className="flex items-start gap-2">
                   <Badge variant="outline" className={cn("text-xs shrink-0", roleColors[role])}>
@@ -89,7 +99,7 @@ export default function ManageRoles() {
                   <span className="text-xs text-muted-foreground">
                     {ROLE_DESCRIPTIONS[role]}
                     {role === 'admin' && !canApproveAdmin && (
-                      <span className="text-amber-600 dark:text-amber-400 ml-1">(Super Admin required)</span>
+                      <span className="text-amber-600 dark:text-amber-400 ml-1">(Full Access Admin required)</span>
                     )}
                   </span>
                 </div>
@@ -156,9 +166,9 @@ export default function ManageRoles() {
                           {isSuperAdmin && (
                             <Tooltip>
                               <TooltipTrigger>
-                                <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white gap-1 text-xs">
+                                <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 gap-1 text-xs border border-amber-300">
                                   <Crown className="w-3 h-3" />
-                                  Super Admin
+                                  Full Access Admin
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent>Can approve admin roles</TooltipContent>
@@ -216,7 +226,7 @@ export default function ManageRoles() {
                                   <TooltipTrigger>
                                     <Lock className="w-3 h-3 text-muted-foreground" />
                                   </TooltipTrigger>
-                                  <TooltipContent>Super Admin required</TooltipContent>
+                                  <TooltipContent>Full Access Admin required</TooltipContent>
                                 </Tooltip>
                               )}
                             </div>
