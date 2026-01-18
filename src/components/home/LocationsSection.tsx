@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Phone, Info, MapPin } from "lucide-react";
+import { ArrowRight, Phone, Info, MapPin, Users } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
 const locations = [
@@ -10,14 +10,16 @@ const locations = [
     address: "2036 N Gilbert Rd Ste 1",
     city: "Mesa, AZ 85203",
     phone: "(480) 548-1886",
-    bookingUrl: "/booking?location=north-mesa"
+    bookingUrl: "/booking?location=north-mesa",
+    stylistFilterId: "north-mesa"
   },
   {
     name: "Val Vista Lakes",
     address: "3641 E Baseline Rd Suite Q-103",
     city: "Gilbert, AZ 85234",
     phone: "(480) 548-1886",
-    bookingUrl: "/booking?location=val-vista-lakes"
+    bookingUrl: "/booking?location=val-vista-lakes",
+    stylistFilterId: "val-vista-lakes"
   },
 ];
 
@@ -96,7 +98,7 @@ export function LocationsSection() {
                 <Phone className="w-4 h-4" />
                 <span>{location.phone}</span>
               </a>
-              <div>
+              <div className="flex flex-col items-center gap-3">
                 <Link
                   to={location.bookingUrl}
                   className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group/link"
@@ -104,6 +106,23 @@ export function LocationsSection() {
                   <span>Book consult</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
                 </Link>
+                <button
+                  onClick={() => {
+                    const stylistsSection = document.getElementById('stylists-section');
+                    if (stylistsSection) {
+                      stylistsSection.scrollIntoView({ behavior: 'smooth' });
+                      // Dispatch custom event to set the location filter
+                      window.dispatchEvent(new CustomEvent('setLocationFilter', { 
+                        detail: { location: location.stylistFilterId } 
+                      }));
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground/70 hover:text-foreground transition-colors group/stylists"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Check Out The Stylists</span>
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/stylists:translate-x-1" />
+                </button>
               </div>
             </motion.div>
           ))}

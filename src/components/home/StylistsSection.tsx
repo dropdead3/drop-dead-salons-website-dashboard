@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, ChevronDown, Info, Star } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -146,6 +146,21 @@ export function StylistsSection() {
   const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Listen for location filter events from LocationsSection
+  useEffect(() => {
+    const handleLocationFilter = (e: CustomEvent<{ location: Location }>) => {
+      setSelectedLocation(e.detail.location);
+      // Reset other filters when switching location
+      setSelectedSpecialty(null);
+      setSelectedLevel(null);
+    };
+
+    window.addEventListener('setLocationFilter', handleLocationFilter as EventListener);
+    return () => {
+      window.removeEventListener('setLocationFilter', handleLocationFilter as EventListener);
+    };
+  }, []);
+
   const filteredStylists = stylists.filter((s) => {
     const matchesLocation = s.location === selectedLocation;
     const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
@@ -179,7 +194,7 @@ export function StylistsSection() {
   };
 
   return (
-    <section ref={sectionRef} className="py-20 lg:py-32 bg-secondary overflow-hidden">
+    <section ref={sectionRef} id="stylists-section" className="py-20 lg:py-32 bg-secondary overflow-hidden">
       <div className="container mx-auto px-6">
         {/* Header */}
         <SectionHeader
