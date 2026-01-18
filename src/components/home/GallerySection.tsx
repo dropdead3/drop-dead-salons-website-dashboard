@@ -100,7 +100,7 @@ export function GallerySection() {
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: (index + transformations.length) * 0.1 }}
-            className="relative aspect-[3/4] overflow-hidden group cursor-pointer"
+            className="relative aspect-[3/4] overflow-hidden rounded-xl group cursor-pointer"
           >
             <ImageWithSkeleton
               src={image.src}

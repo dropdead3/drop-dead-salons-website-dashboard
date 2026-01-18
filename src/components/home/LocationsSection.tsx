@@ -61,7 +61,7 @@ export function LocationsSection() {
                   ease: [0.25, 0.1, 0.25, 1], 
                   delay: 0.2 + index * 0.15 
                 }}
-                className="group relative bg-secondary p-10 md:p-12 text-center overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-foreground/5 hover:-translate-y-1"
+                className="group relative bg-secondary p-10 md:p-12 text-center overflow-hidden rounded-2xl transition-all duration-500 hover:shadow-xl hover:shadow-foreground/5 hover:-translate-y-1"
               >
 
                 {/* Top accent line */}
@@ -111,7 +111,7 @@ export function LocationsSection() {
                 <div className="flex flex-col items-center gap-3 relative z-10">
                   <Link
                     to={location.bookingUrl}
-                    className="inline-flex items-center justify-center bg-foreground text-background px-6 py-3.5 text-sm font-sans font-medium hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/link w-full overflow-hidden"
+                    className="inline-flex items-center justify-center bg-foreground text-background px-6 py-3.5 text-sm font-sans font-medium rounded-lg hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/link w-full overflow-hidden"
                   >
                     <span>Book consult</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover/link:w-4 group-hover/link:ml-2 group-hover/link:opacity-100 transition-all duration-300" />
@@ -126,7 +126,7 @@ export function LocationsSection() {
                         }));
                       }
                     }}
-                    className="inline-flex items-center justify-center bg-background border border-border text-foreground px-6 py-3.5 text-sm font-sans font-medium hover:bg-muted hover:border-foreground/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/stylists w-full overflow-hidden"
+                    className="inline-flex items-center justify-center bg-background border border-border text-foreground px-6 py-3.5 text-sm font-sans font-medium rounded-lg hover:bg-muted hover:border-foreground/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/stylists w-full overflow-hidden"
                   >
                     <span>Check out the stylists</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover/stylists:w-4 group-hover/stylists:ml-2 group-hover/stylists:opacity-100 transition-all duration-300" />

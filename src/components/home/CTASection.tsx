@@ -36,7 +36,7 @@ export function CTASection() {
           >
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 px-12 py-5 text-base font-sans border border-background text-background hover:bg-background hover:text-foreground transition-all duration-300 active:scale-[0.98]"
+              className="group inline-flex items-center gap-3 px-12 py-5 text-base font-sans border border-background text-background rounded-xl hover:bg-background hover:text-foreground transition-all duration-300 active:scale-[0.98]"
             >
               <span>Book consult</span>
               <motion.span

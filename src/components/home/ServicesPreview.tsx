@@ -338,7 +338,7 @@ export function ServicesPreview() {
               className="group flex-shrink-0 w-[85vw] max-w-[600px] flex"
             >
               {/* Image Area - Before/After Slider for Extensions, placeholder for others */}
-              <div className="relative w-1/2 aspect-[3/4] bg-secondary/50 border border-border overflow-hidden mr-2">
+              <div className="relative w-1/2 aspect-[3/4] bg-secondary/50 border border-border rounded-xl overflow-hidden mr-2">
                 {service.category === "Extensions" ? (
                   <BeforeAfterSlider
                     beforeImage="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600&h=750&fit=crop"
@@ -383,13 +383,13 @@ export function ServicesPreview() {
                 <div className="flex gap-3">
                   <Link
                     to="/booking"
-                    className="inline-flex items-center px-7 py-3.5 text-sm font-sans bg-foreground text-background hover:bg-foreground/90 hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
+                    className="inline-flex items-center px-7 py-3.5 text-sm font-sans bg-foreground text-background rounded-lg hover:bg-foreground/90 hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
                   >
                     Book consult
                   </Link>
                   <Link
                     to="/services"
-                    className="group/learn inline-flex items-center px-7 py-3.5 text-sm font-sans border border-border text-foreground hover:border-foreground hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap overflow-hidden"
+                    className="group/learn inline-flex items-center px-7 py-3.5 text-sm font-sans border border-border text-foreground rounded-lg hover:border-foreground hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap overflow-hidden"
                   >
                     <span>Learn more</span>
                     <ArrowRight className="w-0 h-5 opacity-0 group-hover/learn:w-5 group-hover/learn:ml-2 group-hover/learn:opacity-100 transition-all duration-300" />
@@ -424,7 +424,7 @@ export function ServicesPreview() {
               data-mobile-card
             >
               {/* Image - Before/After Slider for Extensions, placeholder for others */}
-              <div className="relative aspect-[4/5] bg-secondary/50 border border-border mb-6 overflow-hidden">
+              <div className="relative aspect-[4/5] bg-secondary/50 border border-border rounded-xl mb-6 overflow-hidden">
                 {service.category === "Extensions" ? (
                   <BeforeAfterSlider
                     beforeImage="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600&h=750&fit=crop"

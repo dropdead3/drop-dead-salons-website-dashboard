@@ -44,7 +44,7 @@ const StarRating = () => (
 );
 
 const ReviewCard = ({ review }: { review: typeof reviews[0] }) => (
-  <div className="flex-shrink-0 w-[320px] md:w-[380px] bg-background border border-border p-6 md:p-8">
+  <div className="flex-shrink-0 w-[320px] md:w-[380px] bg-background border border-border rounded-2xl p-6 md:p-8">
     <h3 className="text-xl md:text-2xl font-display mb-4">{review.title}</h3>
     
     <div className="flex items-center gap-3 mb-3">
