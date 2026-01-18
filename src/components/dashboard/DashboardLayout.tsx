@@ -72,53 +72,54 @@ interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  roles?: AppRole[]; // If undefined, visible to all authenticated users
+  permission?: string; // Permission required to view this item
+  roles?: AppRole[]; // Fallback: If undefined, visible to all authenticated users
 }
 
 const mainNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
-  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact },
+  { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
+  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
 ];
 
 const housekeepingNavItems: NavItem[] = [
-  { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users },
-  { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText },
+  { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users, permission: 'view_onboarding' },
+  { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText, permission: 'view_handbooks' },
 ];
 
 const growthNavItems: NavItem[] = [
-  { href: '/dashboard/training', label: 'Training', icon: Video },
-  { href: '/dashboard/program', label: 'Client Engine', icon: Target, roles: ['stylist', 'manager', 'admin'] },
-  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, roles: ['stylist', 'manager', 'admin'] },
+  { href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training' },
+  { href: '/dashboard/program', label: 'Client Engine', icon: Target, permission: 'access_client_engine' },
+  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell' },
 ];
 
 const getHelpNavItems: NavItem[] = [
-  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, roles: ['stylist', 'assistant', 'manager', 'admin'] },
-  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1 Meeting', icon: CalendarClock },
+  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
+  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1 Meeting', icon: CalendarClock, permission: 'schedule_meetings' },
 ];
 
 const statsNavItems: NavItem[] = [
-  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, roles: ['stylist', 'manager', 'admin'] },
-  { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats' },
+  { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
 ];
 
 // Manager-accessible admin items
 const managerNavItems: NavItem[] = [
-  { href: '/dashboard/admin/team', label: 'Team Overview', icon: Users },
-  { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Bell },
+  { href: '/dashboard/admin/team', label: 'Team Overview', icon: Users, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Bell, permission: 'manage_announcements' },
 ];
 
 // Full admin-only items (not visible to managers)
 const adminOnlyNavItems: NavItem[] = [
-  { href: '/dashboard/admin/approvals', label: 'Account Approvals', icon: UserCheck },
-  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield },
-  { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText },
-  { href: '/dashboard/admin/homepage-stylists', label: 'Homepage Stylists', icon: Globe },
-  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/dashboard/admin/approvals', label: 'Account Approvals', icon: UserCheck, permission: 'approve_accounts' },
+  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
+  { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText, permission: 'manage_handbooks' },
+  { href: '/dashboard/admin/homepage-stylists', label: 'Homepage Stylists', icon: Globe, permission: 'manage_homepage_stylists' },
+  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, isCoach, roles: actualRoles, signOut } = useAuth();
+  const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
   const { viewAsRole, setViewAsRole, isViewingAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
@@ -130,6 +131,52 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isAdmin = actualRoles.includes('admin');
   // isCoach should use simulated roles for nav visibility
   const effectiveIsCoach = isViewingAs ? (viewAsRole === 'admin' || viewAsRole === 'manager') : isCoach;
+
+  // Permission checking that respects View As mode
+  // When viewing as a role, we need to simulate that role's permissions
+  const getSimulatedPermissions = (role: AppRole): string[] => {
+    // These are the default permissions for each role - should match database seed
+    const rolePermissionMap: Record<AppRole, string[]> = {
+      admin: [
+        'view_command_center', 'view_team_directory', 'view_training', 'access_client_engine',
+        'ring_the_bell', 'view_leaderboard', 'view_own_stats', 'view_assistant_schedule',
+        'request_assistant', 'manage_assistant_schedule', 'schedule_meetings', 'view_onboarding',
+        'view_handbooks', 'view_team_overview', 'manage_announcements', 'view_all_stats',
+        'approve_accounts', 'manage_user_roles', 'manage_handbooks', 'manage_homepage_stylists',
+        'manage_settings', 'grant_super_admin'
+      ],
+      manager: [
+        'view_command_center', 'view_team_directory', 'view_training', 'access_client_engine',
+        'ring_the_bell', 'view_leaderboard', 'view_own_stats', 'view_assistant_schedule',
+        'request_assistant', 'schedule_meetings', 'view_onboarding', 'view_handbooks',
+        'view_team_overview', 'manage_announcements', 'view_all_stats'
+      ],
+      stylist: [
+        'view_command_center', 'view_team_directory', 'view_training', 'access_client_engine',
+        'ring_the_bell', 'view_leaderboard', 'view_own_stats', 'view_assistant_schedule',
+        'request_assistant', 'schedule_meetings', 'view_onboarding', 'view_handbooks'
+      ],
+      receptionist: [
+        'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
+        'schedule_meetings', 'view_onboarding', 'view_handbooks'
+      ],
+      assistant: [
+        'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
+        'view_assistant_schedule', 'manage_assistant_schedule', 'schedule_meetings',
+        'view_onboarding', 'view_handbooks'
+      ],
+    };
+    return rolePermissionMap[role] || [];
+  };
+
+  // Get effective permissions based on actual permissions or simulated role
+  const effectivePermissions = isViewingAs && viewAsRole 
+    ? getSimulatedPermissions(viewAsRole)
+    : actualPermissions;
+
+  const hasPermission = (permissionName: string): boolean => {
+    return effectivePermissions.includes(permissionName);
+  };
 
   // Get the user's primary access level for display
   const getAccessLabel = () => {
@@ -167,10 +214,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     navigate('/staff-login');
   };
 
-  // Filter nav items based on user roles (uses effective roles)
+  // Filter nav items based on permissions (primary) or roles (fallback)
   const filterNavItems = (items: NavItem[]) => {
     return items.filter(item => {
-      if (!item.roles) return true; // No roles specified = visible to all
+      // Check permission first
+      if (item.permission) {
+        return hasPermission(item.permission);
+      }
+      // Fallback to role-based check
+      if (!item.roles) return true; // No roles or permission specified = visible to all
       return item.roles.some(role => roles.includes(role));
     });
   };
