@@ -251,6 +251,35 @@ export type Database = {
         }
         Relationships: []
       }
+      handbook_acknowledgments: {
+        Row: {
+          acknowledged_at: string
+          handbook_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          handbook_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          handbook_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handbook_acknowledgments_handbook_id_fkey"
+            columns: ["handbook_id"]
+            isOneToOne: false
+            referencedRelation: "handbooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       handbooks: {
         Row: {
           category: string | null
