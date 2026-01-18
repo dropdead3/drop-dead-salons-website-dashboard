@@ -155,7 +155,7 @@ export function StickyFooterBar() {
               {/* Book CTA */}
               <Link
                 to="/booking"
-                className="flex items-center justify-center gap-2 px-4 md:px-5 py-3 bg-foreground text-background rounded-xl hover:bg-foreground/90 transition-all duration-200 group"
+                className="flex items-center justify-center gap-2 px-4 md:px-5 py-3 bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all duration-200 group"
               >
                 <span className="text-xs md:text-sm font-medium">Book consult</span>
                 <ArrowUpRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

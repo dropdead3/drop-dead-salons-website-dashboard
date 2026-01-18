@@ -377,14 +377,14 @@ export function HeroSection() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
                   onClick={() => setConsultationOpen(true)}
-                  className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal bg-foreground text-background rounded-xl hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
+                  className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
                 >
                   <span className="relative z-10">I am a new client</span>
                   <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
                 </button>
                 <Link
                   to="/booking"
-                  className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal border border-foreground text-foreground rounded-xl transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
+                  className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
                 >
                   <span className="relative z-10">I am a returning client</span>
                   <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />

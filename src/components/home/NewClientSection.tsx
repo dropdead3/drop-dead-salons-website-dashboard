@@ -72,7 +72,7 @@ export const NewClientSection = () => {
           >
             <Link
               to="/booking"
-              className="inline-flex items-center gap-3 bg-primary text-primary-foreground rounded-xl px-8 py-4 text-base font-medium hover:bg-primary/90 transition-colors duration-300 group"
+              className="inline-flex items-center gap-3 bg-primary text-primary-foreground rounded-full px-8 py-4 text-base font-medium hover:bg-primary/90 transition-colors duration-300 group"
             >
               <span>Let's Get Started</span>
               <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
