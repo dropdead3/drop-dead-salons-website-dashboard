@@ -6,6 +6,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { BeforeAfterSlider } from "@/components/home/BeforeAfterSlider";
+import { ExtensionReviewsSection } from "@/components/home/ExtensionReviewsSection";
 import {
   Accordion,
   AccordionContent,
@@ -330,6 +331,9 @@ export default function Extensions() {
           </motion.div>
         </div>
       </Section>
+
+      {/* Extension Reviews Section */}
+      <ExtensionReviewsSection />
 
       {/* FAQ Section */}
       <Section sectionRef={faqRef} className="bg-secondary/30">
