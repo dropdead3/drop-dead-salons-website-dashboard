@@ -126,15 +126,25 @@ function SocialProofSection() {
               {[...Array(5)].map((_, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                  initial={{ opacity: 0.3 }}
+                  animate={isInView ? { opacity: 1 } : { opacity: 0.3 }}
                   transition={{ 
-                    duration: 0.3, 
-                    delay: i * 0.1,
-                    ease: [0.34, 1.56, 0.64, 1]
+                    duration: 0.4, 
+                    delay: 0.3 + i * 0.15,
+                    ease: [0.25, 0.1, 0.25, 1]
                   }}
                 >
-                  <Star className="w-4 h-4 fill-foreground text-foreground" />
+                  <motion.div
+                    initial={{ scale: 0.5 }}
+                    animate={isInView ? { scale: 1 } : { scale: 0.5 }}
+                    transition={{ 
+                      duration: 0.3, 
+                      delay: 0.3 + i * 0.15,
+                      ease: [0.34, 1.56, 0.64, 1]
+                    }}
+                  >
+                    <Star className="w-4 h-4 fill-foreground text-foreground" />
+                  </motion.div>
                 </motion.div>
               ))}
             </div>
