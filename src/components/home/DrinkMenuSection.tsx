@@ -110,12 +110,13 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
             <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-oat-foreground/60 font-display">Ingredients</p>
             <motion.ul 
               layout
-              className="text-sm font-serif leading-relaxed text-left space-y-1"
+              className="text-sm leading-relaxed text-left space-y-1"
+              style={{ fontFamily: "'Aeonik Pro', sans-serif", fontWeight: 500 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
               {displayedIngredients.map((ingredient, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-oat-foreground/50 mt-1">•</span>
+                <li key={i} className="flex items-start gap-2 text-foreground">
+                  <span className="text-foreground/50 mt-1">•</span>
                   <span>{ingredient.trim()}</span>
                 </li>
               ))}
