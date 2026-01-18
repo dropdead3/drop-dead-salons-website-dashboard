@@ -239,7 +239,8 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
   return (
     <div
       ref={containerRef}
-      className={`relative aspect-[3/4] overflow-hidden select-none rounded-2xl ${isVideoMode ? '' : 'cursor-ew-resize'} ${className}`}
+      className={`relative aspect-[3/4] overflow-hidden select-none ${isVideoMode ? '' : 'cursor-ew-resize'} ${className}`}
+      style={{ borderRadius: 'inherit' }}
       onTouchMove={!isVideoMode ? handleTouchMove : undefined}
       onTouchEnd={!isVideoMode ? handleTouchEnd : undefined}
       onMouseEnter={hoverMode ? handleMouseEnter : undefined}
@@ -273,7 +274,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
       ) : (
         <>
           {/* After Image (Background) */}
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 rounded-[inherit] overflow-hidden">
             <img 
               src={afterImage} 
               alt="After transformation" 
@@ -283,7 +284,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
 
           {/* Before Image (Clipped) */}
           <div 
-            className="absolute inset-0"
+            className="absolute inset-0 rounded-[inherit] overflow-hidden"
             style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
           >
             <img 
