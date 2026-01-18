@@ -23,51 +23,51 @@ interface FloatingCircleConfig {
   mouseSpeed: number;
 }
 
-// Floating circle image configuration - adjusted for better visual balance
+// Floating circle image configuration - dynamic layering with dramatic movement
 const floatingCircleImages: FloatingCircleConfig[] = [
   { 
     src: heroCircle1, 
-    size: 220, 
-    x: "-2%", 
-    y: "18%", 
-    duration: 20, 
+    size: 240, 
+    x: "5%", 
+    y: "15%", 
+    duration: 18, 
     delay: 0,
-    zIndex: 5,
-    parallaxSpeed: 0.3,
-    mouseSpeed: 0.02,
+    zIndex: 5, // Behind content
+    parallaxSpeed: 0.25,
+    mouseSpeed: 0.015,
   },
   { 
     src: heroCircle2, 
-    size: 180, 
-    x: "82%", 
-    y: "12%", 
-    duration: 24, 
-    delay: 1,
-    zIndex: 15,
-    parallaxSpeed: 0.5,
-    mouseSpeed: 0.035,
+    size: 200, 
+    x: "75%", 
+    y: "8%", 
+    duration: 22, 
+    delay: 0.8,
+    zIndex: 25, // In front of content
+    parallaxSpeed: 0.6,
+    mouseSpeed: 0.045,
   },
   { 
     src: heroCircle3, 
-    size: 200, 
-    x: "75%", 
-    y: "55%", 
-    duration: 22, 
-    delay: 0.5,
-    zIndex: 5,
-    parallaxSpeed: 0.4,
-    mouseSpeed: 0.025,
+    size: 220, 
+    x: "80%", 
+    y: "50%", 
+    duration: 20, 
+    delay: 0.4,
+    zIndex: 5, // Behind content
+    parallaxSpeed: 0.35,
+    mouseSpeed: 0.02,
   },
   { 
     src: heroCircle4, 
-    size: 150, 
-    x: "2%", 
-    y: "52%", 
-    duration: 18, 
-    delay: 1.5,
-    zIndex: 15,
-    parallaxSpeed: 0.6,
-    mouseSpeed: 0.04,
+    size: 170, 
+    x: "8%", 
+    y: "55%", 
+    duration: 16, 
+    delay: 1.2,
+    zIndex: 25, // In front of content
+    parallaxSpeed: 0.7,
+    mouseSpeed: 0.05,
   },
 ];
 
@@ -125,8 +125,9 @@ function FloatingCircle({
       <motion.div
         className="w-full h-full"
         animate={{
-          x: isFront ? [0, -8, 12, 0] : [0, 10, -6, 0],
-          y: isFront ? [0, 10, -8, 0] : [0, -15, 8, 0],
+          x: isFront ? [0, -20, 30, -10, 0] : [0, 25, -15, 10, 0],
+          y: isFront ? [0, 25, -20, 15, 0] : [0, -30, 20, -10, 0],
+          rotate: isFront ? [0, 2, -2, 1, 0] : [0, -1, 2, -1, 0],
         }}
         transition={{
           duration: config.duration,
