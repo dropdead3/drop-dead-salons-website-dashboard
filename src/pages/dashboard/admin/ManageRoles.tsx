@@ -233,21 +233,32 @@ export default function ManageRoles() {
 
                     {/* Role Toggles */}
                     <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-8 gap-y-3">
-                      {/* Full Access Admin Toggle - Only visible to super admins */}
-                      {canApproveAdmin && (
+                      {/* Super Admin Toggle - Shown for super admins (locked) or editable by other super admins */}
+                      {(isSuperAdmin || canApproveAdmin) && (
                         <div className="flex items-center gap-2">
                           <label 
                             htmlFor={`${user.user_id}-super-admin`}
-                            className="text-sm font-medium cursor-pointer flex items-center gap-1"
+                            className={cn(
+                              "text-sm font-medium flex items-center gap-1",
+                              isSuperAdmin && !canApproveAdmin ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"
+                            )}
                           >
                             <Crown className="w-3 h-3 text-amber-600" />
                             Super Admin
                           </label>
+                          {isSuperAdmin && !canApproveAdmin && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Lock className="w-3 h-3 text-muted-foreground" />
+                              </TooltipTrigger>
+                              <TooltipContent>Inherent to Super Admin status</TooltipContent>
+                            </Tooltip>
+                          )}
                           <Switch
                             id={`${user.user_id}-super-admin`}
                             checked={isSuperAdmin || false}
                             onCheckedChange={() => handleToggleSuperAdmin(user.user_id, user.display_name || user.full_name, isSuperAdmin || false)}
-                            disabled={toggleSuperAdmin.isPending}
+                            disabled={toggleSuperAdmin.isPending || !canApproveAdmin}
                             className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-400 data-[state=checked]:to-orange-400"
                           />
                         </div>
