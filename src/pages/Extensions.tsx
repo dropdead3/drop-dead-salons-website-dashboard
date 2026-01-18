@@ -233,36 +233,49 @@ export default function Extensions() {
           {extensionBenefits.map((benefit, index) => (
             <motion.div
               key={benefit.title}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group relative bg-oat/30 overflow-hidden"
+              transition={{ duration: 0.7, delay: index * 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+              className="group relative overflow-hidden cursor-pointer"
             >
-              <div className="p-6 lg:p-8 flex flex-col h-full min-h-[320px]">
-                {/* Text Content */}
-                <div className="flex-1 pr-[40%]">
-                  {/* Number + Title */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full border border-foreground/30 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-medium">{index + 1}</span>
-                    </div>
-                    <h3 className="font-serif text-xl md:text-2xl font-medium text-foreground">
-                      {benefit.title}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {benefit.description}
-                  </p>
-                </div>
-              </div>
-
-              {/* Image positioned on right */}
-              <div className="absolute right-0 bottom-0 w-[45%] h-[80%]">
+              {/* Full Background Image */}
+              <div className="aspect-[4/5] relative">
                 <img 
                   src={benefit.image}
                   alt={benefit.title}
-                  className="w-full h-full object-cover object-top"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 />
+                
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-500" />
+                
+                {/* Content */}
+                <div className="absolute inset-0 p-6 lg:p-8 flex flex-col justify-end text-white">
+                  {/* Number + Title */}
+                  <motion.div 
+                    className="flex items-center gap-3 mb-3"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={benefitsInView ? { opacity: 1, x: 0 } : {}}
+                    transition={{ duration: 0.5, delay: 0.3 + index * 0.15 }}
+                  >
+                    <div className="w-8 h-8 rounded-full border border-white/50 flex items-center justify-center flex-shrink-0 backdrop-blur-sm bg-white/10">
+                      <span className="text-sm font-medium">{index + 1}</span>
+                    </div>
+                    <h3 className="font-serif text-xl md:text-2xl font-medium">
+                      {benefit.title}
+                    </h3>
+                  </motion.div>
+                  
+                  {/* Description - slides up on hover */}
+                  <motion.p 
+                    className="text-sm text-white/80 leading-relaxed max-w-[90%] transform transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 translate-y-2 opacity-80"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={benefitsInView ? { opacity: 0.8, y: 0 } : {}}
+                    transition={{ duration: 0.5, delay: 0.4 + index * 0.15 }}
+                  >
+                    {benefit.description}
+                  </motion.p>
+                </div>
               </div>
             </motion.div>
           ))}
