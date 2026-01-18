@@ -868,7 +868,7 @@ export default function Extensions() {
           <div className="lg:hidden absolute top-0 bottom-0 left-6 w-px bg-border" />
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
-            {/* Day 1 - Installation */}
+            {/* Day 1 - Consultation */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -881,14 +881,14 @@ export default function Extensions() {
               
               <div className="lg:pt-12">
                 <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Day 1</span>
-                <h3 className="font-serif text-lg mb-2">Installation</h3>
+                <h3 className="font-serif text-lg mb-2">Consultation</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Custom-installed using the Drop Dead Method for seamless, natural results.
+                  Initial extension consultation to assess your hair and discuss your goals.
                 </p>
               </div>
             </motion.div>
 
-            {/* Week 2 - Settling */}
+            {/* Next Week - Installation */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -897,18 +897,18 @@ export default function Extensions() {
               className="relative pl-16 lg:pl-0 py-8 lg:py-0 lg:text-center"
             >
               {/* Timeline dot */}
-              <div className="absolute left-4 lg:left-1/2 lg:-translate-x-1/2 top-8 lg:top-0 w-5 h-5 rounded-full bg-oat border-4 border-background shadow-sm z-10" />
+              <div className="absolute left-4 lg:left-1/2 lg:-translate-x-1/2 top-8 lg:top-0 w-5 h-5 rounded-full bg-foreground border-4 border-background shadow-sm z-10" />
               
               <div className="lg:pt-12">
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Week 2</span>
-                <h3 className="font-serif text-lg mb-2">Settling In</h3>
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Next Week</span>
+                <h3 className="font-serif text-lg mb-2">Installation</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Extensions fully settle. Perfect time for minor adjustments if needed.
+                  Full installation with custom color matching, toning, and blending.
                 </p>
               </div>
             </motion.div>
 
-            {/* Week 6-8 - Maintenance */}
+            {/* Week 6 - First Maintenance */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -920,8 +920,8 @@ export default function Extensions() {
               <div className="absolute left-4 lg:left-1/2 lg:-translate-x-1/2 top-8 lg:top-0 w-5 h-5 rounded-full bg-foreground border-4 border-background shadow-sm z-10 ring-4 ring-foreground/10" />
               
               <div className="lg:pt-12">
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Week 6-8</span>
-                <h3 className="font-serif text-lg mb-2">Maintenance</h3>
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Week 6</span>
+                <h3 className="font-serif text-lg mb-2">First Maintenance</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-2">
                   We move up your rows as your natural hair grows.
                 </p>
@@ -931,7 +931,7 @@ export default function Extensions() {
               </div>
             </motion.div>
 
-            {/* Month 6-12 - Refresh */}
+            {/* 12+ Months - Fresh Set */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -943,7 +943,7 @@ export default function Extensions() {
               <div className="absolute left-4 lg:left-1/2 lg:-translate-x-1/2 top-8 lg:top-0 w-5 h-5 rounded-full bg-oat border-4 border-background shadow-sm z-10" />
               
               <div className="lg:pt-12">
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Month 6-12</span>
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">12+ Months</span>
                 <h3 className="font-serif text-lg mb-2">Fresh Set</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Time for new hair. Start fresh with a brand new set of extensions.
