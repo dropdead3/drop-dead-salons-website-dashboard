@@ -169,7 +169,7 @@ export function Header() {
           )}>
             <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo with scroll transition - fixed width container to prevent layout shift */}
-            <div className="w-32 lg:w-40">
+            <div className="w-40 lg:w-56">
               <Link
                 to="/"
                 className="inline-block hover:opacity-70 transition-opacity"
@@ -188,7 +188,7 @@ export function Header() {
                       }}
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className="h-5 lg:h-6 w-auto"
+                      className="h-7 lg:h-8 w-auto"
                     />
                   ) : (
                     <motion.img
@@ -203,7 +203,7 @@ export function Header() {
                       }}
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className="h-6 w-auto"
+                      className="h-8 lg:h-10 w-auto"
                     />
                   )}
                 </AnimatePresence>
