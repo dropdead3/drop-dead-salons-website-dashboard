@@ -8,9 +8,9 @@ export function FounderWelcome() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
   return (
-    <section ref={sectionRef} className="py-20 lg:py-32 bg-background">
+    <section ref={sectionRef} className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-20 items-center max-w-6xl mx-auto">
           {/* Left Column - Founder Photo */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
