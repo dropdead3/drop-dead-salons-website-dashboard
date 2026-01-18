@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
-import { useToggleUserRole, ROLE_LABELS } from '@/hooks/useUserRoles';
+import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -373,13 +373,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     </div>
   );
 
-  const toggleRole = useToggleUserRole();
-
-  const handleToggleRole = (role: AppRole) => {
-    if (!user) return;
-    const hasRole = actualRoles.includes(role);
-    toggleRole.mutate({ userId: user.id, role, hasRole });
-  };
 
   // View As Component for admins - allows viewing dashboard as different roles
   const ViewAsToggle = () => {
@@ -455,69 +448,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   };
 
-  // Role Toggle Component for admins
-  const RoleToggle = () => {
-    if (!isAdmin) return null;
-
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Shield className="w-4 h-4" />
-            <span className="hidden sm:inline">My Roles</span>
-            <div className="flex gap-1">
-              {actualRoles.slice(0, 2).map(role => (
-                <Badge 
-                  key={role} 
-                  variant="secondary" 
-                  className={cn("text-xs px-1.5 py-0", roleColors[role as AppRole])}
-                >
-                  {ROLE_LABELS[role as AppRole]?.charAt(0)}
-                </Badge>
-              ))}
-              {actualRoles.length > 2 && (
-                <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                  +{actualRoles.length - 2}
-                </Badge>
-              )}
-            </div>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Toggle My Roles</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {ALL_ROLES.map(role => {
-            const hasRole = actualRoles.includes(role);
-            return (
-              <DropdownMenuItem
-                key={role}
-                onClick={() => handleToggleRole(role)}
-                className="flex items-center justify-between cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <Badge 
-                    variant="secondary" 
-                    className={cn("text-xs", roleColors[role])}
-                  >
-                    {ROLE_LABELS[role]}
-                  </Badge>
-                </div>
-                <div className={cn(
-                  "w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
-                  hasRole 
-                    ? "bg-primary border-primary text-primary-foreground" 
-                    : "border-muted-foreground"
-                )}>
-                  {hasRole && <span className="text-xs">✓</span>}
-                </div>
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
@@ -542,10 +472,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <img src={Logo} alt="Drop Dead" className="h-4 w-auto" />
         </Link>
 
-        <div className="flex items-center gap-2">
-          <ViewAsToggle />
-          <RoleToggle />
-        </div>
+        <ViewAsToggle />
       </header>
 
       {/* View As Banner */}
@@ -591,7 +518,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="hidden lg:block lg:pl-64">
           <div className="sticky top-0 z-30 flex items-center justify-end gap-2 h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
             <ViewAsToggle />
-            <RoleToggle />
           </div>
         </div>
       )}
