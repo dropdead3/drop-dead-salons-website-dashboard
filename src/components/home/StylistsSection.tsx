@@ -271,6 +271,11 @@ export function StylistsSection() {
       const bNotBooking = b.isBooking === false ? 1 : 0;
       if (aNotBooking !== bNotBooking) return aNotBooking - bNotBooking;
       
+      // Then sort by extensions specialty (extension stylists first)
+      const aHasExtensions = a.specialties.includes("EXTENSIONS") ? 0 : 1;
+      const bHasExtensions = b.specialties.includes("EXTENSIONS") ? 0 : 1;
+      if (aHasExtensions !== bHasExtensions) return aHasExtensions - bHasExtensions;
+      
       // Then sort by level (highest to lowest)
       return (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99);
     });
