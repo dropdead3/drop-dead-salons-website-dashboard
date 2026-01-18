@@ -26,9 +26,9 @@ interface DashboardLayoutProps {
 }
 
 const stylistNavItems = [
-  { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
+  { href: '/dashboard/program', label: 'Drop Dead 75', icon: Target },
   { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users },
-  { href: '/dashboard/progress', label: 'Progress', icon: Target },
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3 },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell },
@@ -80,7 +80,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <img src={Logo} alt="Drop Dead" className="h-5 w-auto" />
         </Link>
         <p className="text-xs text-muted-foreground mt-2 font-sans">
-          Drop Dead 75
+          Staff Dashboard
         </p>
       </div>
 
