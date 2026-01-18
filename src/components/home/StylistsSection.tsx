@@ -93,7 +93,7 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
             }`}
           >
             {specialty === "EXTENSIONS" && <Star className="w-3 h-3 fill-current" />}
-            {specialty}
+            {toTitleCase(specialty)}
           </motion.span>
         ))}
       </div>
