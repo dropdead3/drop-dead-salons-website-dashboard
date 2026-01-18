@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Instagram, ArrowUpRight, MapPin } from "lucide-react";
 import Logo from "@/assets/drop-dead-logo.svg";
+import { FooterStamp } from "./FooterStamp";
 
 const footerLinks = [
   { href: "/services", label: "Services" },
@@ -28,7 +29,7 @@ export function Footer() {
   return (
     <footer className="bg-background border-t border-border">
       <div className="container mx-auto px-6 lg:px-12 py-16 lg:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-16">
           {/* Brand */}
           <div className="space-y-6">
             <Link
@@ -120,6 +121,11 @@ export function Footer() {
               <Instagram size={18} />
               <span>@dropdeadsalon</span>
             </a>
+          </div>
+
+          {/* Stamp */}
+          <div className="flex items-start justify-center lg:justify-end">
+            <FooterStamp />
           </div>
         </div>
 
