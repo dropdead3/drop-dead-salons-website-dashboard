@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight } from 'lucide-react';
 import { useAllUsersWithRoles, useToggleUserRole, ALL_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/hooks/useUserRoles';
-import { useCanApproveAdmin, useAccountApprovals } from '@/hooks/useAccountApproval';
+import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -31,6 +31,7 @@ export default function ManageRoles() {
   const { data: accounts } = useAccountApprovals();
   const { data: canApproveAdmin } = useCanApproveAdmin();
   const toggleRole = useToggleUserRole();
+  const toggleSuperAdmin = useToggleSuperAdmin();
 
   const filteredUsers = users.filter(user => {
     if (!searchQuery) return true;
@@ -48,6 +49,10 @@ export default function ManageRoles() {
 
   const handleToggleRole = (userId: string, role: AppRole, hasRole: boolean) => {
     toggleRole.mutate({ userId, role, hasRole });
+  };
+
+  const handleToggleSuperAdmin = (userId: string, isSuperAdmin: boolean) => {
+    toggleSuperAdmin.mutate({ userId, grant: !isSuperAdmin });
   };
 
   return (
@@ -204,6 +209,27 @@ export default function ManageRoles() {
 
                     {/* Role Toggles */}
                     <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-8 gap-y-3">
+                      {/* Full Access Admin Toggle - Only visible to super admins */}
+                      {canApproveAdmin && (
+                        <div className="flex items-center gap-2">
+                          <label 
+                            htmlFor={`${user.user_id}-super-admin`}
+                            className="text-sm font-medium cursor-pointer flex items-center gap-1"
+                          >
+                            <Crown className="w-3 h-3 text-amber-600" />
+                            Full Access Admin
+                          </label>
+                          <Switch
+                            id={`${user.user_id}-super-admin`}
+                            checked={isSuperAdmin || false}
+                            onCheckedChange={() => handleToggleSuperAdmin(user.user_id, isSuperAdmin || false)}
+                            disabled={toggleSuperAdmin.isPending}
+                            className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-400 data-[state=checked]:to-orange-400"
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Regular Role Toggles */}
                       {ALL_ROLES.map(role => {
                         const hasRole = user.roles.includes(role);
                         const isAdminRole = role === 'admin';

@@ -198,10 +198,10 @@ export function useToggleSuperAdmin() {
     onSuccess: (_, { grant }) => {
       queryClient.invalidateQueries({ queryKey: ['account-approvals'] });
       queryClient.invalidateQueries({ queryKey: ['all-users-with-roles'] });
-      toast.success(grant ? 'Super Admin status granted' : 'Super Admin status revoked');
+      toast.success(grant ? 'Full Access Admin status granted' : 'Full Access Admin status revoked');
     },
     onError: (error) => {
-      toast.error('Failed to update super admin status', { description: error.message });
+      toast.error('Failed to update Full Access Admin status', { description: error.message });
     },
   });
 }
