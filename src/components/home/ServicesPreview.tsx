@@ -71,17 +71,15 @@ export function ServicesPreview() {
       // Start at the first card of the middle set
       const middleStartIndex = CLONE_COUNT;
       const card = cards[middleStartIndex] as HTMLElement;
-      const prevCard = cards[middleStartIndex - 1] as HTMLElement;
       
-      if (card && prevCard) {
-        // Scroll to position where the first card's image starts at the left padding edge
-        // We need to hide the previous card completely
-        const prevCardEnd = prevCard.offsetLeft + prevCard.offsetWidth;
-        container.scrollLeft = prevCardEnd;
+      if (card) {
+        // Scroll so the first card starts exactly at the container's left edge (after padding)
+        // This ensures no previous card is visible
+        container.scrollLeft = card.offsetLeft;
         hasInitialized.current = true;
         extendedIndex.current = CLONE_COUNT;
       }
-    }, 100);
+    }, 150);
     
     return () => clearTimeout(timer);
   }, []);
@@ -409,7 +407,7 @@ export function ServicesPreview() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+          className={`flex overflow-x-auto scrollbar-minimal pr-6 lg:pr-12 pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}
         >
           {extendedServices.map((service, index) => (
@@ -420,7 +418,7 @@ export function ServicesPreview() {
               variants={cardVariants}
               initial="hidden"
               animate={isInView ? "visible" : "hidden"}
-              className="group flex-shrink-0 w-[85vw] max-w-[600px] flex"
+              className={`group flex-shrink-0 w-[85vw] max-w-[600px] flex ${index === 0 ? 'ml-6 lg:ml-12' : ''}`}
             >
               {/* Placeholder Image Area */}
               <div className="relative w-1/2 aspect-[3/4] bg-secondary/50 border border-border overflow-hidden mr-2">
