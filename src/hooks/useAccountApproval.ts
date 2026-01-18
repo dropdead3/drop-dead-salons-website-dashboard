@@ -106,6 +106,7 @@ export function useApproveAccount() {
       queryClient.invalidateQueries({ queryKey: ['account-approvals'] });
       queryClient.invalidateQueries({ queryKey: ['pending-approvals'] });
       queryClient.invalidateQueries({ queryKey: ['all-users-with-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['role-change-history'] });
       toast.success(approve ? 'Account approved' : 'Account approval revoked');
     },
     onError: (error) => {
@@ -154,6 +155,7 @@ export function useApproveAdminRole() {
     onSuccess: (_, { approve }) => {
       queryClient.invalidateQueries({ queryKey: ['account-approvals'] });
       queryClient.invalidateQueries({ queryKey: ['all-users-with-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['role-change-history'] });
       toast.success(approve ? 'Admin role approved' : 'Admin approval revoked');
     },
     onError: (error) => {
@@ -198,6 +200,7 @@ export function useToggleSuperAdmin() {
     onSuccess: (_, { grant }) => {
       queryClient.invalidateQueries({ queryKey: ['account-approvals'] });
       queryClient.invalidateQueries({ queryKey: ['all-users-with-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['role-change-history'] });
       toast.success(grant ? 'Full Access Admin status granted' : 'Full Access Admin status revoked');
     },
     onError: (error) => {

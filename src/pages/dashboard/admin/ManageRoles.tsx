@@ -22,6 +22,7 @@ import {
 import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight } from 'lucide-react';
 import { useAllUsersWithRoles, useToggleUserRole, ALL_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/hooks/useUserRoles';
 import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
+import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -37,6 +38,7 @@ const roleColors: Record<AppRole, string> = {
 
 export default function ManageRoles() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
   const [superAdminConfirm, setSuperAdminConfirm] = useState<{
     userId: string;
     userName: string;
@@ -285,6 +287,17 @@ export default function ManageRoles() {
                           </div>
                         );
                       })}
+                    </div>
+
+                    {/* Role History */}
+                    <div className="mt-3">
+                      <RoleHistoryPanel 
+                        userId={user.user_id} 
+                        isOpen={expandedHistory === user.user_id}
+                        onToggle={() => setExpandedHistory(
+                          expandedHistory === user.user_id ? null : user.user_id
+                        )}
+                      />
                     </div>
                   </CardContent>
                 </Card>

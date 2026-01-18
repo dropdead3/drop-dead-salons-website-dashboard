@@ -74,6 +74,10 @@ export function useToggleUserRole() {
 
   return useMutation({
     mutationFn: async ({ userId, role, hasRole }: { userId: string; role: AppRole; hasRole: boolean }) => {
+      // Get current user for logging
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('Not authenticated');
+
       if (hasRole) {
         // Remove role
         const { error } = await supabase
@@ -85,12 +89,19 @@ export function useToggleUserRole() {
         if (error) {
           if (error.message?.includes('row-level security')) {
             if (role === 'admin') {
-              throw new Error('Only Super Admins can remove the Admin role. Request approval from account owner.');
+              throw new Error('Only Full Access Admins can remove the Admin role. Request approval from account owner.');
             }
             throw new Error('Permission denied');
           }
           throw error;
         }
+
+        // Log the action
+        await supabase.from('account_approval_logs').insert({
+          user_id: userId,
+          action: `role_removed:${role}`,
+          performed_by: currentUser.id,
+        });
       } else {
         // Add role
         const { error } = await supabase
@@ -104,18 +115,26 @@ export function useToggleUserRole() {
           }
           if (error.message?.includes('row-level security')) {
             if (role === 'admin') {
-              throw new Error('Only Super Admins can assign the Admin role. Request approval from account owner.');
+              throw new Error('Only Full Access Admins can assign the Admin role. Request approval from account owner.');
             }
             throw new Error('Permission denied');
           }
           throw error;
         }
+
+        // Log the action
+        await supabase.from('account_approval_logs').insert({
+          user_id: userId,
+          action: `role_added:${role}`,
+          performed_by: currentUser.id,
+        });
       }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['all-users-with-roles'] });
       queryClient.invalidateQueries({ queryKey: ['team-directory'] });
       queryClient.invalidateQueries({ queryKey: ['account-approvals'] });
+      queryClient.invalidateQueries({ queryKey: ['role-change-history'] });
       toast.success(
         variables.hasRole 
           ? `${ROLE_LABELS[variables.role]} role removed` 
@@ -128,5 +147,39 @@ export function useToggleUserRole() {
         description: error.message || 'An error occurred'
       });
     },
+  });
+}
+
+// Hook to fetch role change history for a user
+export function useRoleChangeHistory(userId: string) {
+  return useQuery({
+    queryKey: ['role-change-history', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('account_approval_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      // Fetch performer names
+      const performerIds = [...new Set(data?.map(log => log.performed_by) || [])];
+      const { data: performers } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name')
+        .in('user_id', performerIds);
+
+      const performerMap = new Map(
+        performers?.map(p => [p.user_id, p.display_name || p.full_name]) || []
+      );
+
+      return (data || []).map(log => ({
+        ...log,
+        performed_by_name: performerMap.get(log.performed_by) || 'Unknown',
+      }));
+    },
+    enabled: !!userId,
   });
 }
