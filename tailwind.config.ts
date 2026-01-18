@@ -116,6 +116,7 @@ export default {
         },
         "shine": {
           "0%": { backgroundPosition: "200% 0" },
+          "15%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },
       },
@@ -130,7 +131,7 @@ export default {
         "blur-in": "blur-in 0.5s ease-out",
         "float": "float 3s ease-in-out infinite",
         "marquee": "marquee 25s linear infinite",
-        "shine": "shine 3s ease-in-out infinite",
+        "shine": "shine 8s ease-in-out infinite",
       },
     },
   },
