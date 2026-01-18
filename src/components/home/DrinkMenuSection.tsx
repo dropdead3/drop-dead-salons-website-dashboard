@@ -115,8 +115,8 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
               {displayedIngredients.map((ingredient, i) => (
-                <li key={i} className="flex items-start gap-2 text-background">
-                  <span className="text-background/50 mt-1">•</span>
+                <li key={i} className="flex items-center gap-2 text-background">
+                  <span className="text-background/50">•</span>
                   <span className="capitalize">{ingredient.trim()}</span>
                 </li>
               ))}
