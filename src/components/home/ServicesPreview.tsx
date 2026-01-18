@@ -375,7 +375,7 @@ export function ServicesPreview() {
 
       {/* Desktop: Horizontal Scroll Carousel */}
       <div 
-        className="hidden md:block -mx-2 lg:-mx-8 relative overflow-hidden"
+        className="hidden md:block -mx-1 lg:-mx-7 relative overflow-hidden"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
