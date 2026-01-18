@@ -548,6 +548,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <AccessIcon className="w-3 h-3" />
             <span className="hidden sm:inline">{getAccessLabel()}</span>
           </Badge>
+          <ViewAsToggle />
           <NotificationsPanel unreadCount={unreadCount} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -571,7 +572,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <ViewAsToggle />
         </div>
       </header>
 
@@ -620,6 +620,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <AccessIcon className="w-3 h-3" />
             {getAccessLabel()}
           </Badge>
+          {isAdmin && <ViewAsToggle />}
           <NotificationsPanel unreadCount={unreadCount} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -643,7 +644,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {isAdmin && <ViewAsToggle />}
         </div>
       </div>
 
