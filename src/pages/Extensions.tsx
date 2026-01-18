@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Search, X, ChevronLeft, ChevronRight, Layers, Ruler, ShieldCheck, type LucideIcon } from "lucide-react";
+import { ArrowRight, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
@@ -47,24 +47,21 @@ const transformations = [
 ];
 
 // Extension benefit cards
-const extensionBenefits: { title: string; description: string; image: string; icon: LucideIcon }[] = [
+const extensionBenefits = [
   {
     title: "Instant Volume",
     description: "Increase volume with seamless, lightweight extensions that blend naturally and boost your hair's fullness in just one appointment.",
-    image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop",
-    icon: Layers
+    image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop"
   },
   {
     title: "Instant Length",
     description: "Get the hair of your dreams by achieving instant length with our custom extensions—designed to add inches and impact without the wait.",
-    image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=500&fit=crop",
-    icon: Ruler
+    image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=500&fit=crop"
   },
   {
     title: "Damage-Free",
     description: "Enjoy damage-free extensions with our signature Drop Dead Method, designed to protect your natural hair while enhancing your look.",
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop",
-    icon: ShieldCheck
+    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop"
   }
 ];
 
@@ -244,23 +241,18 @@ export default function Extensions() {
               <div className="p-6 lg:p-8 flex flex-col h-full min-h-[320px]">
                 {/* Text Content */}
                 <div className="flex-1 pr-[40%]">
-                  <h3 className="font-serif text-xl md:text-2xl font-medium text-foreground mb-3">
-                    {benefit.title}
-                  </h3>
+                  {/* Number + Title */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-full border border-foreground/30 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-medium">{index + 1}</span>
+                    </div>
+                    <h3 className="font-serif text-xl md:text-2xl font-medium text-foreground">
+                      {benefit.title}
+                    </h3>
+                  </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {benefit.description}
                   </p>
-                </div>
-                
-                {/* Icon Button */}
-                <div className="mt-6">
-                  <Link
-                    to="/booking"
-                    className="inline-flex items-center justify-center w-10 h-10 border border-foreground/30 hover:bg-foreground hover:text-background transition-all duration-300"
-                    aria-label={`Learn more about ${benefit.title}`}
-                  >
-                    <benefit.icon className="w-4 h-4" />
-                  </Link>
                 </div>
               </div>
 
