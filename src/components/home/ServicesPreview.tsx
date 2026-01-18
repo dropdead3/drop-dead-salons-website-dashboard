@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { Section } from "@/components/ui/section";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Pause } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { BeforeAfterSlider } from "./BeforeAfterSlider";
 
 const services = [
   {
@@ -336,13 +337,27 @@ export function ServicesPreview() {
               animate={isInView ? "visible" : "hidden"}
               className="group flex-shrink-0 w-[85vw] max-w-[600px] flex"
             >
-              {/* Placeholder Image Area */}
+              {/* Image Area - Before/After Slider for Extensions, placeholder for others */}
               <div className="relative w-1/2 aspect-[3/4] bg-secondary/50 border border-border overflow-hidden mr-2">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-6xl text-muted-foreground/30">✦</span>
-                </div>
-                {/* Subtle hover overlay */}
-                <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-500" />
+                {service.category === "Extensions" ? (
+                  <BeforeAfterSlider
+                    beforeImage="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600&h=750&fit=crop"
+                    afterImage="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=750&fit=crop"
+                    beforeLabel="Before"
+                    afterLabel="After Extensions"
+                    className="absolute inset-0"
+                    hideDefaultVideoButton={true}
+                    hoverMode={true}
+                  />
+                ) : (
+                  <>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-6xl text-muted-foreground/30">✦</span>
+                    </div>
+                    {/* Subtle hover overlay */}
+                    <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-500" />
+                  </>
+                )}
               </div>
 
               {/* Content */}
@@ -408,11 +423,22 @@ export function ServicesPreview() {
               className="group flex-shrink-0 w-[85vw] snap-center"
               data-mobile-card
             >
-              {/* Image placeholder */}
+              {/* Image - Before/After Slider for Extensions, placeholder for others */}
               <div className="relative aspect-[4/5] bg-secondary/50 border border-border mb-6 overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-6xl text-muted-foreground/30">✦</span>
-                </div>
+                {service.category === "Extensions" ? (
+                  <BeforeAfterSlider
+                    beforeImage="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600&h=750&fit=crop"
+                    afterImage="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=750&fit=crop"
+                    beforeLabel="Before"
+                    afterLabel="After Extensions"
+                    className="absolute inset-0"
+                    hideDefaultVideoButton={true}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-6xl text-muted-foreground/30">✦</span>
+                  </div>
+                )}
               </div>
 
               <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans block mb-2">
