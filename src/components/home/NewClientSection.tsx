@@ -29,7 +29,8 @@ export const NewClientSection = () => {
               transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
               className="text-3xl md:text-4xl lg:text-5xl font-display mb-6"
             >
-              New clients can get<br /><span><TypewriterText text="started" isInView={isInView} delay={600} /> here...</span>
+              <span className="whitespace-nowrap">New clients can get</span>{" "}
+              <span><TypewriterText text="started" isInView={isInView} delay={600} /> here...</span>
             </motion.h2>
             
             <motion.p
