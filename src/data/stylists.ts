@@ -70,9 +70,10 @@ export const stylists: Stylist[] = [
 // Get extension specialists sorted by level (highest to lowest)
 export const getExtensionSpecialists = (): Stylist[] => {
   const levelOrder: Record<string, number> = {
-    "LEVEL III STYLIST": 1,
-    "LEVEL II STYLIST": 2,
-    "LEVEL I STYLIST": 3
+    "LEVEL IV STYLIST": 1,
+    "LEVEL III STYLIST": 2,
+    "LEVEL II STYLIST": 3,
+    "LEVEL I STYLIST": 4
   };
 
   return stylists
@@ -99,4 +100,5 @@ export const stylistLevels = [
   { id: "LEVEL I STYLIST", name: "Level I", price: "$", description: "Rising talent" },
   { id: "LEVEL II STYLIST", name: "Level II", price: "$$", description: "Skilled stylist" },
   { id: "LEVEL III STYLIST", name: "Level III", price: "$$$", description: "Master artist" },
+  { id: "LEVEL IV STYLIST", name: "Level IV", price: "$$$$", description: "Elite specialist" },
 ];
