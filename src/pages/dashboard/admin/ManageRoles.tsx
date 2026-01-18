@@ -97,8 +97,8 @@ export default function ManageRoles() {
           <Alert className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800 dark:text-amber-200">
-              <strong>Limited Permissions:</strong> Only Full Access Admins can assign or remove the Admin role. 
-              Contact your account owner to request Full Access Admin status.
+              <strong>Limited Permissions:</strong> Only Super Admins can assign or remove the Admin role. 
+              Contact your account owner to request Super Admin status.
             </AlertDescription>
           </Alert>
         )}
@@ -114,7 +114,7 @@ export default function ManageRoles() {
               <div className="flex items-start gap-2">
                 <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300 text-xs shrink-0 gap-1">
                   <Crown className="w-3 h-3" />
-                  Full Access Admin
+                  Super Admin
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   Super user with ability to approve admin roles
@@ -128,7 +128,7 @@ export default function ManageRoles() {
                   <span className="text-xs text-muted-foreground">
                     {ROLE_DESCRIPTIONS[role]}
                     {role === 'admin' && !canApproveAdmin && (
-                      <span className="text-amber-600 dark:text-amber-400 ml-1">(Full Access Admin required)</span>
+                      <span className="text-amber-600 dark:text-amber-400 ml-1">(Super Admin required)</span>
                     )}
                   </span>
                 </div>
@@ -197,7 +197,7 @@ export default function ManageRoles() {
                               <TooltipTrigger>
                                 <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 gap-1 text-xs border border-amber-300">
                                   <Crown className="w-3 h-3" />
-                                  Full Access Admin
+                                  Super Admin
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent>Can approve admin roles</TooltipContent>
@@ -241,7 +241,7 @@ export default function ManageRoles() {
                             className="text-sm font-medium cursor-pointer flex items-center gap-1"
                           >
                             <Crown className="w-3 h-3 text-amber-600" />
-                            Full Access Admin
+                            Super Admin
                           </label>
                           <Switch
                             id={`${user.user_id}-super-admin`}
@@ -275,7 +275,7 @@ export default function ManageRoles() {
                                 <TooltipTrigger>
                                   <Lock className="w-3 h-3 text-muted-foreground" />
                                 </TooltipTrigger>
-                                <TooltipContent>Full Access Admin required</TooltipContent>
+                                <TooltipContent>Super Admin required</TooltipContent>
                               </Tooltip>
                             )}
                             <Switch
@@ -313,18 +313,18 @@ export default function ManageRoles() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Crown className="w-5 h-5 text-amber-600" />
-              {superAdminConfirm?.isSuperAdmin ? 'Revoke' : 'Grant'} Full Access Admin
+              {superAdminConfirm?.isSuperAdmin ? 'Revoke' : 'Grant'} Super Admin
             </AlertDialogTitle>
             <AlertDialogDescription>
               {superAdminConfirm?.isSuperAdmin ? (
                 <>
-                  Are you sure you want to <strong>revoke</strong> Full Access Admin status from{' '}
+                  Are you sure you want to <strong>revoke</strong> Super Admin status from{' '}
                   <strong>{superAdminConfirm?.userName}</strong>? They will no longer be able to 
                   assign or remove Admin roles.
                 </>
               ) : (
                 <>
-                  Are you sure you want to <strong>grant</strong> Full Access Admin status to{' '}
+                  Are you sure you want to <strong>grant</strong> Super Admin status to{' '}
                   <strong>{superAdminConfirm?.userName}</strong>? They will be able to assign and 
                   remove Admin roles for all users.
                 </>

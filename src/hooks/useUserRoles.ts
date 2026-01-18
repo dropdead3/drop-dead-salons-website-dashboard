@@ -89,7 +89,7 @@ export function useToggleUserRole() {
         if (error) {
           if (error.message?.includes('row-level security')) {
             if (role === 'admin') {
-              throw new Error('Only Full Access Admins can remove the Admin role. Request approval from account owner.');
+              throw new Error('Only Super Admins can remove the Admin role. Request approval from account owner.');
             }
             throw new Error('Permission denied');
           }
@@ -115,7 +115,7 @@ export function useToggleUserRole() {
           }
           if (error.message?.includes('row-level security')) {
             if (role === 'admin') {
-              throw new Error('Only Full Access Admins can assign the Admin role. Request approval from account owner.');
+              throw new Error('Only Super Admins can assign the Admin role. Request approval from account owner.');
             }
             throw new Error('Permission denied');
           }
