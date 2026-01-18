@@ -186,6 +186,14 @@ export function DrinkMenuSection() {
           />
         ))}
       </div>
+
+      {/* Bottom fade overlay for seamless exit */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-32 lg:h-40 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to bottom, transparent 0%, hsl(40 20% 92%) 100%)'
+        }}
+      />
     </section>
   );
 }
