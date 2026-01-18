@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
+import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import {
   LayoutDashboard,
   Target,
@@ -48,13 +50,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, isCoach, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { data: unreadCount = 0 } = useUnreadAnnouncements();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/staff-login');
   };
 
-  const NavLink = ({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }) => {
+  const NavLink = ({ href, label, icon: Icon, badgeCount }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; badgeCount?: number }) => {
     const isActive = location.pathname === href;
     return (
       <Link
@@ -68,7 +71,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       >
         <Icon className="w-4 h-4" />
-        {label}
+        <span className="flex-1">{label}</span>
+        {badgeCount !== undefined && badgeCount > 0 && (
+          <Badge variant="destructive" className="h-5 min-w-5 flex items-center justify-center text-xs px-1.5">
+            {badgeCount > 9 ? '9+' : badgeCount}
+          </Badge>
+        )}
       </Link>
     );
   };
@@ -89,7 +97,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <nav className="flex-1 py-4 overflow-y-auto">
         <div className="space-y-1">
           {stylistNavItems.map((item) => (
-            <NavLink key={item.href} {...item} />
+            <NavLink 
+              key={item.href} 
+              {...item} 
+              badgeCount={item.href === '/dashboard' ? unreadCount : undefined}
+            />
           ))}
         </div>
 
@@ -103,7 +115,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </p>
             <div className="space-y-1">
               {coachNavItems.map((item) => (
-                <NavLink key={item.href} {...item} />
+                <NavLink 
+                  key={item.href} 
+                  {...item} 
+                  badgeCount={item.href === '/dashboard/admin/announcements' ? unreadCount : undefined}
+                />
               ))}
             </div>
           </>
