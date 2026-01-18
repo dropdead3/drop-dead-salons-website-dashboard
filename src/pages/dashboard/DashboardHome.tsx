@@ -1,409 +1,237 @@
-import { useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDailyCompletion } from '@/hooks/useDailyCompletion';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { 
-  Target, 
-  Flame, 
-  CheckCircle2, 
-  AlertCircle, 
-  Upload, 
+  Calendar, 
+  TrendingUp, 
+  Bell, 
+  CheckSquare, 
+  Target,
   ChevronRight,
-  Play,
-  Lock,
-  Loader2,
-  ImageIcon
+  Users,
+  DollarSign,
+  Clock,
+  Megaphone,
+  Flame
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useDailyCompletion } from '@/hooks/useDailyCompletion';
 
 export default function DashboardHome() {
   const { user } = useAuth();
-  const {
-    enrollment,
-    todayCompletion,
-    tasks,
-    loading,
-    updateTask,
-    uploadProof,
-    submitDay,
-    refetch,
-  } = useDailyCompletion(user?.id);
+  const { enrollment } = useDailyCompletion(user?.id);
   
-  const [hasEnrollment, setHasEnrollment] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Check enrollment when data loads
-  if (!loading && enrollment && !hasEnrollment) {
-    setHasEnrollment(true);
-  }
-
-  const startProgram = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('stylist_program_enrollment')
-      .insert({
-        user_id: user.id,
-        current_day: 1,
-        streak_count: 0,
-        status: 'active',
-        weekly_wins_due_day: 7,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error starting program:', error);
-      toast.error('Failed to start program');
-    } else {
-      setHasEnrollment(true);
-      refetch();
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    const url = await uploadProof(file);
-    if (url) {
-      toast.success('Proof uploaded successfully');
-      refetch();
-    }
-    setUploading(false);
-  };
-
-  const handleSubmitDay = async () => {
-    setSubmitting(true);
-    await submitDay();
-    setSubmitting(false);
-  };
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="p-6 lg:p-8 flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!hasEnrollment && !enrollment) {
-    return (
-      <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-2xl mx-auto">
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-foreground text-background mx-auto mb-8 flex items-center justify-center">
-              <Target className="w-10 h-10" />
-            </div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-4">
-              DROP DEAD 75
-            </h1>
-            <p className="text-muted-foreground font-sans mb-8 max-w-md mx-auto">
-              75 days of execution. No excuses. Build your client engine and 
-              transform your book.
-            </p>
-            <div className="bg-card border border-border p-6 mb-8 text-left max-w-md mx-auto">
-              <h3 className="font-display text-sm tracking-wide mb-4">THE RULES</h3>
-              <ul className="space-y-3 text-sm font-sans text-muted-foreground">
-                <li className="flex gap-2">
-                  <span className="text-foreground">1.</span>
-                  Complete all daily tasks
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-foreground">2.</span>
-                  Upload proof of work
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-foreground">3.</span>
-                  Log your metrics
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-foreground">4.</span>
-                  Submit Weekly Wins every 7 days
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-foreground font-medium">5.</span>
-                  <span className="text-foreground font-medium">Miss one day = restart</span>
-                </li>
-              </ul>
-            </div>
-            <Button 
-              onClick={startProgram}
-              className="font-display tracking-wide px-8 py-6 text-base"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              START DAY 1
-            </Button>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  const progressPercent = ((enrollment?.current_day || 1) / 75) * 100;
-  const isWeeklyWinsDue = enrollment?.weekly_wins_due_day === enrollment?.current_day;
-  const isPaused = enrollment?.status === 'paused';
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8">
+      <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-2">
-            <h1 className="font-display text-3xl lg:text-4xl">
-              DAY {enrollment?.current_day}
-            </h1>
-            <span className="text-sm text-muted-foreground font-sans">of 75</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm font-sans">
-              <Flame className="w-4 h-4 text-orange-500" />
-              <span>{enrollment?.streak_count} day streak</span>
-            </div>
-            {enrollment?.status === 'active' && (
-              <span className="px-2 py-1 bg-green-500/10 text-green-600 text-xs font-display tracking-wide">
-                ACTIVE
-              </span>
-            )}
-            {isPaused && (
-              <span className="px-2 py-1 bg-yellow-500/10 text-yellow-600 text-xs font-display tracking-wide">
-                PAUSED
-              </span>
-            )}
-          </div>
+        <div>
+          <h1 className="font-display text-3xl lg:text-4xl mb-2">
+            Welcome back, {firstName}
+          </h1>
+          <p className="text-muted-foreground font-sans">
+            Here's what's happening today
+          </p>
         </div>
 
-        {/* Progress Bar */}
-        <Card className="p-6 mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-sans text-muted-foreground">Program Progress</span>
-            <span className="text-sm font-display">{Math.round(progressPercent)}%</span>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-display">0</p>
+                <p className="text-xs text-muted-foreground font-sans">Today's Clients</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-500/10 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-display">$0</p>
+                <p className="text-xs text-muted-foreground font-sans">This Week</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-500/10 flex items-center justify-center">
+                <Users className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-display">0</p>
+                <p className="text-xs text-muted-foreground font-sans">New Clients</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-500/10 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-display">0%</p>
+                <p className="text-xs text-muted-foreground font-sans">Rebooking Rate</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Schedule & Appointments */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-sm tracking-wide">TODAY'S SCHEDULE</h2>
+              <Clock className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="space-y-3">
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm font-sans">No appointments today</p>
+                <p className="text-xs mt-1">Enjoy your day off!</p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Tasks & To-Dos */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-sm tracking-wide">MY TASKS</h2>
+              <CheckSquare className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="space-y-3">
+              <TaskItem label="Complete onboarding checklist" />
+              <TaskItem label="Review training videos" />
+              <TaskItem label="Update availability" />
+            </div>
+            <Button variant="ghost" size="sm" className="w-full mt-4 text-muted-foreground">
+              View all tasks
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </Card>
+
+          {/* Announcements */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
+              <Megaphone className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="space-y-3">
+              <div className="p-3 bg-muted/50 border-l-2 border-foreground">
+                <p className="text-sm font-sans font-medium">Welcome to Drop Dead!</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Complete your onboarding to get started
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Drop Dead 75 Program Section */}
+        <Card className="p-6 border-2 border-foreground/20">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center">
+                <Target className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-display text-lg tracking-wide">DROP DEAD 75</h2>
+                <p className="text-sm text-muted-foreground font-sans">
+                  75 days of execution. No excuses.
+                </p>
+              </div>
+            </div>
+            {enrollment && (
+              <div className="flex items-center gap-2 text-sm">
+                <Flame className="w-4 h-4 text-orange-500" />
+                <span className="font-display">{enrollment.streak_count} day streak</span>
+              </div>
+            )}
           </div>
-          <Progress value={progressPercent} className="h-2" />
+          
+          {enrollment ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-sans text-muted-foreground">
+                  You're on <span className="text-foreground font-medium">Day {enrollment.current_day}</span> of 75
+                </p>
+                <div className="w-48 h-2 bg-muted mt-2 overflow-hidden">
+                  <div 
+                    className="h-full bg-foreground transition-all" 
+                    style={{ width: `${(enrollment.current_day / 75) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <Button asChild>
+                <Link to="/dashboard/program">
+                  Continue Today
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-sans text-muted-foreground">
+                Ready to transform your book? Start the challenge today.
+              </p>
+              <Button asChild>
+                <Link to="/dashboard/program">
+                  Start Program
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
+              </Button>
+            </div>
+          )}
         </Card>
 
-        {/* Paused Warning */}
-        {isPaused && (
-          <Card className="p-6 mb-8 border-yellow-500/50 bg-yellow-500/5">
-            <div className="flex items-start gap-4">
-              <Lock className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-display text-sm tracking-wide mb-1">
-                  PROGRESS PAUSED
-                </h3>
-                <p className="text-sm text-muted-foreground font-sans">
-                  Submit your Weekly Wins Report to unlock Day {enrollment?.current_day}.
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-4"
-                  asChild
-                >
-                  <Link to="/dashboard/weekly-wins">
-                    Submit Weekly Wins
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Weekly Wins Due */}
-        {isWeeklyWinsDue && !isPaused && (
-          <Card className="p-6 mb-8 border-blue-500/50 bg-blue-500/5">
-            <div className="flex items-start gap-4">
-              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-display text-sm tracking-wide mb-1">
-                  WEEKLY WINS DUE TODAY
-                </h3>
-                <p className="text-sm text-muted-foreground font-sans">
-                  Submit your Weekly Wins Report before completing today's tasks.
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-4"
-                  asChild
-                >
-                  <Link to="/dashboard/weekly-wins">
-                    Submit Report
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Today's Tasks */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="p-6">
-            <h2 className="font-display text-sm tracking-wide mb-6">TODAY'S TASKS</h2>
-            <div className="space-y-4">
-              <TaskItem 
-                label="Post content (reel, story, or carousel)"
-                completed={tasks.content_posted}
-                onChange={(v) => updateTask('content_posted', v)}
-                disabled={isPaused}
-              />
-              <TaskItem 
-                label="Respond to all DMs within 2 hours"
-                completed={tasks.dms_responded}
-                onChange={(v) => updateTask('dms_responded', v)}
-                disabled={isPaused}
-              />
-              <TaskItem 
-                label="Follow up with 3 potential clients"
-                completed={tasks.follow_ups}
-                onChange={(v) => updateTask('follow_ups', v)}
-                disabled={isPaused}
-              />
-              <TaskItem 
-                label="Log your daily metrics"
-                completed={tasks.metrics_logged}
-                onChange={(v) => updateTask('metrics_logged', v)}
-                disabled={isPaused}
-              />
-            </div>
-          </Card>
-
-          <div className="space-y-6">
-            <Card className="p-6">
-              <h2 className="font-display text-sm tracking-wide mb-4">PROOF OF WORK</h2>
-              <p className="text-sm text-muted-foreground font-sans mb-4">
-                Upload a screenshot or video of your content posted today.
-              </p>
-              {todayCompletion?.proof_url ? (
-                <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30">
-                  <ImageIcon className="w-5 h-5 text-green-600" />
-                  <span className="text-sm font-sans text-green-600">Proof uploaded</span>
-                </div>
-              ) : (
-                <>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,video/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    disabled={isPaused || uploading}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Proof
-                      </>
-                    )}
-                  </Button>
-                </>
-              )}
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
-              <div className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start" 
-                  asChild
-                >
-                  <Link to="/dashboard/stats">
-                    <ChevronRight className="w-4 h-4 mr-2" />
-                    Log Today's Metrics
-                  </Link>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  asChild
-                >
-                  <Link to="/dashboard/ring-the-bell">
-                    <ChevronRight className="w-4 h-4 mr-2" />
-                    Ring the Bell
-                  </Link>
-                </Button>
-              </div>
-            </Card>
+        {/* Quick Actions */}
+        <div>
+          <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+              <Link to="/dashboard/ring-the-bell">
+                <Bell className="w-5 h-5" />
+                <span className="text-xs">Ring the Bell</span>
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+              <Link to="/dashboard/stats">
+                <TrendingUp className="w-5 h-5" />
+                <span className="text-xs">Log Metrics</span>
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+              <Link to="/dashboard/training">
+                <Target className="w-5 h-5" />
+                <span className="text-xs">Training</span>
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+              <Link to="/dashboard/handbooks">
+                <CheckSquare className="w-5 h-5" />
+                <span className="text-xs">Handbooks</span>
+              </Link>
+            </Button>
           </div>
-        </div>
-
-        {/* Submit Day Button */}
-        <div className="mt-8">
-          <Button 
-            className="w-full lg:w-auto font-display tracking-wide px-8 py-6"
-            disabled={isPaused || submitting}
-            onClick={handleSubmitDay}
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                SUBMITTING...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                SUBMIT DAY {enrollment?.current_day} FOR COMPLETION
-              </>
-            )}
-          </Button>
-          <p className="text-xs text-muted-foreground font-sans mt-2">
-            All tasks, proof, and metrics must be complete to submit.
-          </p>
         </div>
       </div>
     </DashboardLayout>
   );
 }
 
-interface TaskItemProps {
-  label: string;
-  completed: boolean;
-  onChange: (value: boolean) => void;
-  disabled?: boolean;
-}
-
-function TaskItem({ label, completed, onChange, disabled }: TaskItemProps) {
+function TaskItem({ label }: { label: string }) {
   return (
-    <button 
-      className="flex items-center gap-3 cursor-pointer group w-full text-left disabled:cursor-not-allowed disabled:opacity-50"
-      onClick={() => !disabled && onChange(!completed)}
-      disabled={disabled}
-    >
-      <div className={`
-        w-5 h-5 border flex items-center justify-center transition-colors
-        ${completed 
-          ? 'bg-foreground border-foreground' 
-          : 'border-border group-hover:border-foreground'
-        }
-      `}>
-        {completed && <CheckCircle2 className="w-3 h-3 text-background" />}
-      </div>
-      <span className={`text-sm font-sans ${completed ? 'line-through text-muted-foreground' : ''}`}>
-        {label}
-      </span>
-    </button>
+    <div className="flex items-center gap-3">
+      <div className="w-4 h-4 border border-border rounded-sm" />
+      <span className="text-sm font-sans">{label}</span>
+    </div>
   );
 }

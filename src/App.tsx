@@ -21,6 +21,7 @@ import StaffLogin from "./pages/StaffLogin";
 
 // Dashboard pages
 import DashboardHome from "./pages/dashboard/DashboardHome";
+import Program from "./pages/dashboard/Program";
 import RingTheBell from "./pages/dashboard/RingTheBell";
 import Leaderboard from "./pages/dashboard/Leaderboard";
 import Training from "./pages/dashboard/Training";
@@ -57,6 +58,7 @@ const App = () => (
 
               {/* Protected dashboard routes */}
               <Route path="/dashboard" element={<ProtectedRoute><DashboardHome /></ProtectedRoute>} />
+              <Route path="/dashboard/program" element={<ProtectedRoute><Program /></ProtectedRoute>} />
               <Route path="/dashboard/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
               <Route path="/dashboard/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
               <Route path="/dashboard/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
