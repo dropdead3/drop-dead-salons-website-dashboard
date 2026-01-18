@@ -412,7 +412,7 @@ export function ServicesPreview() {
               className="group flex-shrink-0 w-[85vw] max-w-[600px] flex"
             >
               {/* Content */}
-              <div className="w-1/2 flex flex-col justify-center py-4 pr-4">
+              <div className="w-1/2 flex flex-col justify-center py-4 pr-2">
                 <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-display mb-3">
                   {service.category}
                 </span>
@@ -446,7 +446,7 @@ export function ServicesPreview() {
               </div>
 
               {/* Placeholder Image Area */}
-              <div className="relative w-1/2 aspect-[3/4] bg-secondary/50 border border-border overflow-hidden ml-4 mr-12">
+              <div className="relative w-1/2 aspect-[3/4] bg-secondary/50 border border-border overflow-hidden ml-2 mr-20">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-6xl text-muted-foreground/30">✦</span>
                 </div>
