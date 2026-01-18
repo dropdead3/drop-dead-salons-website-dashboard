@@ -1,7 +1,7 @@
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Search, X } from "lucide-react";
+import { Search, X, ArrowRight } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -106,15 +106,17 @@ export function FAQSection() {
             <div className="flex flex-wrap gap-4">
               <Link
                 to="/faq"
-                className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                className="group/faq inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all duration-300 overflow-hidden"
               >
-                See All FAQ's
+                <span>See All FAQ's</span>
+                <ArrowRight className="w-0 h-4 opacity-0 group-hover/faq:w-4 group-hover/faq:ml-2 group-hover/faq:opacity-100 transition-all duration-300" />
               </Link>
               <Link
                 to="/policies"
-                className="inline-flex items-center justify-center px-6 py-3 border border-border bg-background text-foreground text-sm font-medium hover:bg-muted transition-colors"
+                className="group/policies inline-flex items-center justify-center px-6 py-3 border border-border bg-background text-foreground text-sm font-medium hover:border-foreground transition-all duration-300 overflow-hidden"
               >
-                Salon Policies
+                <span>Salon Policies</span>
+                <ArrowRight className="w-0 h-4 opacity-0 group-hover/policies:w-4 group-hover/policies:ml-2 group-hover/policies:opacity-100 transition-all duration-300" />
               </Link>
             </div>
           </motion.div>
