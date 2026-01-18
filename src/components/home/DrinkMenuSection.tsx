@@ -184,7 +184,7 @@ export function DrinkMenuSection() {
       data-theme="light" 
       className="pt-16 lg:pt-24 pb-32 lg:pb-40 overflow-hidden relative"
       style={{
-        background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(0 0% 100%) 50%, hsl(40 20% 92%) 100%)'
+        background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(0 0% 100%) 75%, hsl(40 20% 92%) 100%)'
       }}
     >
       {/* Header */}
