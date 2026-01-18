@@ -96,14 +96,19 @@ const statsNavItems: NavItem[] = [
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
-const coachNavItems: NavItem[] = [
+// Manager-accessible admin items
+const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/team', label: 'Team Overview', icon: Users },
+  { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Bell },
+];
+
+// Full admin-only items (not visible to managers)
+const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/approvals', label: 'Account Approvals', icon: UserCheck },
   { href: '/dashboard/admin/roles', label: 'Manage Roles', icon: Shield },
-  { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Bell },
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText },
   { href: '/dashboard/admin/homepage-stylists', label: 'Homepage Stylists', icon: Globe },
-  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, roles: ['admin'] },
+  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -251,21 +256,39 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </>
         )}
 
-        {effectiveIsCoach && filterNavItems(coachNavItems).length > 0 && (
+        {/* Manager Section - visible to managers and admins */}
+        {effectiveIsCoach && filterNavItems(managerNavItems).length > 0 && (
           <>
             <div className="my-4 px-4">
               <div className="h-px bg-border" />
             </div>
             <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Admin
+              Management
             </p>
             <div className="space-y-1">
-              {filterNavItems(coachNavItems).map((item) => (
+              {filterNavItems(managerNavItems).map((item) => (
                 <NavLink 
                   key={item.href} 
                   {...item} 
                   badgeCount={item.href === '/dashboard/admin/announcements' ? unreadCount : undefined}
                 />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Admin Only Section - visible only to admins */}
+        {roles.includes('admin') && filterNavItems(adminOnlyNavItems).length > 0 && (
+          <>
+            <div className="my-4 px-4">
+              <div className="h-px bg-border" />
+            </div>
+            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
+              Full Access Admin
+            </p>
+            <div className="space-y-1">
+              {filterNavItems(adminOnlyNavItems).map((item) => (
+                <NavLink key={item.href} {...item} />
               ))}
             </div>
           </>
