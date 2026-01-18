@@ -56,9 +56,9 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
+      transition={{ duration: 0.4, delay: index * 0.08 }}
       whileHover={{ y: -4 }}
-      className="group relative aspect-[3/4] bg-muted overflow-hidden flex-shrink-0 w-[280px] md:w-[300px] shadow-md hover:shadow-lg transition-shadow duration-500"
+      className="group relative aspect-[3/4] bg-muted overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-500"
     >
       <ImageWithSkeleton
         src={stylist.imageUrl}
@@ -369,8 +369,8 @@ export function StylistsSection() {
 
       </div>
 
-      {/* Scrolling Cards */}
-      <div className="relative overflow-visible">
+      {/* Stylists Grid */}
+      <div className="container mx-auto px-6 mt-12">
         <AnimatePresence mode="wait">
           {filteredStylists.length > 0 ? (
             <motion.div
@@ -379,13 +379,7 @@ export function StylistsSection() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex gap-4 overflow-x-auto py-8 -my-8"
-              style={{
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-                paddingLeft: 'max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem))',
-                paddingRight: '1.5rem'
-              }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
               {filteredStylists.map((stylist, index) => (
                 <StylistCard key={stylist.id} stylist={stylist} index={index} />
