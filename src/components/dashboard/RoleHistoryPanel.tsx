@@ -21,8 +21,8 @@ const ACTION_CONFIG: Record<string, { icon: typeof History; label: string; color
   revoked: { icon: X, label: 'Account approval revoked', color: 'text-red-600' },
   admin_approved: { icon: Shield, label: 'Admin role approved', color: 'text-green-600' },
   admin_revoked: { icon: ShieldOff, label: 'Admin approval revoked', color: 'text-red-600' },
-  super_admin_granted: { icon: Crown, label: 'Full Access Admin granted', color: 'text-amber-600' },
-  super_admin_revoked: { icon: Crown, label: 'Full Access Admin revoked', color: 'text-red-600' },
+  super_admin_granted: { icon: Crown, label: 'Super Admin granted', color: 'text-amber-600' },
+  super_admin_revoked: { icon: Crown, label: 'Super Admin revoked', color: 'text-red-600' },
 };
 
 function parseAction(action: string): { icon: typeof History; label: string; color: string } {

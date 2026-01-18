@@ -133,7 +133,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Get the user's primary access level for display
   const getAccessLabel = () => {
-    if (actualRoles.includes('admin')) return 'Full Access Admin';
+    if (actualRoles.includes('admin')) return 'Super Admin';
     if (actualRoles.includes('manager')) return 'Manager';
     if (actualRoles.includes('stylist')) return 'Stylist';
     if (actualRoles.includes('receptionist')) return 'Receptionist';
@@ -319,7 +319,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="h-px bg-border" />
             </div>
             <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Full Access Admin
+              Super Admin
             </p>
             <div className="space-y-1">
               {filterNavItems(adminOnlyNavItems).map((item) => (
