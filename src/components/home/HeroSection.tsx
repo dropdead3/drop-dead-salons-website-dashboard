@@ -175,14 +175,14 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="font-display text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-normal text-foreground leading-[0.95]"
+              className="font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-normal text-foreground leading-[0.95]"
               style={{ 
                 opacity,
                 y: headlineY,
                 filter: useTransform(blur, (v) => `blur(${v}px)`)
               }}
             >
-              Drop Dead Salon
+              <span className="whitespace-nowrap">Drop Dead</span> Salon
             </motion.h1>
 
             {/* Subheadline */}
