@@ -151,12 +151,20 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
   }
-  
-  /* Termina font rules: always uppercase, wide tracking, never italic */
+}
+
+/* Termina font rules: always uppercase, wide tracking, never italic */
+@layer utilities {
   .font-display {
     text-transform: uppercase;
     letter-spacing: 0.15em;
     font-style: normal !important;
+  }
+  
+  /* Laguna (serif) should NOT be uppercase */
+  .font-serif {
+    text-transform: none;
+    letter-spacing: normal;
   }
 }
 
