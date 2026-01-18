@@ -2,6 +2,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { Check, ArrowRight } from "lucide-react";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 
 const benefits = [
   "Complimentary Drinks & Snacks",
@@ -10,20 +11,20 @@ const benefits = [
 ];
 
 export const NewClientSection = () => {
-  const sectionRef = useRef<HTMLElement>(null);
-  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const contentRef = useRef(null);
+  const isInView = useInView(contentRef, { once: true, margin: "-100px" });
+  const { ref: scrollRef, opacity, y, blurFilter } = useScrollReveal();
 
   return (
-    <section 
-      ref={sectionRef}
-      className="py-12 md:py-16 bg-background"
-    >
+    <section className="py-12 md:py-16 bg-background">
       <div className="container mx-auto px-6">
-        <div 
+        <motion.div 
+          ref={scrollRef}
           data-theme="light"
           className="bg-secondary rounded-2xl p-12 md:p-16 lg:p-20"
+          style={{ opacity, y, filter: blurFilter }}
         >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 lg:gap-16">
+          <div ref={contentRef} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 lg:gap-16">
             {/* Content */}
             <div className="flex-1 max-w-2xl">
               <motion.h2
@@ -82,7 +83,7 @@ export const NewClientSection = () => {
               </Link>
             </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

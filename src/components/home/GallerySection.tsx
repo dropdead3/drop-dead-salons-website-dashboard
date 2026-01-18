@@ -7,6 +7,7 @@ import { BeforeAfterSlider } from "./BeforeAfterSlider";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { Images, ArrowRight } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 
 // Gallery images - replace with real salon work
 const galleryImages = [
@@ -39,88 +40,94 @@ const transformations = [
 ];
 
 export function GallerySection() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const contentRef = useRef(null);
+  const isInView = useInView(contentRef, { once: true, margin: "-100px" });
+  const { ref: scrollRef, opacity, y, blurFilter } = useScrollReveal();
 
   return (
     <Section theme="light">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-        <SectionHeader
-          title="Work That Speaks"
-          titleHighlight="for Itself."
-          animate
-          isInView={isInView}
-        />
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="flex flex-col gap-4"
-        >
-          <p className="text-sm text-muted-foreground font-sans max-w-xs">
-            Real clients. Real transformations. See our artistry in action.
-          </p>
-          <Link
-            to="/gallery"
-            className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group w-fit"
-          >
-            <Images className="w-4 h-4" />
-            <span>View gallery</span>
-            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
-        </motion.div>
-      </div>
-
-      <div
-        ref={ref}
-        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      <motion.div
+        ref={scrollRef}
+        style={{ opacity, y, filter: blurFilter }}
       >
-        {/* Before/After Slider - Featured */}
-        {transformations.map((transform, index) => (
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+          <SectionHeader
+            title="Work That Speaks"
+            titleHighlight="for Itself."
+            animate
+            isInView={isInView}
+          />
           <motion.div
-            key={`transform-${transform.id}`}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="flex flex-col gap-4"
           >
-            <BeforeAfterSlider
-              beforeImage={transform.beforeImage}
-              afterImage={transform.afterImage}
-              beforeLabel={transform.beforeLabel}
-              afterLabel={transform.afterLabel}
-              hoverMode={true}
-            />
+            <p className="text-sm text-muted-foreground font-sans max-w-xs">
+              Real clients. Real transformations. See our artistry in action.
+            </p>
+            <Link
+              to="/gallery"
+              className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group w-fit"
+            >
+              <Images className="w-4 h-4" />
+              <span>View gallery</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
           </motion.div>
-        ))}
+        </div>
 
-        {/* Regular Gallery Images with Skeleton */}
-        {galleryImages.map((image, index) => (
-          <motion.div
-            key={image.id}
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: (index + transformations.length) * 0.1 }}
-            className="relative aspect-[3/4] overflow-hidden rounded-xl group cursor-pointer"
-          >
-            <ImageWithSkeleton
-              src={image.src}
-              alt={image.alt}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              wrapperClassName="absolute inset-0"
-            />
-            
-            {/* Overlay on hover */}
-            <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors duration-500" />
+        <div
+          ref={contentRef}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          {/* Before/After Slider - Featured */}
+          {transformations.map((transform, index) => (
+            <motion.div
+              key={`transform-${transform.id}`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+            >
+              <BeforeAfterSlider
+                beforeImage={transform.beforeImage}
+                afterImage={transform.afterImage}
+                beforeLabel={transform.beforeLabel}
+                afterLabel={transform.afterLabel}
+                hoverMode={true}
+              />
+            </motion.div>
+          ))}
 
-            {/* Hover reveal */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-              <span className="text-xs uppercase tracking-[0.15em] text-background font-display bg-foreground px-2 py-1">
-                View
-              </span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+          {/* Regular Gallery Images with Skeleton */}
+          {galleryImages.map((image, index) => (
+            <motion.div
+              key={image.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: (index + transformations.length) * 0.1 }}
+              className="relative aspect-[3/4] overflow-hidden rounded-xl group cursor-pointer"
+            >
+              <ImageWithSkeleton
+                src={image.src}
+                alt={image.alt}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                wrapperClassName="absolute inset-0"
+              />
+              
+              {/* Overlay on hover */}
+              <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors duration-500" />
+
+              {/* Hover reveal */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                <span className="text-xs uppercase tracking-[0.15em] text-background font-display bg-foreground px-2 py-1">
+                  View
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
     </Section>
   );
 }

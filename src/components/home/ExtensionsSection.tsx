@@ -4,13 +4,15 @@ import { Section } from "@/components/ui/section";
 import { ArrowRight, Star, Award, MapPin, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BeforeAfterSlider, BeforeAfterSliderHandle } from "./BeforeAfterSlider";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 
 export function ExtensionsSection() {
-  const ref = useRef(null);
+  const contentRef = useRef(null);
   const featuresRef = useRef(null);
   const sliderRef = useRef<BeforeAfterSliderHandle>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(contentRef, { once: true, margin: "-100px" });
   const featuresInView = useInView(featuresRef, { once: true, margin: "-50px" });
+  const { ref: scrollRef, opacity, y, blurFilter } = useScrollReveal();
 
   const features = [
     {
@@ -32,7 +34,11 @@ export function ExtensionsSection() {
 
   return (
     <Section className="bg-foreground text-background overflow-hidden" theme="dark">
-      <div ref={ref} className="relative">
+      <motion.div 
+        ref={scrollRef} 
+        className="relative"
+        style={{ opacity, y, filter: blurFilter }}
+      >
         {/* Background accent */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -41,7 +47,7 @@ export function ExtensionsSection() {
           className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-oat blur-3xl pointer-events-none"
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center relative">
+        <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center relative">
           {/* Left side - Content */}
           <div className="space-y-8">
             <motion.div
@@ -234,7 +240,7 @@ export function ExtensionsSection() {
             />
           </motion.div>
         </div>
-      </div>
+      </motion.div>
     </Section>
   );
 }
