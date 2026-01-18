@@ -1,20 +1,30 @@
-import { motion, useInView } from "framer-motion";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
 export function BrandStatement() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const containerRef = useRef(null);
+  const contentRef = useRef(null);
+  const isInView = useInView(contentRef, { once: true, margin: "-100px" });
+
+  // Scroll-based opacity: starts transparent, fully visible when centered
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "center center"]
+  });
+
+  const opacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
     <Section className="bg-background" theme="light">
-      <div 
-        ref={ref} 
+      <motion.div 
+        ref={containerRef}
         data-theme="dark"
         className="bg-foreground text-background rounded-2xl p-12 md:p-20 lg:p-24"
+        style={{ opacity }}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
+        <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
           {/* Left side - Title */}
           <motion.div
             initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
@@ -46,7 +56,7 @@ export function BrandStatement() {
             </p>
           </motion.div>
         </div>
-      </div>
+      </motion.div>
     </Section>
   );
 }
