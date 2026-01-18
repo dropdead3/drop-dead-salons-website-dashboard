@@ -62,12 +62,40 @@ export default function RingTheBell() {
   useEffect(() => {
     fetchEntries();
     
-    // Subscribe to realtime updates
+    // Subscribe to realtime updates with notifications
     const channel = supabase
       .channel('ring_the_bell')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'ring_the_bell_entries' },
+        { event: 'INSERT', schema: 'public', table: 'ring_the_bell_entries' },
+        async (payload) => {
+          const newEntry = payload.new as any;
+          
+          // Only show notification if it's from another user
+          if (newEntry.user_id !== user?.id) {
+            // Fetch the stylist name for the notification
+            const { data: profile } = await supabase
+              .from('employee_profiles')
+              .select('display_name, full_name')
+              .eq('user_id', newEntry.user_id)
+              .maybeSingle();
+            
+            const stylistName = profile?.display_name || profile?.full_name || 'A stylist';
+            
+            toast({
+              title: '🔔 BELL RUNG!',
+              description: `${stylistName} just booked $${newEntry.ticket_value.toLocaleString()} for ${newEntry.service_booked}!`,
+              duration: 6000,
+            });
+          }
+          
+          // Refresh the list
+          fetchEntries();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'ring_the_bell_entries' },
         () => {
           fetchEntries();
         }
@@ -77,7 +105,7 @@ export default function RingTheBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user?.id]);
 
   const fetchEntries = async () => {
     const { data, error } = await supabase
