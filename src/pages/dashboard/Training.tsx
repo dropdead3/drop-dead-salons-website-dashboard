@@ -24,7 +24,7 @@ interface TrainingProgress {
 
 const categories = [
   { key: 'onboarding', label: 'Onboarding' },
-  { key: 'dd75', label: 'Drop Dead 75' },
+  { key: 'dd75', label: 'Client Engine Program' },
   { key: 'technique', label: 'Technique' },
   { key: 'product', label: 'Product Knowledge' },
   { key: 'client-service', label: 'Client Service' },

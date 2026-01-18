@@ -29,7 +29,7 @@ interface DashboardLayoutProps {
 
 const stylistNavItems = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
-  { href: '/dashboard/program', label: 'Drop Dead 75', icon: Target },
+  { href: '/dashboard/program', label: 'Client Engine', icon: Target },
   { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users },
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3 },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },

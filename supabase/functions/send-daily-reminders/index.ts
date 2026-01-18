@@ -126,7 +126,7 @@ serve(async (req: Request): Promise<Response> => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "Drop Dead 75 <onboarding@resend.dev>",
+            from: "Client Engine Program <onboarding@resend.dev>",
             to: [stylist.email],
             subject,
             html: `

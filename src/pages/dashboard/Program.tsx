@@ -105,7 +105,7 @@ export default function Program() {
           <div className="text-center py-20">
             <img 
               src={DD75Logo} 
-              alt="Drop Dead 75" 
+              alt="Drop Dead 75: Client Engine Program" 
               className="h-10 lg:h-12 w-auto mx-auto mb-8"
             />
             <p className="text-muted-foreground font-sans mb-8 max-w-md mx-auto">
