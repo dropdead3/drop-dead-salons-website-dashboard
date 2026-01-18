@@ -10,6 +10,7 @@ interface BeforeAfterSliderProps {
   className?: string;
   videoUrl?: string;
   hideDefaultVideoButton?: boolean;
+  hoverMode?: boolean; // New prop: slider follows mouse on hover
 }
 
 export interface BeforeAfterSliderHandle {
@@ -25,13 +26,15 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
   afterLabel = "After",
   className = "",
   videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4",
-  hideDefaultVideoButton = false
+  hideDefaultVideoButton = false,
+  hoverMode = false
 }, ref) => {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(true);
   const [isVideoMode, setIsVideoMode] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const animationRef = useRef<number | null>(null);
@@ -176,7 +179,34 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
 
   const handleTouchEnd = () => {
     setIsDragging(false);
-    animateToCenter();
+    if (!hoverMode) {
+      animateToCenter();
+    }
+  };
+
+  // Hover mode handlers
+  const handleMouseEnter = () => {
+    if (hoverMode && !isVideoMode) {
+      setIsHovering(true);
+      setHasInteracted(true);
+      setIsAnimating(false);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverMode && !isVideoMode) {
+      setIsHovering(false);
+      animateToCenter();
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (hoverMode && isHovering && !isVideoMode) {
+      handleMove(e.clientX);
+    }
   };
 
   const handlePlayVideo = () => {
@@ -212,6 +242,9 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
       className={`relative aspect-[3/4] overflow-hidden select-none ${isVideoMode ? '' : 'cursor-ew-resize'} ${className}`}
       onTouchMove={!isVideoMode ? handleTouchMove : undefined}
       onTouchEnd={!isVideoMode ? handleTouchEnd : undefined}
+      onMouseEnter={hoverMode ? handleMouseEnter : undefined}
+      onMouseLeave={hoverMode ? handleMouseLeave : undefined}
+      onMouseMove={hoverMode ? handleMouseMove : undefined}
     >
       {/* Video Mode */}
       {isVideoMode ? (
@@ -316,7 +349,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
             </span>
           </div>
 
-          {/* Drag hint - positioned below the labels */}
+          {/* Hint - positioned below the labels */}
           <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
             <motion.span 
               className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-black/50 text-white/90 backdrop-blur-sm"
@@ -324,7 +357,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
               animate={{ opacity: hasInteracted ? 0 : 1 }}
               transition={{ duration: 0.3 }}
             >
-              Drag to Compare
+              {hoverMode ? "Hover to Compare" : "Drag to Compare"}
             </motion.span>
           </div>
         </>
