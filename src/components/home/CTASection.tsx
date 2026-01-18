@@ -21,11 +21,11 @@ export function CTASection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8 }}
-              className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
+              className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
             >
               Ready for Something
               <br />
-              <span className="italic font-light">Better?</span>
+              <span className="italic font-light font-serif">Better?</span>
             </motion.h2>
 
             <motion.p

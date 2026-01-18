@@ -45,8 +45,8 @@ export function LocationsSection() {
           <p className="text-xs uppercase tracking-[0.2em] text-foreground/50 font-display mb-4">
             Find Us
           </p>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif">
-            Our <em className="italic">Locations</em>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display">
+            Our <em className="italic font-serif">Locations</em>
           </h2>
         </motion.div>
 
@@ -77,7 +77,7 @@ export function LocationsSection() {
                 </div>
               </div>
 
-              <h3 className="font-serif text-2xl md:text-3xl text-foreground mb-4">
+              <h3 className="font-display text-2xl md:text-3xl text-foreground mb-4">
                 {location.name}
               </h3>
               <a

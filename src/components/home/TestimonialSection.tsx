@@ -287,7 +287,7 @@ export function TestimonialSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-            className="text-3xl md:text-4xl lg:text-5xl font-serif"
+            className="text-3xl md:text-4xl lg:text-5xl font-display"
           >
             Hundreds of <TypewriterText text="happy" isInView={isInView} delay={600} /> 5-star reviews
           </motion.h2>
@@ -392,7 +392,7 @@ export function TestimonialSection() {
             className="flex-shrink-0 w-[320px] md:w-[380px] bg-background border border-border p-6 md:p-8"
             style={{ scrollSnapAlign: 'center' }}
           >
-            <h3 className="text-xl md:text-2xl font-serif mb-4">{review.title}</h3>
+            <h3 className="text-xl md:text-2xl font-display mb-4">{review.title}</h3>
             
             <div className="flex items-center gap-3 mb-3">
               <span className="text-sm font-medium">{review.author}</span>

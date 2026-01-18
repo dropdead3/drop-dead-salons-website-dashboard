@@ -113,7 +113,7 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <h3 className="text-xl font-serif mb-1">{stylist.name}</h3>
+        <h3 className="text-xl font-display mb-1">{stylist.name}</h3>
         <a 
           href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
           target="_blank"
@@ -186,8 +186,8 @@ export function StylistsSection() {
           transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif mb-4">
-            Meet our <em className="not-italic italic">stylists</em>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-4">
+            Meet our <em className="not-italic italic font-serif">stylists</em>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
             Our talented team of artists are ready to help you achieve your hair goals. 
@@ -425,8 +425,8 @@ export function StylistsSection() {
               Join Our Team
             </p>
           </div>
-          <h3 className="text-2xl md:text-3xl font-serif mb-3">
-            Work at <em className="italic">Drop Dead</em>
+          <h3 className="text-2xl md:text-3xl font-display mb-3">
+            Work at <em className="italic font-serif">Drop Dead</em>
           </h3>
           <p className="text-foreground/60 text-sm max-w-md mx-auto mb-5">
             Passionate stylist looking for your next opportunity? We'd love to hear from you.

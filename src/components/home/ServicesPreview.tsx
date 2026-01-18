@@ -426,7 +426,7 @@ export function ServicesPreview() {
                   {service.category}
                 </span>
                 
-                <h3 className="font-serif text-2xl lg:text-3xl font-normal text-foreground mb-2 leading-tight">
+                <h3 className="font-display text-2xl lg:text-3xl font-normal text-foreground mb-2 leading-tight">
                   {service.title}
                 </h3>
                 
@@ -491,7 +491,7 @@ export function ServicesPreview() {
                 {service.category}
               </span>
               
-              <h3 className="font-serif text-2xl font-normal text-foreground mb-2">
+              <h3 className="font-display text-2xl font-normal text-foreground mb-2">
                 {service.title}
               </h3>
               
