@@ -180,7 +180,7 @@ export function FAQSection() {
                         <AccordionTrigger className="text-left text-base md:text-lg font-sans font-medium py-5 hover:no-underline group">
                           {highlightText(faq.question, searchQuery)}
                         </AccordionTrigger>
-                        <AccordionContent className="text-foreground/80 font-sans font-normal pb-5 leading-relaxed">
+                        <AccordionContent className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed">
                           {highlightText(faq.answer, searchQuery)}
                         </AccordionContent>
                       </AccordionItem>
