@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Flame, Target, DollarSign, Loader2, TrendingUp, Crown, Medal, Award } from 'lucide-react';
+import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 
 interface LeaderboardEntry {
@@ -21,50 +21,82 @@ interface PhorestPerformer {
   id: string;
   name: string;
   photoUrl?: string;
-  weeklyRevenue: number;
-  servicesCompleted: number;
-  avgTicket: number;
-  trend: 'up' | 'down' | 'stable';
-  trendPercent: number;
+  newClients: number;
+  retentionRate: number;
+  retailSales: number;
+  extensionClients: number;
+  // Hidden revenue used only for ranking
+  _revenue: number;
 }
 
 type MetricType = 'day' | 'streak' | 'revenue' | 'bells';
+type PhorestCategory = 'newClients' | 'retention' | 'retail' | 'extensions';
 
 // Mock data - will be replaced with Phorest API data
 const mockPhorestData: PhorestPerformer[] = [
-  { id: '1', name: 'Jessica Martinez', weeklyRevenue: 4850, servicesCompleted: 28, avgTicket: 173, trend: 'up', trendPercent: 12 },
-  { id: '2', name: 'Amanda Chen', weeklyRevenue: 4320, servicesCompleted: 32, avgTicket: 135, trend: 'up', trendPercent: 8 },
-  { id: '3', name: 'Sarah Johnson', weeklyRevenue: 3980, servicesCompleted: 24, avgTicket: 166, trend: 'stable', trendPercent: 0 },
-  { id: '4', name: 'Taylor Williams', weeklyRevenue: 3650, servicesCompleted: 26, avgTicket: 140, trend: 'down', trendPercent: 5 },
-  { id: '5', name: 'Morgan Davis', weeklyRevenue: 3200, servicesCompleted: 22, avgTicket: 145, trend: 'up', trendPercent: 15 },
-  { id: '6', name: 'Ashley Brown', weeklyRevenue: 2890, servicesCompleted: 20, avgTicket: 144, trend: 'stable', trendPercent: 0 },
+  { id: '1', name: 'Jessica Martinez', newClients: 12, retentionRate: 94, retailSales: 580, extensionClients: 8, _revenue: 4850 },
+  { id: '2', name: 'Amanda Chen', newClients: 8, retentionRate: 91, retailSales: 420, extensionClients: 11, _revenue: 4320 },
+  { id: '3', name: 'Sarah Johnson', newClients: 15, retentionRate: 88, retailSales: 350, extensionClients: 5, _revenue: 3980 },
+  { id: '4', name: 'Taylor Williams', newClients: 6, retentionRate: 96, retailSales: 680, extensionClients: 9, _revenue: 3650 },
+  { id: '5', name: 'Morgan Davis', newClients: 10, retentionRate: 85, retailSales: 290, extensionClients: 12, _revenue: 3200 },
+  { id: '6', name: 'Ashley Brown', newClients: 7, retentionRate: 92, retailSales: 510, extensionClients: 6, _revenue: 2890 },
 ];
+
+const categoryConfig: Record<PhorestCategory, { 
+  label: string; 
+  icon: React.ComponentType<{ className?: string }>; 
+  getValue: (p: PhorestPerformer) => number;
+  formatValue: (v: number) => string;
+  description: string;
+}> = {
+  newClients: {
+    label: 'New Clients',
+    icon: Users,
+    getValue: (p) => p.newClients,
+    formatValue: (v) => `${v} new`,
+    description: 'Most new clients booked this week',
+  },
+  retention: {
+    label: 'Retention',
+    icon: Repeat,
+    getValue: (p) => p.retentionRate,
+    formatValue: (v) => `${v}%`,
+    description: 'Highest client return rate',
+  },
+  retail: {
+    label: 'Retail Sales',
+    icon: ShoppingBag,
+    getValue: (p) => p.retailSales,
+    formatValue: (v) => `$${v}`,
+    description: 'Top retail product sales',
+  },
+  extensions: {
+    label: 'Extensions',
+    icon: Sparkles,
+    getValue: (p) => p.extensionClients,
+    formatValue: (v) => `${v} clients`,
+    description: 'Most extension clients served',
+  },
+};
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [metric, setMetric] = useState<MetricType>('day');
-  const [phorestData, setPhorestData] = useState<PhorestPerformer[]>(mockPhorestData);
-  const [phorestLoading, setPhorestLoading] = useState(false);
+  const [phorestData] = useState<PhorestPerformer[]>(mockPhorestData);
+  const [phorestCategory, setPhorestCategory] = useState<PhorestCategory>('newClients');
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
 
   useEffect(() => {
     fetchLeaderboard();
-    // TODO: Replace with actual Phorest API call
-    // fetchPhorestData();
   }, []);
 
   const fetchLeaderboard = async () => {
-    // Get enrollments with profiles
     const { data: enrollments, error } = await supabase
       .from('stylist_program_enrollment')
-      .select(`
-        user_id,
-        current_day,
-        streak_count
-      `)
+      .select(`user_id, current_day, streak_count`)
       .eq('status', 'active');
 
     if (error) {
@@ -73,7 +105,6 @@ export default function Leaderboard() {
       return;
     }
 
-    // Get profiles for enrolled users
     const userIds = enrollments?.map(e => e.user_id) || [];
     
     if (userIds.length === 0) {
@@ -86,13 +117,11 @@ export default function Leaderboard() {
       .select('user_id, full_name, display_name')
       .in('user_id', userIds);
 
-    // Get ring the bell totals
     const { data: bellTotals } = await supabase
       .from('ring_the_bell_entries')
       .select('user_id, ticket_value')
       .in('user_id', userIds);
 
-    // Combine data
     const leaderboard: LeaderboardEntry[] = (enrollments || []).map(enrollment => {
       const profile = profiles?.find(p => p.user_id === enrollment.user_id);
       const userBells = bellTotals?.filter(b => b.user_id === enrollment.user_id) || [];
@@ -115,36 +144,26 @@ export default function Leaderboard() {
 
   const sortedEntries = [...entries].sort((a, b) => {
     switch (metric) {
-      case 'day':
-        return b.current_day - a.current_day;
-      case 'streak':
-        return b.streak_count - a.streak_count;
-      case 'revenue':
-        return b.total_revenue - a.total_revenue;
-      case 'bells':
-        return b.ring_count - a.ring_count;
-      default:
-        return 0;
+      case 'day': return b.current_day - a.current_day;
+      case 'streak': return b.streak_count - a.streak_count;
+      case 'revenue': return b.total_revenue - a.total_revenue;
+      case 'bells': return b.ring_count - a.ring_count;
+      default: return 0;
     }
   });
 
   const metrics: { key: MetricType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { key: 'day', label: 'Progress', icon: Target },
     { key: 'streak', label: 'Streak', icon: Flame },
-    { key: 'revenue', label: 'Revenue', icon: DollarSign },
     { key: 'bells', label: 'Bells', icon: Trophy },
   ];
 
   const getValue = (entry: LeaderboardEntry): string => {
     switch (metric) {
-      case 'day':
-        return `Day ${entry.current_day}`;
-      case 'streak':
-        return `${entry.streak_count} days`;
-      case 'revenue':
-        return `$${entry.total_revenue.toLocaleString()}`;
-      case 'bells':
-        return `${entry.ring_count} bells`;
+      case 'day': return `Day ${entry.current_day}`;
+      case 'streak': return `${entry.streak_count} days`;
+      case 'revenue': return `$${entry.total_revenue.toLocaleString()}`;
+      case 'bells': return `${entry.ring_count} bells`;
     }
   };
 
@@ -155,7 +174,10 @@ export default function Leaderboard() {
     return null;
   };
 
-  const totalWeeklyRevenue = phorestData.reduce((sum, p) => sum + p.weeklyRevenue, 0);
+  const currentConfig = categoryConfig[phorestCategory];
+  const sortedPhorestData = [...phorestData].sort(
+    (a, b) => currentConfig.getValue(b) - currentConfig.getValue(a)
+  );
 
   return (
     <DashboardLayout>
@@ -173,8 +195,8 @@ export default function Leaderboard() {
         <Tabs defaultValue="phorest" className="space-y-6">
           <TabsList className="bg-muted/50">
             <TabsTrigger value="phorest" className="font-display text-xs tracking-wide">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Weekly Revenue
+              <Trophy className="w-4 h-4 mr-2" />
+              Weekly Rankings
             </TabsTrigger>
             <TabsTrigger value="program" className="font-display text-xs tracking-wide">
               <Target className="w-4 h-4 mr-2" />
@@ -182,7 +204,7 @@ export default function Leaderboard() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Phorest Weekly Revenue Tab */}
+          {/* Phorest Weekly Rankings Tab */}
           <TabsContent value="phorest" className="space-y-6">
             {/* Week Info Banner */}
             <Card className="p-4 bg-primary/5 border-primary/20">
@@ -197,23 +219,47 @@ export default function Leaderboard() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs uppercase tracking-wider text-muted-foreground font-display mb-1">
-                    Team Total
+                    Category
                   </p>
-                  <p className="font-display text-2xl">${totalWeeklyRevenue.toLocaleString()}</p>
+                  <p className="font-display text-lg">{currentConfig.label}</p>
                 </div>
               </div>
             </Card>
 
+            {/* Category Selector */}
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(categoryConfig) as PhorestCategory[]).map((key) => {
+                const config = categoryConfig[key];
+                const Icon = config.icon;
+                return (
+                  <Button
+                    key={key}
+                    variant={phorestCategory === key ? 'default' : 'outline'}
+                    onClick={() => setPhorestCategory(key)}
+                    className="font-display text-xs tracking-wide"
+                  >
+                    <Icon className="w-4 h-4 mr-2" />
+                    {config.label}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Category Description */}
+            <p className="text-sm text-muted-foreground font-sans">
+              {currentConfig.description}
+            </p>
+
             {/* Mock Data Notice */}
             <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
               <p className="text-xs text-muted-foreground font-sans text-center">
-                📊 Showing sample data • Connect Phorest to see live revenue
+                📊 Showing sample data • Connect Phorest to see live rankings
               </p>
             </div>
 
             {/* Top 3 Podium */}
             <div className="grid grid-cols-3 gap-3 mb-6">
-              {phorestData.slice(0, 3).map((performer, index) => {
+              {sortedPhorestData.slice(0, 3).map((performer, index) => {
                 const order = index === 0 ? 'order-2' : index === 1 ? 'order-1' : 'order-3';
                 const height = index === 0 ? 'pt-0' : index === 1 ? 'pt-6' : 'pt-8';
                 
@@ -229,15 +275,9 @@ export default function Leaderboard() {
                       <p className="font-sans text-sm font-medium truncate mb-1">
                         {performer.name.split(' ')[0]}
                       </p>
-                      <p className="font-display text-lg">${performer.weeklyRevenue.toLocaleString()}</p>
-                      <div className={`flex items-center justify-center gap-1 text-xs mt-1 ${
-                        performer.trend === 'up' ? 'text-green-600' : 
-                        performer.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'
-                      }`}>
-                        <TrendingUp className={`w-3 h-3 ${performer.trend === 'down' ? 'rotate-180' : ''} ${performer.trend === 'stable' ? 'hidden' : ''}`} />
-                        {performer.trend !== 'stable' && <span>{performer.trendPercent}%</span>}
-                        {performer.trend === 'stable' && <span>—</span>}
-                      </div>
+                      <p className="font-display text-lg">
+                        {currentConfig.formatValue(currentConfig.getValue(performer))}
+                      </p>
                     </Card>
                   </div>
                 );
@@ -246,7 +286,7 @@ export default function Leaderboard() {
 
             {/* Full Leaderboard */}
             <div className="space-y-3">
-              {phorestData.map((performer, index) => (
+              {sortedPhorestData.map((performer, index) => (
                 <Card 
                   key={performer.id}
                   className={`p-4 ${index < 3 ? 'border-primary/30' : ''}`}
@@ -267,29 +307,21 @@ export default function Leaderboard() {
                       {performer.name.split(' ').map(n => n[0]).join('')}
                     </div>
 
-                    {/* Name & Stats */}
+                    {/* Name */}
                     <div className="flex-1 min-w-0">
                       <p className="font-sans font-medium truncate">{performer.name}</p>
-                      <p className="text-xs text-muted-foreground font-sans">
-                        {performer.servicesCompleted} services • ${performer.avgTicket} avg ticket
-                      </p>
+                      {index === 0 && (
+                        <p className="text-xs text-primary font-display tracking-wide">
+                          THIS WEEK'S LEADER
+                        </p>
+                      )}
                     </div>
 
-                    {/* Revenue */}
+                    {/* Value */}
                     <div className="text-right">
-                      <p className="font-display text-lg">${performer.weeklyRevenue.toLocaleString()}</p>
-                      <div className={`flex items-center justify-end gap-1 text-xs ${
-                        performer.trend === 'up' ? 'text-green-600' : 
-                        performer.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'
-                      }`}>
-                        {performer.trend !== 'stable' && (
-                          <>
-                            <TrendingUp className={`w-3 h-3 ${performer.trend === 'down' ? 'rotate-180' : ''}`} />
-                            <span>{performer.trendPercent}% vs last week</span>
-                          </>
-                        )}
-                        {performer.trend === 'stable' && <span>Same as last week</span>}
-                      </div>
+                      <p className="font-display text-lg">
+                        {currentConfig.formatValue(currentConfig.getValue(performer))}
+                      </p>
                     </div>
                   </div>
                 </Card>
