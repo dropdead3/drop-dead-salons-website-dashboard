@@ -22,6 +22,8 @@ import {
   X,
   HelpCircle,
   CalendarClock,
+  UserCircle,
+  Contact,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -40,6 +42,8 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
+  { href: '/dashboard/profile', label: 'My Profile', icon: UserCircle },
+  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact },
 ];
 
 const housekeepingNavItems: NavItem[] = [
