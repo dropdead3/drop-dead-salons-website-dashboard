@@ -61,16 +61,25 @@ export function Header() {
       </div>
 
       {/* Main Header */}
-      <header
-        className={cn(
-          "sticky top-0 left-0 right-0 z-50 transition-all duration-500 border-b",
-          isScrolled
-            ? "bg-background/70 backdrop-blur-xl backdrop-saturate-150 border-border/50 shadow-sm"
-            : "bg-background border-transparent"
-        )}
-      >
-        <div className="container mx-auto px-6 lg:px-12">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+      <header className="sticky top-0 left-0 right-0 z-50 px-4 md:px-6 lg:px-8 pt-3">
+        <motion.div
+          initial={false}
+          animate={{
+            backgroundColor: isScrolled ? "rgba(255, 255, 255, 0.1)" : "rgba(var(--background-rgb, 255, 255, 255), 1)",
+            backdropFilter: isScrolled ? "blur(24px) saturate(1.5)" : "blur(0px)",
+            borderColor: isScrolled ? "rgba(255, 255, 255, 0.2)" : "transparent",
+            boxShadow: isScrolled 
+              ? "0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+              : "none",
+          }}
+          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          className={cn(
+            "rounded-2xl border transition-colors",
+            isScrolled ? "bg-white/10" : "bg-background"
+          )}
+        >
+          <div className="container mx-auto px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
             <Link
               to="/"
@@ -158,8 +167,9 @@ export function Header() {
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Mobile Menu */}
         <AnimatePresence>
