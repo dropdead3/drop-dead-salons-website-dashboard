@@ -6,6 +6,7 @@ import { Section } from "@/components/ui/section";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { Images, ArrowRight } from "lucide-react";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 
 // Gallery images - replace with real salon work
 const galleryImages = [
@@ -44,16 +45,12 @@ export function GallerySection() {
   return (
     <Section>
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="font-display text-3xl md:text-4xl lg:text-5xl font-normal text-foreground"
-        >
-          Work That Speaks
-          <br />
-          <span className="font-light">for Itself.</span>
-        </motion.h2>
+        <SectionHeader
+          title="Work That Speaks"
+          titleHighlight="for Itself."
+          animate
+          isInView={isInView}
+        />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
