@@ -18,7 +18,7 @@ export function useProfileCompletion() {
       { filled: !!profile.email },
       { filled: !!profile.phone },
       { filled: !!profile.instagram },
-      { filled: !!profile.location_id },
+      { filled: (profile.location_ids?.length || 0) > 0 || !!profile.location_id },
       { filled: !!profile.emergency_contact },
       { filled: !!profile.emergency_phone },
     ];
