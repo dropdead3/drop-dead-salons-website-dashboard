@@ -4,15 +4,33 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
+
+type AppRole = 'admin' | 'manager' | 'stylist' | 'receptionist' | 'assistant';
+
+const roleOptions: { value: AppRole; label: string; description: string }[] = [
+  { value: 'stylist', label: 'Stylist', description: 'Hair stylist or extension specialist' },
+  { value: 'assistant', label: 'Assistant', description: 'Stylist assistant' },
+  { value: 'receptionist', label: 'Receptionist', description: 'Front desk staff' },
+  { value: 'manager', label: 'Manager', description: 'Salon manager or coach' },
+  { value: 'admin', label: 'Admin', description: 'Full system access' },
+];
 
 export default function StaffLogin() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState<AppRole>('stylist');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
@@ -40,7 +58,7 @@ export default function StaffLogin() {
           navigate(from, { replace: true });
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await signUp(email, password, fullName, role);
         if (error) {
           toast({
             variant: 'destructive',
@@ -50,7 +68,7 @@ export default function StaffLogin() {
         } else {
           toast({
             title: 'Account created',
-            description: 'You can now access the dashboard.',
+            description: `Welcome! You've been registered as ${roleOptions.find(r => r.value === role)?.label}.`,
           });
           navigate('/dashboard', { replace: true });
         }
@@ -97,20 +115,43 @@ export default function StaffLogin() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-xs uppercase tracking-wider">
-                  Full Name
-                </Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Your full name"
-                  required={!isLogin}
-                  className="h-12 bg-card border-border"
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-xs uppercase tracking-wider">
+                    Full Name
+                  </Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your full name"
+                    required={!isLogin}
+                    className="h-12 bg-card border-border"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wider">
+                    Your Role
+                  </Label>
+                  <Select value={role} onValueChange={(v) => setRole(v as AppRole)} required>
+                    <SelectTrigger className="h-12 bg-card border-border">
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{option.label}</span>
+                            <span className="text-xs text-muted-foreground">{option.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
 
             <div className="space-y-2">
