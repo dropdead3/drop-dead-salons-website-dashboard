@@ -562,16 +562,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </TooltipTrigger>
             <TooltipContent>Notifications</TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link to="/dashboard/profile">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <UserCircle className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
                   <UserCircle className="w-4 h-4" />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>My Profile</TooltipContent>
-          </Tooltip>
+                  View/Edit Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                <LogOut className="w-4 h-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <ViewAsToggle />
         </div>
       </header>
@@ -634,16 +646,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </TooltipTrigger>
             <TooltipContent>Notifications</TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link to="/dashboard/profile">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <UserCircle className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
                   <UserCircle className="w-4 h-4" />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>My Profile</TooltipContent>
-          </Tooltip>
+                  View/Edit Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                <LogOut className="w-4 h-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {isAdmin && <ViewAsToggle />}
         </div>
       </div>
