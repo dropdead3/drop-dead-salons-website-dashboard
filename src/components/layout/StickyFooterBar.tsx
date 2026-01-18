@@ -66,7 +66,7 @@ export function StickyFooterBar() {
               stiffness: 300,
               damping: 30,
             }}
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 md:bottom-8 z-40"
+            className="fixed bottom-4 inset-x-0 mx-auto w-fit md:bottom-8 z-40"
           >
             {/* Outer glow ring */}
             <div className="absolute -inset-1 bg-gradient-to-r from-white/20 via-white/5 to-white/20 rounded-3xl blur-sm" />
