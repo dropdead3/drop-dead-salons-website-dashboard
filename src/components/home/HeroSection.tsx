@@ -1,175 +1,17 @@
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform, MotionValue, useSpring, useMotionValue } from "framer-motion";
+import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
-// Hero circle images
-import heroCircle1 from "@/assets/hero/hero-circle-1.jpg";
-import heroCircle2 from "@/assets/hero/hero-circle-2.jpg";
-import heroCircle3 from "@/assets/hero/hero-circle-3.jpg";
-import heroCircle4 from "@/assets/hero/hero-circle-4.jpg";
-
-interface FloatingCircleConfig {
-  src: string;
-  size: number;
-  x: string;
-  y: string;
-  duration: number;
-  delay: number;
-  zIndex: number;
-  parallaxSpeed: number;
-  mouseSpeed: number;
+interface HeroSectionProps {
+  videoSrc?: string;
 }
 
-// Floating circle image configuration - dynamic layering with dramatic movement
-const floatingCircleImages: FloatingCircleConfig[] = [
-  { 
-    src: heroCircle1, 
-    size: 240, 
-    x: "5%", 
-    y: "15%", 
-    duration: 18, 
-    delay: 0,
-    zIndex: 5, // Behind content
-    parallaxSpeed: 0.25,
-    mouseSpeed: 0.015,
-  },
-  { 
-    src: heroCircle2, 
-    size: 200, 
-    x: "75%", 
-    y: "8%", 
-    duration: 22, 
-    delay: 0.8,
-    zIndex: 25, // In front of content
-    parallaxSpeed: 0.6,
-    mouseSpeed: 0.045,
-  },
-  { 
-    src: heroCircle3, 
-    size: 220, 
-    x: "80%", 
-    y: "50%", 
-    duration: 20, 
-    delay: 0.4,
-    zIndex: 5, // Behind content
-    parallaxSpeed: 0.35,
-    mouseSpeed: 0.02,
-  },
-  { 
-    src: heroCircle4, 
-    size: 170, 
-    x: "8%", 
-    y: "55%", 
-    duration: 16, 
-    delay: 1.2,
-    zIndex: 25, // In front of content
-    parallaxSpeed: 0.7,
-    mouseSpeed: 0.05,
-  },
-];
-
-// Separate component for each floating circle to properly use hooks
-function FloatingCircle({ 
-  config, 
-  scrollYProgress,
-  isFront,
-  mouseX,
-  mouseY,
-}: { 
-  config: FloatingCircleConfig; 
-  scrollYProgress: MotionValue<number>;
-  isFront: boolean;
-  mouseX: MotionValue<number>;
-  mouseY: MotionValue<number>;
-}) {
-  const parallaxY = useTransform(
-    scrollYProgress, 
-    [0, 1], 
-    [0, isFront ? -150 * config.parallaxSpeed : -100 * config.parallaxSpeed]
-  );
-
-  // Mouse-following transforms with spring physics
-  const mouseXTransform = useTransform(mouseX, (value) => value * config.mouseSpeed);
-  const mouseYTransform = useTransform(mouseY, (value) => value * config.mouseSpeed);
-  
-  const springX = useSpring(mouseXTransform, { stiffness: 50, damping: 20 });
-  const springY = useSpring(mouseYTransform, { stiffness: 50, damping: 20 });
-
-  return (
-    <motion.div
-      className="absolute rounded-full overflow-hidden shadow-2xl pointer-events-none hidden md:block"
-      style={{
-        width: config.size,
-        height: config.size,
-        left: config.x,
-        top: config.y,
-        zIndex: config.zIndex,
-        y: parallaxY,
-        x: springX,
-        translateY: springY,
-      }}
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ 
-        opacity: 1,
-        scale: 1,
-        x: isFront ? [0, 60, -40, 80, 0] : [0, -50, 70, -30, 0],
-        y: isFront ? [0, -40, 60, -20, 0] : [0, 50, -30, 40, 0],
-      }}
-      transition={{
-        opacity: { duration: 1, delay: config.delay },
-        scale: { duration: 1, delay: config.delay, ease: "easeOut" },
-        x: { duration: config.duration * 2, delay: config.delay, repeat: Infinity, ease: "easeInOut" },
-        y: { duration: config.duration * 2.5, delay: config.delay, repeat: Infinity, ease: "easeInOut" },
-      }}
-    >
-      {/* Subtle inner movement */}
-      <motion.div
-        className="w-full h-full"
-        animate={{
-          scale: [1, 1.02, 1],
-        }}
-        transition={{
-          duration: config.duration,
-          delay: config.delay,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      >
-        <img 
-          src={config.src} 
-          alt="Hair styling showcase"
-          className="w-full h-full object-cover object-center scale-110"
-        />
-      </motion.div>
-      {/* Soft edge overlay with subtle border */}
-      <div className="absolute inset-0 rounded-full ring-1 ring-foreground/10" />
-    </motion.div>
-  );
-}
-
-export function HeroSection() {
+export function HeroSection({ videoSrc }: HeroSectionProps) {
   const [consultationOpen, setConsultationOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
-  
-  // Mouse position tracking
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      // Calculate mouse position relative to center of viewport
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      mouseX.set(e.clientX - centerX);
-      mouseY.set(e.clientY - centerY);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX, mouseY]);
   
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -194,125 +36,60 @@ export function HeroSection() {
     });
   };
 
-  // Floating decorative elements config - alternating oat and foreground tints
-  const floatingElements = [
-    { size: 300, x: "10%", y: "20%", duration: 20, delay: 0, color: "oat" },
-    { size: 200, x: "85%", y: "15%", duration: 25, delay: 2, color: "foreground" },
-    { size: 150, x: "75%", y: "70%", duration: 18, delay: 4, color: "oat" },
-    { size: 250, x: "5%", y: "65%", duration: 22, delay: 1, color: "foreground" },
-    { size: 100, x: "50%", y: "80%", duration: 15, delay: 3, color: "oat" },
-  ];
-
-  const backCircles = floatingCircleImages.filter(img => img.zIndex < 10);
-  const frontCircles = floatingCircleImages.filter(img => img.zIndex >= 10);
-
   return (
     <section ref={sectionRef} data-theme="light" className="relative min-h-screen flex flex-col overflow-hidden">
-      {/* Floating Decorative Elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {floatingElements.map((el, index) => (
+      {/* Video Background */}
+      {videoSrc && (
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src={videoSrc} type="video/mp4" />
+          </video>
+          {/* Overlay for text readability */}
+          <div className="absolute inset-0 bg-background/60" />
+        </div>
+      )}
+
+      {/* Subtle gradient orbs - only show when no video */}
+      {!videoSrc && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
-            key={index}
-            className="absolute rounded-full"
+            className="absolute w-[600px] h-[600px] -top-[200px] -right-[200px] rounded-full"
             style={{
-              width: el.size,
-              height: el.size,
-              left: el.x,
-              top: el.y,
-              background: el.color === "oat" 
-                ? `radial-gradient(circle, hsl(var(--oat) / 0.15) 0%, transparent 70%)`
-                : `radial-gradient(circle, hsl(var(--foreground) / 0.03) 0%, transparent 70%)`,
+              background: "radial-gradient(circle, hsl(var(--foreground) / 0.02) 0%, transparent 60%)",
             }}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ 
-              opacity: [0.3, 0.6, 0.3],
-              scale: [1, 1.1, 1],
-              x: [0, 30, -20, 0],
-              y: [0, -40, 20, 0],
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.5, 0.8, 0.5],
             }}
             transition={{
-              duration: el.duration,
-              delay: el.delay,
+              duration: 15,
               repeat: Infinity,
               ease: "easeInOut",
             }}
           />
-        ))}
-        
-        {/* Subtle gradient orbs */}
-        <motion.div
-          className="absolute w-[600px] h-[600px] -top-[200px] -right-[200px] rounded-full"
-          style={{
-            background: "radial-gradient(circle, hsl(var(--foreground) / 0.02) 0%, transparent 60%)",
-          }}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.5, 0.8, 0.5],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute w-[500px] h-[500px] -bottom-[150px] -left-[150px] rounded-full"
-          style={{
-            background: "radial-gradient(circle, hsl(var(--foreground) / 0.02) 0%, transparent 60%)",
-          }}
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.6, 0.4, 0.6],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
-        {/* Thin floating lines */}
-        <motion.div
-          className="absolute w-[1px] h-32 bg-gradient-to-b from-transparent via-foreground/10 to-transparent"
-          style={{ left: "20%", top: "30%" }}
-          animate={{
-            y: [0, 50, 0],
-            opacity: [0, 0.5, 0],
-            rotate: [0, 5, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute w-[1px] h-24 bg-gradient-to-b from-transparent via-foreground/10 to-transparent"
-          style={{ right: "25%", top: "40%" }}
-          animate={{
-            y: [0, -40, 0],
-            opacity: [0, 0.4, 0],
-          }}
-          transition={{
-            duration: 10,
-            delay: 2,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      </div>
-
-      {/* Floating Circle Images - Behind content layer */}
-      {backCircles.map((config, index) => (
-        <FloatingCircle 
-          key={`circle-back-${index}`}
-          config={config}
-          scrollYProgress={scrollYProgress}
-          isFront={false}
-          mouseX={mouseX}
-          mouseY={mouseY}
-        />
-      ))}
+          <motion.div
+            className="absolute w-[500px] h-[500px] -bottom-[150px] -left-[150px] rounded-full"
+            style={{
+              background: "radial-gradient(circle, hsl(var(--foreground) / 0.02) 0%, transparent 60%)",
+            }}
+            animate={{
+              scale: [1.2, 1, 1.2],
+              opacity: [0.6, 0.4, 0.6],
+            }}
+            transition={{
+              duration: 18,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        </div>
+      )}
 
       <div className="flex-1 flex items-center justify-center py-24 lg:py-32 relative z-10">
         <div className="container mx-auto px-6 lg:px-12">
@@ -398,18 +175,6 @@ export function HeroSection() {
           </div>
         </div>
       </div>
-
-      {/* Floating Circle Images - In front of content layer */}
-      {frontCircles.map((config, index) => (
-        <FloatingCircle 
-          key={`circle-front-${index}`}
-          config={config}
-          scrollYProgress={scrollYProgress}
-          isFront={true}
-          mouseX={mouseX}
-          mouseY={mouseY}
-        />
-      ))}
 
       {/* Scroll Indicator */}
       <motion.button
