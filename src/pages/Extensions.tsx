@@ -500,14 +500,46 @@ export default function Extensions() {
         <div className="container mx-auto px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
             <p className="text-foreground font-medium text-center">
-              New clients can save 15% off their first extension install service! Use code <span className="font-bold">NEWCLIENT15</span> at checkout.
+              New clients can save 15% off their first extension install service! Present code <span className="font-bold">NEWCLIENT15</span> at checkout.
             </p>
-            <Link
-              to="/booking"
+            <button
+              onClick={() => {
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                  printWindow.document.write(`
+                    <html>
+                      <head>
+                        <title>New Client Discount Code</title>
+                        <style>
+                          body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+                          .coupon { background: white; border: 3px dashed #333; padding: 40px 60px; text-align: center; max-width: 400px; }
+                          .logo { font-size: 24px; font-weight: bold; letter-spacing: 0.1em; margin-bottom: 20px; }
+                          .discount { font-size: 32px; font-weight: bold; color: #333; margin: 20px 0; }
+                          .code { font-size: 28px; font-weight: bold; background: #f0f0f0; padding: 15px 30px; border-radius: 8px; letter-spacing: 0.15em; margin: 20px 0; display: inline-block; }
+                          .details { font-size: 14px; color: #666; margin-top: 20px; line-height: 1.6; }
+                          .valid { font-size: 12px; color: #999; margin-top: 15px; }
+                        </style>
+                      </head>
+                      <body>
+                        <div class="coupon">
+                          <div class="logo">INDIGO HAIR CO.</div>
+                          <div class="discount">15% OFF</div>
+                          <p>Your First Extension Install Service</p>
+                          <div class="code">NEWCLIENT15</div>
+                          <div class="details">Present this coupon at checkout to redeem your new client discount.</div>
+                          <div class="valid">Valid for first-time extension clients only. Cannot be combined with other offers.</div>
+                        </div>
+                        <script>window.onload = function() { window.print(); }</script>
+                      </body>
+                    </html>
+                  `);
+                  printWindow.document.close();
+                }
+              }}
               className="inline-flex items-center px-6 py-2.5 border border-foreground text-foreground text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
             >
-              Get Started
-            </Link>
+              Print Code Here
+            </button>
           </div>
         </div>
       </section>
