@@ -208,7 +208,7 @@ function ExtensionSpecialistsCarousel() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+          className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-display block mb-4"
         >
           Our Team
         </motion.span>
@@ -1011,7 +1011,7 @@ export default function Extensions() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="bg-foreground text-background p-8 flex flex-col relative"
           >
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-oat text-oat-foreground px-4 py-1.5 text-xs uppercase tracking-[0.15em]">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-oat text-oat-foreground px-4 py-1.5 text-xs uppercase tracking-[0.15em] font-display">
               Most Popular
             </div>
             <div className="mb-6">
@@ -1627,7 +1627,7 @@ export default function Extensions() {
             animate={faqInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
+            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-display block mb-4">
               Questions
             </span>
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-display mb-6">

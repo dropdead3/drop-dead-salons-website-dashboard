@@ -117,7 +117,7 @@ export function GallerySection() {
 
             {/* Hover reveal */}
             <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-              <span className="text-xs uppercase tracking-[0.15em] text-background font-sans bg-foreground px-2 py-1">
+              <span className="text-xs uppercase tracking-[0.15em] text-background font-display bg-foreground px-2 py-1">
                 View
               </span>
             </div>
