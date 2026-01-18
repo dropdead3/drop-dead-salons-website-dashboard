@@ -158,43 +158,45 @@ export function Header() {
             isOverDark ? "text-white" : "text-foreground"
           )}>
             <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logo with scroll transition */}
-            <Link
-              to="/"
-              className="relative hover:opacity-70 transition-opacity h-5 lg:h-6"
-            >
-              <AnimatePresence mode="wait">
-                {isScrolled ? (
-                  <motion.img
-                    key="icon"
-                    src={LogoIcon}
-                    alt="Drop Dead"
-                    initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-                    transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                    className={cn(
-                      "h-5 lg:h-6 w-auto",
-                      isOverDark ? "invert" : ""
-                    )}
-                  />
-                ) : (
-                  <motion.img
-                    key="full"
-                    src={Logo}
-                    alt="Drop Dead"
-                    initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-                    transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                    className={cn(
-                      "h-4 lg:h-5 w-auto",
-                      isOverDark ? "invert" : ""
-                    )}
-                  />
-                )}
-              </AnimatePresence>
-            </Link>
+            {/* Logo with scroll transition - fixed width container to prevent layout shift */}
+            <div className="w-32 lg:w-40">
+              <Link
+                to="/"
+                className="inline-block hover:opacity-70 transition-opacity"
+              >
+                <AnimatePresence mode="wait">
+                  {isScrolled ? (
+                    <motion.img
+                      key="icon"
+                      src={LogoIcon}
+                      alt="Drop Dead"
+                      initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                      className={cn(
+                        "h-5 lg:h-6 w-auto",
+                        isOverDark ? "invert" : ""
+                      )}
+                    />
+                  ) : (
+                    <motion.img
+                      key="full"
+                      src={Logo}
+                      alt="Drop Dead"
+                      initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                      className={cn(
+                        "h-4 lg:h-5 w-auto",
+                        isOverDark ? "invert" : ""
+                      )}
+                    />
+                  )}
+                </AnimatePresence>
+              </Link>
+            </div>
 
             {/* Desktop Navigation - Center */}
             <nav className="hidden lg:flex items-center gap-6 xl:gap-10">
