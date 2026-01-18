@@ -217,7 +217,7 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
           )}
           
           {/* Location callout */}
-          <p className="text-xs text-white/60 text-right leading-tight min-w-0">
+          <p className="text-xs text-white/60 text-right leading-tight min-w-0 pr-1">
             {stylist.locations.length > 1 
               ? stylist.locations.map(loc => getLocationName(loc)).join(" & ")
               : getLocationName(stylist.locations[0])
