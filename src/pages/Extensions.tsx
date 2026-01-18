@@ -7,6 +7,7 @@ import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { BeforeAfterSlider } from "@/components/home/BeforeAfterSlider";
 import { ExtensionReviewsSection } from "@/components/home/ExtensionReviewsSection";
+import { useCounterAnimation } from "@/hooks/use-counter-animation";
 import {
   Accordion,
   AccordionContent,
@@ -100,6 +101,79 @@ const extensionFaqs = [
     answer: "Extension pricing varies based on the amount of hair needed, desired length, and your specific goals. After your consultation, we'll provide a detailed quote. Investment typically ranges from $800-$2500 for a full install."
   }
 ];
+
+// Animated Social Proof Section Component
+function SocialProofSection() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-50px" });
+  
+  const rating = useCounterAnimation({ end: 4.9, duration: 1500, decimals: 1 });
+  const reviews = useCounterAnimation({ end: 500, duration: 1800 });
+  const transformations = useCounterAnimation({ end: 2000, duration: 2000 });
+  const years = useCounterAnimation({ end: 10, duration: 1200 });
+
+  return (
+    <section ref={sectionRef} className="py-8 border-b border-border bg-background">
+      <div className="container mx-auto px-6 lg:px-12">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.6 }}
+          className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-sm"
+        >
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={isInView ? { opacity: 1, scale: 1 } : {}}
+                  transition={{ 
+                    duration: 0.3, 
+                    delay: i * 0.1,
+                    ease: [0.34, 1.56, 0.64, 1]
+                  }}
+                >
+                  <Star className="w-4 h-4 fill-foreground text-foreground" />
+                </motion.div>
+              ))}
+            </div>
+            <span ref={rating.ref} className="text-foreground font-medium tabular-nums">
+              {rating.count}
+            </span>
+            <span className="text-muted-foreground">
+              (<span ref={reviews.ref} className="tabular-nums">{reviews.count}</span>+ reviews)
+            </span>
+          </div>
+          <div className="hidden sm:block w-px h-4 bg-border" />
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span ref={transformations.ref} className="font-medium text-foreground tabular-nums">
+              {transformations.count}+
+            </span>
+            <span>transformations</span>
+          </div>
+          <div className="hidden sm:block w-px h-4 bg-border" />
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span ref={years.ref} className="font-medium text-foreground tabular-nums">
+              {years.count}+
+            </span>
+            <span>years experience</span>
+          </div>
+          <div className="hidden sm:block w-px h-4 bg-border" />
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.5, delay: 0.8 }}
+            className="flex items-center gap-2 text-muted-foreground"
+          >
+            <span className="font-medium text-foreground">Certified</span>
+            <span>Drop Dead Method</span>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
 
 export default function Extensions() {
   const heroRef = useRef(null);
@@ -215,43 +289,8 @@ export default function Extensions() {
         </div>
       </section>
 
-      {/* Social Proof - Minimal Inline */}
-      <section className="py-8 border-b border-border bg-background">
-        <div className="container mx-auto px-6 lg:px-12">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-sm"
-          >
-            <div className="flex items-center gap-2">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-foreground text-foreground" />
-                ))}
-              </div>
-              <span className="text-foreground font-medium">4.9</span>
-              <span className="text-muted-foreground">(500+ reviews)</span>
-            </div>
-            <div className="hidden sm:block w-px h-4 bg-border" />
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="font-medium text-foreground">2,000+</span>
-              <span>transformations</span>
-            </div>
-            <div className="hidden sm:block w-px h-4 bg-border" />
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="font-medium text-foreground">10+ years</span>
-              <span>experience</span>
-            </div>
-            <div className="hidden sm:block w-px h-4 bg-border" />
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="font-medium text-foreground">Certified</span>
-              <span>Drop Dead Method</span>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      {/* Social Proof - Minimal Inline with Animated Counters */}
+      <SocialProofSection />
 
       <section className="py-5 border-y border-border">
         <div className="container mx-auto px-6 lg:px-12">
