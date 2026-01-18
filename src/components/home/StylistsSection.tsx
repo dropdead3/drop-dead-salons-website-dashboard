@@ -200,7 +200,7 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
         
         <div className="flex items-center justify-between gap-3">
           {stylist.isBooking === false ? (
-            <div className="shrink-0 inline-flex items-center gap-2 bg-white/20 text-white/70 px-5 py-2.5 text-sm font-medium whitespace-nowrap cursor-not-allowed border border-black/50">
+            <div className="shrink-0 inline-flex items-center gap-2 bg-white/20 text-white/70 px-5 py-2.5 text-sm font-medium whitespace-nowrap cursor-not-allowed border border-white/40">
               <X className="w-4 h-4 shrink-0" />
               <span>Not Booking</span>
             </div>
