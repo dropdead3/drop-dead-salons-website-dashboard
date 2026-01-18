@@ -334,7 +334,7 @@ export function ServicesPreview() {
             scrollbarWidth: 'none', 
             msOverflowStyle: 'none', 
             scrollBehavior: 'smooth',
-            paddingLeft: 'max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem))',
+            paddingLeft: 'max(6rem, calc((100vw - 1280px) / 2 + 12rem))',
             paddingRight: '3rem'
           }}
         >
