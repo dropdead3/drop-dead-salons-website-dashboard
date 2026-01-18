@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,14 +14,54 @@ import {
   DollarSign,
   Clock,
   Megaphone,
-  Flame
+  Flame,
+  Pin,
+  AlertTriangle,
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+
+type Priority = 'low' | 'normal' | 'high' | 'urgent';
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  priority: Priority;
+  is_pinned: boolean;
+  created_at: string;
+}
+
+const priorityColors: Record<Priority, string> = {
+  low: 'border-muted-foreground',
+  normal: 'border-blue-500',
+  high: 'border-orange-500',
+  urgent: 'border-red-500',
+};
 
 export default function DashboardHome() {
   const { user } = useAuth();
   const { enrollment } = useDailyCompletion(user?.id);
+  
+  const { data: announcements } = useQuery({
+    queryKey: ['announcements'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      if (error) throw error;
+      return data as Announcement[];
+    },
+  });
   
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
 
@@ -125,12 +166,32 @@ export default function DashboardHome() {
               <Megaphone className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="space-y-3">
-              <div className="p-3 bg-muted/50 border-l-2 border-foreground">
-                <p className="text-sm font-sans font-medium">Welcome to Drop Dead!</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Complete your onboarding to get started
-                </p>
-              </div>
+              {announcements && announcements.length > 0 ? (
+                announcements.map((announcement) => (
+                  <div 
+                    key={announcement.id}
+                    className={`p-3 bg-muted/50 border-l-2 ${priorityColors[announcement.priority]}`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      {announcement.is_pinned && <Pin className="w-3 h-3" />}
+                      <p className="text-sm font-sans font-medium">{announcement.title}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {announcement.content}
+                    </p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">
+                      {format(new Date(announcement.created_at), 'MMM d')}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="p-3 bg-muted/50 border-l-2 border-foreground">
+                  <p className="text-sm font-sans font-medium">Welcome to Drop Dead!</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Complete your onboarding to get started
+                  </p>
+                </div>
+              )}
             </div>
           </Card>
         </div>
