@@ -14,8 +14,8 @@ export function BrandStatement() {
     offset: ["start end", "start 0.6"]
   });
 
-  const opacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
-  const blur = useTransform(scrollYProgress, [0, 1], [20, 0]);
+  const opacity = useTransform(scrollYProgress, [0, 0.7], [0, 1]);
+  const blur = useTransform(scrollYProgress, [0, 0.5], [8, 0]);
   const blurFilter = useTransform(blur, (v) => `blur(${v}px)`);
 
   return (
