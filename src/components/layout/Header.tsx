@@ -51,26 +51,45 @@ export function Header() {
         headerRef.current.style.pointerEvents = originalPointerEvents;
         
         if (elementBehind) {
-          // Check if element or its parents have dark background
+          // Determine whether we're over a dark section.
+          // Primary: find nearest non-transparent background.
+          // Fallback: if backgrounds are transparent (images/gradients), infer from text color.
           let current: Element | null = elementBehind;
           let isDark = false;
-          
+          let foundBackground = false;
+
           while (current && current !== document.body) {
-            const bg = window.getComputedStyle(current).backgroundColor;
+            const styles = window.getComputedStyle(current);
+            const bg = styles.backgroundColor;
+
             if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
-              // Parse RGB values
               const match = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
               if (match) {
-                const [, r, g, b] = match.map(Number);
-                // Calculate relative luminance
+                const r = Number(match[1]);
+                const g = Number(match[2]);
+                const b = Number(match[3]);
                 const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
                 isDark = luminance < 0.5;
+                foundBackground = true;
                 break;
               }
             }
             current = current.parentElement;
           }
-          
+
+          if (!foundBackground) {
+            const color = window.getComputedStyle(elementBehind).color;
+            const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (match) {
+              const r = Number(match[1]);
+              const g = Number(match[2]);
+              const b = Number(match[3]);
+              const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+              // Light text usually indicates a dark section background.
+              isDark = luminance > 0.7;
+            }
+          }
+
           setIsOverDark(isDark);
         }
       }
