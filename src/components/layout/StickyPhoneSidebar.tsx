@@ -7,6 +7,10 @@ const locations = [
     name: "North Mesa",
     phone: "(480) 548-1886",
   },
+  {
+    name: "Val Vista Lakes",
+    phone: "(480) 548-1886",
+  },
 ];
 
 export function StickyPhoneSidebar() {

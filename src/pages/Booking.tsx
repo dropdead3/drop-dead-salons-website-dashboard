@@ -91,6 +91,8 @@ export default function Booking() {
 
   const locationOptions = [
     { name: "North Mesa", address: "2036 N Gilbert Rd Ste 1, Mesa, AZ 85203" },
+    { name: "Val Vista Lakes", address: "3641 E Baseline Rd Suite Q-103, Gilbert, AZ 85234" },
+    { name: "No Preference", address: "" },
   ];
 
   return (
@@ -415,7 +417,33 @@ export default function Booking() {
                   >
                     (480) 548-1886
                   </a>
+              </div>
+
+              {/* Val Vista Lakes Location */}
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
+                      Val Vista Lakes
+                    </h3>
+                    <p className="text-muted-foreground font-sans font-light">
+                      3641 E Baseline Rd Suite Q-103
+                      <br />
+                      Gilbert, AZ 85234
+                    </p>
+                  </div>
                 </div>
+                <div className="flex items-start gap-4 ml-9">
+                  <Phone size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <a
+                    href="tel:+14805481886"
+                    className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors text-sm"
+                  >
+                    (480) 548-1886
+                  </a>
+                </div>
+              </div>
               </div>
 
               {/* Hours */}

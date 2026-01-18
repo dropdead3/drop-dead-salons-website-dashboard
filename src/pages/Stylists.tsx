@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 
-type Location = "north-mesa";
+type Location = "north-mesa" | "val-vista-lakes";
 
 interface Stylist {
   id: string;
@@ -75,7 +75,8 @@ const stylists: Stylist[] = [
 ];
 
 const locations = [
-  { id: "north-mesa" as Location, name: "North Mesa" }
+  { id: "north-mesa" as Location, name: "North Mesa" },
+  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes" }
 ];
 
 const StylistCard = ({ stylist }: { stylist: Stylist }) => {

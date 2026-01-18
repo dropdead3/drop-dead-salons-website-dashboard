@@ -1,4 +1,4 @@
-export type Location = "north-mesa";
+export type Location = "north-mesa" | "val-vista-lakes";
 
 export interface Stylist {
   id: string;
@@ -82,6 +82,7 @@ export const getExtensionSpecialists = (): Stylist[] => {
 
 export const locations = [
   { id: "north-mesa" as Location, name: "North Mesa", address: "2036 N Gilbert Rd Ste 1, Mesa, AZ 85203" },
+  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes", address: "3641 E Baseline Rd Suite Q-103, Gilbert, AZ 85234" },
 ];
 
 // Extract all unique specialties - with EXTENSIONS first

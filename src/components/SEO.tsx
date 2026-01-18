@@ -32,6 +32,16 @@ const BUSINESS_INFO = {
       phone: "(480) 548-1886",
       geo: { latitude: 33.4564, longitude: -111.7890 },
     },
+    {
+      name: "Drop Dead Salon - Val Vista Lakes",
+      street: "3641 E Baseline Rd Suite Q-103",
+      city: "Gilbert",
+      state: "AZ",
+      zip: "85234",
+      country: "US",
+      phone: "(480) 548-1886",
+      geo: { latitude: 33.3794, longitude: -111.7405 },
+    },
   ],
 };
 
