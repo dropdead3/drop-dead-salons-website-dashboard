@@ -110,7 +110,7 @@ const managerNavItems: NavItem[] = [
 // Full admin-only items (not visible to managers)
 const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/approvals', label: 'Account Approvals', icon: UserCheck },
-  { href: '/dashboard/admin/roles', label: 'Manage User Roles', icon: Shield },
+  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield },
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText },
   { href: '/dashboard/admin/homepage-stylists', label: 'Homepage Stylists', icon: Globe },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings },

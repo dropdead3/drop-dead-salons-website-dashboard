@@ -110,7 +110,7 @@ export default function ManageRoles() {
         <div className="mb-8">
           <h1 className="text-2xl font-display font-medium mb-2 flex items-center gap-2">
             <Shield className="w-6 h-6" />
-            Manage User Roles
+            Manage Users & Roles
           </h1>
           <p className="text-muted-foreground">
             Assign and manage user roles across your team.
