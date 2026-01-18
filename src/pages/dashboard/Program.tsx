@@ -106,7 +106,7 @@ export default function Program() {
             <img 
               src={DD75Logo} 
               alt="Drop Dead 75" 
-              className="h-16 lg:h-20 w-auto mx-auto mb-8"
+              className="h-10 lg:h-12 w-auto mx-auto mb-8"
             />
             <p className="text-muted-foreground font-sans mb-8 max-w-md mx-auto">
               75 days of execution. No excuses. Build your client engine and 
