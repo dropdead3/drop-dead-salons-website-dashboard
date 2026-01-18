@@ -201,14 +201,14 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
         <div className="flex items-center justify-between gap-3">
           <Link
             to="/booking"
-            className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
+            className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium whitespace-nowrap hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
           >
             <span>Book Consult</span>
-            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+            <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/btn:translate-x-1" />
           </Link>
           
           {/* Location callout */}
-          <p className="text-xs text-white/60 text-right leading-tight">
+          <p className="text-xs text-white/60 text-right leading-tight min-w-0">
             {stylist.locations.length > 1 
               ? stylist.locations.map(loc => getLocationName(loc)).join(" & ")
               : getLocationName(stylist.locations[0])
