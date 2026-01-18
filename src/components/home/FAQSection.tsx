@@ -172,8 +172,8 @@ export function FAQSection() {
                       animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 100 }}
                       exit={{ opacity: 0, x: -50 }}
                       transition={{ 
-                        duration: 0.7, 
-                        delay: 0.3 + index * 0.12,
+                        duration: 0.9, 
+                        delay: 0.4 + index * 0.18,
                         ease: [0.25, 0.1, 0.25, 1]
                       }}
                       whileHover={{ scale: 1.01, x: 4 }}
