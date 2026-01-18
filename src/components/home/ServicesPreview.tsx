@@ -67,9 +67,9 @@ export function ServicesPreview() {
     const card = cards[middleStartIndex] as HTMLElement;
     
     if (card) {
-      // Position the first card at the left edge with padding
+      // Position the first card's image at the left edge with padding
       const paddingLeft = window.innerWidth >= 1024 ? 48 : 24; // lg:px-12 = 48px, px-6 = 24px
-      container.scrollLeft = card.offsetLeft - paddingLeft;
+      container.scrollLeft = card.offsetLeft - paddingLeft - 10; // Extra offset to show full image
       hasInitialized.current = true;
       extendedIndex.current = CLONE_COUNT;
     }
