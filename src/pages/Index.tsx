@@ -33,6 +33,7 @@ const Index = () => {
       <GallerySection />
       {/* Combined Reviews & FAQ Section with Gradient */}
       <div 
+        data-theme="light"
         className="relative"
         style={{ 
           background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(40 25% 95%) 30%, hsl(40 30% 94%) 70%, hsl(40 20% 92%) 100%)' 

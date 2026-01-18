@@ -26,7 +26,7 @@ export function PopularServices() {
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   return (
-    <Section className="pt-0 md:pt-0 pb-20 md:pb-28">
+    <Section className="pt-0 md:pt-0 pb-20 md:pb-28" theme="light">
       <motion.div
         ref={ref}
         initial={{ opacity: 0, y: 20 }}

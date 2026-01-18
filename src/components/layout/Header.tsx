@@ -36,68 +36,36 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
-      
-      // Check what's behind the header
-      if (headerRef.current) {
-        const headerRect = headerRef.current.getBoundingClientRect();
-        const headerMidY = headerRect.top + headerRect.height / 2;
-        const headerMidX = window.innerWidth / 2;
-        
-        // Temporarily hide header to sample what's behind
-        const originalPointerEvents = headerRef.current.style.pointerEvents;
-        headerRef.current.style.pointerEvents = 'none';
-        
-        const elementBehind = document.elementFromPoint(headerMidX, headerMidY);
-        headerRef.current.style.pointerEvents = originalPointerEvents;
-        
-        if (elementBehind) {
-          // Determine whether we're over a dark section.
-          // Primary: find nearest non-transparent background.
-          // Fallback: if backgrounds are transparent (images/gradients), infer from text color.
-          let current: Element | null = elementBehind;
-          let isDark = false;
-          let foundBackground = false;
-
-          while (current && current !== document.body) {
-            const styles = window.getComputedStyle(current);
-            const bg = styles.backgroundColor;
-
-            if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
-              const match = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-              if (match) {
-                const r = Number(match[1]);
-                const g = Number(match[2]);
-                const b = Number(match[3]);
-                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                isDark = luminance < 0.5;
-                foundBackground = true;
-                break;
-              }
-            }
-            current = current.parentElement;
-          }
-
-          if (!foundBackground) {
-            const color = window.getComputedStyle(elementBehind).color;
-            const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-            if (match) {
-              const r = Number(match[1]);
-              const g = Number(match[2]);
-              const b = Number(match[3]);
-              const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-              // Light text usually indicates a dark section background.
-              isDark = luminance > 0.7;
-            }
-          }
-
-          setIsOverDark(isDark);
-        }
-      }
     };
     
-    window.addEventListener("scroll", handleScroll);
-    handleScroll(); // Initial check
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Section theme detection using data-theme attributes
+  useEffect(() => {
+    const detectTheme = () => {
+      const headerY = 80; // Header center approximate position
+      const sections = document.querySelectorAll("[data-theme]");
+      
+      for (const section of Array.from(sections)) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= headerY && rect.bottom >= headerY) {
+          const theme = section.getAttribute("data-theme");
+          setIsOverDark(theme === "dark");
+          return;
+        }
+      }
+      
+      // Default to light if no themed section found at header position
+      setIsOverDark(false);
+    };
+
+    window.addEventListener("scroll", detectTheme, { passive: true });
+    detectTheme(); // Initial check
+    
+    return () => window.removeEventListener("scroll", detectTheme);
   }, []);
 
   useEffect(() => {

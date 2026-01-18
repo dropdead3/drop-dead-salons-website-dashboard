@@ -73,6 +73,7 @@ export function TestimonialSection() {
   return (
     <section 
       ref={sectionRef} 
+      data-theme="light"
       className="py-20 lg:py-32 overflow-hidden"
     >
       {/* Header */}

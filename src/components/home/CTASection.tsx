@@ -12,6 +12,7 @@ export function CTASection() {
   return (
     <section
       ref={ref}
+      data-theme="dark"
       className="py-24 lg:py-32 bg-foreground text-background"
     >
       <div className="container mx-auto px-6 lg:px-12">

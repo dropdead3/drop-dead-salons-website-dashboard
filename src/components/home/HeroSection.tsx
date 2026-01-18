@@ -207,7 +207,7 @@ export function HeroSection() {
   const frontCircles = floatingCircleImages.filter(img => img.zIndex >= 10);
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen flex flex-col overflow-hidden">
+    <section ref={sectionRef} data-theme="light" className="relative min-h-screen flex flex-col overflow-hidden">
       {/* Floating Decorative Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {floatingElements.map((el, index) => (

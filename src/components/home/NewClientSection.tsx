@@ -16,6 +16,7 @@ export const NewClientSection = () => {
   return (
     <section 
       ref={sectionRef}
+      data-theme="light"
       className="py-20 md:py-28 bg-secondary"
     >
       <div className="container mx-auto px-6">

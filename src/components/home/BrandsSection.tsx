@@ -8,7 +8,7 @@ const brandLogos = [
 
 export function BrandsSection() {
   return (
-    <section className="py-12 md:py-16 bg-background">
+    <section data-theme="light" className="py-12 md:py-16 bg-background">
       <div className="container mx-auto" style={{ paddingLeft: 'calc(1.5rem + 6px)', paddingRight: 'calc(1.5rem + 6px)' }}>
         <div className="flex items-center">
           {/* Left side text with divider */}

@@ -6,13 +6,15 @@ interface SectionProps {
   className?: string;
   id?: string;
   sectionRef?: RefObject<HTMLElement>;
+  theme?: "light" | "dark";
 }
 
-export function Section({ children, className, id, sectionRef }: SectionProps) {
+export function Section({ children, className, id, sectionRef, theme = "light" }: SectionProps) {
   return (
     <section
       ref={sectionRef}
       id={id}
+      data-theme={theme}
       className={cn("py-20 lg:py-32", className)}
     >
       <div className="container mx-auto px-6 lg:px-12">
