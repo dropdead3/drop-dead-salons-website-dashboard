@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_approval_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          performed_by: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          performed_by: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          performed_by?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       announcement_reads: {
         Row: {
           announcement_id: string
@@ -335,6 +359,10 @@ export type Database = {
       }
       employee_profiles: {
         Row: {
+          admin_approved_at: string | null
+          admin_approved_by: string | null
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           dd_certified: boolean | null
           display_name: string | null
@@ -349,7 +377,9 @@ export type Database = {
           id: string
           instagram: string | null
           is_active: boolean | null
+          is_approved: boolean | null
           is_booking: boolean | null
+          is_super_admin: boolean | null
           location_id: string | null
           location_ids: string[] | null
           phone: string | null
@@ -361,6 +391,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_approved_at?: string | null
+          admin_approved_by?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           dd_certified?: boolean | null
           display_name?: string | null
@@ -375,7 +409,9 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_active?: boolean | null
+          is_approved?: boolean | null
           is_booking?: boolean | null
+          is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null
           phone?: string | null
@@ -387,6 +423,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_approved_at?: string | null
+          admin_approved_by?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           dd_certified?: boolean | null
           display_name?: string | null
@@ -401,7 +441,9 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_active?: boolean | null
+          is_approved?: boolean | null
           is_booking?: boolean | null
+          is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null
           phone?: string | null
@@ -853,6 +895,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_approve_admin_role: { Args: { _user_id: string }; Returns: boolean }
       current_user_is_coach: { Args: never; Returns: boolean }
       has_role: {
         Args: {
