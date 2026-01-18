@@ -837,112 +837,118 @@ export default function Extensions() {
       </Section>
 
       {/* Maintenance Timeline Section */}
-      <Section className="bg-secondary/30">
-        <div className="text-center mb-12 lg:mb-16">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
-          >
-            Your Extension Journey
-          </motion.span>
+      <Section className="bg-secondary/30 overflow-hidden">
+        <div className="text-center mb-16 lg:mb-20">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            transition={{ duration: 0.6 }}
             className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
           >
-            Maintenance <span className="italic font-light">Timeline</span>
+            Your Extension <span className="italic font-light">Journey</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-4 text-muted-foreground max-w-2xl mx-auto"
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="mt-4 text-muted-foreground max-w-xl mx-auto"
           >
-            Keep your extensions looking flawless with our recommended maintenance schedule.
+            From installation to maintenance, here's what to expect.
           </motion.p>
         </div>
 
         {/* Timeline */}
-        <div className="relative">
-          {/* Timeline line - desktop */}
-          <div className="hidden lg:block absolute top-8 left-0 right-0 h-0.5 bg-border" />
+        <div className="relative max-w-5xl mx-auto">
+          {/* Connecting line - desktop */}
+          <div className="hidden lg:block absolute top-6 left-[10%] right-[10%] h-px bg-border" />
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Week 0 - Installation */}
+          {/* Connecting line - mobile/tablet vertical */}
+          <div className="lg:hidden absolute top-0 bottom-0 left-6 w-px bg-border" />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
+            {/* Day 1 - Installation */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="relative text-center"
+              transition={{ duration: 0.5 }}
+              className="relative pl-16 lg:pl-0 py-8 lg:py-0 lg:text-center"
             >
-              <div className="w-16 h-16 mx-auto bg-foreground text-background rounded-full flex items-center justify-center mb-4 relative z-10">
-                <span className="font-serif text-xl">Day 1</span>
+              {/* Timeline dot */}
+              <div className="absolute left-4 lg:left-1/2 lg:-translate-x-1/2 top-8 lg:top-0 w-5 h-5 rounded-full bg-foreground border-4 border-background shadow-sm z-10" />
+              
+              <div className="lg:pt-12">
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Day 1</span>
+                <h3 className="font-serif text-lg mb-2">Installation</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Custom-installed using the Drop Dead Method for seamless, natural results.
+                </p>
               </div>
-              <h3 className="font-serif text-xl mb-2">Installation</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Your extensions are custom-installed using the Drop Dead Method for a seamless, natural look.
-              </p>
             </motion.div>
 
             {/* Week 2 - Settling */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="relative text-center"
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="relative pl-16 lg:pl-0 py-8 lg:py-0 lg:text-center"
             >
-              <div className="w-16 h-16 mx-auto bg-oat text-foreground rounded-full flex items-center justify-center mb-4 relative z-10">
-                <span className="font-serif text-xl">Week 2</span>
+              {/* Timeline dot */}
+              <div className="absolute left-4 lg:left-1/2 lg:-translate-x-1/2 top-8 lg:top-0 w-5 h-5 rounded-full bg-oat border-4 border-background shadow-sm z-10" />
+              
+              <div className="lg:pt-12">
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Week 2</span>
+                <h3 className="font-serif text-lg mb-2">Settling In</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Extensions fully settle. Perfect time for minor adjustments if needed.
+                </p>
               </div>
-              <h3 className="font-serif text-xl mb-2">Settling Period</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Your extensions fully settle in. Perfect time for any minor adjustments if needed.
-              </p>
             </motion.div>
 
             {/* Week 6-8 - Maintenance */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative text-center"
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="relative pl-16 lg:pl-0 py-8 lg:py-0 lg:text-center"
             >
-              <div className="w-16 h-16 mx-auto bg-foreground text-background rounded-full flex items-center justify-center mb-4 relative z-10">
-                <Clock className="w-6 h-6" />
+              {/* Timeline dot - highlighted */}
+              <div className="absolute left-4 lg:left-1/2 lg:-translate-x-1/2 top-8 lg:top-0 w-5 h-5 rounded-full bg-foreground border-4 border-background shadow-sm z-10 ring-4 ring-foreground/10" />
+              
+              <div className="lg:pt-12">
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Week 6-8</span>
+                <h3 className="font-serif text-lg mb-2">Maintenance</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                  We move up your rows as your natural hair grows.
+                </p>
+                <span className="text-xs font-medium text-foreground bg-oat/40 px-3 py-1 inline-block">
+                  $150 – $300
+                </span>
               </div>
-              <h3 className="font-serif text-xl mb-2">Week 6-8</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                <span className="font-medium">Maintenance appointment.</span> We move up your rows as your natural hair grows.
-              </p>
-              <span className="inline-block mt-2 text-xs uppercase tracking-wider bg-oat/30 px-3 py-1 rounded-full">
-                $150-$300
-              </span>
             </motion.div>
 
-            {/* Month 6-12 - Reinstall */}
+            {/* Month 6-12 - Refresh */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="relative text-center"
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="relative pl-16 lg:pl-0 py-8 lg:py-0 lg:text-center"
             >
-              <div className="w-16 h-16 mx-auto bg-oat text-foreground rounded-full flex items-center justify-center mb-4 relative z-10">
-                <Sparkles className="w-6 h-6" />
+              {/* Timeline dot */}
+              <div className="absolute left-4 lg:left-1/2 lg:-translate-x-1/2 top-8 lg:top-0 w-5 h-5 rounded-full bg-oat border-4 border-background shadow-sm z-10" />
+              
+              <div className="lg:pt-12">
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">Month 6-12</span>
+                <h3 className="font-serif text-lg mb-2">Fresh Set</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Time for new hair. Start fresh with a brand new set of extensions.
+                </p>
               </div>
-              <h3 className="font-serif text-xl mb-2">Month 6-12</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Time for new hair! Your original extensions have served you well—start fresh with a new set.
-              </p>
             </motion.div>
           </div>
 
@@ -951,14 +957,14 @@ export default function Extensions() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-center mt-12"
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="text-center mt-16"
           >
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
+              className="group inline-flex items-center gap-3 border border-foreground text-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
             >
-              <span>Schedule Your Maintenance</span>
+              <span>Book Maintenance</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </motion.div>
