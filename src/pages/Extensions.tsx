@@ -107,10 +107,10 @@ function SocialProofSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-50px" });
   
-  const rating = useCounterAnimation({ end: 4.9, duration: 1500, decimals: 1 });
-  const reviews = useCounterAnimation({ end: 500, duration: 1800 });
-  const transformations = useCounterAnimation({ end: 2000, duration: 2000 });
-  const years = useCounterAnimation({ end: 10, duration: 1200 });
+  const rating = useCounterAnimation({ end: 4.9, duration: 2200, decimals: 1 });
+  const reviews = useCounterAnimation({ end: 500, duration: 2600 });
+  const transformations = useCounterAnimation({ end: 2000, duration: 3000 });
+  const years = useCounterAnimation({ end: 10, duration: 1800 });
 
   return (
     <section ref={sectionRef} className="py-8 border-b border-border bg-background">
