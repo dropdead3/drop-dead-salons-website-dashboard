@@ -305,6 +305,18 @@ export default function Extensions() {
 
       {/* Gallery Section - 4 Before/After Sliders */}
       <Section sectionRef={specialtyRef} className="bg-background">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={specialtyInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12 lg:mb-16"
+        >
+          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1]">
+            You'll have to see it to believe it
+          </h2>
+        </motion.div>
+
         {/* Gallery Grid - 4 Before/After Sliders */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           {transformations.map((transformation, index) => (
