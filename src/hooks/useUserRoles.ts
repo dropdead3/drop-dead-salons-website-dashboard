@@ -82,28 +82,51 @@ export function useToggleUserRole() {
           .eq('user_id', userId)
           .eq('role', role);
 
-        if (error) throw error;
+        if (error) {
+          if (error.message?.includes('row-level security')) {
+            if (role === 'admin') {
+              throw new Error('Only Super Admins can remove the Admin role. Request approval from account owner.');
+            }
+            throw new Error('Permission denied');
+          }
+          throw error;
+        }
       } else {
         // Add role
         const { error } = await supabase
           .from('user_roles')
           .insert({ user_id: userId, role });
 
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') {
+            // Duplicate key - role already exists
+            return;
+          }
+          if (error.message?.includes('row-level security')) {
+            if (role === 'admin') {
+              throw new Error('Only Super Admins can assign the Admin role. Request approval from account owner.');
+            }
+            throw new Error('Permission denied');
+          }
+          throw error;
+        }
       }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['all-users-with-roles'] });
       queryClient.invalidateQueries({ queryKey: ['team-directory'] });
+      queryClient.invalidateQueries({ queryKey: ['account-approvals'] });
       toast.success(
         variables.hasRole 
           ? `${ROLE_LABELS[variables.role]} role removed` 
           : `${ROLE_LABELS[variables.role]} role added`
       );
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error toggling role:', error);
-      toast.error('Failed to update role');
+      toast.error('Failed to update role', { 
+        description: error.message || 'An error occurred'
+      });
     },
   });
 }
