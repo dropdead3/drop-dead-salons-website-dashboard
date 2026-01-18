@@ -55,6 +55,72 @@ const toTitleCase = (str: string) => {
   return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+// Join Team Card with dynamic column spanning
+const JoinTeamCard = ({ 
+  stylistCount, 
+  isFormExpanded, 
+  onToggleForm 
+}: { 
+  stylistCount: number; 
+  isFormExpanded: boolean;
+  onToggleForm: () => void;
+}) => {
+  // Calculate remaining spots for xl (4 cols)
+  const remainderXl = stylistCount % 4;
+  const spanXl = remainderXl === 0 ? 4 : 4 - remainderXl;
+  
+  // For lg (3 cols)
+  const remainderLg = stylistCount % 3;
+  const spanLg = remainderLg === 0 ? 3 : 3 - remainderLg;
+  
+  // For sm (2 cols)
+  const remainderSm = stylistCount % 2;
+  const spanSm = remainderSm === 0 ? 2 : 2 - remainderSm;
+
+  // Use predefined classes based on calculated spans
+  const getSpanClass = () => {
+    const xlClass = spanXl === 4 ? 'xl:col-span-4' : spanXl === 3 ? 'xl:col-span-3' : spanXl === 2 ? 'xl:col-span-2' : 'xl:col-span-1';
+    const lgClass = spanLg === 3 ? 'lg:col-span-3' : spanLg === 2 ? 'lg:col-span-2' : 'lg:col-span-1';
+    const smClass = spanSm === 2 ? 'sm:col-span-2' : 'sm:col-span-1';
+    
+    return `col-span-1 ${smClass} ${lgClass} ${xlClass}`;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: stylistCount * 0.08 }}
+      className={`${getSpanClass()} relative bg-muted/50 border border-border flex flex-col items-center justify-center p-8 min-h-[300px]`}
+    >
+      <div className="text-center">
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <Sparkles className="w-4 h-4 text-foreground/50" />
+          <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
+            Join Our Team
+          </p>
+        </div>
+        <h3 className="text-2xl md:text-3xl font-display mb-3">
+          Work at Drop Dead
+        </h3>
+        <p className="text-foreground/60 text-sm max-w-sm mx-auto mb-5">
+          Passionate stylist looking for your next opportunity? We'd love to hear from you.
+        </p>
+        
+        <button
+          onClick={onToggleForm}
+          className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
+        >
+          <span>{isFormExpanded ? "Close" : "Apply now"}</span>
+          <ChevronDown 
+            className={`w-4 h-4 transition-transform duration-300 ${isFormExpanded ? "rotate-180" : ""}`} 
+          />
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
 const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) => {
   return (
     <motion.div
@@ -399,38 +465,12 @@ export function StylistsSection() {
                 <StylistCard key={stylist.id} stylist={stylist} index={index} />
               ))}
               
-              {/* Join Our Team Card - spans 2 columns on xl when there's room */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: filteredStylists.length * 0.08 }}
-                className="col-span-1 sm:col-span-2 relative bg-muted/50 border border-border flex flex-col items-center justify-center p-8 min-h-[300px] aspect-auto sm:aspect-[2/1] xl:aspect-auto"
-              >
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-foreground/50" />
-                    <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
-                      Join Our Team
-                    </p>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-display mb-3">
-                    Work at Drop Dead
-                  </h3>
-                  <p className="text-foreground/60 text-sm max-w-sm mx-auto mb-5">
-                    Passionate stylist looking for your next opportunity? We'd love to hear from you.
-                  </p>
-                  
-                  <button
-                    onClick={() => setIsFormExpanded(!isFormExpanded)}
-                    className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
-                  >
-                    <span>{isFormExpanded ? "Close" : "Apply now"}</span>
-                    <ChevronDown 
-                      className={`w-4 h-4 transition-transform duration-300 ${isFormExpanded ? "rotate-180" : ""}`} 
-                    />
-                  </button>
-                </div>
-              </motion.div>
+              {/* Join Our Team Card - dynamically spans remaining columns */}
+              <JoinTeamCard 
+                stylistCount={filteredStylists.length} 
+                isFormExpanded={isFormExpanded}
+                onToggleForm={() => setIsFormExpanded(!isFormExpanded)}
+              />
             </motion.div>
           ) : (
             <motion.div
