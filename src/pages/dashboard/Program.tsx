@@ -20,6 +20,7 @@ import {
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import DD75Logo from '@/assets/dd75-logo.svg';
 
 export default function Program() {
   const { user } = useAuth();
@@ -102,12 +103,11 @@ export default function Program() {
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-2xl mx-auto">
           <div className="text-center py-20">
-            <div className="w-20 h-20 bg-foreground text-background mx-auto mb-8 flex items-center justify-center">
-              <Target className="w-10 h-10" />
-            </div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-4">
-              DROP DEAD 75
-            </h1>
+            <img 
+              src={DD75Logo} 
+              alt="Drop Dead 75" 
+              className="h-16 lg:h-20 w-auto mx-auto mb-8"
+            />
             <p className="text-muted-foreground font-sans mb-8 max-w-md mx-auto">
               75 days of execution. No excuses. Build your client engine and 
               transform your book.
