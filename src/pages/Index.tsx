@@ -11,7 +11,7 @@ import { StylistsSection } from "@/components/home/StylistsSection";
 import { GallerySection } from "@/components/home/GallerySection";
 import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { FAQSection } from "@/components/home/FAQSection";
-import { CTASection } from "@/components/home/CTASection";
+
 import { BrandsSection } from "@/components/home/BrandsSection";
 import { DrinkMenuSection } from "@/components/home/DrinkMenuSection";
 
@@ -44,7 +44,7 @@ const Index = () => {
       </div>
       <ExtensionsSection />
       <StylistsSection />
-      <CTASection />
+      
       <DrinkMenuSection />
     </Layout>
   );
