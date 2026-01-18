@@ -236,7 +236,7 @@ export default function Extensions() {
               initial={{ opacity: 0, y: 40 }}
               animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.7, delay: index * 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-              className="group relative overflow-hidden cursor-pointer rounded-2xl"
+              className="group relative overflow-hidden cursor-pointer"
             >
               {/* Full Background Image */}
               <div className="aspect-[16/9] relative">
