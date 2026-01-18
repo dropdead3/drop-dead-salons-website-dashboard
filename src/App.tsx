@@ -35,6 +35,7 @@ import AdminSettings from "./pages/dashboard/admin/Settings";
 import AdminAnnouncements from "./pages/dashboard/admin/Announcements";
 import HomepageStylists from "./pages/dashboard/admin/HomepageStylists";
 import ManageRoles from "./pages/dashboard/admin/ManageRoles";
+import AccountApprovals from "./pages/dashboard/admin/AccountApprovals";
 import MyHandbooks from "./pages/dashboard/MyHandbooks";
 import Onboarding from "./pages/dashboard/Onboarding";
 import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requireCoach><AdminAnnouncements /></ProtectedRoute>} />
               <Route path="/dashboard/admin/homepage-stylists" element={<ProtectedRoute requireCoach><HomepageStylists /></ProtectedRoute>} />
               <Route path="/dashboard/admin/roles" element={<ProtectedRoute requireCoach><ManageRoles /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/approvals" element={<ProtectedRoute requireCoach><AccountApprovals /></ProtectedRoute>} />
               <Route path="/dashboard/admin/settings" element={<ProtectedRoute requireCoach><AdminSettings /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
