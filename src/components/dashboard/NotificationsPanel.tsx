@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +31,30 @@ interface NotificationsPanelProps {
 export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Subscribe to realtime announcements changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('announcements-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'announcements',
+        },
+        () => {
+          // Invalidate queries to refetch data when announcements change
+          queryClient.invalidateQueries({ queryKey: ['notifications-announcements'] });
+          queryClient.invalidateQueries({ queryKey: ['unread-announcements-count'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Fetch recent announcements
   const { data: announcements, isLoading } = useQuery({
