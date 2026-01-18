@@ -65,7 +65,7 @@ export function Header() {
         <motion.div
           initial={false}
           animate={{
-            backgroundColor: isScrolled ? "rgba(255, 255, 255, 0.1)" : "rgba(var(--background-rgb, 255, 255, 255), 1)",
+            backgroundColor: isScrolled ? "rgba(255, 255, 255, 0.1)" : "transparent",
             backdropFilter: isScrolled ? "blur(24px) saturate(1.5)" : "blur(0px)",
             borderColor: isScrolled ? "rgba(255, 255, 255, 0.2)" : "transparent",
             boxShadow: isScrolled 
@@ -74,8 +74,8 @@ export function Header() {
           }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className={cn(
-            "rounded-2xl border transition-colors",
-            isScrolled ? "bg-white/10" : "bg-background"
+            "rounded-2xl border",
+            isScrolled ? "bg-white/10" : "bg-transparent"
           )}
         >
           <div className="container mx-auto px-6 lg:px-8">
