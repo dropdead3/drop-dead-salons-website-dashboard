@@ -1,4 +1,4 @@
-import { motion, useInView, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useInView, useScroll, useVelocity, useTransform, useSpring, useAnimationFrame } from "framer-motion";
 import { useRef, useState } from "react";
 
 // Import drink images
@@ -138,21 +138,40 @@ export function DrinkMenuSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   
-  // Track scroll progress through this section
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"]
+  // Track scroll velocity
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  const smoothVelocity = useSpring(scrollVelocity, {
+    stiffness: 400,
+    damping: 50
   });
   
-  // Transform scroll progress to horizontal movement
-  // Moves drinks from right to left as user scrolls down
-  const xTransform = useTransform(scrollYProgress, [0, 1], ["10%", "-60%"]);
+  // Base position for infinite scroll
+  const baseX = useRef(0);
+  const [xPos, setXPos] = useState(0);
   
-  // Add spring physics for smooth, responsive movement
-  const smoothX = useSpring(xTransform, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
+  // Animate continuously with velocity-based speed
+  useAnimationFrame((_, delta) => {
+    // Base speed (pixels per second)
+    const baseSpeed = 30;
+    
+    // Get current velocity and add to base speed
+    const velocity = smoothVelocity.get();
+    const velocityFactor = velocity * 0.05; // Scale down velocity influence
+    
+    // Calculate movement for this frame
+    const moveBy = (baseSpeed + Math.abs(velocityFactor)) * (delta / 1000);
+    
+    // Update position (negative = moving left)
+    baseX.current -= moveBy;
+    
+    // Reset position for infinite loop (based on single set width ~1200px)
+    const singleSetWidth = 1200;
+    if (baseX.current <= -singleSetWidth) {
+      baseX.current += singleSetWidth;
+    }
+    
+    setXPos(baseX.current);
   });
 
   return (
@@ -178,14 +197,15 @@ export function DrinkMenuSection() {
         </p>
       </motion.div>
 
-      {/* Scroll-driven horizontal drinks */}
+      {/* Infinite scroll drinks with velocity-based speed */}
       <motion.div 
         className="flex"
         style={{ 
-          x: smoothX,
+          x: xPos,
           width: 'fit-content'
         }}
       >
+        {/* First set */}
         {drinks.map((drink, index) => (
           <DrinkCard 
             key={drink.id} 
@@ -193,6 +213,15 @@ export function DrinkMenuSection() {
             index={index} 
             isInView={isInView} 
             animated={true}
+          />
+        ))}
+        
+        {/* Duplicate set for seamless loop */}
+        {drinks.map((drink) => (
+          <DrinkCard 
+            key={`dup-${drink.id}`} 
+            drink={drink} 
+            animated={false}
           />
         ))}
       </motion.div>
