@@ -19,7 +19,7 @@ export function BrandStatement() {
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]">
             Not Your
             <br />
-            <span className="italic font-light font-serif">
+            <span className="italic font-light">
               <TypewriterText text="Average" isInView={isInView} delay={600} /> Salon.
             </span>
           </h2>
