@@ -426,7 +426,7 @@ export function ServicesPreview() {
                   {service.category}
                 </span>
                 
-                <h3 className="font-sans text-2xl lg:text-3xl font-medium text-foreground mb-2 leading-tight uppercase tracking-wide">
+                <h3 className="font-sans text-2xl lg:text-3xl font-medium text-foreground mb-2 leading-tight">
                   {service.title}
                 </h3>
                 
@@ -491,7 +491,7 @@ export function ServicesPreview() {
                 {service.category}
               </span>
               
-              <h3 className="font-sans text-2xl font-medium text-foreground mb-2 uppercase tracking-wide">
+              <h3 className="font-sans text-2xl font-medium text-foreground mb-2">
                 {service.title}
               </h3>
               
