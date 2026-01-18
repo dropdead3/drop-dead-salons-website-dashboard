@@ -413,6 +413,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const ViewAsToggle = () => {
     if (!isAdmin) return null;
 
+    const roleIcons: Record<AppRole, React.ComponentType<{ className?: string }>> = {
+      admin: Crown,
+      manager: Shield,
+      stylist: Scissors,
+      receptionist: Headset,
+      assistant: HandHelping,
+    };
+
+    const roleDescriptions: Record<AppRole, string> = {
+      admin: 'Full system access',
+      manager: 'Team management access',
+      stylist: 'Stylist dashboard view',
+      receptionist: 'Front desk access',
+      assistant: 'Assistant tools access',
+    };
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -438,46 +454,66 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel className="flex items-center gap-2">
-            <Eye className="w-4 h-4" />
-            View Dashboard As
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
+        <DropdownMenuContent align="end" className="w-72 p-2 bg-card border border-border shadow-lg">
+          <div className="flex items-center gap-3 px-2 py-3 mb-2">
+            <div className="p-2 bg-muted">
+              <Eye className="w-5 h-5 text-foreground" />
+            </div>
+            <div>
+              <p className="font-display text-sm font-medium">View Dashboard As</p>
+              <p className="text-xs text-muted-foreground">Preview how other roles see the app</p>
+            </div>
+          </div>
+          <DropdownMenuSeparator className="my-2" />
           {isViewingAs && (
             <>
               <DropdownMenuItem
                 onClick={() => setViewAsRole(null)}
-                className="flex items-center gap-2 cursor-pointer text-amber-600 dark:text-amber-400"
+                className="flex items-center gap-3 px-3 py-3 cursor-pointer bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 mb-2"
               >
-                <X className="w-4 h-4" />
-                Exit View As Mode
+                <div className="p-1.5 bg-amber-500 text-white">
+                  <X className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Exit Preview Mode</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-500">Return to your admin view</p>
+                </div>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="my-2" />
             </>
           )}
-          {ALL_ROLES.filter(role => role !== 'admin').map(role => (
-            <DropdownMenuItem
-              key={role}
-              onClick={() => setViewAsRole(role)}
-              className={cn(
-                "flex items-center justify-between cursor-pointer",
-                viewAsRole === role && "bg-accent"
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <Badge 
-                  variant="secondary" 
-                  className={cn("text-xs", roleColors[role])}
+          <div className="space-y-1">
+            {ALL_ROLES.filter(role => role !== 'admin').map(role => {
+              const RoleIcon = roleIcons[role];
+              const isSelected = viewAsRole === role;
+              return (
+                <DropdownMenuItem
+                  key={role}
+                  onClick={() => setViewAsRole(role)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-3 cursor-pointer transition-all",
+                    isSelected && "bg-accent"
+                  )}
                 >
-                  {ROLE_LABELS[role]}
-                </Badge>
-              </div>
-              {viewAsRole === role && (
-                <Eye className="w-4 h-4 text-amber-500" />
-              )}
-            </DropdownMenuItem>
-          ))}
+                  <div className={cn(
+                    "p-1.5 transition-colors",
+                    roleColors[role]
+                  )}>
+                    <RoleIcon className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{ROLE_LABELS[role]}</p>
+                    <p className="text-xs text-muted-foreground truncate">{roleDescriptions[role]}</p>
+                  </div>
+                  {isSelected && (
+                    <div className="p-1 bg-amber-500 text-white">
+                      <Eye className="w-3 h-3" />
+                    </div>
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     );
