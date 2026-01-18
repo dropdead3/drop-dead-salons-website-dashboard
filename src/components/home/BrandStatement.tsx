@@ -13,7 +13,7 @@ export function BrandStatement() {
         ref={ref} 
         className="bg-foreground text-background rounded-2xl p-10 md:p-16 lg:p-20"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
           {/* Left side - Title */}
           <motion.div
             initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
