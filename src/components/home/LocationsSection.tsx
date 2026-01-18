@@ -10,14 +10,16 @@ const locations = [
     address: "2036 N Gilbert Rd Ste 1",
     city: "Mesa, AZ 85203",
     phone: "(480) 548-1886",
-    bookingUrl: "/booking?location=north-mesa"
+    bookingUrl: "/booking?location=north-mesa",
+    mapQuery: "2036+N+Gilbert+Rd+Ste+1,+Mesa,+AZ+85203"
   },
   {
     name: "Val Vista Lakes",
     address: "3641 E Baseline Rd Suite Q-103",
     city: "Gilbert, AZ 85234",
     phone: "(480) 548-1886",
-    bookingUrl: "/booking?location=val-vista-lakes"
+    bookingUrl: "/booking?location=val-vista-lakes",
+    mapQuery: "3641+E+Baseline+Rd+Suite+Q-103,+Gilbert,+AZ+85234"
   },
 ];
 
@@ -59,51 +61,68 @@ export function LocationsSection() {
                 ease: [0.25, 0.1, 0.25, 1], 
                 delay: 0.2 + index * 0.15 
               }}
-              className="group relative bg-secondary hover:bg-secondary/80 transition-colors duration-300 p-8 md:p-10 text-center"
+              className="group relative bg-secondary hover:bg-secondary/80 transition-colors duration-300 overflow-hidden"
             >
-              {/* Location Title with Info Icon */}
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <h3 className="font-display text-2xl md:text-3xl text-foreground">
-                  {location.name}
-                </h3>
-                {/* Info Icon with Hours Tooltip */}
-                <div className="relative group/info">
-                  <Info className="w-5 h-5 text-foreground/40 hover:text-foreground/70 transition-colors cursor-pointer" />
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all duration-200 z-10">
-                    <div className="bg-foreground text-background text-xs px-4 py-3 whitespace-nowrap shadow-lg">
-                      <p className="font-medium mb-1">{hours.open}</p>
-                      <p className="text-background/70">{hours.closed}</p>
+              {/* Google Maps Embed */}
+              <div className="w-full h-40 md:h-48 bg-muted">
+                <iframe
+                  src={`https://www.google.com/maps?q=${location.mapQuery}&output=embed`}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title={`Map of ${location.name}`}
+                  className="grayscale hover:grayscale-0 transition-all duration-500"
+                />
+              </div>
+
+              <div className="p-8 md:p-10 text-center">
+                {/* Location Title with Info Icon */}
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <h3 className="font-display text-2xl md:text-3xl text-foreground">
+                    {location.name}
+                  </h3>
+                  {/* Info Icon with Hours Tooltip */}
+                  <div className="relative group/info">
+                    <Info className="w-5 h-5 text-foreground/40 hover:text-foreground/70 transition-colors cursor-pointer" />
+                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all duration-200 z-10">
+                      <div className="bg-foreground text-background text-xs px-4 py-3 whitespace-nowrap shadow-lg">
+                        <p className="font-medium mb-1">{hours.open}</p>
+                        <p className="text-background/70">{hours.closed}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex flex-col items-center gap-1 mb-6 text-foreground/70 hover:text-foreground transition-colors group/maps"
-              >
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4" />
-                  <span>{location.address}</span>
-                </span>
-                <span>{location.city}</span>
-              </a>
-              <a
-                href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
-                className="flex items-center justify-center gap-2 text-foreground/70 hover:text-foreground transition-colors mb-6"
-              >
-                <Phone className="w-4 h-4" />
-                <span>{location.phone}</span>
-              </a>
-              <div>
-                <Link
-                  to={location.bookingUrl}
-                  className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group/link"
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex flex-col items-center gap-1 mb-6 text-foreground/70 hover:text-foreground transition-colors group/maps"
                 >
-                  <span>Book consult</span>
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
-                </Link>
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4" />
+                    <span>{location.address}</span>
+                  </span>
+                  <span>{location.city}</span>
+                </a>
+                <a
+                  href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
+                  className="flex items-center justify-center gap-2 text-foreground/70 hover:text-foreground transition-colors mb-6"
+                >
+                  <Phone className="w-4 h-4" />
+                  <span>{location.phone}</span>
+                </a>
+                <div>
+                  <Link
+                    to={location.bookingUrl}
+                    className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group/link"
+                  >
+                    <span>Book consult</span>
+                    <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
+                  </Link>
+                </div>
               </div>
             </motion.div>
           ))}
