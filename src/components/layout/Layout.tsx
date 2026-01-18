@@ -40,25 +40,13 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main content that scrolls over the footer */}
       <div 
-        className="relative z-10 bg-background flex flex-col min-h-screen"
+        className="relative z-10 flex flex-col min-h-screen"
         style={{ marginBottom: footerHeight }}
       >
         <Header />
-        <main className="flex-1">
+        <main className="flex-1 bg-background">
           <PageTransition>{children}</PageTransition>
         </main>
-        {/* Shadow to create depth as content reveals footer */}
-        <div 
-          className="h-8 bg-gradient-to-b from-background to-transparent pointer-events-none"
-          style={{ 
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            transform: 'translateY(100%)',
-            boxShadow: '0 -20px 40px -10px rgba(0,0,0,0.15)'
-          }}
-        />
       </div>
 
       <StickyFooterBar />
