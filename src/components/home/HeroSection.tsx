@@ -212,7 +212,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
       <motion.button
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 1.9, ease }}
+        transition={{ duration: 0.8, delay: 2.7, ease }}
         onClick={scrollToContent}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-20"
         aria-label="Scroll down"
