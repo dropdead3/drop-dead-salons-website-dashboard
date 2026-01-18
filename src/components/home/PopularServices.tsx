@@ -4,6 +4,7 @@ import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
 import { ArrowUpRight } from "lucide-react";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 const popularServices = [
   "Hidden Beaded Row Weft Extension Installs",
@@ -33,12 +34,9 @@ export function PopularServices() {
         transition={{ duration: 0.6 }}
         className="text-center"
       >
-        <span 
-          className="text-xs uppercase tracking-[0.2em] text-muted-foreground block mb-12"
-          style={{ fontFamily: "'Termina', sans-serif" }}
-        >
+        <Eyebrow className="text-muted-foreground mb-12">
           Other Popular Services
-        </span>
+        </Eyebrow>
 
         <div className="flex flex-wrap justify-center gap-3 md:gap-4 max-w-6xl mx-auto">
           {popularServices.map((service, index) => (

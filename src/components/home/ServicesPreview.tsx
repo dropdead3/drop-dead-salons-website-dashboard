@@ -3,6 +3,7 @@ import { motion, useInView, useReducedMotion, type Variants } from "framer-motio
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Section } from "@/components/ui/section";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Pause } from "lucide-react";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 const services = [
   {
@@ -257,12 +258,9 @@ export function ServicesPreview() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, ease: editorialEasing }}
         >
-          <span 
-            className="text-xs uppercase tracking-[0.2em] text-muted-foreground"
-            style={{ fontFamily: "'Termina', sans-serif" }}
-          >
+          <Eyebrow className="text-muted-foreground">
             Explore Our Services ↘
-          </span>
+          </Eyebrow>
         </motion.div>
         
         <motion.div

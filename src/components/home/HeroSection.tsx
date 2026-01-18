@@ -4,6 +4,7 @@ import { ChevronDown, ArrowRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { TypewriterText } from "@/components/ui/TypewriterText";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 export function HeroSection() {
   const [consultationOpen, setConsultationOpen] = useState(false);
@@ -141,35 +142,35 @@ export function HeroSection() {
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-5xl mx-auto text-center">
             {/* Tagline */}
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-8"
               style={{ 
-                fontFamily: "'Termina', sans-serif",
                 opacity,
                 y: taglineY
               }}
             >
-              <TypewriterText text="Hair" isInView={true} delay={300} speed={280} />
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 1.5 }}
-              >
-                {" "}•{" "}
-              </motion.span>
-              <TypewriterText text="Color" isInView={true} delay={1800} speed={280} />
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 3.2 }}
-              >
-                {" "}•{" "}
-              </motion.span>
-              <TypewriterText text="Artistry" isInView={true} delay={3500} speed={280} />
-            </motion.p>
+              <Eyebrow className="text-muted-foreground mb-8">
+                <TypewriterText text="Hair" isInView={true} delay={300} speed={280} />
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 1.5 }}
+                >
+                  {" "}•{" "}
+                </motion.span>
+                <TypewriterText text="Color" isInView={true} delay={1800} speed={280} />
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 3.2 }}
+                >
+                  {" "}•{" "}
+                </motion.span>
+                <TypewriterText text="Artistry" isInView={true} delay={3500} speed={280} />
+              </Eyebrow>
+            </motion.div>
 
             {/* Main headline */}
             <motion.h1
