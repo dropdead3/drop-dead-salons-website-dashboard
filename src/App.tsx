@@ -8,6 +8,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { CustomCursor } from "./components/ui/CustomCursor";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
+import About from "./pages/About";
 import Booking from "./pages/Booking";
 import Stylists from "./pages/Stylists";
 import Extensions from "./pages/Extensions";
@@ -26,6 +27,7 @@ const App = () => (
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
             <Route path="/services" element={<Services />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/stylists" element={<Stylists />} />
