@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Star, Award, MapPin, ArrowRight, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
@@ -45,6 +45,25 @@ const transformations = [
   }
 ];
 
+// Extension benefit cards
+const extensionBenefits = [
+  {
+    title: "Instant Volume",
+    description: "Increase volume with seamless, lightweight extensions that blend naturally and boost your hair's fullness in just one appointment.",
+    image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop"
+  },
+  {
+    title: "Instant Length",
+    description: "Get the hair of your dreams by achieving instant length with our custom extensions—designed to add inches and impact without the wait.",
+    image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=500&fit=crop"
+  },
+  {
+    title: "Damage-Free",
+    description: "Enjoy damage-free extensions with our signature Drop Dead Method, designed to protect your natural hair while enhancing your look.",
+    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop"
+  }
+];
+
 // Extension-specific FAQs
 const extensionFaqs = [
   {
@@ -81,34 +100,15 @@ const extensionFaqs = [
   }
 ];
 
-// Drop Dead Method features
-const methodFeatures = [
-  {
-    icon: Star,
-    title: "Hidden & Seamless",
-    description: "Invisible beaded rows that lay completely flat against your scalp"
-  },
-  {
-    icon: Award,
-    title: "Maximum Comfort",
-    description: "No tension, no damage—designed for all-day wearability"
-  },
-  {
-    icon: MapPin,
-    title: "Nationwide Education",
-    description: "We train salons across the country who proudly showcase our method"
-  }
-];
-
 export default function Extensions() {
   const heroRef = useRef(null);
-  const galleryRef = useRef(null);
-  const methodRef = useRef(null);
+  const benefitsRef = useRef(null);
+  const specialtyRef = useRef(null);
   const faqRef = useRef(null);
   
   const heroInView = useInView(heroRef, { once: true, margin: "-100px" });
-  const galleryInView = useInView(galleryRef, { once: true, margin: "-100px" });
-  const methodInView = useInView(methodRef, { once: true, margin: "-100px" });
+  const benefitsInView = useInView(benefitsRef, { once: true, margin: "-100px" });
+  const specialtyInView = useInView(specialtyRef, { once: true, margin: "-100px" });
   const faqInView = useInView(faqRef, { once: true, margin: "-100px" });
   
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -148,282 +148,191 @@ export default function Extensions() {
   return (
     <Layout>
       <SEO 
-        title="Hair Extensions - The Drop Dead Method"
-        description="Experience the most comfortable and seamless hair extension method. Hidden beaded rows, zero damage, and stunning transformations. Book your extension consultation today."
+        title="Hair Extensions - Luxury Extension Services"
+        description="Experience luxury hair extensions with the Drop Dead Method. Instant volume, instant length, damage-free extensions. Book your consultation today."
       />
 
       {/* Hero Section */}
-      <section ref={heroRef} className="pt-32 lg:pt-40 pb-16 lg:pb-20">
+      <section ref={heroRef} className="pt-32 lg:pt-40 pb-16 lg:pb-24 overflow-hidden">
         <div className="container mx-auto px-6 lg:px-12">
-          <div className="max-w-3xl">
-            <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={heroInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6 }}
-              className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-6"
-            >
-              Hair Extensions
-            </motion.span>
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={heroInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-[1.1]"
-            >
-              The Drop Dead
-              <br />
-              <span className="italic font-light">Method</span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={heroInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="mt-8 text-base md:text-lg text-muted-foreground font-sans font-light max-w-lg"
-            >
-              The most versatile and comfortable hidden beaded row method available. 
-              Flawless, natural-looking extensions that move and feel like your own hair.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={heroInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="mt-8 flex flex-wrap gap-4"
-            >
-              <Link
-                to="/booking"
-                className="group inline-flex items-center gap-3 bg-foreground text-background px-6 py-3.5 text-sm font-medium tracking-wide hover:bg-foreground/90 transition-all duration-300"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left - Content */}
+            <div className="order-2 lg:order-1">
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={heroInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6 }}
+                className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-[1.1]"
               >
-                <span>BOOK EXTENSION CONSULT</span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
+                <span className="italic font-light">Luxury</span> extension services
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={heroInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="mt-6 text-base md:text-lg text-muted-foreground font-sans font-light max-w-lg leading-relaxed"
+              >
+                Drop Dead Salon built it's foundations upon our hair extension knowledge and sister brand, Drop Dead Extensions. We use all our own proprietary extension products in our salons to deliver incredible results with a quality guarantee.
+              </motion.p>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={heroInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="mt-8"
+              >
+                <Link
+                  to="/booking"
+                  className="group inline-flex items-center gap-3 bg-foreground text-background px-6 py-3.5 rounded-full text-sm font-medium tracking-wide hover:bg-foreground/90 transition-all duration-300"
+                >
+                  <span>Book your consultation</span>
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              </motion.div>
+            </div>
+
+            {/* Right - Hero Image */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={heroInView ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="order-1 lg:order-2 relative"
+            >
+              <div className="aspect-[4/5] lg:aspect-[3/4] relative overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=1000&fit=crop"
+                  alt="Luxury hair extensions"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Transformation Gallery Section */}
-      <Section sectionRef={galleryRef} className="bg-secondary/30">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={galleryInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-12"
-        >
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
-            Transformations
-          </span>
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground">
-            Real <span className="italic font-light">Results</span>
-          </h2>
-        </motion.div>
+      {/* New Client Banner */}
+      <section className="py-5 border-y border-border">
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+            <p className="text-foreground font-medium text-center">
+              New clients can save 15% off the first service!
+            </p>
+            <Link
+              to="/booking"
+              className="inline-flex items-center px-6 py-2.5 border border-foreground text-foreground text-sm font-medium hover:bg-foreground hover:text-background transition-all duration-300 rounded-full"
+            >
+              Get started
+            </Link>
+          </div>
+        </div>
+      </section>
 
-        <div className="relative max-w-4xl mx-auto">
-          {/* Main Slider */}
+      {/* Benefits Cards Section */}
+      <Section sectionRef={benefitsRef} className="bg-background">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {extensionBenefits.map((benefit, index) => (
+            <motion.div
+              key={benefit.title}
+              initial={{ opacity: 0, y: 30 }}
+              animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="group relative bg-oat/30 overflow-hidden"
+            >
+              <div className="p-6 lg:p-8 flex flex-col h-full min-h-[320px]">
+                {/* Text Content */}
+                <div className="flex-1 pr-[40%]">
+                  <h3 className="font-serif text-xl md:text-2xl font-medium text-foreground mb-3">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {benefit.description}
+                  </p>
+                </div>
+                
+                {/* Arrow Button */}
+                <div className="mt-6">
+                  <Link
+                    to="/booking"
+                    className="inline-flex items-center justify-center w-10 h-10 border border-foreground/30 hover:bg-foreground hover:text-background transition-all duration-300 rounded-full"
+                    aria-label={`Learn more about ${benefit.title}`}
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Image positioned on right */}
+              <div className="absolute right-0 bottom-0 w-[45%] h-[80%]">
+                <img 
+                  src={benefit.image}
+                  alt={benefit.title}
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
+
+      {/* We Specialize Section with Before/After */}
+      <Section sectionRef={specialtyRef} className="bg-background">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          {/* Left - Content */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={galleryInView ? { opacity: 1, scale: 1 } : {}}
+            initial={{ opacity: 0, y: 30 }}
+            animate={specialtyInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
+              We specialize in dream hair...
+            </h2>
+            <div className="text-muted-foreground leading-relaxed space-y-4 mb-8">
+              <p>
+                Looking for the best hair extensions in Mesa or Gilbert, AZ? At Drop Dead Hair Studio, we specialize in invisible row extensions, hand-tied sew-in methods, and custom hybrid installs using our exclusive Drop Dead Hair — premium, cuticle-aligned Remy human hair extensions designed for long wear and flawless blending.
+              </p>
+              <p>
+                Whether you want added volume, dramatic length, or a complete hair transformation, our certified stylists use the Drop Dead Method to deliver seamless results that look and feel 100% natural. Book your extension consultation today and discover why we're the go-to salon for luxury hair extensions in Arizona.
+              </p>
+            </div>
+
+            {/* Navigation arrows */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={prevSlide}
+                className="w-10 h-10 border border-foreground/30 flex items-center justify-center hover:bg-foreground hover:text-background transition-all duration-300 rounded-full"
+                aria-label="Previous transformation"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={nextSlide}
+                className="w-10 h-10 border border-foreground/30 flex items-center justify-center hover:bg-foreground hover:text-background transition-all duration-300 rounded-full"
+                aria-label="Next transformation"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Right - Before/After Slider */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={specialtyInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative"
           >
             <BeforeAfterSlider
               beforeImage={transformations[currentSlide].beforeImage}
               afterImage={transformations[currentSlide].afterImage}
-              beforeLabel="Before"
-              afterLabel="After"
-              className="aspect-[4/5] md:aspect-[3/4]"
+              beforeLabel="BEFORE"
+              afterLabel="AFTER"
+              className="aspect-[3/4]"
               hideDefaultVideoButton={true}
             />
-            
-            {/* Slide Info Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6 z-20">
-              <h3 className="text-white font-serif text-xl md:text-2xl mb-2">
-                {transformations[currentSlide].title}
-              </h3>
-              <p className="text-white/80 text-sm">
-                {transformations[currentSlide].description}
-              </p>
-            </div>
           </motion.div>
-
-          {/* Navigation Arrows */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors duration-200 z-30"
-            aria-label="Previous transformation"
-          >
-            <ChevronLeft className="w-6 h-6 text-foreground" />
-          </button>
-          <button
-            onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-background/90 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors duration-200 z-30"
-            aria-label="Next transformation"
-          >
-            <ChevronRight className="w-6 h-6 text-foreground" />
-          </button>
-
-          {/* Dots Indicator */}
-          <div className="flex justify-center gap-2 mt-6">
-            {transformations.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentSlide 
-                    ? 'bg-foreground w-8' 
-                    : 'bg-foreground/30 hover:bg-foreground/50'
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      {/* Drop Dead Method Section */}
-      <Section sectionRef={methodRef} className="bg-foreground text-background overflow-hidden">
-        <div className="relative">
-          {/* Background accent */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={methodInView ? { opacity: 0.03, scale: 1 } : {}}
-            transition={{ duration: 1.2 }}
-            className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-oat blur-3xl pointer-events-none"
-          />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center relative">
-            {/* Left side - Content */}
-            <div className="space-y-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={methodInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6 }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-oat/20 border border-oat/30"
-              >
-                <Star className="w-4 h-4 fill-oat text-oat" />
-                <span className="text-sm font-medium tracking-wide text-oat">OUR SIGNATURE</span>
-              </motion.div>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 30 }}
-                animate={methodInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: 0.1 }}
-                className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]"
-              >
-                Why The Drop Dead
-                <br />
-                <span className="italic font-light text-oat">Method?</span>
-              </motion.h2>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={methodInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="text-lg font-sans font-light leading-relaxed text-background/80 max-w-xl"
-              >
-                Our proprietary technique delivers flawless, natural-looking extensions 
-                that are completely undetectable. No tension, no damage—just gorgeous hair 
-                that looks and feels like your own.
-              </motion.p>
-
-              <div className="space-y-5">
-                {methodFeatures.map((feature, index) => (
-                  <motion.div
-                    key={feature.title}
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={methodInView ? { opacity: 1, x: 0 } : {}}
-                    transition={{ 
-                      duration: 0.6, 
-                      delay: 0.3 + index * 0.15,
-                      ease: [0.25, 0.1, 0.25, 1]
-                    }}
-                    className="flex items-start gap-4 group"
-                  >
-                    <div className="flex-shrink-0 w-12 h-12 bg-oat/20 flex items-center justify-center transition-colors duration-300 group-hover:bg-oat/30">
-                      <feature.icon className="w-5 h-5 text-oat" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-background mb-1">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-background/60">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={methodInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: 0.7 }}
-                className="space-y-4 pt-4"
-              >
-                <div className="flex flex-wrap gap-4">
-                  <Link
-                    to="/booking"
-                    className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-6 py-3.5 text-sm font-medium tracking-wide hover:bg-oat/90 transition-all duration-300"
-                  >
-                    <span>BOOK EXTENSION CONSULT</span>
-                    <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </Link>
-                </div>
-                <Link
-                  to="/education"
-                  className="group inline-flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors duration-300"
-                >
-                  <span>Are you a stylist wanting to learn our method?</span>
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-              </motion.div>
-            </div>
-
-            {/* Right side - Visual */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={methodInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 1, delay: 0.3 }}
-              className="relative"
-            >
-              <div className="aspect-[4/5] relative overflow-hidden">
-                <img 
-                  src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=750&fit=crop"
-                  alt="Beautiful extension result"
-                  className="w-full h-full object-cover"
-                />
-                
-                {/* Floating badge */}
-                <div className="absolute bottom-6 left-6 right-6 bg-background/95 backdrop-blur-sm p-5">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Award className="w-5 h-5 text-foreground" />
-                    <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationally Recognized</span>
-                  </div>
-                  <p className="text-sm text-foreground leading-relaxed">
-                    Salons across the country travel to learn and proudly showcase the Drop Dead Method.
-                  </p>
-                </div>
-              </div>
-
-              {/* Decorative elements */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={methodInView ? { opacity: 0.6, x: 0 } : {}}
-                transition={{ duration: 1, delay: 0.5 }}
-                className="absolute -top-4 -right-4 w-24 h-24 border border-oat/40"
-              />
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={methodInView ? { opacity: 0.6, x: 0 } : {}}
-                transition={{ duration: 1, delay: 0.6 }}
-                className="absolute -bottom-4 -left-4 w-32 h-32 border border-oat/40"
-              />
-            </motion.div>
-          </div>
         </div>
       </Section>
 
       {/* FAQ Section */}
-      <Section sectionRef={faqRef}>
+      <Section sectionRef={faqRef} className="bg-secondary/30">
         {/* Header Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 mb-12">
           {/* Left Column - Intro */}
