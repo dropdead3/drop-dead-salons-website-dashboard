@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ArrowRight, MoreVertical } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,13 +28,55 @@ const navLinks = [
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isOverDark, setIsOverDark] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
+      
+      // Check what's behind the header
+      if (headerRef.current) {
+        const headerRect = headerRef.current.getBoundingClientRect();
+        const headerMidY = headerRect.top + headerRect.height / 2;
+        const headerMidX = window.innerWidth / 2;
+        
+        // Temporarily hide header to sample what's behind
+        const originalPointerEvents = headerRef.current.style.pointerEvents;
+        headerRef.current.style.pointerEvents = 'none';
+        
+        const elementBehind = document.elementFromPoint(headerMidX, headerMidY);
+        headerRef.current.style.pointerEvents = originalPointerEvents;
+        
+        if (elementBehind) {
+          // Check if element or its parents have dark background
+          let current: Element | null = elementBehind;
+          let isDark = false;
+          
+          while (current && current !== document.body) {
+            const bg = window.getComputedStyle(current).backgroundColor;
+            if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+              // Parse RGB values
+              const match = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+              if (match) {
+                const [, r, g, b] = match.map(Number);
+                // Calculate relative luminance
+                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                isDark = luminance < 0.5;
+                break;
+              }
+            }
+            current = current.parentElement;
+          }
+          
+          setIsOverDark(isDark);
+        }
+      }
     };
+    
     window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Initial check
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -61,27 +103,40 @@ export function Header() {
       </div>
 
       {/* Main Header */}
-      <header className={cn(
-        "sticky top-0 left-0 right-0 z-50 px-4 md:px-6 lg:px-8 transition-[padding] duration-400",
-        isScrolled ? "pt-4 md:pt-6 lg:pt-8" : "pt-2"
-      )}>
+      <header 
+        ref={headerRef}
+        className={cn(
+          "sticky top-0 left-0 right-0 z-50 px-4 md:px-6 lg:px-8 transition-[padding] duration-400",
+          isScrolled ? "pt-4 md:pt-6 lg:pt-8" : "pt-2"
+        )}
+      >
         <motion.div
           initial={false}
           animate={{
-            backgroundColor: isScrolled ? "rgba(255, 255, 255, 0.1)" : "transparent",
+            backgroundColor: isScrolled 
+              ? isOverDark ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.1)" 
+              : "transparent",
             backdropFilter: isScrolled ? "blur(24px) saturate(1.5)" : "blur(0px)",
-            borderColor: isScrolled ? "rgba(255, 255, 255, 0.2)" : "transparent",
+            borderColor: isScrolled 
+              ? isOverDark ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.2)" 
+              : "transparent",
             boxShadow: isScrolled 
               ? "0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
               : "none",
           }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className={cn(
-            "rounded-2xl border",
-            isScrolled ? "bg-white/10" : "bg-transparent"
+            "rounded-2xl border transition-colors duration-300",
+            isScrolled 
+              ? isOverDark ? "bg-black/20" : "bg-white/10" 
+              : "bg-transparent",
+            isOverDark && !isScrolled ? "text-white" : ""
           )}
         >
-          <div className="container mx-auto px-6 lg:px-8">
+          <div className={cn(
+            "container mx-auto px-6 lg:px-8 transition-colors duration-300",
+            isOverDark ? "text-white" : "text-foreground"
+          )}>
             <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
             <motion.div
@@ -96,7 +151,10 @@ export function Header() {
                 <img 
                   src={Logo} 
                   alt="Drop Dead" 
-                  className="h-4 lg:h-5 w-auto"
+                  className={cn(
+                    "h-4 lg:h-5 w-auto transition-all duration-300",
+                    isOverDark ? "invert" : ""
+                  )}
                 />
               </Link>
             </motion.div>
@@ -153,7 +211,12 @@ export function Header() {
                   <TooltipTrigger asChild>
                     <Link
                       to="/booking"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium bg-foreground text-background hover:bg-foreground/90 hover:shadow-lg transition-all duration-300 active:scale-[0.98]"
+                      className={cn(
+                        "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-lg hover:shadow-lg transition-all duration-300 active:scale-[0.98]",
+                        isOverDark 
+                          ? "bg-white text-black hover:bg-white/90" 
+                          : "bg-foreground text-background hover:bg-foreground/90"
+                      )}
                     >
                       Book Consult
                     </Link>
