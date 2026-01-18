@@ -47,13 +47,15 @@ export function PopularServices() {
             >
               <Link
                 to="/services"
-                className="group/btn inline-flex items-center gap-2 p-4 text-base font-sans text-foreground bg-card border border-border transition-all duration-300 ease-out hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105 hover:shadow-lg hover:pr-6"
+                className="group/btn inline-flex items-center p-4 text-base font-sans text-foreground bg-card border border-border transition-all duration-300 ease-out hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105 hover:shadow-lg"
               >
                 {service}
-                <ArrowUpRight 
-                  size={18} 
-                  className="w-0 opacity-0 group-hover/btn:w-[18px] group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-all duration-300" 
-                />
+                <span className="inline-flex w-0 overflow-hidden group-hover/btn:w-6 group-hover/btn:ml-2 transition-all duration-300">
+                  <ArrowUpRight 
+                    size={18} 
+                    className="flex-shrink-0 translate-x-0.5 -translate-y-0.5" 
+                  />
+                </span>
               </Link>
             </motion.div>
           ))}
