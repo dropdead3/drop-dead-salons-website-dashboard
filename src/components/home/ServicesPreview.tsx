@@ -15,9 +15,21 @@ const services = [
   },
   {
     category: "Color Services",
-    title: "Color & Blonding",
+    title: "Blonding",
+    price: "Starting at $250",
+    description: "Expert blonding from subtle highlights to full platinum transformations. Our colorists specialize in creating dimensional, natural-looking blonde results.",
+  },
+  {
+    category: "Color Services",
+    title: "Creative Color",
+    price: "Starting at $175",
+    description: "Bold, artistic color work for those who want to make a statement. From vivid fashion colors to unique custom blends that express your personality.",
+  },
+  {
+    category: "Color Services",
+    title: "Gray Coverage",
     price: "Starting at $150",
-    description: "Expert color work from subtle dimension to bold transformation. Our colorists specialize in creating refined, natural-looking results tailored to your unique features.",
+    description: "Seamless, natural-looking gray coverage tailored to your desired look. Whether you want full coverage or a sophisticated blend, we've got you covered.",
   },
   {
     category: "Haircuts",
