@@ -58,22 +58,32 @@ export function ServicesPreview() {
 
   // Initialize scroll position to middle set (so we can scroll left or right infinitely)
   useEffect(() => {
-    if (!scrollContainerRef.current || hasInitialized.current) return;
+    if (!scrollContainerRef.current) return;
     
-    const container = scrollContainerRef.current;
-    const cards = container.querySelectorAll('[data-card]');
-    // Start at the first card of the middle set
-    const middleStartIndex = CLONE_COUNT;
-    const card = cards[middleStartIndex] as HTMLElement;
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (hasInitialized.current) return;
+      
+      const container = scrollContainerRef.current;
+      if (!container) return;
+      
+      const cards = container.querySelectorAll('[data-card]');
+      // Start at the first card of the middle set
+      const middleStartIndex = CLONE_COUNT;
+      const card = cards[middleStartIndex] as HTMLElement;
+      
+      if (card) {
+        // Account for container padding (px-6 = 24px, lg:px-12 = 48px)
+        const paddingLeft = window.innerWidth >= 1024 ? 48 : 24;
+        // Scroll so the card's left edge (the image) aligns with the content area start
+        container.scrollLeft = card.offsetLeft - paddingLeft;
+        hasInitialized.current = true;
+        extendedIndex.current = CLONE_COUNT;
+      }
+    }, 100);
     
-    if (card) {
-      // Position so the first card's image is visible at the left edge
-      // Subtract container's left padding to align image to viewport edge
-      container.scrollLeft = card.offsetLeft;
-      hasInitialized.current = true;
-      extendedIndex.current = CLONE_COUNT;
-    }
-  }, [isInView]);
+    return () => clearTimeout(timer);
+  }, []);
 
   const scrollToExtendedIndex = useCallback((targetExtIndex: number, smooth = true) => {
     if (!scrollContainerRef.current) return;
@@ -398,7 +408,7 @@ export function ServicesPreview() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex gap-16 overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+          className={`flex overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}
         >
           {extendedServices.map((service, index) => (
