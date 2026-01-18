@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Phone, Info, MapPin, Scissors, Sparkles } from "lucide-react";
+import { ArrowRight, Phone, Info, MapPin } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
 const locations = [
@@ -12,7 +12,6 @@ const locations = [
     phone: "(480) 548-1886",
     bookingUrl: "/booking?location=north-mesa",
     stylistFilterId: "north-mesa",
-    icon: Scissors,
   },
   {
     name: "Val Vista Lakes",
@@ -21,7 +20,6 @@ const locations = [
     phone: "(480) 548-1886",
     bookingUrl: "/booking?location=val-vista-lakes",
     stylistFilterId: "val-vista-lakes",
-    icon: Sparkles,
   },
 ];
 
@@ -53,9 +51,7 @@ export function LocationsSection() {
 
         {/* Location Cards - Side by Side */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
-          {locations.map((location, index) => {
-            const IconComponent = location.icon;
-            return (
+          {locations.map((location, index) => (
               <motion.div
                 key={location.name}
                 initial={{ opacity: 0, y: 30, filter: "blur(4px)" }}
@@ -67,15 +63,6 @@ export function LocationsSection() {
                 }}
                 className="group relative bg-secondary p-10 md:p-12 text-center overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-foreground/5 hover:-translate-y-1"
               >
-                {/* Decorative Icon - Large, subtle in background */}
-                <motion.div 
-                  className="absolute -right-6 -top-6 text-foreground/[0.03] pointer-events-none transition-all duration-700 group-hover:text-foreground/[0.06] group-hover:scale-110"
-                  initial={{ rotate: -15, scale: 0.9 }}
-                  animate={isInView ? { rotate: 0, scale: 1 } : {}}
-                  transition={{ duration: 1, delay: 0.4 + index * 0.15 }}
-                >
-                  <IconComponent className="w-32 h-32 md:w-40 md:h-40" strokeWidth={1} />
-                </motion.div>
 
                 {/* Top accent line */}
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-foreground/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -146,8 +133,7 @@ export function LocationsSection() {
                   </button>
                 </div>
               </motion.div>
-            );
-          })}
+          ))}
         </div>
       </div>
     </section>
