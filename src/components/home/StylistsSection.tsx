@@ -141,29 +141,6 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
       
       <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
-        {/* Location badges - show selected first, then others */}
-        {[...stylist.locations]
-          .sort((a, b) => {
-            if (a === selectedLocation) return -1;
-            if (b === selectedLocation) return 1;
-            return 0;
-          })
-          .map((loc, idx) => (
-            <motion.span
-              key={loc}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 + index * 0.1 }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
-                loc === selectedLocation
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background/70 text-foreground"
-              }`}
-            >
-              {getLocationName(loc)}
-            </motion.span>
-          ))}
-        
         {/* Specialty badges - EXTENSIONS first */}
         {[...stylist.specialties].sort((a, b) => {
           if (a === "EXTENSIONS") return -1;
@@ -174,7 +151,7 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
             key={specialty}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: (stylist.locations.length + idx) * 0.05 + index * 0.1 }}
+            transition={{ delay: idx * 0.05 + index * 0.1 }}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
               specialty === "EXTENSIONS"
                 ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
@@ -211,6 +188,15 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
           </TooltipProvider>
         </div>
         <h3 className="text-xl font-display mb-1">{stylist.name}</h3>
+        
+        {/* Location callout */}
+        <p className="text-xs text-white/60 mb-1">
+          {stylist.locations.length > 1 
+            ? stylist.locations.map(loc => getLocationName(loc)).join(" & ")
+            : getLocationName(stylist.locations[0])
+          }
+        </p>
+        
         <a 
           href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
           target="_blank"
