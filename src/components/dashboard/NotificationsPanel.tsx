@@ -202,7 +202,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                 >
                   <div className="flex items-start gap-2">
                     <div className={cn(
-                      "p-1.5 rounded-md border shrink-0 mt-0.5",
+                      "p-1.5 rounded-full border shrink-0 mt-0.5",
                       getPriorityColor(announcement.priority)
                     )}>
                       <Megaphone className="w-3 h-3" />

@@ -87,7 +87,7 @@ function CalendarEvent({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            'absolute left-1 right-1 rounded-md border-l-4 px-2 py-1 cursor-pointer transition-all hover:shadow-md overflow-hidden',
+            'absolute left-1 right-1 rounded-full border-l-4 px-2 py-1 cursor-pointer transition-all hover:shadow-md overflow-hidden',
             statusColors[request.status],
             request.status === 'cancelled' && 'opacity-50'
           )}
@@ -185,19 +185,19 @@ export function ScheduleCalendar({ requests, isStylistView }: ScheduleCalendarPr
       {/* Legend */}
       <div className="flex gap-4 mb-4 text-xs">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-yellow-400 border border-yellow-500" />
+          <div className="w-3 h-3 rounded-full bg-yellow-400 border border-yellow-500" />
           <span>Pending</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-green-400 border border-green-500" />
+          <div className="w-3 h-3 rounded-full bg-green-400 border border-green-500" />
           <span>Assigned</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-blue-400 border border-blue-500" />
+          <div className="w-3 h-3 rounded-full bg-blue-400 border border-blue-500" />
           <span>Completed</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-gray-300 border border-gray-400" />
+          <div className="w-3 h-3 rounded-full bg-gray-300 border border-gray-400" />
           <span>Cancelled</span>
         </div>
       </div>

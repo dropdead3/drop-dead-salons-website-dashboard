@@ -87,7 +87,7 @@ export function StickyFooterBar() {
               <div ref={dropdownRef} className="relative md:hidden">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center gap-2 px-4 py-3 text-foreground/80 hover:text-foreground hover:bg-foreground/5 rounded-xl transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-3 text-foreground/80 hover:text-foreground hover:bg-foreground/5 rounded-full transition-all duration-200"
                 >
                   <Phone size={14} />
                   <span className="text-xs font-medium uppercase tracking-wide">Call</span>
@@ -105,7 +105,7 @@ export function StickyFooterBar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-background border border-border rounded-xl shadow-xl overflow-hidden z-50"
+                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-background border border-border rounded-2xl shadow-xl overflow-hidden z-50"
                     >
                       {locations.map((loc) => (
                         <a
@@ -130,7 +130,7 @@ export function StickyFooterBar() {
               <div className="hidden md:flex items-center">
                 <a
                   href={`tel:${locations[0].phone.replace(/[^0-9]/g, "")}`}
-                  className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-xl transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-full transition-all duration-200"
                 >
                   <Phone size={14} />
                   <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
@@ -143,7 +143,7 @@ export function StickyFooterBar() {
                 
                 <a
                   href={`tel:${locations[1].phone.replace(/[^0-9]/g, "")}`}
-                  className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-xl transition-all duration-200"
+                  className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-full transition-all duration-200"
                 >
                   <Phone size={14} />
                   <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
