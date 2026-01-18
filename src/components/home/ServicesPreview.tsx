@@ -347,9 +347,9 @@ export function ServicesPreview() {
         >
           <Link
             to="/services"
-            className="text-sm uppercase tracking-[0.15em] font-sans text-foreground link-underline"
+            className="text-sm font-sans text-foreground link-underline"
           >
-            View All
+            View all
           </Link>
           
           {/* Navigation Arrows */}
@@ -442,15 +442,15 @@ export function ServicesPreview() {
                 <div className="flex gap-3">
                   <Link
                     to="/booking"
-                    className="inline-flex items-center px-6 py-3 text-xs uppercase tracking-[0.1em] font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 whitespace-nowrap"
+                    className="inline-flex items-center px-6 py-3 text-xs font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 whitespace-nowrap"
                   >
-                    Book Consult
+                    Book consult
                   </Link>
                   <Link
                     to="/services"
-                    className="inline-flex items-center px-6 py-3 text-xs uppercase tracking-[0.1em] font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 whitespace-nowrap"
+                    className="inline-flex items-center px-6 py-3 text-xs font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 whitespace-nowrap"
                   >
-                    Learn More
+                    Learn more
                   </Link>
                 </div>
               </div>
@@ -507,15 +507,15 @@ export function ServicesPreview() {
               <div className="flex gap-3">
                 <Link
                   to="/booking"
-                  className="inline-flex items-center px-5 py-3 text-xs uppercase tracking-[0.1em] font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 whitespace-nowrap"
+                  className="inline-flex items-center px-5 py-3 text-xs font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 whitespace-nowrap"
                 >
-                  Book Consult
+                  Book consult
                 </Link>
                 <Link
                   to="/services"
-                  className="inline-flex items-center px-5 py-3 text-xs uppercase tracking-[0.1em] font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 whitespace-nowrap"
+                  className="inline-flex items-center px-5 py-3 text-xs font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 whitespace-nowrap"
                 >
-                  Learn More
+                  Learn more
                 </Link>
               </div>
             </motion.div>

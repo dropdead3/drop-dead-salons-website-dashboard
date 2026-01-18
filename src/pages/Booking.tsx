@@ -168,7 +168,7 @@ export default function Booking() {
                 href="https://booking.dropdeadsalon.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-2 text-sm uppercase tracking-[0.1em] font-sans font-medium text-foreground hover:opacity-70 transition-opacity"
+                className="mt-3 inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:opacity-70 transition-opacity"
               >
                 Book your known services here →
               </a>
@@ -369,9 +369,9 @@ export default function Booking() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-sans font-normal bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors"
               >
-                {isSubmitting ? "Sending..." : "Request Appointment"}
+                {isSubmitting ? "Sending..." : "Request appointment"}
                 {!isSubmitting && <ArrowUpRight size={14} />}
               </button>
             </form>

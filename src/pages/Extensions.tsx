@@ -477,16 +477,16 @@ export default function Extensions() {
             >
               <Link
                 to="/booking"
-                className="group inline-flex items-center gap-3 bg-white text-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-white/90 transition-all duration-300"
+                className="group inline-flex items-center gap-3 bg-white text-foreground px-8 py-4 text-sm font-sans font-normal hover:bg-white/90 transition-all duration-300"
               >
-                <span>Book Your Consultation</span>
+                <span>Book your consultation</span>
                 <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
               <Link
                 to="#packages"
-                className="group inline-flex items-center gap-3 border border-white text-white px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-white hover:text-foreground transition-all duration-300"
+                className="group inline-flex items-center gap-3 border border-white text-white px-8 py-4 text-sm font-sans font-normal hover:bg-white hover:text-foreground transition-all duration-300"
               >
-                <span>View Packages</span>
+                <span>View packages</span>
               </Link>
             </motion.div>
           </div>
@@ -536,9 +536,9 @@ export default function Extensions() {
                   printWindow.document.close();
                 }
               }}
-              className="inline-flex items-center px-6 py-2.5 border border-foreground text-foreground text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
+              className="inline-flex items-center px-6 py-2.5 border border-foreground text-foreground text-sm font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
             >
-              Print Code Here
+              Print code here
             </button>
           </div>
         </div>
@@ -741,16 +741,16 @@ export default function Extensions() {
           >
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
+              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
             >
-              <span>Schedule Consultation</span>
+              <span>Schedule consultation</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 border border-foreground text-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
+              className="group inline-flex items-center gap-3 border border-foreground text-foreground px-8 py-4 text-sm font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
             >
-              <span>Book Maintenance</span>
+              <span>Book maintenance</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </motion.div>
@@ -919,9 +919,9 @@ export default function Extensions() {
             </p>
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
+              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
             >
-              <span>Book Your Consultation</span>
+              <span>Book your consultation</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </motion.div>
@@ -997,9 +997,9 @@ export default function Extensions() {
             </ul>
             <Link
               to="/booking"
-              className="w-full py-3.5 border border-foreground text-foreground text-sm uppercase tracking-[0.15em] font-sans text-center hover:bg-foreground hover:text-background transition-all duration-300"
+              className="w-full py-3.5 border border-foreground text-foreground text-sm font-sans text-center hover:bg-foreground hover:text-background transition-all duration-300"
             >
-              Book Consultation
+              Book consultation
             </Link>
           </motion.div>
 
@@ -1046,9 +1046,9 @@ export default function Extensions() {
             </ul>
             <Link
               to="/booking"
-              className="w-full py-3.5 bg-oat text-oat-foreground text-sm uppercase tracking-[0.15em] font-sans text-center hover:bg-oat/90 transition-all duration-300"
+              className="w-full py-3.5 bg-oat text-oat-foreground text-sm font-sans text-center hover:bg-oat/90 transition-all duration-300"
             >
-              Book Consultation
+              Book consultation
             </Link>
           </motion.div>
 
@@ -1092,9 +1092,9 @@ export default function Extensions() {
             </ul>
             <Link
               to="/booking"
-              className="w-full py-3.5 border border-foreground text-foreground text-sm uppercase tracking-[0.15em] font-sans text-center hover:bg-foreground hover:text-background transition-all duration-300"
+              className="w-full py-3.5 border border-foreground text-foreground text-sm font-sans text-center hover:bg-foreground hover:text-background transition-all duration-300"
             >
-              Book Consultation
+              Book consultation
             </Link>
           </motion.div>
         </div>
@@ -1224,9 +1224,9 @@ export default function Extensions() {
             </p>
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-oat/90 transition-all duration-300"
+              className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-8 py-4 text-sm font-sans font-normal hover:bg-oat/90 transition-all duration-300"
             >
-              <span>Schedule Consultation</span>
+              <span>Schedule consultation</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </motion.div>
@@ -1488,9 +1488,9 @@ export default function Extensions() {
             </p>
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 border border-foreground text-foreground px-6 py-3 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
+              className="group inline-flex items-center gap-3 border border-foreground text-foreground px-6 py-3 text-sm font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
             >
-              <span>Shop In Salon</span>
+              <span>Shop in salon</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </motion.div>
@@ -1606,9 +1606,9 @@ export default function Extensions() {
         >
           <Link
             to="/booking"
-            className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-oat/90 transition-all duration-300"
+            className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-8 py-4 text-sm font-sans font-normal hover:bg-oat/90 transition-all duration-300"
           >
-            <span>Book Your Appointment</span>
+            <span>Book your appointment</span>
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>
@@ -1643,9 +1643,9 @@ export default function Extensions() {
 
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
+              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
             >
-              <span>Book A Consultation</span>
+              <span>Book a consultation</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </motion.div>

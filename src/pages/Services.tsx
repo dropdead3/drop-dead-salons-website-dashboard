@@ -178,9 +178,9 @@ export default function Services() {
           </p>
           <Link
             to="/booking"
-            className="inline-flex items-center gap-2 px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300"
+            className="inline-flex items-center gap-2 px-8 py-4 text-sm font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300"
           >
-            Book a Consultation
+            Book a consultation
             <ArrowUpRight size={14} />
           </Link>
         </div>

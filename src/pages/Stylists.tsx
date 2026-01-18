@@ -138,9 +138,9 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
         
         <Link
           to="/booking"
-          className="inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
+          className="inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-sans font-medium hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
         >
-          <span>Book Consult</span>
+          <span>Book consult</span>
           <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
         </Link>
       </div>

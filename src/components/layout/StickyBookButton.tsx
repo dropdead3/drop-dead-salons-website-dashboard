@@ -59,7 +59,7 @@ export function StickyBookButton() {
         >
           <Link
             to="/booking"
-            className="relative inline-flex items-center gap-2 px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-2xl overflow-hidden"
+            className="relative inline-flex items-center gap-2 px-6 py-4 text-sm font-sans font-normal bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-2xl overflow-hidden"
           >
             {/* Shine effect */}
             <span
@@ -71,7 +71,7 @@ export function StickyBookButton() {
                 width: "100%",
               }}
             />
-            <span className="relative z-10">Book Consult</span>
+            <span className="relative z-10">Book consult</span>
             <ArrowUpRight size={14} className="relative z-10" />
           </Link>
         </motion.div>

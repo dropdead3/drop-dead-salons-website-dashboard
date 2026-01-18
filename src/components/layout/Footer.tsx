@@ -126,16 +126,16 @@ export function Footer() {
           <div className="flex items-center gap-10 md:gap-12">
             <Link
               to="/stylists#careers"
-              className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-sans text-foreground hover:opacity-70 transition-opacity"
+              className="inline-flex items-center gap-2 text-xs font-sans text-foreground hover:opacity-70 transition-opacity"
             >
               Work at Drop Dead
               <ArrowUpRight size={12} />
             </Link>
             <Link
               to="/gift-cards"
-              className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-sans text-foreground hover:opacity-70 transition-opacity"
+              className="inline-flex items-center gap-2 text-xs font-sans text-foreground hover:opacity-70 transition-opacity"
             >
-              Buy a Gift Card
+              Buy a gift card
               <ArrowUpRight size={12} />
             </Link>
           </div>

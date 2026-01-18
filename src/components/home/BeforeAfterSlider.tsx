@@ -327,7 +327,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
               whileTap={{ scale: 0.98 }}
             >
               <Play className="w-4 h-4 fill-current" />
-              <span className="text-xs uppercase tracking-[0.15em] font-medium">Watch Video</span>
+              <span className="text-xs font-sans font-medium">Watch video</span>
             </motion.button>
           )}
 
