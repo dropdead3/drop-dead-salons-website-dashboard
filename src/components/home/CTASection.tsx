@@ -25,7 +25,7 @@ export function CTASection() {
             >
               Ready for Something
               <br />
-              <span className="italic font-light">Better?</span>
+              <span className="font-light">Better?</span>
             </motion.h2>
 
             <motion.p

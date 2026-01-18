@@ -52,7 +52,7 @@ export function GallerySection() {
         >
           Work That Speaks
           <br />
-          <span className="italic font-light">for Itself.</span>
+          <span className="font-light">for Itself.</span>
         </motion.h2>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

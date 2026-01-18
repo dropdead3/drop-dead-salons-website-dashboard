@@ -46,7 +46,7 @@ export function LocationsSection() {
             Find Us
           </p>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display">
-            Our <em className="italic">Locations</em>
+            Our Locations
           </h2>
         </motion.div>
 
