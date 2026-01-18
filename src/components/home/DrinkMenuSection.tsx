@@ -95,7 +95,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
         <div className="absolute left-full top-1/2 -translate-y-1/2 ml-6 md:ml-8 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out pointer-events-none group-hover:pointer-events-auto z-10">
           <motion.div 
             layout
-            className="bg-foreground text-background px-5 py-4 text-center shadow-lg w-[180px] min-h-[120px] flex flex-col justify-center"
+            className="bg-foreground text-background px-5 py-4 text-center shadow-lg w-[180px] min-h-[120px] flex flex-col justify-center rounded-2xl"
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <p className="text-xs uppercase tracking-[0.2em] mb-3 text-background/60 font-display">Ingredients</p>
