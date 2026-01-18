@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ const priorityColors: Record<Priority, string> = {
 export default function DashboardHome() {
   const { user } = useAuth();
   const { enrollment } = useDailyCompletion(user?.id);
+  const queryClient = useQueryClient();
   
   const { data: announcements } = useQuery({
     queryKey: ['announcements'],
@@ -62,6 +64,43 @@ export default function DashboardHome() {
       return data as Announcement[];
     },
   });
+
+  // Mark announcements as read when they're displayed
+  useEffect(() => {
+    const markAsRead = async () => {
+      if (!user?.id || !announcements || announcements.length === 0) return;
+
+      // Get already read announcements
+      const { data: existingReads } = await supabase
+        .from('announcement_reads')
+        .select('announcement_id')
+        .eq('user_id', user.id);
+
+      const readIds = new Set(existingReads?.map(r => r.announcement_id) || []);
+      
+      // Filter to only unread announcements
+      const unreadAnnouncements = announcements.filter(a => !readIds.has(a.id));
+      
+      if (unreadAnnouncements.length === 0) return;
+
+      // Mark all displayed announcements as read
+      const { error } = await supabase
+        .from('announcement_reads')
+        .insert(
+          unreadAnnouncements.map(a => ({
+            announcement_id: a.id,
+            user_id: user.id,
+          }))
+        );
+
+      if (!error) {
+        // Invalidate the unread count query to update badges
+        queryClient.invalidateQueries({ queryKey: ['unread-announcements-count'] });
+      }
+    };
+
+    markAsRead();
+  }, [announcements, user?.id, queryClient]);
   
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
 
