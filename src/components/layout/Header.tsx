@@ -114,8 +114,8 @@ export function Header() {
                       Book Consult
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[200px] p-3 bg-background text-foreground border border-border">
-                    <p className="text-xs text-center">Every new client starts with a free consultation to ensure the perfect match</p>
+                  <TooltipContent side="bottom" className="max-w-[280px] p-5 bg-background text-foreground border border-border shadow-lg">
+                    <p className="text-sm text-center leading-relaxed">Every new client starts with a free consultation to ensure the perfect match</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
