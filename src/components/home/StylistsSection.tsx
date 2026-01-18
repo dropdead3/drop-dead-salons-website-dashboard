@@ -50,6 +50,11 @@ const applicationSchema = z.object({
 
 type ApplicationFormData = z.infer<typeof applicationSchema>;
 
+// Helper to convert text to title case
+const toTitleCase = (str: string) => {
+  return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) => {
   return (
     <motion.div
@@ -264,9 +269,9 @@ export function StylistsSection() {
                     color: selectedSpecialty === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
                   }}
                   transition={{ duration: 0.2 }}
-                  className="px-4 py-2 text-xs tracking-wide font-medium border border-border"
+                  className="px-4 py-2 text-xs font-medium border border-border"
                 >
-                  ALL
+                  All
                 </motion.button>
                 {allSpecialties.map((specialty) => (
                   <motion.button
@@ -279,9 +284,9 @@ export function StylistsSection() {
                       color: selectedSpecialty === specialty ? "hsl(var(--background))" : "hsl(var(--foreground))",
                     }}
                     transition={{ duration: 0.2 }}
-                    className="px-4 py-2 text-xs tracking-wide font-medium border border-border"
+                    className="px-4 py-2 text-xs font-medium border border-border"
                   >
-                    {specialty}
+                    {toTitleCase(specialty)}
                   </motion.button>
                 ))}
               </div>
@@ -322,9 +327,9 @@ export function StylistsSection() {
                     color: selectedLevel === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
                   }}
                   transition={{ duration: 0.2 }}
-                  className="px-4 py-2 text-xs tracking-wide font-medium border border-border"
+                  className="px-4 py-2 text-xs font-medium border border-border"
                 >
-                  ALL LEVELS
+                  All Levels
                 </motion.button>
                 {stylistLevels.map((level) => (
                   <motion.button
@@ -337,7 +342,7 @@ export function StylistsSection() {
                       color: selectedLevel === level.id ? "hsl(var(--background))" : "hsl(var(--foreground))",
                     }}
                     transition={{ duration: 0.2 }}
-                    className="px-4 py-2 text-xs tracking-wide font-medium border border-border"
+                    className="px-4 py-2 text-xs font-medium border border-border"
                   >
                     <span>{level.name}</span>
                     <span className="ml-2 opacity-60">{level.price}</span>
