@@ -3,6 +3,7 @@ const brandLogos = [
   { name: "AIIR", text: "AIIR" },
   { name: "Nutrafol", text: "NUTRAFOL" },
   { name: "Drop Dead Professional", text: "DROP DEAD PROFESSIONAL" },
+  { name: "Danger Jones", text: "DANGER JONES" },
 ];
 
 export function BrandsSection() {
