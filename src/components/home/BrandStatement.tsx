@@ -11,7 +11,7 @@ export function BrandStatement() {
     <Section className="bg-background">
       <div 
         ref={ref} 
-        className="bg-foreground text-background rounded-2xl p-10 md:p-16 lg:p-20"
+        className="bg-foreground text-background rounded-2xl p-12 md:p-20 lg:p-24"
       >
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
           {/* Left side - Title */}
