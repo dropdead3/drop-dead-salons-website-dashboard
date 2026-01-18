@@ -282,133 +282,6 @@ export default function Extensions() {
         </div>
       </Section>
 
-      {/* What's Included Section */}
-      <Section className="bg-foreground text-background">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-          {/* Left - Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="text-xs uppercase tracking-[0.3em] text-background/60 font-sans block mb-4">
-              The Process
-            </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1] mb-6">
-              What's <span className="italic font-light text-oat">Included</span>
-            </h2>
-            <p className="text-background/70 leading-relaxed mb-8">
-              Every extension journey begins with a complimentary consultation. Here's what you can expect when you book with us.
-            </p>
-            <Link
-              to="/booking"
-              className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-oat/90 transition-all duration-300"
-            >
-              <span>Schedule Consultation</span>
-              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </motion.div>
-
-          {/* Right - Process Steps */}
-          <div className="space-y-0">
-            {/* Step 1 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="border-b border-background/20 py-6 first:pt-0"
-            >
-              <div className="flex gap-6">
-                <span className="text-oat font-serif text-2xl">01</span>
-                <div>
-                  <h3 className="font-medium text-lg mb-2">Hair Assessment</h3>
-                  <p className="text-sm text-background/70 leading-relaxed">
-                    We evaluate your hair's health, texture, and current condition to ensure extensions are right for you and determine the best method.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Step 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="border-b border-background/20 py-6"
-            >
-              <div className="flex gap-6">
-                <span className="text-oat font-serif text-2xl">02</span>
-                <div>
-                  <h3 className="font-medium text-lg mb-2">Color Matching</h3>
-                  <p className="text-sm text-background/70 leading-relaxed">
-                    Our stylists custom match your hair color using our premium Drop Dead Hair swatches, ensuring a seamless, natural blend.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Step 3 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="border-b border-background/20 py-6"
-            >
-              <div className="flex gap-6">
-                <span className="text-oat font-serif text-2xl">03</span>
-                <div>
-                  <h3 className="font-medium text-lg mb-2">Goal Setting</h3>
-                  <p className="text-sm text-background/70 leading-relaxed">
-                    We discuss your desired length, volume, and overall look. Together, we'll create a customized plan tailored to your lifestyle.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Step 4 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="border-b border-background/20 py-6"
-            >
-              <div className="flex gap-6">
-                <span className="text-oat font-serif text-2xl">04</span>
-                <div>
-                  <h3 className="font-medium text-lg mb-2">Investment Quote</h3>
-                  <p className="text-sm text-background/70 leading-relaxed">
-                    You'll receive a detailed quote based on your specific needs, including hair cost, installation, and recommended maintenance schedule.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Step 5 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="py-6"
-            >
-              <div className="flex gap-6">
-                <span className="text-oat font-serif text-2xl">05</span>
-                <div>
-                  <h3 className="font-medium text-lg mb-2">Care Education</h3>
-                  <p className="text-sm text-background/70 leading-relaxed">
-                    Before you leave, we'll walk you through proper care techniques, recommended products, and what to expect during your extension journey.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </Section>
 
       {/* We Specialize Section with Before/After */}
       <Section sectionRef={specialtyRef} className="bg-background">
@@ -660,7 +533,134 @@ export default function Extensions() {
         </motion.div>
       </Section>
 
-      {/* Extension Care Section */}
+      {/* What's Included Section */}
+      <Section className="bg-foreground text-background">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+          {/* Left - Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="text-xs uppercase tracking-[0.3em] text-background/60 font-sans block mb-4">
+              The Process
+            </span>
+            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1] mb-6">
+              What's <span className="italic font-light text-oat">Included</span>
+            </h2>
+            <p className="text-background/70 leading-relaxed mb-8">
+              Every extension journey begins with a complimentary consultation. Here's what you can expect when you book with us.
+            </p>
+            <Link
+              to="/booking"
+              className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-oat/90 transition-all duration-300"
+            >
+              <span>Schedule Consultation</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </motion.div>
+
+          {/* Right - Process Steps */}
+          <div className="space-y-0">
+            {/* Step 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="border-b border-background/20 py-6 first:pt-0"
+            >
+              <div className="flex gap-6">
+                <span className="text-oat font-serif text-2xl">01</span>
+                <div>
+                  <h3 className="font-medium text-lg mb-2">Hair Assessment</h3>
+                  <p className="text-sm text-background/70 leading-relaxed">
+                    We evaluate your hair's health, texture, and current condition to ensure extensions are right for you and determine the best method.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Step 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="border-b border-background/20 py-6"
+            >
+              <div className="flex gap-6">
+                <span className="text-oat font-serif text-2xl">02</span>
+                <div>
+                  <h3 className="font-medium text-lg mb-2">Color Matching</h3>
+                  <p className="text-sm text-background/70 leading-relaxed">
+                    Our stylists custom match your hair color using our premium Drop Dead Hair swatches, ensuring a seamless, natural blend.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Step 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="border-b border-background/20 py-6"
+            >
+              <div className="flex gap-6">
+                <span className="text-oat font-serif text-2xl">03</span>
+                <div>
+                  <h3 className="font-medium text-lg mb-2">Goal Setting</h3>
+                  <p className="text-sm text-background/70 leading-relaxed">
+                    We discuss your desired length, volume, and overall look. Together, we'll create a customized plan tailored to your lifestyle.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Step 4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="border-b border-background/20 py-6"
+            >
+              <div className="flex gap-6">
+                <span className="text-oat font-serif text-2xl">04</span>
+                <div>
+                  <h3 className="font-medium text-lg mb-2">Investment Quote</h3>
+                  <p className="text-sm text-background/70 leading-relaxed">
+                    You'll receive a detailed quote based on your specific needs, including hair cost, installation, and recommended maintenance schedule.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Step 5 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="py-6"
+            >
+              <div className="flex gap-6">
+                <span className="text-oat font-serif text-2xl">05</span>
+                <div>
+                  <h3 className="font-medium text-lg mb-2">Care Education</h3>
+                  <p className="text-sm text-background/70 leading-relaxed">
+                    Before you leave, we'll walk you through proper care techniques, recommended products, and what to expect during your extension journey.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </Section>
+
       <Section className="bg-background">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* Left - Header */}
