@@ -8,8 +8,11 @@ export function BrandStatement() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <Section className="bg-foreground text-background">
-      <div ref={ref} className="bg-background/5 backdrop-blur-sm rounded-2xl p-8 md:p-12 lg:p-16 border border-background/10">
+    <Section className="bg-background">
+      <div 
+        ref={ref} 
+        className="bg-foreground text-background rounded-2xl p-8 md:p-12 lg:p-16"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Left side - Title */}
           <motion.div
