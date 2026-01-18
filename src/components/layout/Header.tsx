@@ -50,12 +50,8 @@ export function Header() {
       // Sample Y at the vertical center of the header
       const sampleY = headerRect.top + headerRect.height / 2;
       
-      // Sample at multiple X points to catch nested dark containers
-      const samplePoints = [
-        window.innerWidth / 2,           // Center of viewport
-        window.innerWidth / 3,           // Left third
-        window.innerWidth * 2 / 3,       // Right third
-      ];
+      // Sample at center of viewport
+      const sampleX = window.innerWidth / 2;
 
       // Temporarily hide ALL header children so elementFromPoint sees what's behind
       const headerChildren = headerEl.querySelectorAll('*');
@@ -67,25 +63,20 @@ export function Header() {
       });
       headerEl.style.pointerEvents = 'none';
 
-      // Check all sample points - if ANY hits a dark theme, consider it dark
+      const elBehind = document.elementFromPoint(sampleX, sampleY);
+      
+      // Walk up to find nearest ancestor with data-theme
       let foundDark = false;
-      for (const sampleX of samplePoints) {
-        const elBehind = document.elementFromPoint(sampleX, sampleY);
-        
-        // Walk up to find nearest ancestor with data-theme
-        let cur: Element | null = elBehind;
-        while (cur && cur !== document.body && cur !== headerEl) {
-          if (cur instanceof HTMLElement && cur.hasAttribute("data-theme")) {
-            const theme = cur.getAttribute("data-theme");
-            if (theme === "dark") {
-              foundDark = true;
-              break;
-            }
-            break; // Found a theme, stop walking up
+      let cur: Element | null = elBehind;
+      while (cur && cur !== document.body && cur !== headerEl) {
+        if (cur instanceof HTMLElement && cur.hasAttribute("data-theme")) {
+          const theme = cur.getAttribute("data-theme");
+          if (theme === "dark") {
+            foundDark = true;
           }
-          cur = cur.parentElement;
+          break; // Found a theme, stop walking up
         }
-        if (foundDark) break;
+        cur = cur.parentElement;
       }
 
       // Restore pointer events
@@ -101,9 +92,13 @@ export function Header() {
     };
 
     window.addEventListener("scroll", detectTheme, { passive: true });
-    detectTheme(); // Initial check
+    // Delay initial check to ensure DOM is ready
+    const timeout = setTimeout(detectTheme, 100);
     
-    return () => window.removeEventListener("scroll", detectTheme);
+    return () => {
+      window.removeEventListener("scroll", detectTheme);
+      clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {
@@ -179,11 +174,12 @@ export function Header() {
                       animate={{ 
                         opacity: 1, 
                         scale: 1, 
-                        filter: isOverDark ? "blur(0px) invert(1)" : "blur(0px) invert(0)" 
+                        filter: "blur(0px)" 
                       }}
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                       className="h-5 w-auto"
+                      style={{ filter: isOverDark ? "invert(1)" : "none" }}
                     />
                   ) : (
                     <motion.img
@@ -194,11 +190,12 @@ export function Header() {
                       animate={{ 
                         opacity: 1, 
                         scale: 1, 
-                        filter: isOverDark ? "blur(0px) invert(1)" : "blur(0px) invert(0)" 
+                        filter: "blur(0px)" 
                       }}
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                       className="h-10 w-auto"
+                      style={{ filter: isOverDark ? "invert(1)" : "none" }}
                     />
                   )}
                 </AnimatePresence>
