@@ -53,7 +53,7 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 px-8 py-4 text-base font-sans font-medium bg-foreground text-background rounded-xl hover:bg-foreground/90 transition-all duration-300 active:scale-[0.98]"
+              className="group inline-flex items-center gap-3 px-8 py-4 text-base font-sans font-medium bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all duration-300 active:scale-[0.98]"
             >
               <span>Book consult</span>
               <ArrowUpRight size={18} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

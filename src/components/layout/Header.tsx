@@ -263,7 +263,7 @@ export function Header() {
                     <Link
                       to="/booking"
                       className={cn(
-                        "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-lg hover:shadow-lg transition-all duration-300 active:scale-[0.98]",
+                        "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-full hover:shadow-lg transition-all duration-300 active:scale-[0.98]",
                         isOverDark 
                           ? "bg-white text-black hover:bg-white/90" 
                           : "bg-foreground text-background hover:bg-foreground/90"
