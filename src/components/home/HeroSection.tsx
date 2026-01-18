@@ -160,16 +160,19 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               style={{ y: ctaY }}
             >
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <motion.button
+                <motion.div
                   initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   transition={{ ...springTransition, delay: 4.2 }}
-                  onClick={() => setConsultationOpen(true)}
-                  className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
                 >
-                  <span className="relative z-10">I am a new client</span>
-                  <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
-                </motion.button>
+                  <button
+                    onClick={() => setConsultationOpen(true)}
+                    className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
+                  >
+                    <span className="relative z-10">I am a new client</span>
+                    <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
+                  </button>
+                </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
