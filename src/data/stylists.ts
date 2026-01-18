@@ -97,8 +97,8 @@ export const allSpecialties = Array.from(
 
 // Stylist levels with price indicators
 export const stylistLevels = [
-  { id: "LEVEL I STYLIST", name: "Level I", price: "$", description: "Rising talent" },
-  { id: "LEVEL II STYLIST", name: "Level II", price: "$$", description: "Skilled stylist" },
-  { id: "LEVEL III STYLIST", name: "Level III", price: "$$$", description: "Master artist" },
-  { id: "LEVEL IV STYLIST", name: "Level IV", price: "$$$$", description: "Elite specialist" },
+  { id: "LEVEL I STYLIST", name: "Level 1", price: "$", description: "Rising talent" },
+  { id: "LEVEL II STYLIST", name: "Level 2", price: "$$", description: "Skilled stylist" },
+  { id: "LEVEL III STYLIST", name: "Level 3", price: "$$$", description: "Master artist" },
+  { id: "LEVEL IV STYLIST", name: "Level 4", price: "$$$$", description: "Elite specialist" },
 ];

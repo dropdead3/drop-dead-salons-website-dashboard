@@ -111,9 +111,10 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
               <TooltipContent side="top" className="max-w-[280px] p-4 bg-background text-foreground border border-border">
                 <p className="font-medium mb-2">Stylist Level System</p>
                 <ul className="text-xs space-y-1.5 text-foreground/80">
-                  <li><span className="font-medium text-foreground">Level I:</span> Rising talent building their craft</li>
-                  <li><span className="font-medium text-foreground">Level II:</span> Skilled stylist with proven expertise</li>
-                  <li><span className="font-medium text-foreground">Level III:</span> Master artist & senior specialist</li>
+                  <li><span className="font-medium text-foreground">Level 1:</span> Rising talent building their craft</li>
+                  <li><span className="font-medium text-foreground">Level 2:</span> Skilled stylist with proven expertise</li>
+                  <li><span className="font-medium text-foreground">Level 3:</span> Master artist & senior specialist</li>
+                  <li><span className="font-medium text-foreground">Level 4:</span> Elite specialist & industry leader</li>
                 </ul>
                 <p className="text-xs text-muted-foreground mt-2">Higher levels reflect experience, training, and demand.</p>
               </TooltipContent>
@@ -308,9 +309,10 @@ export function StylistsSection() {
                     <TooltipContent side="top" className="max-w-[280px] p-4 bg-background text-foreground border border-border">
                       <p className="font-medium mb-2">Stylist Level System</p>
                       <ul className="text-xs space-y-1.5 text-foreground/80">
-                        <li><span className="font-medium text-foreground">Level I ($):</span> Rising talent building their craft</li>
-                        <li><span className="font-medium text-foreground">Level II ($$):</span> Skilled stylist with proven expertise</li>
-                        <li><span className="font-medium text-foreground">Level III ($$$):</span> Master artist & senior specialist</li>
+                        <li><span className="font-medium text-foreground">Level 1 ($):</span> Rising talent building their craft</li>
+                        <li><span className="font-medium text-foreground">Level 2 ($$):</span> Skilled stylist with proven expertise</li>
+                        <li><span className="font-medium text-foreground">Level 3 ($$$):</span> Master artist & senior specialist</li>
+                        <li><span className="font-medium text-foreground">Level 4 ($$$$):</span> Elite specialist & industry leader</li>
                       </ul>
                       <p className="text-xs text-muted-foreground mt-2">Higher levels reflect experience, training, and demand.</p>
                     </TooltipContent>
