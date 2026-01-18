@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,10 +20,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight } from 'lucide-react';
+import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key } from 'lucide-react';
 import { useAllUsersWithRoles, useToggleUserRole, ALL_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/hooks/useUserRoles';
 import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
+import { RolePermissionsManager } from '@/components/dashboard/RolePermissionsManager';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -167,39 +169,53 @@ export default function ManageRoles() {
           </Alert>
         )}
 
-        {/* Role Legend */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Role Permissions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {/* Full Access Admin - Special status */}
-              <div className="flex items-start gap-2">
-                <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300 text-xs shrink-0 gap-1">
-                  <Crown className="w-3 h-3" />
-                  Super Admin
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  Super user with ability to approve admin roles
-                </span>
-              </div>
-              {ALL_ROLES.map(role => (
-                <div key={role} className="flex items-start gap-2">
-                  <Badge variant="outline" className={cn("text-xs shrink-0", roleColors[role])}>
-                    {ROLE_LABELS[role]}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {ROLE_DESCRIPTIONS[role]}
-                    {role === 'admin' && !canApproveAdmin && (
-                      <span className="text-amber-600 dark:text-amber-400 ml-1">(Super Admin required)</span>
-                    )}
-                  </span>
+        {/* Main Tabs: User Roles vs Role Permissions */}
+        <Tabs defaultValue="users" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="w-4 h-4" />
+              User Roles
+            </TabsTrigger>
+            <TabsTrigger value="permissions" className="gap-2">
+              <Key className="w-4 h-4" />
+              Role Permissions
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users" className="space-y-6">
+            {/* Role Legend */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Role Overview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {/* Full Access Admin - Special status */}
+                  <div className="flex items-start gap-2">
+                    <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300 text-xs shrink-0 gap-1">
+                      <Crown className="w-3 h-3" />
+                      Super Admin
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      Super user with ability to approve admin roles
+                    </span>
+                  </div>
+                  {ALL_ROLES.map(role => (
+                    <div key={role} className="flex items-start gap-2">
+                      <Badge variant="outline" className={cn("text-xs shrink-0", roleColors[role])}>
+                        {ROLE_LABELS[role]}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {ROLE_DESCRIPTIONS[role]}
+                        {role === 'admin' && !canApproveAdmin && (
+                          <span className="text-amber-600 dark:text-amber-400 ml-1">(Super Admin required)</span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
         {/* Search */}
         <div className="flex items-center gap-4 mb-6">
@@ -380,6 +396,12 @@ export default function ManageRoles() {
             })}
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="permissions">
+            <RolePermissionsManager />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Full Access Admin Confirmation Dialog */}
