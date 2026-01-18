@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,11 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle } from 'lucide-react';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { locations } from '@/data/stylists';
+import { cn } from '@/lib/utils';
 
 const stylistLevels = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4'];
 
@@ -58,6 +59,39 @@ export default function MyProfile() {
     }
   }, [profile]);
 
+  // Calculate profile completion
+  const profileFields = useMemo(() => {
+    const isStylist = roles.includes('stylist');
+    
+    const fields = [
+      { key: 'photo', label: 'Profile Photo', filled: !!profile?.photo_url },
+      { key: 'full_name', label: 'Full Name', filled: !!formData.full_name },
+      { key: 'display_name', label: 'Display Name', filled: !!formData.display_name },
+      { key: 'email', label: 'Email', filled: !!formData.email },
+      { key: 'phone', label: 'Phone', filled: !!formData.phone },
+      { key: 'instagram', label: 'Instagram', filled: !!formData.instagram },
+      { key: 'location_id', label: 'Location', filled: !!formData.location_id },
+      { key: 'emergency_contact', label: 'Emergency Contact', filled: !!formData.emergency_contact },
+      { key: 'emergency_phone', label: 'Emergency Phone', filled: !!formData.emergency_phone },
+    ];
+
+    if (isStylist) {
+      fields.push(
+        { key: 'stylist_level', label: 'Stylist Level', filled: !!formData.stylist_level },
+        { key: 'specialties', label: 'Specialties', filled: formData.specialties.length > 0 }
+      );
+    }
+
+    return fields;
+  }, [formData, profile?.photo_url, roles]);
+
+  const completionPercentage = useMemo(() => {
+    const filledCount = profileFields.filter(f => f.filled).length;
+    return Math.round((filledCount / profileFields.length) * 100);
+  }, [profileFields]);
+
+  const missingFields = profileFields.filter(f => !f.filled);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfile.mutate(formData);
@@ -102,6 +136,78 @@ export default function MyProfile() {
             Manage your contact information and profile details.
           </p>
         </div>
+
+        {/* Profile Completion Card */}
+        <Card className={cn(
+          "mb-6 border-2",
+          completionPercentage === 100 
+            ? "border-green-500/50 bg-green-50/50 dark:bg-green-950/20" 
+            : "border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20"
+        )}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <svg className="w-16 h-16 -rotate-90">
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    className="text-muted/30"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(completionPercentage / 100) * 176} 176`}
+                    className={completionPercentage === 100 ? "text-green-500" : "text-amber-500"}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
+                  {completionPercentage}%
+                </span>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium flex items-center gap-2">
+                  {completionPercentage === 100 ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      Profile Complete!
+                    </>
+                  ) : (
+                    <>
+                      Profile {completionPercentage}% Complete
+                    </>
+                  )}
+                </h3>
+                {missingFields.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm text-muted-foreground mb-2">Missing fields:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {missingFields.slice(0, 5).map(field => (
+                        <Badge key={field.key} variant="outline" className="text-xs">
+                          <Circle className="w-2 h-2 mr-1" />
+                          {field.label}
+                        </Badge>
+                      ))}
+                      {missingFields.length > 5 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{missingFields.length - 5} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Photo Section */}
