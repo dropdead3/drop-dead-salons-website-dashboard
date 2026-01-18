@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -17,6 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X } from 'lucide-react';
 import { format } from 'date-fns';
+import confetti from 'canvas-confetti';
 
 interface BellEntry {
   id: string;
@@ -81,6 +82,14 @@ export default function RingTheBell() {
               .maybeSingle();
             
             const stylistName = profile?.display_name || profile?.full_name || 'A stylist';
+            
+            // Trigger confetti for team celebration
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+              colors: ['#FFD700', '#FFA500', '#FF6347', '#FF69B4', '#00CED1'],
+            });
             
             toast({
               title: '🔔 BELL RUNG!',
@@ -179,6 +188,32 @@ export default function RingTheBell() {
         description: 'Failed to submit. Please try again.',
       });
     } else {
+      // Celebrate with confetti burst
+      const duration = 2000;
+      const end = Date.now() + duration;
+      
+      const frame = () => {
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#FFD700', '#FFA500', '#FF6347'],
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#FFD700', '#FFA500', '#FF6347'],
+        });
+        
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+      
       toast({
         title: '🔔 Bell Rung!',
         description: `$${ticketValue} booking logged. Keep crushing it!`,
