@@ -958,8 +958,15 @@ export default function Extensions() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="text-center mt-16"
+            className="text-center mt-16 flex flex-col sm:flex-row items-center justify-center gap-4"
           >
+            <Link
+              to="/booking"
+              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
+            >
+              <span>Schedule Consultation</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
             <Link
               to="/booking"
               className="group inline-flex items-center gap-3 border border-foreground text-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
