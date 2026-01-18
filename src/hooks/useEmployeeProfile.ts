@@ -1,0 +1,136 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import type { Database } from '@/integrations/supabase/types';
+
+type EmployeeProfile = Database['public']['Tables']['employee_profiles']['Row'];
+type EmployeeProfileUpdate = Database['public']['Tables']['employee_profiles']['Update'];
+
+export function useEmployeeProfile() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['employee-profile', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('*')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as EmployeeProfile | null;
+    },
+    enabled: !!user,
+  });
+}
+
+export function useUpdateEmployeeProfile() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (updates: EmployeeProfileUpdate) => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .update(updates)
+        .eq('user_id', user!.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['team-directory'] });
+      toast.success('Profile updated successfully');
+    },
+    onError: (error) => {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
+    },
+  });
+}
+
+export function useTeamDirectory(locationFilter?: string) {
+  return useQuery({
+    queryKey: ['team-directory', locationFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from('employee_profiles')
+        .select('*')
+        .eq('is_active', true)
+        .order('full_name');
+
+      if (locationFilter && locationFilter !== 'all') {
+        query = query.eq('location_id', locationFilter);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Fetch roles for each user
+      const userIds = data?.map(p => p.user_id) || [];
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+
+      const rolesMap = new Map<string, string[]>();
+      rolesData?.forEach(r => {
+        const existing = rolesMap.get(r.user_id) || [];
+        rolesMap.set(r.user_id, [...existing, r.role]);
+      });
+
+      return (data || []).map(profile => ({
+        ...profile,
+        roles: rolesMap.get(profile.user_id) || [],
+      }));
+    },
+  });
+}
+
+export function useUploadProfilePhoto() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user!.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${user!.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('employee-photos')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('employee-photos')
+        .getPublicUrl(filePath);
+
+      // Update profile with new photo URL
+      const { error: updateError } = await supabase
+        .from('employee_profiles')
+        .update({ photo_url: publicUrl })
+        .eq('user_id', user!.id);
+
+      if (updateError) throw updateError;
+
+      return publicUrl;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['team-directory'] });
+      toast.success('Photo uploaded successfully');
+    },
+    onError: (error) => {
+      console.error('Error uploading photo:', error);
+      toast.error('Failed to upload photo');
+    },
+  });
+}
