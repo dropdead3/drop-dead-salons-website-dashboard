@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import ScrollToTop from "./components/ScrollToTop";
 import { CustomCursor } from "./components/ui/CustomCursor";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ViewAsProvider } from "./contexts/ViewAsContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 // Public pages
@@ -47,7 +48,8 @@ const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
+        <ViewAsProvider>
+          <TooltipProvider>
           <CustomCursor />
           <Toaster />
           <Sonner />
@@ -90,7 +92,8 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </TooltipProvider>
+          </TooltipProvider>
+        </ViewAsProvider>
       </AuthProvider>
     </QueryClientProvider>
   </HelmetProvider>
