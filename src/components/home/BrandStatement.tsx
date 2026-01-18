@@ -9,37 +9,39 @@ export function BrandStatement() {
 
   return (
     <Section className="bg-foreground text-background">
-      <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-        {/* Left side - Title */}
-        <motion.div
-          initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-          animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
-          transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
-        >
-          <Eyebrow className="text-background/60 mb-4">
-            Drop Dead is
-          </Eyebrow>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
-            Not Your
-            <br />
-            <span className="font-light">Average Salon.</span>
-          </h2>
-        </motion.div>
+      <div ref={ref} className="bg-background/5 backdrop-blur-sm rounded-2xl p-8 md:p-12 lg:p-16 border border-background/10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          {/* Left side - Title */}
+          <motion.div
+            initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
+            animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
+            transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
+          >
+            <span className="inline-block px-3 py-1.5 bg-background/10 rounded-lg text-xs uppercase tracking-[0.2em] text-background/60 mb-4">
+              Drop Dead is
+            </span>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
+              Not Your
+              <br />
+              <span className="font-light">Average Salon.</span>
+            </h2>
+          </motion.div>
 
-        {/* Right side - Description */}
-        <motion.div
-          initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
-          animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
-          transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-          className="space-y-6"
-        >
-          <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
-            Located in the heart of Mesa and Gilbert, Arizona, Drop Dead Salon has become the Phoenix Valley's destination for transformative hair experiences. Clients travel from Scottsdale, Chandler, Tempe, and across the East Valley to experience our artistry.
-          </p>
-          <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
-            Experience an extensive range of innovative treatments meticulously crafted by our artist-led team—where science meets beauty in Arizona's premier luxury salon.
-          </p>
-        </motion.div>
+          {/* Right side - Description */}
+          <motion.div
+            initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
+            animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
+            transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+            className="space-y-6"
+          >
+            <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
+              Located in the heart of Mesa and Gilbert, Arizona, Drop Dead Salon has become the Phoenix Valley's destination for transformative hair experiences. Clients travel from Scottsdale, Chandler, Tempe, and across the East Valley to experience our artistry.
+            </p>
+            <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
+              Experience an extensive range of innovative treatments meticulously crafted by our artist-led team—where science meets beauty in Arizona's premier luxury salon.
+            </p>
+          </motion.div>
+        </div>
       </div>
     </Section>
   );
