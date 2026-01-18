@@ -42,7 +42,10 @@ export function LocationsSection() {
           transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
           className="text-center mb-16"
         >
-          <p className="text-xs uppercase tracking-[0.2em] text-foreground/50 font-display mb-4">
+          <p 
+            className="text-xs uppercase tracking-[0.2em] text-foreground/50 mb-4"
+            style={{ fontFamily: "'Termina', sans-serif" }}
+          >
             Find Us
           </p>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display">

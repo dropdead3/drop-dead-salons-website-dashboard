@@ -168,7 +168,10 @@ const Stylists = () => {
         <div className="container mx-auto px-6">
           {/* Location Toggle */}
           <div className="text-center mb-12">
-            <p className="text-xs tracking-[0.2em] text-muted-foreground mb-6">
+            <p 
+              className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-6"
+              style={{ fontFamily: "'Termina', sans-serif" }}
+            >
               VIEW STYLISTS BY LOCATION
             </p>
             
