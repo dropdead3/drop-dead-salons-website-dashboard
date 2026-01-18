@@ -73,7 +73,7 @@ export function Header() {
               <img 
                 src={Logo} 
                 alt="Drop Dead" 
-                className="h-6 lg:h-7 w-auto"
+                className="h-4 lg:h-5 w-auto"
               />
             </Link>
 
