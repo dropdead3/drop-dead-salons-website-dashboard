@@ -1,3 +1,5 @@
+import kristiImage from "@/assets/stylists/kristi.jpg";
+
 export type Location = "north-mesa" | "val-vista-lakes";
 
 export interface Stylist {
@@ -26,8 +28,8 @@ export const stylists: Stylist[] = [
     instagram: "@dropdeadkristi",
     level: "LEVEL 3 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
-    imageUrl: "https://images.unsplash.com/photo-1595959183082-7b570b7e1daf?w=600&h=800&fit=crop",
-    locations: ["north-mesa", "val-vista-lakes"] // Works at both
+    imageUrl: kristiImage,
+    locations: ["north-mesa", "val-vista-lakes"]
   },
   {
     id: "2",
