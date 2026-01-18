@@ -107,7 +107,7 @@ export default function StaffLogin() {
             <p className="text-sm text-muted-foreground mt-2 font-sans">
               {isLogin 
                 ? 'Access your employee dashboard' 
-                : 'Set up your staff account'
+                : 'Use your preferred email for all employment software and apps'
               }
             </p>
           </div>
@@ -194,19 +194,31 @@ export default function StaffLogin() {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-12 font-display text-sm tracking-wide"
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isLogin ? (
-                'SIGN IN'
-              ) : (
-                'CREATE ACCOUNT'
+            <div className="flex gap-3">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="flex-1 h-12 font-display text-sm tracking-wide"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isLogin ? (
+                  'SIGN IN'
+                ) : (
+                  'CREATE ACCOUNT'
+                )}
+              </Button>
+              {isLogin && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsLogin(false)}
+                  className="flex-1 h-12 font-display text-sm tracking-wide"
+                >
+                  SIGN UP
+                </Button>
               )}
-            </Button>
+            </div>
           </form>
 
           {/* Toggle */}
