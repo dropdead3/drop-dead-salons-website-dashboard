@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight, Star, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { TogglePill } from "@/components/ui/toggle-pill";
 
 type Location = "north-mesa" | "val-vista-lakes";
 
@@ -173,21 +174,17 @@ const Stylists = () => {
               VIEW STYLISTS BY LOCATION
             </Eyebrow>
             
-            <div className="inline-flex border border-border bg-background">
-              {locations.map((location) => (
-                <button
-                  key={location.id}
-                  onClick={() => setSelectedLocation(location.id)}
-                  className={`px-8 py-4 text-base font-medium transition-all duration-300 ${
-                    selectedLocation === location.id
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-muted"
-                  }`}
-                >
-                  {location.name}
-                </button>
-              ))}
-            </div>
+            <TogglePill
+              options={locations.map(loc => ({
+                value: loc.id,
+                label: loc.name,
+                icon: <Info className="w-3.5 h-3.5" />,
+              }))}
+              value={selectedLocation}
+              onChange={(val) => setSelectedLocation(val as Location)}
+              size="lg"
+              variant="solid"
+            />
           </div>
 
           {/* Title with count */}
