@@ -135,7 +135,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
         </div>
       </div>
       
-      <h3 className="font-serif text-lg md:text-xl lg:text-2xl text-foreground whitespace-nowrap">
+      <h3 className="font-display text-lg md:text-xl lg:text-2xl text-foreground whitespace-nowrap">
         {drink.name}
       </h3>
     </Wrapper>

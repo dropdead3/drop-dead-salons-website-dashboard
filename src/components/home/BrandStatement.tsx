@@ -16,10 +16,10 @@ export function BrandStatement() {
           animate={isInView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]">
+          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]">
             Not Your
             <br />
-            <span className="italic font-light">
+            <span className="italic font-light font-serif">
               <TypewriterText text="Average" isInView={isInView} delay={600} /> Salon.
             </span>
           </h2>
