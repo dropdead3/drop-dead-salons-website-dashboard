@@ -239,18 +239,18 @@ export default function Extensions() {
               className="group relative overflow-hidden cursor-pointer rounded-2xl"
             >
               {/* Full Background Image */}
-              <div className="aspect-[4/3] relative">
+              <div className="aspect-[16/9] relative">
                 <img 
                   src={benefit.image}
                   alt={benefit.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover object-right transition-transform duration-700 ease-out group-hover:scale-105"
                 />
                 
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-500" />
+                {/* Gradient Overlay - stronger on left for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent transition-opacity duration-500" />
                 
-                {/* Content */}
-                <div className="absolute inset-0 p-6 lg:p-8 flex flex-col justify-end text-white">
+                {/* Content - positioned on left half */}
+                <div className="absolute inset-0 p-6 lg:p-8 flex flex-col justify-end text-white w-[60%]">
                   {/* Number + Title */}
                   <motion.div 
                     className="flex items-center gap-3 mb-3"
@@ -268,7 +268,7 @@ export default function Extensions() {
                   
                   {/* Description */}
                   <motion.p 
-                    className="text-sm text-white/80 leading-relaxed max-w-[90%] transform transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 translate-y-2 opacity-80"
+                    className="text-sm text-white/80 leading-relaxed transform transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 translate-y-2 opacity-80"
                     initial={{ opacity: 0, y: 20 }}
                     animate={benefitsInView ? { opacity: 0.8, y: 0 } : {}}
                     transition={{ duration: 0.5, delay: 0.4 + index * 0.15 }}
