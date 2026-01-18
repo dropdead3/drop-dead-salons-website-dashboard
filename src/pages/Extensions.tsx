@@ -652,6 +652,141 @@ export default function Extensions() {
         </motion.div>
       </Section>
 
+      {/* Extension Care Section */}
+      <Section className="bg-background">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+          {/* Left - Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="lg:sticky lg:top-32"
+          >
+            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
+              Aftercare
+            </span>
+            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
+              Extension <span className="italic font-light">Care</span>
+            </h2>
+            <p className="text-muted-foreground leading-relaxed mb-8">
+              Proper care ensures your extensions last longer and look beautiful every day. Follow these essential tips to maintain your investment.
+            </p>
+            <div className="bg-oat/30 p-6">
+              <h4 className="font-medium mb-3">Recommended Products</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                We carry a curated selection of extension-safe products in our salon, including sulfate-free shampoos, nourishing conditioners, and heat protectants specifically formulated for extensions.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Right - Care Tips Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Tip 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-secondary/50 p-6"
+            >
+              <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center mb-4">
+                <span className="font-serif text-lg">1</span>
+              </div>
+              <h3 className="font-medium mb-2">Brush Daily</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Use a loop brush or wide-tooth comb, starting from the ends and working up. Brush 2-3 times daily to prevent tangling.
+              </p>
+            </motion.div>
+
+            {/* Tip 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="bg-secondary/50 p-6"
+            >
+              <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center mb-4">
+                <span className="font-serif text-lg">2</span>
+              </div>
+              <h3 className="font-medium mb-2">Sulfate-Free Products</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Always use sulfate-free shampoo and conditioner. Sulfates strip the hair of moisture and can cause extensions to dry out and tangle.
+              </p>
+            </motion.div>
+
+            {/* Tip 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-secondary/50 p-6"
+            >
+              <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center mb-4">
+                <span className="font-serif text-lg">3</span>
+              </div>
+              <h3 className="font-medium mb-2">Braid Before Bed</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Sleep with your hair in a loose braid or silk bonnet to prevent matting and tangling while you sleep.
+              </p>
+            </motion.div>
+
+            {/* Tip 4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className="bg-secondary/50 p-6"
+            >
+              <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center mb-4">
+                <span className="font-serif text-lg">4</span>
+              </div>
+              <h3 className="font-medium mb-2">Heat Protection</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Always apply heat protectant before styling. Keep heat tools below 350°F to preserve the integrity of your extensions.
+              </p>
+            </motion.div>
+
+            {/* Tip 5 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="bg-secondary/50 p-6"
+            >
+              <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center mb-4">
+                <span className="font-serif text-lg">5</span>
+              </div>
+              <h3 className="font-medium mb-2">Wash Properly</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Wash in a downward motion, never scrubbing. Focus shampoo on the scalp and conditioner on the mid-lengths to ends.
+              </p>
+            </motion.div>
+
+            {/* Tip 6 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+              className="bg-secondary/50 p-6"
+            >
+              <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center mb-4">
+                <span className="font-serif text-lg">6</span>
+              </div>
+              <h3 className="font-medium mb-2">Regular Maintenance</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Book move-up appointments every 6-8 weeks. This keeps extensions secure and your natural hair healthy.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </Section>
+
       {/* Extension Reviews Section */}
       <ExtensionReviewsSection />
 
