@@ -115,7 +115,7 @@ export function Header() {
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[280px] p-5 bg-background text-foreground border border-border shadow-lg">
-                    <p className="text-sm text-center leading-relaxed">Every new client starts with a free consultation to ensure the perfect match</p>
+                    <p className="text-sm text-center leading-relaxed">Every new client starts with a $15 consultation to ensure the perfect match</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

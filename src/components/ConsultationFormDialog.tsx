@@ -120,7 +120,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
             </DialogTitle>
           </div>
           <p className="text-sm text-muted-foreground font-sans font-light mt-3 leading-relaxed">
-            Share a few details about yourself and your hair goals, and we'll be in touch to schedule your complimentary consultation.
+            Share a few details about yourself and your hair goals, and we'll be in touch to schedule your $15 consultation.
           </p>
         </DialogHeader>
         
