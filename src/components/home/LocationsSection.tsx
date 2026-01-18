@@ -101,7 +101,7 @@ export function LocationsSection() {
               <div className="flex flex-col items-center gap-3">
                 <Link
                   to={location.bookingUrl}
-                  className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group/link"
+                  className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-sm font-sans font-medium hover:bg-primary/90 transition-colors group/link w-full"
                 >
                   <span>Book consult</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
@@ -111,13 +111,12 @@ export function LocationsSection() {
                     const stylistsSection = document.getElementById('stylists-section');
                     if (stylistsSection) {
                       stylistsSection.scrollIntoView({ behavior: 'smooth' });
-                      // Dispatch custom event to set the location filter
                       window.dispatchEvent(new CustomEvent('setLocationFilter', { 
                         detail: { location: location.stylistFilterId } 
                       }));
                     }
                   }}
-                  className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground/70 hover:text-foreground transition-colors group/stylists"
+                  className="inline-flex items-center justify-center gap-2 bg-background border border-border text-foreground px-6 py-3 text-sm font-sans font-medium hover:bg-muted transition-colors group/stylists w-full"
                 >
                   <Users className="w-4 h-4" />
                   <span>Check Out The Stylists</span>
