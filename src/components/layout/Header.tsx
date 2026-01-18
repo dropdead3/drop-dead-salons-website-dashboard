@@ -149,13 +149,12 @@ export function Header() {
             "rounded-2xl border transition-colors duration-300",
             isScrolled 
               ? isOverDark ? "bg-black/20" : "bg-white/10" 
-              : "bg-transparent",
-            isOverDark && !isScrolled ? "text-white" : ""
+              : "bg-transparent"
           )}
         >
           <div className={cn(
             "container mx-auto px-6 lg:px-8 transition-colors duration-300",
-            isOverDark ? "text-white" : "text-foreground"
+            isOverDark ? "text-white [&_svg]:text-white" : "text-foreground"
           )}>
             <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo with scroll transition - fixed width container to prevent layout shift */}
@@ -290,7 +289,7 @@ export function Header() {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-foreground"
+              className="lg:hidden p-2"
               aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
