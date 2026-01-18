@@ -47,8 +47,8 @@ export function StickyFooterBar() {
 
   return (
     <>
-      {/* Scroll to top - bottom right */}
-      <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-40">
+      {/* Scroll to top - bottom right (hidden on mobile) */}
+      <div className="hidden md:block fixed bottom-8 right-8 z-40">
         <AnimatePresence>
           {isVisible && <ScrollProgressButton />}
         </AnimatePresence>
