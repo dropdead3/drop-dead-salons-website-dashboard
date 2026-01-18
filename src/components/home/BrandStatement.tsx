@@ -16,7 +16,10 @@ export function BrandStatement() {
           animate={isInView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.8 }}
         >
-          <span className="text-xs uppercase tracking-[0.2em] text-background/60 font-sans block mb-4">
+          <span 
+            className="text-xs uppercase tracking-[0.2em] text-background/60 block mb-4"
+            style={{ fontFamily: "'Termina', sans-serif" }}
+          >
             Drop Dead is
           </span>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">

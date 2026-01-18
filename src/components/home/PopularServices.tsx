@@ -33,7 +33,10 @@ export function PopularServices() {
         transition={{ duration: 0.6 }}
         className="text-center"
       >
-        <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-display block mb-12">
+        <span 
+          className="text-xs uppercase tracking-[0.2em] text-muted-foreground block mb-12"
+          style={{ fontFamily: "'Termina', sans-serif" }}
+        >
           Other Popular Services
         </span>
 

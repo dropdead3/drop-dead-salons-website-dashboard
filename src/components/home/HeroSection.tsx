@@ -145,8 +145,9 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-xs uppercase tracking-[0.4em] text-muted-foreground font-display mb-8"
+              className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-8"
               style={{ 
+                fontFamily: "'Termina', sans-serif",
                 opacity,
                 y: taglineY
               }}

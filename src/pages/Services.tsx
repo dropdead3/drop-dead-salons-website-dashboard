@@ -88,7 +88,8 @@ export default function Services() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-display block mb-6"
+              className="text-xs uppercase tracking-[0.2em] text-muted-foreground block mb-6"
+              style={{ fontFamily: "'Termina', sans-serif" }}
             >
               Our Services
             </motion.span>

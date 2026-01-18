@@ -257,7 +257,10 @@ export function ServicesPreview() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, ease: editorialEasing }}
         >
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-display">
+          <span 
+            className="text-xs uppercase tracking-[0.2em] text-muted-foreground"
+            style={{ fontFamily: "'Termina', sans-serif" }}
+          >
             Explore Our Services ↘
           </span>
         </motion.div>

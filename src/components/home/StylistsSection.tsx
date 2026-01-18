@@ -194,7 +194,10 @@ export function StylistsSection() {
             Each stylist brings their own unique expertise and creative vision.
           </p>
           
-          <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
+          <p 
+            className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4"
+            style={{ fontFamily: "'Termina', sans-serif" }}
+          >
             VIEW STYLISTS BY LOCATION
           </p>
           
@@ -238,7 +241,10 @@ export function StylistsSection() {
           <div className="mt-8 flex flex-col gap-8 items-center">
             {/* Specialty Filter */}
             <div>
-              <p className="text-xs tracking-[0.2em] text-muted-foreground mb-4">
+              <p 
+                className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4"
+                style={{ fontFamily: "'Termina', sans-serif" }}
+              >
                 VIEW BY SPECIALTY
               </p>
               <div className="flex flex-wrap justify-center gap-2">
@@ -277,7 +283,10 @@ export function StylistsSection() {
             {/* Level/Price Filter */}
             <div>
               <div className="flex items-center justify-center gap-2 mb-4">
-                <p className="text-xs tracking-[0.2em] text-muted-foreground">
+                <p 
+                  className="text-xs uppercase tracking-[0.2em] text-muted-foreground"
+                  style={{ fontFamily: "'Termina', sans-serif" }}
+                >
                   VIEW BY LEVEL & PRICE
                 </p>
                 <TooltipProvider delayDuration={100}>
