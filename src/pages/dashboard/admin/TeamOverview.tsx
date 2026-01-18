@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Select,
   SelectContent,
@@ -11,6 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { 
   Users, 
   Search, 
@@ -19,11 +26,21 @@ import {
   Pause,
   RefreshCw,
   Flame,
-  Loader2
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  Plus,
+  Calendar,
+  Trophy,
+  Target
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 interface TeamMember {
   user_id: string;
+  enrollment_id: string;
   full_name: string;
   display_name: string | null;
   location_id: string | null;
@@ -31,22 +48,47 @@ interface TeamMember {
   streak_count: number;
   status: string;
   restart_count: number;
+  start_date: string;
+  last_completion_date: string | null;
+}
+
+interface CoachNote {
+  id: string;
+  note_text: string;
+  note_type: string | null;
+  created_at: string;
+}
+
+interface WeeklyWin {
+  id: string;
+  week_number: number;
+  wins_this_week: string | null;
+  what_worked: string | null;
+  bottleneck: string | null;
+  adjustment_for_next_week: string | null;
+  is_submitted: boolean;
+  submitted_at: string | null;
 }
 
 type FilterStatus = 'all' | 'active' | 'paused' | 'at-risk' | 'restarted';
 
 export default function TeamOverview() {
+  const { user } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
+  const [expandedMember, setExpandedMember] = useState<string | null>(null);
+  const [memberNotes, setMemberNotes] = useState<Record<string, CoachNote[]>>({});
+  const [memberWeeklyWins, setMemberWeeklyWins] = useState<Record<string, WeeklyWin[]>>({});
+  const [newNote, setNewNote] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
     fetchTeam();
   }, []);
 
   const fetchTeam = async () => {
-    // Get all enrollments
     const { data: enrollments, error: enrollmentError } = await supabase
       .from('stylist_program_enrollment')
       .select('*');
@@ -57,7 +99,6 @@ export default function TeamOverview() {
       return;
     }
 
-    // Get profiles
     const userIds = enrollments?.map(e => e.user_id) || [];
     
     if (userIds.length === 0) {
@@ -70,11 +111,11 @@ export default function TeamOverview() {
       .select('user_id, full_name, display_name, location_id')
       .in('user_id', userIds);
 
-    // Combine data
     const team: TeamMember[] = (enrollments || []).map(enrollment => {
       const profile = profiles?.find(p => p.user_id === enrollment.user_id);
       return {
         user_id: enrollment.user_id,
+        enrollment_id: enrollment.id,
         full_name: profile?.full_name || 'Unknown',
         display_name: profile?.display_name,
         location_id: profile?.location_id,
@@ -82,11 +123,68 @@ export default function TeamOverview() {
         streak_count: enrollment.streak_count,
         status: enrollment.status,
         restart_count: enrollment.restart_count,
+        start_date: enrollment.start_date,
+        last_completion_date: enrollment.last_completion_date,
       };
     });
 
     setMembers(team);
     setLoading(false);
+  };
+
+  const fetchMemberDetails = async (enrollmentId: string) => {
+    // Fetch notes
+    const { data: notes } = await supabase
+      .from('coach_notes')
+      .select('*')
+      .eq('enrollment_id', enrollmentId)
+      .order('created_at', { ascending: false });
+
+    setMemberNotes(prev => ({ ...prev, [enrollmentId]: (notes || []) as CoachNote[] }));
+
+    // Fetch weekly wins
+    const { data: weeklyWins } = await supabase
+      .from('weekly_wins_reports')
+      .select('*')
+      .eq('enrollment_id', enrollmentId)
+      .eq('is_submitted', true)
+      .order('week_number', { ascending: false });
+
+    setMemberWeeklyWins(prev => ({ ...prev, [enrollmentId]: (weeklyWins || []) as WeeklyWin[] }));
+  };
+
+  const handleExpandMember = (member: TeamMember) => {
+    if (expandedMember === member.enrollment_id) {
+      setExpandedMember(null);
+    } else {
+      setExpandedMember(member.enrollment_id);
+      fetchMemberDetails(member.enrollment_id);
+    }
+    setNewNote('');
+  };
+
+  const addNote = async (enrollmentId: string) => {
+    if (!newNote.trim() || !user) return;
+
+    setSavingNote(true);
+    const { error } = await supabase
+      .from('coach_notes')
+      .insert({
+        enrollment_id: enrollmentId,
+        coach_user_id: user.id,
+        note_text: newNote.trim(),
+        note_type: 'general',
+      });
+
+    if (error) {
+      console.error('Error adding note:', error);
+      toast.error('Failed to add note');
+    } else {
+      toast.success('Note added');
+      setNewNote('');
+      fetchMemberDetails(enrollmentId);
+    }
+    setSavingNote(false);
   };
 
   const getStatusBadge = (member: TeamMember) => {
@@ -159,7 +257,7 @@ export default function TeamOverview() {
             TEAM OVERVIEW
           </h1>
           <p className="text-muted-foreground font-sans">
-            Monitor stylist progress and compliance.
+            Monitor stylist progress, view Weekly Wins, and add coaching notes.
           </p>
         </div>
 
@@ -237,42 +335,217 @@ export default function TeamOverview() {
         ) : (
           <div className="space-y-3">
             {filteredMembers.map((member) => (
-              <Card key={member.user_id} className="p-4 lg:p-6">
-                <div className="flex items-center gap-4">
-                  {/* Avatar */}
-                  <div className="w-12 h-12 bg-muted flex items-center justify-center font-display text-lg">
-                    {member.full_name.charAt(0)}
-                  </div>
+              <Collapsible 
+                key={member.user_id} 
+                open={expandedMember === member.enrollment_id}
+                onOpenChange={() => handleExpandMember(member)}
+              >
+                <Card className="overflow-hidden">
+                  <CollapsibleTrigger className="w-full p-4 lg:p-6 text-left">
+                    <div className="flex items-center gap-4">
+                      {/* Avatar */}
+                      <div className="w-12 h-12 bg-muted flex items-center justify-center font-display text-lg">
+                        {member.full_name.charAt(0)}
+                      </div>
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-sans font-medium truncate">
-                      {member.display_name || member.full_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground font-sans">
-                      {member.location_id === 'north-mesa' ? 'North Mesa' : 'Val Vista Lakes'}
-                    </p>
-                  </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-sans font-medium truncate">
+                          {member.display_name || member.full_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-sans">
+                          Started {format(new Date(member.start_date), 'MMM d, yyyy')}
+                        </p>
+                      </div>
 
-                  {/* Stats */}
-                  <div className="hidden lg:flex items-center gap-8">
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground font-display tracking-wide">DAY</p>
-                      <p className="font-display text-lg">{member.current_day}</p>
+                      {/* Stats */}
+                      <div className="hidden lg:flex items-center gap-8">
+                        <div className="text-center">
+                          <p className="text-xs text-muted-foreground font-display tracking-wide">DAY</p>
+                          <p className="font-display text-lg">{member.current_day}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-muted-foreground font-display tracking-wide">STREAK</p>
+                          <p className="font-display text-lg flex items-center gap-1">
+                            <Flame className="w-4 h-4 text-orange-500" />
+                            {member.streak_count}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Status */}
+                      {getStatusBadge(member)}
+
+                      {/* Expand Icon */}
+                      <div className="ml-2">
+                        {expandedMember === member.enrollment_id ? (
+                          <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground font-display tracking-wide">STREAK</p>
-                      <p className="font-display text-lg flex items-center gap-1">
-                        <Flame className="w-4 h-4 text-orange-500" />
-                        {member.streak_count}
-                      </p>
-                    </div>
-                  </div>
+                  </CollapsibleTrigger>
 
-                  {/* Status */}
-                  {getStatusBadge(member)}
-                </div>
-              </Card>
+                  <CollapsibleContent>
+                    <div className="px-4 lg:px-6 pb-6 border-t border-border pt-6">
+                      <div className="grid lg:grid-cols-2 gap-6">
+                        {/* Coach Notes Section */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-4">
+                            <MessageSquare className="w-4 h-4" />
+                            <h3 className="font-display text-sm tracking-wide">COACH NOTES</h3>
+                          </div>
+
+                          {/* Add Note Form */}
+                          <div className="mb-4">
+                            <Textarea
+                              placeholder="Add a coaching note..."
+                              value={newNote}
+                              onChange={(e) => setNewNote(e.target.value)}
+                              className="mb-2 min-h-[80px]"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => addNote(member.enrollment_id)}
+                              disabled={!newNote.trim() || savingNote}
+                            >
+                              {savingNote ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <Plus className="w-4 h-4 mr-2" />
+                              )}
+                              Add Note
+                            </Button>
+                          </div>
+
+                          {/* Notes List */}
+                          <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                            {memberNotes[member.enrollment_id]?.length === 0 ? (
+                              <p className="text-sm text-muted-foreground font-sans">
+                                No notes yet.
+                              </p>
+                            ) : (
+                              memberNotes[member.enrollment_id]?.map((note) => (
+                                <div key={note.id} className="bg-muted/50 p-3 text-sm">
+                                  <p className="font-sans">{note.note_text}</p>
+                                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    {format(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
+                                  </p>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Weekly Wins Section */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-4">
+                            <Trophy className="w-4 h-4" />
+                            <h3 className="font-display text-sm tracking-wide">WEEKLY WINS REPORTS</h3>
+                          </div>
+
+                          <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                            {memberWeeklyWins[member.enrollment_id]?.length === 0 ? (
+                              <p className="text-sm text-muted-foreground font-sans">
+                                No Weekly Wins submitted yet.
+                              </p>
+                            ) : (
+                              memberWeeklyWins[member.enrollment_id]?.map((report) => (
+                                <div key={report.id} className="bg-muted/50 p-4">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <span className="font-display text-sm">WEEK {report.week_number}</span>
+                                    {report.submitted_at && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {format(new Date(report.submitted_at), 'MMM d')}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {report.wins_this_week && (
+                                    <div className="mb-3">
+                                      <p className="text-xs text-muted-foreground font-display tracking-wide mb-1">
+                                        WINS
+                                      </p>
+                                      <p className="text-sm font-sans">{report.wins_this_week}</p>
+                                    </div>
+                                  )}
+
+                                  {report.what_worked && (
+                                    <div className="mb-3">
+                                      <p className="text-xs text-muted-foreground font-display tracking-wide mb-1">
+                                        WHAT WORKED
+                                      </p>
+                                      <p className="text-sm font-sans">{report.what_worked}</p>
+                                    </div>
+                                  )}
+
+                                  {report.bottleneck && (
+                                    <div className="mb-3">
+                                      <p className="text-xs text-muted-foreground font-display tracking-wide mb-1">
+                                        BOTTLENECK
+                                      </p>
+                                      <p className="text-sm font-sans">{report.bottleneck}</p>
+                                    </div>
+                                  )}
+
+                                  {report.adjustment_for_next_week && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground font-display tracking-wide mb-1">
+                                        ADJUSTMENT
+                                      </p>
+                                      <p className="text-sm font-sans">{report.adjustment_for_next_week}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Quick Stats */}
+                      <div className="mt-6 pt-6 border-t border-border">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="flex items-center gap-3">
+                            <Target className="w-5 h-5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground font-display">PROGRESS</p>
+                              <p className="font-sans">{Math.round((member.current_day / 75) * 100)}%</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <RefreshCw className="w-5 h-5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground font-display">RESTARTS</p>
+                              <p className="font-sans">{member.restart_count}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Calendar className="w-5 h-5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground font-display">LAST ACTIVE</p>
+                              <p className="font-sans">
+                                {member.last_completion_date 
+                                  ? format(new Date(member.last_completion_date), 'MMM d')
+                                  : 'Never'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Trophy className="w-5 h-5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground font-display">WEEKLY WINS</p>
+                              <p className="font-sans">{memberWeeklyWins[member.enrollment_id]?.length || 0}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             ))}
           </div>
         )}
