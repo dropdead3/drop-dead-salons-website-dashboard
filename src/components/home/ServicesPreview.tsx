@@ -383,13 +383,13 @@ export function ServicesPreview() {
                 <div className="flex gap-3">
                   <Link
                     to="/booking"
-                    className="inline-flex items-center px-7 py-3.5 text-sm font-sans bg-foreground text-background rounded-lg hover:bg-foreground/90 hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
+                    className="inline-flex items-center px-7 py-3.5 text-sm font-sans bg-foreground text-background rounded-full hover:bg-foreground/90 hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
                   >
                     Book consult
                   </Link>
                   <Link
                     to="/services"
-                    className="group/learn inline-flex items-center px-7 py-3.5 text-sm font-sans border border-border text-foreground rounded-lg hover:border-foreground hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap overflow-hidden"
+                    className="group/learn inline-flex items-center px-7 py-3.5 text-sm font-sans border border-border text-foreground rounded-full hover:border-foreground hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap overflow-hidden"
                   >
                     <span>Learn more</span>
                     <ArrowRight className="w-0 h-5 opacity-0 group-hover/learn:w-5 group-hover/learn:ml-2 group-hover/learn:opacity-100 transition-all duration-300" />
@@ -462,13 +462,13 @@ export function ServicesPreview() {
               <div className="flex gap-3">
                 <Link
                   to="/booking"
-                  className="inline-flex items-center px-6 py-3.5 text-sm font-sans bg-foreground text-background hover:bg-foreground/90 hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
+                  className="inline-flex items-center px-6 py-3.5 text-sm font-sans bg-foreground text-background rounded-full hover:bg-foreground/90 hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
                 >
                   Book consult
                 </Link>
                 <Link
                   to="/services"
-                  className="group/learn inline-flex items-center px-6 py-3.5 text-sm font-sans border border-border text-foreground hover:border-foreground hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap overflow-hidden"
+                  className="group/learn inline-flex items-center px-6 py-3.5 text-sm font-sans border border-border text-foreground rounded-full hover:border-foreground hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap overflow-hidden"
                 >
                   <span>Learn more</span>
                   <ArrowRight className="w-0 h-5 opacity-0 group-hover/learn:w-5 group-hover/learn:ml-2 group-hover/learn:opacity-100 transition-all duration-300" />
