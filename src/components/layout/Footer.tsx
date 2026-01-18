@@ -14,6 +14,12 @@ const locations = [
     city: "Mesa, AZ 85203",
     phone: "(480) 548-1886",
   },
+  {
+    name: "Val Vista Lakes",
+    address: "3641 E Baseline Rd Suite Q-103",
+    city: "Gilbert, AZ 85234",
+    phone: "(480) 548-1886",
+  },
 ];
 
 const hours = "Tue–Sat: 10am–6pm · Closed Sun & Mon";

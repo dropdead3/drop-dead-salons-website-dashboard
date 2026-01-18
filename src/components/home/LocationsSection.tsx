@@ -11,6 +11,13 @@ const locations = [
     phone: "(480) 548-1886",
     bookingUrl: "/booking?location=north-mesa"
   },
+  {
+    name: "Val Vista Lakes",
+    address: "3641 E Baseline Rd Suite Q-103",
+    city: "Gilbert, AZ 85234",
+    phone: "(480) 548-1886",
+    bookingUrl: "/booking?location=val-vista-lakes"
+  },
 ];
 
 const hours = {
