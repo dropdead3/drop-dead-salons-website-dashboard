@@ -29,6 +29,9 @@ interface DashboardLayoutProps {
 
 const mainNavItems = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
+];
+
+const housekeepingNavItems = [
   { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users },
   { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText },
 ];
@@ -108,6 +111,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {...item} 
               badgeCount={item.href === '/dashboard' ? unreadCount : undefined}
             />
+          ))}
+        </div>
+
+        {/* Housekeeping Section */}
+        <div className="my-4 px-4">
+          <div className="h-px bg-border" />
+        </div>
+        <p className="px-4 mb-2 text-xs uppercase tracking-wider text-muted-foreground font-display">
+          Housekeeping
+        </p>
+        <div className="space-y-1">
+          {housekeepingNavItems.map((item) => (
+            <NavLink key={item.href} {...item} />
           ))}
         </div>
 
