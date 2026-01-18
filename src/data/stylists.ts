@@ -15,7 +15,7 @@ export const stylists: Stylist[] = [
     id: "1",
     name: "Kristi D.",
     instagram: "@dropdeadkristi",
-    level: "LEVEL III STYLIST",
+    level: "LEVEL 3 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1595959183082-7b570b7e1daf?w=600&h=800&fit=crop",
     location: "north-mesa"
@@ -24,7 +24,7 @@ export const stylists: Stylist[] = [
     id: "2",
     name: "Sarina L.",
     instagram: "@hairdidbysarina_",
-    level: "LEVEL II STYLIST",
+    level: "LEVEL 2 STYLIST",
     specialties: ["EXTENSIONS", "BLONDING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&h=800&fit=crop",
     location: "north-mesa"
@@ -33,7 +33,7 @@ export const stylists: Stylist[] = [
     id: "3",
     name: "Hayleigh H.",
     instagram: "@lucky7studios_",
-    level: "LEVEL II STYLIST",
+    level: "LEVEL 2 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=600&h=800&fit=crop",
     location: "north-mesa"
@@ -42,7 +42,7 @@ export const stylists: Stylist[] = [
     id: "4",
     name: "Gavin E.",
     instagram: "@hairbygavinn",
-    level: "LEVEL II STYLIST",
+    level: "LEVEL 2 STYLIST",
     specialties: ["AIRTOUCH", "COLOR BLOCKING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop",
     location: "north-mesa"
@@ -51,7 +51,7 @@ export const stylists: Stylist[] = [
     id: "5",
     name: "Maya R.",
     instagram: "@mayahairartist",
-    level: "LEVEL III STYLIST",
+    level: "LEVEL 3 STYLIST",
     specialties: ["LAYERED CUTS", "CREATIVE COLOR", "COLOR BLOCKING"],
     imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=800&fit=crop",
     location: "north-mesa"
@@ -60,7 +60,7 @@ export const stylists: Stylist[] = [
     id: "6",
     name: "Jordan T.",
     instagram: "@jordantcuts",
-    level: "LEVEL I STYLIST",
+    level: "LEVEL 1 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "CUSTOM CUTS"],
     imageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&h=800&fit=crop",
     location: "north-mesa"
@@ -70,10 +70,10 @@ export const stylists: Stylist[] = [
 // Get extension specialists sorted by level (highest to lowest)
 export const getExtensionSpecialists = (): Stylist[] => {
   const levelOrder: Record<string, number> = {
-    "LEVEL IV STYLIST": 1,
-    "LEVEL III STYLIST": 2,
-    "LEVEL II STYLIST": 3,
-    "LEVEL I STYLIST": 4
+    "LEVEL 4 STYLIST": 1,
+    "LEVEL 3 STYLIST": 2,
+    "LEVEL 2 STYLIST": 3,
+    "LEVEL 1 STYLIST": 4
   };
 
   return stylists
@@ -97,8 +97,8 @@ export const allSpecialties = Array.from(
 
 // Stylist levels with price indicators
 export const stylistLevels = [
-  { id: "LEVEL I STYLIST", name: "Level 1", price: "$", description: "Rising talent" },
-  { id: "LEVEL II STYLIST", name: "Level 2", price: "$$", description: "Skilled stylist" },
-  { id: "LEVEL III STYLIST", name: "Level 3", price: "$$$", description: "Master artist" },
-  { id: "LEVEL IV STYLIST", name: "Level 4", price: "$$$$", description: "Elite specialist" },
+  { id: "LEVEL 1 STYLIST", name: "Level 1", price: "$", description: "Rising talent" },
+  { id: "LEVEL 2 STYLIST", name: "Level 2", price: "$$", description: "Skilled stylist" },
+  { id: "LEVEL 3 STYLIST", name: "Level 3", price: "$$$", description: "Master artist" },
+  { id: "LEVEL 4 STYLIST", name: "Level 4", price: "$$$$", description: "Elite specialist" },
 ];
