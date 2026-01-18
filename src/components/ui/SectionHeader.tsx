@@ -69,7 +69,7 @@ export function SectionHeader({
           {titleHighlight && (
             <>
               <br />
-              <span className="italic font-light">{titleHighlight}</span>
+              <span className="font-light">{titleHighlight}</span>
             </>
           )}
         </h2>

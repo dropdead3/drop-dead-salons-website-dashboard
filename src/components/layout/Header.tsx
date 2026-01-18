@@ -42,7 +42,7 @@ export function Header() {
       <div className="bg-secondary py-2.5 px-6">
         <div className="container mx-auto flex items-center justify-between">
           <p className="text-xs md:text-sm text-foreground/80">
-            Are you a salon <em>professional</em> looking for our extensions?
+            Are you a salon <span className="font-medium">professional</span> looking for our extensions?
           </p>
           <a 
             href="#" 
