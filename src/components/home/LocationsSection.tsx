@@ -48,7 +48,7 @@ export function LocationsSection() {
         />
 
         {/* Location Cards - Side by Side */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {locations.map((location, index) => (
             <motion.div
               key={location.name}
@@ -59,11 +59,11 @@ export function LocationsSection() {
                 ease: [0.25, 0.1, 0.25, 1], 
                 delay: 0.2 + index * 0.15 
               }}
-              className="group relative bg-secondary hover:bg-secondary/80 transition-colors duration-300 p-8 md:p-10 text-center"
+              className="group relative bg-secondary hover:bg-secondary/80 transition-colors duration-300 p-10 md:p-12 text-center"
             >
               {/* Location Title with Info Icon */}
               <div className="flex items-center justify-center gap-2 mb-4">
-                <h3 className="font-display text-2xl md:text-3xl text-foreground">
+                <h3 className="font-display text-2xl md:text-3xl text-foreground whitespace-nowrap">
                   {location.name}
                 </h3>
                 {/* Info Icon with Hours Tooltip */}
