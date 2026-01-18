@@ -168,7 +168,7 @@ export function FAQSection() {
                     <motion.div
                       key={faq.question}
                       initial={{ opacity: 0, x: 60 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 60 }}
                       exit={{ opacity: 0, x: -30 }}
                       transition={{ 
                         duration: 0.6, 
