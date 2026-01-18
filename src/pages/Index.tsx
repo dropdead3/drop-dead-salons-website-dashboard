@@ -32,18 +32,15 @@ const Index = () => {
       <LocationsSection />
       <GallerySection />
       {/* Combined Reviews & FAQ Section with Gradient */}
-      <div data-theme="light" className="py-20 lg:py-32 bg-background">
-        <div className="container mx-auto px-6">
-          <div 
-            className="rounded-2xl relative overflow-hidden"
-            style={{ 
-              background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(40 25% 95%) 30%, hsl(40 30% 94%) 70%, hsl(40 20% 92%) 100%)' 
-            }}
-          >
-            <TestimonialSection />
-            <FAQSection />
-          </div>
-        </div>
+      <div 
+        data-theme="light"
+        className="relative"
+        style={{ 
+          background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(40 25% 95%) 30%, hsl(40 30% 94%) 70%, hsl(40 20% 92%) 100%)' 
+        }}
+      >
+        <TestimonialSection />
+        <FAQSection />
       </div>
       <ExtensionsSection />
       <StylistsSection />

@@ -31,9 +31,8 @@ export function ExtensionsSection() {
   ];
 
   return (
-    <Section className="bg-background overflow-hidden" theme="light">
-      <div className="bg-foreground text-background rounded-2xl p-10 md:p-16 lg:p-20">
-      <div ref={ref} className="relative" data-theme="dark">
+    <Section className="bg-foreground text-background overflow-hidden" theme="dark">
+      <div ref={ref} className="relative">
         {/* Background accent */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -235,7 +234,6 @@ export function ExtensionsSection() {
             />
           </motion.div>
         </div>
-      </div>
       </div>
     </Section>
   );
