@@ -36,7 +36,7 @@ export function CTASection() {
           >
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-2 px-8 py-4 text-sm font-sans border border-background text-background hover:bg-background hover:text-foreground transition-all duration-300 active:scale-[0.98]"
+              className="group inline-flex items-center gap-3 px-12 py-5 text-base font-sans border border-background text-background hover:bg-background hover:text-foreground transition-all duration-300 active:scale-[0.98]"
             >
               <span>Book consult</span>
               <motion.span
@@ -44,7 +44,7 @@ export function CTASection() {
                 whileHover={{ x: 4, y: -4 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                <ArrowUpRight size={16} />
+                <ArrowUpRight size={20} />
               </motion.span>
             </Link>
             <p className="text-xs text-background/60 font-sans lg:text-right">
