@@ -398,6 +398,39 @@ export function StylistsSection() {
               {filteredStylists.map((stylist, index) => (
                 <StylistCard key={stylist.id} stylist={stylist} index={index} />
               ))}
+              
+              {/* Join Our Team Card - spans 2 columns on xl when there's room */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: filteredStylists.length * 0.08 }}
+                className="col-span-1 sm:col-span-2 relative bg-muted/50 border border-border flex flex-col items-center justify-center p-8 min-h-[300px] aspect-auto sm:aspect-[2/1] xl:aspect-auto"
+              >
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-foreground/50" />
+                    <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
+                      Join Our Team
+                    </p>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-display mb-3">
+                    Work at Drop Dead
+                  </h3>
+                  <p className="text-foreground/60 text-sm max-w-sm mx-auto mb-5">
+                    Passionate stylist looking for your next opportunity? We'd love to hear from you.
+                  </p>
+                  
+                  <button
+                    onClick={() => setIsFormExpanded(!isFormExpanded)}
+                    className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
+                  >
+                    <span>{isFormExpanded ? "Close" : "Apply now"}</span>
+                    <ChevronDown 
+                      className={`w-4 h-4 transition-transform duration-300 ${isFormExpanded ? "rotate-180" : ""}`} 
+                    />
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
           ) : (
             <motion.div
@@ -416,66 +449,19 @@ export function StylistsSection() {
         </AnimatePresence>
       </div>
 
-      {/* View All Link */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6, delay: 0.4 }}
-        className="container mx-auto px-6 mt-10 text-center"
-      >
-        <Link
-          to="/stylists"
-          className="inline-flex items-center gap-2 text-sm font-medium group"
-        >
-          <span className="link-underline">View all stylists</span>
-          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-        </Link>
-      </motion.div>
-
-      {/* Join Our Team - Collapsible */}
-      <div className="container mx-auto px-6 mt-16 pt-12 border-t border-border/50">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-center"
-        >
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-foreground/50" />
-            <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
-              Join Our Team
-            </p>
-          </div>
-          <h3 className="text-2xl md:text-3xl font-display mb-3">
-            Work at Drop Dead
-          </h3>
-          <p className="text-foreground/60 text-sm max-w-md mx-auto mb-5">
-            Passionate stylist looking for your next opportunity? We'd love to hear from you.
-          </p>
-          
-          <button
-            onClick={() => setIsFormExpanded(!isFormExpanded)}
-            className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
+      {/* Collapsible Application Form */}
+      <AnimatePresence>
+        {isFormExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            className="overflow-hidden"
           >
-            <span>{isFormExpanded ? "Close" : "Apply now"}</span>
-            <ChevronDown 
-              className={`w-4 h-4 transition-transform duration-300 ${isFormExpanded ? "rotate-180" : ""}`} 
-            />
-          </button>
-        </motion.div>
-
-        {/* Collapsible Form */}
-        <AnimatePresence>
-          {isFormExpanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="pt-8 max-w-2xl mx-auto">
-                <div className="bg-background p-6 md:p-8">
+            <div className="container mx-auto px-6 pt-8">
+              <div className="max-w-2xl mx-auto">
+                <div className="bg-background border border-border p-6 md:p-8">
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                       <FormField
@@ -656,10 +642,26 @@ export function StylistsSection() {
                   </Form>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* View All Link */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        className="container mx-auto px-6 mt-10 text-center"
+      >
+        <Link
+          to="/stylists"
+          className="inline-flex items-center gap-2 text-sm font-medium group"
+        >
+          <span className="link-underline">View all stylists</span>
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </Link>
+      </motion.div>
     </section>
   );
 }
