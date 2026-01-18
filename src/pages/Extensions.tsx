@@ -183,9 +183,9 @@ export default function Extensions() {
               >
                 <Link
                   to="/booking"
-                  className="group inline-flex items-center gap-3 bg-foreground text-background px-6 py-3.5 rounded-full text-sm font-medium tracking-wide hover:bg-foreground/90 transition-all duration-300"
+                  className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
                 >
-                  <span>Book your consultation</span>
+                  <span>Book Your Consultation</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </motion.div>
@@ -219,9 +219,9 @@ export default function Extensions() {
             </p>
             <Link
               to="/booking"
-              className="inline-flex items-center px-6 py-2.5 border border-foreground text-foreground text-sm font-medium hover:bg-foreground hover:text-background transition-all duration-300 rounded-full"
+              className="inline-flex items-center px-6 py-2.5 border border-foreground text-foreground text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
             >
-              Get started
+              Get Started
             </Link>
           </div>
         </div>
@@ -253,7 +253,7 @@ export default function Extensions() {
                 <div className="mt-6">
                   <Link
                     to="/booking"
-                    className="inline-flex items-center justify-center w-10 h-10 border border-foreground/30 hover:bg-foreground hover:text-background transition-all duration-300 rounded-full"
+                    className="inline-flex items-center justify-center w-10 h-10 border border-foreground/30 hover:bg-foreground hover:text-background transition-all duration-300"
                     aria-label={`Learn more about ${benefit.title}`}
                   >
                     <ArrowRight className="w-4 h-4" />
@@ -299,14 +299,14 @@ export default function Extensions() {
             <div className="flex items-center gap-3">
               <button
                 onClick={prevSlide}
-                className="w-10 h-10 border border-foreground/30 flex items-center justify-center hover:bg-foreground hover:text-background transition-all duration-300 rounded-full"
+                className="w-10 h-10 border border-foreground/30 flex items-center justify-center hover:bg-foreground hover:text-background transition-all duration-300"
                 aria-label="Previous transformation"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={nextSlide}
-                className="w-10 h-10 border border-foreground/30 flex items-center justify-center hover:bg-foreground hover:text-background transition-all duration-300 rounded-full"
+                className="w-10 h-10 border border-foreground/30 flex items-center justify-center hover:bg-foreground hover:text-background transition-all duration-300"
                 aria-label="Next transformation"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -362,9 +362,9 @@ export default function Extensions() {
 
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 bg-foreground text-background px-6 py-3.5 text-sm font-medium tracking-wide hover:bg-foreground/90 transition-all duration-300"
+              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
             >
-              <span>BOOK A CONSULTATION</span>
+              <span>Book A Consultation</span>
               <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </motion.div>
