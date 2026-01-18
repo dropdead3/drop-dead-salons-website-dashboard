@@ -11,12 +11,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { href: "/services", label: "Services" },
@@ -30,6 +24,7 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOverDark, setIsOverDark] = useState(false);
+  const [isStaffMenuOpen, setIsStaffMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const location = useLocation();
 
@@ -278,24 +273,55 @@ export function Header() {
                 </Tooltip>
               </TooltipProvider>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button 
-                    className="p-2 opacity-70 hover:opacity-100 transition-opacity"
-                    aria-label="More options"
+              <button 
+                onClick={() => setIsStaffMenuOpen(!isStaffMenuOpen)}
+                className="p-2 opacity-70 hover:opacity-100 transition-opacity"
+                aria-label="More options"
+              >
+                <MoreVertical size={20} />
+              </button>
+            </motion.div>
+            
+            {/* Staff Login Expanding Menu */}
+            <AnimatePresence>
+              {isStaffMenuOpen && (
+                <motion.div
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: "auto", opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="absolute right-4 md:right-6 lg:right-8 top-1/2 -translate-y-1/2 overflow-hidden"
+                >
+                  <motion.div
+                    initial={{ x: 20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: 20, opacity: 0 }}
+                    transition={{ duration: 0.2, delay: 0.1 }}
+                    className="flex items-center gap-3 pl-4 pr-2"
                   >
-                    <MoreVertical size={20} />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background border-border">
-                  <DropdownMenuItem asChild>
-                    <Link to="/staff-login" className="cursor-pointer">
+                    <Link
+                      to="/staff-login"
+                      onClick={() => setIsStaffMenuOpen(false)}
+                      className={cn(
+                        "text-sm font-sans font-medium whitespace-nowrap px-4 py-2 rounded-full border transition-all duration-200",
+                        isOverDark 
+                          ? "border-white/30 text-white hover:bg-white/10" 
+                          : "border-foreground/20 text-foreground hover:bg-foreground/5"
+                      )}
+                    >
                       Staff Login
                     </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </motion.div>
+                    <button
+                      onClick={() => setIsStaffMenuOpen(false)}
+                      className="p-1.5 opacity-70 hover:opacity-100 transition-opacity"
+                      aria-label="Close menu"
+                    >
+                      <X size={16} />
+                    </button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Mobile Menu Toggle */}
             <button
