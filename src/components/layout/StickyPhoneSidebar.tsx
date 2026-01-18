@@ -56,7 +56,7 @@ export function StickyPhoneSidebar() {
                 >
                   <Phone size={16} />
                   <span
-                    className="text-xs uppercase tracking-wider font-sans"
+                    className="text-xs uppercase tracking-wider font-display"
                     style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
                   >
                     {location.name}

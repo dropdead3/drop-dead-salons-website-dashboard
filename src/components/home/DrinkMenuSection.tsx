@@ -107,7 +107,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
             className="bg-oat text-oat-foreground px-5 py-4 text-center shadow-lg border border-border/50 w-[180px] min-h-[120px] flex flex-col justify-center"
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-oat-foreground/60 font-sans">Ingredients</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-oat-foreground/60 font-display">Ingredients</p>
             <motion.ul 
               layout
               className="text-sm font-serif leading-relaxed text-left space-y-1"
@@ -155,7 +155,7 @@ export function DrinkMenuSection() {
         transition={{ duration: 0.6 }}
         className="container mx-auto px-6 text-center mb-12"
       >
-        <p className="text-xs md:text-sm uppercase tracking-[0.2em] text-muted-foreground font-sans">
+        <p className="text-xs md:text-sm uppercase tracking-[0.2em] text-muted-foreground font-display">
           Drinks on us. We have an exclusive menu of{" "}
           <span className="underline underline-offset-4">complimentary</span>{" "}
           options for your appointment.

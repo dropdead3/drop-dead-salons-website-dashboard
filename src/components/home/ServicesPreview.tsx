@@ -388,7 +388,7 @@ export function ServicesPreview() {
           className="absolute top-4 right-12 z-10 flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-sm border border-border rounded-full pointer-events-none"
         >
           <Pause size={12} className="text-muted-foreground" />
-          <span className="text-xs text-muted-foreground font-sans uppercase tracking-wider">Paused</span>
+          <span className="text-xs text-muted-foreground font-display uppercase tracking-wider">Paused</span>
         </motion.div>
         <div
           ref={scrollContainerRef}
@@ -423,7 +423,7 @@ export function ServicesPreview() {
 
               {/* Content */}
               <div className="w-1/2 flex flex-col justify-center py-4">
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3">
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-display mb-3">
                   {service.category}
                 </span>
                 

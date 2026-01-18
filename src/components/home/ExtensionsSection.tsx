@@ -51,7 +51,7 @@ export function ExtensionsSection() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-oat/20 border border-oat/30"
             >
               <Star className="w-4 h-4 fill-oat text-oat" />
-              <span className="text-sm font-medium tracking-wide text-oat">OUR SIGNATURE</span>
+              <span className="text-sm font-display uppercase tracking-wide text-oat">OUR SIGNATURE</span>
             </motion.div>
 
             <motion.h2

@@ -145,7 +145,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-xs uppercase tracking-[0.4em] text-muted-foreground font-sans mb-8"
+              className="text-xs uppercase tracking-[0.4em] text-muted-foreground font-display mb-8"
               style={{ 
                 opacity,
                 y: taglineY
@@ -245,7 +245,7 @@ export function HeroSection() {
         aria-label="Scroll down"
         style={{ opacity }}
       >
-        <span className="text-xs uppercase tracking-[0.2em] font-sans">Scroll</span>
+        <span className="text-xs uppercase tracking-[0.2em] font-display">Scroll</span>
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ 
