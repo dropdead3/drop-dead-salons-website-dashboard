@@ -562,6 +562,87 @@ export default function Extensions() {
         </div>
       </Section>
 
+      {/* Are Extensions Right For You? Checklist */}
+      <Section className="bg-oat/20">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+            >
+              Find Out
+            </motion.span>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+            >
+              Are Extensions <span className="italic font-light">Right For You?</span>
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mt-4 text-muted-foreground max-w-xl mx-auto"
+            >
+              If you check off most of these, you're the perfect candidate for extensions.
+            </motion.p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              "You want longer hair but don't want to wait years to grow it",
+              "You have fine or thin hair and want more volume and fullness",
+              "You're tired of hair that won't grow past a certain length",
+              "You want to add dimension or color without damaging your natural hair",
+              "You have a special event coming up and want a dramatic transformation",
+              "You're ready to invest in yourself and feel confident every day",
+              "You want versatile styling options—updos, ponytails, and braids",
+              "You've tried other methods and want something more comfortable and natural"
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                className="flex items-start gap-4 bg-background p-4 border border-border"
+              >
+                <div className="w-6 h-6 border-2 border-foreground flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-4 h-4 text-foreground" />
+                </div>
+                <p className="text-sm leading-relaxed">{item}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="text-center mt-10"
+          >
+            <p className="text-muted-foreground mb-6">
+              Sound like you? Let's make it happen.
+            </p>
+            <Link
+              to="/booking"
+              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
+            >
+              <span>Book Your Consultation</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </motion.div>
+        </div>
+      </Section>
+
       {/* Extension Pricing Section */}
       <Section className="bg-secondary/30">
         <div className="text-center mb-12">
