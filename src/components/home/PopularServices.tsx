@@ -47,7 +47,7 @@ export function PopularServices() {
             >
               <Link
                 to="/services"
-                className="group/btn inline-flex items-center gap-2 px-6 py-3 text-sm uppercase tracking-[0.1em] font-sans text-foreground bg-card border border-border transition-all duration-300 ease-out hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105 hover:shadow-lg"
+                className="group/btn inline-flex items-center gap-2 px-6 py-3 text-sm font-sans text-foreground bg-card border border-border transition-all duration-300 ease-out hover:bg-foreground hover:text-background hover:border-foreground hover:scale-105 hover:shadow-lg"
               >
                 {service}
                 <ArrowUpRight 

@@ -65,10 +65,10 @@ export function GallerySection() {
           </p>
           <Link
             to="/gallery"
-            className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.15em] font-medium text-foreground hover:text-foreground/70 transition-colors group w-fit"
+            className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group w-fit"
           >
             <Images className="w-4 h-4" />
-            <span>View Gallery</span>
+            <span>View gallery</span>
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>

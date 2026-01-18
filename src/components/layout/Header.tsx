@@ -165,9 +165,9 @@ export function Header() {
                 </Link>
                 <Link
                   to="/booking"
-                  className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm uppercase tracking-[0.15em] font-sans font-medium bg-foreground text-background"
+                  className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-sans font-medium bg-foreground text-background"
                 >
-                  Book Consult
+                  Book consult
                 </Link>
               </nav>
             </motion.div>
