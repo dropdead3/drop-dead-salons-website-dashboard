@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Instagram, ArrowUpRight, MapPin, Phone } from "lucide-react";
 import Logo from "@/assets/drop-dead-logo.svg";
-import { FooterStamp } from "./FooterStamp";
+
 
 const footerLinks = [
   { href: "/services", label: "Services" },
@@ -175,10 +175,6 @@ export function Footer() {
             </a>
           </div>
 
-          {/* Stamp */}
-          <div className="flex items-start justify-center lg:justify-end">
-            <FooterStamp />
-          </div>
         </div>
 
         {/* Bottom */}
