@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
+import DD75Logo from '@/assets/dd75-logo.svg';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -253,16 +254,15 @@ export default function DashboardHome() {
         {/* Drop Dead 75 Program Section */}
         <Card className="p-6 border-2 border-foreground/20">
           <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center">
-                <Target className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="font-display text-lg tracking-wide">DROP DEAD 75</h2>
-                <p className="text-sm text-muted-foreground font-sans">
-                  75 days of execution. No excuses.
-                </p>
-              </div>
+            <div className="flex items-center gap-4">
+              <img 
+                src={DD75Logo} 
+                alt="Drop Dead 75" 
+                className="h-8 w-auto"
+              />
+              <p className="text-sm text-muted-foreground font-sans">
+                75 days of execution. No excuses.
+              </p>
             </div>
             {enrollment && (
               <div className="flex items-center gap-2 text-sm">
