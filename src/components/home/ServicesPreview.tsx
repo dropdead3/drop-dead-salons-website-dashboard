@@ -251,7 +251,7 @@ export function ServicesPreview() {
   };
 
   return (
-    <Section className="pb-8 lg:pb-12 overflow-hidden" sectionRef={sectionRef} theme="light">
+    <Section className="pb-8 lg:pb-12 overflow-visible" sectionRef={sectionRef} theme="light">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
         <motion.div
@@ -299,11 +299,16 @@ export function ServicesPreview() {
         </motion.div>
       </div>
 
-      {/* Desktop: Horizontal Scroll Carousel */}
+      {/* Desktop: Horizontal Scroll Carousel - Full Width */}
       <div 
-        className="hidden md:block -mx-1 lg:-mx-7 relative overflow-hidden"
+        className="hidden md:block relative"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        style={{ 
+          marginLeft: 'calc(-50vw + 50%)', 
+          marginRight: 'calc(-50vw + 50%)', 
+          width: '100vw' 
+        }}
       >
         {/* Pause indicator */}
         <motion.div
@@ -324,8 +329,14 @@ export function ServicesPreview() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}
+          className={`flex overflow-x-auto scrollbar-minimal pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none', 
+            scrollBehavior: 'smooth',
+            paddingLeft: 'max(1.5rem, calc((100vw - 1280px) / 2 + 1.5rem))',
+            paddingRight: '3rem'
+          }}
         >
           {services.map((service, index) => (
             <motion.div
