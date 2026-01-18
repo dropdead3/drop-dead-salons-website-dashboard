@@ -14,37 +14,37 @@ const drinks = [
     id: 1,
     name: "Dirty Peach",
     image: dirtyPeachImg,
-    ingredients: "Peach, brown sugar, gummy candy, sparkling water",
+    ingredients: "Coke, peach, vanilla cream",
   },
   {
     id: 2,
     name: "Blow Out",
     image: blowOutImg,
-    ingredients: "Strawberry, peach ring, sparkling water, crushed ice",
+    ingredients: "Sparkling water, peach, strawberry",
   },
   {
     id: 3,
     name: "Scary Stories",
     image: scaryStoriesImg,
-    ingredients: "Toasted marshmallow, caramel, espresso, oat milk, whipped cream",
+    ingredients: "Espresso, white chocolate, toasted marshmallow, oat milk, whipped cream, cinnamon powder",
   },
   {
     id: 4,
     name: "Gramps",
     image: grampsImg,
-    ingredients: "Caramel, butterscotch, espresso, oat milk, whipped cream",
+    ingredients: "Espresso, caramel drizzle, butterscotch, hazelnut, oat milk",
   },
   {
     id: 5,
     name: "Zombie",
     image: zombieImg,
-    ingredients: "Cinnamon, espresso, oat milk, whipped cream",
+    ingredients: "Espresso, brown sugar cinnamon, vanilla, oat milk, cinnamon powder",
   },
   {
     id: 6,
     name: "Afterlife",
     image: afterlifeImg,
-    ingredients: "Strawberry, mango, passion fruit, sparkling water",
+    ingredients: "Red Bull, coconut, strawberry, vanilla cream",
   },
 ];
 
