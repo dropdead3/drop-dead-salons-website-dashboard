@@ -171,8 +171,8 @@ export function FAQSection() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -30 }}
                       transition={{ 
-                        duration: 0.5, 
-                        delay: index * 0.1,
+                        duration: 0.6, 
+                        delay: index * 0.15,
                         ease: [0.25, 0.1, 0.25, 1]
                       }}
                       whileHover={{ scale: 1.01, x: 4 }}
