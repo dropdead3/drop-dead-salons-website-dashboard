@@ -37,7 +37,7 @@ export function PopularServices() {
           Other Popular Services
         </span>
 
-        <div className="flex flex-wrap justify-center gap-3 md:gap-4 max-w-4xl mx-auto">
+        <div className="flex flex-wrap justify-center gap-3 md:gap-4 max-w-6xl mx-auto">
           {popularServices.map((service, index) => (
             <motion.div
               key={service}
