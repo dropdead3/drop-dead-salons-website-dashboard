@@ -27,36 +27,45 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const mainNavItems = [
+type AppRole = 'admin' | 'manager' | 'stylist' | 'receptionist' | 'assistant';
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: AppRole[]; // If undefined, visible to all authenticated users
+}
+
+const mainNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
 ];
 
-const housekeepingNavItems = [
+const housekeepingNavItems: NavItem[] = [
   { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users },
   { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText },
 ];
 
-const growthNavItems = [
+const growthNavItems: NavItem[] = [
   { href: '/dashboard/training', label: 'Training', icon: Video },
-  { href: '/dashboard/program', label: 'Client Engine', icon: Target },
-  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell },
+  { href: '/dashboard/program', label: 'Client Engine', icon: Target, roles: ['stylist', 'manager', 'admin'] },
+  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, roles: ['stylist', 'manager', 'admin'] },
 ];
 
-const statsNavItems = [
-  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3 },
+const statsNavItems: NavItem[] = [
+  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, roles: ['stylist', 'manager', 'admin'] },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
-const coachNavItems = [
+const coachNavItems: NavItem[] = [
   { href: '/dashboard/admin/team', label: 'Team Overview', icon: Users },
   { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Bell },
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText },
-  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, roles: ['admin'] },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, isCoach, signOut } = useAuth();
+  const { user, isCoach, roles, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
@@ -64,6 +73,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const handleSignOut = async () => {
     await signOut();
     navigate('/staff-login');
+  };
+
+  // Filter nav items based on user roles
+  const filterNavItems = (items: NavItem[]) => {
+    return items.filter(item => {
+      if (!item.roles) return true; // No roles specified = visible to all
+      return item.roles.some(role => roles.includes(role));
+    });
   };
 
   const NavLink = ({ href, label, icon: Icon, badgeCount }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; badgeCount?: number }) => {
@@ -105,7 +122,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Navigation */}
       <nav className="flex-1 py-4 overflow-y-auto">
         <div className="space-y-1">
-          {mainNavItems.map((item) => (
+          {filterNavItems(mainNavItems).map((item) => (
             <NavLink 
               key={item.href} 
               {...item} 
@@ -115,45 +132,57 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Growth Section */}
-        <div className="my-4 px-4">
-          <div className="h-px bg-border" />
-        </div>
-        <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-          Growth
-        </p>
-        <div className="space-y-1">
-          {growthNavItems.map((item) => (
-            <NavLink key={item.href} {...item} />
-          ))}
-        </div>
+        {filterNavItems(growthNavItems).length > 0 && (
+          <>
+            <div className="my-4 px-4">
+              <div className="h-px bg-border" />
+            </div>
+            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
+              Growth
+            </p>
+            <div className="space-y-1">
+              {filterNavItems(growthNavItems).map((item) => (
+                <NavLink key={item.href} {...item} />
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Stats & Leaderboard Section */}
-        <div className="my-4 px-4">
-          <div className="h-px bg-border" />
-        </div>
-        <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-          Stats & Leaderboard
-        </p>
-        <div className="space-y-1">
-          {statsNavItems.map((item) => (
-            <NavLink key={item.href} {...item} />
-          ))}
-        </div>
+        {filterNavItems(statsNavItems).length > 0 && (
+          <>
+            <div className="my-4 px-4">
+              <div className="h-px bg-border" />
+            </div>
+            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
+              Stats & Leaderboard
+            </p>
+            <div className="space-y-1">
+              {filterNavItems(statsNavItems).map((item) => (
+                <NavLink key={item.href} {...item} />
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Housekeeping Section */}
-        <div className="my-4 px-4">
-          <div className="h-px bg-border" />
-        </div>
-        <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-          Housekeeping
-        </p>
-        <div className="space-y-1">
-          {housekeepingNavItems.map((item) => (
-            <NavLink key={item.href} {...item} />
-          ))}
-        </div>
+        {filterNavItems(housekeepingNavItems).length > 0 && (
+          <>
+            <div className="my-4 px-4">
+              <div className="h-px bg-border" />
+            </div>
+            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
+              Housekeeping
+            </p>
+            <div className="space-y-1">
+              {filterNavItems(housekeepingNavItems).map((item) => (
+                <NavLink key={item.href} {...item} />
+              ))}
+            </div>
+          </>
+        )}
 
-        {isCoach && (
+        {isCoach && filterNavItems(coachNavItems).length > 0 && (
           <>
             <div className="my-4 px-4">
               <div className="h-px bg-border" />
@@ -162,7 +191,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               Admin
             </p>
             <div className="space-y-1">
-              {coachNavItems.map((item) => (
+              {filterNavItems(coachNavItems).map((item) => (
                 <NavLink 
                   key={item.href} 
                   {...item} 
