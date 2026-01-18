@@ -66,7 +66,7 @@ export function StickyFooterBar() {
               stiffness: 300,
               damping: 30,
             }}
-            className="fixed bottom-4 left-4 right-20 md:left-1/2 md:right-auto md:-translate-x-1/2 md:bottom-8 z-40"
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 md:bottom-8 z-40"
           >
             {/* Outer glow ring */}
             <div className="absolute -inset-1 bg-gradient-to-r from-white/20 via-white/5 to-white/20 rounded-3xl blur-sm" />
@@ -95,7 +95,7 @@ export function StickyFooterBar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute bottom-full left-0 mb-2 w-48 bg-background border border-border rounded-xl shadow-xl overflow-hidden z-50"
+                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-background border border-border rounded-xl shadow-xl overflow-hidden z-50"
                     >
                       {locations.map((loc) => (
                         <a
@@ -116,24 +116,31 @@ export function StickyFooterBar() {
                 </AnimatePresence>
               </div>
 
-              {/* Desktop: Show both locations */}
-              <div className="hidden md:flex items-center gap-2">
-                {locations.map((loc) => (
-                  <a
-                    key={loc.name}
-                    href={`tel:${loc.phone.replace(/[^0-9]/g, "")}`}
-                    className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-xl transition-all duration-200"
-                  >
-                    <Phone size={14} />
-                    <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
-                      {loc.name}
-                    </span>
-                  </a>
-                ))}
+              {/* Desktop: Show both locations with divider between them */}
+              <div className="hidden md:flex items-center">
+                <a
+                  href={`tel:${locations[0].phone.replace(/[^0-9]/g, "")}`}
+                  className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-xl transition-all duration-200"
+                >
+                  <Phone size={14} />
+                  <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
+                    {locations[0].name}
+                  </span>
+                </a>
+                
+                {/* Divider between locations */}
+                <div className="w-px h-6 bg-foreground/15" />
+                
+                <a
+                  href={`tel:${locations[1].phone.replace(/[^0-9]/g, "")}`}
+                  className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-xl transition-all duration-200"
+                >
+                  <Phone size={14} />
+                  <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
+                    {locations[1].name}
+                  </span>
+                </a>
               </div>
-
-              {/* Divider */}
-              <div className="w-px h-8 bg-foreground/10" />
 
               {/* Book CTA */}
               <Link
