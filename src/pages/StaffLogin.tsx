@@ -253,11 +253,30 @@ export default function StaffLogin() {
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      setConfirmPassword(newValue);
+                      
+                      // Show real-time password match feedback
+                      if (newValue.length >= 6 && password.length >= 6) {
+                        if (newValue === password) {
+                          toast({
+                            title: 'Passwords match ✓',
+                            description: 'You\'re all set!',
+                          });
+                        } else {
+                          toast({
+                            variant: 'destructive',
+                            title: 'Passwords do not match',
+                            description: 'Please make sure both passwords are identical.',
+                          });
+                        }
+                      }
+                    }}
                     placeholder="••••••••"
                     required
                     minLength={6}
-                    className="h-12 bg-card border-border pr-12"
+                    className={`h-12 bg-card border-border pr-12 ${confirmPassword.length >= 6 ? (confirmPassword === password ? 'border-green-500' : 'border-destructive') : ''}`}
                   />
                   <button
                     type="button"
@@ -267,6 +286,11 @@ export default function StaffLogin() {
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {confirmPassword.length >= 6 && (
+                  <p className={`text-xs ${confirmPassword === password ? 'text-green-600' : 'text-destructive'}`}>
+                    {confirmPassword === password ? 'Passwords match ✓' : 'Passwords do not match'}
+                  </p>
+                )}
               </div>
             )}
 
