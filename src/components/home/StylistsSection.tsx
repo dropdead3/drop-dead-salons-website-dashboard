@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/tooltip";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { TogglePill } from "@/components/ui/toggle-pill";
 
 import { stylists, locations, allSpecialties, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
 
@@ -323,41 +324,17 @@ export function StylistsSection() {
             VIEW STYLISTS BY LOCATION
           </Eyebrow>
           
-          <div className="inline-flex items-center border border-border bg-background rounded-xl overflow-hidden">
-            {locations.map((location) => (
-              <button
-                key={location.id}
-                onClick={() => setSelectedLocation(location.id)}
-                className={`flex items-center gap-2 px-4 md:px-6 py-3 md:py-4 text-sm md:text-base font-medium transition-all duration-300 ${
-                  selectedLocation === location.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-muted"
-                }`}
-              >
-                <span>{location.name}</span>
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span 
-                        className={`transition-colors ${
-                          selectedLocation === location.id
-                            ? "text-primary-foreground/70 hover:text-primary-foreground"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Info className="w-3.5 h-3.5" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="p-3 bg-background text-foreground border border-border">
-                      <p className="text-xs font-medium mb-1">{location.name}</p>
-                      <p className="text-xs text-muted-foreground">{location.address}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </button>
-            ))}
-          </div>
+          <TogglePill
+            options={locations.map(loc => ({
+              value: loc.id,
+              label: loc.name,
+              icon: <Info className="w-3.5 h-3.5" />,
+            }))}
+            value={selectedLocation}
+            onChange={(val) => setSelectedLocation(val as Location)}
+            size="lg"
+            variant="solid"
+          />
 
           {/* Filters */}
           <div className="mt-8 flex flex-col gap-8 items-center">
@@ -369,14 +346,14 @@ export function StylistsSection() {
               <div className="flex flex-wrap justify-center gap-2">
                 <motion.button
                   onClick={() => setSelectedSpecialty(null)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   animate={{
                     backgroundColor: selectedSpecialty === null ? "hsl(var(--foreground))" : "hsl(var(--background))",
                     color: selectedSpecialty === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
                   }}
                   transition={{ duration: 0.2 }}
-                  className="px-5 py-2.5 text-sm font-medium border border-border rounded-lg"
+                  className="px-5 py-2.5 text-sm font-medium border border-border rounded-full"
                 >
                   All
                 </motion.button>
@@ -384,14 +361,14 @@ export function StylistsSection() {
                   <motion.button
                     key={specialty}
                     onClick={() => setSelectedSpecialty(specialty)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     animate={{
                       backgroundColor: selectedSpecialty === specialty ? "hsl(var(--foreground))" : "hsl(var(--background))",
                       color: selectedSpecialty === specialty ? "hsl(var(--background))" : "hsl(var(--foreground))",
                     }}
                     transition={{ duration: 0.2 }}
-                    className="px-5 py-2.5 text-sm font-medium border border-border rounded-lg"
+                    className="px-5 py-2.5 text-sm font-medium border border-border rounded-full"
                   >
                     {toTitleCase(specialty)}
                   </motion.button>
@@ -428,14 +405,14 @@ export function StylistsSection() {
               <div className="flex flex-wrap justify-center gap-2">
                 <motion.button
                   onClick={() => setSelectedLevel(null)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   animate={{
                     backgroundColor: selectedLevel === null ? "hsl(var(--foreground))" : "hsl(var(--background))",
                     color: selectedLevel === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
                   }}
                   transition={{ duration: 0.2 }}
-                  className="px-5 py-2.5 text-sm font-medium border border-border"
+                  className="px-5 py-2.5 text-sm font-medium border border-border rounded-full"
                 >
                   All Levels
                 </motion.button>
@@ -443,14 +420,14 @@ export function StylistsSection() {
                   <motion.button
                     key={level.id}
                     onClick={() => setSelectedLevel(level.id)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     animate={{
                       backgroundColor: selectedLevel === level.id ? "hsl(var(--foreground))" : "hsl(var(--background))",
                       color: selectedLevel === level.id ? "hsl(var(--background))" : "hsl(var(--foreground))",
                     }}
                     transition={{ duration: 0.2 }}
-                    className="px-5 py-2.5 text-sm font-medium border border-border"
+                    className="px-5 py-2.5 text-sm font-medium border border-border rounded-full"
                   >
                     <span>{level.name}</span>
                     <span className="ml-2 opacity-60">{level.price}</span>
