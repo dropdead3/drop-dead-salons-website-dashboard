@@ -23,9 +23,9 @@ export const NewClientSection = () => {
           {/* Content */}
           <div className="flex-1 max-w-2xl">
             <motion.h2
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+              initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+              animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 20, filter: "blur(4px)" }}
+              transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
               className="text-3xl md:text-4xl lg:text-5xl font-display mb-6"
             >
               <span className="whitespace-nowrap">New clients can get</span>{" "}

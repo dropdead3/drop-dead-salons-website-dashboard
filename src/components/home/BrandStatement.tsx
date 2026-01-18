@@ -12,9 +12,9 @@ export function BrandStatement() {
       <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
         {/* Left side - Title */}
         <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          animate={isInView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.8 }}
+          initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
+          animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
+          transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
         >
           <Eyebrow className="text-background/60 mb-4">
             Drop Dead is
@@ -28,9 +28,9 @@ export function BrandStatement() {
 
         {/* Right side - Description */}
         <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          animate={isInView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
+          animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
+          transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
           className="space-y-6"
         >
           <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
