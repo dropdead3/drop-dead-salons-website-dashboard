@@ -374,9 +374,10 @@ export function ServicesPreview() {
                   </Link>
                   <Link
                     to="/services"
-                    className="inline-flex items-center px-7 py-3.5 text-sm font-sans border border-border text-foreground hover:bg-foreground hover:text-background hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
+                    className="group/learn inline-flex items-center gap-2 px-7 py-3.5 text-sm font-sans border border-border text-foreground hover:border-foreground hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
                   >
-                    Learn more
+                    <span>Learn more</span>
+                    <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/learn:opacity-100 group-hover/learn:translate-x-0 transition-all duration-300" />
                   </Link>
                 </div>
               </div>
@@ -441,9 +442,10 @@ export function ServicesPreview() {
                 </Link>
                 <Link
                   to="/services"
-                  className="inline-flex items-center px-6 py-3.5 text-sm font-sans border border-border text-foreground hover:bg-foreground hover:text-background hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
+                  className="group/learn inline-flex items-center gap-2 px-6 py-3.5 text-sm font-sans border border-border text-foreground hover:border-foreground hover:scale-105 active:scale-[0.98] transition-all duration-300 whitespace-nowrap"
                 >
-                  Learn more
+                  <span>Learn more</span>
+                  <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/learn:opacity-100 group-hover/learn:translate-x-0 transition-all duration-300" />
                 </Link>
               </div>
             </motion.div>
