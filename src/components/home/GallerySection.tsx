@@ -91,6 +91,7 @@ export function GallerySection() {
               afterImage={transform.afterImage}
               beforeLabel={transform.beforeLabel}
               afterLabel={transform.afterLabel}
+              hoverMode={true}
             />
           </motion.div>
         ))}
