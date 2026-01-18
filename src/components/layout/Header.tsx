@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Logo from "@/assets/drop-dead-logo.svg";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -67,9 +68,13 @@ export function Header() {
             {/* Logo */}
             <Link
               to="/"
-              className="font-serif text-xl lg:text-2xl font-bold tracking-tight text-foreground hover:opacity-70 transition-opacity uppercase leading-none"
+              className="hover:opacity-70 transition-opacity"
             >
-              Drop Dead
+              <img 
+                src={Logo} 
+                alt="Drop Dead" 
+                className="h-6 lg:h-7 w-auto"
+              />
             </Link>
 
             {/* Desktop Navigation - Center */}
