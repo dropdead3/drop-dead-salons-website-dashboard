@@ -171,13 +171,14 @@ export function Header() {
                       src={LogoIcon}
                       alt="Drop Dead"
                       initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      animate={{ 
+                        opacity: 1, 
+                        scale: 1, 
+                        filter: isOverDark ? "blur(0px) invert(1)" : "blur(0px) invert(0)" 
+                      }}
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className={cn(
-                        "h-5 lg:h-6 w-auto transition-[filter] duration-300",
-                        isOverDark && "invert"
-                      )}
+                      className="h-5 lg:h-6 w-auto"
                     />
                   ) : (
                     <motion.img
@@ -185,13 +186,14 @@ export function Header() {
                       src={Logo}
                       alt="Drop Dead"
                       initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      animate={{ 
+                        opacity: 1, 
+                        scale: 1, 
+                        filter: isOverDark ? "blur(0px) invert(1)" : "blur(0px) invert(0)" 
+                      }}
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className={cn(
-                        "h-6 w-auto transition-[filter] duration-300",
-                        isOverDark && "invert"
-                      )}
+                      className="h-6 w-auto"
                     />
                   )}
                 </AnimatePresence>
