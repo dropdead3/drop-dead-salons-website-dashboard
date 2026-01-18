@@ -47,28 +47,19 @@ export function Header() {
       // Get the header's bounding box
       const headerRect = headerEl.getBoundingClientRect();
       
-      // Sample Y at the vertical center of the header
-      const sampleY = headerRect.top + headerRect.height / 2;
+      // Sample Y below the header to hit the content behind it
+      // Add extra offset to ensure we're sampling content, not the header itself
+      const sampleY = headerRect.bottom + 50;
       
       // Sample at center of viewport
       const sampleX = window.innerWidth / 2;
-
-      // Temporarily hide ALL header children so elementFromPoint sees what's behind
-      const headerChildren = headerEl.querySelectorAll('*');
-      headerChildren.forEach(child => {
-        if (child instanceof HTMLElement) {
-          child.dataset.originalPointerEvents = child.style.pointerEvents;
-          child.style.pointerEvents = 'none';
-        }
-      });
-      headerEl.style.pointerEvents = 'none';
 
       const elBehind = document.elementFromPoint(sampleX, sampleY);
       
       // Walk up to find nearest ancestor with data-theme
       let foundDark = false;
       let cur: Element | null = elBehind;
-      while (cur && cur !== document.body && cur !== headerEl) {
+      while (cur && cur !== document.body) {
         if (cur instanceof HTMLElement && cur.hasAttribute("data-theme")) {
           const theme = cur.getAttribute("data-theme");
           if (theme === "dark") {
@@ -79,25 +70,15 @@ export function Header() {
         cur = cur.parentElement;
       }
 
-      // Restore pointer events
-      headerEl.style.pointerEvents = '';
-      headerChildren.forEach(child => {
-        if (child instanceof HTMLElement) {
-          child.style.pointerEvents = child.dataset.originalPointerEvents || '';
-          delete child.dataset.originalPointerEvents;
-        }
-      });
-
       setIsOverDark(foundDark);
     };
 
     window.addEventListener("scroll", detectTheme, { passive: true });
-    // Delay initial check to ensure DOM is ready
-    const timeout = setTimeout(detectTheme, 100);
+    // Run immediately
+    detectTheme();
     
     return () => {
       window.removeEventListener("scroll", detectTheme);
-      clearTimeout(timeout);
     };
   }, []);
 
