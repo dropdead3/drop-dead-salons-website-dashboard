@@ -24,7 +24,16 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Starting daily reminder check...");
+    // Check if this is the late (urgent) reminder
+    let isLateReminder = false;
+    try {
+      const body = await req.json();
+      isLateReminder = body?.isLateReminder === true;
+    } catch {
+      // No body or invalid JSON, default to regular reminder
+    }
+
+    console.log(`Starting ${isLateReminder ? 'LATE' : 'regular'} daily reminder check...`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -88,6 +97,28 @@ serve(async (req: Request): Promise<Response> => {
 
     for (const stylist of stylistsToRemind) {
       try {
+        const subject = isLateReminder 
+          ? `🚨 URGENT: Day ${stylist.current_day} ends in 3 hours!`
+          : `⏰ Day ${stylist.current_day} Check-In Reminder`;
+
+        const urgentMessage = isLateReminder
+          ? `
+            <p style="font-size: 18px; line-height: 1.6; color: #c00; font-weight: bold;">
+              ⚠️ You only have about 3 hours left to complete Day ${stylist.current_day}!
+            </p>
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              If you don't complete your check-in by midnight, <strong>you will have to restart the entire 75-day program</strong>.
+            </p>
+          `
+          : `
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              You haven't completed your <strong>Day ${stylist.current_day}</strong> check-in yet.
+            </p>
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              Remember, missing a day means restarting the entire 75-day program. Don't let today be that day!
+            </p>
+          `;
+
         const emailRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -97,23 +128,17 @@ serve(async (req: Request): Promise<Response> => {
           body: JSON.stringify({
             from: "Drop Dead 75 <onboarding@resend.dev>",
             to: [stylist.email],
-            subject: `⏰ Day ${stylist.current_day} Check-In Reminder`,
+            subject,
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1 style="font-size: 24px; margin-bottom: 16px;">Hey ${stylist.full_name}!</h1>
+                <h1 style="font-size: 24px; margin-bottom: 16px;">${isLateReminder ? '🚨' : ''} Hey ${stylist.full_name}!</h1>
                 
-                <p style="font-size: 16px; line-height: 1.6; color: #333;">
-                  You haven't completed your <strong>Day ${stylist.current_day}</strong> check-in yet.
-                </p>
-                
-                <p style="font-size: 16px; line-height: 1.6; color: #333;">
-                  Remember, missing a day means restarting the entire 75-day program. Don't let today be that day!
-                </p>
+                ${urgentMessage}
                 
                 <div style="margin: 32px 0;">
                   <a href="${Deno.env.get("SITE_URL") || "https://dropdeadgorgeous.com"}/dashboard" 
-                     style="background: #000; color: #fff; padding: 16px 32px; text-decoration: none; font-weight: bold; display: inline-block;">
-                    COMPLETE DAY ${stylist.current_day} NOW
+                     style="background: ${isLateReminder ? '#c00' : '#000'}; color: #fff; padding: 16px 32px; text-decoration: none; font-weight: bold; display: inline-block;">
+                    ${isLateReminder ? '⚡ COMPLETE NOW - TIME IS RUNNING OUT' : `COMPLETE DAY ${stylist.current_day} NOW`}
                   </a>
                 </div>
                 
@@ -129,7 +154,7 @@ serve(async (req: Request): Promise<Response> => {
                 </ul>
                 
                 <p style="font-size: 14px; color: #999; margin-top: 32px;">
-                  You've got this. No excuses. 💪
+                  ${isLateReminder ? 'Stop what you\'re doing and get this done. NOW. 🔥' : 'You\'ve got this. No excuses. 💪'}
                 </p>
               </div>
             `,
