@@ -491,12 +491,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   key={role}
                   onClick={() => setViewAsRole(role)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-3 cursor-pointer transition-all",
+                    "flex items-center gap-3 px-3 py-3 cursor-pointer transition-all group",
                     isSelected && "bg-accent"
                   )}
                 >
                   <div className={cn(
-                    "p-1.5 transition-colors",
+                    "p-1.5 transition-all border border-transparent group-hover:border-foreground/30",
                     roleColors[role]
                   )}>
                     <RoleIcon className="w-4 h-4" />
