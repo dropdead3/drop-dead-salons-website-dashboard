@@ -126,6 +126,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // isCoach should use simulated roles for nav visibility
   const effectiveIsCoach = isViewingAs ? (viewAsRole === 'admin' || viewAsRole === 'manager') : isCoach;
 
+  // Get the user's primary access level for display
+  const getAccessLabel = () => {
+    if (actualRoles.includes('admin')) return 'Full Access Admin';
+    if (actualRoles.includes('manager')) return 'Manager';
+    if (actualRoles.includes('stylist')) return 'Stylist';
+    if (actualRoles.includes('receptionist')) return 'Receptionist';
+    if (actualRoles.includes('assistant')) return 'Assistant';
+    return 'Team Member';
+  };
+
+  const getAccessBadgeColor = () => {
+    if (actualRoles.includes('admin')) return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800';
+    if (actualRoles.includes('manager')) return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800';
+    if (actualRoles.includes('stylist')) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800';
+    if (actualRoles.includes('receptionist')) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800';
+    if (actualRoles.includes('assistant')) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+    return 'bg-muted text-muted-foreground border-border';
+  };
+
   const handleSignOut = async () => {
     setViewAsRole(null); // Clear view as on sign out
     await signOut();
@@ -472,7 +491,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <img src={Logo} alt="Drop Dead" className="h-4 w-auto" />
         </Link>
 
-        <ViewAsToggle />
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className={cn("text-xs font-medium", getAccessBadgeColor())}>
+            {getAccessLabel()}
+          </Badge>
+          <ViewAsToggle />
+        </div>
       </header>
 
       {/* View As Banner */}
@@ -513,14 +537,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Desktop Top Bar (for admins) */}
-      {isAdmin && (
-        <div className="hidden lg:block lg:pl-64">
-          <div className="sticky top-0 z-30 flex items-center justify-end gap-2 h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
-            <ViewAsToggle />
-          </div>
+      {/* Desktop Top Bar */}
+      <div className="hidden lg:block lg:pl-64">
+        <div className="sticky top-0 z-30 flex items-center justify-end gap-3 h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
+          <Badge variant="outline" className={cn("text-xs font-medium", getAccessBadgeColor())}>
+            {getAccessLabel()}
+          </Badge>
+          {isAdmin && <ViewAsToggle />}
         </div>
-      )}
+      </div>
 
       {/* Main Content */}
       <main className="lg:pl-64">
