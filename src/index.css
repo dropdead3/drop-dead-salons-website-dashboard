@@ -396,11 +396,11 @@
     background: linear-gradient(
       90deg,
       transparent,
-      hsla(0, 0%, 100%, 0.5),
+      hsla(0, 0%, 100%, 0.3),
       transparent
     );
     transform: translateX(-100%) skewX(-15deg);
-    animation: badge-shine 3s ease-in-out infinite;
+    animation: badge-shine 5s ease-in-out infinite;
     pointer-events: none;
   }
 }
