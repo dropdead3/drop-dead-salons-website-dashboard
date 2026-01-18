@@ -1,7 +1,7 @@
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Search, X, ChevronLeft, ChevronRight, Star, Award, Users, Clock, Check, Sparkles } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
@@ -215,7 +215,75 @@ export default function Extensions() {
         </div>
       </section>
 
-      {/* New Client Banner */}
+      {/* Social Proof / Trust Badges Section */}
+      <section className="py-12 bg-secondary/30">
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+            {/* Rating */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="text-center"
+            >
+              <div className="flex items-center justify-center gap-1 mb-2">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-oat text-oat" />
+                ))}
+              </div>
+              <p className="text-2xl font-serif font-medium text-foreground">4.9</p>
+              <p className="text-sm text-muted-foreground mt-1">500+ Reviews</p>
+            </motion.div>
+
+            {/* Certified */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-center"
+            >
+              <div className="flex items-center justify-center mb-2">
+                <Award className="w-8 h-8 text-foreground" />
+              </div>
+              <p className="text-2xl font-serif font-medium text-foreground">Certified</p>
+              <p className="text-sm text-muted-foreground mt-1">Drop Dead Method</p>
+            </motion.div>
+
+            {/* Clients Served */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-center"
+            >
+              <div className="flex items-center justify-center mb-2">
+                <Users className="w-8 h-8 text-foreground" />
+              </div>
+              <p className="text-2xl font-serif font-medium text-foreground">2,000+</p>
+              <p className="text-sm text-muted-foreground mt-1">Transformations</p>
+            </motion.div>
+
+            {/* Experience */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="text-center"
+            >
+              <div className="flex items-center justify-center mb-2">
+                <Sparkles className="w-8 h-8 text-foreground" />
+              </div>
+              <p className="text-2xl font-serif font-medium text-foreground">10+ Years</p>
+              <p className="text-sm text-muted-foreground mt-1">Expert Experience</p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       <section className="py-5 border-y border-border">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
@@ -544,7 +612,103 @@ export default function Extensions() {
         </motion.div>
       </Section>
 
-      {/* What's Included Section */}
+      {/* Method Comparison Section */}
+      <Section className="bg-background">
+        <div className="text-center mb-12">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+          >
+            Why Choose Us
+          </motion.span>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+          >
+            The Drop Dead <span className="italic font-light">Difference</span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-4 text-muted-foreground max-w-2xl mx-auto"
+          >
+            See how our signature Drop Dead Method compares to other popular extension techniques.
+          </motion.p>
+        </div>
+
+        {/* Comparison Table */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="overflow-x-auto"
+        >
+          <table className="w-full border-collapse min-w-[600px]">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="py-4 px-4 text-left font-serif text-lg font-normal">Feature</th>
+                <th className="py-4 px-4 text-center font-serif text-lg font-normal bg-oat/10">Drop Dead Method</th>
+                <th className="py-4 px-4 text-center font-serif text-lg font-normal">Tape-Ins</th>
+                <th className="py-4 px-4 text-center font-serif text-lg font-normal">Keratin Bonds</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-border/50">
+                <td className="py-4 px-4 text-sm text-muted-foreground">Damage to natural hair</td>
+                <td className="py-4 px-4 text-center bg-oat/10"><Check className="w-5 h-5 text-green-600 mx-auto" /><span className="text-xs block mt-1">None</span></td>
+                <td className="py-4 px-4 text-center"><span className="text-xs text-muted-foreground">Minimal</span></td>
+                <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /><span className="text-xs block mt-1">Possible</span></td>
+              </tr>
+              <tr className="border-b border-border/50">
+                <td className="py-4 px-4 text-sm text-muted-foreground">Completely invisible</td>
+                <td className="py-4 px-4 text-center bg-oat/10"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                <td className="py-4 px-4 text-center"><span className="text-xs text-muted-foreground">Varies</span></td>
+              </tr>
+              <tr className="border-b border-border/50">
+                <td className="py-4 px-4 text-sm text-muted-foreground">Heat-free application</td>
+                <td className="py-4 px-4 text-center bg-oat/10"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                <td className="py-4 px-4 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+              </tr>
+              <tr className="border-b border-border/50">
+                <td className="py-4 px-4 text-sm text-muted-foreground">Wear hair up freely</td>
+                <td className="py-4 px-4 text-center bg-oat/10"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
+                <td className="py-4 px-4 text-center"><span className="text-xs text-muted-foreground">Limited</span></td>
+              </tr>
+              <tr className="border-b border-border/50">
+                <td className="py-4 px-4 text-sm text-muted-foreground">Time between maintenance</td>
+                <td className="py-4 px-4 text-center bg-oat/10"><span className="font-medium">6-8 weeks</span></td>
+                <td className="py-4 px-4 text-center"><span className="text-sm">4-6 weeks</span></td>
+                <td className="py-4 px-4 text-center"><span className="text-sm">3-4 months</span></td>
+              </tr>
+              <tr className="border-b border-border/50">
+                <td className="py-4 px-4 text-sm text-muted-foreground">Hair lifespan</td>
+                <td className="py-4 px-4 text-center bg-oat/10"><span className="font-medium">6-12 months</span></td>
+                <td className="py-4 px-4 text-center"><span className="text-sm">4-8 weeks per set</span></td>
+                <td className="py-4 px-4 text-center"><span className="text-sm">3-6 months</span></td>
+              </tr>
+              <tr>
+                <td className="py-4 px-4 text-sm text-muted-foreground">Comfort level</td>
+                <td className="py-4 px-4 text-center bg-oat/10"><span className="font-medium text-green-600">Excellent</span></td>
+                <td className="py-4 px-4 text-center"><span className="text-sm">Good</span></td>
+                <td className="py-4 px-4 text-center"><span className="text-sm">Fair</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </motion.div>
+      </Section>
+
       <Section className="bg-foreground text-background">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Left - Header */}
@@ -672,6 +836,136 @@ export default function Extensions() {
         </div>
       </Section>
 
+      {/* Maintenance Timeline Section */}
+      <Section className="bg-secondary/30">
+        <div className="text-center mb-12 lg:mb-16">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+          >
+            Your Extension Journey
+          </motion.span>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+          >
+            Maintenance <span className="italic font-light">Timeline</span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-4 text-muted-foreground max-w-2xl mx-auto"
+          >
+            Keep your extensions looking flawless with our recommended maintenance schedule.
+          </motion.p>
+        </div>
+
+        {/* Timeline */}
+        <div className="relative">
+          {/* Timeline line - desktop */}
+          <div className="hidden lg:block absolute top-8 left-0 right-0 h-0.5 bg-border" />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Week 0 - Installation */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="relative text-center"
+            >
+              <div className="w-16 h-16 mx-auto bg-foreground text-background rounded-full flex items-center justify-center mb-4 relative z-10">
+                <span className="font-serif text-xl">Day 1</span>
+              </div>
+              <h3 className="font-serif text-xl mb-2">Installation</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Your extensions are custom-installed using the Drop Dead Method for a seamless, natural look.
+              </p>
+            </motion.div>
+
+            {/* Week 2 - Settling */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="relative text-center"
+            >
+              <div className="w-16 h-16 mx-auto bg-oat text-foreground rounded-full flex items-center justify-center mb-4 relative z-10">
+                <span className="font-serif text-xl">Week 2</span>
+              </div>
+              <h3 className="font-serif text-xl mb-2">Settling Period</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Your extensions fully settle in. Perfect time for any minor adjustments if needed.
+              </p>
+            </motion.div>
+
+            {/* Week 6-8 - Maintenance */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative text-center"
+            >
+              <div className="w-16 h-16 mx-auto bg-foreground text-background rounded-full flex items-center justify-center mb-4 relative z-10">
+                <Clock className="w-6 h-6" />
+              </div>
+              <h3 className="font-serif text-xl mb-2">Week 6-8</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                <span className="font-medium">Maintenance appointment.</span> We move up your rows as your natural hair grows.
+              </p>
+              <span className="inline-block mt-2 text-xs uppercase tracking-wider bg-oat/30 px-3 py-1 rounded-full">
+                $150-$300
+              </span>
+            </motion.div>
+
+            {/* Month 6-12 - Reinstall */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="relative text-center"
+            >
+              <div className="w-16 h-16 mx-auto bg-oat text-foreground rounded-full flex items-center justify-center mb-4 relative z-10">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <h3 className="font-serif text-xl mb-2">Month 6-12</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Time for new hair! Your original extensions have served you well—start fresh with a new set.
+              </p>
+            </motion.div>
+          </div>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-center mt-12"
+          >
+            <Link
+              to="/booking"
+              className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
+            >
+              <span>Schedule Your Maintenance</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </motion.div>
+        </div>
+      </Section>
+
+      {/* Extension Care Section */}
       <Section className="bg-background">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* Left - Header */}
