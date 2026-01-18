@@ -203,33 +203,31 @@ export default function ManageRoles() {
                     </div>
 
                     {/* Role Toggles */}
-                    <div className="mt-4 pt-4 border-t grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-8 gap-y-3">
                       {ALL_ROLES.map(role => {
                         const hasRole = user.roles.includes(role);
                         const isAdminRole = role === 'admin';
                         const isLocked = isAdminRole && !canApproveAdmin;
                         
                         return (
-                          <div key={role} className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1">
-                              <label 
-                                htmlFor={`${user.user_id}-${role}`}
-                                className={cn(
-                                  "text-sm font-medium",
-                                  isLocked ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"
-                                )}
-                              >
-                                {ROLE_LABELS[role]}
-                              </label>
-                              {isLocked && (
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Lock className="w-3 h-3 text-muted-foreground" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>Full Access Admin required</TooltipContent>
-                                </Tooltip>
+                          <div key={role} className="flex items-center gap-2">
+                            <label 
+                              htmlFor={`${user.user_id}-${role}`}
+                              className={cn(
+                                "text-sm font-medium",
+                                isLocked ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"
                               )}
-                            </div>
+                            >
+                              {ROLE_LABELS[role]}
+                            </label>
+                            {isLocked && (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Lock className="w-3 h-3 text-muted-foreground" />
+                                </TooltipTrigger>
+                                <TooltipContent>Full Access Admin required</TooltipContent>
+                              </Tooltip>
+                            )}
                             <Switch
                               id={`${user.user_id}-${role}`}
                               checked={hasRole}
