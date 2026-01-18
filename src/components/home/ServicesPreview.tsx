@@ -14,6 +14,12 @@ const services = [
     description: "Drop Dead salons specialize in seamless, high-quality extensions utilizing both our proprietary hand-tied and tape-in methods for natural volume transformations.",
   },
   {
+    category: "Extensions",
+    title: "Keratin Tip Extensions",
+    price: "Starting at $800",
+    description: "Premium keratin-bonded extensions for a seamless, long-lasting look. Individual strands are fused for natural movement and virtually undetectable results.",
+  },
+  {
     category: "Color Services",
     title: "Blonding",
     price: "Starting at $250",
@@ -36,6 +42,12 @@ const services = [
     title: "Creative Cuts",
     price: "Starting at $185",
     description: "Artistry meets precision. Our stylists specialize in crafting unique shapes and styles that reflect your individuality and elevate your everyday look.",
+  },
+  {
+    category: "Treatments",
+    title: "Brazilian Blowout",
+    price: "Starting at $350",
+    description: "Smooth, frizz-free hair for up to 12 weeks. This professional smoothing treatment eliminates frizz and reduces styling time while keeping your natural curl pattern.",
   },
   {
     category: "Treatments",
