@@ -218,20 +218,9 @@ export default function StaffLogin() {
 
             {!isForgotPassword && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs uppercase tracking-wider">
-                    Password
-                  </Label>
-                  {isLogin && (
-                    <button
-                      type="button"
-                      onClick={() => setIsForgotPassword(true)}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Forgot password?
-                    </button>
-                  )}
-                </div>
+                <Label htmlFor="password" className="text-xs uppercase tracking-wider">
+                  Password
+                </Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -310,23 +299,34 @@ export default function StaffLogin() {
             </div>
           </form>
 
-          {/* Toggle */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsForgotPassword(false);
-                setIsLogin(!isLogin);
-              }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors font-sans"
-            >
-              {isForgotPassword
-                ? 'Back to sign in'
-                : isLogin 
-                  ? "Don't have an account? Sign up" 
-                  : 'Already have an account? Sign in'
-              }
-            </button>
+          {/* Toggle & Forgot Password */}
+          <div className="text-center space-y-3">
+            {isLogin && !isForgotPassword && (
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(true)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors font-sans"
+              >
+                Forgot password?
+              </button>
+            )}
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPassword(false);
+                  setIsLogin(!isLogin);
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors font-sans"
+              >
+                {isForgotPassword
+                  ? 'Back to sign in'
+                  : isLogin 
+                    ? "Don't have an account? Sign up" 
+                    : 'Already have an account? Sign in'
+                }
+              </button>
+            </div>
           </div>
         </div>
       </div>
