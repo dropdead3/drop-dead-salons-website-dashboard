@@ -188,7 +188,7 @@ export function Header() {
                       }}
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className="h-7 lg:h-8 w-auto"
+                      className="h-5 w-auto"
                     />
                   ) : (
                     <motion.img
@@ -203,7 +203,7 @@ export function Header() {
                       }}
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className="h-8 lg:h-10 w-auto"
+                      className="h-10 w-auto"
                     />
                   )}
                 </AnimatePresence>
