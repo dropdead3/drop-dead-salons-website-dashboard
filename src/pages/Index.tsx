@@ -30,8 +30,8 @@ const Index = () => {
       <PopularServices />
       <BrandsSection />
       <NewClientSection />
-      <LocationsSection />
       <FounderWelcome />
+      <LocationsSection />
       <GallerySection />
       {/* Combined Reviews & FAQ Section with Gradient */}
       <div 
