@@ -480,8 +480,8 @@ export default function Extensions() {
               <div className="lg:pt-12">
                 <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-1 block">12+ Months</span>
                 <h3 className="font-serif text-lg mb-2">Fresh Set</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Time for new hair. Start fresh with a brand new set of extensions.
+                <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                  Hair lasts 12+ months with proper care, fully warrantied against defects.
                 </p>
               </div>
             </motion.div>
