@@ -258,7 +258,7 @@ export default function DashboardHome() {
               <img 
                 src={DD75Logo} 
                 alt="Drop Dead 75" 
-                className="h-8 w-auto"
+                className="h-5 w-auto"
               />
               <p className="text-sm text-muted-foreground font-sans">
                 75 days of execution. No excuses.
