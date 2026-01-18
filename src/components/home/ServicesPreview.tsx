@@ -344,7 +344,7 @@ export function ServicesPreview() {
                     beforeImage="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600&h=750&fit=crop"
                     afterImage="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=750&fit=crop"
                     beforeLabel="Before"
-                    afterLabel="After Extensions"
+                    afterLabel="After"
                     className="!absolute inset-0 !aspect-auto w-full h-full"
                     hideDefaultVideoButton={true}
                     hoverMode={true}
@@ -430,7 +430,7 @@ export function ServicesPreview() {
                     beforeImage="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=600&h=750&fit=crop"
                     afterImage="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=750&fit=crop"
                     beforeLabel="Before"
-                    afterLabel="After Extensions"
+                    afterLabel="After"
                     className="!absolute inset-0 !aspect-auto w-full h-full"
                     hideDefaultVideoButton={true}
                   />
