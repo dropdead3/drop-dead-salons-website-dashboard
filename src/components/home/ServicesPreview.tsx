@@ -421,7 +421,7 @@ export function ServicesPreview() {
               </div>
 
               {/* Content */}
-              <div className="w-1/2 flex flex-col justify-center py-4 pl-2 mr-20">
+              <div className="w-1/2 flex flex-col justify-center py-4 pl-2 mr-10">
                 <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-display mb-3">
                   {service.category}
                 </span>
