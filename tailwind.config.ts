@@ -14,8 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        serif: ['"Playfair Display"', 'Georgia', 'serif'],
-        sans: ['"Inter"', 'system-ui', 'sans-serif'],
+        serif: ['"Laguna"', 'Georgia', 'serif'],
+        sans: ['"Aeonik Pro"', 'system-ui', 'sans-serif'],
+        display: ['"Termina"', 'sans-serif'],
+        script: ['"Sloop Script"', 'cursive'],
       },
       colors: {
         border: "hsl(var(--border))",
