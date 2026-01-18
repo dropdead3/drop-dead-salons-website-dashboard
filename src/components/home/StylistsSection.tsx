@@ -189,14 +189,6 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
         </div>
         <h3 className="text-xl font-display mb-1">{stylist.name}</h3>
         
-        {/* Location callout */}
-        <p className="text-xs text-white/60 mb-1">
-          {stylist.locations.length > 1 
-            ? stylist.locations.map(loc => getLocationName(loc)).join(" & ")
-            : getLocationName(stylist.locations[0])
-          }
-        </p>
-        
         <a 
           href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
           target="_blank"
@@ -206,13 +198,23 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
           {stylist.instagram}
         </a>
         
-        <Link
-          to="/booking"
-          className="inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
-        >
-          <span>Book Consult</span>
-          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
-        </Link>
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            to="/booking"
+            className="inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
+          >
+            <span>Book Consult</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+          </Link>
+          
+          {/* Location callout */}
+          <p className="text-xs text-white/60 text-right">
+            {stylist.locations.length > 1 
+              ? stylist.locations.map(loc => getLocationName(loc)).join(" & ")
+              : getLocationName(stylist.locations[0])
+            }
+          </p>
+        </div>
       </div>
     </motion.div>
   );
