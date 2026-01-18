@@ -31,10 +31,6 @@ const services = [
   },
 ];
 
-// Create extended array for infinite scroll (duplicate cards)
-const extendedServices = [...services, ...services, ...services];
-const CLONE_COUNT = services.length;
-
 export function ServicesPreview() {
   const sectionRef = useRef<HTMLElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -50,52 +46,22 @@ export function ServicesPreview() {
   const [scrollLeft, setScrollLeft] = useState(0);
   const [swipeStartX, setSwipeStartX] = useState(0);
   const isAutoScrolling = useRef(false);
-  const hasInitialized = useRef(false);
-  const extendedIndex = useRef(CLONE_COUNT); // Track position in extended array
 
   // Editorial easing - slow start, smooth middle, gentle stop
   const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
-  // Initialize scroll position to middle set (so we can scroll left or right infinitely)
-  useEffect(() => {
-    if (!scrollContainerRef.current) return;
-    
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      if (hasInitialized.current) return;
-      
-      const container = scrollContainerRef.current;
-      if (!container) return;
-      
-      const cards = container.querySelectorAll('[data-card]');
-      // Start at the first card of the middle set
-      const middleStartIndex = CLONE_COUNT;
-      const card = cards[middleStartIndex] as HTMLElement;
-      
-      if (card) {
-        // Scroll so the first card starts exactly at the container's left edge (after padding)
-        // This ensures no previous card is visible
-        container.scrollLeft = card.offsetLeft;
-        hasInitialized.current = true;
-        extendedIndex.current = CLONE_COUNT;
-      }
-    }, 150);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  const scrollToExtendedIndex = useCallback((targetExtIndex: number, smooth = true) => {
+  const scrollToCard = useCallback((targetIndex: number, smooth = true) => {
     if (!scrollContainerRef.current) return;
     
     const container = scrollContainerRef.current;
     const cards = container.querySelectorAll('[data-card]');
-    const card = cards[targetExtIndex] as HTMLElement;
+    const card = cards[targetIndex] as HTMLElement;
     
     if (!card) return;
 
-    const containerRect = container.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-    const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
+    // Position card at the left edge with some padding
+    const paddingLeft = window.innerWidth >= 1024 ? 48 : 24;
+    const scrollLeftPos = card.offsetLeft - paddingLeft;
 
     isAutoScrolling.current = true;
     
@@ -105,68 +71,46 @@ export function ServicesPreview() {
         left: Math.max(0, scrollLeftPos),
         behavior: 'smooth'
       });
-      // Wait for scroll to complete, then check if we need to reset position
       setTimeout(() => {
         setIsAnimating(false);
         isAutoScrolling.current = false;
-        
-        // If we've scrolled past the middle set, silently reset to middle
-        if (targetExtIndex >= CLONE_COUNT * 2) {
-          const resetIndex = CLONE_COUNT + (targetExtIndex % services.length);
-          const resetCard = cards[resetIndex] as HTMLElement;
-          if (resetCard) {
-            const resetScrollPos = resetCard.offsetLeft - (containerRect.width / 2) + (resetCard.offsetWidth / 2);
-            container.scrollLeft = resetScrollPos;
-            extendedIndex.current = resetIndex;
-          }
-        }
       }, 800);
     } else {
       container.scrollLeft = Math.max(0, scrollLeftPos);
       isAutoScrolling.current = false;
     }
     
-    extendedIndex.current = targetExtIndex;
-    setCurrentIndex(targetExtIndex % services.length);
+    setCurrentIndex(targetIndex);
   }, [prefersReducedMotion]);
 
-  // Keep scrollToCard for manual navigation (arrows)
-  const scrollToCard = useCallback((realIndex: number, smooth = true) => {
-    const targetExtIndex = CLONE_COUNT + realIndex;
-    extendedIndex.current = targetExtIndex;
-    scrollToExtendedIndex(targetExtIndex, smooth);
-  }, [scrollToExtendedIndex]);
-
-  // Auto-advance animation when in view - every 3 seconds, loops continuously
+  // Auto-advance animation when in view - every 3 seconds, loops back to start
   useEffect(() => {
     if (!isInView || isPaused || prefersReducedMotion) return;
 
     const intervalId = setInterval(() => {
-      const nextExtIndex = extendedIndex.current + 1;
-      scrollToExtendedIndex(nextExtIndex);
+      const nextIndex = (currentIndex + 1) % services.length;
+      scrollToCard(nextIndex);
     }, 3000);
 
     return () => clearInterval(intervalId);
-  }, [isInView, isPaused, prefersReducedMotion, scrollToExtendedIndex]);
+  }, [isInView, isPaused, prefersReducedMotion, currentIndex, scrollToCard]);
 
-  // Detect user scroll and handle infinite loop reset
+  // Detect user scroll to update current index
   const handleUserScroll = useCallback(() => {
-    // Don't pause here - let mouse enter/leave handle pausing
-    // This prevents race conditions with auto-scroll
-    
-    if (!scrollContainerRef.current) return;
+    if (!scrollContainerRef.current || isAutoScrolling.current) return;
     
     const container = scrollContainerRef.current;
     const cards = container.querySelectorAll('[data-card]');
-    const containerCenter = container.scrollLeft + container.offsetWidth / 2;
+    const containerLeft = container.scrollLeft;
+    const paddingLeft = window.innerWidth >= 1024 ? 48 : 24;
     
     let closestIndex = 0;
     let closestDistance = Infinity;
     
     cards.forEach((card, index) => {
       const cardElement = card as HTMLElement;
-      const cardCenter = cardElement.offsetLeft + cardElement.offsetWidth / 2;
-      const distance = Math.abs(containerCenter - cardCenter);
+      const cardStart = cardElement.offsetLeft - paddingLeft;
+      const distance = Math.abs(containerLeft - cardStart);
       
       if (distance < closestDistance) {
         closestDistance = distance;
@@ -174,36 +118,7 @@ export function ServicesPreview() {
       }
     });
     
-    // Convert extended index to real index
-    const realIndex = closestIndex % services.length;
-    setCurrentIndex(realIndex);
-    
-    // If scrolled into the first or last set, silently jump to middle set
-    if (!isAutoScrolling.current && closestIndex < CLONE_COUNT) {
-      // Scrolled into first clone set - jump to middle
-      const middleIndex = CLONE_COUNT + realIndex;
-      const card = cards[middleIndex] as HTMLElement;
-      if (card) {
-        const containerRect = container.getBoundingClientRect();
-        const cardRect = card.getBoundingClientRect();
-        const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
-        requestAnimationFrame(() => {
-          container.scrollLeft = scrollLeftPos;
-        });
-      }
-    } else if (!isAutoScrolling.current && closestIndex >= CLONE_COUNT * 2) {
-      // Scrolled into last clone set - jump to middle
-      const middleIndex = CLONE_COUNT + realIndex;
-      const card = cards[middleIndex] as HTMLElement;
-      if (card) {
-        const containerRect = container.getBoundingClientRect();
-        const cardRect = card.getBoundingClientRect();
-        const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
-        requestAnimationFrame(() => {
-          container.scrollLeft = scrollLeftPos;
-        });
-      }
-    }
+    setCurrentIndex(closestIndex);
   }, []);
 
   const goToPrevious = () => {
@@ -407,18 +322,18 @@ export function ServicesPreview() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex overflow-x-auto scrollbar-minimal pr-6 lg:pr-12 pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+          className={`flex overflow-x-auto scrollbar-minimal px-6 lg:px-12 pb-4 scroll-smooth ${isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}
         >
-          {extendedServices.map((service, index) => (
+          {services.map((service, index) => (
             <motion.div
               key={`${service.title}-${index}`}
               data-card
-              custom={index % services.length}
+              custom={index}
               variants={cardVariants}
               initial="hidden"
               animate={isInView ? "visible" : "hidden"}
-              className={`group flex-shrink-0 w-[85vw] max-w-[600px] flex ${index === 0 ? 'ml-6 lg:ml-12' : ''}`}
+              className="group flex-shrink-0 w-[85vw] max-w-[600px] flex"
             >
               {/* Placeholder Image Area */}
               <div className="relative w-1/2 aspect-[3/4] bg-secondary/50 border border-border overflow-hidden mr-2">
