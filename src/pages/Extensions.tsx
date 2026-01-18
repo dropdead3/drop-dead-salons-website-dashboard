@@ -249,11 +249,11 @@ export default function Extensions() {
                 {/* Gradient Overlay - stronger on left for text readability */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent transition-opacity duration-500" />
                 
-                {/* Content */}
-                <div className="absolute inset-0 p-6 lg:p-8 flex flex-col justify-end text-white">
+                {/* Content - aligned to top for consistent positioning */}
+                <div className="absolute inset-0 p-6 flex flex-col justify-start text-white">
                   {/* Number + Title - full width */}
                   <motion.div 
-                    className="flex items-center gap-3 mb-3"
+                    className="flex items-center gap-3 mb-4"
                     initial={{ opacity: 0, x: -20 }}
                     animate={benefitsInView ? { opacity: 1, x: 0 } : {}}
                     transition={{ duration: 0.5, delay: 0.3 + index * 0.15 }}
@@ -268,7 +268,7 @@ export default function Extensions() {
                   
                   {/* Description - left side weighted */}
                   <motion.p 
-                    className="text-sm text-white/80 leading-relaxed w-[55%] transform transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 translate-y-2 opacity-80"
+                    className="text-sm text-white/80 leading-relaxed w-[55%]"
                     initial={{ opacity: 0, y: 20 }}
                     animate={benefitsInView ? { opacity: 0.8, y: 0 } : {}}
                     transition={{ duration: 0.5, delay: 0.4 + index * 0.15 }}
