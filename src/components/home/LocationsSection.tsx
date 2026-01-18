@@ -62,13 +62,13 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
     <motion.div
       ref={cardRef}
       style={{ opacity, y, scale }}
-      className="group relative bg-secondary p-10 md:p-12 text-center overflow-hidden rounded-2xl transition-all duration-500 hover:shadow-xl hover:shadow-foreground/5"
+      className="group relative bg-secondary p-10 md:p-12 text-center overflow-hidden rounded-2xl transition-all duration-500 hover:shadow-xl hover:shadow-foreground/5 h-full flex flex-col"
     >
       {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-foreground/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       {/* Location Title */}
-      <h3 className="font-display text-2xl md:text-3xl text-foreground tracking-tight mb-2">
+      <h3 className="font-display text-2xl md:text-3xl text-foreground tracking-tight mb-2 whitespace-nowrap">
         {location.name}
       </h3>
 
@@ -101,7 +101,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
       </a>
 
       {/* CTAs */}
-      <div className="flex flex-col items-center gap-3 relative z-10">
+      <div className="flex flex-col items-center gap-3 relative z-10 mt-auto pt-4">
         <Link
           to={location.bookingUrl}
           className="inline-flex items-center justify-center bg-foreground text-background px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/link w-full overflow-hidden"
@@ -159,7 +159,7 @@ export function LocationsSection() {
         </motion.div>
 
         {/* Location Cards Grid */}
-        <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
           {locations.map((location, index) => (
             <LocationCard key={location.id} location={location} index={index} />
           ))}
