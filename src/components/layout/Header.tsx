@@ -170,32 +170,22 @@ export function Header() {
                       key="icon"
                       src={LogoIcon}
                       alt="Drop Dead"
-                      initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-                      animate={{ 
-                        opacity: 1, 
-                        scale: 1, 
-                        filter: "blur(0px)" 
-                      }}
-                      exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className="h-5 w-auto"
-                      style={{ filter: isOverDark ? "invert(1)" : "none" }}
+                      className={cn("h-5 w-auto transition-all duration-300", isOverDark && "invert")}
                     />
                   ) : (
                     <motion.img
                       key="full"
                       src={Logo}
                       alt="Drop Dead"
-                      initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-                      animate={{ 
-                        opacity: 1, 
-                        scale: 1, 
-                        filter: "blur(0px)" 
-                      }}
-                      exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className="h-10 w-auto"
-                      style={{ filter: isOverDark ? "invert(1)" : "none" }}
+                      className={cn("h-10 w-auto transition-all duration-300", isOverDark && "invert")}
                     />
                   )}
                 </AnimatePresence>
