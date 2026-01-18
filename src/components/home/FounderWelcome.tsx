@@ -21,7 +21,7 @@ export function FounderWelcome() {
             <img
               src={founderHeadshot}
               alt="Kristi Day, Founder of Drop Dead Salon"
-              className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-full object-cover"
+              className="w-36 h-36 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full object-cover"
             />
           </motion.div>
 
@@ -51,7 +51,7 @@ export function FounderWelcome() {
               <img
                 src={founderSignature}
                 alt="Kristi Day signature"
-                className="h-24 md:h-32 lg:h-36 w-auto mb-2"
+                className="h-28 md:h-36 lg:h-44 w-auto mb-2"
               />
               <p className="text-sm text-muted-foreground">
                 Founder & Lead Stylist
