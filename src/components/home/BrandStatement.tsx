@@ -8,13 +8,15 @@ export function BrandStatement() {
   const contentRef = useRef(null);
   const isInView = useInView(contentRef, { once: true, margin: "-100px" });
 
-  // Scroll-based opacity: starts transparent, fully visible when centered
+  // Scroll-based opacity and blur: starts transparent/blurred, fully visible sooner
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start end", "center center"]
+    offset: ["start end", "start 0.6"]
   });
 
   const opacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const blur = useTransform(scrollYProgress, [0, 1], [20, 0]);
+  const blurFilter = useTransform(blur, (v) => `blur(${v}px)`);
 
   return (
     <Section className="bg-background" theme="light">
@@ -22,7 +24,7 @@ export function BrandStatement() {
         ref={containerRef}
         data-theme="dark"
         className="bg-foreground text-background rounded-2xl p-12 md:p-20 lg:p-24"
-        style={{ opacity }}
+        style={{ opacity, filter: blurFilter }}
       >
         <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
           {/* Left side - Title */}
