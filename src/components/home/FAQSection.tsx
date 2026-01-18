@@ -89,9 +89,9 @@ export function FAQSection() {
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
             className="lg:sticky lg:top-32 lg:self-start"
           >
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif mb-6">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
               Frequently <TypewriterText text="asked" isInView={isInView} delay={600} /><br />
-              <em className="not-italic italic">questions...</em>
+              <em className="not-italic italic font-serif">questions...</em>
             </h2>
             
             <div className="space-y-4 text-foreground/80 mb-8">
@@ -175,10 +175,10 @@ export function FAQSection() {
                         value={`item-${index}`}
                         className="bg-background border border-border px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:bg-secondary hover:border-foreground/20 hover:shadow-md"
                       >
-                        <AccordionTrigger className="text-left text-base md:text-lg font-medium py-5 hover:no-underline group">
+                        <AccordionTrigger className="text-left text-base md:text-lg font-sans font-medium py-5 hover:no-underline group">
                           {highlightText(faq.question, searchQuery)}
                         </AccordionTrigger>
-                        <AccordionContent className="text-foreground/80 pb-5 leading-relaxed">
+                        <AccordionContent className="text-foreground/80 font-sans font-normal pb-5 leading-relaxed">
                           {highlightText(faq.answer, searchQuery)}
                         </AccordionContent>
                       </AccordionItem>
