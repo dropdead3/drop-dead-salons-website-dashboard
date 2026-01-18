@@ -81,43 +81,64 @@ export function Header() {
           <div className="container mx-auto px-6 lg:px-8">
             <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
-            <Link
-              to="/"
-              className="hover:opacity-70 transition-opacity"
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
             >
-              <img 
-                src={Logo} 
-                alt="Drop Dead" 
-                className="h-4 lg:h-5 w-auto"
-              />
-            </Link>
+              <Link
+                to="/"
+                className="hover:opacity-70 transition-opacity"
+              >
+                <img 
+                  src={Logo} 
+                  alt="Drop Dead" 
+                  className="h-4 lg:h-5 w-auto"
+                />
+              </Link>
+            </motion.div>
 
             {/* Desktop Navigation - Center */}
             <nav className="hidden lg:flex items-center gap-6 xl:gap-10">
-              {navLinks.map((link) => (
-                <Link
+              {navLinks.map((link, index) => (
+                <motion.div
                   key={link.href}
-                  to={link.href}
-                  className={cn(
-                    "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none",
-                    location.pathname === link.href
-                      ? "opacity-100"
-                      : "opacity-70 hover:opacity-100"
-                  )}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ 
+                    duration: 0.4, 
+                    delay: 0.1 + index * 0.05,
+                    ease: [0.25, 0.1, 0.25, 1] 
+                  }}
                 >
-                  <span className="transition-transform duration-300 group-hover:-translate-x-1">
-                    {link.label}
-                  </span>
-                  <ArrowRight 
-                    size={14} 
-                    className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" 
-                  />
-                </Link>
+                  <Link
+                    to={link.href}
+                    className={cn(
+                      "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none",
+                      location.pathname === link.href
+                        ? "opacity-100"
+                        : "opacity-70 hover:opacity-100"
+                    )}
+                  >
+                    <span className="transition-transform duration-300 group-hover:-translate-x-1">
+                      {link.label}
+                    </span>
+                    <ArrowRight 
+                      size={14} 
+                      className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" 
+                    />
+                  </Link>
+                </motion.div>
               ))}
             </nav>
 
             {/* Right Side - Contact & Book */}
-            <div className="hidden md:flex items-center gap-6">
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+              className="hidden md:flex items-center gap-6"
+            >
               <Link
                 to="/contact"
                 className="text-sm tracking-wide font-sans font-medium opacity-70 hover:opacity-100 transition-all duration-300 link-underline"
@@ -157,7 +178,7 @@ export function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </motion.div>
 
             {/* Mobile Menu Toggle */}
             <button
