@@ -236,45 +236,56 @@ export default function Extensions() {
               initial={{ opacity: 0, y: 40 }}
               animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.7, delay: index * 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-              className="group relative overflow-hidden cursor-pointer"
+              className="group relative bg-oat/40 rounded-2xl overflow-hidden cursor-pointer"
             >
-              {/* Full Background Image */}
-              <div className="aspect-[4/5] relative">
-                <img 
-                  src={benefit.image}
-                  alt={benefit.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                />
-                
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-500" />
-                
-                {/* Content */}
-                <div className="absolute inset-0 p-6 lg:p-8 flex flex-col justify-end text-white">
-                  {/* Number + Title */}
-                  <motion.div 
-                    className="flex items-center gap-3 mb-3"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={benefitsInView ? { opacity: 1, x: 0 } : {}}
-                    transition={{ duration: 0.5, delay: 0.3 + index * 0.15 }}
-                  >
-                    <div className="w-8 h-8 rounded-full border border-white/50 flex items-center justify-center flex-shrink-0 backdrop-blur-sm bg-white/10">
-                      <span className="text-sm font-medium">{index + 1}</span>
-                    </div>
-                    <h3 className="font-serif text-xl md:text-2xl font-medium">
-                      {benefit.title}
-                    </h3>
-                  </motion.div>
+              <div className="aspect-[4/3] relative flex">
+                {/* Text Content - Left Side */}
+                <div className="w-[55%] p-6 lg:p-8 flex flex-col justify-between relative z-10">
+                  <div>
+                    {/* Number + Title */}
+                    <motion.div 
+                      className="flex items-center gap-3 mb-4"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={benefitsInView ? { opacity: 1, x: 0 } : {}}
+                      transition={{ duration: 0.5, delay: 0.3 + index * 0.15 }}
+                    >
+                      <div className="w-8 h-8 rounded-full border border-foreground/30 flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm font-medium text-foreground">{index + 1}</span>
+                      </div>
+                      <h3 className="font-serif text-xl lg:text-2xl font-medium text-foreground">
+                        {benefit.title}
+                      </h3>
+                    </motion.div>
+                    
+                    {/* Description */}
+                    <motion.p 
+                      className="text-sm text-muted-foreground leading-relaxed"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={benefitsInView ? { opacity: 1, y: 0 } : {}}
+                      transition={{ duration: 0.5, delay: 0.4 + index * 0.15 }}
+                    >
+                      {benefit.description}
+                    </motion.p>
+                  </div>
                   
-                  {/* Description - slides up on hover */}
-                  <motion.p 
-                    className="text-sm text-white/80 leading-relaxed max-w-[90%] transform transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 translate-y-2 opacity-80"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={benefitsInView ? { opacity: 0.8, y: 0 } : {}}
-                    transition={{ duration: 0.5, delay: 0.4 + index * 0.15 }}
+                  {/* Arrow Button */}
+                  <motion.div
+                    className="w-10 h-10 rounded-full border border-foreground/30 flex items-center justify-center group-hover:bg-foreground group-hover:text-background transition-all duration-300"
+                    initial={{ opacity: 0 }}
+                    animate={benefitsInView ? { opacity: 1 } : {}}
+                    transition={{ duration: 0.5, delay: 0.5 + index * 0.15 }}
                   >
-                    {benefit.description}
-                  </motion.p>
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.div>
+                </div>
+                
+                {/* Image - Right Side */}
+                <div className="absolute right-0 top-0 w-[50%] h-full">
+                  <img 
+                    src={benefit.image}
+                    alt={benefit.title}
+                    className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
                 </div>
               </div>
             </motion.div>
