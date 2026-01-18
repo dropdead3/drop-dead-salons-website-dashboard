@@ -215,18 +215,18 @@ export function HeroSection() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
                   onClick={() => setConsultationOpen(true)}
-                  className="group w-full sm:w-auto px-8 py-4 text-sm font-sans font-normal bg-foreground text-background hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98]"
+                  className="group w-full sm:w-auto px-10 py-5 text-base font-sans font-normal bg-foreground text-background hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98]"
                 >
                   <span className="relative z-10">I am a new client</span>
                 </button>
                 <Link
                   to="/booking"
-                  className="group w-full sm:w-auto px-8 py-4 text-sm font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300 text-center relative overflow-hidden"
+                  className="group w-full sm:w-auto px-10 py-5 text-base font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300 text-center relative overflow-hidden"
                 >
                   <span className="relative z-10">I am a returning client</span>
                 </Link>
               </div>
-              <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground font-sans">
+              <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground font-sans">
                 <p>New clients begin with a complimentary consultation</p>
                 <p>Returning clients are free to book their known services</p>
               </div>
