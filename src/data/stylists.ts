@@ -1,4 +1,4 @@
-export type Location = "val-vista-lakes" | "north-mesa";
+export type Location = "north-mesa";
 
 export interface Stylist {
   id: string;
@@ -18,7 +18,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL III STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1595959183082-7b570b7e1daf?w=600&h=800&fit=crop",
-    location: "val-vista-lakes"
+    location: "north-mesa"
   },
   {
     id: "2",
@@ -27,7 +27,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL II STYLIST",
     specialties: ["EXTENSIONS", "BLONDING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&h=800&fit=crop",
-    location: "val-vista-lakes"
+    location: "north-mesa"
   },
   {
     id: "3",
@@ -36,7 +36,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL II STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=600&h=800&fit=crop",
-    location: "val-vista-lakes"
+    location: "north-mesa"
   },
   {
     id: "4",
@@ -45,7 +45,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL II STYLIST",
     specialties: ["AIRTOUCH", "COLOR BLOCKING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop",
-    location: "val-vista-lakes"
+    location: "north-mesa"
   },
   {
     id: "5",
@@ -81,8 +81,7 @@ export const getExtensionSpecialists = (): Stylist[] => {
 };
 
 export const locations = [
-  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes", address: "1234 E Val Vista Lakes Blvd, Gilbert, AZ 85296" },
-  { id: "north-mesa" as Location, name: "North Mesa", address: "5678 N Mesa Dr, Mesa, AZ 85201" }
+  { id: "north-mesa" as Location, name: "North Mesa", address: "2036 N Gilbert Rd Ste 1, Mesa, AZ 85203" },
 ];
 
 // Extract all unique specialties - with EXTENSIONS first

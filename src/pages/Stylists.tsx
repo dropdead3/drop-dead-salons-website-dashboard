@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 
-type Location = "val-vista-lakes" | "north-mesa";
+type Location = "north-mesa";
 
 interface Stylist {
   id: string;
@@ -25,7 +25,7 @@ const stylists: Stylist[] = [
     level: "LEVEL III STYLIST",
     specialties: ["BLONDING", "VIVIDS", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1595959183082-7b570b7e1daf?w=600&h=800&fit=crop",
-    location: "val-vista-lakes"
+    location: "north-mesa"
   },
   {
     id: "2",
@@ -34,7 +34,7 @@ const stylists: Stylist[] = [
     level: "LEVEL II STYLIST",
     specialties: ["EXTENSIONS", "BLONDING", "VIVIDS"],
     imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&h=800&fit=crop",
-    location: "val-vista-lakes"
+    location: "north-mesa"
   },
   {
     id: "3",
@@ -43,7 +43,7 @@ const stylists: Stylist[] = [
     level: "LEVEL II STYLIST",
     specialties: ["BLONDING", "VIVIDS", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=600&h=800&fit=crop",
-    location: "val-vista-lakes"
+    location: "north-mesa"
   },
   {
     id: "4",
@@ -52,7 +52,7 @@ const stylists: Stylist[] = [
     level: "LEVEL II STYLIST",
     specialties: ["AIRTOUCH", "COLOR BLOCKING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop",
-    location: "val-vista-lakes"
+    location: "north-mesa"
   },
   {
     id: "5",
@@ -75,7 +75,6 @@ const stylists: Stylist[] = [
 ];
 
 const locations = [
-  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes" },
   { id: "north-mesa" as Location, name: "North Mesa" }
 ];
 
@@ -149,7 +148,7 @@ const StylistCard = ({ stylist }: { stylist: Stylist }) => {
 };
 
 const Stylists = () => {
-  const [selectedLocation, setSelectedLocation] = useState<Location>("val-vista-lakes");
+  const [selectedLocation, setSelectedLocation] = useState<Location>("north-mesa");
 
   const filteredStylists = stylists.filter(
     (s) => s.location === selectedLocation

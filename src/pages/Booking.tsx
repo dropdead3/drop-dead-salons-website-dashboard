@@ -90,9 +90,7 @@ export default function Booking() {
   ];
 
   const locationOptions = [
-    { name: "West Hollywood", address: "8715 Santa Monica Blvd, West Hollywood, CA 90069" },
-    { name: "Studio City", address: "12345 Ventura Blvd, Studio City, CA 91604" },
-    { name: "No Preference", address: "" },
+    { name: "North Mesa", address: "2036 N Gilbert Rd Ste 1, Mesa, AZ 85203" },
   ];
 
   return (
@@ -394,54 +392,28 @@ export default function Booking() {
             </h2>
 
             <div className="space-y-10">
-              {/* West Hollywood Location */}
+              {/* North Mesa Location */}
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
-                      West Hollywood
+                      North Mesa
                     </h3>
                     <p className="text-muted-foreground font-sans font-light">
-                      8715 Santa Monica Blvd
+                      2036 N Gilbert Rd Ste 1
                       <br />
-                      West Hollywood, CA 90069
+                      Mesa, AZ 85203
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 ml-9">
                   <Phone size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
                   <a
-                    href="tel:+13235550123"
+                    href="tel:+14805481886"
                     className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors text-sm"
                   >
-                    (323) 555-0123
-                  </a>
-                </div>
-              </div>
-
-              {/* Studio City Location */}
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <MapPin size={20} className="text-muted-foreground mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="text-sm uppercase tracking-[0.15em] text-foreground font-sans mb-2">
-                      Studio City
-                    </h3>
-                    <p className="text-muted-foreground font-sans font-light">
-                      12345 Ventura Blvd
-                      <br />
-                      Studio City, CA 91604
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 ml-9">
-                  <Phone size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <a
-                    href="tel:+18185550456"
-                    className="text-muted-foreground font-sans font-light hover:text-foreground transition-colors text-sm"
-                  >
-                    (818) 555-0456
+                    (480) 548-1886
                   </a>
                 </div>
               </div>

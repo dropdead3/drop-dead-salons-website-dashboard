@@ -5,19 +5,12 @@ import { ArrowRight, Phone, Info, MapPin } from "lucide-react";
 
 const locations = [
   {
-    name: "West Hollywood",
-    address: "8715 Santa Monica Blvd",
-    city: "West Hollywood, CA 90069",
-    phone: "(323) 555-0123",
-    bookingUrl: "/booking?location=weho"
+    name: "North Mesa",
+    address: "2036 N Gilbert Rd Ste 1",
+    city: "Mesa, AZ 85203",
+    phone: "(480) 548-1886",
+    bookingUrl: "/booking?location=north-mesa"
   },
-  {
-    name: "Studio City",
-    address: "12345 Ventura Blvd",
-    city: "Studio City, CA 91604",
-    phone: "(818) 555-0456",
-    bookingUrl: "/booking?location=studio-city"
-  }
 ];
 
 const hours = {
