@@ -1,7 +1,7 @@
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Search, X, ArrowRight } from "lucide-react";
+import { Search, X, ArrowRight, ChevronUp } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -182,10 +182,16 @@ export function FAQSection() {
                           {highlightText(faq.question, searchQuery)}
                         </AccordionTrigger>
                         <AccordionContent 
-                          className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed cursor-pointer"
+                          className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed cursor-pointer group/content"
                           onClick={() => setOpenItem(undefined)}
                         >
-                          {highlightText(faq.answer, searchQuery)}
+                          <div className="mb-4">
+                            {highlightText(faq.answer, searchQuery)}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground opacity-60 group-hover/content:opacity-100 transition-opacity">
+                            <ChevronUp className="w-3 h-3" />
+                            <span>Click to close</span>
+                          </div>
                         </AccordionContent>
                       </AccordionItem>
                     </motion.div>
