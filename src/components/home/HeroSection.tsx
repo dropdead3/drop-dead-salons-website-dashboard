@@ -138,11 +138,11 @@ function FloatingCircle({
         <img 
           src={config.src} 
           alt="Hair styling showcase"
-          className="w-full h-full object-cover rounded-full"
+          className="w-full h-full object-cover object-center scale-110"
         />
       </motion.div>
       {/* Soft edge overlay with subtle border */}
-      <div className="absolute inset-0 rounded-full ring-1 ring-foreground/10 shadow-inner" />
+      <div className="absolute inset-0 rounded-full ring-1 ring-foreground/10" />
     </motion.div>
   );
 }
