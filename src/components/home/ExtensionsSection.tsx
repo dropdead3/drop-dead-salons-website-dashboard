@@ -62,7 +62,7 @@ export function ExtensionsSection() {
             >
               The Drop Dead
               <br />
-              <span className="italic font-light text-oat">Method</span>
+              <span className="font-light text-oat">Method</span>
             </motion.h2>
 
             <motion.p

@@ -187,7 +187,7 @@ export function StylistsSection() {
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-4">
-            Meet our <em className="not-italic italic">stylists</em>
+            Meet our stylists
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
             Our talented team of artists are ready to help you achieve your hair goals. 
@@ -426,7 +426,7 @@ export function StylistsSection() {
             </p>
           </div>
           <h3 className="text-2xl md:text-3xl font-display mb-3">
-            Work at <em className="italic">Drop Dead</em>
+            Work at Drop Dead
           </h3>
           <p className="text-foreground/60 text-sm max-w-md mx-auto mb-5">
             Passionate stylist looking for your next opportunity? We'd love to hear from you.
