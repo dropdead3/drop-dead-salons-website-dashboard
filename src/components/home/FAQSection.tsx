@@ -106,14 +106,14 @@ export function FAQSection() {
             <div className="flex flex-wrap gap-4">
               <Link
                 to="/faq"
-                className="group/faq inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all duration-300 overflow-hidden"
+                className="group/faq inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-all duration-300 overflow-hidden"
               >
                 <span>See All FAQ's</span>
                 <ArrowRight className="w-0 h-4 opacity-0 group-hover/faq:w-4 group-hover/faq:ml-2 group-hover/faq:opacity-100 transition-all duration-300" />
               </Link>
               <Link
                 to="/policies"
-                className="group/policies inline-flex items-center justify-center px-6 py-3 border border-border bg-background text-foreground text-sm font-medium hover:border-foreground transition-all duration-300 overflow-hidden"
+                className="group/policies inline-flex items-center justify-center px-6 py-3 border border-border bg-background text-foreground text-sm font-medium rounded-lg hover:border-foreground transition-all duration-300 overflow-hidden"
               >
                 <span>Salon Policies</span>
                 <ArrowRight className="w-0 h-4 opacity-0 group-hover/policies:w-4 group-hover/policies:ml-2 group-hover/policies:opacity-100 transition-all duration-300" />
@@ -136,7 +136,7 @@ export function FAQSection() {
                 placeholder="Search questions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-12 py-4 bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 transition-colors"
+                className="w-full pl-12 pr-12 py-4 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 transition-colors"
               />
               {searchQuery && (
                 <button
@@ -180,7 +180,7 @@ export function FAQSection() {
                     >
                       <AccordionItem
                         value={faq.question}
-                        className="bg-background border border-border px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:bg-secondary hover:border-foreground/20 hover:shadow-md"
+                        className="bg-background border border-border rounded-xl px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:bg-secondary hover:border-foreground/20 hover:shadow-md"
                       >
                         <AccordionTrigger className="text-left text-base md:text-lg font-sans font-medium py-5 hover:no-underline group">
                           {highlightText(faq.question, searchQuery)}
