@@ -48,8 +48,8 @@ export function useCounterAnimation({
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Ease-out cubic for fast-to-slow effect
-      const easeOut = 1 - Math.pow(1 - progress, 3);
+      // Stronger ease-out quint for more dramatic fast-to-slow effect
+      const easeOut = 1 - Math.pow(1 - progress, 5);
       
       const currentCount = easeOut * end;
       setCount(currentCount);
