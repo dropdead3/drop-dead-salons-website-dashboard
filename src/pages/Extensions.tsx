@@ -748,7 +748,7 @@ export default function Extensions() {
             </div>
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-oat rounded-full" />
-              <span>Hair lasts 6-12 months with proper care</span>
+              <span>Hair lasts 12+ months with proper care, fully warrantied against defects</span>
             </div>
           </div>
         </motion.div>
