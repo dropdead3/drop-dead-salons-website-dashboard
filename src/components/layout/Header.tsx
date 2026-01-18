@@ -114,8 +114,8 @@ export function Header() {
                       Book Consult
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[280px] p-5 bg-background text-foreground border border-border shadow-lg">
-                    <p className="text-sm text-center leading-relaxed">Every new client starts with a $15 consultation to ensure the perfect match</p>
+                  <TooltipContent side="bottom" className="max-w-[320px] p-5 bg-background text-foreground border border-border shadow-lg">
+                    <p className="text-sm text-center leading-relaxed">New-client consultations ($15) are required for all new clients to ensure we match you to your best suited stylist and prepare the best plan to achieve your end goal.</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
