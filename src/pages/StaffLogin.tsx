@@ -282,6 +282,16 @@ export default function StaffLogin() {
             )}
 
             <div className="flex gap-3">
+              {isLogin && !isForgotPassword && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setIsLogin(false)}
+                  className="flex-1 h-12 font-display text-sm tracking-wide bg-secondary hover:bg-secondary/80 text-foreground border-2 border-foreground/20"
+                >
+                  SIGN UP
+                </Button>
+              )}
               <Button
                 type="submit"
                 disabled={loading}
@@ -297,16 +307,6 @@ export default function StaffLogin() {
                   'CREATE ACCOUNT'
                 )}
               </Button>
-              {isLogin && !isForgotPassword && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsLogin(false)}
-                  className="flex-1 h-12 font-display text-sm tracking-wide"
-                >
-                  SIGN UP
-                </Button>
-              )}
             </div>
           </form>
 
