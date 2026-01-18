@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,8 @@ export default function StaffLogin() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const passwordMatchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPasswordMatchStateRef = useRef<boolean | null>(null);
   
   const { signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
@@ -47,6 +49,25 @@ export default function StaffLogin() {
   const { toast } = useToast();
 
   const from = location.state?.from?.pathname || '/dashboard';
+
+  const showPasswordMatchToast = useCallback((matches: boolean) => {
+    // Only show toast if state changed
+    if (lastPasswordMatchStateRef.current === matches) return;
+    lastPasswordMatchStateRef.current = matches;
+    
+    if (matches) {
+      toast({
+        title: 'Passwords match ✓',
+        description: 'You\'re all set!',
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Passwords do not match',
+        description: 'Please make sure both passwords are identical.',
+      });
+    }
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -257,20 +278,16 @@ export default function StaffLogin() {
                       const newValue = e.target.value;
                       setConfirmPassword(newValue);
                       
-                      // Show real-time password match feedback
+                      // Clear existing timeout
+                      if (passwordMatchTimeoutRef.current) {
+                        clearTimeout(passwordMatchTimeoutRef.current);
+                      }
+                      
+                      // Debounced password match feedback
                       if (newValue.length >= 6 && password.length >= 6) {
-                        if (newValue === password) {
-                          toast({
-                            title: 'Passwords match ✓',
-                            description: 'You\'re all set!',
-                          });
-                        } else {
-                          toast({
-                            variant: 'destructive',
-                            title: 'Passwords do not match',
-                            description: 'Please make sure both passwords are identical.',
-                          });
-                        }
+                        passwordMatchTimeoutRef.current = setTimeout(() => {
+                          showPasswordMatchToast(newValue === password);
+                        }, 800);
                       }
                     }}
                     placeholder="••••••••"
