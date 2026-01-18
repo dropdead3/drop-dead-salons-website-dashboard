@@ -4,6 +4,7 @@ import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 const services = [
   {
@@ -84,15 +85,15 @@ export default function Services() {
       <section className="pt-32 lg:pt-40 pb-16 lg:pb-20">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-3xl">
-            <motion.span
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-xs uppercase tracking-[0.2em] text-muted-foreground block mb-6"
-              style={{ fontFamily: "'Termina', sans-serif" }}
             >
-              Our Services
-            </motion.span>
+              <Eyebrow className="text-muted-foreground mb-6">
+                Our Services
+              </Eyebrow>
+            </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

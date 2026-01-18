@@ -2,6 +2,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Phone, Info, MapPin } from "lucide-react";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 const locations = [
   {
@@ -42,12 +43,9 @@ export function LocationsSection() {
           transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
           className="text-center mb-16"
         >
-          <p 
-            className="text-xs uppercase tracking-[0.2em] text-foreground/50 mb-4"
-            style={{ fontFamily: "'Termina', sans-serif" }}
-          >
+          <Eyebrow className="text-foreground/50 mb-4">
             Find Us
-          </p>
+          </Eyebrow>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display">
             Our Locations
           </h2>

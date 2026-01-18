@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Star } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 type Location = "north-mesa" | "val-vista-lakes";
 
@@ -168,12 +169,9 @@ const Stylists = () => {
         <div className="container mx-auto px-6">
           {/* Location Toggle */}
           <div className="text-center mb-12">
-            <p 
-              className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-6"
-              style={{ fontFamily: "'Termina', sans-serif" }}
-            >
+            <Eyebrow className="text-muted-foreground mb-6">
               VIEW STYLISTS BY LOCATION
-            </p>
+            </Eyebrow>
             
             <div className="inline-flex border border-border bg-background">
               {locations.map((location) => (

@@ -2,6 +2,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
 import { TypewriterText } from "@/components/ui/TypewriterText";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 export function BrandStatement() {
   const ref = useRef(null);
@@ -16,12 +17,9 @@ export function BrandStatement() {
           animate={isInView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.8 }}
         >
-          <span 
-            className="text-xs uppercase tracking-[0.2em] text-background/60 block mb-4"
-            style={{ fontFamily: "'Termina', sans-serif" }}
-          >
+          <Eyebrow className="text-background/60 mb-4">
             Drop Dead is
-          </span>
+          </Eyebrow>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
             Not Your
             <br />

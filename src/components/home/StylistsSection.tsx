@@ -31,6 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 import { stylists, locations, allSpecialties, stylistLevels, type Stylist, type Location } from "@/data/stylists";
 
@@ -194,12 +195,9 @@ export function StylistsSection() {
             Each stylist brings their own unique expertise and creative vision.
           </p>
           
-          <p 
-            className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4"
-            style={{ fontFamily: "'Termina', sans-serif" }}
-          >
+          <Eyebrow className="text-muted-foreground mb-4">
             VIEW STYLISTS BY LOCATION
-          </p>
+          </Eyebrow>
           
           <div className="inline-flex items-center border border-border bg-background">
             {locations.map((location) => (
@@ -241,12 +239,9 @@ export function StylistsSection() {
           <div className="mt-8 flex flex-col gap-8 items-center">
             {/* Specialty Filter */}
             <div>
-              <p 
-                className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4"
-                style={{ fontFamily: "'Termina', sans-serif" }}
-              >
+              <Eyebrow className="text-muted-foreground mb-4">
                 VIEW BY SPECIALTY
-              </p>
+              </Eyebrow>
               <div className="flex flex-wrap justify-center gap-2">
                 <motion.button
                   onClick={() => setSelectedSpecialty(null)}
@@ -283,12 +278,9 @@ export function StylistsSection() {
             {/* Level/Price Filter */}
             <div>
               <div className="flex items-center justify-center gap-2 mb-4">
-                <p 
-                  className="text-xs uppercase tracking-[0.2em] text-muted-foreground"
-                  style={{ fontFamily: "'Termina', sans-serif" }}
-                >
+                <Eyebrow className="text-muted-foreground">
                   VIEW BY LEVEL & PRICE
-                </p>
+                </Eyebrow>
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
