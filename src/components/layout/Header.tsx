@@ -46,7 +46,14 @@ export function Header() {
   // Section theme detection using data-theme attributes
   useEffect(() => {
     const detectTheme = () => {
-      const headerY = 80; // Header center approximate position
+      // Calculate actual header center position dynamically
+      const headerEl = headerRef.current;
+      let headerY = 80; // fallback
+      if (headerEl) {
+        const headerRect = headerEl.getBoundingClientRect();
+        headerY = headerRect.top + headerRect.height / 2;
+      }
+      
       const sections = document.querySelectorAll("[data-theme]");
       
       for (const section of Array.from(sections)) {
