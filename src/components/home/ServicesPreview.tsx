@@ -354,7 +354,7 @@ export function ServicesPreview() {
                   {service.title}
                 </h3>
                 
-                <p className="text-sm text-muted-foreground font-sans mb-4">
+                <p className="text-sm text-muted-foreground font-sans font-semibold mb-4">
                   {service.price}
                 </p>
 
@@ -419,7 +419,7 @@ export function ServicesPreview() {
                 {service.title}
               </h3>
               
-              <p className="text-sm text-muted-foreground font-sans mb-4">
+              <p className="text-sm text-muted-foreground font-sans font-semibold mb-4">
                 {service.price}
               </p>
 
