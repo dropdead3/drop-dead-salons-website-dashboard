@@ -6,8 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
+import { useToggleUserRole, ROLE_LABELS } from '@/hooks/useUserRoles';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 import {
   LayoutDashboard,
   Target,
@@ -31,11 +43,19 @@ import {
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
+const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'assistant'];
+
+const roleColors: Record<AppRole, string> = {
+  admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  manager: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  stylist: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  receptionist: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  assistant: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+};
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
-
-type AppRole = 'admin' | 'manager' | 'stylist' | 'receptionist' | 'assistant';
 
 interface NavItem {
   href: string;
@@ -316,6 +336,77 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     </div>
   );
 
+  const toggleRole = useToggleUserRole();
+
+  const handleToggleRole = (role: AppRole) => {
+    if (!user) return;
+    const hasRole = roles.includes(role);
+    toggleRole.mutate({ userId: user.id, role, hasRole });
+  };
+
+  // Role Toggle Component for admins
+  const RoleToggle = () => {
+    if (!roles.includes('admin')) return null;
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Shield className="w-4 h-4" />
+            <span className="hidden sm:inline">My Roles</span>
+            <div className="flex gap-1">
+              {roles.slice(0, 2).map(role => (
+                <Badge 
+                  key={role} 
+                  variant="secondary" 
+                  className={cn("text-xs px-1.5 py-0", roleColors[role as AppRole])}
+                >
+                  {ROLE_LABELS[role as AppRole]?.charAt(0)}
+                </Badge>
+              ))}
+              {roles.length > 2 && (
+                <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                  +{roles.length - 2}
+                </Badge>
+              )}
+            </div>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>Toggle My Roles</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {ALL_ROLES.map(role => {
+            const hasRole = roles.includes(role);
+            return (
+              <DropdownMenuItem
+                key={role}
+                onClick={() => handleToggleRole(role)}
+                className="flex items-center justify-between cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    variant="secondary" 
+                    className={cn("text-xs", roleColors[role])}
+                  >
+                    {ROLE_LABELS[role]}
+                  </Badge>
+                </div>
+                <div className={cn(
+                  "w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+                  hasRole 
+                    ? "bg-primary border-primary text-primary-foreground" 
+                    : "border-muted-foreground"
+                )}>
+                  {hasRole && <span className="text-xs">✓</span>}
+                </div>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
@@ -340,12 +431,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <img src={Logo} alt="Drop Dead" className="h-4 w-auto" />
         </Link>
 
-        <div className="w-10" /> {/* Spacer for centering */}
+        <RoleToggle />
       </header>
+
+      {/* Desktop Top Bar (for admins) */}
+      {roles.includes('admin') && (
+        <div className="hidden lg:block lg:pl-64">
+          <div className="sticky top-0 z-30 flex items-center justify-end h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
+            <RoleToggle />
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="lg:pl-64">
-        <div className="min-h-screen">
+        <div className={cn("min-h-screen", roles.includes('admin') && "lg:pt-0")}>
           {children}
         </div>
       </main>
