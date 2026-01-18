@@ -17,6 +17,7 @@ export function BrandStatement() {
   const opacity = useTransform(scrollYProgress, [0, 0.7], [0, 1]);
   const blur = useTransform(scrollYProgress, [0, 0.5], [8, 0]);
   const blurFilter = useTransform(blur, (v) => `blur(${v}px)`);
+  const y = useTransform(scrollYProgress, [0, 0.7], [40, 0]);
 
   return (
     <Section className="bg-background" theme="light">
@@ -24,7 +25,7 @@ export function BrandStatement() {
         ref={containerRef}
         data-theme="dark"
         className="bg-foreground text-background rounded-2xl p-12 md:p-20 lg:p-24"
-        style={{ opacity, filter: blurFilter }}
+        style={{ opacity, filter: blurFilter, y }}
       >
         <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
           {/* Left side - Title */}
