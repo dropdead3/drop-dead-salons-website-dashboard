@@ -157,7 +157,7 @@
 @layer utilities {
   .font-display {
     text-transform: uppercase;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.05em;
     font-style: normal !important;
   }
   
