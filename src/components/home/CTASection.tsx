@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
-import { ArrowUpRight } from "lucide-react";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { ArrowUpRight, Phone } from "lucide-react";
 
 export function CTASection() {
   const ref = useRef(null);
@@ -12,47 +11,53 @@ export function CTASection() {
   return (
     <section
       ref={ref}
-      data-theme="dark"
-      className="py-24 lg:py-32 bg-foreground text-background"
+      data-theme="light"
+      className="py-16 lg:py-20 bg-secondary"
     >
-      <div className="container mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
-          {/* Left - Text */}
-          <SectionHeader
-            title="Ready for Something"
-            titleHighlight="Better?"
-            description="Experience the difference of a salon that truly cares about artistry and results."
-            titleClassName="text-4xl md:text-5xl lg:text-6xl"
-            descriptionClassName="text-background/70"
-            animate
-            isInView={isInView}
-          />
-
-          {/* Right - Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="flex flex-col items-start lg:items-end gap-4"
-          >
+      <div className="container mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center"
+        >
+          <h2 className="font-script text-4xl md:text-5xl lg:text-6xl text-foreground mb-4">
+            Book Your Consult
+          </h2>
+          <p className="text-muted-foreground font-sans text-sm md:text-base mb-8">
+            Every great transformation begins with a conversation. Let's plan yours.
+          </p>
+          
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
             <Link
               to="/booking"
-              className="group inline-flex items-center gap-3 px-12 py-5 text-base font-sans border border-background text-background rounded-xl hover:bg-background hover:text-foreground transition-all duration-300 active:scale-[0.98]"
+              className="group inline-flex items-center gap-2 px-8 py-3.5 text-sm font-sans bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all duration-300 active:scale-[0.98]"
             >
               <span>Book consult</span>
-              <motion.span
-                className="inline-block"
-                whileHover={{ x: 4, y: -4 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <ArrowUpRight size={20} />
-              </motion.span>
+              <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
-            <p className="text-xs text-background/60 font-sans lg:text-right">
-              We start every journey with a personalized consultation
-            </p>
-          </motion.div>
-        </div>
+            
+            <span className="text-muted-foreground text-sm">or call</span>
+            
+            <a 
+              href="tel:+14805551234" 
+              className="inline-flex items-center gap-2 text-sm text-foreground hover:text-foreground/70 transition-colors"
+            >
+              <Phone size={14} />
+              <span>North Mesa</span>
+            </a>
+            
+            <span className="text-muted-foreground">·</span>
+            
+            <a 
+              href="tel:+14805555678" 
+              className="inline-flex items-center gap-2 text-sm text-foreground hover:text-foreground/70 transition-colors"
+            >
+              <Phone size={14} />
+              <span>Val Vista Lakes</span>
+            </a>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
