@@ -45,6 +45,11 @@ import {
   Eye,
   EyeOff,
   UserCheck,
+  Crown,
+  Scissors,
+  Headset,
+  HandHelping,
+  User,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -136,6 +141,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return 'Team Member';
   };
 
+  const getAccessIcon = () => {
+    if (actualRoles.includes('admin')) return Crown;
+    if (actualRoles.includes('manager')) return Shield;
+    if (actualRoles.includes('stylist')) return Scissors;
+    if (actualRoles.includes('receptionist')) return Headset;
+    if (actualRoles.includes('assistant')) return HandHelping;
+    return User;
+  };
+
   const getAccessBadgeColor = () => {
     if (actualRoles.includes('admin')) return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800';
     if (actualRoles.includes('manager')) return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800';
@@ -144,6 +158,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (actualRoles.includes('assistant')) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800';
     return 'bg-muted text-muted-foreground border-border';
   };
+
+  const AccessIcon = getAccessIcon();
 
   const handleSignOut = async () => {
     setViewAsRole(null); // Clear view as on sign out
@@ -492,7 +508,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </Link>
 
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className={cn("text-xs font-medium", getAccessBadgeColor())}>
+          <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
+            <AccessIcon className="w-3 h-3" />
             {getAccessLabel()}
           </Badge>
           <ViewAsToggle />
@@ -540,7 +557,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Desktop Top Bar */}
       <div className="hidden lg:block lg:pl-64">
         <div className="sticky top-0 z-30 flex items-center justify-end gap-3 h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
-          <Badge variant="outline" className={cn("text-xs font-medium", getAccessBadgeColor())}>
+          <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
+            <AccessIcon className="w-3 h-3" />
             {getAccessLabel()}
           </Badge>
           {isAdmin && <ViewAsToggle />}
