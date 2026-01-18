@@ -21,9 +21,9 @@ export function BrandStatement() {
             animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
             transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <span className="text-xs uppercase tracking-[0.2em] text-background/60 mb-4 block">
+            <Eyebrow className="text-background/60 mb-4">
               Drop Dead is
-            </span>
+            </Eyebrow>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
               Not Your
               <br />
