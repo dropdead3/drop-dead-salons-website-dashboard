@@ -1,4 +1,4 @@
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -153,58 +153,63 @@ export default function Extensions() {
         description="Experience luxury hair extensions with the Drop Dead Method. Instant volume, instant length, damage-free extensions. Book your consultation today."
       />
 
-      {/* Hero Section */}
-      <section ref={heroRef} className="pt-32 lg:pt-40 pb-16 lg:pb-24 overflow-hidden">
-        <div className="container mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left - Content */}
-            <div className="order-2 lg:order-1">
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={heroInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6 }}
-                className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight text-foreground leading-[1.1]"
-              >
-                <span className="italic font-light">Luxury</span> extension services
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={heroInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="mt-6 text-base md:text-lg text-muted-foreground font-sans font-light max-w-lg leading-relaxed"
-              >
-                Drop Dead Salon built it's foundations upon our hair extension knowledge and sister brand, Drop Dead Extensions. We use all our own proprietary extension products in our salons to deliver incredible results with a quality guarantee.
-              </motion.p>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={heroInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="mt-8"
-              >
-                <Link
-                  to="/booking"
-                  className="group inline-flex items-center gap-3 bg-foreground text-background px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground/90 transition-all duration-300"
-                >
-                  <span>Book Your Consultation</span>
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-              </motion.div>
-            </div>
-
-            {/* Right - Hero Image */}
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={heroInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="order-1 lg:order-2 relative"
+      {/* Hero Section - Full Width Parallax */}
+      <section ref={heroRef} className="relative h-screen min-h-[600px] max-h-[900px] overflow-hidden">
+        {/* Parallax Background Image */}
+        <motion.div 
+          className="absolute inset-0 w-full h-[120%] -top-[10%]"
+          style={{
+            y: useTransform(useScroll().scrollY, [0, 1000], [0, 300])
+          }}
+        >
+          <img 
+            src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1920&h=1200&fit=crop"
+            alt="Luxury hair extensions"
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
+        
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/40" />
+        
+        {/* Centered Content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="container mx-auto px-6 lg:px-12 text-center">
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={heroInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8 }}
+              className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal tracking-tight text-white leading-[1.1] max-w-4xl mx-auto"
             >
-              <div className="aspect-[4/5] lg:aspect-[3/4] relative overflow-hidden">
-                <img 
-                  src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=1000&fit=crop"
-                  alt="Luxury hair extensions"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <span className="italic font-light">Luxury</span> extension services
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 30 }}
+              animate={heroInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8, delay: 0.15 }}
+              className="mt-6 text-base md:text-lg text-white/80 font-sans font-light max-w-xl mx-auto leading-relaxed"
+            >
+              Drop Dead Salon built it's foundations upon our hair extension knowledge and sister brand, Drop Dead Extensions. We use all our own proprietary extension products in our salons to deliver incredible results with a quality guarantee.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={heroInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+            >
+              <Link
+                to="/booking"
+                className="group inline-flex items-center gap-3 bg-white text-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-white/90 transition-all duration-300"
+              >
+                <span>Book Your Consultation</span>
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+              <Link
+                to="#packages"
+                className="group inline-flex items-center gap-3 border border-white text-white px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-white hover:text-foreground transition-all duration-300"
+              >
+                <span>View Packages</span>
+              </Link>
             </motion.div>
           </div>
         </div>
