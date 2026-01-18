@@ -215,72 +215,41 @@ export default function Extensions() {
         </div>
       </section>
 
-      {/* Social Proof / Trust Badges Section */}
-      <section className="py-12 bg-secondary/30">
+      {/* Social Proof - Minimal Inline */}
+      <section className="py-8 border-b border-border bg-background">
         <div className="container mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
-            {/* Rating */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="text-center"
-            >
-              <div className="flex items-center justify-center gap-1 mb-2">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-sm"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-oat text-oat" />
+                  <Star key={i} className="w-4 h-4 fill-foreground text-foreground" />
                 ))}
               </div>
-              <p className="text-2xl font-serif font-medium text-foreground">4.9</p>
-              <p className="text-sm text-muted-foreground mt-1">500+ Reviews</p>
-            </motion.div>
-
-            {/* Certified */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-center"
-            >
-              <div className="flex items-center justify-center mb-2">
-                <Award className="w-8 h-8 text-foreground" />
-              </div>
-              <p className="text-2xl font-serif font-medium text-foreground">Certified</p>
-              <p className="text-sm text-muted-foreground mt-1">Drop Dead Method</p>
-            </motion.div>
-
-            {/* Clients Served */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-center"
-            >
-              <div className="flex items-center justify-center mb-2">
-                <Users className="w-8 h-8 text-foreground" />
-              </div>
-              <p className="text-2xl font-serif font-medium text-foreground">2,000+</p>
-              <p className="text-sm text-muted-foreground mt-1">Transformations</p>
-            </motion.div>
-
-            {/* Experience */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="text-center"
-            >
-              <div className="flex items-center justify-center mb-2">
-                <Sparkles className="w-8 h-8 text-foreground" />
-              </div>
-              <p className="text-2xl font-serif font-medium text-foreground">10+ Years</p>
-              <p className="text-sm text-muted-foreground mt-1">Expert Experience</p>
-            </motion.div>
-          </div>
+              <span className="text-foreground font-medium">4.9</span>
+              <span className="text-muted-foreground">(500+ reviews)</span>
+            </div>
+            <div className="hidden sm:block w-px h-4 bg-border" />
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span className="font-medium text-foreground">2,000+</span>
+              <span>transformations</span>
+            </div>
+            <div className="hidden sm:block w-px h-4 bg-border" />
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span className="font-medium text-foreground">10+ years</span>
+              <span>experience</span>
+            </div>
+            <div className="hidden sm:block w-px h-4 bg-border" />
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span className="font-medium text-foreground">Certified</span>
+              <span>Drop Dead Method</span>
+            </div>
+          </motion.div>
         </div>
       </section>
 
