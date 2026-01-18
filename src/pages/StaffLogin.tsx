@@ -27,14 +27,17 @@ const roleOptions: { value: AppRole; label: string; description: string }[] = [
 
 export default function StaffLogin() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<AppRole>('stylist');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -46,7 +49,22 @@ export default function StaffLogin() {
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (isForgotPassword) {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast({
+            variant: 'destructive',
+            title: 'Reset failed',
+            description: error.message,
+          });
+        } else {
+          toast({
+            title: 'Check your email',
+            description: 'We sent you a password reset link.',
+          });
+          setIsForgotPassword(false);
+        }
+      } else if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
           toast({
@@ -58,6 +76,14 @@ export default function StaffLogin() {
           navigate(from, { replace: true });
         }
       } else {
+        if (password !== confirmPassword) {
+          toast({
+            variant: 'destructive',
+            title: 'Passwords do not match',
+            description: 'Please make sure your passwords match.',
+          });
+          return;
+        }
         const { error } = await signUp(email, password, fullName, role);
         if (error) {
           toast({
@@ -102,19 +128,21 @@ export default function StaffLogin() {
               className="h-6 w-auto mx-auto mb-8"
             />
             <h1 className="font-display text-2xl tracking-wide">
-              {isLogin ? 'STAFF LOGIN' : 'CREATE ACCOUNT'}
+              {isForgotPassword ? 'RESET PASSWORD' : isLogin ? 'STAFF LOGIN' : 'CREATE ACCOUNT'}
             </h1>
             <p className="text-sm text-muted-foreground mt-2 font-sans">
-              {isLogin 
-                ? 'Access your employee dashboard' 
-                : 'Use your preferred email for all employment software and apps'
+              {isForgotPassword
+                ? 'Enter your email to receive a reset link'
+                : isLogin 
+                  ? 'Access your employee dashboard' 
+                  : 'Use your preferred email for all employment software and apps'
               }
             </p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {!isLogin && (
+            {!isLogin && !isForgotPassword && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="text-xs uppercase tracking-wider">
@@ -169,30 +197,70 @@ export default function StaffLogin() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs uppercase tracking-wider">
-                Password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                  className="h-12 bg-card border-border pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+            {!isForgotPassword && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-xs uppercase tracking-wider">
+                    Password
+                  </Label>
+                  {isLogin && (
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPassword(true)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                    className="h-12 bg-card border-border pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {!isLogin && !isForgotPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-wider">
+                  Confirm Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                    className="h-12 bg-card border-border pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-3">
               <Button
@@ -202,13 +270,15 @@ export default function StaffLogin() {
               >
                 {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isForgotPassword ? (
+                  'SEND RESET LINK'
                 ) : isLogin ? (
                   'SIGN IN'
                 ) : (
                   'CREATE ACCOUNT'
                 )}
               </Button>
-              {isLogin && (
+              {isLogin && !isForgotPassword && (
                 <Button
                   type="button"
                   variant="outline"
@@ -225,12 +295,17 @@ export default function StaffLogin() {
           <div className="text-center">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsForgotPassword(false);
+                setIsLogin(!isLogin);
+              }}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors font-sans"
             >
-              {isLogin 
-                ? "Don't have an account? Sign up" 
-                : 'Already have an account? Sign in'
+              {isForgotPassword
+                ? 'Back to sign in'
+                : isLogin 
+                  ? "Don't have an account? Sign up" 
+                  : 'Already have an account? Sign in'
               }
             </button>
           </div>
