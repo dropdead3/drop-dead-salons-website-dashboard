@@ -102,7 +102,7 @@ export default function Services() {
             >
               Services &
               <br />
-              <span className="italic font-light">Experiences</span>
+              <span className="font-light">Experiences</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -145,7 +145,7 @@ export default function Services() {
                         {service.description}
                       </p>
                       {service.note && (
-                        <p className="mt-2 text-sm text-muted-foreground/70 font-sans italic">
+                        <p className="mt-2 text-sm text-muted-foreground/70 font-sans">
                           {service.note}
                         </p>
                       )}
@@ -173,7 +173,7 @@ export default function Services() {
       <Section>
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="font-serif text-3xl md:text-4xl font-normal text-foreground mb-4">
-            Ready to <span className="italic font-light">Begin?</span>
+            Ready to <span className="font-light">Begin?</span>
           </h2>
           <p className="text-muted-foreground font-sans font-light mb-8">
             Book your consultation and let's discuss your vision.

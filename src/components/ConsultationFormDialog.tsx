@@ -116,7 +116,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
             <DialogTitle className="font-serif text-2xl md:text-3xl font-normal text-foreground">
               Schedule Your
               <br />
-              <span className="italic font-light">Initial Consultation</span>
+              <span className="font-light">Initial Consultation</span>
             </DialogTitle>
           </div>
           <p className="text-sm text-muted-foreground font-sans font-light mt-3 leading-relaxed">

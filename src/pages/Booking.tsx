@@ -121,7 +121,7 @@ export default function Booking() {
             >
               Schedule Your
               <br />
-              <span className="italic font-light">Initial Consultation</span>
+              <span className="font-light">Initial Consultation</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
