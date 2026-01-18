@@ -464,6 +464,48 @@ export type Database = {
         }
         Relationships: []
       }
+      one_on_one_meetings: {
+        Row: {
+          coach_id: string
+          created_at: string
+          end_time: string
+          id: string
+          meeting_date: string
+          meeting_type: string | null
+          notes: string | null
+          requester_id: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string
+          end_time: string
+          id?: string
+          meeting_date: string
+          meeting_type?: string | null
+          notes?: string | null
+          requester_id: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          meeting_date?: string
+          meeting_type?: string | null
+          notes?: string | null
+          requester_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ring_the_bell_entries: {
         Row: {
           closing_script: string | null

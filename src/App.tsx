@@ -35,6 +35,7 @@ import AdminAnnouncements from "./pages/dashboard/admin/Announcements";
 import MyHandbooks from "./pages/dashboard/MyHandbooks";
 import Onboarding from "./pages/dashboard/Onboarding";
 import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
+import ScheduleMeeting from "./pages/dashboard/ScheduleMeeting";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/dashboard/handbooks" element={<ProtectedRoute><MyHandbooks /></ProtectedRoute>} />
               <Route path="/dashboard/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route path="/dashboard/assistant-schedule" element={<ProtectedRoute><AssistantSchedule /></ProtectedRoute>} />
+              <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute><ScheduleMeeting /></ProtectedRoute>} />
               
               {/* Admin routes */}
               <Route path="/dashboard/admin/team" element={<ProtectedRoute requireCoach><TeamOverview /></ProtectedRoute>} />
