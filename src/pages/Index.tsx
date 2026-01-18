@@ -7,7 +7,6 @@ import { ServicesPreview } from "@/components/home/ServicesPreview";
 import { PopularServices } from "@/components/home/PopularServices";
 import { NewClientSection } from "@/components/home/NewClientSection";
 import { LocationsSection } from "@/components/home/LocationsSection";
-import { FounderWelcome } from "@/components/home/FounderWelcome";
 import { StylistsSection } from "@/components/home/StylistsSection";
 import { GallerySection } from "@/components/home/GallerySection";
 import { TestimonialSection } from "@/components/home/TestimonialSection";
@@ -30,7 +29,6 @@ const Index = () => {
       <PopularServices />
       <BrandsSection />
       <NewClientSection />
-      <FounderWelcome />
       <LocationsSection />
       <GallerySection />
       {/* Combined Reviews & FAQ Section with Gradient */}
