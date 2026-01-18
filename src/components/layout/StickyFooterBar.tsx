@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, Phone } from "lucide-react";
+import { ArrowUpRight, Phone, ChevronUp } from "lucide-react";
 import { ScrollProgressButton } from "./ScrollProgressButton";
 
 const locations = [
@@ -17,6 +17,8 @@ const locations = [
 
 export function StickyFooterBar() {
   const [isVisible, setIsVisible] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const isBookingPage = location.pathname === "/booking";
 
@@ -29,12 +31,24 @@ export function StickyFooterBar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   if (isBookingPage) return null;
 
   return (
     <>
       {/* Scroll to top - bottom right */}
-      <div className="fixed bottom-8 right-8 z-40">
+      <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-40">
         <AnimatePresence>
           {isVisible && <ScrollProgressButton />}
         </AnimatePresence>
@@ -52,16 +66,59 @@ export function StickyFooterBar() {
               stiffness: 300,
               damping: 30,
             }}
-            className="fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:bottom-8 z-40"
+            className="fixed bottom-4 left-4 right-20 md:left-1/2 md:right-auto md:-translate-x-1/2 md:bottom-8 z-40"
           >
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 p-2 bg-foreground/80 backdrop-blur-xl border border-foreground/20 rounded-2xl shadow-2xl shadow-foreground/20">
-              {/* Phone buttons row on mobile */}
-              <div className="flex items-center gap-1 md:gap-2">
+            <div className="flex items-center gap-2 p-1.5 md:p-2 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl shadow-black/20">
+              {/* Mobile: Dropdown for locations */}
+              <div ref={dropdownRef} className="relative md:hidden">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 px-4 py-3 text-foreground/80 hover:text-foreground hover:bg-foreground/5 rounded-xl transition-all duration-200"
+                >
+                  <Phone size={14} />
+                  <span className="text-xs font-medium uppercase tracking-wide">Call</span>
+                  <ChevronUp 
+                    size={12} 
+                    className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-0' : 'rotate-180'}`} 
+                  />
+                </button>
+
+                {/* Dropdown menu */}
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute bottom-full left-0 mb-2 w-48 bg-background border border-border rounded-xl shadow-xl overflow-hidden z-50"
+                    >
+                      {locations.map((loc) => (
+                        <a
+                          key={loc.name}
+                          href={`tel:${loc.phone.replace(/[^0-9]/g, "")}`}
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 text-foreground hover:bg-muted transition-colors"
+                        >
+                          <Phone size={14} className="text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium">{loc.name}</p>
+                            <p className="text-xs text-muted-foreground">{loc.phone}</p>
+                          </div>
+                        </a>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Desktop: Show both locations */}
+              <div className="hidden md:flex items-center gap-2">
                 {locations.map((loc) => (
                   <a
                     key={loc.name}
                     href={`tel:${loc.phone.replace(/[^0-9]/g, "")}`}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-3 text-background/70 hover:text-background hover:bg-background/10 rounded-xl transition-all duration-200"
+                    className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-xl transition-all duration-200"
                   >
                     <Phone size={14} />
                     <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
@@ -71,16 +128,15 @@ export function StickyFooterBar() {
                 ))}
               </div>
 
-              {/* Divider - horizontal on mobile, vertical on desktop */}
-              <div className="hidden md:block w-px h-8 bg-background/20" />
-              <div className="md:hidden w-full h-px bg-background/20" />
+              {/* Divider */}
+              <div className="w-px h-8 bg-foreground/10" />
 
               {/* Book CTA */}
               <Link
                 to="/booking"
-                className="flex items-center justify-center gap-2 px-5 py-3 bg-background text-foreground rounded-xl hover:bg-background/90 transition-all duration-200 group"
+                className="flex items-center justify-center gap-2 px-4 md:px-5 py-3 bg-foreground text-background rounded-xl hover:bg-foreground/90 transition-all duration-200 group"
               >
-                <span className="text-sm font-medium">Book consult</span>
+                <span className="text-xs md:text-sm font-medium">Book consult</span>
                 <ArrowUpRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
             </div>
