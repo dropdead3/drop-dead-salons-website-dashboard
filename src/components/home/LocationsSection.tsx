@@ -118,7 +118,7 @@ export function LocationsSection() {
                   }}
                   className="inline-flex items-center justify-center bg-background border border-border text-foreground px-6 py-3 text-sm font-sans font-medium hover:bg-muted transition-all duration-300 group/stylists w-full overflow-hidden"
                 >
-                  <span>Check Out The Stylists</span>
+                  <span>Check out the stylists</span>
                   <ArrowRight className="w-0 h-4 opacity-0 group-hover/stylists:w-4 group-hover/stylists:ml-2 group-hover/stylists:opacity-100 transition-all duration-300" />
                 </button>
               </div>
