@@ -45,7 +45,7 @@ export function FAQSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [searchQuery, setSearchQuery] = useState("");
-  const [openItem, setOpenItem] = useState<string | undefined>(undefined);
+  const [openItem, setOpenItem] = useState<string>("");
 
   const filteredFaqs = useMemo(() => {
     if (!searchQuery.trim()) return faqs;
@@ -187,9 +187,7 @@ export function FAQSection() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log('Content clicked, closing:', faq.question);
-                              console.log('Current openItem:', openItem);
-                              setOpenItem(undefined);
+                              setOpenItem("");
                             }}
                           >
                             <div className="mb-4">
