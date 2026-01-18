@@ -32,6 +32,7 @@ const stylistNavItems = [
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell },
   { href: '/dashboard/training', label: 'Training', icon: Video },
+  { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText },
 ];
 
 const coachNavItems = [
