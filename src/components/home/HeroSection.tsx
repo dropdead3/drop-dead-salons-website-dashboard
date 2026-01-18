@@ -99,18 +99,18 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
         </div>
       )}
 
-      <div className="flex-1 flex items-center justify-center py-24 lg:py-32 relative z-10">
+      <motion.div 
+        className="flex-1 flex items-center justify-center py-24 lg:py-32 relative z-10"
+        style={{ opacity }}
+      >
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-5xl mx-auto text-center">
             {/* Tagline */}
             <motion.div
-              initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ ...springTransition, delay: 2.0 }}
-              style={{ 
-                opacity,
-                y: taglineY
-              }}
+              style={{ y: taglineY }}
             >
               <Eyebrow className="text-muted-foreground mb-8">
                 Hair • Color • Artistry
@@ -120,26 +120,22 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             {/* Main headline - Split into two lines for stagger effect */}
             <motion.h1
               className="font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-normal text-foreground leading-[0.95]"
-              style={{ 
-                opacity,
-                y: headlineY,
-                filter: blurFilter
-              }}
+              style={{ y: headlineY }}
             >
               <motion.span 
                 className="whitespace-nowrap inline-block"
-                initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+                initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 2.6 }}
+                transition={{ ...springTransition, delay: 2.5 }}
               >
                 Drop Dead
               </motion.span>
               {" "}
               <motion.span
                 className="inline-block"
-                initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+                initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 3.2 }}
+                transition={{ ...springTransition, delay: 3.0 }}
               >
                 Salon
               </motion.span>
@@ -147,14 +143,11 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
 
             {/* Subheadline */}
             <motion.p
-              initial={{ opacity: 0, y: 25, filter: "blur(6px)" }}
+              initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ ...springTransition, delay: 4.0 }}
+              transition={{ ...springTransition, delay: 3.6 }}
               className="mt-10 text-base md:text-lg text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
-              style={{ 
-                opacity,
-                y: subheadlineY
-              }}
+              style={{ y: subheadlineY }}
             >
               Step into a world where science meets artistry.
               <br />
@@ -164,16 +157,13 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             {/* CTAs */}
             <motion.div
               className="mt-12 flex flex-col items-center gap-4"
-              style={{ 
-                opacity,
-                y: ctaY
-              }}
+              style={{ y: ctaY }}
             >
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <motion.button
-                  initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+                  initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  transition={{ ...springTransition, delay: 4.8 }}
+                  transition={{ ...springTransition, delay: 4.2 }}
                   onClick={() => setConsultationOpen(true)}
                   className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
                 >
@@ -181,9 +171,9 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                   <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
                 </motion.button>
                 <motion.div
-                  initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+                  initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  transition={{ ...springTransition, delay: 5.2 }}
+                  transition={{ ...springTransition, delay: 4.6 }}
                 >
                   <Link
                     to="/booking"
@@ -195,9 +185,9 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 </motion.div>
               </div>
               <motion.div 
-                initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+                initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 5.8 }}
+                transition={{ ...springTransition, delay: 5.1 }}
                 className="flex flex-col items-center gap-1 text-sm text-muted-foreground font-sans"
               >
                 <p>New clients begin with a $15 consultation</p>
@@ -206,17 +196,16 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             </motion.div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Scroll Indicator */}
       <motion.button
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ ...springTransition, delay: 6.5 }}
+        transition={{ ...springTransition, delay: 5.8 }}
         onClick={scrollToContent}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-20"
         aria-label="Scroll down"
-        style={{ opacity }}
       >
         <span className="text-xs uppercase tracking-[0.2em] font-display">Scroll</span>
         <motion.div
