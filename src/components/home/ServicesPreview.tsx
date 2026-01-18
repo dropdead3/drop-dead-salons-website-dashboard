@@ -8,16 +8,16 @@ import { BeforeAfterSlider } from "./BeforeAfterSlider";
 
 const services = [
   {
-    category: "Color Services",
-    title: "Color & Blonding",
-    price: "Starting at $150",
-    description: "Expert color work from subtle dimension to bold transformation. Our colorists specialize in creating refined, natural-looking results tailored to your unique features.",
-  },
-  {
     category: "Extensions",
     title: "Drop Dead® Extensions",
     price: "Clients typically spend $1,200 - $3,500",
     description: "Drop Dead salons specialize in seamless, high-quality extensions utilizing both our proprietary hand-tied and tape-in methods for natural volume transformations.",
+  },
+  {
+    category: "Color Services",
+    title: "Color & Blonding",
+    price: "Starting at $150",
+    description: "Expert color work from subtle dimension to bold transformation. Our colorists specialize in creating refined, natural-looking results tailored to your unique features.",
   },
   {
     category: "Haircuts",
