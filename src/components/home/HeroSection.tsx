@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ArrowRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { TypewriterText } from "@/components/ui/TypewriterText";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
@@ -221,9 +221,10 @@ export function HeroSection() {
                 </button>
                 <Link
                   to="/booking"
-                  className="group w-full sm:w-auto px-10 py-5 text-base font-sans font-normal border border-foreground text-foreground hover:bg-foreground hover:text-background transition-all duration-300 text-center relative overflow-hidden"
+                  className="group w-full sm:w-auto px-10 py-5 text-base font-sans font-normal border border-foreground text-foreground transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-2"
                 >
                   <span className="relative z-10">I am a returning client</span>
+                  <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                 </Link>
               </div>
               <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground font-sans">
