@@ -157,7 +157,7 @@ export function Header() {
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                       className={cn(
-                        "h-6 lg:h-7 w-auto",
+                        "h-5 w-auto",
                         isOverDark ? "invert" : ""
                       )}
                     />
