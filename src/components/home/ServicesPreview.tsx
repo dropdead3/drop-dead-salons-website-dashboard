@@ -67,10 +67,9 @@ export function ServicesPreview() {
     const card = cards[middleStartIndex] as HTMLElement;
     
     if (card) {
-      const containerRect = container.getBoundingClientRect();
-      const cardRect = card.getBoundingClientRect();
-      const scrollLeftPos = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
-      container.scrollLeft = Math.max(0, scrollLeftPos);
+      // Position the first card at the left edge with padding
+      const paddingLeft = window.innerWidth >= 1024 ? 48 : 24; // lg:px-12 = 48px, px-6 = 24px
+      container.scrollLeft = card.offsetLeft - paddingLeft;
       hasInitialized.current = true;
       extendedIndex.current = CLONE_COUNT;
     }
