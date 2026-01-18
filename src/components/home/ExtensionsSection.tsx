@@ -48,7 +48,7 @@ export function ExtensionsSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-oat/20 border border-oat/30"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-oat/20 border border-oat-foreground/30 badge-shine"
             >
               <Star className="w-4 h-4 fill-oat text-oat" />
               <span className="text-sm font-display uppercase tracking-wide text-oat">OUR SIGNATURE</span>
