@@ -71,12 +71,13 @@ export function ServicesPreview() {
       // Start at the first card of the middle set
       const middleStartIndex = CLONE_COUNT;
       const card = cards[middleStartIndex] as HTMLElement;
+      const prevCard = cards[middleStartIndex - 1] as HTMLElement;
       
-      if (card) {
-        // Account for container padding (px-6 = 24px, lg:px-12 = 48px)
-        const paddingLeft = window.innerWidth >= 1024 ? 48 : 24;
-        // Scroll so the card's left edge (the image) aligns with the content area start
-        container.scrollLeft = card.offsetLeft - paddingLeft;
+      if (card && prevCard) {
+        // Scroll to position where the first card's image starts at the left padding edge
+        // We need to hide the previous card completely
+        const prevCardEnd = prevCard.offsetLeft + prevCard.offsetWidth;
+        container.scrollLeft = prevCardEnd;
         hasInitialized.current = true;
         extendedIndex.current = CLONE_COUNT;
       }
