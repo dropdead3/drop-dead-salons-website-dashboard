@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,6 +64,29 @@ export default function ManageRoles() {
     return accounts?.find(a => a.user_id === userId);
   };
 
+  // Calculate role statistics
+  const roleStats = useMemo(() => {
+    const stats: Record<AppRole | 'super_admin' | 'total', number> = {
+      total: users.length,
+      super_admin: 0,
+      admin: 0,
+      manager: 0,
+      stylist: 0,
+      receptionist: 0,
+      assistant: 0,
+    };
+
+    users.forEach(user => {
+      const accountInfo = getAccountInfo(user.user_id);
+      if (accountInfo?.is_super_admin) stats.super_admin++;
+      user.roles.forEach(role => {
+        stats[role]++;
+      });
+    });
+
+    return stats;
+  }, [users, accounts]);
+
   const handleToggleRole = (userId: string, role: AppRole, hasRole: boolean) => {
     toggleRole.mutate({ userId, role, hasRole });
   };
@@ -90,6 +113,47 @@ export default function ManageRoles() {
           <p className="text-muted-foreground">
             Assign and manage user roles across your team.
           </p>
+        </div>
+
+        {/* Role Statistics Overview */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+          <Card className="bg-muted/30">
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-display font-medium">{roleStats.total}</p>
+              <p className="text-xs text-muted-foreground">Total Users</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800">
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-display font-medium text-amber-700 dark:text-amber-400">{roleStats.super_admin}</p>
+              <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center justify-center gap-1">
+                <Crown className="w-3 h-3" />
+                Super Admin
+              </p>
+            </CardContent>
+          </Card>
+          {ALL_ROLES.map(role => (
+            <Card key={role} className={cn(
+              "border",
+              role === 'admin' && "border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/10",
+              role === 'manager' && "border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/10",
+              role === 'stylist' && "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/10",
+              role === 'receptionist' && "border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/10",
+              role === 'assistant' && "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/10",
+            )}>
+              <CardContent className="p-4 text-center">
+                <p className={cn(
+                  "text-2xl font-display font-medium",
+                  role === 'admin' && "text-red-700 dark:text-red-400",
+                  role === 'manager' && "text-purple-700 dark:text-purple-400",
+                  role === 'stylist' && "text-blue-700 dark:text-blue-400",
+                  role === 'receptionist' && "text-green-700 dark:text-green-400",
+                  role === 'assistant' && "text-amber-700 dark:text-amber-400",
+                )}>{roleStats[role]}</p>
+                <p className="text-xs text-muted-foreground">{ROLE_LABELS[role]}s</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Admin Role Warning */}
