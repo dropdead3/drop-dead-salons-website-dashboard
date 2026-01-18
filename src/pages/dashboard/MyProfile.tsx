@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock } from 'lucide-react';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { locations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const stylistLevels = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4'];
 
@@ -391,6 +392,108 @@ export default function MyProfile() {
                     ))}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Homepage Visibility - Only for stylists with complete profiles */}
+          {roles.includes('stylist') && (
+            <Card className={cn(
+              "border-2",
+              profile?.homepage_visible 
+                ? "border-green-500/50 bg-green-50/30 dark:bg-green-950/20"
+                : profile?.homepage_requested
+                  ? "border-amber-500/50 bg-amber-50/30 dark:bg-amber-950/20"
+                  : ""
+            )}>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Website Visibility
+                </CardTitle>
+                <CardDescription>
+                  Request to have your stylist card displayed on the salon website homepage.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {completionPercentage < 100 ? (
+                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                    <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm">Complete your profile first</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Your profile must be 100% complete before you can request homepage visibility. 
+                        You're currently at {completionPercentage}%.
+                      </p>
+                    </div>
+                  </div>
+                ) : profile?.homepage_visible ? (
+                  <div className="flex items-start gap-3 p-4 bg-green-100/50 dark:bg-green-900/20 rounded-lg">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-green-800 dark:text-green-400">
+                        You're visible on the website!
+                      </p>
+                      <p className="text-sm text-green-700/80 dark:text-green-400/70 mt-1">
+                        Your stylist card is now displayed on the salon homepage. Clients can see your profile and book consultations with you.
+                      </p>
+                    </div>
+                  </div>
+                ) : profile?.homepage_requested ? (
+                  <div className="flex items-start gap-3 p-4 bg-amber-100/50 dark:bg-amber-900/20 rounded-lg">
+                    <Clock className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-amber-800 dark:text-amber-400">
+                        Pending admin approval
+                      </p>
+                      <p className="text-sm text-amber-700/80 dark:text-amber-400/70 mt-1">
+                        Your request to be featured on the homepage is being reviewed. An admin will approve it soon.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Request Homepage Visibility</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Toggle this on to request that your stylist card be added to the website.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={false}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          updateProfile.mutate({
+                            homepage_requested: true,
+                            homepage_requested_at: new Date().toISOString(),
+                          }, {
+                            onSuccess: () => {
+                              toast.success('Homepage visibility requested! An admin will review your request.');
+                            }
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Booking Status Toggle - only show if visible on homepage */}
+                {profile?.homepage_visible && (
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Currently Booking</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Toggle off if you're not accepting new clients right now.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={profile?.is_booking ?? true}
+                      onCheckedChange={(checked) => {
+                        updateProfile.mutate({ is_booking: checked });
+                      }}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

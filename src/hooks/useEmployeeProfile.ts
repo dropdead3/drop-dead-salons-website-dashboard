@@ -45,6 +45,8 @@ export function useUpdateEmployeeProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employee-profile'] });
       queryClient.invalidateQueries({ queryKey: ['team-directory'] });
+      queryClient.invalidateQueries({ queryKey: ['homepage-stylists'] });
+      queryClient.invalidateQueries({ queryKey: ['homepage-requests'] });
       toast.success('Profile updated successfully');
     },
     onError: (error) => {

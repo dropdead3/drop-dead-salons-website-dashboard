@@ -342,9 +342,13 @@ export type Database = {
           emergency_phone: string | null
           full_name: string
           hire_date: string | null
+          homepage_requested: boolean | null
+          homepage_requested_at: string | null
+          homepage_visible: boolean | null
           id: string
           instagram: string | null
           is_active: boolean | null
+          is_booking: boolean | null
           location_id: string | null
           phone: string | null
           photo_url: string | null
@@ -362,9 +366,13 @@ export type Database = {
           emergency_phone?: string | null
           full_name: string
           hire_date?: string | null
+          homepage_requested?: boolean | null
+          homepage_requested_at?: string | null
+          homepage_visible?: boolean | null
           id?: string
           instagram?: string | null
           is_active?: boolean | null
+          is_booking?: boolean | null
           location_id?: string | null
           phone?: string | null
           photo_url?: string | null
@@ -382,9 +390,13 @@ export type Database = {
           emergency_phone?: string | null
           full_name?: string
           hire_date?: string | null
+          homepage_requested?: boolean | null
+          homepage_requested_at?: string | null
+          homepage_visible?: boolean | null
           id?: string
           instagram?: string | null
           is_active?: boolean | null
+          is_booking?: boolean | null
           location_id?: string | null
           phone?: string | null
           photo_url?: string | null

@@ -26,6 +26,7 @@ import {
   CalendarClock,
   UserCircle,
   Contact,
+  Globe,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -73,6 +74,7 @@ const coachNavItems: NavItem[] = [
   { href: '/dashboard/admin/team', label: 'Team Overview', icon: Users },
   { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Bell },
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText },
+  { href: '/dashboard/admin/homepage-stylists', label: 'Homepage Stylists', icon: Globe },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, roles: ['admin'] },
 ];
 
