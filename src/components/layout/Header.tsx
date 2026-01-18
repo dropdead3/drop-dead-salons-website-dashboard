@@ -61,7 +61,10 @@ export function Header() {
       </div>
 
       {/* Main Header */}
-      <header className="sticky top-0 left-0 right-0 z-50 px-4 md:px-6 lg:px-8 pt-4 md:pt-6 lg:pt-8">
+      <header className={cn(
+        "sticky top-0 left-0 right-0 z-50 px-4 md:px-6 lg:px-8 transition-[padding] duration-400",
+        isScrolled ? "pt-4 md:pt-6 lg:pt-8" : "pt-2"
+      )}>
         <motion.div
           initial={false}
           animate={{
