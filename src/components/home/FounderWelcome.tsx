@@ -10,7 +10,7 @@ export function FounderWelcome() {
   return (
     <section ref={sectionRef} className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-20 items-center max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-24 items-center">
           {/* Left Column - Founder Photo */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
