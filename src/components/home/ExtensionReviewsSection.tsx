@@ -292,14 +292,14 @@ export function ExtensionReviewsSection() {
           <div className="flex gap-2">
             <button
               onClick={goToPrevious}
-              className="p-3 border border-border bg-background hover:bg-muted transition-colors rounded-full"
+              className="p-3 border border-border bg-background hover:bg-muted transition-colors"
               aria-label="Previous review"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             <button
               onClick={goToNext}
-              className="p-3 border border-border bg-background hover:bg-muted transition-colors rounded-full"
+              className="p-3 border border-border bg-background hover:bg-muted transition-colors"
               aria-label="Next review"
             >
               <ArrowRight className="w-4 h-4" />
@@ -315,7 +315,7 @@ export function ExtensionReviewsSection() {
                   setIsPaused(true);
                   scrollToCard(index);
                 }}
-                className={`h-1 transition-all duration-500 rounded-full ${
+                className={`h-1 transition-all duration-500 ${
                   index === currentIndex
                     ? 'w-8 bg-foreground'
                     : 'w-2 bg-foreground/30 hover:bg-foreground/50'
@@ -399,7 +399,7 @@ export function ExtensionReviewsSection() {
                 setIsPaused(true);
                 scrollToCard(index);
               }}
-              className={`h-1 transition-all duration-500 rounded-full ${
+              className={`h-1 transition-all duration-500 ${
                 index === currentIndex
                   ? 'w-8 bg-foreground'
                   : 'w-2 bg-foreground/30'
@@ -424,7 +424,7 @@ export function ExtensionReviewsSection() {
           {extensionTypes.map((type, index) => (
             <div
               key={index}
-              className="inline-flex items-center gap-2 px-5 py-2.5 border border-border bg-background rounded-full text-sm"
+              className="inline-flex items-center gap-2 px-5 py-2.5 border border-border bg-background text-sm"
             >
               <Check className="w-4 h-4 text-foreground" strokeWidth={2} />
               <span>{type}</span>
