@@ -55,8 +55,12 @@ export function Header() {
       // Sample Y at the vertical center of the header
       const sampleY = headerRect.top + headerRect.height / 2;
       
-      // Sample X near the logo (left side of header)
-      const sampleX = headerRect.left + 100;
+      // Sample at multiple X points to catch nested dark containers
+      const samplePoints = [
+        window.innerWidth / 2,           // Center of viewport
+        window.innerWidth / 3,           // Left third
+        window.innerWidth * 2 / 3,       // Right third
+      ];
 
       // Temporarily hide ALL header children so elementFromPoint sees what's behind
       const headerChildren = headerEl.querySelectorAll('*');
@@ -68,7 +72,26 @@ export function Header() {
       });
       headerEl.style.pointerEvents = 'none';
 
-      const elBehind = document.elementFromPoint(sampleX, sampleY);
+      // Check all sample points - if ANY hits a dark theme, consider it dark
+      let foundDark = false;
+      for (const sampleX of samplePoints) {
+        const elBehind = document.elementFromPoint(sampleX, sampleY);
+        
+        // Walk up to find nearest ancestor with data-theme
+        let cur: Element | null = elBehind;
+        while (cur && cur !== document.body && cur !== headerEl) {
+          if (cur instanceof HTMLElement && cur.hasAttribute("data-theme")) {
+            const theme = cur.getAttribute("data-theme");
+            if (theme === "dark") {
+              foundDark = true;
+              break;
+            }
+            break; // Found a theme, stop walking up
+          }
+          cur = cur.parentElement;
+        }
+        if (foundDark) break;
+      }
 
       // Restore pointer events
       headerEl.style.pointerEvents = '';
@@ -79,19 +102,7 @@ export function Header() {
         }
       });
 
-      // Walk up to find nearest ancestor with data-theme
-      let cur: Element | null = elBehind;
-      while (cur && cur !== document.body && cur !== headerEl) {
-        if (cur instanceof HTMLElement && cur.hasAttribute("data-theme")) {
-          const theme = cur.getAttribute("data-theme");
-          setIsOverDark(theme === "dark");
-          return;
-        }
-        cur = cur.parentElement;
-      }
-
-      // Default to light if we can't find a themed container
-      setIsOverDark(false);
+      setIsOverDark(foundDark);
     };
 
     window.addEventListener("scroll", detectTheme, { passive: true });
