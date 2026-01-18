@@ -31,6 +31,7 @@ import WeeklyWins from "./pages/dashboard/WeeklyWins";
 import TeamOverview from "./pages/dashboard/admin/TeamOverview";
 import Handbooks from "./pages/dashboard/admin/Handbooks";
 import AdminSettings from "./pages/dashboard/admin/Settings";
+import AdminAnnouncements from "./pages/dashboard/admin/Announcements";
 import MyHandbooks from "./pages/dashboard/MyHandbooks";
 import Onboarding from "./pages/dashboard/Onboarding";
 
@@ -71,6 +72,7 @@ const App = () => (
               {/* Admin routes */}
               <Route path="/dashboard/admin/team" element={<ProtectedRoute requireCoach><TeamOverview /></ProtectedRoute>} />
               <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requireCoach><Handbooks /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requireCoach><AdminAnnouncements /></ProtectedRoute>} />
               <Route path="/dashboard/admin/settings" element={<ProtectedRoute requireCoach><AdminSettings /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />

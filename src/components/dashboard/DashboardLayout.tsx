@@ -38,6 +38,7 @@ const stylistNavItems = [
 
 const coachNavItems = [
   { href: '/dashboard/admin/team', label: 'Team Overview', icon: Users },
+  { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Bell },
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings },
 ];
