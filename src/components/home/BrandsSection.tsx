@@ -37,31 +37,28 @@ export function BrandsSection() {
               WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 5%, black 100%)',
             }}
           >
-            <div className="flex animate-brand-scroll">
+            <div className="flex animate-marquee hover:[animation-play-state:paused]">
               {/* First set */}
-              <div className="flex items-center gap-16 md:gap-28 lg:gap-36 pr-16 md:pr-28 lg:pr-36">
-                {brandLogos.map((brand, index) => (
-                  <span
-                    key={index}
-                    className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase"
-                    style={{ fontFamily: "'Termina', sans-serif" }}
-                  >
-                    {brand.text}
-                  </span>
-                ))}
-              </div>
+              {brandLogos.map((brand, index) => (
+                <span
+                  key={index}
+                  className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase flex-shrink-0 px-8 md:px-14 lg:px-18"
+                  style={{ fontFamily: "'Termina', sans-serif" }}
+                >
+                  {brand.text}
+                </span>
+              ))}
               {/* Duplicate set for seamless loop */}
-              <div className="flex items-center gap-16 md:gap-28 lg:gap-36 pr-16 md:pr-28 lg:pr-36" aria-hidden="true">
-                {brandLogos.map((brand, index) => (
-                  <span
-                    key={`dup-${index}`}
-                    className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase"
-                    style={{ fontFamily: "'Termina', sans-serif" }}
-                  >
-                    {brand.text}
-                  </span>
-                ))}
-              </div>
+              {brandLogos.map((brand, index) => (
+                <span
+                  key={`dup-${index}`}
+                  className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase flex-shrink-0 px-8 md:px-14 lg:px-18"
+                  style={{ fontFamily: "'Termina', sans-serif" }}
+                  aria-hidden="true"
+                >
+                  {brand.text}
+                </span>
+              ))}
             </div>
           </div>
         </div>
