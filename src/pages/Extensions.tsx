@@ -215,7 +215,7 @@ export default function Extensions() {
     const parts = text.split(regex);
     return parts.map((part, index) => 
       regex.test(part) ? (
-        <mark key={index} className="bg-oat/50 text-foreground px-0.5 rounded-sm">
+        <mark key={index} className="bg-oat text-foreground px-1 py-0.5 rounded font-medium animate-pulse">
           {part}
         </mark>
       ) : part
@@ -548,8 +548,49 @@ export default function Extensions() {
           </p>
         </motion.div>
 
-        {/* Gallery Grid - 4 Before/After Sliders */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        {/* Mobile Carousel */}
+        <div className="lg:hidden">
+          <div className="relative overflow-hidden">
+            <motion.div 
+              className="flex gap-4"
+              drag="x"
+              dragConstraints={{ left: -((transformations.length - 1) * 280), right: 0 }}
+              style={{ cursor: 'grab' }}
+            >
+              {transformations.map((transformation, index) => (
+                <motion.div
+                  key={transformation.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={specialtyInView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.7, delay: index * 0.1 }}
+                  className="flex-shrink-0 w-[280px]"
+                >
+                  <BeforeAfterSlider
+                    beforeImage={transformation.beforeImage}
+                    afterImage={transformation.afterImage}
+                    beforeLabel="BEFORE"
+                    afterLabel="AFTER"
+                    className="aspect-[3/4]"
+                    hideDefaultVideoButton={true}
+                    hoverMode={true}
+                  />
+                  <div className="mt-3 text-center">
+                    <h3 className="font-serif text-lg font-medium text-foreground">
+                      {transformation.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {transformation.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+            <p className="text-center text-xs text-muted-foreground mt-4">← Swipe to see more →</p>
+          </div>
+        </div>
+
+        {/* Desktop Grid - 4 Before/After Sliders */}
+        <div className="hidden lg:grid lg:grid-cols-4 gap-6">
           {transformations.map((transformation, index) => (
             <motion.div
               key={transformation.id}
@@ -1196,6 +1237,237 @@ export default function Extensions() {
             </motion.div>
           </div>
         </div>
+      </Section>
+
+      {/* Meet Our Extension Specialists */}
+      <Section className="bg-oat/10">
+        <div className="text-center mb-12">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+          >
+            Our Team
+          </motion.span>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+          >
+            Extension <span className="italic font-light">Specialists</span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-4 text-muted-foreground max-w-xl mx-auto"
+          >
+            Our certified stylists have mastered the Drop Dead Method with years of specialized training.
+          </motion.p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              name: "Sarah Mitchell",
+              title: "Lead Extension Specialist",
+              experience: "8+ years",
+              certifications: ["Drop Dead Certified", "Master Colorist"],
+              image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=500&fit=crop&crop=face"
+            },
+            {
+              name: "Jessica Cole",
+              title: "Senior Extension Artist",
+              experience: "6+ years",
+              certifications: ["Drop Dead Certified", "Texture Specialist"],
+              image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop&crop=face"
+            },
+            {
+              name: "Amanda Rose",
+              title: "Extension Specialist",
+              experience: "4+ years",
+              certifications: ["Drop Dead Certified", "Balayage Expert"],
+              image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop&crop=face"
+            }
+          ].map((stylist, index) => (
+            <motion.div
+              key={stylist.name}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="group"
+            >
+              <div className="aspect-[4/5] overflow-hidden bg-secondary mb-4">
+                <img 
+                  src={stylist.image} 
+                  alt={stylist.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+              <h3 className="font-serif text-xl mb-1">{stylist.name}</h3>
+              <p className="text-sm text-muted-foreground mb-3">{stylist.title} • {stylist.experience}</p>
+              <div className="flex flex-wrap gap-2">
+                {stylist.certifications.map((cert) => (
+                  <span key={cert} className="text-xs bg-foreground text-background px-2 py-1">
+                    {cert}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Recommended Products Section */}
+      <Section className="bg-background">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
+              Extension Care
+            </span>
+            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
+              Recommended <span className="italic font-light">Products</span>
+            </h2>
+            <p className="text-muted-foreground leading-relaxed mb-8">
+              Extend the life of your extensions with our salon-exclusive, extension-safe products. Each product is specially formulated to nourish and protect both your natural hair and extensions.
+            </p>
+            <Link
+              to="/booking"
+              className="group inline-flex items-center gap-3 border border-foreground text-foreground px-6 py-3 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-foreground hover:text-background transition-all duration-300"
+            >
+              <span>Shop In Salon</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </motion.div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { name: "Extension Shampoo", description: "Sulfate-free gentle cleanse", price: "$32" },
+              { name: "Hydrating Conditioner", description: "Deep moisture treatment", price: "$34" },
+              { name: "Detangling Spray", description: "Prevents matting & knots", price: "$28" },
+              { name: "Heat Protectant", description: "Up to 450°F protection", price: "$26" }
+            ].map((product, index) => (
+              <motion.div
+                key={product.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-secondary/50 p-5 hover:bg-secondary transition-colors"
+              >
+                <div className="w-full aspect-square bg-oat/20 mb-3 flex items-center justify-center">
+                  <Sparkles className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h4 className="font-medium text-sm mb-1">{product.name}</h4>
+                <p className="text-xs text-muted-foreground mb-2">{product.description}</p>
+                <p className="font-serif text-lg">{product.price}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* What to Expect - Appointment Walkthrough */}
+      <Section className="bg-foreground text-background">
+        <div className="text-center mb-12">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-xs uppercase tracking-[0.3em] text-background/60 font-sans block mb-4"
+          >
+            Your Visit
+          </motion.span>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
+          >
+            What to <span className="italic font-light text-oat">Expect</span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-4 text-background/70 max-w-xl mx-auto"
+          >
+            A step-by-step walkthrough of your extension appointment from start to finish.
+          </motion.p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              step: "01",
+              title: "Arrive & Relax",
+              description: "Enjoy a complimentary beverage while we prep your station and review your goals.",
+              duration: "15 min"
+            },
+            {
+              step: "02",
+              title: "Color Matching",
+              description: "We'll custom-blend your extensions to perfectly match your natural hair color.",
+              duration: "30 min"
+            },
+            {
+              step: "03",
+              title: "Installation",
+              description: "Precise placement of each row using our signature Drop Dead Method.",
+              duration: "2-3 hrs"
+            },
+            {
+              step: "04",
+              title: "Style & Educate",
+              description: "Final styling, care instructions, and scheduling your first maintenance.",
+              duration: "30 min"
+            }
+          ].map((item, index) => (
+            <motion.div
+              key={item.step}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="border border-background/20 p-6"
+            >
+              <span className="text-oat font-serif text-3xl block mb-4">{item.step}</span>
+              <h3 className="font-medium text-lg mb-2">{item.title}</h3>
+              <p className="text-sm text-background/70 leading-relaxed mb-4">{item.description}</p>
+              <span className="text-xs uppercase tracking-wider text-background/50">{item.duration}</span>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="text-center mt-12"
+        >
+          <Link
+            to="/booking"
+            className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-8 py-4 text-sm uppercase tracking-[0.15em] font-sans font-normal hover:bg-oat/90 transition-all duration-300"
+          >
+            <span>Book Your Appointment</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
+        </motion.div>
       </Section>
 
       {/* Extension Reviews Section */}
