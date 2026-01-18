@@ -219,7 +219,7 @@ function ExtensionSpecialistsCarousel() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
         >
-          Extension <span className="italic font-light">Specialists</span>
+          Extension Specialists
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -459,7 +459,7 @@ export default function Extensions() {
               transition={{ duration: 0.8 }}
               className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal tracking-tight text-white leading-[1.1] max-w-4xl mx-auto"
             >
-              <span className="italic font-light">Luxury</span> extension services
+              Luxury extension services
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 30 }}
@@ -625,7 +625,7 @@ export default function Extensions() {
             transition={{ duration: 0.6 }}
             className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
           >
-            Your Extension <span className="italic font-light">Journey</span>
+            Your Extension Journey
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -867,7 +867,7 @@ export default function Extensions() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
             >
-              Are Extensions <span className="italic font-light">Right For You?</span>
+              Are Extensions Right For You?
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -947,7 +947,7 @@ export default function Extensions() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
           >
-            Extension <span className="italic font-light">Packages</span>
+            Extension Packages
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -1139,7 +1139,7 @@ export default function Extensions() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
           >
-            The Drop Dead <span className="italic font-light">Difference</span>
+            The Drop Dead Difference
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -1217,7 +1217,7 @@ export default function Extensions() {
               The Process
             </span>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1] mb-6">
-              What's <span className="italic font-light text-oat">Included</span>
+              What's Included
             </h2>
             <p className="text-background/70 leading-relaxed mb-8">
               Every extension journey begins with a complimentary consultation. Here's what you can expect when you book with us.
@@ -1345,7 +1345,7 @@ export default function Extensions() {
               Aftercare
             </span>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
-              Extension <span className="italic font-light">Care</span>
+              Extension Care
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-8">
               Proper care ensures your extensions last longer and look beautiful every day. Follow these essential tips to maintain your investment.
@@ -1481,7 +1481,7 @@ export default function Extensions() {
               Extension Care
             </span>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
-              Recommended <span className="italic font-light">Products</span>
+              Recommended Products
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-8">
               Extend the life of your extensions with our salon-exclusive, extension-safe products. Each product is specially formulated to nourish and protect both your natural hair and extensions.
@@ -1541,7 +1541,7 @@ export default function Extensions() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
           >
-            What to <span className="italic font-light text-oat">Expect</span>
+            What to Expect
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -1631,8 +1631,7 @@ export default function Extensions() {
               Questions
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
-              Extension<br />
-              <em className="not-italic italic">FAQ</em>
+              Extension FAQ
             </h2>
             
             <div className="space-y-4 text-foreground/80 mb-8">
