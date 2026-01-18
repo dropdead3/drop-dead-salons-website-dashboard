@@ -38,10 +38,25 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
     offset: ["start end", "end start"]
   });
 
-  // Animate based on scroll position
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [60, 0, 0, -60]);
-  const scale = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0.95, 1, 1, 0.95]);
+  // Stagger the animation start based on index
+  const staggerOffset = index * 0.08;
+  
+  // Animate based on scroll position with staggered timing
+  const opacity = useTransform(
+    scrollYProgress, 
+    [0 + staggerOffset, 0.2 + staggerOffset, 0.75, 0.95], 
+    [0, 1, 1, 0]
+  );
+  const y = useTransform(
+    scrollYProgress, 
+    [0 + staggerOffset, 0.2 + staggerOffset, 0.75, 0.95], 
+    [80, 0, 0, -60]
+  );
+  const scale = useTransform(
+    scrollYProgress, 
+    [0 + staggerOffset, 0.2 + staggerOffset, 0.75, 0.95], 
+    [0.92, 1, 1, 0.95]
+  );
 
   return (
     <motion.div
