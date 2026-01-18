@@ -251,12 +251,29 @@ export function StylistsSection() {
     };
   }, []);
 
-  const filteredStylists = stylists.filter((s) => {
-    const matchesLocation = s.locations.includes(selectedLocation);
-    const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
-    const matchesLevel = !selectedLevel || s.level === selectedLevel;
-    return matchesLocation && matchesSpecialty && matchesLevel;
-  });
+  const levelOrder: Record<string, number> = {
+    "LEVEL 4 STYLIST": 1,
+    "LEVEL 3 STYLIST": 2,
+    "LEVEL 2 STYLIST": 3,
+    "LEVEL 1 STYLIST": 4
+  };
+
+  const filteredStylists = stylists
+    .filter((s) => {
+      const matchesLocation = s.locations.includes(selectedLocation);
+      const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
+      const matchesLevel = !selectedLevel || s.level === selectedLevel;
+      return matchesLocation && matchesSpecialty && matchesLevel;
+    })
+    .sort((a, b) => {
+      // First, sort by booking status (booking stylists first)
+      const aNotBooking = a.isBooking === false ? 1 : 0;
+      const bNotBooking = b.isBooking === false ? 1 : 0;
+      if (aNotBooking !== bNotBooking) return aNotBooking - bNotBooking;
+      
+      // Then sort by level (highest to lowest)
+      return (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99);
+    });
 
   const form = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
