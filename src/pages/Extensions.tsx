@@ -754,7 +754,7 @@ export default function Extensions() {
         </motion.div>
       </Section>
 
-      {/* Method Comparison Section */}
+      {/* Drop Dead Method Benefits Section */}
       <Section className="bg-background">
         <div className="text-center mb-12">
           <motion.span
@@ -782,73 +782,60 @@ export default function Extensions() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-4 text-muted-foreground max-w-2xl mx-auto"
           >
-            See how our signature Drop Dead Method compares to other popular extension techniques.
+            Our signature method delivers the best results with zero compromise.
           </motion.p>
         </div>
 
-        {/* Comparison Table */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="overflow-x-auto"
-        >
-          <table className="w-full border-collapse min-w-[600px]">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="py-4 px-4 text-left font-serif text-lg font-normal">Feature</th>
-                <th className="py-4 px-4 text-center font-serif text-lg font-normal bg-oat/10">Drop Dead Method</th>
-                <th className="py-4 px-4 text-center font-serif text-lg font-normal">Tape-Ins</th>
-                <th className="py-4 px-4 text-center font-serif text-lg font-normal">Keratin Bonds</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-border/50">
-                <td className="py-4 px-4 text-sm text-muted-foreground">Damage to natural hair</td>
-                <td className="py-4 px-4 text-center bg-oat/10"><Check className="w-5 h-5 text-green-600 mx-auto" /><span className="text-xs block mt-1">None</span></td>
-                <td className="py-4 px-4 text-center"><span className="text-xs text-muted-foreground">Minimal</span></td>
-                <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /><span className="text-xs block mt-1">Possible</span></td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="py-4 px-4 text-sm text-muted-foreground">Completely invisible</td>
-                <td className="py-4 px-4 text-center bg-oat/10"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
-                <td className="py-4 px-4 text-center"><span className="text-xs text-muted-foreground">Varies</span></td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="py-4 px-4 text-sm text-muted-foreground">Heat-free application</td>
-                <td className="py-4 px-4 text-center bg-oat/10"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                <td className="py-4 px-4 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="py-4 px-4 text-sm text-muted-foreground">Wear hair up freely</td>
-                <td className="py-4 px-4 text-center bg-oat/10"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
-                <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-red-500 mx-auto" /></td>
-                <td className="py-4 px-4 text-center"><span className="text-xs text-muted-foreground">Limited</span></td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="py-4 px-4 text-sm text-muted-foreground">Time between maintenance</td>
-                <td className="py-4 px-4 text-center bg-oat/10"><span className="font-medium">6-8 weeks</span></td>
-                <td className="py-4 px-4 text-center"><span className="text-sm">4-6 weeks</span></td>
-                <td className="py-4 px-4 text-center"><span className="text-sm">3-4 months</span></td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="py-4 px-4 text-sm text-muted-foreground">Hair lifespan</td>
-                <td className="py-4 px-4 text-center bg-oat/10"><span className="font-medium">6-12 months</span></td>
-                <td className="py-4 px-4 text-center"><span className="text-sm">4-8 weeks per set</span></td>
-                <td className="py-4 px-4 text-center"><span className="text-sm">3-6 months</span></td>
-              </tr>
-              <tr>
-                <td className="py-4 px-4 text-sm text-muted-foreground">Comfort level</td>
-                <td className="py-4 px-4 text-center bg-oat/10"><span className="font-medium text-green-600">Excellent</span></td>
-                <td className="py-4 px-4 text-center"><span className="text-sm">Good</span></td>
-                <td className="py-4 px-4 text-center"><span className="text-sm">Fair</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </motion.div>
+        {/* Benefits Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            {
+              title: "Zero Damage",
+              description: "Our hidden beaded row technique uses no heat, glue, or chemicals—protecting your natural hair completely."
+            },
+            {
+              title: "Completely Invisible",
+              description: "Extensions lay flat against your scalp with hidden attachment points that are undetectable, even in updos."
+            },
+            {
+              title: "Heat-Free Application",
+              description: "No damaging heat tools are used during installation, preserving the integrity of your natural hair."
+            },
+            {
+              title: "Wear Hair Up Freely",
+              description: "Style your hair any way you like—ponytails, braids, updos—with complete confidence and no visible bonds."
+            },
+            {
+              title: "6-8 Week Maintenance",
+              description: "Longer time between appointments means less time in the chair and more time enjoying your beautiful hair."
+            },
+            {
+              title: "Exceptional Comfort",
+              description: "Lightweight construction and flat-laying rows mean all-day comfort without tension or headaches."
+            }
+          ].map((benefit, index) => (
+            <motion.div
+              key={benefit.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="bg-secondary/30 p-6"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 bg-foreground text-background flex items-center justify-center flex-shrink-0">
+                  <Check className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-lg mb-2">{benefit.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {benefit.description}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </Section>
 
       <Section className="bg-foreground text-background">
