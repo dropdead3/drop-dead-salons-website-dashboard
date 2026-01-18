@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Instagram, ArrowUpRight, MapPin } from "lucide-react";
+import Logo from "@/assets/drop-dead-logo.svg";
 
 const footerLinks = [
   { href: "/services", label: "Services" },
@@ -32,9 +33,13 @@ export function Footer() {
           <div className="space-y-6">
             <Link
               to="/"
-              className="font-serif text-2xl font-normal tracking-tight text-foreground"
+              className="hover:opacity-70 transition-opacity"
             >
-              Drop Dead Salon
+              <img 
+                src={Logo} 
+                alt="Drop Dead" 
+                className="h-5 w-auto"
+              />
             </Link>
             <p className="text-sm text-muted-foreground font-sans font-light leading-relaxed max-w-xs">
               Luxury without compromise. Where artistry lives.
