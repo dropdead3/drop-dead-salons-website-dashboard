@@ -322,6 +322,7 @@ export default function Extensions() {
                 afterLabel="AFTER"
                 className="aspect-[3/4]"
                 hideDefaultVideoButton={true}
+                hoverMode={true}
               />
               <div className="mt-3 text-center">
                 <h3 className="font-serif text-lg font-medium text-foreground">
