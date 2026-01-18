@@ -766,7 +766,7 @@ export default function Extensions() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12 lg:mb-16"
         >
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
+          <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
             You'll have to see it to believe it
           </h2>
           <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto">
