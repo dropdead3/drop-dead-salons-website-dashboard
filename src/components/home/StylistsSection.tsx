@@ -269,7 +269,7 @@ export function StylistsSection() {
                     color: selectedSpecialty === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
                   }}
                   transition={{ duration: 0.2 }}
-                  className="px-4 py-2 text-xs font-medium border border-border"
+                  className="px-5 py-2.5 text-sm font-medium border border-border"
                 >
                   All
                 </motion.button>
@@ -284,7 +284,7 @@ export function StylistsSection() {
                       color: selectedSpecialty === specialty ? "hsl(var(--background))" : "hsl(var(--foreground))",
                     }}
                     transition={{ duration: 0.2 }}
-                    className="px-4 py-2 text-xs font-medium border border-border"
+                    className="px-5 py-2.5 text-sm font-medium border border-border"
                   >
                     {toTitleCase(specialty)}
                   </motion.button>
@@ -327,7 +327,7 @@ export function StylistsSection() {
                     color: selectedLevel === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
                   }}
                   transition={{ duration: 0.2 }}
-                  className="px-4 py-2 text-xs font-medium border border-border"
+                  className="px-5 py-2.5 text-sm font-medium border border-border"
                 >
                   All Levels
                 </motion.button>
@@ -342,7 +342,7 @@ export function StylistsSection() {
                       color: selectedLevel === level.id ? "hsl(var(--background))" : "hsl(var(--foreground))",
                     }}
                     transition={{ duration: 0.2 }}
-                    className="px-4 py-2 text-xs font-medium border border-border"
+                    className="px-5 py-2.5 text-sm font-medium border border-border"
                   >
                     <span>{level.name}</span>
                     <span className="ml-2 opacity-60">{level.price}</span>
