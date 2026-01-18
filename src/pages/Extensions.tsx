@@ -8,6 +8,7 @@ import { Section } from "@/components/ui/section";
 import { BeforeAfterSlider } from "@/components/home/BeforeAfterSlider";
 import { ExtensionReviewsSection } from "@/components/home/ExtensionReviewsSection";
 import { useCounterAnimation } from "@/hooks/use-counter-animation";
+import { getExtensionSpecialists } from "@/data/stylists";
 import {
   Accordion,
   AccordionContent,
@@ -182,6 +183,199 @@ function SocialProofSection() {
         </motion.div>
       </div>
     </section>
+  );
+}
+
+// Extension Specialists Carousel Component
+function ExtensionSpecialistsCarousel() {
+  const extensionSpecialists = getExtensionSpecialists();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev + 1) % extensionSpecialists.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev - 1 + extensionSpecialists.length) % extensionSpecialists.length);
+  };
+
+  return (
+    <Section className="bg-oat/10 overflow-hidden">
+      <div className="text-center mb-12">
+        <motion.span
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+        >
+          Our Team
+        </motion.span>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+        >
+          Extension <span className="italic font-light">Specialists</span>
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mt-4 text-muted-foreground max-w-xl mx-auto"
+        >
+          Our certified stylists have mastered the Drop Dead Method with years of specialized training.
+        </motion.p>
+      </div>
+
+      {/* Desktop Grid */}
+      <div className="hidden lg:grid lg:grid-cols-3 gap-8">
+        {extensionSpecialists.map((stylist, index) => (
+          <motion.div
+            key={stylist.id}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: index * 0.1 }}
+            className="group"
+          >
+            <div className="aspect-[3/4] overflow-hidden bg-secondary mb-4 relative">
+              <img 
+                src={stylist.imageUrl} 
+                alt={stylist.name}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                {stylist.specialties.filter(s => s === "EXTENSIONS").map((specialty) => (
+                  <span key={specialty} className="text-xs bg-oat text-oat-foreground px-2 py-1 flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-current" />
+                    {specialty}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs tracking-[0.15em] text-muted-foreground">{stylist.level}</span>
+            </div>
+            <h3 className="font-serif text-xl mb-1">{stylist.name}</h3>
+            <a 
+              href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {stylist.instagram}
+            </a>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {stylist.specialties.slice(0, 3).map((specialty) => (
+                <span key={specialty} className="text-xs bg-secondary px-2 py-1">
+                  {specialty}
+                </span>
+              ))}
+            </div>
+            <Link
+              to="/booking"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-foreground/70 transition-colors group/btn"
+            >
+              <span>Book Consultation</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Mobile/Tablet Carousel */}
+      <div className="lg:hidden relative">
+        <div className="overflow-hidden" ref={carouselRef}>
+          <motion.div 
+            className="flex"
+            animate={{ x: `-${currentIndex * 100}%` }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            {extensionSpecialists.map((stylist) => (
+              <div key={stylist.id} className="w-full flex-shrink-0 px-4">
+                <div className="max-w-sm mx-auto">
+                  <div className="aspect-[3/4] overflow-hidden bg-secondary mb-4 relative">
+                    <img 
+                      src={stylist.imageUrl} 
+                      alt={stylist.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                      <span className="text-xs bg-oat text-oat-foreground px-2 py-1 flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-current" />
+                        EXTENSIONS
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs tracking-[0.15em] text-muted-foreground">{stylist.level}</span>
+                  </div>
+                  <h3 className="font-serif text-xl mb-1">{stylist.name}</h3>
+                  <a 
+                    href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {stylist.instagram}
+                  </a>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {stylist.specialties.slice(0, 3).map((specialty) => (
+                      <span key={specialty} className="text-xs bg-secondary px-2 py-1">
+                        {specialty}
+                      </span>
+                    ))}
+                  </div>
+                  <Link
+                    to="/booking"
+                    className="mt-4 inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-sm font-medium hover:bg-foreground/90 transition-colors"
+                  >
+                    <span>Book Consultation</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* Carousel Controls */}
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <button
+            onClick={prevSlide}
+            className="w-12 h-12 border border-foreground flex items-center justify-center hover:bg-foreground hover:text-background transition-colors"
+            aria-label="Previous stylist"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="flex gap-2">
+            {extensionSpecialists.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`w-2 h-2 rounded-full transition-colors ${
+                  index === currentIndex ? 'bg-foreground' : 'bg-foreground/30'
+                }`}
+                aria-label={`Go to stylist ${index + 1}`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={nextSlide}
+            className="w-12 h-12 border border-foreground flex items-center justify-center hover:bg-foreground hover:text-background transition-colors"
+            aria-label="Next stylist"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </Section>
   );
 }
 
@@ -1239,90 +1433,8 @@ export default function Extensions() {
         </div>
       </Section>
 
-      {/* Meet Our Extension Specialists */}
-      <Section className="bg-oat/10">
-        <div className="text-center mb-12">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
-          >
-            Our Team
-          </motion.span>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
-          >
-            Extension <span className="italic font-light">Specialists</span>
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-4 text-muted-foreground max-w-xl mx-auto"
-          >
-            Our certified stylists have mastered the Drop Dead Method with years of specialized training.
-          </motion.p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              name: "Sarah Mitchell",
-              title: "Lead Extension Specialist",
-              experience: "8+ years",
-              certifications: ["Drop Dead Certified", "Master Colorist"],
-              image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=500&fit=crop&crop=face"
-            },
-            {
-              name: "Jessica Cole",
-              title: "Senior Extension Artist",
-              experience: "6+ years",
-              certifications: ["Drop Dead Certified", "Texture Specialist"],
-              image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop&crop=face"
-            },
-            {
-              name: "Amanda Rose",
-              title: "Extension Specialist",
-              experience: "4+ years",
-              certifications: ["Drop Dead Certified", "Balayage Expert"],
-              image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop&crop=face"
-            }
-          ].map((stylist, index) => (
-            <motion.div
-              key={stylist.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group"
-            >
-              <div className="aspect-[4/5] overflow-hidden bg-secondary mb-4">
-                <img 
-                  src={stylist.image} 
-                  alt={stylist.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-              <h3 className="font-serif text-xl mb-1">{stylist.name}</h3>
-              <p className="text-sm text-muted-foreground mb-3">{stylist.title} • {stylist.experience}</p>
-              <div className="flex flex-wrap gap-2">
-                {stylist.certifications.map((cert) => (
-                  <span key={cert} className="text-xs bg-foreground text-background px-2 py-1">
-                    {cert}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </Section>
+      {/* Meet Our Extension Specialists - Carousel */}
+      <ExtensionSpecialistsCarousel />
 
       {/* Recommended Products Section */}
       <Section className="bg-background">
