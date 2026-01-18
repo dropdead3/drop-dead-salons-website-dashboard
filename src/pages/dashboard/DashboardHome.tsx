@@ -17,14 +17,14 @@ import {
   Megaphone,
   Flame,
   Pin,
-  AlertTriangle,
-  AlertCircle,
-  Info
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
+import { useTasks } from '@/hooks/useTasks';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { TaskItem } from '@/components/dashboard/TaskItem';
+import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -47,6 +47,7 @@ const priorityColors: Record<Priority, string> = {
 export default function DashboardHome() {
   const { user } = useAuth();
   const { enrollment } = useDailyCompletion(user?.id);
+  const { tasks, createTask, toggleTask, deleteTask } = useTasks();
   const queryClient = useQueryClient();
   
   const { data: announcements } = useQuery({
@@ -185,17 +186,31 @@ export default function DashboardHome() {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-sm tracking-wide">MY TASKS</h2>
-              <CheckSquare className="w-4 h-4 text-muted-foreground" />
+              <AddTaskDialog onAdd={(task) => createTask.mutate(task)} isPending={createTask.isPending} />
             </div>
             <div className="space-y-3">
-              <TaskItem label="Complete onboarding checklist" />
-              <TaskItem label="Review training videos" />
-              <TaskItem label="Update availability" />
+              {tasks.length > 0 ? (
+                tasks.slice(0, 5).map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    onToggle={(id, completed) => toggleTask.mutate({ id, is_completed: completed })}
+                    onDelete={(id) => deleteTask.mutate(id)}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <CheckSquare className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-sans">No tasks yet</p>
+                  <p className="text-xs mt-1">Add your first task above</p>
+                </div>
+              )}
             </div>
-            <Button variant="ghost" size="sm" className="w-full mt-4 text-muted-foreground">
-              View all tasks
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
+            {tasks.length > 5 && (
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                +{tasks.length - 5} more tasks
+              </p>
+            )}
           </Card>
 
           {/* Announcements */}
@@ -327,11 +342,3 @@ export default function DashboardHome() {
   );
 }
 
-function TaskItem({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="w-4 h-4 border border-border rounded-sm" />
-      <span className="text-sm font-sans">{label}</span>
-    </div>
-  );
-}
