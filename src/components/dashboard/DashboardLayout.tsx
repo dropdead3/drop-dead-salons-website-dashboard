@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
+import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -547,21 +548,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <AccessIcon className="w-3 h-3" />
             <span className="hidden sm:inline">{getAccessLabel()}</span>
           </Badge>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link to="/dashboard/profile">
-                <Button variant="ghost" size="icon" className="relative h-8 w-8">
-                  <Bell className="w-4 h-4" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-bold bg-destructive text-destructive-foreground px-1">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>Notifications</TooltipContent>
-          </Tooltip>
+          <NotificationsPanel unreadCount={unreadCount} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -633,19 +620,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <AccessIcon className="w-3 h-3" />
             {getAccessLabel()}
           </Badge>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-8 w-8">
-                <Bell className="w-4 h-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-bold bg-destructive text-destructive-foreground px-1">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Notifications</TooltipContent>
-          </Tooltip>
+          <NotificationsPanel unreadCount={unreadCount} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
