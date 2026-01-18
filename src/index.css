@@ -379,6 +379,38 @@
   animation-play-state: paused;
 }
 
+/* Shine/reflection animation for badges */
+@keyframes badge-shine {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+.badge-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-shine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsla(0, 0%, 100%, 0.4),
+    transparent
+  );
+  animation: badge-shine 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
 /* Drink menu scroll animation */
 @keyframes drink-scroll {
   from {

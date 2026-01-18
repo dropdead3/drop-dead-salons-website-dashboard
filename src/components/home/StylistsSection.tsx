@@ -88,7 +88,7 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
             transition={{ delay: idx * 0.05 + index * 0.1 }}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
               specialty === "EXTENSIONS"
-                ? "bg-oat/85 text-oat-foreground"
+                ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
                 : "bg-background/70 text-foreground"
             }`}
           >
