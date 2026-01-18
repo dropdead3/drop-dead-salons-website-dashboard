@@ -46,19 +46,19 @@ export function Header() {
   // Section theme detection using data-theme attributes
   useEffect(() => {
     const detectTheme = () => {
-      // Calculate actual header center position dynamically
+      // We want the section *behind* the header, so sample just below it.
       const headerEl = headerRef.current;
-      let headerY = 80; // fallback
+      let sampleY = 120; // fallback
       if (headerEl) {
         const headerRect = headerEl.getBoundingClientRect();
-        headerY = headerRect.top + headerRect.height / 2;
+        sampleY = headerRect.bottom + 1;
       }
       
       const sections = document.querySelectorAll("[data-theme]");
       
       for (const section of Array.from(sections)) {
         const rect = section.getBoundingClientRect();
-        if (rect.top <= headerY && rect.bottom >= headerY) {
+        if (rect.top <= sampleY && rect.bottom >= sampleY) {
           const theme = section.getAttribute("data-theme");
           setIsOverDark(theme === "dark");
           return;
