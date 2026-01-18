@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
@@ -523,23 +524,42 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </header>
 
       {/* View As Banner */}
-      {isViewingAs && (
-        <div className="bg-amber-500 text-white text-center py-2 px-4 text-sm font-medium lg:pl-64">
-          <div className="flex items-center justify-center gap-2">
-            <Eye className="w-4 h-4" />
-            <span>Viewing as <strong>{ROLE_LABELS[viewAsRole!]}</strong> – This is a preview only</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setViewAsRole(null)}
-              className="h-6 px-2 text-white hover:bg-amber-600 hover:text-white ml-2"
+      <AnimatePresence>
+        {isViewingAs && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="bg-amber-500 text-white text-center text-sm font-medium lg:pl-64 overflow-hidden"
+          >
+            <motion.div 
+              initial={{ y: -20 }}
+              animate={{ y: 0 }}
+              exit={{ y: -20 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+              className="flex items-center justify-center gap-2 py-2 px-4"
             >
-              <X className="w-3 h-3 mr-1" />
-              Exit
-            </Button>
-          </div>
-        </div>
-      )}
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <Eye className="w-4 h-4" />
+              </motion.div>
+              <span>Viewing as <strong>{ROLE_LABELS[viewAsRole!]}</strong> – This is a preview only</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setViewAsRole(null)}
+                className="h-6 px-2 text-white hover:bg-amber-600 hover:text-white ml-2"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Exit
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Desktop Top Bar (for admins) */}
       {isAdmin && (
