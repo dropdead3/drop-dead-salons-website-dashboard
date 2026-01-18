@@ -107,7 +107,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
             className="bg-foreground text-background px-5 py-4 text-center shadow-lg w-[180px] min-h-[120px] flex flex-col justify-center"
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <p className="text-[10px] uppercase tracking-[0.2em] mb-2 text-background/60 font-display">Ingredients</p>
+            <p className="text-xs uppercase tracking-[0.2em] mb-3 text-background/60 font-display">Ingredients</p>
             <motion.ul 
               layout
               className="text-sm leading-relaxed text-left space-y-1"
