@@ -43,7 +43,7 @@ export function GallerySection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <Section>
+    <Section theme="light">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
         <SectionHeader
           title="Work That Speaks"

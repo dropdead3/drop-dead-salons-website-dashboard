@@ -307,7 +307,7 @@ export function StylistsSection() {
   };
 
   return (
-    <section ref={sectionRef} id="stylists-section" className="py-20 lg:py-32 bg-secondary overflow-hidden">
+    <section ref={sectionRef} id="stylists-section" data-theme="light" className="py-20 lg:py-32 bg-secondary overflow-hidden">
       <div className="container mx-auto px-6">
         {/* Header */}
         <SectionHeader

@@ -41,6 +41,7 @@ export function LocationsSection() {
   return (
     <section 
       ref={sectionRef}
+      data-theme="light"
       className="py-20 md:py-28 bg-background"
     >
       <div className="container mx-auto px-6">

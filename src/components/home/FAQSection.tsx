@@ -78,6 +78,7 @@ export function FAQSection() {
   return (
     <section 
       ref={sectionRef}
+      data-theme="light"
       className="py-20 lg:py-32"
     >
       <div className="container mx-auto px-6">

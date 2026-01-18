@@ -8,7 +8,7 @@ export function BrandStatement() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <Section className="bg-background">
+    <Section className="bg-background" theme="light">
       <div 
         ref={ref} 
         className="bg-foreground text-background rounded-2xl p-12 md:p-20 lg:p-24"
