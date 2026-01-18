@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, MoreVertical } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/assets/drop-dead-logo.svg";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { href: "/services", label: "Services" },
@@ -124,6 +130,24 @@ export function Header() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button 
+                    className="p-2 opacity-70 hover:opacity-100 transition-opacity"
+                    aria-label="More options"
+                  >
+                    <MoreVertical size={20} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-background border-border">
+                  <DropdownMenuItem asChild>
+                    <Link to="/staff-login" className="cursor-pointer">
+                      Team Login
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Mobile Menu Toggle */}
