@@ -375,13 +375,10 @@ export function ServicesPreview() {
 
       {/* Desktop: Horizontal Scroll Carousel */}
       <div 
-        className="hidden md:block -mx-6 lg:-mx-12 relative overflow-hidden"
+        className="hidden md:block -mx-2 lg:-mx-8 relative overflow-hidden"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Left edge mask to hide peeking cards */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 lg:w-14 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-        
         {/* Pause indicator */}
         <motion.div
           initial={{ opacity: 0 }}
