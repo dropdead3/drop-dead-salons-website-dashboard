@@ -76,7 +76,6 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
-  { href: '/dashboard/profile', label: 'My Profile', icon: UserCircle },
   { href: '/dashboard/directory', label: 'Team Directory', icon: Contact },
 ];
 
@@ -546,8 +545,33 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex items-center gap-2">
           <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
             <AccessIcon className="w-3 h-3" />
-            {getAccessLabel()}
+            <span className="hidden sm:inline">{getAccessLabel()}</span>
           </Badge>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/dashboard/profile">
+                <Button variant="ghost" size="icon" className="relative h-8 w-8">
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-bold bg-destructive text-destructive-foreground px-1">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Notifications</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/dashboard/profile">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <UserCircle className="w-4 h-4" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>My Profile</TooltipContent>
+          </Tooltip>
           <ViewAsToggle />
         </div>
       </header>
@@ -597,6 +621,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <AccessIcon className="w-3 h-3" />
             {getAccessLabel()}
           </Badge>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative h-8 w-8">
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-bold bg-destructive text-destructive-foreground px-1">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Notifications</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/dashboard/profile">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <UserCircle className="w-4 h-4" />
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>My Profile</TooltipContent>
+          </Tooltip>
           {isAdmin && <ViewAsToggle />}
         </div>
       </div>
