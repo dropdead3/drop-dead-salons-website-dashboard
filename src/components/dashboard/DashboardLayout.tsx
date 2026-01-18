@@ -5,7 +5,9 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
+import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import {
   LayoutDashboard,
   Target,
@@ -80,6 +82,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
+  const { percentage: profileCompletion } = useProfileCompletion();
 
   const handleSignOut = async () => {
     await signOut();
@@ -233,9 +236,60 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* User */}
       <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-muted flex items-center justify-center text-sm font-display">
-            {user?.email?.charAt(0).toUpperCase()}
+        <Link 
+          to="/dashboard/profile" 
+          onClick={() => setSidebarOpen(false)}
+          className="flex items-center gap-3 mb-4 p-2 -m-2 rounded-lg hover:bg-muted/50 transition-colors"
+        >
+          <div className="relative">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center text-sm font-display rounded-full">
+              {user?.email?.charAt(0).toUpperCase()}
+            </div>
+            {profileCompletion < 100 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="absolute -top-1 -right-1">
+                    <svg className="w-5 h-5 -rotate-90">
+                      <circle
+                        cx="10"
+                        cy="10"
+                        r="8"
+                        fill="hsl(var(--background))"
+                        stroke="hsl(var(--border))"
+                        strokeWidth="1"
+                      />
+                      <circle
+                        cx="10"
+                        cy="10"
+                        r="6"
+                        fill="none"
+                        stroke="hsl(var(--muted))"
+                        strokeWidth="2"
+                      />
+                      <circle
+                        cx="10"
+                        cy="10"
+                        r="6"
+                        fill="none"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeDasharray={`${(profileCompletion / 100) * 37.7} 37.7`}
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold">
+                      {profileCompletion}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Profile {profileCompletion}% complete</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {profileCompletion === 100 && (
+              <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-sans truncate">
@@ -245,7 +299,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {isCoach ? 'Coach' : 'Stylist'}
             </p>
           </div>
-        </div>
+        </Link>
         <Button
           variant="ghost"
           onClick={handleSignOut}
