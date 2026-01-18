@@ -82,6 +82,83 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_assignments: {
+        Row: {
+          assistant_id: string
+          created_at: string
+          id: string
+          last_assigned_at: string | null
+          total_assignments: number | null
+        }
+        Insert: {
+          assistant_id: string
+          created_at?: string
+          id?: string
+          last_assigned_at?: string | null
+          total_assignments?: number | null
+        }
+        Update: {
+          assistant_id?: string
+          created_at?: string
+          id?: string
+          last_assigned_at?: string | null
+          total_assignments?: number | null
+        }
+        Relationships: []
+      }
+      assistant_requests: {
+        Row: {
+          assistant_id: string | null
+          client_name: string
+          created_at: string
+          end_time: string
+          id: string
+          notes: string | null
+          request_date: string
+          service_id: string
+          start_time: string
+          status: string
+          stylist_id: string
+          updated_at: string
+        }
+        Insert: {
+          assistant_id?: string | null
+          client_name: string
+          created_at?: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          request_date: string
+          service_id: string
+          start_time: string
+          status?: string
+          stylist_id: string
+          updated_at?: string
+        }
+        Update: {
+          assistant_id?: string | null
+          client_name?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          request_date?: string
+          service_id?: string
+          start_time?: string
+          status?: string
+          stylist_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_requests_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "salon_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_notes: {
         Row: {
           coach_user_id: string
@@ -436,6 +513,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      salon_services: {
+        Row: {
+          category: string | null
+          created_at: string
+          duration_minutes: number
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       stylist_program_enrollment: {
         Row: {
