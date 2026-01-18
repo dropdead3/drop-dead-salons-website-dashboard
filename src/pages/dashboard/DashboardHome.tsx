@@ -26,6 +26,7 @@ import { format } from 'date-fns';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import DD75Logo from '@/assets/dd75-logo.svg';
+import DD75Icon from '@/assets/dd75-icon.svg';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -256,13 +257,16 @@ export default function DashboardHome() {
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-4">
               <img 
-                src={DD75Logo} 
+                src={DD75Icon} 
                 alt="Drop Dead 75: Client Engine Program" 
-                className="h-5 w-auto"
+                className="h-12 w-12"
               />
-              <p className="text-sm text-muted-foreground font-sans">
-                75 days of execution. No excuses.
-              </p>
+              <div>
+                <h2 className="font-display text-lg tracking-wide">CLIENT ENGINE</h2>
+                <p className="text-sm text-muted-foreground font-sans">
+                  75 days of execution. No excuses.
+                </p>
+              </div>
             </div>
             {enrollment && (
               <div className="flex items-center gap-2 text-sm">
