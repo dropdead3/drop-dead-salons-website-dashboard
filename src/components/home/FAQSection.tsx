@@ -176,17 +176,18 @@ export function FAQSection() {
                     >
                       <AccordionItem
                         value={`item-${index}`}
-                        className="bg-background border border-border px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:bg-secondary hover:border-foreground/20 hover:shadow-md data-[state=open]:cursor-pointer"
-                        onClick={() => {
-                          if (openItem === `item-${index}`) {
-                            setOpenItem(undefined);
-                          }
-                        }}
+                        className="bg-background border border-border px-6 data-[state=open]:border-foreground/20 transition-all duration-300 hover:bg-secondary hover:border-foreground/20 hover:shadow-md"
                       >
                         <AccordionTrigger className="text-left text-base md:text-lg font-sans font-medium py-5 hover:no-underline group">
                           {highlightText(faq.question, searchQuery)}
                         </AccordionTrigger>
-                        <AccordionContent className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed group/content">
+                        <AccordionContent 
+                          className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed cursor-pointer group/content"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenItem(undefined);
+                          }}
+                        >
                           <div className="mb-4">
                             {highlightText(faq.answer, searchQuery)}
                           </div>
