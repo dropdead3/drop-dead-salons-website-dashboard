@@ -2,7 +2,6 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { Check, ArrowRight } from "lucide-react";
-import { TypewriterText } from "@/components/ui/TypewriterText";
 
 const benefits = [
   "Complimentary Drinks & Snacks",
@@ -30,7 +29,7 @@ export const NewClientSection = () => {
               className="text-3xl md:text-4xl lg:text-5xl font-display mb-6"
             >
               <span className="whitespace-nowrap">New clients can get</span>{" "}
-              <span><TypewriterText text="started" isInView={isInView} delay={600} /> here...</span>
+              <span>started here...</span>
             </motion.h2>
             
             <motion.p

@@ -1,7 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { Star, ArrowRight } from "lucide-react";
-import { TypewriterText } from "@/components/ui/TypewriterText";
 
 const reviews = [
   {
@@ -85,7 +84,7 @@ export function TestimonialSection() {
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
             className="text-3xl md:text-4xl lg:text-5xl font-display"
           >
-            Hundreds of <TypewriterText text="happy" isInView={isInView} delay={600} /><br />5-star reviews
+            Hundreds of happy<br />5-star reviews
           </motion.h2>
           
           <motion.a

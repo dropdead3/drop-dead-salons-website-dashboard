@@ -8,7 +8,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { TypewriterText } from "@/components/ui/TypewriterText";
 
 const faqs = [
   {
@@ -91,7 +90,7 @@ export function FAQSection() {
             className="lg:sticky lg:top-32 lg:self-start"
           >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
-              Frequently <TypewriterText text="asked" isInView={isInView} delay={600} /><br />
+              Frequently asked<br />
               <span>questions...</span>
             </h2>
             
