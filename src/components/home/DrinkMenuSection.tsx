@@ -1,4 +1,4 @@
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView, useScroll, useTransform, useSpring } from "framer-motion";
 import { useRef, useState } from "react";
 
 // Import drink images
@@ -137,6 +137,23 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
 export function DrinkMenuSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  
+  // Track scroll progress through this section
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"]
+  });
+  
+  // Transform scroll progress to horizontal movement
+  // Moves drinks from right to left as user scrolls down
+  const xTransform = useTransform(scrollYProgress, [0, 1], ["10%", "-60%"]);
+  
+  // Add spring physics for smooth, responsive movement
+  const smoothX = useSpring(xTransform, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
   return (
     <section 
@@ -161,12 +178,14 @@ export function DrinkMenuSection() {
         </p>
       </motion.div>
 
-      {/* Scrolling Drinks */}
-      <div 
-        className="flex animate-drink-scroll"
-        style={{ width: 'fit-content' }}
+      {/* Scroll-driven horizontal drinks */}
+      <motion.div 
+        className="flex"
+        style={{ 
+          x: smoothX,
+          width: 'fit-content'
+        }}
       >
-        {/* First set */}
         {drinks.map((drink, index) => (
           <DrinkCard 
             key={drink.id} 
@@ -176,16 +195,7 @@ export function DrinkMenuSection() {
             animated={true}
           />
         ))}
-        
-        {/* Duplicate set for seamless loop */}
-        {drinks.map((drink) => (
-          <DrinkCard 
-            key={`dup-${drink.id}`} 
-            drink={drink} 
-            animated={false}
-          />
-        ))}
-      </div>
+      </motion.div>
 
       {/* Bottom fade overlay for seamless exit */}
       <div 
