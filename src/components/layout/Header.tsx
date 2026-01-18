@@ -143,7 +143,7 @@ export function Header() {
                 <DropdownMenuContent align="end" className="bg-background border-border">
                   <DropdownMenuItem asChild>
                     <Link to="/staff-login" className="cursor-pointer">
-                      Team Login
+                      Staff Login
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
