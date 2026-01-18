@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
@@ -36,11 +36,19 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
     });
   };
 
+  // Shared easing for smooth animations
+  const ease: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+
   return (
     <section ref={sectionRef} data-theme="light" className="relative min-h-screen flex flex-col overflow-hidden">
       {/* Video Background */}
       {videoSrc && (
-        <div className="absolute inset-0 z-0">
+        <motion.div 
+          className="absolute inset-0 z-0"
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.5, ease }}
+        >
           <video
             autoPlay
             loop
@@ -52,7 +60,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
           </video>
           {/* Overlay for text readability */}
           <div className="absolute inset-0 bg-background/60" />
-        </div>
+        </motion.div>
       )}
 
       {/* Subtle gradient orbs - only show when no video */}
@@ -63,14 +71,14 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             style={{
               background: "radial-gradient(circle, hsl(var(--foreground) / 0.02) 0%, transparent 60%)",
             }}
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{
-              scale: [1, 1.2, 1],
               opacity: [0.5, 0.8, 0.5],
+              scale: [1, 1.2, 1],
             }}
             transition={{
-              duration: 15,
-              repeat: Infinity,
-              ease: "easeInOut",
+              opacity: { duration: 15, repeat: Infinity, ease: "easeInOut" },
+              scale: { duration: 15, repeat: Infinity, ease: "easeInOut" },
             }}
           />
           <motion.div
@@ -78,14 +86,14 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             style={{
               background: "radial-gradient(circle, hsl(var(--foreground) / 0.02) 0%, transparent 60%)",
             }}
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{
-              scale: [1.2, 1, 1.2],
               opacity: [0.6, 0.4, 0.6],
+              scale: [1.2, 1, 1.2],
             }}
             transition={{
-              duration: 18,
-              repeat: Infinity,
-              ease: "easeInOut",
+              opacity: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+              scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
             }}
           />
         </div>
@@ -96,9 +104,9 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
           <div className="max-w-5xl mx-auto text-center">
             {/* Tagline */}
             <motion.div
-              initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+              initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+              transition={{ duration: 0.8, delay: 0.1, ease }}
               style={{ 
                 opacity,
                 y: taglineY
@@ -109,11 +117,8 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               </Eyebrow>
             </motion.div>
 
-            {/* Main headline */}
+            {/* Main headline - Split into two lines for stagger effect */}
             <motion.h1
-              initial={{ opacity: 0, y: 25, filter: "blur(6px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 1, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
               className="font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-normal text-foreground leading-[0.95]"
               style={{ 
                 opacity,
@@ -121,14 +126,30 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 filter: blurFilter
               }}
             >
-              <span className="whitespace-nowrap">Drop Dead</span> Salon
+              <motion.span 
+                className="whitespace-nowrap inline-block"
+                initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.9, delay: 0.2, ease }}
+              >
+                Drop Dead
+              </motion.span>
+              {" "}
+              <motion.span
+                className="inline-block"
+                initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.9, delay: 0.35, ease }}
+              >
+                Salon
+              </motion.span>
             </motion.h1>
 
             {/* Subheadline */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              initial={{ opacity: 0, y: 25, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.8, delay: 0.5, ease }}
               className="mt-10 text-base md:text-lg text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
               style={{ 
                 opacity,
@@ -142,9 +163,6 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
 
             {/* CTAs */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
               className="mt-12 flex flex-col items-center gap-4"
               style={{ 
                 opacity,
@@ -152,25 +170,39 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               }}
             >
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button
+                <motion.button
+                  initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  transition={{ duration: 0.7, delay: 0.65, ease }}
                   onClick={() => setConsultationOpen(true)}
                   className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
                 >
                   <span className="relative z-10">I am a new client</span>
                   <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
-                </button>
-                <Link
-                  to="/booking"
-                  className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
+                </motion.button>
+                <motion.div
+                  initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  transition={{ duration: 0.7, delay: 0.75, ease }}
                 >
-                  <span className="relative z-10">I am a returning client</span>
-                  <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
-                </Link>
+                  <Link
+                    to="/booking"
+                    className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
+                  >
+                    <span className="relative z-10">I am a returning client</span>
+                    <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
+                  </Link>
+                </motion.div>
               </div>
-              <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground font-sans">
+              <motion.div 
+                initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.6, delay: 0.9, ease }}
+                className="flex flex-col items-center gap-1 text-sm text-muted-foreground font-sans"
+              >
                 <p>New clients begin with a $15 consultation</p>
                 <p>Returning clients are free to book their known services</p>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
@@ -178,9 +210,9 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
 
       {/* Scroll Indicator */}
       <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, delay: 1 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 1.1, ease }}
         onClick={scrollToContent}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-20"
         aria-label="Scroll down"
