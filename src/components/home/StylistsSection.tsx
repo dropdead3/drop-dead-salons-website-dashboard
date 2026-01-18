@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, ChevronDown, Info, Star } from "lucide-react";
+import { ArrowRight, Sparkles, ChevronDown, Info, Star, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -199,13 +199,20 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
         </a>
         
         <div className="flex items-center justify-between gap-3">
-          <Link
-            to="/booking"
-            className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium whitespace-nowrap hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
-          >
-            <span>Book Consult</span>
-            <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/btn:translate-x-1" />
-          </Link>
+          {stylist.isBooking === false ? (
+            <div className="shrink-0 inline-flex items-center gap-2 bg-white/20 text-white/70 px-5 py-2.5 text-sm font-medium whitespace-nowrap cursor-not-allowed">
+              <X className="w-4 h-4 shrink-0" />
+              <span>Not Booking</span>
+            </div>
+          ) : (
+            <Link
+              to="/booking"
+              className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium whitespace-nowrap hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
+            >
+              <span>Book Consult</span>
+              <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/btn:translate-x-1" />
+            </Link>
+          )}
           
           {/* Location callout */}
           <p className="text-xs text-white/60 text-right leading-tight min-w-0">
