@@ -376,8 +376,15 @@ export function StylistsSection() {
 
       </div>
 
+      {/* Specialty Notice */}
+      <div className="container mx-auto px-6 mt-8">
+        <p className="text-center text-sm text-muted-foreground max-w-2xl mx-auto">
+          <span className="italic">Note:</span> Specialty badges indicate each stylist's preferred focus areas, not a comprehensive list. All our stylists provide excellent services across nearly every service type.
+        </p>
+      </div>
+
       {/* Stylists Grid */}
-      <div className="container mx-auto px-6 mt-12">
+      <div className="container mx-auto px-6 mt-8">
         <AnimatePresence mode="wait">
           {filteredStylists.length > 0 ? (
             <motion.div
