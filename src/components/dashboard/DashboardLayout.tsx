@@ -158,7 +158,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="my-4 px-4">
               <div className="h-px bg-border" />
             </div>
-            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-muted-foreground font-display">
+            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
               Admin
             </p>
             <div className="space-y-1">
