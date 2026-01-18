@@ -49,23 +49,39 @@ export function Header() {
       const headerEl = headerRef.current;
       if (!headerEl) return;
 
-      // Temporarily hide the header so elementFromPoint sees what's behind it
-      const originalPointerEvents = headerEl.style.pointerEvents;
-      headerEl.style.pointerEvents = "none";
-
-      // Sample at the header's vertical center
+      // Get the header's bounding box
       const headerRect = headerEl.getBoundingClientRect();
-      const sampleY = headerRect.top + headerRect.height / 2;
-      const sampleX = Math.min(window.innerWidth - 2, Math.max(2, window.innerWidth / 2));
       
+      // Sample Y at the vertical center of the header
+      const sampleY = headerRect.top + headerRect.height / 2;
+      
+      // Sample X near the logo (left side of header)
+      const sampleX = headerRect.left + 100;
+
+      // Temporarily hide ALL header children so elementFromPoint sees what's behind
+      const headerChildren = headerEl.querySelectorAll('*');
+      headerChildren.forEach(child => {
+        if (child instanceof HTMLElement) {
+          child.dataset.originalPointerEvents = child.style.pointerEvents;
+          child.style.pointerEvents = 'none';
+        }
+      });
+      headerEl.style.pointerEvents = 'none';
+
       const elBehind = document.elementFromPoint(sampleX, sampleY);
 
       // Restore pointer events
-      headerEl.style.pointerEvents = originalPointerEvents;
+      headerEl.style.pointerEvents = '';
+      headerChildren.forEach(child => {
+        if (child instanceof HTMLElement) {
+          child.style.pointerEvents = child.dataset.originalPointerEvents || '';
+          delete child.dataset.originalPointerEvents;
+        }
+      });
 
       // Walk up to find nearest ancestor with data-theme
       let cur: Element | null = elBehind;
-      while (cur && cur !== document.body) {
+      while (cur && cur !== document.body && cur !== headerEl) {
         if (cur instanceof HTMLElement && cur.hasAttribute("data-theme")) {
           const theme = cur.getAttribute("data-theme");
           setIsOverDark(theme === "dark");
@@ -159,8 +175,8 @@ export function Header() {
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                       className={cn(
-                        "h-5 lg:h-6 w-auto",
-                        isOverDark ? "invert" : ""
+                        "h-5 lg:h-6 w-auto transition-[filter] duration-300",
+                        isOverDark && "invert"
                       )}
                     />
                   ) : (
@@ -173,8 +189,8 @@ export function Header() {
                       exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                       className={cn(
-                        "h-6 w-auto",
-                        isOverDark ? "invert" : ""
+                        "h-6 w-auto transition-[filter] duration-300",
+                        isOverDark && "invert"
                       )}
                     />
                   )}
