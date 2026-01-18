@@ -154,7 +154,7 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 + index * 0.1 }}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-md ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-full ${
               specialty === "EXTENSIONS"
                 ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
                 : "bg-background/70 text-foreground"
@@ -202,14 +202,14 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
         
         <div className="flex items-center justify-between gap-3">
           {stylist.isBooking === false ? (
-            <div className="shrink-0 inline-flex items-center gap-2 bg-white/20 text-white/70 px-5 py-2.5 text-sm font-medium rounded-lg whitespace-nowrap cursor-not-allowed border border-white/40">
+            <div className="shrink-0 inline-flex items-center gap-2 bg-white/20 text-white/70 px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap cursor-not-allowed border border-white/40">
               <X className="w-4 h-4 shrink-0" />
               <span>Not Booking</span>
             </div>
           ) : (
             <Link
               to="/booking"
-              className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium rounded-lg whitespace-nowrap hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
+              className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
             >
               <span>Book Consult</span>
               <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/btn:translate-x-1" />
