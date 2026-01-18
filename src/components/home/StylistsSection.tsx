@@ -138,7 +138,7 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
 export function StylistsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
-  const [selectedLocation, setSelectedLocation] = useState<Location>("val-vista-lakes");
+  const [selectedLocation, setSelectedLocation] = useState<Location>("north-mesa");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [isFormExpanded, setIsFormExpanded] = useState(false);

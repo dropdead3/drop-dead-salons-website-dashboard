@@ -4,12 +4,8 @@ import { Phone, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 const locations = [
   {
-    name: "West Hollywood",
-    phone: "(323) 555-0123",
-  },
-  {
-    name: "Studio City",
-    phone: "(818) 555-0456",
+    name: "North Mesa",
+    phone: "(480) 548-1886",
   },
 ];
 
