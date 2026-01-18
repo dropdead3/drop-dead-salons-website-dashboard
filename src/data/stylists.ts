@@ -7,8 +7,17 @@ export interface Stylist {
   level: string;
   specialties: string[];
   imageUrl: string;
-  location: Location;
+  locations: Location[]; // Support multiple locations
 }
+
+// Helper to get location display name
+export const getLocationName = (locationId: Location): string => {
+  const locationMap: Record<Location, string> = {
+    "north-mesa": "North Mesa",
+    "val-vista-lakes": "Val Vista Lakes"
+  };
+  return locationMap[locationId];
+};
 
 export const stylists: Stylist[] = [
   {
@@ -18,7 +27,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1595959183082-7b570b7e1daf?w=600&h=800&fit=crop",
-    location: "north-mesa"
+    locations: ["north-mesa", "val-vista-lakes"] // Works at both
   },
   {
     id: "2",
@@ -27,7 +36,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["EXTENSIONS", "BLONDING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&h=800&fit=crop",
-    location: "north-mesa"
+    locations: ["north-mesa"]
   },
   {
     id: "3",
@@ -36,7 +45,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=600&h=800&fit=crop",
-    location: "north-mesa"
+    locations: ["north-mesa"]
   },
   {
     id: "4",
@@ -45,7 +54,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["AIRTOUCH", "COLOR BLOCKING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop",
-    location: "north-mesa"
+    locations: ["north-mesa"]
   },
   {
     id: "5",
@@ -54,7 +63,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["LAYERED CUTS", "CREATIVE COLOR", "COLOR BLOCKING"],
     imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=800&fit=crop",
-    location: "north-mesa"
+    locations: ["north-mesa"]
   },
   {
     id: "6",
@@ -63,7 +72,7 @@ export const stylists: Stylist[] = [
     level: "LEVEL 1 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "CUSTOM CUTS"],
     imageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&h=800&fit=crop",
-    location: "north-mesa"
+    locations: ["north-mesa"]
   }
 ];
 
@@ -79,6 +88,11 @@ export const getExtensionSpecialists = (): Stylist[] => {
   return stylists
     .filter(stylist => stylist.specialties.includes("EXTENSIONS"))
     .sort((a, b) => (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99));
+};
+
+// Check if stylist works at a specific location
+export const stylistWorksAtLocation = (stylist: Stylist, location: Location): boolean => {
+  return stylist.locations.includes(location);
 };
 
 export const locations = [

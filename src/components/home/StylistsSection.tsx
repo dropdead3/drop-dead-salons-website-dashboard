@@ -34,7 +34,7 @@ import {
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
-import { stylists, locations, allSpecialties, stylistLevels, type Stylist, type Location } from "@/data/stylists";
+import { stylists, locations, allSpecialties, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
 
 const applicationSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
@@ -121,7 +121,7 @@ const JoinTeamCard = ({
   );
 };
 
-const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) => {
+const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; index: number; selectedLocation: Location }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -141,17 +141,40 @@ const StylistCard = ({ stylist, index }: { stylist: Stylist; index: number }) =>
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
       
       <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
-        {/* Sort specialties with EXTENSIONS first */}
+        {/* Location badges - show selected first, then others */}
+        {[...stylist.locations]
+          .sort((a, b) => {
+            if (a === selectedLocation) return -1;
+            if (b === selectedLocation) return 1;
+            return 0;
+          })
+          .map((loc, idx) => (
+            <motion.span
+              key={loc}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 + index * 0.1 }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
+                loc === selectedLocation
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background/70 text-foreground"
+              }`}
+            >
+              {getLocationName(loc)}
+            </motion.span>
+          ))}
+        
+        {/* Specialty badges - EXTENSIONS first */}
         {[...stylist.specialties].sort((a, b) => {
           if (a === "EXTENSIONS") return -1;
           if (b === "EXTENSIONS") return 1;
           return 0;
         }).map((specialty, idx) => (
           <motion.span
-            key={idx}
+            key={specialty}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 + index * 0.1 }}
+            transition={{ delay: (stylist.locations.length + idx) * 0.05 + index * 0.1 }}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide ${
               specialty === "EXTENSIONS"
                 ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
@@ -234,7 +257,7 @@ export function StylistsSection() {
   }, []);
 
   const filteredStylists = stylists.filter((s) => {
-    const matchesLocation = s.location === selectedLocation;
+    const matchesLocation = s.locations.includes(selectedLocation);
     const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
     const matchesLevel = !selectedLevel || s.level === selectedLevel;
     return matchesLocation && matchesSpecialty && matchesLevel;
@@ -462,7 +485,7 @@ export function StylistsSection() {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
               {filteredStylists.map((stylist, index) => (
-                <StylistCard key={stylist.id} stylist={stylist} index={index} />
+                <StylistCard key={stylist.id} stylist={stylist} index={index} selectedLocation={selectedLocation} />
               ))}
               
               {/* Join Our Team Card - dynamically spans remaining columns */}
