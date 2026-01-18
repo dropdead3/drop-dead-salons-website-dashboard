@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useDailyCompletion } from '@/hooks/useDailyCompletion';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,48 +13,36 @@ import {
   Upload, 
   ChevronRight,
   Play,
-  Lock
+  Lock,
+  Loader2,
+  ImageIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-interface Enrollment {
-  id: string;
-  current_day: number;
-  streak_count: number;
-  status: string;
-  weekly_wins_due_day: number | null;
-  start_date: string;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function DashboardHome() {
   const { user } = useAuth();
-  const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    enrollment,
+    todayCompletion,
+    tasks,
+    loading,
+    updateTask,
+    uploadProof,
+    submitDay,
+    refetch,
+  } = useDailyCompletion(user?.id);
+  
   const [hasEnrollment, setHasEnrollment] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchEnrollment();
-    }
-  }, [user]);
-
-  const fetchEnrollment = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('stylist_program_enrollment')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching enrollment:', error);
-    } else if (data) {
-      setEnrollment(data as Enrollment);
-      setHasEnrollment(true);
-    }
-    setLoading(false);
-  };
+  // Check enrollment when data loads
+  if (!loading && enrollment && !hasEnrollment) {
+    setHasEnrollment(true);
+  }
 
   const startProgram = async () => {
     if (!user) return;
@@ -73,23 +61,43 @@ export default function DashboardHome() {
 
     if (error) {
       console.error('Error starting program:', error);
+      toast.error('Failed to start program');
     } else {
-      setEnrollment(data as Enrollment);
       setHasEnrollment(true);
+      refetch();
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const url = await uploadProof(file);
+    if (url) {
+      toast.success('Proof uploaded successfully');
+      refetch();
+    }
+    setUploading(false);
+  };
+
+  const handleSubmitDay = async () => {
+    setSubmitting(true);
+    await submitDay();
+    setSubmitting(false);
   };
 
   if (loading) {
     return (
       <DashboardLayout>
         <div className="p-6 lg:p-8 flex items-center justify-center min-h-[60vh]">
-          <div className="animate-pulse text-muted-foreground">Loading...</div>
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       </DashboardLayout>
     );
   }
 
-  if (!hasEnrollment) {
+  if (!hasEnrollment && !enrollment) {
     return (
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-2xl mx-auto">
@@ -247,19 +255,27 @@ export default function DashboardHome() {
             <div className="space-y-4">
               <TaskItem 
                 label="Post content (reel, story, or carousel)"
-                completed={false}
+                completed={tasks.content_posted}
+                onChange={(v) => updateTask('content_posted', v)}
+                disabled={isPaused}
               />
               <TaskItem 
                 label="Respond to all DMs within 2 hours"
-                completed={false}
+                completed={tasks.dms_responded}
+                onChange={(v) => updateTask('dms_responded', v)}
+                disabled={isPaused}
               />
               <TaskItem 
                 label="Follow up with 3 potential clients"
-                completed={false}
+                completed={tasks.follow_ups}
+                onChange={(v) => updateTask('follow_ups', v)}
+                disabled={isPaused}
               />
               <TaskItem 
                 label="Log your daily metrics"
-                completed={false}
+                completed={tasks.metrics_logged}
+                onChange={(v) => updateTask('metrics_logged', v)}
+                disabled={isPaused}
               />
             </div>
           </Card>
@@ -270,10 +286,40 @@ export default function DashboardHome() {
               <p className="text-sm text-muted-foreground font-sans mb-4">
                 Upload a screenshot or video of your content posted today.
               </p>
-              <Button variant="outline" className="w-full" disabled={isPaused}>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Proof
-              </Button>
+              {todayCompletion?.proof_url ? (
+                <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30">
+                  <ImageIcon className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-sans text-green-600">Proof uploaded</span>
+                </div>
+              ) : (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    disabled={isPaused || uploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Proof
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
             </Card>
 
             <Card className="p-6">
@@ -308,10 +354,20 @@ export default function DashboardHome() {
         <div className="mt-8">
           <Button 
             className="w-full lg:w-auto font-display tracking-wide px-8 py-6"
-            disabled={isPaused}
+            disabled={isPaused || submitting}
+            onClick={handleSubmitDay}
           >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            SUBMIT DAY {enrollment?.current_day} FOR COMPLETION
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                SUBMITTING...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                SUBMIT DAY {enrollment?.current_day} FOR COMPLETION
+              </>
+            )}
           </Button>
           <p className="text-xs text-muted-foreground font-sans mt-2">
             All tasks, proof, and metrics must be complete to submit.
@@ -322,9 +378,20 @@ export default function DashboardHome() {
   );
 }
 
-function TaskItem({ label, completed }: { label: string; completed: boolean }) {
+interface TaskItemProps {
+  label: string;
+  completed: boolean;
+  onChange: (value: boolean) => void;
+  disabled?: boolean;
+}
+
+function TaskItem({ label, completed, onChange, disabled }: TaskItemProps) {
   return (
-    <label className="flex items-center gap-3 cursor-pointer group">
+    <button 
+      className="flex items-center gap-3 cursor-pointer group w-full text-left disabled:cursor-not-allowed disabled:opacity-50"
+      onClick={() => !disabled && onChange(!completed)}
+      disabled={disabled}
+    >
       <div className={`
         w-5 h-5 border flex items-center justify-center transition-colors
         ${completed 
@@ -337,6 +404,6 @@ function TaskItem({ label, completed }: { label: string; completed: boolean }) {
       <span className={`text-sm font-sans ${completed ? 'line-through text-muted-foreground' : ''}`}>
         {label}
       </span>
-    </label>
+    </button>
   );
 }

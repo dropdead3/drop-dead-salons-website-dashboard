@@ -26,6 +26,7 @@ import Leaderboard from "./pages/dashboard/Leaderboard";
 import Training from "./pages/dashboard/Training";
 import Progress from "./pages/dashboard/Progress";
 import Stats from "./pages/dashboard/Stats";
+import WeeklyWins from "./pages/dashboard/WeeklyWins";
 import TeamOverview from "./pages/dashboard/admin/TeamOverview";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/dashboard/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
               <Route path="/dashboard/ring-the-bell" element={<ProtectedRoute><RingTheBell /></ProtectedRoute>} />
               <Route path="/dashboard/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
+              <Route path="/dashboard/weekly-wins" element={<ProtectedRoute><WeeklyWins /></ProtectedRoute>} />
               
               {/* Admin routes */}
               <Route path="/dashboard/admin/team" element={<ProtectedRoute requireCoach><TeamOverview /></ProtectedRoute>} />
