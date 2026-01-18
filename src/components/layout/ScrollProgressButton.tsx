@@ -35,14 +35,14 @@ export function ScrollProgressButton() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
-          transition={{ 
+          transition={{
             type: "spring",
             stiffness: 400,
             damping: 15,
           }}
           onClick={scrollToTop}
-          className="relative w-16 h-16 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer"
-          style={{ mixBlendMode: "exclusion" }}
+          className="relative w-16 h-16 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer text-foreground"
+          style={{ mixBlendMode: "difference", filter: "contrast(1.15)" }}
           aria-label="Back to top"
         >
           {/* SVG with rotating text and progress */}
@@ -65,18 +65,18 @@ export function ScrollProgressButton() {
               cy="32"
               r={radius}
               fill="none"
-              stroke="black"
+              stroke="currentColor"
               strokeWidth="1"
-              opacity="0.2"
+              opacity="0.25"
             />
-            
+
             {/* Progress circle */}
             <motion.circle
               cx="32"
               cy="32"
               r={radius}
               fill="none"
-              stroke="black"
+              stroke="currentColor"
               strokeWidth="1.5"
               strokeLinecap="round"
               style={{
@@ -86,7 +86,7 @@ export function ScrollProgressButton() {
                 transformOrigin: "32px 32px",
               }}
             />
-            
+
             {/* Rotating text */}
             <motion.g
               animate={{ rotate: 360 }}
@@ -98,23 +98,25 @@ export function ScrollProgressButton() {
               style={{ transformOrigin: "32px 32px" }}
             >
               <text
-                fill="black"
+                fill="currentColor"
                 fontSize="6"
                 fontFamily="sans-serif"
+                fontWeight="500"
                 letterSpacing="0.15em"
                 textAnchor="middle"
+                dominantBaseline="middle"
               >
-                <textPath href="#textCircle" startOffset="0%">
-                  BACK TO TOP • BACK TO TOP • 
+                <textPath href="#textCircle" startOffset="50%">
+                  BACK TO TOP • BACK TO TOP •
                 </textPath>
               </text>
             </motion.g>
-            
+
             {/* Arrow icon centered */}
             <g transform="translate(32, 32)">
               <path
                 d="M0 4 L0 -4 M-4 0 L0 -4 L4 0"
-                stroke="black"
+                stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
