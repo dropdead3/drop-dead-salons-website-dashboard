@@ -46,19 +46,24 @@ export function Header() {
   // Section theme detection using data-theme attributes
   useEffect(() => {
     const detectTheme = () => {
-      // Sample the DOM *behind* the sticky header using elementFromPoint,
-      // then walk up to the nearest ancestor with data-theme.
       const headerEl = headerRef.current;
+      if (!headerEl) return;
 
-      let sampleY = 120; // fallback
-      if (headerEl) {
-        const headerRect = headerEl.getBoundingClientRect();
-        sampleY = headerRect.bottom + 1;
-      }
+      // Temporarily hide the header so elementFromPoint sees what's behind it
+      const originalPointerEvents = headerEl.style.pointerEvents;
+      headerEl.style.pointerEvents = "none";
 
+      // Sample at the header's vertical center
+      const headerRect = headerEl.getBoundingClientRect();
+      const sampleY = headerRect.top + headerRect.height / 2;
       const sampleX = Math.min(window.innerWidth - 2, Math.max(2, window.innerWidth / 2));
+      
       const elBehind = document.elementFromPoint(sampleX, sampleY);
 
+      // Restore pointer events
+      headerEl.style.pointerEvents = originalPointerEvents;
+
+      // Walk up to find nearest ancestor with data-theme
       let cur: Element | null = elBehind;
       while (cur && cur !== document.body) {
         if (cur instanceof HTMLElement && cur.hasAttribute("data-theme")) {
