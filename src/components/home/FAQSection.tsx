@@ -181,19 +181,24 @@ export function FAQSection() {
                         <AccordionTrigger className="text-left text-base md:text-lg font-sans font-medium py-5 hover:no-underline group">
                           {highlightText(faq.question, searchQuery)}
                         </AccordionTrigger>
-                        <AccordionContent 
-                          className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed cursor-pointer group/content"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenItem(undefined);
-                          }}
-                        >
-                          <div className="mb-4">
-                            {highlightText(faq.answer, searchQuery)}
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground opacity-60 group-hover/content:opacity-100 transition-opacity">
-                            <ChevronUp className="w-3 h-3" />
-                            <span>Click to close</span>
+                        <AccordionContent className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed">
+                          <div 
+                            className="cursor-pointer group/content"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('Content clicked, closing:', faq.question);
+                              console.log('Current openItem:', openItem);
+                              setOpenItem(undefined);
+                            }}
+                          >
+                            <div className="mb-4">
+                              {highlightText(faq.answer, searchQuery)}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground opacity-60 group-hover/content:opacity-100 transition-opacity">
+                              <ChevronUp className="w-3 h-3" />
+                              <span>Click to close</span>
+                            </div>
                           </div>
                         </AccordionContent>
                       </AccordionItem>
