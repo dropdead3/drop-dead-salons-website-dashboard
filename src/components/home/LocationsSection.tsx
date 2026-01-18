@@ -64,9 +64,9 @@ export function LocationsSection() {
               className="group relative bg-secondary hover:bg-secondary/80 transition-colors duration-300 overflow-hidden"
             >
               {/* Google Maps Embed */}
-              <div className="w-full h-40 md:h-48 bg-muted">
+              <div className="w-full h-40 md:h-48 bg-muted relative overflow-hidden">
                 <iframe
-                  src={`https://www.google.com/maps?q=${location.mapQuery}&output=embed`}
+                  src={`https://www.google.com/maps?q=${location.mapQuery}&output=embed&z=15`}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
@@ -74,8 +74,10 @@ export function LocationsSection() {
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   title={`Map of ${location.name}`}
-                  className="grayscale hover:grayscale-0 transition-all duration-500"
+                  className="grayscale contrast-[1.1] brightness-[1.05] saturate-0 hover:saturate-100 hover:grayscale-0 hover:contrast-100 hover:brightness-100 transition-all duration-500"
                 />
+                {/* Subtle overlay for cleaner look */}
+                <div className="absolute inset-0 bg-secondary/10 pointer-events-none mix-blend-overlay" />
               </div>
 
               <div className="p-8 md:p-10 text-center">
