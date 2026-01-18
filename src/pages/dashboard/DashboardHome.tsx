@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   Calendar, 
   TrendingUp, 
@@ -17,10 +18,13 @@ import {
   Megaphone,
   Flame,
   Pin,
+  AlertTriangle,
+  Hourglass,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
 import { useTasks } from '@/hooks/useTasks';
+import { useCurrentUserApprovalStatus } from '@/hooks/useAccountApproval';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { TaskItem } from '@/components/dashboard/TaskItem';
@@ -50,6 +54,7 @@ export default function DashboardHome() {
   const { user } = useAuth();
   const { enrollment } = useDailyCompletion(user?.id);
   const { tasks, createTask, toggleTask, deleteTask } = useTasks();
+  const { data: approvalStatus } = useCurrentUserApprovalStatus();
   const queryClient = useQueryClient();
   
   const { data: announcements } = useQuery({
@@ -110,6 +115,20 @@ export default function DashboardHome() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-8">
+        {/* Pending Approval Banner */}
+        {approvalStatus?.is_approved === false && (
+          <Alert className="border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 dark:border-amber-700">
+            <Hourglass className="h-5 w-5 text-amber-600" />
+            <AlertTitle className="text-amber-800 dark:text-amber-200 font-display">
+              Account Pending Approval
+            </AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-300">
+              Your account is waiting for admin approval. Some features may be limited until your account is approved. 
+              If you've been waiting a while, please contact your manager.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Header */}
         <div>
           <h1 className="font-display text-3xl lg:text-4xl mb-2">
