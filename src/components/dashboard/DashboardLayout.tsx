@@ -27,6 +27,7 @@ interface DashboardLayoutProps {
 
 const stylistNavItems = [
   { href: '/dashboard', label: 'Today', icon: LayoutDashboard },
+  { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users },
   { href: '/dashboard/progress', label: 'Progress', icon: Target },
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3 },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
