@@ -42,7 +42,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm text-muted-foreground font-sans font-light leading-relaxed max-w-xs">
-              Luxury without compromise. Where artistry lives.
+              Death to bad hair.
             </p>
           </div>
 
