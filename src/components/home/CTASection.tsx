@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 
 export function CTASection() {
   const ref = useRef(null);
@@ -16,27 +17,15 @@ export function CTASection() {
       <div className="container mx-auto px-6 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
           {/* Left - Text */}
-          <div>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8 }}
-              className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
-            >
-              Ready for Something
-              <br />
-              <span className="font-light">Better?</span>
-            </motion.h2>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.1 }}
-              className="mt-6 text-base text-background/70 font-sans font-light max-w-md"
-            >
-              Experience the difference of a salon that truly cares about artistry and results.
-            </motion.p>
-          </div>
+          <SectionHeader
+            title="Ready for Something"
+            titleHighlight="Better?"
+            description="Experience the difference of a salon that truly cares about artistry and results."
+            titleClassName="text-4xl md:text-5xl lg:text-6xl"
+            descriptionClassName="text-background/70"
+            animate
+            isInView={isInView}
+          />
 
           {/* Right - Button */}
           <motion.div

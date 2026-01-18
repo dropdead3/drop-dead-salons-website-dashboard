@@ -31,6 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
 import { stylists, locations, allSpecialties, stylistLevels, type Stylist, type Location } from "@/data/stylists";
@@ -181,20 +182,16 @@ export function StylistsSection() {
     <section ref={sectionRef} className="py-20 lg:py-32 bg-secondary overflow-hidden">
       <div className="container mx-auto px-6">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-          className="text-center mb-12"
-        >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-4">
-            Meet our stylists
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-            Our talented team of artists are ready to help you achieve your hair goals. 
-            Each stylist brings their own unique expertise and creative vision.
-          </p>
-          
+        <SectionHeader
+          title="Meet our stylists"
+          description="Our talented team of artists are ready to help you achieve your hair goals. Each stylist brings their own unique expertise and creative vision."
+          align="center"
+          className="mb-8"
+          animate
+          isInView={isInView}
+        />
+
+        <div className="text-center">
           <Eyebrow className="text-muted-foreground mb-4">
             VIEW STYLISTS BY LOCATION
           </Eyebrow>
@@ -353,7 +350,7 @@ export function StylistsSection() {
               )}
             </AnimatePresence>
           </div>
-        </motion.div>
+        </div>
 
       </div>
 

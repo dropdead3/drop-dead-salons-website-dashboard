@@ -1,8 +1,8 @@
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Phone, Info, MapPin } from "lucide-react";
-import { Eyebrow } from "@/components/ui/Eyebrow";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 
 const locations = [
   {
@@ -37,19 +37,15 @@ export function LocationsSection() {
     >
       <div className="container mx-auto px-6">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-          className="text-center mb-16"
-        >
-          <Eyebrow className="text-foreground/50 mb-4">
-            Find Us
-          </Eyebrow>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display">
-            Our Locations
-          </h2>
-        </motion.div>
+        <SectionHeader
+          eyebrow="Find Us"
+          title="Our Locations"
+          align="center"
+          className="mb-16"
+          eyebrowClassName="text-foreground/50"
+          animate
+          isInView={isInView}
+        />
 
         {/* Location Cards - Side by Side */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
