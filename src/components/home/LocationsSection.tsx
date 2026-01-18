@@ -101,10 +101,10 @@ export function LocationsSection() {
               <div className="flex flex-col items-center gap-3">
                 <Link
                   to={location.bookingUrl}
-                  className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 text-sm font-sans font-medium hover:bg-primary/90 transition-colors group/link w-full"
+                  className="inline-flex items-center justify-center bg-primary text-primary-foreground px-6 py-3 text-sm font-sans font-medium hover:bg-primary/90 transition-all duration-300 group/link w-full overflow-hidden"
                 >
                   <span>Book consult</span>
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
+                  <ArrowRight className="w-0 h-4 opacity-0 group-hover/link:w-4 group-hover/link:ml-2 group-hover/link:opacity-100 transition-all duration-300" />
                 </Link>
                 <button
                   onClick={() => {
@@ -116,11 +116,10 @@ export function LocationsSection() {
                       }));
                     }
                   }}
-                  className="inline-flex items-center justify-center gap-2 bg-background border border-border text-foreground px-6 py-3 text-sm font-sans font-medium hover:bg-muted transition-colors group/stylists w-full"
+                  className="inline-flex items-center justify-center bg-background border border-border text-foreground px-6 py-3 text-sm font-sans font-medium hover:bg-muted transition-all duration-300 group/stylists w-full overflow-hidden"
                 >
-                  <Users className="w-4 h-4" />
                   <span>Check Out The Stylists</span>
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/stylists:translate-x-1" />
+                  <ArrowRight className="w-0 h-4 opacity-0 group-hover/stylists:w-4 group-hover/stylists:ml-2 group-hover/stylists:opacity-100 transition-all duration-300" />
                 </button>
               </div>
             </motion.div>
