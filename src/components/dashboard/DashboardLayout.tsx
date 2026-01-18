@@ -27,15 +27,21 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-const stylistNavItems = [
+const mainNavItems = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
-  { href: '/dashboard/program', label: 'Client Engine', icon: Target },
   { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users },
+  { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText },
+];
+
+const growthNavItems = [
+  { href: '/dashboard/training', label: 'Training', icon: Video },
+  { href: '/dashboard/program', label: 'Client Engine', icon: Target },
+  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell },
+];
+
+const statsNavItems = [
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3 },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
-  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell },
-  { href: '/dashboard/training', label: 'Training', icon: Video },
-  { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText },
 ];
 
 const coachNavItems = [
@@ -96,12 +102,38 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Navigation */}
       <nav className="flex-1 py-4 overflow-y-auto">
         <div className="space-y-1">
-          {stylistNavItems.map((item) => (
+          {mainNavItems.map((item) => (
             <NavLink 
               key={item.href} 
               {...item} 
               badgeCount={item.href === '/dashboard' ? unreadCount : undefined}
             />
+          ))}
+        </div>
+
+        {/* Growth Section */}
+        <div className="my-4 px-4">
+          <div className="h-px bg-border" />
+        </div>
+        <p className="px-4 mb-2 text-xs uppercase tracking-wider text-muted-foreground font-display">
+          Growth
+        </p>
+        <div className="space-y-1">
+          {growthNavItems.map((item) => (
+            <NavLink key={item.href} {...item} />
+          ))}
+        </div>
+
+        {/* Stats & Leaderboard Section */}
+        <div className="my-4 px-4">
+          <div className="h-px bg-border" />
+        </div>
+        <p className="px-4 mb-2 text-xs uppercase tracking-wider text-muted-foreground font-display">
+          Stats & Leaderboard
+        </p>
+        <div className="space-y-1">
+          {statsNavItems.map((item) => (
+            <NavLink key={item.href} {...item} />
           ))}
         </div>
 
