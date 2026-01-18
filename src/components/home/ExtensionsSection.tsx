@@ -48,7 +48,7 @@ export function ExtensionsSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-oat/20 border border-oat-foreground/30 badge-shine"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-oat/20 border border-oat-foreground/30 rounded-lg badge-shine"
             >
               <Star className="w-4 h-4 fill-oat text-oat" />
               <span className="text-sm font-display uppercase tracking-wide text-oat">OUR SIGNATURE</span>
@@ -106,7 +106,7 @@ export function ExtensionsSection() {
                       delay: index * 0.15 + 0.1,
                       ease: "easeOut"
                     }}
-                    className="flex-shrink-0 w-12 h-12 bg-oat/20 flex items-center justify-center transition-colors duration-300 group-hover:bg-oat/30"
+                    className="flex-shrink-0 w-12 h-12 bg-oat/20 rounded-xl flex items-center justify-center transition-colors duration-300 group-hover:bg-oat/30"
                   >
                     <feature.icon className="w-5 h-5 text-oat" />
                   </motion.div>
@@ -149,14 +149,14 @@ export function ExtensionsSection() {
               <div className="flex flex-wrap gap-4">
                 <Link
                   to="/booking"
-                  className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-6 py-3.5 text-sm font-medium tracking-wide hover:bg-oat/90 transition-all duration-300"
+                  className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-6 py-3.5 text-sm font-medium tracking-wide rounded-xl hover:bg-oat/90 transition-all duration-300"
                 >
                   <span>BOOK EXTENSION CONSULT</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
                 <Link
                   to="/services"
-                  className="group inline-flex items-center gap-3 border border-background/30 text-background px-6 py-3.5 text-sm font-medium tracking-wide hover:bg-background/10 transition-all duration-300"
+                  className="group inline-flex items-center gap-3 border border-background/30 text-background px-6 py-3.5 text-sm font-medium tracking-wide rounded-xl hover:bg-background/10 transition-all duration-300"
                 >
                   <span>LEARN MORE</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -195,12 +195,14 @@ export function ExtensionsSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.8 }}
-              className="absolute bottom-6 left-6 right-6 bg-background/95 backdrop-blur-sm p-5 z-30"
+              className="absolute bottom-6 left-6 right-6 bg-background/95 backdrop-blur-sm p-5 rounded-2xl z-30"
             >
               <div className="flex items-center justify-between gap-6">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <Award className="w-5 h-5 text-oat-foreground" />
+                    <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
+                      <Award className="w-4 h-4 text-oat-foreground" />
+                    </div>
                     <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationally Recognized</span>
                   </div>
                   <p className="text-sm text-foreground leading-relaxed">
@@ -209,7 +211,7 @@ export function ExtensionsSection() {
                 </div>
                 <button
                   onClick={() => sliderRef.current?.playVideo()}
-                  className="flex-shrink-0 w-12 h-12 bg-foreground text-background rounded-full flex items-center justify-center hover:bg-foreground/90 transition-colors duration-200"
+                  className="flex-shrink-0 w-12 h-12 bg-foreground text-background rounded-xl flex items-center justify-center hover:bg-foreground/90 transition-colors duration-200"
                   aria-label="Watch video"
                 >
                   <Play className="w-5 h-5 fill-current ml-0.5" />
@@ -222,13 +224,13 @@ export function ExtensionsSection() {
               initial={{ opacity: 0, x: 20 }}
               animate={isInView ? { opacity: 0.6, x: 0 } : {}}
               transition={{ duration: 1, delay: 0.5 }}
-              className="absolute -top-4 -right-4 w-24 h-24 border border-oat/40"
+              className="absolute -top-4 -right-4 w-24 h-24 border border-oat/40 rounded-2xl"
             />
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={isInView ? { opacity: 0.6, x: 0 } : {}}
               transition={{ duration: 1, delay: 0.6 }}
-              className="absolute -bottom-4 -left-4 w-32 h-32 border border-oat/40"
+              className="absolute -bottom-4 -left-4 w-32 h-32 border border-oat/40 rounded-2xl"
             />
           </motion.div>
         </div>

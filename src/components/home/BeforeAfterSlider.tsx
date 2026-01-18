@@ -239,7 +239,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
   return (
     <div
       ref={containerRef}
-      className={`relative aspect-[3/4] overflow-hidden select-none ${isVideoMode ? '' : 'cursor-ew-resize'} ${className}`}
+      className={`relative aspect-[3/4] overflow-hidden select-none rounded-2xl ${isVideoMode ? '' : 'cursor-ew-resize'} ${className}`}
       onTouchMove={!isVideoMode ? handleTouchMove : undefined}
       onTouchEnd={!isVideoMode ? handleTouchEnd : undefined}
       onMouseEnter={hoverMode ? handleMouseEnter : undefined}
@@ -265,7 +265,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           {/* Close button */}
           <button
             onClick={handleCloseVideo}
-            className="absolute top-4 right-4 w-10 h-10 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center z-40 hover:bg-background transition-colors duration-200"
+            className="absolute top-4 right-4 w-10 h-10 bg-background/90 backdrop-blur-sm rounded-xl flex items-center justify-center z-40 hover:bg-background transition-colors duration-200"
           >
             <X className="w-5 h-5 text-foreground" />
           </button>
@@ -300,7 +300,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           >
             {/* Slider Handle */}
             <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white flex items-center justify-center cursor-ew-resize shadow-lg border border-black/10"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-xl bg-white flex items-center justify-center cursor-ew-resize shadow-lg border border-black/10"
               onMouseDown={handleMouseDown}
               onTouchStart={handleMouseDown}
             >
@@ -319,7 +319,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           {!hideDefaultVideoButton && (
             <motion.button
               onClick={handlePlayVideo}
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 bg-background/90 backdrop-blur-sm text-foreground hover:bg-background transition-colors duration-200"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 bg-background/90 backdrop-blur-sm rounded-lg text-foreground hover:bg-background transition-colors duration-200"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
@@ -334,7 +334,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           {/* Labels - positioned at top corners */}
           <div className="absolute top-4 left-4 z-20">
             <span 
-              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 text-foreground"
+              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 rounded-md text-foreground"
               style={{ opacity: sliderPosition > 20 ? 1 : 0, transition: 'opacity 0.2s' }}
             >
               {beforeLabel}
@@ -342,7 +342,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           </div>
           <div className="absolute top-4 right-4 z-20">
             <span 
-              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 text-foreground"
+              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 rounded-md text-foreground"
               style={{ opacity: sliderPosition < 80 ? 1 : 0, transition: 'opacity 0.2s' }}
             >
               {afterLabel}
@@ -352,7 +352,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           {/* Hint - positioned below the labels */}
           <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
             <motion.span 
-              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-black/50 text-white/90 backdrop-blur-sm"
+              className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-black/50 rounded-md text-white/90 backdrop-blur-sm"
               initial={{ opacity: 1 }}
               animate={{ opacity: hasInteracted ? 0 : 1 }}
               transition={{ duration: 0.3 }}
