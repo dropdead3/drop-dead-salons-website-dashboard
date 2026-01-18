@@ -217,7 +217,7 @@ function ExtensionSpecialistsCarousel() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+          className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
         >
           Extension <span className="italic font-light">Specialists</span>
         </motion.h2>
@@ -457,7 +457,7 @@ export default function Extensions() {
               initial={{ opacity: 0, y: 30 }}
               animate={heroInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8 }}
-              className="font-serif text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal tracking-tight text-white leading-[1.1] max-w-4xl mx-auto"
+              className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal tracking-tight text-white leading-[1.1] max-w-4xl mx-auto"
             >
               <span className="italic font-light">Luxury</span> extension services
             </motion.h1>
@@ -553,7 +553,7 @@ export default function Extensions() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12 lg:mb-16"
         >
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
             We specialize in dream hair...
           </h2>
           <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto">
@@ -623,7 +623,7 @@ export default function Extensions() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+            className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
           >
             Your Extension <span className="italic font-light">Journey</span>
           </motion.h2>
@@ -766,7 +766,7 @@ export default function Extensions() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12 lg:mb-16"
         >
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
             You'll have to see it to believe it
           </h2>
           <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto">
@@ -865,7 +865,7 @@ export default function Extensions() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+              className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
             >
               Are Extensions <span className="italic font-light">Right For You?</span>
             </motion.h2>
@@ -945,7 +945,7 @@ export default function Extensions() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+            className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
           >
             Extension <span className="italic font-light">Packages</span>
           </motion.h2>
@@ -1137,7 +1137,7 @@ export default function Extensions() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+            className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
           >
             The Drop Dead <span className="italic font-light">Difference</span>
           </motion.h2>
@@ -1216,7 +1216,7 @@ export default function Extensions() {
             <span className="text-xs uppercase tracking-[0.3em] text-background/60 font-sans block mb-4">
               The Process
             </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1] mb-6">
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1] mb-6">
               What's <span className="italic font-light text-oat">Included</span>
             </h2>
             <p className="text-background/70 leading-relaxed mb-8">
@@ -1344,7 +1344,7 @@ export default function Extensions() {
             <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
               Aftercare
             </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
               Extension <span className="italic font-light">Care</span>
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-8">
@@ -1480,7 +1480,7 @@ export default function Extensions() {
             <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
               Extension Care
             </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
               Recommended <span className="italic font-light">Products</span>
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-8">
@@ -1539,7 +1539,7 @@ export default function Extensions() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
+            className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight"
           >
             What to <span className="italic font-light text-oat">Expect</span>
           </motion.h2>
@@ -1630,7 +1630,7 @@ export default function Extensions() {
             <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4">
               Questions
             </span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif mb-6">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
               Extension<br />
               <em className="not-italic italic">FAQ</em>
             </h2>
