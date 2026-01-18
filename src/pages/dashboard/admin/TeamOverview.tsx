@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import { 
   Select,
   SelectContent,
@@ -33,7 +34,9 @@ import {
   Plus,
   Calendar,
   Trophy,
-  Target
+  Target,
+  BookOpen,
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -70,6 +73,12 @@ interface WeeklyWin {
   submitted_at: string | null;
 }
 
+interface HandbookStatus {
+  total: number;
+  acknowledged: number;
+  pending: string[];
+}
+
 type FilterStatus = 'all' | 'active' | 'paused' | 'at-risk' | 'restarted';
 
 export default function TeamOverview() {
@@ -81,6 +90,7 @@ export default function TeamOverview() {
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [memberNotes, setMemberNotes] = useState<Record<string, CoachNote[]>>({});
   const [memberWeeklyWins, setMemberWeeklyWins] = useState<Record<string, WeeklyWin[]>>({});
+  const [memberHandbooks, setMemberHandbooks] = useState<Record<string, HandbookStatus>>({});
   const [newNote, setNewNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
@@ -132,25 +142,56 @@ export default function TeamOverview() {
     setLoading(false);
   };
 
-  const fetchMemberDetails = async (enrollmentId: string) => {
-    // Fetch notes
-    const { data: notes } = await supabase
-      .from('coach_notes')
-      .select('*')
-      .eq('enrollment_id', enrollmentId)
-      .order('created_at', { ascending: false });
+  const fetchMemberDetails = async (enrollmentId: string, userId: string) => {
+    // Fetch notes, weekly wins, and handbook status in parallel
+    const [notesResult, weeklyWinsResult, handbooksResult, acknowledgementsResult] = await Promise.all([
+      supabase
+        .from('coach_notes')
+        .select('*')
+        .eq('enrollment_id', enrollmentId)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('weekly_wins_reports')
+        .select('*')
+        .eq('enrollment_id', enrollmentId)
+        .eq('is_submitted', true)
+        .order('week_number', { ascending: false }),
+      supabase
+        .from('handbooks')
+        .select('id, title, visible_to_roles')
+        .eq('is_active', true),
+      supabase
+        .from('handbook_acknowledgments')
+        .select('handbook_id')
+        .eq('user_id', userId)
+    ]);
 
-    setMemberNotes(prev => ({ ...prev, [enrollmentId]: (notes || []) as CoachNote[] }));
+    setMemberNotes(prev => ({ ...prev, [enrollmentId]: (notesResult.data || []) as CoachNote[] }));
+    setMemberWeeklyWins(prev => ({ ...prev, [enrollmentId]: (weeklyWinsResult.data || []) as WeeklyWin[] }));
 
-    // Fetch weekly wins
-    const { data: weeklyWins } = await supabase
-      .from('weekly_wins_reports')
-      .select('*')
-      .eq('enrollment_id', enrollmentId)
-      .eq('is_submitted', true)
-      .order('week_number', { ascending: false });
-
-    setMemberWeeklyWins(prev => ({ ...prev, [enrollmentId]: (weeklyWins || []) as WeeklyWin[] }));
+    // Get user's roles to filter handbooks
+    const { data: userRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
+    
+    const roles = userRoles?.map(r => r.role) || [];
+    const userHandbooks = (handbooksResult.data || []).filter((h: any) => {
+      const visibleRoles = h.visible_to_roles || [];
+      return roles.some(role => visibleRoles.includes(role));
+    });
+    
+    const acknowledgedIds = (acknowledgementsResult.data || []).map(a => a.handbook_id);
+    const pendingHandbooks = userHandbooks.filter(h => !acknowledgedIds.includes(h.id));
+    
+    setMemberHandbooks(prev => ({
+      ...prev,
+      [enrollmentId]: {
+        total: userHandbooks.length,
+        acknowledged: acknowledgedIds.filter(id => userHandbooks.some((h: any) => h.id === id)).length,
+        pending: pendingHandbooks.map((h: any) => h.title)
+      }
+    }));
   };
 
   const handleExpandMember = (member: TeamMember) => {
@@ -158,12 +199,12 @@ export default function TeamOverview() {
       setExpandedMember(null);
     } else {
       setExpandedMember(member.enrollment_id);
-      fetchMemberDetails(member.enrollment_id);
+      fetchMemberDetails(member.enrollment_id, member.user_id);
     }
     setNewNote('');
   };
 
-  const addNote = async (enrollmentId: string) => {
+  const addNote = async (enrollmentId: string, userId: string) => {
     if (!newNote.trim() || !user) return;
 
     setSavingNote(true);
@@ -182,7 +223,7 @@ export default function TeamOverview() {
     } else {
       toast.success('Note added');
       setNewNote('');
-      fetchMemberDetails(enrollmentId);
+      fetchMemberDetails(enrollmentId, userId);
     }
     setSavingNote(false);
   };
@@ -407,7 +448,7 @@ export default function TeamOverview() {
                             />
                             <Button
                               size="sm"
-                              onClick={() => addNote(member.enrollment_id)}
+                              onClick={() => addNote(member.enrollment_id, member.user_id)}
                               disabled={!newNote.trim() || savingNote}
                             >
                               {savingNote ? (
@@ -505,9 +546,56 @@ export default function TeamOverview() {
                         </div>
                       </div>
 
+                      {/* Handbook Acknowledgments Section */}
+                      {memberHandbooks[member.enrollment_id] && (
+                        <div className="mt-6 pt-6 border-t border-border">
+                          <div className="flex items-center gap-2 mb-4">
+                            <BookOpen className="w-4 h-4" />
+                            <h3 className="font-display text-sm tracking-wide">HANDBOOK ACKNOWLEDGMENTS</h3>
+                          </div>
+                          
+                          {memberHandbooks[member.enrollment_id].total === 0 ? (
+                            <p className="text-sm text-muted-foreground font-sans">
+                              No handbooks assigned to this role.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-4">
+                                <Progress 
+                                  value={(memberHandbooks[member.enrollment_id].acknowledged / memberHandbooks[member.enrollment_id].total) * 100} 
+                                  className="flex-1 h-2"
+                                />
+                                <span className="text-sm font-sans text-muted-foreground whitespace-nowrap">
+                                  {memberHandbooks[member.enrollment_id].acknowledged} / {memberHandbooks[member.enrollment_id].total}
+                                </span>
+                              </div>
+                              
+                              {memberHandbooks[member.enrollment_id].pending.length > 0 ? (
+                                <div className="bg-amber-500/10 p-3 rounded">
+                                  <p className="text-xs font-display text-amber-600 mb-2">PENDING ACKNOWLEDGMENTS</p>
+                                  <ul className="space-y-1">
+                                    {memberHandbooks[member.enrollment_id].pending.map((title, idx) => (
+                                      <li key={idx} className="text-sm font-sans flex items-center gap-2">
+                                        <FileText className="w-3 h-3 text-amber-600" />
+                                        {title}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : (
+                                <div className="bg-green-500/10 p-3 rounded flex items-center gap-2">
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                  <span className="text-sm font-sans text-green-600">All handbooks acknowledged</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Quick Stats */}
                       <div className="mt-6 pt-6 border-t border-border">
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                           <div className="flex items-center gap-3">
                             <Target className="w-5 h-5 text-muted-foreground" />
                             <div>
@@ -538,6 +626,17 @@ export default function TeamOverview() {
                             <div>
                               <p className="text-xs text-muted-foreground font-display">WEEKLY WINS</p>
                               <p className="font-sans">{memberWeeklyWins[member.enrollment_id]?.length || 0}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <BookOpen className="w-5 h-5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground font-display">HANDBOOKS</p>
+                              <p className="font-sans">
+                                {memberHandbooks[member.enrollment_id] 
+                                  ? `${memberHandbooks[member.enrollment_id].acknowledged}/${memberHandbooks[member.enrollment_id].total}`
+                                  : '—'}
+                              </p>
                             </div>
                           </div>
                         </div>
