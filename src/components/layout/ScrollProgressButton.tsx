@@ -7,7 +7,7 @@ export function ScrollProgressButton() {
   const { scrollYProgress } = useScroll();
   
   // Transform scroll progress to stroke dashoffset
-  const circumference = 2 * Math.PI * 18; // radius = 18
+  const circumference = 2 * Math.PI * 26; // radius = 26
   const strokeDashoffset = useTransform(
     scrollYProgress,
     [0, 1],
@@ -40,40 +40,70 @@ export function ScrollProgressButton() {
             damping: 15,
           }}
           onClick={scrollToTop}
-          className="relative w-12 h-12 flex items-center justify-center bg-background border border-border hover:bg-muted transition-colors shadow-lg"
-          style={{ borderRadius: "50%" }}
+          className="relative w-16 h-16 flex items-center justify-center bg-background border border-border hover:bg-muted transition-colors shadow-lg rounded-full"
           aria-label="Back to top"
         >
-          {/* SVG Progress Circle */}
+          {/* SVG with rotating text and progress */}
           <svg
-            className="absolute inset-0 w-full h-full -rotate-90"
-            viewBox="0 0 44 44"
+            className="absolute inset-0 w-full h-full"
+            viewBox="0 0 64 64"
           >
-            {/* Background circle */}
+            <defs>
+              {/* Circular path for text */}
+              <path
+                id="textCircle"
+                d="M 32, 32 m -22, 0 a 22,22 0 1,1 44,0 a 22,22 0 1,1 -44,0"
+                fill="none"
+              />
+            </defs>
+            
+            {/* Background circle for progress */}
             <circle
-              cx="22"
-              cy="22"
-              r="18"
+              cx="32"
+              cy="32"
+              r="26"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1"
               className="text-muted/30"
             />
+            
             {/* Progress circle */}
             <motion.circle
-              cx="22"
-              cy="22"
-              r="18"
+              cx="32"
+              cy="32"
+              r="26"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1.5"
               strokeLinecap="round"
               className="text-foreground"
               style={{
                 strokeDasharray: circumference,
                 strokeDashoffset,
+                transform: "rotate(-90deg)",
+                transformOrigin: "center",
               }}
             />
+            
+            {/* Rotating text */}
+            <motion.g
+              animate={{ rotate: 360 }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              style={{ transformOrigin: "center" }}
+            >
+              <text
+                className="fill-foreground text-[7px] uppercase tracking-[0.3em] font-sans"
+              >
+                <textPath href="#textCircle" startOffset="0%">
+                  BACK TO TOP • BACK TO TOP • 
+                </textPath>
+              </text>
+            </motion.g>
           </svg>
           
           {/* Arrow icon */}
