@@ -91,7 +91,7 @@ export function FAQSection() {
           >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
               Frequently <TypewriterText text="asked" isInView={isInView} delay={600} /><br />
-              <em className="not-italic italic font-serif">questions...</em>
+              <em className="not-italic italic">questions...</em>
             </h2>
             
             <div className="space-y-4 text-foreground/80 mb-8">
