@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, DollarSign, Pin, Loader2 } from 'lucide-react';
+import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface BellEntry {
@@ -24,9 +24,11 @@ interface BellEntry {
   ticket_value: number;
   lead_source: string;
   closing_script: string | null;
+  coach_note: string | null;
   is_pinned: boolean;
   created_at: string;
   user_id: string;
+  stylist_name?: string;
 }
 
 const leadSources = [
@@ -52,6 +54,11 @@ export default function RingTheBell() {
   const [leadSource, setLeadSource] = useState('');
   const [closingScript, setClosingScript] = useState('');
 
+  // Coach note state
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+
   useEffect(() => {
     fetchEntries();
     
@@ -60,9 +67,9 @@ export default function RingTheBell() {
       .channel('ring_the_bell')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'ring_the_bell_entries' },
-        (payload) => {
-          setEntries(prev => [payload.new as BellEntry, ...prev]);
+        { event: '*', schema: 'public', table: 'ring_the_bell_entries' },
+        () => {
+          fetchEntries();
         }
       )
       .subscribe();
@@ -75,14 +82,29 @@ export default function RingTheBell() {
   const fetchEntries = async () => {
     const { data, error } = await supabase
       .from('ring_the_bell_entries')
-      .select('*')
+      .select(`
+        *,
+        employee_profiles!ring_the_bell_entries_user_id_fkey(display_name, full_name)
+      `)
+      .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(50);
 
     if (error) {
       console.error('Error fetching entries:', error);
+      // Fallback without join
+      const { data: fallbackData } = await supabase
+        .from('ring_the_bell_entries')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setEntries((fallbackData || []) as BellEntry[]);
     } else {
-      setEntries((data || []) as BellEntry[]);
+      const formattedEntries = (data || []).map((entry: any) => ({
+        ...entry,
+        stylist_name: entry.employee_profiles?.display_name || entry.employee_profiles?.full_name || 'Stylist',
+      }));
+      setEntries(formattedEntries as BellEntry[]);
     }
     setLoading(false);
   };
@@ -154,8 +176,52 @@ export default function RingTheBell() {
     if (!error) {
       setEntries(prev => 
         prev.map(e => e.id === entryId ? { ...e, is_pinned: !currentlyPinned } : e)
+          .sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0))
       );
+      toast({
+        title: currentlyPinned ? 'Unpinned' : '📌 Pinned!',
+        description: currentlyPinned ? 'Entry unpinned.' : 'Entry pinned to the top.',
+      });
     }
+  };
+
+  const startEditingNote = (entry: BellEntry) => {
+    setEditingNoteId(entry.id);
+    setNoteText(entry.coach_note || '');
+  };
+
+  const cancelEditingNote = () => {
+    setEditingNoteId(null);
+    setNoteText('');
+  };
+
+  const saveCoachNote = async (entryId: string) => {
+    if (!isCoach) return;
+    
+    setSavingNote(true);
+    const { error } = await supabase
+      .from('ring_the_bell_entries')
+      .update({ coach_note: noteText || null })
+      .eq('id', entryId);
+
+    if (!error) {
+      setEntries(prev => 
+        prev.map(e => e.id === entryId ? { ...e, coach_note: noteText || null } : e)
+      );
+      toast({
+        title: '✨ Note Saved',
+        description: 'Your celebratory note has been added!',
+      });
+      setEditingNoteId(null);
+      setNoteText('');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to save note.',
+      });
+    }
+    setSavingNote(false);
   };
 
   return (
@@ -272,50 +338,113 @@ export default function RingTheBell() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {/* Pinned entries first */}
-            {entries
-              .sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0))
-              .map((entry) => (
-                <Card 
-                  key={entry.id} 
-                  className={`p-6 ${entry.is_pinned ? 'border-foreground' : ''}`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="font-display text-xl">
-                          ${entry.ticket_value.toLocaleString()}
+            {entries.map((entry) => (
+              <Card 
+                key={entry.id} 
+                className={`p-6 ${entry.is_pinned ? 'border-primary bg-primary/5' : ''}`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-display text-xl">
+                        ${entry.ticket_value.toLocaleString()}
+                      </span>
+                      {entry.is_pinned && (
+                        <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs font-display tracking-wide rounded">
+                          PINNED
                         </span>
-                        {entry.is_pinned && (
-                          <span className="px-2 py-0.5 bg-foreground text-background text-xs font-display tracking-wide">
-                            PINNED
-                          </span>
-                        )}
-                      </div>
-                      <p className="font-sans text-sm mb-1">{entry.service_booked}</p>
-                      <p className="text-xs text-muted-foreground font-sans">
-                        {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
-                        {format(new Date(entry.created_at), 'MMM d, yyyy')}
-                      </p>
-                      {entry.closing_script && (
-                        <p className="mt-3 text-sm text-muted-foreground font-sans italic">
-                          "{entry.closing_script}"
-                        </p>
                       )}
                     </div>
-                    {isCoach && (
+                    <p className="font-sans text-sm mb-1">{entry.service_booked}</p>
+                    <p className="text-xs text-muted-foreground font-sans">
+                      {entry.stylist_name && <span className="font-medium">{entry.stylist_name} · </span>}
+                      {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
+                      {format(new Date(entry.created_at), 'MMM d, yyyy')}
+                    </p>
+                    {entry.closing_script && (
+                      <p className="mt-3 text-sm text-muted-foreground font-sans italic">
+                        "{entry.closing_script}"
+                      </p>
+                    )}
+
+                    {/* Coach Note Display */}
+                    {entry.coach_note && editingNoteId !== entry.id && (
+                      <div className="mt-4 p-3 bg-accent/50 rounded-lg border border-accent">
+                        <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" /> Coach Note
+                        </p>
+                        <p className="text-sm font-sans">{entry.coach_note}</p>
+                      </div>
+                    )}
+
+                    {/* Coach Note Editor */}
+                    {isCoach && editingNoteId === entry.id && (
+                      <div className="mt-4 space-y-2">
+                        <Textarea
+                          value={noteText}
+                          onChange={(e) => setNoteText(e.target.value)}
+                          placeholder="Add a celebratory note for this win..."
+                          rows={2}
+                          className="text-sm"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => saveCoachNote(entry.id)}
+                            disabled={savingNote}
+                            className="font-display text-xs"
+                          >
+                            {savingNote ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <>
+                                <Send className="w-3 h-3 mr-1" />
+                                Save Note
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={cancelEditingNote}
+                            className="font-display text-xs"
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Coach Actions */}
+                  {isCoach && (
+                    <div className="flex flex-col gap-1 ml-4">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => togglePin(entry.id, entry.is_pinned)}
-                        className={entry.is_pinned ? 'text-foreground' : 'text-muted-foreground'}
+                        className={entry.is_pinned ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}
+                        title={entry.is_pinned ? 'Unpin' : 'Pin to top'}
                       >
                         <Pin className="w-4 h-4" />
                       </Button>
-                    )}
-                  </div>
-                </Card>
-              ))}
+                      {editingNoteId !== entry.id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => startEditingNote(entry)}
+                          className="text-muted-foreground hover:text-foreground"
+                          title="Add/edit note"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
           </div>
         )}
       </div>
