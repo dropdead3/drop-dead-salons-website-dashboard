@@ -149,15 +149,19 @@ export function DrinkMenuSection() {
   // Base position for infinite scroll
   const baseX = useRef(0);
   const [xPos, setXPos] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   
   // Animate continuously with velocity-based speed
   useAnimationFrame((_, delta) => {
+    // Slow down significantly when hovered
+    const hoverMultiplier = isHovered ? 0.1 : 1;
+    
     // Base speed (pixels per second)
-    const baseSpeed = 30;
+    const baseSpeed = 30 * hoverMultiplier;
     
     // Get current velocity and add to base speed
     const velocity = smoothVelocity.get();
-    const velocityFactor = velocity * 0.05; // Scale down velocity influence
+    const velocityFactor = isHovered ? 0 : velocity * 0.05; // No velocity boost on hover
     
     // Calculate movement for this frame
     const moveBy = (baseSpeed + Math.abs(velocityFactor)) * (delta / 1000);
@@ -204,6 +208,8 @@ export function DrinkMenuSection() {
           x: xPos,
           width: 'fit-content'
         }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         {/* First set */}
         {drinks.map((drink, index) => (
