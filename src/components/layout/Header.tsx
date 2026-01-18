@@ -45,7 +45,7 @@ export function Header() {
           </p>
           <a 
             href="#" 
-            className="group inline-flex items-center gap-1.5 text-xs md:text-sm font-medium text-foreground uppercase tracking-wider hover:opacity-70 transition-opacity"
+            className="group inline-flex items-center gap-1.5 text-xs md:text-sm font-sans font-medium text-foreground uppercase tracking-wider hover:opacity-70 transition-opacity"
           >
             Shop Our Extensions Here
             <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
@@ -79,7 +79,7 @@ export function Header() {
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-normal transition-opacity leading-none",
+                    "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none",
                     location.pathname === link.href
                       ? "opacity-100"
                       : "opacity-70 hover:opacity-100"
@@ -100,7 +100,7 @@ export function Header() {
             <div className="hidden md:flex items-center gap-6">
               <Link
                 to="/contact"
-                className="text-sm tracking-wide font-sans font-normal opacity-70 hover:opacity-100 transition-all duration-300 link-underline"
+                className="text-sm tracking-wide font-sans font-medium opacity-70 hover:opacity-100 transition-all duration-300 link-underline"
               >
                 Contact Us
               </Link>
