@@ -58,16 +58,16 @@ export function ExtensionsSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.05 }}
-              className="text-sm font-display uppercase tracking-widest text-oat/70"
+              className="text-sm font-display uppercase tracking-widest text-oat/70 mb-1"
             >
-              the
+              Check out the
             </motion.p>
 
             <motion.h2
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1] -mt-2"
+              className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]"
             >
               <span className="whitespace-nowrap">Drop Dead</span>
               <br />
