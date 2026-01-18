@@ -45,6 +45,7 @@ export function FAQSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [searchQuery, setSearchQuery] = useState("");
+  const [openItem, setOpenItem] = useState<string | undefined>(undefined);
 
   const filteredFaqs = useMemo(() => {
     if (!searchQuery.trim()) return faqs;
@@ -160,7 +161,7 @@ export function FAQSection() {
             )}
 
             {/* FAQ Accordion */}
-            <Accordion type="single" collapsible className="space-y-3">
+            <Accordion type="single" collapsible className="space-y-3" value={openItem} onValueChange={setOpenItem}>
               <AnimatePresence mode="popLayout">
                 {filteredFaqs.length > 0 ? (
                   filteredFaqs.map((faq, index) => (
@@ -180,7 +181,10 @@ export function FAQSection() {
                         <AccordionTrigger className="text-left text-base md:text-lg font-sans font-medium py-5 hover:no-underline group">
                           {highlightText(faq.question, searchQuery)}
                         </AccordionTrigger>
-                        <AccordionContent className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed">
+                        <AccordionContent 
+                          className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed cursor-pointer"
+                          onClick={() => setOpenItem(undefined)}
+                        >
                           {highlightText(faq.answer, searchQuery)}
                         </AccordionContent>
                       </AccordionItem>
