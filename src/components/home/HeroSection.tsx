@@ -140,6 +140,7 @@ export function HeroSection() {
   // Transform scroll progress to opacity and blur
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const blur = useTransform(scrollYProgress, [0, 0.5], [0, 20]);
+  const blurFilter = useTransform(blur, (v) => `blur(${v}px)`);
   
   // Parallax transforms - different speeds for depth effect
   const taglineY = useTransform(scrollYProgress, [0, 1], [0, -50]);
@@ -299,7 +300,7 @@ export function HeroSection() {
               style={{ 
                 opacity,
                 y: headlineY,
-                filter: useTransform(blur, (v) => `blur(${v}px)`)
+                filter: blurFilter
               }}
             >
               <span className="whitespace-nowrap">Drop Dead</span> Salon
