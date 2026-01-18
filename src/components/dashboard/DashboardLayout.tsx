@@ -114,19 +114,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           ))}
         </div>
 
-        {/* Housekeeping Section */}
-        <div className="my-4 px-4">
-          <div className="h-px bg-border" />
-        </div>
-        <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-          Housekeeping
-        </p>
-        <div className="space-y-1">
-          {housekeepingNavItems.map((item) => (
-            <NavLink key={item.href} {...item} />
-          ))}
-        </div>
-
         {/* Growth Section */}
         <div className="my-4 px-4">
           <div className="h-px bg-border" />
@@ -149,6 +136,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </p>
         <div className="space-y-1">
           {statsNavItems.map((item) => (
+            <NavLink key={item.href} {...item} />
+          ))}
+        </div>
+
+        {/* Housekeeping Section */}
+        <div className="my-4 px-4">
+          <div className="h-px bg-border" />
+        </div>
+        <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
+          Housekeeping
+        </p>
+        <div className="space-y-1">
+          {housekeepingNavItems.map((item) => (
             <NavLink key={item.href} {...item} />
           ))}
         </div>
