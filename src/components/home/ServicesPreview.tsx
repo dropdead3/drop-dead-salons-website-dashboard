@@ -368,13 +368,13 @@ export function ServicesPreview() {
                 <div className="flex gap-3">
                   <Link
                     to="/booking"
-                    className="inline-flex items-center px-6 py-3 text-xs font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 whitespace-nowrap"
+                    className="inline-flex items-center px-7 py-3.5 text-sm font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 whitespace-nowrap"
                   >
                     Book consult
                   </Link>
                   <Link
                     to="/services"
-                    className="inline-flex items-center px-6 py-3 text-xs font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 whitespace-nowrap"
+                    className="inline-flex items-center px-7 py-3.5 text-sm font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 whitespace-nowrap"
                   >
                     Learn more
                   </Link>
@@ -435,13 +435,13 @@ export function ServicesPreview() {
               <div className="flex gap-3">
                 <Link
                   to="/booking"
-                  className="inline-flex items-center px-5 py-3 text-xs font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 whitespace-nowrap"
+                  className="inline-flex items-center px-6 py-3.5 text-sm font-sans bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 whitespace-nowrap"
                 >
                   Book consult
                 </Link>
                 <Link
                   to="/services"
-                  className="inline-flex items-center px-5 py-3 text-xs font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 whitespace-nowrap"
+                  className="inline-flex items-center px-6 py-3.5 text-sm font-sans border border-border text-foreground hover:bg-foreground hover:text-background transition-all duration-300 whitespace-nowrap"
                 >
                   Learn more
                 </Link>
