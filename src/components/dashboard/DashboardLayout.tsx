@@ -49,6 +49,7 @@ const growthNavItems: NavItem[] = [
   { href: '/dashboard/training', label: 'Training', icon: Video },
   { href: '/dashboard/program', label: 'Client Engine', icon: Target, roles: ['stylist', 'manager', 'admin'] },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, roles: ['stylist', 'manager', 'admin'] },
+  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, roles: ['stylist', 'assistant', 'manager', 'admin'] },
 ];
 
 const statsNavItems: NavItem[] = [
