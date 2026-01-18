@@ -54,13 +54,22 @@ export function ExtensionsSection() {
               <span className="text-sm font-display uppercase tracking-wide text-oat">OUR SIGNATURE</span>
             </motion.div>
 
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.05 }}
+              className="text-sm font-display uppercase tracking-widest text-oat/70"
+            >
+              the
+            </motion.p>
+
             <motion.h2
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]"
+              className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1] -mt-2"
             >
-              The <span className="whitespace-nowrap">Drop Dead</span>
+              <span className="whitespace-nowrap">Drop Dead</span>
               <br />
               <span className="font-light text-oat">Method</span>
             </motion.h2>
