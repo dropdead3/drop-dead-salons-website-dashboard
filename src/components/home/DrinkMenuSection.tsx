@@ -139,7 +139,14 @@ export function DrinkMenuSection() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
   return (
-    <section ref={sectionRef} data-theme="light" className="py-16 lg:py-24 overflow-hidden bg-white">
+    <section 
+      ref={sectionRef} 
+      data-theme="light" 
+      className="pt-16 lg:pt-24 pb-32 lg:pb-40 overflow-hidden relative"
+      style={{
+        background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(0 0% 100%) 60%, hsl(40 30% 94%) 100%)'
+      }}
+    >
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
