@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
@@ -11,8 +11,19 @@ import heroCircle2 from "@/assets/hero/hero-circle-2.jpg";
 import heroCircle3 from "@/assets/hero/hero-circle-3.jpg";
 import heroCircle4 from "@/assets/hero/hero-circle-4.jpg";
 
+interface FloatingCircleConfig {
+  src: string;
+  size: number;
+  x: string;
+  y: string;
+  duration: number;
+  delay: number;
+  zIndex: number;
+  parallaxSpeed: number;
+}
+
 // Floating circle image configuration
-const floatingCircleImages = [
+const floatingCircleImages: FloatingCircleConfig[] = [
   { 
     src: heroCircle1, 
     size: 180, 
@@ -55,6 +66,68 @@ const floatingCircleImages = [
   },
 ];
 
+// Separate component for each floating circle to properly use hooks
+function FloatingCircle({ 
+  config, 
+  scrollYProgress,
+  isFront,
+}: { 
+  config: FloatingCircleConfig; 
+  scrollYProgress: MotionValue<number>;
+  isFront: boolean;
+}) {
+  const parallaxY = useTransform(
+    scrollYProgress, 
+    [0, 1], 
+    [0, isFront ? -150 * config.parallaxSpeed : -100 * config.parallaxSpeed]
+  );
+
+  return (
+    <motion.div
+      className="absolute rounded-full overflow-hidden shadow-2xl pointer-events-none"
+      style={{
+        width: config.size,
+        height: config.size,
+        left: config.x,
+        top: config.y,
+        zIndex: config.zIndex,
+        y: parallaxY,
+      }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ 
+        opacity: 1,
+        scale: 1,
+        x: isFront ? [0, -12, 18, 0] : [0, 15, -10, 0],
+        y: isFront ? [0, 15, -12, 0] : [0, -20, 10, 0],
+      }}
+      transition={{
+        opacity: { duration: 0.8, delay: config.delay },
+        scale: { duration: 0.8, delay: config.delay },
+        x: {
+          duration: config.duration,
+          delay: config.delay,
+          repeat: Infinity,
+          ease: "easeInOut",
+        },
+        y: {
+          duration: config.duration,
+          delay: config.delay,
+          repeat: Infinity,
+          ease: "easeInOut",
+        },
+      }}
+    >
+      <img 
+        src={config.src} 
+        alt="Hair styling showcase"
+        className="w-full h-full object-cover"
+      />
+      {/* Soft edge overlay */}
+      <div className="absolute inset-0 rounded-full ring-1 ring-foreground/5" />
+    </motion.div>
+  );
+}
+
 export function HeroSection() {
   const [consultationOpen, setConsultationOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -89,6 +162,9 @@ export function HeroSection() {
     { size: 250, x: "5%", y: "65%", duration: 22, delay: 1, color: "foreground" },
     { size: 100, x: "50%", y: "80%", duration: 15, delay: 3, color: "oat" },
   ];
+
+  const backCircles = floatingCircleImages.filter(img => img.zIndex < 10);
+  const frontCircles = floatingCircleImages.filter(img => img.zIndex >= 10);
 
   return (
     <section ref={sectionRef} className="relative min-h-screen flex flex-col overflow-hidden">
@@ -187,50 +263,13 @@ export function HeroSection() {
       </div>
 
       {/* Floating Circle Images - Behind content layer */}
-      {floatingCircleImages.filter(img => img.zIndex < 10).map((img, index) => (
-        <motion.div
+      {backCircles.map((config, index) => (
+        <FloatingCircle 
           key={`circle-back-${index}`}
-          className="absolute rounded-full overflow-hidden shadow-2xl pointer-events-none"
-          style={{
-            width: img.size,
-            height: img.size,
-            left: img.x,
-            top: img.y,
-            zIndex: img.zIndex,
-            y: useTransform(scrollYProgress, [0, 1], [0, -100 * img.parallaxSpeed]),
-          }}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ 
-            opacity: 1,
-            scale: 1,
-            x: [0, 15, -10, 0],
-            y: [0, -20, 10, 0],
-          }}
-          transition={{
-            opacity: { duration: 0.8, delay: img.delay },
-            scale: { duration: 0.8, delay: img.delay },
-            x: {
-              duration: img.duration,
-              delay: img.delay,
-              repeat: Infinity,
-              ease: "easeInOut",
-            },
-            y: {
-              duration: img.duration,
-              delay: img.delay,
-              repeat: Infinity,
-              ease: "easeInOut",
-            },
-          }}
-        >
-          <img 
-            src={img.src} 
-            alt="Hair styling showcase"
-            className="w-full h-full object-cover"
-          />
-          {/* Soft edge overlay */}
-          <div className="absolute inset-0 rounded-full ring-1 ring-foreground/5" />
-        </motion.div>
+          config={config}
+          scrollYProgress={scrollYProgress}
+          isFront={false}
+        />
       ))}
 
       <div className="flex-1 flex items-center justify-center py-24 lg:py-32 relative z-10">
@@ -319,50 +358,13 @@ export function HeroSection() {
       </div>
 
       {/* Floating Circle Images - In front of content layer */}
-      {floatingCircleImages.filter(img => img.zIndex >= 10).map((img, index) => (
-        <motion.div
+      {frontCircles.map((config, index) => (
+        <FloatingCircle 
           key={`circle-front-${index}`}
-          className="absolute rounded-full overflow-hidden shadow-2xl pointer-events-none"
-          style={{
-            width: img.size,
-            height: img.size,
-            left: img.x,
-            top: img.y,
-            zIndex: img.zIndex,
-            y: useTransform(scrollYProgress, [0, 1], [0, -150 * img.parallaxSpeed]),
-          }}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ 
-            opacity: 1,
-            scale: 1,
-            x: [0, -12, 18, 0],
-            y: [0, 15, -12, 0],
-          }}
-          transition={{
-            opacity: { duration: 0.8, delay: img.delay },
-            scale: { duration: 0.8, delay: img.delay },
-            x: {
-              duration: img.duration,
-              delay: img.delay,
-              repeat: Infinity,
-              ease: "easeInOut",
-            },
-            y: {
-              duration: img.duration,
-              delay: img.delay,
-              repeat: Infinity,
-              ease: "easeInOut",
-            },
-          }}
-        >
-          <img 
-            src={img.src} 
-            alt="Hair styling showcase"
-            className="w-full h-full object-cover"
-          />
-          {/* Soft edge overlay */}
-          <div className="absolute inset-0 rounded-full ring-1 ring-foreground/5" />
-        </motion.div>
+          config={config}
+          scrollYProgress={scrollYProgress}
+          isFront={true}
+        />
       ))}
 
       {/* Scroll Indicator */}
