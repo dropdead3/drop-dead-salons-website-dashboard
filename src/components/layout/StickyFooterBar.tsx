@@ -52,30 +52,33 @@ export function StickyFooterBar() {
               stiffness: 300,
               damping: 30,
             }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40"
+            className="fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:bottom-8 z-40"
           >
-            <div className="flex items-center gap-2 p-2 bg-foreground/80 backdrop-blur-xl border border-foreground/20 rounded-2xl shadow-2xl shadow-foreground/20">
-              {/* Phone buttons for each location */}
-              {locations.map((loc) => (
-                <a
-                  key={loc.name}
-                  href={`tel:${loc.phone.replace(/[^0-9]/g, "")}`}
-                  className="flex items-center gap-2 px-4 py-3 text-background/70 hover:text-background hover:bg-background/10 rounded-xl transition-all duration-200"
-                >
-                  <Phone size={14} />
-                  <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
-                    {loc.name}
-                  </span>
-                </a>
-              ))}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 p-2 bg-foreground/80 backdrop-blur-xl border border-foreground/20 rounded-2xl shadow-2xl shadow-foreground/20">
+              {/* Phone buttons row on mobile */}
+              <div className="flex items-center gap-1 md:gap-2">
+                {locations.map((loc) => (
+                  <a
+                    key={loc.name}
+                    href={`tel:${loc.phone.replace(/[^0-9]/g, "")}`}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-3 text-background/70 hover:text-background hover:bg-background/10 rounded-xl transition-all duration-200"
+                  >
+                    <Phone size={14} />
+                    <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
+                      {loc.name}
+                    </span>
+                  </a>
+                ))}
+              </div>
 
-              {/* Divider */}
-              <div className="w-px h-8 bg-background/20" />
+              {/* Divider - horizontal on mobile, vertical on desktop */}
+              <div className="hidden md:block w-px h-8 bg-background/20" />
+              <div className="md:hidden w-full h-px bg-background/20" />
 
               {/* Book CTA */}
               <Link
                 to="/booking"
-                className="flex items-center gap-2 px-5 py-3 bg-background text-foreground rounded-xl hover:bg-background/90 transition-all duration-200 group"
+                className="flex items-center justify-center gap-2 px-5 py-3 bg-background text-foreground rounded-xl hover:bg-background/90 transition-all duration-200 group"
               >
                 <span className="text-sm font-medium">Book consult</span>
                 <ArrowUpRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
