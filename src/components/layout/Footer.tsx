@@ -35,13 +35,13 @@ export function Footer() {
       <div className="py-24 lg:py-32 text-center border-b border-foreground/10">
         <div className="container mx-auto px-6 lg:px-12">
           {/* Eyebrow */}
-          <p className="text-foreground/50 text-xs uppercase tracking-[0.2em] font-sans mb-6">
+          <p className="text-foreground/50 text-xs uppercase tracking-[0.2em] font-display mb-6">
             Ready for Something Different?
           </p>
 
           {/* Main headline */}
-          <h2 className="font-serif text-4xl md:text-6xl lg:text-7xl text-foreground mb-6">
-            Book Your <span className="italic">Consult</span>
+          <h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-foreground mb-6">
+            Book Your Consult
           </h2>
 
           {/* Description */}
