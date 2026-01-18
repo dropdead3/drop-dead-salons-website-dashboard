@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
-import { Plus, Clock, User, CheckCircle2, XCircle, Calendar } from 'lucide-react';
+import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { RequestAssistantDialog } from '@/components/dashboard/RequestAssistantDialog';
+import { ScheduleCalendar } from '@/components/dashboard/ScheduleCalendar';
 import { useAssistantRequests, useUpdateRequestStatus, type AssistantRequest } from '@/hooks/useAssistantRequests';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -180,6 +182,7 @@ export default function AssistantSchedule() {
   const [activeTab, setActiveTab] = useState<'my-requests' | 'my-assignments' | 'all'>(
     isStylist ? 'my-requests' : isAssistant ? 'my-assignments' : 'all'
   );
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   const { data: myRequests = [], isLoading: loadingMyRequests } = useAssistantRequests('stylist');
   const { data: myAssignments = [], isLoading: loadingMyAssignments } = useAssistantRequests('assistant');
@@ -192,6 +195,15 @@ export default function AssistantSchedule() {
   const filterCompleted = (requests: AssistantRequest[]) =>
     requests.filter(r => r.status === 'completed' || r.status === 'cancelled');
 
+  // Get current requests based on active tab
+  const getCurrentRequests = () => {
+    if (activeTab === 'my-requests') return myRequests;
+    if (activeTab === 'my-assignments') return myAssignments;
+    return allRequests;
+  };
+
+  const currentIsStylistView = activeTab === 'my-requests';
+
   return (
     <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto">
@@ -203,99 +215,130 @@ export default function AssistantSchedule() {
             </p>
           </div>
           
-          {isStylist && (
-            <RequestAssistantDialog>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Request Assistant
-              </Button>
-            </RequestAssistantDialog>
-          )}
+          <div className="flex items-center gap-2">
+            {isStylist && (
+              <RequestAssistantDialog>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Request Assistant
+                </Button>
+              </RequestAssistantDialog>
+            )}
+            
+            <ToggleGroup 
+              type="single" 
+              value={viewMode} 
+              onValueChange={(v) => v && setViewMode(v as 'list' | 'calendar')}
+              className="border rounded-lg"
+            >
+              <ToggleGroupItem value="list" aria-label="List view" className="px-3">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="calendar" aria-label="Calendar view" className="px-3">
+                <LayoutGrid className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="mb-6">
-            {isStylist && <TabsTrigger value="my-requests">My Requests</TabsTrigger>}
-            {isAssistant && <TabsTrigger value="my-assignments">My Assignments</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="all">All Requests</TabsTrigger>}
-          </TabsList>
+        {/* Calendar View */}
+        {viewMode === 'calendar' && (
+          <Card className="mb-6">
+            <CardContent className="p-4" style={{ height: '700px' }}>
+              <ScheduleCalendar 
+                requests={getCurrentRequests()} 
+                isStylistView={currentIsStylistView} 
+              />
+            </CardContent>
+          </Card>
+        )}
 
-          {isStylist && (
-            <TabsContent value="my-requests">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Requests</CardTitle>
-                  <CardDescription>Your pending and assigned assistant requests</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loadingMyRequests ? (
-                    <div className="text-center py-8 text-muted-foreground">Loading...</div>
-                  ) : (
-                    <RequestsList requests={filterActive(myRequests)} isStylistView={true} />
-                  )}
-                </CardContent>
-              </Card>
+        {/* List View */}
+        {viewMode === 'list' && (
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+            <TabsList className="mb-6">
+              {isStylist && <TabsTrigger value="my-requests">My Requests</TabsTrigger>}
+              {isAssistant && <TabsTrigger value="my-assignments">My Assignments</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="all">All Requests</TabsTrigger>}
+            </TabsList>
 
-              {filterCompleted(myRequests).length > 0 && (
-                <Card className="mt-6">
+            {isStylist && (
+              <TabsContent value="my-requests">
+                <Card>
                   <CardHeader>
-                    <CardTitle>Past Requests</CardTitle>
+                    <CardTitle>Upcoming Requests</CardTitle>
+                    <CardDescription>Your pending and assigned assistant requests</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <RequestsList requests={filterCompleted(myRequests)} isStylistView={true} />
+                    {loadingMyRequests ? (
+                      <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                    ) : (
+                      <RequestsList requests={filterActive(myRequests)} isStylistView={true} />
+                    )}
                   </CardContent>
                 </Card>
-              )}
-            </TabsContent>
-          )}
 
-          {isAssistant && (
-            <TabsContent value="my-assignments">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Assignments</CardTitle>
-                  <CardDescription>Stylists you're scheduled to assist</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loadingMyAssignments ? (
-                    <div className="text-center py-8 text-muted-foreground">Loading...</div>
-                  ) : (
-                    <RequestsList requests={filterActive(myAssignments)} isStylistView={false} />
-                  )}
-                </CardContent>
-              </Card>
+                {filterCompleted(myRequests).length > 0 && (
+                  <Card className="mt-6">
+                    <CardHeader>
+                      <CardTitle>Past Requests</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <RequestsList requests={filterCompleted(myRequests)} isStylistView={true} />
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+            )}
 
-              {filterCompleted(myAssignments).length > 0 && (
-                <Card className="mt-6">
+            {isAssistant && (
+              <TabsContent value="my-assignments">
+                <Card>
                   <CardHeader>
-                    <CardTitle>Completed</CardTitle>
+                    <CardTitle>Your Assignments</CardTitle>
+                    <CardDescription>Stylists you're scheduled to assist</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <RequestsList requests={filterCompleted(myAssignments)} isStylistView={false} />
+                    {loadingMyAssignments ? (
+                      <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                    ) : (
+                      <RequestsList requests={filterActive(myAssignments)} isStylistView={false} />
+                    )}
                   </CardContent>
                 </Card>
-              )}
-            </TabsContent>
-          )}
 
-          {isAdmin && (
-            <TabsContent value="all">
-              <Card>
-                <CardHeader>
-                  <CardTitle>All Requests</CardTitle>
-                  <CardDescription>Overview of all assistant requests</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loadingAll ? (
-                    <div className="text-center py-8 text-muted-foreground">Loading...</div>
-                  ) : (
-                    <RequestsList requests={filterActive(allRequests)} isStylistView={false} />
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-        </Tabs>
+                {filterCompleted(myAssignments).length > 0 && (
+                  <Card className="mt-6">
+                    <CardHeader>
+                      <CardTitle>Completed</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <RequestsList requests={filterCompleted(myAssignments)} isStylistView={false} />
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+            )}
+
+            {isAdmin && (
+              <TabsContent value="all">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All Requests</CardTitle>
+                    <CardDescription>Overview of all assistant requests</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingAll ? (
+                      <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                    ) : (
+                      <RequestsList requests={filterActive(allRequests)} isStylistView={false} />
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+          </Tabs>
+        )}
       </div>
     </DashboardLayout>
   );
