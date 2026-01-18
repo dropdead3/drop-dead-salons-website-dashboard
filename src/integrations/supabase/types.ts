@@ -351,6 +351,7 @@ export type Database = {
           is_active: boolean | null
           is_booking: boolean | null
           location_id: string | null
+          location_ids: string[] | null
           phone: string | null
           photo_url: string | null
           specialties: string[] | null
@@ -376,6 +377,7 @@ export type Database = {
           is_active?: boolean | null
           is_booking?: boolean | null
           location_id?: string | null
+          location_ids?: string[] | null
           phone?: string | null
           photo_url?: string | null
           specialties?: string[] | null
@@ -401,6 +403,7 @@ export type Database = {
           is_active?: boolean | null
           is_booking?: boolean | null
           location_id?: string | null
+          location_ids?: string[] | null
           phone?: string | null
           photo_url?: string | null
           specialties?: string[] | null

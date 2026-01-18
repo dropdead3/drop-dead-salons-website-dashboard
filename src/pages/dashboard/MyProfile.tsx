@@ -37,6 +37,7 @@ export default function MyProfile() {
     phone: '',
     instagram: '',
     location_id: '',
+    location_ids: [] as string[],
     stylist_level: '',
     specialties: [] as string[],
     dd_certified: false,
@@ -46,6 +47,13 @@ export default function MyProfile() {
 
   useEffect(() => {
     if (profile) {
+      // Support both old location_id and new location_ids
+      const locationIds = profile.location_ids?.length 
+        ? profile.location_ids 
+        : profile.location_id 
+          ? [profile.location_id] 
+          : [];
+      
       setFormData({
         full_name: profile.full_name || '',
         display_name: profile.display_name || '',
@@ -53,6 +61,7 @@ export default function MyProfile() {
         phone: profile.phone || '',
         instagram: profile.instagram || '',
         location_id: profile.location_id || '',
+        location_ids: locationIds,
         stylist_level: profile.stylist_level || '',
         specialties: profile.specialties || [],
         dd_certified: profile.dd_certified || false,
@@ -73,7 +82,7 @@ export default function MyProfile() {
       { key: 'email', label: 'Email', filled: !!formData.email },
       { key: 'phone', label: 'Phone', filled: !!formData.phone },
       { key: 'instagram', label: 'Instagram', filled: !!formData.instagram },
-      { key: 'location_id', label: 'Location', filled: !!formData.location_id },
+      { key: 'location_ids', label: 'Location', filled: formData.location_ids.length > 0 },
       { key: 'emergency_contact', label: 'Emergency Contact', filled: !!formData.emergency_contact },
       { key: 'emergency_phone', label: 'Emergency Phone', filled: !!formData.emergency_phone },
     ];
@@ -341,21 +350,39 @@ export default function MyProfile() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Select
-                    value={formData.location_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, location_id: value }))}
-                  >
-                    <SelectTrigger>
-                      <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <SelectValue placeholder="Select location..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map(loc => (
-                        <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Locations</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {locations.map(loc => {
+                      const isSelected = formData.location_ids.includes(loc.id);
+                      return (
+                        <Badge
+                          key={loc.id}
+                          variant={isSelected ? 'default' : 'outline'}
+                          className="cursor-pointer transition-all"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              location_ids: isSelected
+                                ? prev.location_ids.filter(id => id !== loc.id)
+                                : [...prev.location_ids, loc.id],
+                              // Keep location_id in sync with first selected location
+                              location_id: isSelected 
+                                ? prev.location_ids.filter(id => id !== loc.id)[0] || ''
+                                : prev.location_id || loc.id,
+                            }));
+                          }}
+                        >
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {loc.name}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                  {formData.location_ids.length > 1 && (
+                    <p className="text-xs text-muted-foreground">
+                      Working at {formData.location_ids.length} locations
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
