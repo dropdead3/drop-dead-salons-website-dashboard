@@ -9,7 +9,8 @@ export interface Stylist {
   level: string;
   specialties: string[];
   imageUrl: string;
-  locations: Location[]; // Support multiple locations
+  locations: Location[];
+  isBooking?: boolean; // false = not currently booking
 }
 
 // Helper to get location display name
@@ -29,7 +30,8 @@ export const stylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: kristiImage,
-    locations: ["north-mesa", "val-vista-lakes"]
+    locations: ["north-mesa", "val-vista-lakes"],
+    isBooking: false
   },
   {
     id: "2",
