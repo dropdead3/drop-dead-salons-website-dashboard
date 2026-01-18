@@ -256,11 +256,9 @@ export default function DashboardHome() {
         <Card className="p-6 border-2 border-foreground/20">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-4">
-              <img 
-                src={DD75Icon} 
-                alt="Drop Dead 75: Client Engine Program" 
-                className="h-12 w-12"
-              />
+              <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center">
+                <Target className="w-6 h-6" />
+              </div>
               <div>
                 <h2 className="font-display text-lg tracking-wide">CLIENT ENGINE</h2>
                 <p className="text-sm text-muted-foreground font-sans">
