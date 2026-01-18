@@ -288,61 +288,51 @@ export default function Extensions() {
       </Section>
 
 
-      {/* We Specialize Section with Before/After */}
+      {/* We Specialize Section - Gallery with 4 Before/After Sliders */}
       <Section sectionRef={specialtyRef} className="bg-background">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          {/* Left - Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={specialtyInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
-              We specialize in dream hair...
-            </h2>
-            <div className="text-muted-foreground leading-relaxed space-y-4 mb-8">
-              <p>
-                Looking for the best hair extensions in Mesa or Gilbert, AZ? At Drop Dead Hair Studio, we specialize in invisible row extensions, hand-tied sew-in methods, and custom hybrid installs using our exclusive Drop Dead Hair — premium, cuticle-aligned Remy human hair extensions designed for long wear and flawless blending.
-              </p>
-              <p>
-                Whether you want added volume, dramatic length, or a complete hair transformation, our certified stylists use the Drop Dead Method to deliver seamless results that look and feel 100% natural. Book your extension consultation today and discover why we're the go-to salon for luxury hair extensions in Arizona.
-              </p>
-            </div>
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={specialtyInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12 lg:mb-16"
+        >
+          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground leading-[1.1] mb-6">
+            We specialize in dream hair...
+          </h2>
+          <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+            Looking for the best hair extensions in Mesa or Gilbert, AZ? Our certified stylists use the Drop Dead Method to deliver seamless results that look and feel 100% natural.
+          </p>
+        </motion.div>
 
-            {/* Navigation arrows */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={prevSlide}
-                className="w-10 h-10 border border-foreground/30 flex items-center justify-center hover:bg-foreground hover:text-background transition-all duration-300"
-                aria-label="Previous transformation"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="w-10 h-10 border border-foreground/30 flex items-center justify-center hover:bg-foreground hover:text-background transition-all duration-300"
-                aria-label="Next transformation"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </motion.div>
-
-          {/* Right - Before/After Slider */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={specialtyInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <BeforeAfterSlider
-              beforeImage={transformations[currentSlide].beforeImage}
-              afterImage={transformations[currentSlide].afterImage}
-              beforeLabel="BEFORE"
-              afterLabel="AFTER"
-              className="aspect-[3/4]"
-              hideDefaultVideoButton={true}
-            />
-          </motion.div>
+        {/* Gallery Grid - 4 Before/After Sliders */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {transformations.map((transformation, index) => (
+            <motion.div
+              key={transformation.id}
+              initial={{ opacity: 0, y: 40 }}
+              animate={specialtyInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.7, delay: index * 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+              className="group"
+            >
+              <BeforeAfterSlider
+                beforeImage={transformation.beforeImage}
+                afterImage={transformation.afterImage}
+                beforeLabel="BEFORE"
+                afterLabel="AFTER"
+                className="aspect-[3/4]"
+                hideDefaultVideoButton={true}
+              />
+              <div className="mt-3 text-center">
+                <h3 className="font-serif text-lg font-medium text-foreground">
+                  {transformation.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {transformation.description}
+                </p>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </Section>
 
