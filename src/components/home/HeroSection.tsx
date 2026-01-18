@@ -115,19 +115,21 @@ function FloatingCircle({
       animate={{ 
         opacity: 1,
         scale: 1,
+        x: isFront ? [0, 60, -40, 80, 0] : [0, -50, 70, -30, 0],
+        y: isFront ? [0, -40, 60, -20, 0] : [0, 50, -30, 40, 0],
       }}
       transition={{
         opacity: { duration: 1, delay: config.delay },
         scale: { duration: 1, delay: config.delay, ease: "easeOut" },
+        x: { duration: config.duration * 2, delay: config.delay, repeat: Infinity, ease: "easeInOut" },
+        y: { duration: config.duration * 2.5, delay: config.delay, repeat: Infinity, ease: "easeInOut" },
       }}
     >
-      {/* Subtle floating animation */}
+      {/* Subtle inner movement */}
       <motion.div
         className="w-full h-full"
         animate={{
-          x: isFront ? [0, -20, 30, -10, 0] : [0, 25, -15, 10, 0],
-          y: isFront ? [0, 25, -20, 15, 0] : [0, -30, 20, -10, 0],
-          rotate: isFront ? [0, 2, -2, 1, 0] : [0, -1, 2, -1, 0],
+          scale: [1, 1.02, 1],
         }}
         transition={{
           duration: config.duration,
