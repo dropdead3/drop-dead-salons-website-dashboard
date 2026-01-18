@@ -1220,7 +1220,7 @@ export default function Extensions() {
               What's Included
             </h2>
             <p className="text-background/70 leading-relaxed mb-8">
-              Every extension journey begins with a complimentary consultation. Here's what you can expect when you book with us.
+              Every extension journey begins with a $15 consultation. Here's what you can expect when you book with us.
             </p>
             <Link
               to="/booking"

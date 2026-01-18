@@ -99,7 +99,7 @@ export default function Booking() {
     <Layout>
       <SEO 
         title="Schedule Your Initial Consultation"
-        description="Schedule your initial consultation at Drop Dead Salon. New clients begin with a complimentary consultation to discuss your hair goals."
+        description="Schedule your initial consultation at Drop Dead Salon. New clients begin with a $15 consultation to discuss your hair goals."
       />
       {/* Hero */}
       <section className="pt-32 lg:pt-40 pb-16 lg:pb-20">
@@ -129,7 +129,7 @@ export default function Booking() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-8 text-base md:text-lg text-muted-foreground font-sans font-light max-w-lg"
             >
-              Share a few details about yourself and your hair goals, and we'll be in touch to schedule your complimentary consultation.
+              Share a few details about yourself and your hair goals, and we'll be in touch to schedule your $15 consultation.
             </motion.p>
             {/* New clients notice */}
             <motion.div

@@ -229,7 +229,7 @@ export function HeroSection() {
                 </Link>
               </div>
               <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground font-sans">
-                <p>New clients begin with a complimentary consultation</p>
+                <p>New clients begin with a $15 consultation</p>
                 <p>Returning clients are free to book their known services</p>
               </div>
             </motion.div>
