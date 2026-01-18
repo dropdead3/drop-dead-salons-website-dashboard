@@ -87,7 +87,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
           <img 
             src={drink.image} 
             alt={drink.name}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain mix-blend-multiply"
           />
         </div>
         
