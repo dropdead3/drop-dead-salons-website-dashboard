@@ -84,9 +84,9 @@ export function FAQSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Left Column - Intro */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+            initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+            animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+            transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
             className="lg:sticky lg:top-32 lg:self-start"
           >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">

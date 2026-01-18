@@ -79,9 +79,9 @@ export function TestimonialSection() {
       <div className="container mx-auto px-6 mb-10">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+            initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+            animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+            transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
             className="text-3xl md:text-4xl lg:text-5xl font-display"
           >
             Hundreds of happy<br />5-star reviews

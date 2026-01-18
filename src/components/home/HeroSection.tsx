@@ -142,9 +142,9 @@ export function HeroSection() {
           <div className="max-w-5xl mx-auto text-center">
             {/* Tagline */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
               style={{ 
                 opacity,
                 y: taglineY
@@ -157,9 +157,9 @@ export function HeroSection() {
 
             {/* Main headline */}
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
+              initial={{ opacity: 0, y: 25, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 1, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
               className="font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-normal text-foreground leading-[0.95]"
               style={{ 
                 opacity,
