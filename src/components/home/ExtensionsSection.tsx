@@ -178,6 +178,7 @@ export function ExtensionsSection() {
               afterLabel="After Extensions"
               className="aspect-[4/5]"
               hideDefaultVideoButton={true}
+              hoverMode={true}
             />
               
             {/* Floating badge with integrated play button */}
