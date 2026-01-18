@@ -9,6 +9,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight } from 'lucide-react';
 import { useAllUsersWithRoles, useToggleUserRole, ALL_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/hooks/useUserRoles';
 import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
@@ -27,6 +37,11 @@ const roleColors: Record<AppRole, string> = {
 
 export default function ManageRoles() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [superAdminConfirm, setSuperAdminConfirm] = useState<{
+    userId: string;
+    userName: string;
+    isSuperAdmin: boolean;
+  } | null>(null);
   const { data: users = [], isLoading } = useAllUsersWithRoles();
   const { data: accounts } = useAccountApprovals();
   const { data: canApproveAdmin } = useCanApproveAdmin();
@@ -51,8 +66,15 @@ export default function ManageRoles() {
     toggleRole.mutate({ userId, role, hasRole });
   };
 
-  const handleToggleSuperAdmin = (userId: string, isSuperAdmin: boolean) => {
-    toggleSuperAdmin.mutate({ userId, grant: !isSuperAdmin });
+  const handleToggleSuperAdmin = (userId: string, userName: string, isSuperAdmin: boolean) => {
+    setSuperAdminConfirm({ userId, userName, isSuperAdmin });
+  };
+
+  const confirmSuperAdminToggle = () => {
+    if (superAdminConfirm) {
+      toggleSuperAdmin.mutate({ userId: superAdminConfirm.userId, grant: !superAdminConfirm.isSuperAdmin });
+      setSuperAdminConfirm(null);
+    }
   };
 
   return (
@@ -222,7 +244,7 @@ export default function ManageRoles() {
                           <Switch
                             id={`${user.user_id}-super-admin`}
                             checked={isSuperAdmin || false}
-                            onCheckedChange={() => handleToggleSuperAdmin(user.user_id, isSuperAdmin || false)}
+                            onCheckedChange={() => handleToggleSuperAdmin(user.user_id, user.display_name || user.full_name, isSuperAdmin || false)}
                             disabled={toggleSuperAdmin.isPending}
                             className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-400 data-[state=checked]:to-orange-400"
                           />
@@ -271,6 +293,46 @@ export default function ManageRoles() {
           </div>
         )}
       </div>
+
+      {/* Full Access Admin Confirmation Dialog */}
+      <AlertDialog open={!!superAdminConfirm} onOpenChange={() => setSuperAdminConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Crown className="w-5 h-5 text-amber-600" />
+              {superAdminConfirm?.isSuperAdmin ? 'Revoke' : 'Grant'} Full Access Admin
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {superAdminConfirm?.isSuperAdmin ? (
+                <>
+                  Are you sure you want to <strong>revoke</strong> Full Access Admin status from{' '}
+                  <strong>{superAdminConfirm?.userName}</strong>? They will no longer be able to 
+                  assign or remove Admin roles.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to <strong>grant</strong> Full Access Admin status to{' '}
+                  <strong>{superAdminConfirm?.userName}</strong>? They will be able to assign and 
+                  remove Admin roles for all users.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSuperAdminToggle}
+              className={cn(
+                superAdminConfirm?.isSuperAdmin 
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  : "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
+              )}
+            >
+              {superAdminConfirm?.isSuperAdmin ? 'Revoke Access' : 'Grant Access'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
