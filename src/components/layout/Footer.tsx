@@ -143,6 +143,12 @@ export function Footer() {
               Buy a gift card
               <ArrowUpRight size={12} />
             </Link>
+            <Link
+              to="/staff-login"
+              className="inline-flex items-center gap-2 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Staff Login
+            </Link>
           </div>
         </div>
       </div>
