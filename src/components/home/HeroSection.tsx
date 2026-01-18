@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
+import { motion, useScroll, useTransform, MotionValue, useSpring, useMotionValue } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
@@ -20,49 +20,54 @@ interface FloatingCircleConfig {
   delay: number;
   zIndex: number;
   parallaxSpeed: number;
+  mouseSpeed: number;
 }
 
-// Floating circle image configuration
+// Floating circle image configuration - adjusted for better visual balance
 const floatingCircleImages: FloatingCircleConfig[] = [
   { 
     src: heroCircle1, 
-    size: 180, 
-    x: "8%", 
-    y: "25%", 
-    duration: 18, 
+    size: 220, 
+    x: "-2%", 
+    y: "18%", 
+    duration: 20, 
     delay: 0,
     zIndex: 5,
     parallaxSpeed: 0.3,
+    mouseSpeed: 0.02,
   },
   { 
     src: heroCircle2, 
-    size: 140, 
-    x: "85%", 
-    y: "18%", 
-    duration: 22, 
-    delay: 1.5,
+    size: 180, 
+    x: "82%", 
+    y: "12%", 
+    duration: 24, 
+    delay: 1,
     zIndex: 15,
     parallaxSpeed: 0.5,
+    mouseSpeed: 0.035,
   },
   { 
     src: heroCircle3, 
-    size: 160, 
-    x: "78%", 
-    y: "62%", 
-    duration: 20, 
-    delay: 0.8,
+    size: 200, 
+    x: "75%", 
+    y: "55%", 
+    duration: 22, 
+    delay: 0.5,
     zIndex: 5,
     parallaxSpeed: 0.4,
+    mouseSpeed: 0.025,
   },
   { 
     src: heroCircle4, 
-    size: 120, 
-    x: "3%", 
-    y: "58%", 
-    duration: 16, 
-    delay: 2,
+    size: 150, 
+    x: "2%", 
+    y: "52%", 
+    duration: 18, 
+    delay: 1.5,
     zIndex: 15,
     parallaxSpeed: 0.6,
+    mouseSpeed: 0.04,
   },
 ];
 
@@ -71,10 +76,14 @@ function FloatingCircle({
   config, 
   scrollYProgress,
   isFront,
+  mouseX,
+  mouseY,
 }: { 
   config: FloatingCircleConfig; 
   scrollYProgress: MotionValue<number>;
   isFront: boolean;
+  mouseX: MotionValue<number>;
+  mouseY: MotionValue<number>;
 }) {
   const parallaxY = useTransform(
     scrollYProgress, 
@@ -82,9 +91,16 @@ function FloatingCircle({
     [0, isFront ? -150 * config.parallaxSpeed : -100 * config.parallaxSpeed]
   );
 
+  // Mouse-following transforms with spring physics
+  const mouseXTransform = useTransform(mouseX, (value) => value * config.mouseSpeed);
+  const mouseYTransform = useTransform(mouseY, (value) => value * config.mouseSpeed);
+  
+  const springX = useSpring(mouseXTransform, { stiffness: 50, damping: 20 });
+  const springY = useSpring(mouseYTransform, { stiffness: 50, damping: 20 });
+
   return (
     <motion.div
-      className="absolute rounded-full overflow-hidden shadow-2xl pointer-events-none"
+      className="absolute rounded-full overflow-hidden shadow-2xl pointer-events-none hidden md:block"
       style={{
         width: config.size,
         height: config.size,
@@ -92,38 +108,41 @@ function FloatingCircle({
         top: config.y,
         zIndex: config.zIndex,
         y: parallaxY,
+        x: springX,
+        translateY: springY,
       }}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ 
         opacity: 1,
         scale: 1,
-        x: isFront ? [0, -12, 18, 0] : [0, 15, -10, 0],
-        y: isFront ? [0, 15, -12, 0] : [0, -20, 10, 0],
       }}
       transition={{
-        opacity: { duration: 0.8, delay: config.delay },
-        scale: { duration: 0.8, delay: config.delay },
-        x: {
-          duration: config.duration,
-          delay: config.delay,
-          repeat: Infinity,
-          ease: "easeInOut",
-        },
-        y: {
-          duration: config.duration,
-          delay: config.delay,
-          repeat: Infinity,
-          ease: "easeInOut",
-        },
+        opacity: { duration: 1, delay: config.delay },
+        scale: { duration: 1, delay: config.delay, ease: "easeOut" },
       }}
     >
-      <img 
-        src={config.src} 
-        alt="Hair styling showcase"
-        className="w-full h-full object-cover"
-      />
-      {/* Soft edge overlay */}
-      <div className="absolute inset-0 rounded-full ring-1 ring-foreground/5" />
+      {/* Subtle floating animation */}
+      <motion.div
+        className="w-full h-full"
+        animate={{
+          x: isFront ? [0, -8, 12, 0] : [0, 10, -6, 0],
+          y: isFront ? [0, 10, -8, 0] : [0, -15, 8, 0],
+        }}
+        transition={{
+          duration: config.duration,
+          delay: config.delay,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      >
+        <img 
+          src={config.src} 
+          alt="Hair styling showcase"
+          className="w-full h-full object-cover rounded-full"
+        />
+      </motion.div>
+      {/* Soft edge overlay with subtle border */}
+      <div className="absolute inset-0 rounded-full ring-1 ring-foreground/10 shadow-inner" />
     </motion.div>
   );
 }
@@ -131,6 +150,23 @@ function FloatingCircle({
 export function HeroSection() {
   const [consultationOpen, setConsultationOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  
+  // Mouse position tracking
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      // Calculate mouse position relative to center of viewport
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      mouseX.set(e.clientX - centerX);
+      mouseY.set(e.clientY - centerY);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY]);
   
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -270,6 +306,8 @@ export function HeroSection() {
           config={config}
           scrollYProgress={scrollYProgress}
           isFront={false}
+          mouseX={mouseX}
+          mouseY={mouseY}
         />
       ))}
 
@@ -365,6 +403,8 @@ export function HeroSection() {
           config={config}
           scrollYProgress={scrollYProgress}
           isFront={true}
+          mouseX={mouseX}
+          mouseY={mouseY}
         />
       ))}
 
