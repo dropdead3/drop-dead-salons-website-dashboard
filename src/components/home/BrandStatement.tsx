@@ -1,7 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
-import { TypewriterText } from "@/components/ui/TypewriterText";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
 export function BrandStatement() {
@@ -23,9 +22,7 @@ export function BrandStatement() {
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
             Not Your
             <br />
-            <span className="font-light">
-              <TypewriterText text="Average" isInView={isInView} delay={600} /> Salon.
-            </span>
+            <span className="font-light">Average Salon.</span>
           </h2>
         </motion.div>
 

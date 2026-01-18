@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { useRef, useState } from "react";
-import { TypewriterText } from "@/components/ui/TypewriterText";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
@@ -152,23 +151,7 @@ export function HeroSection() {
               }}
             >
               <Eyebrow className="text-muted-foreground mb-8">
-                <TypewriterText text="Hair" isInView={true} delay={300} speed={280} />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4, delay: 1.5 }}
-                >
-                  {" "}•{" "}
-                </motion.span>
-                <TypewriterText text="Color" isInView={true} delay={1800} speed={280} />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4, delay: 3.2 }}
-                >
-                  {" "}•{" "}
-                </motion.span>
-                <TypewriterText text="Artistry" isInView={true} delay={3500} speed={280} />
+                Hair • Color • Artistry
               </Eyebrow>
             </motion.div>
 
