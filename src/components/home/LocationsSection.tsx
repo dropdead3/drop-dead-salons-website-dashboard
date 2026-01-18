@@ -61,11 +61,15 @@ export function LocationsSection() {
               }}
               className="group relative bg-secondary hover:bg-secondary/80 transition-colors duration-300 p-8 md:p-10 text-center"
             >
-              {/* Info Icon with Hours Tooltip */}
-              <div className="absolute top-4 right-4">
+              {/* Location Title with Info Icon */}
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <h3 className="font-display text-2xl md:text-3xl text-foreground">
+                  {location.name}
+                </h3>
+                {/* Info Icon with Hours Tooltip */}
                 <div className="relative group/info">
                   <Info className="w-5 h-5 text-foreground/40 hover:text-foreground/70 transition-colors cursor-pointer" />
-                  <div className="absolute right-0 top-full mt-2 opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all duration-200 z-10">
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all duration-200 z-10">
                     <div className="bg-foreground text-background text-xs px-4 py-3 whitespace-nowrap shadow-lg">
                       <p className="font-medium mb-1">{hours.open}</p>
                       <p className="text-background/70">{hours.closed}</p>
@@ -73,10 +77,6 @@ export function LocationsSection() {
                   </div>
                 </div>
               </div>
-
-              <h3 className="font-display text-2xl md:text-3xl text-foreground mb-4">
-                {location.name}
-              </h3>
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
                 target="_blank"
