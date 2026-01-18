@@ -13,7 +13,10 @@ export function BrandsSection() {
         {/* Left side text with divider */}
         <div className="flex-shrink-0 pl-6 md:pl-12 lg:pl-20 pr-6 md:pr-10 flex items-center">
           <div className="max-w-[180px] md:max-w-[200px]">
-            <p className="text-xs md:text-sm uppercase tracking-[0.15em] font-light text-foreground/80 leading-relaxed">
+            <p 
+              className="text-xs md:text-sm tracking-[0.02em] text-foreground/80 leading-relaxed"
+              style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
+            >
               Our favorite brands
               <br />
               we love to use in the
