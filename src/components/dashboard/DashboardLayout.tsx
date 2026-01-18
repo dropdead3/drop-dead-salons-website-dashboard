@@ -20,6 +20,8 @@ import {
   Bell,
   ChevronDown,
   X,
+  HelpCircle,
+  CalendarClock,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -49,7 +51,11 @@ const growthNavItems: NavItem[] = [
   { href: '/dashboard/training', label: 'Training', icon: Video },
   { href: '/dashboard/program', label: 'Client Engine', icon: Target, roles: ['stylist', 'manager', 'admin'] },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, roles: ['stylist', 'manager', 'admin'] },
+];
+
+const getHelpNavItems: NavItem[] = [
   { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, roles: ['stylist', 'assistant', 'manager', 'admin'] },
+  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1 Meeting', icon: CalendarClock },
 ];
 
 const statsNavItems: NavItem[] = [
@@ -160,6 +166,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </p>
             <div className="space-y-1">
               {filterNavItems(statsNavItems).map((item) => (
+                <NavLink key={item.href} {...item} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Get Help Section */}
+        {filterNavItems(getHelpNavItems).length > 0 && (
+          <>
+            <div className="my-4 px-4">
+              <div className="h-px bg-border" />
+            </div>
+            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
+              Get Help
+            </p>
+            <div className="space-y-1">
+              {filterNavItems(getHelpNavItems).map((item) => (
                 <NavLink key={item.href} {...item} />
               ))}
             </div>
