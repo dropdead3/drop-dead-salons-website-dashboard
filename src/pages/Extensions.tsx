@@ -332,6 +332,198 @@ export default function Extensions() {
         </div>
       </Section>
 
+      {/* Extension Pricing Section */}
+      <Section className="bg-secondary/30">
+        <div className="text-center mb-12">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-sans block mb-4"
+          >
+            Investment
+          </motion.span>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight text-foreground"
+          >
+            Extension <span className="italic font-light">Packages</span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-4 text-muted-foreground max-w-xl mx-auto"
+          >
+            Pricing varies based on desired length, volume, and hair type. A consultation is required for an accurate quote.
+          </motion.p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Volume Package */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="bg-background border border-border p-8 flex flex-col"
+          >
+            <div className="mb-6">
+              <h3 className="font-serif text-2xl mb-2">Volume</h3>
+              <p className="text-sm text-muted-foreground">Perfect for adding thickness and body without extra length</p>
+            </div>
+            <div className="mb-6">
+              <span className="text-3xl font-serif">$800</span>
+              <span className="text-muted-foreground"> - $1,200</span>
+            </div>
+            <ul className="space-y-3 mb-8 flex-1">
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0" />
+                <span>1-2 rows of extensions</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0" />
+                <span>Adds fullness & density</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0" />
+                <span>Custom color matching</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0" />
+                <span>2-hour appointment</span>
+              </li>
+            </ul>
+            <Link
+              to="/booking"
+              className="w-full py-3.5 border border-foreground text-foreground text-sm uppercase tracking-[0.15em] font-sans text-center hover:bg-foreground hover:text-background transition-all duration-300"
+            >
+              Book Consultation
+            </Link>
+          </motion.div>
+
+          {/* Length + Volume Package - Featured */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="bg-foreground text-background p-8 flex flex-col relative"
+          >
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-oat text-oat-foreground px-4 py-1.5 text-xs uppercase tracking-[0.15em]">
+              Most Popular
+            </div>
+            <div className="mb-6">
+              <h3 className="font-serif text-2xl mb-2">Length + Volume</h3>
+              <p className="text-sm text-background/70">Our most requested package for dramatic transformations</p>
+            </div>
+            <div className="mb-6">
+              <span className="text-3xl font-serif">$1,400</span>
+              <span className="text-background/70"> - $2,000</span>
+            </div>
+            <ul className="space-y-3 mb-8 flex-1">
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-oat rounded-full mt-1.5 flex-shrink-0" />
+                <span>2-3 rows of extensions</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-oat rounded-full mt-1.5 flex-shrink-0" />
+                <span>Up to 18" added length</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-oat rounded-full mt-1.5 flex-shrink-0" />
+                <span>Maximum volume & fullness</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-oat rounded-full mt-1.5 flex-shrink-0" />
+                <span>Custom color matching & blending</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-oat rounded-full mt-1.5 flex-shrink-0" />
+                <span>3-hour appointment</span>
+              </li>
+            </ul>
+            <Link
+              to="/booking"
+              className="w-full py-3.5 bg-oat text-oat-foreground text-sm uppercase tracking-[0.15em] font-sans text-center hover:bg-oat/90 transition-all duration-300"
+            >
+              Book Consultation
+            </Link>
+          </motion.div>
+
+          {/* Full Transformation Package */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-background border border-border p-8 flex flex-col"
+          >
+            <div className="mb-6">
+              <h3 className="font-serif text-2xl mb-2">Full Transformation</h3>
+              <p className="text-sm text-muted-foreground">Complete hair makeover with color and extensions</p>
+            </div>
+            <div className="mb-6">
+              <span className="text-3xl font-serif">$2,000</span>
+              <span className="text-muted-foreground"> - $3,000+</span>
+            </div>
+            <ul className="space-y-3 mb-8 flex-1">
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0" />
+                <span>3-4 rows of extensions</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0" />
+                <span>Up to 22" added length</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0" />
+                <span>Includes color service</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0" />
+                <span>Custom blending & styling</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="w-1.5 h-1.5 bg-foreground rounded-full mt-1.5 flex-shrink-0" />
+                <span>4-5 hour appointment</span>
+              </li>
+            </ul>
+            <Link
+              to="/booking"
+              className="w-full py-3.5 border border-foreground text-foreground text-sm uppercase tracking-[0.15em] font-sans text-center hover:bg-foreground hover:text-background transition-all duration-300"
+            >
+              Book Consultation
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* Maintenance Note */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-12 text-center"
+        >
+          <div className="inline-flex items-center gap-6 flex-wrap justify-center text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-oat rounded-full" />
+              <span>Maintenance: $150-$300 every 6-8 weeks</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-oat rounded-full" />
+              <span>Hair lasts 6-12 months with proper care</span>
+            </div>
+          </div>
+        </motion.div>
+      </Section>
+
       {/* Extension Reviews Section */}
       <ExtensionReviewsSection />
 
