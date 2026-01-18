@@ -11,6 +11,7 @@ export function BrandStatement() {
     <Section className="bg-background" theme="light">
       <div 
         ref={ref} 
+        data-theme="dark"
         className="bg-foreground text-background rounded-2xl p-12 md:p-20 lg:p-24"
       >
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
