@@ -39,8 +39,8 @@ export function BrandsSection() {
               {brandLogos.map((brand, index) => (
                 <span
                   key={index}
-                  className="text-lg md:text-xl lg:text-2xl font-semibold tracking-[0.1em] text-foreground whitespace-nowrap"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase"
+                  style={{ fontFamily: "'Termina', sans-serif" }}
                 >
                   {brand.text}
                 </span>
@@ -51,8 +51,8 @@ export function BrandsSection() {
               {brandLogos.map((brand, index) => (
                 <span
                   key={`dup-${index}`}
-                  className="text-lg md:text-xl lg:text-2xl font-semibold tracking-[0.1em] text-foreground whitespace-nowrap"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase"
+                  style={{ fontFamily: "'Termina', sans-serif" }}
                 >
                   {brand.text}
                 </span>
