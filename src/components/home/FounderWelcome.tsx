@@ -38,7 +38,7 @@ export function FounderWelcome() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="md:col-span-2 text-center md:text-left"
             >
-              <span className="inline-block text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4 px-3 py-1.5 bg-background rounded-lg">
+              <span className="inline-block text-xs uppercase tracking-[0.2em] text-muted-foreground mb-4 px-3 py-1.5 bg-background rounded-full">
                 A Note From Our Founder
               </span>
               <h2 className="text-3xl md:text-4xl font-display mb-6">
