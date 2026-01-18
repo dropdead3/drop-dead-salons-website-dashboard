@@ -4,14 +4,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import { FileText, Loader2, Download, BookOpen } from 'lucide-react';
+import { FileText, Loader2, Download, BookOpen, CheckCircle2, Circle } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 interface Handbook {
   id: string;
@@ -23,45 +26,112 @@ interface Handbook {
   updated_at: string;
 }
 
+interface Acknowledgment {
+  handbook_id: string;
+  acknowledged_at: string;
+}
+
 export default function MyHandbooks() {
-  const { roles } = useAuth();
+  const { roles, user } = useAuth();
+  const { toast } = useToast();
   const [handbooks, setHandbooks] = useState<Handbook[]>([]);
+  const [acknowledgments, setAcknowledgments] = useState<Acknowledgment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedHandbook, setSelectedHandbook] = useState<Handbook | null>(null);
+  const [hasReadContent, setHasReadContent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchHandbooks();
-  }, [roles]);
-
-  const fetchHandbooks = async () => {
-    if (roles.length === 0) {
+    if (roles.length > 0 && user) {
+      fetchData();
+    } else if (roles.length === 0) {
       setLoading(false);
-      return;
+    }
+  }, [roles, user]);
+
+  const fetchData = async () => {
+    // Fetch handbooks and acknowledgments in parallel
+    const [handbooksResult, acknowledgementsResult] = await Promise.all([
+      supabase
+        .from('handbooks')
+        .select('id, title, category, content, file_url, version, updated_at, visible_to_roles')
+        .eq('is_active', true)
+        .order('category')
+        .order('title'),
+      supabase
+        .from('handbook_acknowledgments')
+        .select('handbook_id, acknowledged_at')
+    ]);
+
+    if (handbooksResult.error) {
+      console.error('Error fetching handbooks:', handbooksResult.error);
+    } else {
+      // Filter handbooks where visible_to_roles overlaps with user's roles
+      const filteredHandbooks = (handbooksResult.data || []).filter((handbook: any) => {
+        const visibleRoles = handbook.visible_to_roles || [];
+        return roles.some(role => visibleRoles.includes(role));
+      });
+      setHandbooks(filteredHandbooks);
     }
 
-    // Fetch handbooks where visible_to_roles contains any of the user's roles
-    const { data, error } = await supabase
-      .from('handbooks')
-      .select('id, title, category, content, file_url, version, updated_at')
-      .eq('is_active', true)
-      .order('category')
-      .order('title');
-
-    if (error) {
-      console.error('Error fetching handbooks:', error);
-      setLoading(false);
-      return;
+    if (acknowledgementsResult.error) {
+      console.error('Error fetching acknowledgments:', acknowledgementsResult.error);
+    } else {
+      setAcknowledgments(acknowledgementsResult.data || []);
     }
 
-    // Filter handbooks where visible_to_roles overlaps with user's roles
-    const filteredHandbooks = (data || []).filter((handbook: any) => {
-      const visibleRoles = handbook.visible_to_roles || [];
-      return roles.some(role => visibleRoles.includes(role));
-    });
-
-    setHandbooks(filteredHandbooks);
     setLoading(false);
   };
+
+  const isAcknowledged = (handbookId: string) => {
+    return acknowledgments.some(ack => ack.handbook_id === handbookId);
+  };
+
+  const getAcknowledgmentDate = (handbookId: string) => {
+    const ack = acknowledgments.find(a => a.handbook_id === handbookId);
+    return ack ? ack.acknowledged_at : null;
+  };
+
+  const handleAcknowledge = async () => {
+    if (!selectedHandbook || !user) return;
+    
+    setSubmitting(true);
+    
+    const { error } = await supabase
+      .from('handbook_acknowledgments')
+      .insert({
+        user_id: user.id,
+        handbook_id: selectedHandbook.id
+      });
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message
+      });
+    } else {
+      setAcknowledgments(prev => [...prev, {
+        handbook_id: selectedHandbook.id,
+        acknowledged_at: new Date().toISOString()
+      }]);
+      toast({
+        title: 'Acknowledged',
+        description: 'You have signed off on this handbook.'
+      });
+      setSelectedHandbook(null);
+    }
+    
+    setSubmitting(false);
+  };
+
+  const openHandbook = (handbook: Handbook) => {
+    setSelectedHandbook(handbook);
+    setHasReadContent(false);
+  };
+
+  const acknowledgedCount = handbooks.filter(h => isAcknowledged(h.id)).length;
+  const totalCount = handbooks.length;
 
   const groupedHandbooks = handbooks.reduce((acc, handbook) => {
     const cat = handbook.category || 'General';
@@ -79,6 +149,19 @@ export default function MyHandbooks() {
           <p className="text-muted-foreground font-sans">
             Training materials and resources for your role.
           </p>
+          {totalCount > 0 && (
+            <div className="mt-4 flex items-center gap-2">
+              <div className="h-2 flex-1 max-w-xs bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${(acknowledgedCount / totalCount) * 100}%` }}
+                />
+              </div>
+              <span className="text-sm text-muted-foreground font-sans">
+                {acknowledgedCount}/{totalCount} acknowledged
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -101,25 +184,50 @@ export default function MyHandbooks() {
                   {category.toUpperCase()}
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {items.map(handbook => (
-                    <Card 
-                      key={handbook.id} 
-                      className="p-5 hover:bg-muted/50 transition-colors cursor-pointer group"
-                      onClick={() => setSelectedHandbook(handbook)}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 bg-muted rounded-lg group-hover:bg-background transition-colors">
-                          <BookOpen className="w-5 h-5" />
+                  {items.map(handbook => {
+                    const acknowledged = isAcknowledged(handbook.id);
+                    const ackDate = getAcknowledgmentDate(handbook.id);
+                    
+                    return (
+                      <Card 
+                        key={handbook.id} 
+                        className={`p-5 hover:bg-muted/50 transition-colors cursor-pointer group ${
+                          acknowledged ? 'border-primary/30 bg-primary/5' : ''
+                        }`}
+                        onClick={() => openHandbook(handbook)}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className={`p-3 rounded-lg transition-colors ${
+                            acknowledged 
+                              ? 'bg-primary/10 text-primary' 
+                              : 'bg-muted group-hover:bg-background'
+                          }`}>
+                            {acknowledged ? (
+                              <CheckCircle2 className="w-5 h-5" />
+                            ) : (
+                              <BookOpen className="w-5 h-5" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-sans font-medium truncate">{handbook.title}</h3>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              v{handbook.version} • Updated {format(new Date(handbook.updated_at), 'MMM d, yyyy')}
+                            </p>
+                            {acknowledged && ackDate && (
+                              <p className="text-xs text-primary mt-2">
+                                ✓ Acknowledged {format(new Date(ackDate), 'MMM d, yyyy')}
+                              </p>
+                            )}
+                            {!acknowledged && (
+                              <p className="text-xs text-amber-500 mt-2">
+                                Requires acknowledgment
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-sans font-medium truncate">{handbook.title}</h3>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            v{handbook.version} • Updated {format(new Date(handbook.updated_at), 'MMM d, yyyy')}
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -128,7 +236,7 @@ export default function MyHandbooks() {
 
         {/* Handbook Detail Dialog */}
         <Dialog open={!!selectedHandbook} onOpenChange={(open) => !open && setSelectedHandbook(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
             {selectedHandbook && (
               <>
                 <DialogHeader>
@@ -140,7 +248,7 @@ export default function MyHandbooks() {
                   </p>
                 </DialogHeader>
                 
-                <div className="mt-4 space-y-4">
+                <div className="flex-1 overflow-y-auto mt-4 space-y-4">
                   {selectedHandbook.content && (
                     <div className="prose prose-sm dark:prose-invert max-w-none">
                       <div className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
@@ -150,7 +258,7 @@ export default function MyHandbooks() {
                   )}
 
                   {selectedHandbook.file_url && (
-                    <Button asChild className="w-full font-display">
+                    <Button asChild variant="outline" className="w-full font-display">
                       <a href={selectedHandbook.file_url} target="_blank" rel="noopener noreferrer">
                         <Download className="w-4 h-4 mr-2" />
                         DOWNLOAD FILE
@@ -164,6 +272,44 @@ export default function MyHandbooks() {
                     </p>
                   )}
                 </div>
+
+                <DialogFooter className="mt-6 border-t pt-4">
+                  {isAcknowledged(selectedHandbook.id) ? (
+                    <div className="flex items-center gap-2 text-primary w-full justify-center">
+                      <CheckCircle2 className="w-5 h-5" />
+                      <span className="font-sans text-sm">
+                        You acknowledged this on {format(new Date(getAcknowledgmentDate(selectedHandbook.id)!), 'MMMM d, yyyy')}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="w-full space-y-4">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id="read-confirm"
+                          checked={hasReadContent}
+                          onCheckedChange={(checked) => setHasReadContent(checked === true)}
+                        />
+                        <label 
+                          htmlFor="read-confirm" 
+                          className="text-sm font-sans leading-tight cursor-pointer"
+                        >
+                          I confirm that I have read and understood the contents of this handbook.
+                        </label>
+                      </div>
+                      <Button 
+                        onClick={handleAcknowledge} 
+                        disabled={!hasReadContent || submitting}
+                        className="w-full font-display"
+                      >
+                        {submitting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          'SIGN OFF & ACKNOWLEDGE'
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </DialogFooter>
               </>
             )}
           </DialogContent>
