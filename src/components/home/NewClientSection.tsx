@@ -39,7 +39,7 @@ export const NewClientSection = () => {
                 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6"
               >
                 <span className="whitespace-nowrap">New clients can get</span>{" "}
-                <span>started here...</span>
+                <span>started here</span>
               </motion.h2>
               
               <motion.p
