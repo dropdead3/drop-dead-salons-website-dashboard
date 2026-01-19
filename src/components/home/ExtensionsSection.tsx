@@ -112,7 +112,7 @@ export function ExtensionsSection() {
                       delay: index * 0.15 + 0.1,
                       ease: "easeOut"
                     }}
-                    className="flex-shrink-0 w-12 h-12 bg-oat/20 rounded-xl flex items-center justify-center transition-colors duration-300 group-hover:bg-oat/30"
+                    className="flex-shrink-0 w-12 h-12 bg-oat/20 rounded-full flex items-center justify-center transition-colors duration-300 group-hover:bg-oat/30"
                   >
                     <feature.icon className="w-5 h-5 text-oat" />
                   </motion.div>
@@ -157,14 +157,14 @@ export function ExtensionsSection() {
                   to="/booking"
                   className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-6 py-3.5 text-sm font-medium tracking-wide rounded-full hover:bg-oat/90 transition-all duration-300"
                 >
-                  <span>BOOK EXTENSION CONSULT</span>
+                  <span>Book Extension Consult</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
                 <Link
-                  to="/services"
+                  to="/extensions"
                   className="group inline-flex items-center gap-3 border border-background/30 text-background px-6 py-3.5 text-sm font-medium tracking-wide rounded-full hover:bg-background/10 transition-all duration-300"
                 >
-                  <span>LEARN MORE</span>
+                  <span>Learn More</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </div>
