@@ -28,9 +28,11 @@ import {
   Loader2,
   Save,
   UserCog,
-  Trash2
+  Trash2,
+  Mail,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
 
 interface UserWithRole {
   user_id: string;
@@ -253,6 +255,21 @@ export default function Settings() {
             </AccordionContent>
           </AccordionItem>
 
+          {/* Email Templates */}
+          <AccordionItem value="email-templates" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5" />
+                <span className="font-display text-sm tracking-wide">EMAIL TEMPLATES</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="py-4">
+                <EmailTemplatesManager />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* Notification Settings */}
           <AccordionItem value="notifications" className="border rounded-lg px-4">
             <AccordionTrigger className="hover:no-underline">
@@ -283,6 +300,16 @@ export default function Settings() {
                       <p className="font-sans font-medium text-sm">Weekly Wins Reminders</p>
                       <p className="text-xs text-muted-foreground">
                         Remind stylists to submit weekly wins
+                      </p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-sans font-medium text-sm">Birthday Reminders (3 days before)</p>
+                      <p className="text-xs text-muted-foreground">
+                        Email leadership team about upcoming birthdays
                       </p>
                     </div>
                     <Switch defaultChecked />
