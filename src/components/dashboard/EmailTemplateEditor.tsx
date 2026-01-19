@@ -393,6 +393,8 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
   const [activeTab, setActiveTab] = useState<'visual' | 'code' | 'preview'>('visual');
   const [isUploading, setIsUploading] = useState(false);
   const [rawHtml, setRawHtml] = useState(initialHtml);
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead');
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
@@ -708,6 +710,56 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
     updateBlocksAndHtml(newBlocks);
     setSelectedBlockId(duplicatedBlock.id);
     toast.success('Block duplicated');
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, blockId: string) => {
+    setDraggedBlockId(blockId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', blockId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, blockId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedBlockId && blockId !== draggedBlockId) {
+      setDragOverBlockId(blockId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverBlockId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetBlockId: string) => {
+    e.preventDefault();
+    if (!draggedBlockId || draggedBlockId === targetBlockId) {
+      setDraggedBlockId(null);
+      setDragOverBlockId(null);
+      return;
+    }
+
+    const draggedIndex = blocks.findIndex(b => b.id === draggedBlockId);
+    const targetIndex = blocks.findIndex(b => b.id === targetBlockId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedBlockId(null);
+      setDragOverBlockId(null);
+      return;
+    }
+
+    const newBlocks = [...blocks];
+    const [draggedBlock] = newBlocks.splice(draggedIndex, 1);
+    newBlocks.splice(targetIndex, 0, draggedBlock);
+    
+    updateBlocksAndHtml(newBlocks);
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
   };
 
   const handleImageUpload = async (blockId: string, file: File) => {
@@ -1529,12 +1581,27 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                   {blocks.map((block, index) => (
                     <div
                       key={block.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, block.id)}
+                      onDragOver={(e) => handleDragOver(e, block.id)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, block.id)}
+                      onDragEnd={handleDragEnd}
                       className={cn(
                         'relative group cursor-pointer transition-all',
-                        selectedBlockId === block.id && 'ring-2 ring-primary ring-offset-2'
+                        selectedBlockId === block.id && 'ring-2 ring-primary ring-offset-2',
+                        draggedBlockId === block.id && 'opacity-50 scale-[0.98]',
+                        dragOverBlockId === block.id && 'ring-2 ring-primary ring-dashed'
                       )}
                       onClick={() => setSelectedBlockId(block.id)}
                     >
+                      {/* Drag handle indicator */}
+                      <div className={cn(
+                        'absolute left-2 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing',
+                        selectedBlockId === block.id && 'opacity-100'
+                      )}>
+                        <GripVertical className="w-4 h-4 text-muted-foreground" />
+                      </div>
                       {/* Block toolbar - top right corner */}
                       <div className={cn(
                         'absolute right-2 top-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm rounded-md shadow-sm border p-0.5',
