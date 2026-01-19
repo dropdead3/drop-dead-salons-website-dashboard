@@ -370,6 +370,21 @@ export default function Services() {
             transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
             className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
           >
+            {/* Animated text on sticky */}
+            <AnimatePresence>
+              {isSticky && (
+                <motion.span
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3, ease: editorialEasing }}
+                  className="hidden lg:block text-sm font-display tracking-wide text-white/90"
+                >
+                  See prices based on the stylist
+                </motion.span>
+              )}
+            </AnimatePresence>
+            
             <StylistLevelSelector 
               selectedLevel={selectedLevel}
               onLevelChange={setSelectedLevel}
