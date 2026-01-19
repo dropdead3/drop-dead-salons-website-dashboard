@@ -111,11 +111,23 @@ export default function ServicesManager() {
             </p>
           </div>
           
-          <Button className="gap-2" disabled>
-            <Plus className="w-4 h-4" />
-            Add Service
-            <Badge variant="secondary" className="ml-1">Coming Soon</Badge>
-          </Button>
+          <div className="flex items-center gap-2">
+            <StylistLevelsEditor
+              levels={stylistLevels}
+              onLevelsChange={setStylistLevels}
+              trigger={
+                <Button variant="outline" className="gap-2">
+                  <Settings2 className="w-4 h-4" />
+                  Manage Levels
+                </Button>
+              }
+            />
+            <Button className="gap-2" disabled>
+              <Plus className="w-4 h-4" />
+              Add Service
+              <Badge variant="secondary" className="ml-1">Coming Soon</Badge>
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -165,31 +177,6 @@ export default function ServicesManager() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Management */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Settings2 className="w-4 h-4" />
-              Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="flex flex-wrap gap-2">
-              <StylistLevelsEditor
-                levels={stylistLevels}
-                onLevelsChange={setStylistLevels}
-                trigger={
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Layers className="w-4 h-4" />
-                    Stylist Levels
-                    <Badge variant="secondary" className="ml-1">{stylistLevels.length}</Badge>
-                  </Button>
-                }
-              />
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Search */}
         <div className="relative">
