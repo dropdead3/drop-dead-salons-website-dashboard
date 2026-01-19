@@ -140,10 +140,10 @@ export function Header() {
           )}>
             <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo with scroll transition - fixed width container to prevent layout shift */}
-            <div className="w-40 lg:w-56">
+            <div className="w-40 lg:w-56 flex items-center">
               <Link
                 to="/"
-                className="inline-block hover:opacity-70 transition-opacity"
+                className="inline-flex items-center hover:opacity-70 transition-opacity"
               >
                 <AnimatePresence mode="wait">
                   {isScrolled ? (
