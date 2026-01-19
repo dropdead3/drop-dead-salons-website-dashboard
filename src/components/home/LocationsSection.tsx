@@ -188,7 +188,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
             transform: "rotateY(180deg)"
           }}
         >
-          <div className="relative w-full h-full bg-foreground overflow-hidden rounded-2xl flex flex-col p-3">
+          <div className="relative w-full h-full bg-secondary overflow-hidden rounded-2xl flex flex-col p-3">
             {/* Bento Box Gallery */}
             <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-2 overflow-hidden rounded-xl">
               {galleryImages.slice(0, 4).map((image, idx) => (
@@ -199,17 +199,24 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
                   <ImageWithSkeleton
                     src={image}
                     alt={`${location.name} salon interior ${idx + 1}`}
-                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover"
                     wrapperClassName="w-full h-full"
                   />
                 </div>
               ))}
             </div>
 
-            {/* Location name and tap hint */}
-            <div className="pt-4 pb-2 text-center">
-              <h3 className="font-display text-xl text-background mb-1">{location.name}</h3>
-              <p className="text-[10px] text-background/50 tracking-wide font-aeonik">
+            {/* Location name, book button, and tap hint */}
+            <div className="pt-4 pb-2 text-center flex flex-col items-center gap-2">
+              <h3 className="font-display text-xl text-foreground">{location.name}</h3>
+              <Link
+                to={location.bookingUrl}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center justify-center bg-foreground text-background px-5 py-2 text-sm font-sans font-medium rounded-full hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+              >
+                Book here
+              </Link>
+              <p className="text-[10px] text-foreground/50 tracking-wide font-aeonik">
                 Tap to go back
               </p>
             </div>
