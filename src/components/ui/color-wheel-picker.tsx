@@ -151,7 +151,7 @@ function getRecommendedColors(colorType: string, baseHue: number): string[] {
   }
 }
 
-type HarmonyType = 'complementary' | 'analogous' | 'triadic' | 'split-complementary';
+type HarmonyType = 'complementary' | 'analogous' | 'triadic' | 'split-complementary' | 'monochromatic';
 
 interface HarmonyColors {
   type: HarmonyType;
@@ -161,6 +161,17 @@ interface HarmonyColors {
 
 function getColorHarmonies(h: number, s: number, l: number): HarmonyColors[] {
   return [
+    {
+      type: 'monochromatic',
+      label: 'Monochromatic',
+      colors: [
+        hslToHex(h, s, 15),
+        hslToHex(h, s, 30),
+        hslToHex(h, s, 50),
+        hslToHex(h, s, 70),
+        hslToHex(h, s, 85),
+      ],
+    },
     {
       type: 'complementary',
       label: 'Complementary',
