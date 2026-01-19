@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -17,6 +17,9 @@ import { differenceInYears, differenceInMonths, parseISO, format, setYear, isSam
 import { useUpcomingAnniversaries, useTodaysAnniversaries, MILESTONE_YEARS, getAnniversaryMilestone } from '@/hooks/useAnniversaries';
 import { cn } from '@/lib/utils';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useStrikeCounts } from '@/hooks/useStaffStrikes';
+import { AddStrikeDialog } from '@/components/dashboard/AddStrikeDialog';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -114,8 +117,14 @@ export default function TeamDirectory() {
   const { data: todaysAnniversaries = [] } = useTodaysAnniversaries();
   const { data: upcomingAnniversaries = [] } = useUpcomingAnniversaries(30);
   const { isViewingAsUser } = useViewAs();
+  const { roles: actualRoles } = useAuth();
   
   const isSuperAdmin = currentUserProfile?.is_super_admin;
+  const isAdmin = actualRoles.includes('admin');
+  
+  // Get strike counts for all team members (only for admins)
+  const userIds = team.map(m => m.user_id);
+  const { data: strikeCounts = {} } = useStrikeCounts(isAdmin ? userIds : []);
 
   // Get all unique roles from team members for filter dropdown
   const allRoles = [...new Set(team.flatMap(member => 
@@ -341,6 +350,8 @@ export default function TeamDirectory() {
                         member={member} 
                         locations={locations}
                         isSuperAdmin={isSuperAdmin}
+                        isAdmin={isAdmin}
+                        strikeCount={strikeCounts[member.user_id] || 0}
                         onViewProfile={() => navigate(`/dashboard/profile/${member.user_id}`)}
                       />
                     ))}
@@ -377,10 +388,12 @@ interface TeamMemberCardProps {
   };
   locations: Array<{ id: string; name: string }>;
   isSuperAdmin?: boolean;
+  isAdmin?: boolean;
+  strikeCount?: number;
   onViewProfile?: () => void;
 }
 
-function TeamMemberCard({ member, locations, isSuperAdmin, onViewProfile }: TeamMemberCardProps) {
+function TeamMemberCard({ member, locations, isSuperAdmin, isAdmin, strikeCount = 0, onViewProfile }: TeamMemberCardProps) {
   const timeAtCompany = getTimeAtCompany(member.hire_date);
   const memberLocations = member.location_ids || [];
   const hasSchedules = Object.keys(member.location_schedules).length > 0;
@@ -430,6 +443,24 @@ function TeamMemberCard({ member, locations, isSuperAdmin, onViewProfile }: Team
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="text-xs">View/Edit Profile</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )}
+
+        {/* Strike indicator for admins */}
+        {isAdmin && strikeCount > 0 && (
+          <div className="absolute top-3 right-3 z-10">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="p-1.5 bg-destructive text-destructive-foreground rounded-full shadow-sm">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="text-xs">
+                  {strikeCount} active strike{strikeCount > 1 ? 's' : ''}
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>

@@ -954,6 +954,57 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_strikes: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          incident_date: string
+          is_resolved: boolean
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          strike_type: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          incident_date?: string
+          is_resolved?: boolean
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          strike_type: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          incident_date?: string
+          is_resolved?: boolean
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          strike_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       stylist_program_enrollment: {
         Row: {
           completed_at: string | null
