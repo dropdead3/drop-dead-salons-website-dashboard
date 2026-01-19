@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
-import { ArrowRight, Star, Award, MapPin, Play } from "lucide-react";
+import { ArrowRight, Star, Zap, MapPin, Play, Award } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BeforeAfterSlider, BeforeAfterSliderHandle } from "./BeforeAfterSlider";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
@@ -207,12 +207,12 @@ export function ExtensionsSection() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-                      <Award className="w-4 h-4 text-oat-foreground" />
+                      <Zap className="w-4 h-4 text-oat-foreground" />
                     </div>
-                    <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationally Recognized</span>
+                    <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Change Your Look Instantly</span>
                   </div>
                   <p className="text-sm text-foreground leading-relaxed">
-                    Salons across the country travel to learn and proudly showcase the Drop Dead Method.
+                    Add instant volume, length, and/or temporary color accents with Drop Dead Extensions & the Drop Dead Method.
                   </p>
                 </div>
                 <button
