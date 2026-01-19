@@ -35,6 +35,7 @@ import { BirthdayCalendarCard } from '@/components/dashboard/BirthdayCalendarCar
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
 import { WorkScheduleWidget } from '@/components/dashboard/WorkScheduleWidget';
 import { ScheduleRequestsCard } from '@/components/dashboard/ScheduleRequestsCard';
+import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -62,6 +63,9 @@ export default function DashboardHome() {
   const { data: profile } = useEmployeeProfile();
   const { data: visibility = {} } = useMyDashboardVisibility();
   const queryClient = useQueryClient();
+  
+  // Birthday notifications for leadership
+  useBirthdayNotifications();
   
   // Leadership team: super admins, admins, and managers
   const isLeadership = profile?.is_super_admin || roles.includes('admin') || roles.includes('manager');
