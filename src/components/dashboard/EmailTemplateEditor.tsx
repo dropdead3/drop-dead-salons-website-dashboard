@@ -108,10 +108,16 @@ const brandLogos: BrandLogo[] = [
 ];
 
 // Block types for the email editor
-type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social' | 'footer';
+type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social' | 'footer' | 'header';
 
 interface SocialLink {
   platform: 'instagram' | 'tiktok' | 'email';
+  url: string;
+  enabled: boolean;
+}
+
+interface NavLink {
+  label: string;
   url: string;
   enabled: boolean;
 }
@@ -143,6 +149,12 @@ interface EmailBlock {
     showSocialIcons: boolean;
     copyrightText: string;
   };
+  headerConfig?: {
+    showLogo: boolean;
+    logoId: string;
+    showNavLinks: boolean;
+  };
+  navLinks?: NavLink[];
 }
 
 interface EmailTemplateEditorProps {
@@ -415,6 +427,32 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           ${logoHtml}
           ${socialHtml}
           <p style="margin: 0; font-size: 12px; opacity: 0.8;">${footerConfig.copyrightText}</p>
+        </div>`;
+      }
+      case 'header': {
+        const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main', showNavLinks: true };
+        const logo = brandLogos.find(l => l.id === headerConfig.logoId) || brandLogos[0];
+        const bgColor = block.styles.backgroundColor || '#1a1a1a';
+        const textColor = block.styles.textColor || '#f5f0e8';
+        
+        let logoHtml = '';
+        if (headerConfig.showLogo) {
+          logoHtml = `<img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto;" />`;
+        }
+        
+        let navHtml = '';
+        if (headerConfig.showNavLinks) {
+          const enabledLinks = (block.navLinks || []).filter(link => link.enabled);
+          if (enabledLinks.length > 0) {
+            navHtml = enabledLinks.map(link => 
+              `<a href="${link.url}" style="color: ${textColor}; text-decoration: none; font-size: 14px; font-weight: 500; margin: 0 12px;">${link.label}</a>`
+            ).join('');
+          }
+        }
+        
+        return `<div style="display: flex; align-items: center; justify-content: space-between; background-color: ${bgColor}; color: ${textColor}; padding: ${block.styles.padding || '20px 24px'}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'};">
+          <div>${logoHtml}</div>
+          <div>${navHtml}</div>
         </div>`;
       }
       default:
@@ -741,6 +779,12 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           padding: '32px 24px',
           borderRadius: '0 0 12px 12px'
         }),
+        ...(type === 'header' && {
+          backgroundColor: currentTheme.colors.headerBg,
+          textColor: currentTheme.colors.headerText,
+          padding: '20px 24px',
+          borderRadius: '12px 12px 0 0'
+        }),
       },
       ...(type === 'button' && { linkUrl: '{{dashboard_url}}' }),
       ...(type === 'link' && { linkUrl: '{{dashboard_url}}' }),
@@ -762,6 +806,18 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           logoId: 'drop-dead-main',
           showSocialIcons: true,
           copyrightText: '© 2025 Drop Dead Gorgeous. All rights reserved.',
+        }
+      }),
+      ...(type === 'header' && {
+        navLinks: [
+          { label: 'Home', url: 'https://dropdeadhair.com', enabled: true },
+          { label: 'Services', url: 'https://dropdeadhair.com/services', enabled: true },
+          { label: 'Book Now', url: 'https://dropdeadhair.com/booking', enabled: true },
+        ],
+        headerConfig: {
+          showLogo: true,
+          logoId: 'drop-dead-main',
+          showNavLinks: true,
         }
       }),
     };
@@ -1392,6 +1448,10 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                     <LayoutTemplate className="w-4 h-4" />
                     Footer
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('header')} className="justify-start gap-2 col-span-2">
+                    <LayoutTemplate className="w-4 h-4" />
+                    Header
+                  </Button>
                 </div>
               </div>
               
@@ -1880,6 +1940,137 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                       </>
                     )}
 
+                    {selectedBlock.type === 'header' && (
+                      <>
+                        <div className="space-y-3">
+                          <Label className="text-xs font-medium">Header Options</Label>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedBlock.headerConfig?.showLogo ?? true}
+                                onChange={(e) => {
+                                  updateBlock(selectedBlock.id, {
+                                    headerConfig: {
+                                      ...selectedBlock.headerConfig!,
+                                      showLogo: e.target.checked,
+                                    }
+                                  });
+                                }}
+                                className="h-4 w-4 rounded border-border"
+                              />
+                              <span className="text-xs">Show Logo</span>
+                            </div>
+                            {selectedBlock.headerConfig?.showLogo && (
+                              <Select
+                                value={selectedBlock.headerConfig?.logoId || 'drop-dead-main'}
+                                onValueChange={(v) => {
+                                  updateBlock(selectedBlock.id, {
+                                    headerConfig: {
+                                      ...selectedBlock.headerConfig!,
+                                      logoId: v,
+                                    }
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {brandLogos.map((logo) => (
+                                    <SelectItem key={logo.id} value={logo.id}>{logo.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedBlock.headerConfig?.showNavLinks ?? true}
+                              onChange={(e) => {
+                                updateBlock(selectedBlock.id, {
+                                  headerConfig: {
+                                    ...selectedBlock.headerConfig!,
+                                    showNavLinks: e.target.checked,
+                                  }
+                                });
+                              }}
+                              className="h-4 w-4 rounded border-border"
+                            />
+                            <span className="text-xs">Show Navigation Links</span>
+                          </div>
+                        </div>
+
+                        {selectedBlock.headerConfig?.showNavLinks && (
+                          <div className="space-y-3">
+                            <Label className="text-xs font-medium">Navigation Links</Label>
+                            {(selectedBlock.navLinks || []).map((link, index) => (
+                              <div key={index} className="space-y-1.5 p-2 border rounded-md bg-muted/30">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={link.enabled}
+                                    onChange={(e) => {
+                                      const newLinks = [...(selectedBlock.navLinks || [])];
+                                      newLinks[index] = { ...newLinks[index], enabled: e.target.checked };
+                                      updateBlock(selectedBlock.id, { navLinks: newLinks });
+                                    }}
+                                    className="h-4 w-4 rounded border-border"
+                                  />
+                                  <Input
+                                    value={link.label}
+                                    onChange={(e) => {
+                                      const newLinks = [...(selectedBlock.navLinks || [])];
+                                      newLinks[index] = { ...newLinks[index], label: e.target.value };
+                                      updateBlock(selectedBlock.id, { navLinks: newLinks });
+                                    }}
+                                    placeholder="Link label"
+                                    className="h-7 text-xs flex-1"
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-destructive"
+                                    onClick={() => {
+                                      const newLinks = (selectedBlock.navLinks || []).filter((_, i) => i !== index);
+                                      updateBlock(selectedBlock.id, { navLinks: newLinks });
+                                    }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                                {link.enabled && (
+                                  <Input
+                                    value={link.url}
+                                    onChange={(e) => {
+                                      const newLinks = [...(selectedBlock.navLinks || [])];
+                                      newLinks[index] = { ...newLinks[index], url: e.target.value };
+                                      updateBlock(selectedBlock.id, { navLinks: newLinks });
+                                    }}
+                                    placeholder="https://..."
+                                    className="h-7 text-xs"
+                                  />
+                                )}
+                              </div>
+                            ))}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => {
+                                const newLinks = [...(selectedBlock.navLinks || []), { label: 'New Link', url: '#', enabled: true }];
+                                updateBlock(selectedBlock.id, { navLinks: newLinks });
+                              }}
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Add Link
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+
                     {/* Common settings */}
                     {selectedBlock.type !== 'divider' && selectedBlock.type !== 'spacer' && (
                       <>
@@ -2138,6 +2329,38 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                                 </div>
                               )}
                               <p style={{ margin: 0, fontSize: '11px', opacity: 0.8 }}>{footerConfig.copyrightText}</p>
+                            </div>
+                          );
+                        })()}
+                        {block.type === 'header' && (() => {
+                          const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main', showNavLinks: true };
+                          const logo = brandLogos.find(l => l.id === headerConfig.logoId) || brandLogos[0];
+                          const enabledLinks = (block.navLinks || []).filter(l => l.enabled);
+                          
+                          return (
+                            <div className="flex items-center justify-between">
+                              {headerConfig.showLogo && (
+                                <div>
+                                  <img 
+                                    src={logo.src} 
+                                    alt={logo.name} 
+                                    style={{ maxWidth: '100px', height: 'auto', filter: block.styles.textColor === '#f5f0e8' || block.styles.textColor === '#ffffff' ? 'invert(1)' : 'none' }}
+                                  />
+                                </div>
+                              )}
+                              {headerConfig.showNavLinks && enabledLinks.length > 0 && (
+                                <div className="flex items-center gap-3">
+                                  {enabledLinks.map((link, index) => (
+                                    <span 
+                                      key={index}
+                                      className="text-xs font-medium"
+                                      style={{ color: block.styles.textColor || '#f5f0e8' }}
+                                    >
+                                      {link.label}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
