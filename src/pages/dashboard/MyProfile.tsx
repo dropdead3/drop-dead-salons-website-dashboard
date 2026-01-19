@@ -205,27 +205,38 @@ export default function MyProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Save location schedules to the database
-    const schedulePromises = Object.entries(formData.location_schedules).map(
-      ([locationId, workDays]) => 
-        upsertSchedule.mutateAsync({ locationId, workDays })
-    );
+    // Save location schedules to the database - only for selected locations
+    const schedulePromises = formData.location_ids
+      .filter(locationId => formData.location_schedules[locationId] !== undefined)
+      .map(locationId => 
+        upsertSchedule.mutateAsync({ 
+          locationId, 
+          workDays: formData.location_schedules[locationId] || [] 
+        })
+      );
     
     try {
-      await Promise.all(schedulePromises);
+      if (schedulePromises.length > 0) {
+        await Promise.all(schedulePromises);
+      }
     } catch (error) {
       console.error('Error saving schedules:', error);
-      // Continue with profile update even if schedules fail
+      toast.error('Failed to save work schedule');
+      return; // Stop if schedules fail - they're important
     }
     
-    // Update profile (excluding location_schedules which is stored separately)
-    const { location_schedules, ...profileData } = formData;
+    // Update profile (excluding location_schedules and work_days which are stored separately)
+    const { location_schedules, work_days, ...profileData } = formData;
     updateProfile.mutate(profileData as any, {
       onSuccess: () => {
         setInitialFormData(formData);
         setHasUnsavedChanges(false);
         setShowUnsavedToast(false);
         toast.success('Profile saved successfully!');
+      },
+      onError: (error) => {
+        console.error('Profile update error:', error);
+        // Toast is already shown by the hook
       }
     });
   };
