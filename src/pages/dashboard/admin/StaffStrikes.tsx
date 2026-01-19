@@ -60,6 +60,7 @@ import {
   StrikeSeverity,
 } from '@/hooks/useStaffStrikes';
 import { AddStrikeDialog } from '@/components/dashboard/AddStrikeDialog';
+import { AddStrikeToStaffDialog } from '@/components/dashboard/AddStrikeToStaffDialog';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { cn } from '@/lib/utils';
 
@@ -172,77 +173,8 @@ export default function StaffStrikes() {
               Track write-ups, complaints, warnings, and issues for team members.
             </p>
           </div>
-          <Select
-            value={selectedEmployee}
-            onValueChange={(value) => {
-              setSelectedEmployee(value);
-              const emp = team.find((t) => t.user_id === value);
-              if (emp) {
-                // Open dialog to add strike
-              }
-            }}
-          >
-            <SelectTrigger className="w-64">
-              <SelectValue placeholder="Add strike for employee..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" disabled>Select employee to add strike</SelectItem>
-              {team.map((member) => (
-                <SelectItem key={member.user_id} value={member.user_id}>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-5 h-5">
-                      <AvatarImage src={member.photo_url || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {member.full_name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    {member.display_name || member.full_name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <AddStrikeToStaffDialog />
         </div>
-
-        {/* Quick Action: Add strike dialog for selected employee */}
-        {selectedEmployee !== 'all' && (
-          <Card className="mb-6 border-destructive/30 bg-destructive/5">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 text-destructive" />
-                  <span>
-                    Add strike for{' '}
-                    <strong>
-                      {team.find((t) => t.user_id === selectedEmployee)?.display_name ||
-                        team.find((t) => t.user_id === selectedEmployee)?.full_name}
-                    </strong>
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedEmployee('all')}>
-                    Cancel
-                  </Button>
-                  <AddStrikeDialog
-                    userId={selectedEmployee}
-                    userName={
-                      team.find((t) => t.user_id === selectedEmployee)?.display_name ||
-                      team.find((t) => t.user_id === selectedEmployee)?.full_name ||
-                      ''
-                    }
-                    onSuccess={() => setSelectedEmployee('all')}
-                    trigger={
-                      <Button variant="destructive" size="sm">
-                        <AlertTriangle className="w-4 h-4 mr-2" />
-                        Add Strike
-                      </Button>
-                    }
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
