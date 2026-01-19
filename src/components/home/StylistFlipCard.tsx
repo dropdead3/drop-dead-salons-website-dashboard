@@ -91,7 +91,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
               ))}
             </div>
             
-            <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform transition-transform duration-500 group-hover:translate-y-[-4px]">
+            <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform translate-y-6 transition-transform duration-500 ease-out group-hover:translate-y-0">
               <div className="flex items-center gap-1.5 mb-1">
                 <p className="text-xs tracking-[0.2em] text-white/70">{stylist.level}</p>
                 <TooltipProvider delayDuration={100}>
@@ -157,7 +157,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
 
               {/* Tap hint - visible on hover */}
               {stylist.bio && (
-                <p className="text-[10px] text-white/40 mt-3 text-center tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <p className="text-[10px] text-white/40 mt-3 text-center tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
                   Tap to learn more
                 </p>
               )}
