@@ -144,7 +144,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
             <div className="relative z-10 mt-auto">
               {/* Tap hint - positioned below buttons, revealed on hover */}
               <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100">
-                <p className="text-xs text-foreground/60 tracking-wide font-aeonik animate-pulse">
+                <p className="text-sm text-foreground/60 tracking-wide font-aeonik animate-pulse">
                   Tap here to see inside
                 </p>
               </div>
