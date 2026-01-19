@@ -98,7 +98,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
     <motion.div
       ref={cardRef}
       style={{ opacity, y, scale }}
-      className="group relative h-[420px] md:h-[460px] cursor-pointer"
+      className="group relative h-[420px] md:h-[460px] cursor-pointer perspective-1000"
       onClick={handleFlip}
     >
       <div
