@@ -450,6 +450,83 @@ export default function LocationsManager() {
               </TabsContent>
               
               <TabsContent value="hours" className="space-y-4 py-4">
+                {/* Weekend Presets */}
+                <div className="flex flex-wrap gap-2 pb-4 border-b">
+                  <span className="text-sm text-muted-foreground mr-2">Quick presets:</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Set Sat & Sun to closed
+                      setFormData(f => ({
+                        ...f,
+                        hours_json: {
+                          ...f.hours_json,
+                          saturday: { closed: true },
+                          sunday: { closed: true },
+                        },
+                      }));
+                    }}
+                  >
+                    Close Weekends
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Set Sat to 9-3, Sun closed
+                      setFormData(f => ({
+                        ...f,
+                        hours_json: {
+                          ...f.hours_json,
+                          saturday: { open: '09:00', close: '15:00', closed: false },
+                          sunday: { closed: true },
+                        },
+                      }));
+                    }}
+                  >
+                    Sat 9–3, Sun Closed
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Set both Sat & Sun to reduced hours
+                      setFormData(f => ({
+                        ...f,
+                        hours_json: {
+                          ...f.hours_json,
+                          saturday: { open: '10:00', close: '16:00', closed: false },
+                          sunday: { open: '11:00', close: '15:00', closed: false },
+                        },
+                      }));
+                    }}
+                  >
+                    Weekend Reduced Hours
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Set Mon closed (common for salons)
+                      setFormData(f => ({
+                        ...f,
+                        hours_json: {
+                          ...f.hours_json,
+                          monday: { closed: true },
+                          sunday: { closed: true },
+                        },
+                      }));
+                    }}
+                  >
+                    Mon & Sun Closed
+                  </Button>
+                </div>
+
                 <p className="text-sm text-muted-foreground mb-4">
                   Set operating hours for each day of the week
                 </p>

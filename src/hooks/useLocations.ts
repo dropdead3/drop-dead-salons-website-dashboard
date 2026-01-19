@@ -115,6 +115,27 @@ export function isClosedForHoliday(holidayClosures: HolidayClosure[] | null): Ho
   return holidayClosures.find(h => h.date === today) || null;
 }
 
+// Check if location is closed today based on regular hours
+export function isClosedToday(hoursJson: HoursJson | null): boolean {
+  if (!hoursJson) return false;
+  
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+  const today = dayNames[new Date().getDay()];
+  return hoursJson[today]?.closed === true;
+}
+
+// Get today's hours
+export function getTodayHours(hoursJson: HoursJson | null): { open: string; close: string } | null {
+  if (!hoursJson) return null;
+  
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+  const today = dayNames[new Date().getDay()];
+  const dayHours = hoursJson[today];
+  
+  if (dayHours?.closed || !dayHours?.open || !dayHours?.close) return null;
+  return { open: dayHours.open, close: dayHours.close };
+}
+
 export function useLocations() {
   return useQuery({
     queryKey: ['locations'],
