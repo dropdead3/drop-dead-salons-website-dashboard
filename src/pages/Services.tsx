@@ -286,38 +286,42 @@ export default function Services() {
       <div ref={sentinelRef} className="h-0" />
 
       {/* Stylist Level Selector + Pricing Note - Sticky */}
-      <div className={`sticky top-[120px] z-30 backdrop-blur-md py-4 transition-all duration-300 ease-out ${isSticky ? 'bg-foreground/10 shadow-lg' : 'bg-background/95'}`}>
-        <div className="container mx-auto px-6 lg:px-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
-            className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
-          >
-            <div className="flex items-center gap-4">
-              <AnimatePresence>
-                {isSticky && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: editorialEasing }}
-                    className="font-sans font-medium text-sm text-foreground whitespace-nowrap"
-                  >
-                    See Pricing by Level
-                  </motion.span>
-                )}
-              </AnimatePresence>
-              <StylistLevelSelector 
-                selectedLevel={selectedLevel}
-                onLevelChange={setSelectedLevel}
-              />
-            </div>
-            <p className="text-sm text-muted-foreground font-sans">
-              <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
-            </p>
-          </motion.div>
+      <div className={`sticky top-[120px] z-30 transition-all duration-300 ease-out ${isSticky ? 'bg-foreground/10 shadow-lg' : 'bg-background/95'}`}>
+        <div className="backdrop-blur-md py-4">
+          <div className="container mx-auto px-6 lg:px-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={heroInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
+              className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
+            >
+              <div className="flex items-center gap-4">
+                <AnimatePresence>
+                  {isSticky && (
+                    <motion.span
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3, ease: editorialEasing }}
+                      className="font-sans font-medium text-sm text-foreground whitespace-nowrap"
+                    >
+                      See Pricing by Level
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+                <StylistLevelSelector 
+                  selectedLevel={selectedLevel}
+                  onLevelChange={setSelectedLevel}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground font-sans">
+                <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
+              </p>
+            </motion.div>
+          </div>
         </div>
+        {/* Bottom blur gradient for smooth scroll transition */}
+        <div className="h-6 bg-gradient-to-b from-background/80 to-transparent backdrop-blur-sm pointer-events-none" />
       </div>
 
       {/* New Client Notice */}
