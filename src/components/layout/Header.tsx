@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ArrowRight, MoreVertical } from "lucide-react";
+import { Menu, X, ArrowRight, MoreVertical, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/assets/drop-dead-logo.svg";
 import LogoIcon from "@/assets/dd-secondary-logo.svg";
@@ -11,13 +11,25 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 const navLinks = [
   { href: "/services", label: "Services" },
-  { href: "/about", label: "About" },
   { href: "/extensions", label: "Hair Extensions" },
   { href: "/careers", label: "Join The Team" },
   { href: "/gallery", label: "Gallery" },
+];
+
+const aboutLinks = [
+  { href: "/about", label: "About Us" },
+  { href: "/policies", label: "Salon Policies" },
 ];
 
 export function Header() {
@@ -196,14 +208,91 @@ export function Header() {
               }}
               transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
             >
-              {navLinks.map((link, index) => (
+              {/* Services Link */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  duration: 0.4, 
+                  delay: 0.1,
+                  ease: [0.25, 0.1, 0.25, 1] 
+                }}
+              >
+                <Link
+                  to="/services"
+                  className={cn(
+                    "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none",
+                    location.pathname === "/services"
+                      ? "opacity-100"
+                      : "opacity-70 hover:opacity-100"
+                  )}
+                >
+                  <span className="transition-transform duration-300 group-hover:-translate-x-1">
+                    Services
+                  </span>
+                  <ArrowRight 
+                    size={14} 
+                    className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" 
+                  />
+                </Link>
+              </motion.div>
+
+              {/* About Dropdown */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  duration: 0.4, 
+                  delay: 0.15,
+                  ease: [0.25, 0.1, 0.25, 1] 
+                }}
+              >
+                <NavigationMenu>
+                  <NavigationMenuList>
+                    <NavigationMenuItem>
+                      <NavigationMenuTrigger 
+                        className={cn(
+                          "text-sm tracking-wide font-sans font-medium transition-opacity leading-none bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent px-0 h-auto",
+                          (location.pathname === "/about" || location.pathname === "/policies")
+                            ? "opacity-100"
+                            : "opacity-70 hover:opacity-100"
+                        )}
+                      >
+                        About
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <ul className="grid w-[180px] gap-1 p-2 bg-background">
+                          {aboutLinks.map((link) => (
+                            <li key={link.href}>
+                              <NavigationMenuLink asChild>
+                                <Link
+                                  to={link.href}
+                                  className={cn(
+                                    "block select-none rounded-md px-3 py-2 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                                    location.pathname === link.href && "bg-accent/50"
+                                  )}
+                                >
+                                  {link.label}
+                                </Link>
+                              </NavigationMenuLink>
+                            </li>
+                          ))}
+                        </ul>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  </NavigationMenuList>
+                </NavigationMenu>
+              </motion.div>
+
+              {/* Remaining Nav Links */}
+              {navLinks.slice(1).map((link, index) => (
                 <motion.div
                   key={link.href}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ 
                     duration: 0.4, 
-                    delay: 0.1 + index * 0.05,
+                    delay: 0.2 + index * 0.05,
                     ease: [0.25, 0.1, 0.25, 1] 
                   }}
                 >
@@ -339,7 +428,32 @@ export function Header() {
               className="lg:hidden bg-background border-t border-border overflow-hidden"
             >
               <nav className="container mx-auto px-6 py-8 flex flex-col gap-6">
-                {navLinks.map((link) => (
+                <Link
+                  to="/services"
+                  className={cn(
+                    "text-lg font-serif tracking-wide transition-opacity",
+                    location.pathname === "/services"
+                      ? "opacity-100"
+                      : "opacity-60"
+                  )}
+                >
+                  Services
+                </Link>
+                {aboutLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className={cn(
+                      "text-lg font-serif tracking-wide transition-opacity pl-4",
+                      location.pathname === link.href
+                        ? "opacity-100"
+                        : "opacity-60"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                {navLinks.slice(1).map((link) => (
                   <Link
                     key={link.href}
                     to={link.href}
