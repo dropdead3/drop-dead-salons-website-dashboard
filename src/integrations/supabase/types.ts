@@ -429,6 +429,57 @@ export type Database = {
         }
         Relationships: []
       }
+      email_themes: {
+        Row: {
+          accent_color: string
+          body_bg: string
+          body_text: string
+          button_bg: string
+          button_text: string
+          created_at: string
+          created_by: string
+          description: string | null
+          divider_color: string
+          header_bg: string
+          header_text: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          body_bg?: string
+          body_text?: string
+          button_bg?: string
+          button_text?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          divider_color?: string
+          header_bg?: string
+          header_text?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          body_bg?: string
+          body_text?: string
+          button_bg?: string
+          button_text?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          divider_color?: string
+          header_bg?: string
+          header_text?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_location_schedules: {
         Row: {
           created_at: string | null
