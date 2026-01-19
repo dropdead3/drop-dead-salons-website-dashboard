@@ -28,6 +28,7 @@ const Index = () => {
       {/* Social proof early for trust */}
       <TestimonialSection />
       <ServicesPreview />
+      <PopularServices />
       <GallerySection />
       {/* Primary conversion CTA */}
       <NewClientSection />
