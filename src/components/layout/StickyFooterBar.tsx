@@ -23,10 +23,16 @@ export function StickyFooterBar() {
   const isBookingPage = location.pathname === "/booking";
 
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+    
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
+      
+      // Detect scroll direction
+      const isScrollingDown = scrollY > lastScrollY;
+      lastScrollY = scrollY;
       
       // Show after scrolling past 50% of first viewport
       const pastThreshold = scrollY > windowHeight * 0.5;
@@ -34,7 +40,8 @@ export function StickyFooterBar() {
       // Hide when near bottom (within 1.5 viewport heights of the bottom)
       const nearBottom = scrollY + windowHeight > documentHeight - windowHeight * 1.5;
       
-      setIsVisible(pastThreshold && !nearBottom);
+      // Show on scroll down, hide on scroll up
+      setIsVisible(pastThreshold && !nearBottom && isScrollingDown);
     };
 
     window.addEventListener("scroll", handleScroll);
