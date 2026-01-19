@@ -30,7 +30,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
-import { StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
+import { StylistsOverviewCard, StaffOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
 import DD75Logo from '@/assets/dd75-logo.svg';
 import DD75Icon from '@/assets/dd75-icon.svg';
 
@@ -277,9 +277,10 @@ export default function DashboardHome() {
           </Card>
         </div>
 
-        {/* Leadership-only: Stylists Overview */}
+        {/* Leadership-only: Team & Stylists Overview */}
         {isLeadership && (
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <StaffOverviewCard />
             <StylistsOverviewCard />
           </div>
         )}
