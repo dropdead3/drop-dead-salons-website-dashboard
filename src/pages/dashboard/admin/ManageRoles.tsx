@@ -80,10 +80,15 @@ export default function ManageRoles() {
 
     users.forEach(user => {
       const accountInfo = getAccountInfo(user.user_id);
-      if (accountInfo?.is_super_admin) stats.super_admin++;
-      user.roles.forEach(role => {
-        stats[role]++;
-      });
+      // Super Admins are counted separately - don't count their regular roles
+      if (accountInfo?.is_super_admin) {
+        stats.super_admin++;
+      } else {
+        // Only count regular roles for non-Super Admin users
+        user.roles.forEach(role => {
+          stats[role]++;
+        });
+      }
     });
 
     return stats;
