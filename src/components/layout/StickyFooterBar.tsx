@@ -79,10 +79,10 @@ export function StickyFooterBar() {
             className="fixed bottom-4 inset-x-0 mx-auto w-fit md:bottom-8 z-40"
           >
             {/* Outer glow ring */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-white/30 via-white/10 to-white/30 rounded-3xl blur-md" />
-            <div className="absolute -inset-0.5 bg-gradient-to-b from-white/20 to-transparent rounded-2xl" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-white/20 via-white/5 to-white/20 rounded-3xl blur-sm" />
+            <div className="absolute -inset-0.5 bg-gradient-to-b from-white/10 to-transparent rounded-2xl" />
             
-            <div className="relative flex items-center gap-2 p-1.5 md:p-2 bg-white/20 backdrop-blur-3xl border border-white/40 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.15),0_0_80px_rgba(255,255,255,0.1),inset_0_1px_0_rgba(255,255,255,0.3),inset_0_-1px_0_rgba(0,0,0,0.05)]">
+            <div className="relative flex items-center gap-2 p-1.5 md:p-2 bg-white/10 backdrop-blur-2xl border-2 border-foreground/40 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.2),0_0_0_1px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.1)]">
               {/* Mobile: Dropdown for locations */}
               <div ref={dropdownRef} className="relative md:hidden">
                 <button
