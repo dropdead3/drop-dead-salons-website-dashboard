@@ -20,6 +20,10 @@ import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
+import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -142,18 +146,26 @@ const websiteNavItems: NavItem[] = [
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
-  const { viewAsRole, setViewAsRole, isViewingAs } = useViewAs();
+  const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
+  
+  // Fetch team members for user impersonation picker
+  const { data: teamMembers = [] } = useTeamDirectory();
 
-  // Use simulated role if viewing as, otherwise use actual roles
-  const roles = isViewingAs && viewAsRole ? [viewAsRole] : actualRoles;
+  // Use simulated role if viewing as a role, or the impersonated user's roles
+  const roles = isViewingAsUser && viewAsUser 
+    ? viewAsUser.roles 
+    : (isViewingAs && viewAsRole ? [viewAsRole] : actualRoles);
   const isAdmin = actualRoles.includes('admin');
   // isCoach should use simulated roles for nav visibility
-  const effectiveIsCoach = isViewingAs ? (viewAsRole === 'admin' || viewAsRole === 'manager') : isCoach;
+  const effectiveIsCoach = isViewingAs 
+    ? (viewAsRole === 'admin' || viewAsRole === 'manager' || viewAsUser?.roles.some(r => r === 'admin' || r === 'manager')) 
+    : isCoach;
 
   // Permission checking that respects View As mode
   // When viewing as a role, we need to simulate that role's permissions
@@ -246,7 +258,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const AccessIcon = getAccessIcon();
 
   const handleSignOut = async () => {
-    setViewAsRole(null); // Clear view as on sign out
+    clearViewAs(); // Clear all view as modes on sign out
     await signOut();
     navigate('/staff-login');
   };
@@ -454,7 +466,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   );
 
 
-  // View As Component for admins - allows viewing dashboard as different roles
+  // View As Component for admins - allows viewing dashboard as different roles or specific users
   const ViewAsToggle = () => {
     if (!isAdmin) return null;
 
@@ -480,8 +492,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       operations_assistant: 'Operations assistant view',
     };
 
+    // Filter team members based on search (exclude self)
+    const filteredMembers = teamMembers
+      .filter(member => member.user_id !== user?.id)
+      .filter(member => 
+        !userSearch || 
+        member.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+        member.email?.toLowerCase().includes(userSearch.toLowerCase())
+      )
+      .slice(0, 8); // Limit to 8 results for performance
+
+    // Get display text for button
+    const getButtonText = () => {
+      if (isViewingAsUser && viewAsUser) {
+        return `Viewing as ${viewAsUser.full_name.split(' ')[0]}`;
+      }
+      if (viewAsRole) {
+        return `Viewing as ${ROLE_LABELS[viewAsRole]}`;
+      }
+      return 'View As';
+    };
+
     return (
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={(open) => { if (!open) setUserSearch(''); }}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant={isViewingAs ? "default" : "outline"} 
@@ -492,34 +525,42 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
           >
             {isViewingAs ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            <span className="hidden sm:inline">
-              {isViewingAs ? `Viewing as ${ROLE_LABELS[viewAsRole!]}` : 'View As'}
-            </span>
-            {isViewingAs && (
+            <span className="hidden sm:inline">{getButtonText()}</span>
+            {isViewingAsUser && viewAsUser && (
+              <Avatar className="h-5 w-5 border border-white/50">
+                <AvatarImage src={viewAsUser.photo_url || undefined} />
+                <AvatarFallback className="text-[10px] bg-white/20 text-white">
+                  {viewAsUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+            {viewAsRole && !isViewingAsUser && (
               <Badge 
                 variant="secondary" 
-                className={cn("text-xs px-1.5 py-0 ml-1", roleColors[viewAsRole!])}
+                className={cn("text-xs px-1.5 py-0 ml-1", roleColors[viewAsRole])}
               >
-                {ROLE_LABELS[viewAsRole!]?.charAt(0)}
+                {ROLE_LABELS[viewAsRole]?.charAt(0)}
               </Badge>
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-72 p-2 bg-card border border-border shadow-lg">
+        <DropdownMenuContent align="end" className="w-80 p-2 bg-card border border-border shadow-lg">
           <div className="flex items-center gap-3 px-2 py-3 mb-2">
             <div className="p-2 bg-muted">
               <Eye className="w-5 h-5 text-foreground" />
             </div>
             <div>
               <p className="font-display text-sm font-medium">View Dashboard As</p>
-              <p className="text-xs text-muted-foreground">Preview how other roles see the app</p>
+              <p className="text-xs text-muted-foreground">Preview how roles or team members see the app</p>
             </div>
           </div>
           <DropdownMenuSeparator className="my-2" />
+          
+          {/* Exit button when viewing */}
           {isViewingAs && (
             <>
               <DropdownMenuItem
-                onClick={() => setViewAsRole(null)}
+                onClick={() => clearViewAs()}
                 className="flex items-center gap-3 px-3 py-3 cursor-pointer bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 mb-2"
               >
                 <div className="p-1.5 bg-amber-500 text-white">
@@ -533,16 +574,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <DropdownMenuSeparator className="my-2" />
             </>
           )}
-          <div className="space-y-1">
+
+          {/* Role-based view section */}
+          <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground px-3 py-2">
+            View as Role
+          </DropdownMenuLabel>
+          <div className="space-y-1 mb-2">
             {ALL_ROLES.map(role => {
               const RoleIcon = roleIcons[role];
-              const isSelected = viewAsRole === role;
+              const isSelected = viewAsRole === role && !isViewingAsUser;
               return (
                 <DropdownMenuItem
                   key={role}
                   onClick={() => setViewAsRole(role)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-3 cursor-pointer transition-all group",
+                    "flex items-center gap-3 px-3 py-2 cursor-pointer transition-all group",
                     isSelected && "bg-accent"
                   )}
                 >
@@ -550,11 +596,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     "p-1.5 transition-all border border-transparent group-hover:border-foreground/30",
                     roleColors[role]
                   )}>
-                    <RoleIcon className="w-4 h-4" />
+                    <RoleIcon className="w-3.5 h-3.5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{ROLE_LABELS[role]}</p>
-                    <p className="text-xs text-muted-foreground truncate">{roleDescriptions[role]}</p>
                   </div>
                   {isSelected && (
                     <div className="p-1 bg-amber-500 text-white">
@@ -565,6 +610,75 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               );
             })}
           </div>
+
+          <DropdownMenuSeparator className="my-2" />
+
+          {/* User-specific view section */}
+          <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground px-3 py-2">
+            View as Team Member
+          </DropdownMenuLabel>
+          
+          {/* Search input - use onKeyDown to prevent dropdown from closing */}
+          <div className="px-2 pb-2">
+            <Input
+              placeholder="Search team members..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              className="h-8 text-sm"
+            />
+          </div>
+
+          <ScrollArea className="max-h-48">
+            <div className="space-y-1 px-1">
+              {filteredMembers.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  {userSearch ? 'No team members found' : 'Start typing to search...'}
+                </p>
+              ) : (
+                filteredMembers.map(member => {
+                  const isSelected = viewAsUser?.id === member.user_id;
+                  const memberRoles = member.roles as AppRole[];
+                  const primaryRole = memberRoles[0];
+                  
+                  return (
+                    <DropdownMenuItem
+                      key={member.user_id}
+                      onClick={() => setViewAsUser({
+                        id: member.user_id,
+                        full_name: member.full_name,
+                        photo_url: member.photo_url,
+                        roles: memberRoles,
+                      })}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 cursor-pointer transition-all",
+                        isSelected && "bg-accent"
+                      )}
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={member.photo_url || undefined} />
+                        <AvatarFallback className="text-xs">
+                          {member.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{member.full_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {primaryRole ? ROLE_LABELS[primaryRole] : 'No role'}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <div className="p-1 bg-amber-500 text-white">
+                          <Eye className="w-3 h-3" />
+                        </div>
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -647,13 +761,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <Eye className="w-4 h-4" />
+                {isViewingAsUser && viewAsUser ? (
+                  <Avatar className="h-5 w-5 border border-white/50">
+                    <AvatarImage src={viewAsUser.photo_url || undefined} />
+                    <AvatarFallback className="text-[10px] bg-white/20 text-white">
+                      {viewAsUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </motion.div>
-              <span>Viewing as <strong>{ROLE_LABELS[viewAsRole!]}</strong> – This is a preview only</span>
+              <span>
+                {isViewingAsUser && viewAsUser ? (
+                  <>Viewing as <strong>{viewAsUser.full_name}</strong> – This is a preview only</>
+                ) : (
+                  <>Viewing as <strong>{viewAsRole ? ROLE_LABELS[viewAsRole] : 'Unknown'}</strong> – This is a preview only</>
+                )}
+              </span>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setViewAsRole(null)}
+                onClick={() => clearViewAs()}
                 className="h-6 px-2 text-white hover:bg-amber-600 hover:text-white ml-2"
               >
                 <X className="w-3 h-3 mr-1" />

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { toast } from 'sonner';
 
 interface LocationSchedule {
@@ -27,21 +28,25 @@ interface ScheduleChangeRequest {
   updated_at: string;
 }
 
+/**
+ * Fetches location schedules for the effective user.
+ * When a super admin is impersonating a user, this returns that user's schedules.
+ */
 export function useLocationSchedules() {
-  const { user } = useAuth();
+  const effectiveUserId = useEffectiveUserId();
 
   return useQuery({
-    queryKey: ['location-schedules', user?.id],
+    queryKey: ['location-schedules', effectiveUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_location_schedules')
         .select('*')
-        .eq('user_id', user!.id);
+        .eq('user_id', effectiveUserId!);
 
       if (error) throw error;
       return data as LocationSchedule[];
     },
-    enabled: !!user,
+    enabled: !!effectiveUserId,
   });
 }
 

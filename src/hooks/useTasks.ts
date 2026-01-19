@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { toast } from 'sonner';
 
 export interface Task {
@@ -15,17 +16,22 @@ export interface Task {
   completed_at: string | null;
 }
 
+/**
+ * Fetches and manages tasks for the effective user.
+ * When a super admin is impersonating a user, this shows that user's tasks.
+ */
 export function useTasks() {
   const { user } = useAuth();
+  const effectiveUserId = useEffectiveUserId();
   const queryClient = useQueryClient();
 
   const tasksQuery = useQuery({
-    queryKey: ['tasks', user?.id],
+    queryKey: ['tasks', effectiveUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', effectiveUserId!)
         .order('is_completed', { ascending: true })
         .order('priority', { ascending: false })
         .order('created_at', { ascending: false });
@@ -33,7 +39,7 @@ export function useTasks() {
       if (error) throw error;
       return data as Task[];
     },
-    enabled: !!user?.id,
+    enabled: !!effectiveUserId,
   });
 
   const createTask = useMutation({
