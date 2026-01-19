@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -12,6 +13,7 @@ import {
   Scissors,
   Headset,
   HandHelping,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
@@ -22,6 +24,16 @@ import {
   groupByCategory,
 } from '@/hooks/useDashboardVisibility';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -42,6 +54,7 @@ export default function CommandCenterConsole() {
   const { data: visibilityData, isLoading } = useDashboardVisibility();
   const toggleVisibility = useToggleDashboardVisibility();
   const bulkUpdate = useBulkUpdateVisibility();
+  const [confirmHideRole, setConfirmHideRole] = useState<AppRole | null>(null);
 
   const elements = visibilityData ? groupVisibilityByElement(visibilityData) : [];
   const categories = groupByCategory(elements);
@@ -134,7 +147,7 @@ export default function CommandCenterConsole() {
                       size="sm"
                       variant={noneVisible ? "default" : "outline"}
                       className="flex-1 text-xs h-7"
-                      onClick={() => handleBulkToggle(role, false)}
+                      onClick={() => setConfirmHideRole(role)}
                       disabled={noneVisible || bulkUpdate.isPending}
                     >
                       <EyeOff className="w-3 h-3 mr-1" />
@@ -243,6 +256,37 @@ export default function CommandCenterConsole() {
           </Card>
         )}
       </div>
+
+      {/* Confirmation Dialog for Bulk Hide */}
+      <AlertDialog open={!!confirmHideRole} onOpenChange={() => setConfirmHideRole(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Hide All Dashboard Elements?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will hide all dashboard elements for the{' '}
+              <strong>{confirmHideRole && ROLE_CONFIG[confirmHideRole].label}</strong> role.
+              Users with this role won't see any of these elements on their dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmHideRole) {
+                  handleBulkToggle(confirmHideRole, false);
+                  setConfirmHideRole(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Hide All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
