@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   Type,
   Image,
@@ -41,10 +49,13 @@ import {
   Variable,
   Upload,
   Loader2,
+  Save,
+  Sparkles,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Block types for the email editor
 type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer';
@@ -317,8 +328,158 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
   const [isUploading, setIsUploading] = useState(false);
   const [rawHtml, setRawHtml] = useState(initialHtml);
   const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead');
+  const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
+  const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
+  const [isSavingTheme, setIsSavingTheme] = useState(false);
+  const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
+    name: '',
+    description: '',
+    colors: {
+      headerBg: '#1a1a1a',
+      headerText: '#f5f0e8',
+      bodyBg: '#f5f0e8',
+      bodyText: '#1a1a1a',
+      buttonBg: '#1a1a1a',
+      buttonText: '#f5f0e8',
+      accentColor: '#d4c5b0',
+      dividerColor: '#d4c5b0',
+    },
+  });
 
+  const { user } = useAuth();
   const selectedBlock = blocks.find(b => b.id === selectedBlockId);
+
+  // Fetch custom themes on mount
+  useEffect(() => {
+    const fetchCustomThemes = async () => {
+      const { data, error } = await supabase
+        .from('email_themes')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching custom themes:', error);
+        return;
+      }
+
+      const themes: EmailTheme[] = (data || []).map(t => ({
+        id: `custom-${t.id}`,
+        name: t.name,
+        description: t.description || 'Custom theme',
+        colors: {
+          headerBg: t.header_bg,
+          headerText: t.header_text,
+          bodyBg: t.body_bg,
+          bodyText: t.body_text,
+          buttonBg: t.button_bg,
+          buttonText: t.button_text,
+          accentColor: t.accent_color,
+          dividerColor: t.divider_color,
+        },
+      }));
+      setCustomThemes(themes);
+    };
+
+    fetchCustomThemes();
+  }, []);
+
+  const handleSaveCustomTheme = async () => {
+    if (!newTheme.name.trim()) {
+      toast.error('Please enter a theme name');
+      return;
+    }
+    if (!user?.id) {
+      toast.error('You must be logged in to save themes');
+      return;
+    }
+
+    setIsSavingTheme(true);
+    try {
+      const { data, error } = await supabase
+        .from('email_themes')
+        .insert({
+          name: newTheme.name,
+          description: newTheme.description,
+          header_bg: newTheme.colors.headerBg,
+          header_text: newTheme.colors.headerText,
+          body_bg: newTheme.colors.bodyBg,
+          body_text: newTheme.colors.bodyText,
+          button_bg: newTheme.colors.buttonBg,
+          button_text: newTheme.colors.buttonText,
+          accent_color: newTheme.colors.accentColor,
+          divider_color: newTheme.colors.dividerColor,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newCustomTheme: EmailTheme = {
+        id: `custom-${data.id}`,
+        name: data.name,
+        description: data.description || 'Custom theme',
+        colors: {
+          headerBg: data.header_bg,
+          headerText: data.header_text,
+          bodyBg: data.body_bg,
+          bodyText: data.body_text,
+          buttonBg: data.button_bg,
+          buttonText: data.button_text,
+          accentColor: data.accent_color,
+          dividerColor: data.divider_color,
+        },
+      };
+
+      setCustomThemes(prev => [...prev, newCustomTheme]);
+      setIsCreateThemeOpen(false);
+      setNewTheme({
+        name: '',
+        description: '',
+        colors: {
+          headerBg: '#1a1a1a',
+          headerText: '#f5f0e8',
+          bodyBg: '#f5f0e8',
+          bodyText: '#1a1a1a',
+          buttonBg: '#1a1a1a',
+          buttonText: '#f5f0e8',
+          accentColor: '#d4c5b0',
+          dividerColor: '#d4c5b0',
+        },
+      });
+      toast.success('Custom theme saved!');
+    } catch (error: any) {
+      console.error('Error saving theme:', error);
+      toast.error('Failed to save theme');
+    } finally {
+      setIsSavingTheme(false);
+    }
+  };
+
+  const handleDeleteCustomTheme = async (themeId: string) => {
+    const dbId = themeId.replace('custom-', '');
+    
+    try {
+      const { error } = await supabase
+        .from('email_themes')
+        .delete()
+        .eq('id', dbId);
+
+      if (error) throw error;
+
+      setCustomThemes(prev => prev.filter(t => t.id !== themeId));
+      if (selectedTheme === themeId) {
+        setSelectedTheme('drop-dead');
+      }
+      toast.success('Theme deleted');
+    } catch (error: any) {
+      console.error('Error deleting theme:', error);
+      toast.error('Failed to delete theme');
+    }
+  };
+
+  // Combined themes (built-in + custom)
+  const allThemes = [...emailThemes, ...customThemes];
 
   const updateBlocksAndHtml = useCallback((newBlocks: EmailBlock[]) => {
     setBlocks(newBlocks);
@@ -429,7 +590,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
   };
 
   const applyTheme = (themeId: string) => {
-    const theme = emailThemes.find(t => t.id === themeId);
+    const theme = allThemes.find(t => t.id === themeId);
     if (!theme) return;
 
     setSelectedTheme(themeId);
@@ -515,48 +676,272 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
             <div className="space-y-4">
               {/* Theme Selector */}
               <div>
-                <div className="font-medium text-sm mb-2 flex items-center gap-2">
-                  <Palette className="w-4 h-4" />
-                  Color Theme
-                </div>
-                <div className="grid grid-cols-1 gap-2">
-                  {emailThemes.map((theme) => (
-                    <button
-                      key={theme.id}
-                      onClick={() => applyTheme(theme.id)}
-                      className={cn(
-                        "p-2 rounded-lg border text-left transition-all hover:border-primary",
-                        selectedTheme === theme.id && "border-primary ring-1 ring-primary"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        {/* Color preview dots */}
-                        <div className="flex gap-0.5">
-                          <div 
-                            className="w-3 h-3 rounded-full border border-border" 
-                            style={{ backgroundColor: theme.colors.headerBg }}
-                          />
-                          <div 
-                            className="w-3 h-3 rounded-full border border-border" 
-                            style={{ backgroundColor: theme.colors.bodyBg }}
-                          />
-                          <div 
-                            className="w-3 h-3 rounded-full border border-border" 
-                            style={{ backgroundColor: theme.colors.buttonBg }}
-                          />
-                          <div 
-                            className="w-3 h-3 rounded-full border border-border" 
-                            style={{ backgroundColor: theme.colors.accentColor }}
+                <div className="font-medium text-sm mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Palette className="w-4 h-4" />
+                    Color Theme
+                  </div>
+                  <Dialog open={isCreateThemeOpen} onOpenChange={setIsCreateThemeOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-6 text-xs gap-1">
+                        <Plus className="w-3 h-3" />
+                        New
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <Sparkles className="w-5 h-5" />
+                          Create Custom Theme
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Theme Name</Label>
+                          <Input
+                            value={newTheme.name}
+                            onChange={(e) => setNewTheme(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="My Brand Theme"
                           />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium truncate">{theme.name}</div>
-                          <div className="text-[10px] text-muted-foreground truncate">{theme.description}</div>
+                        <div className="space-y-2">
+                          <Label>Description</Label>
+                          <Input
+                            value={newTheme.description}
+                            onChange={(e) => setNewTheme(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="Brief description..."
+                          />
+                        </div>
+                        
+                        {/* Color preview */}
+                        <div className="p-3 rounded-lg border">
+                          <div className="text-xs font-medium mb-2">Preview</div>
+                          <div className="rounded-lg overflow-hidden shadow-sm">
+                            <div 
+                              className="p-3 text-center text-sm font-medium"
+                              style={{ backgroundColor: newTheme.colors.headerBg, color: newTheme.colors.headerText }}
+                            >
+                              Header Preview
+                            </div>
+                            <div 
+                              className="p-3 text-sm"
+                              style={{ backgroundColor: newTheme.colors.bodyBg, color: newTheme.colors.bodyText }}
+                            >
+                              Body content preview text
+                              <div className="mt-2 flex justify-center">
+                                <span
+                                  className="px-4 py-1 rounded text-xs font-medium"
+                                  style={{ backgroundColor: newTheme.colors.buttonBg, color: newTheme.colors.buttonText }}
+                                >
+                                  Button
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Color pickers grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Header BG</Label>
+                            <ColorPicker
+                              value={newTheme.colors.headerBg}
+                              onChange={(v) => setNewTheme(prev => ({ 
+                                ...prev, 
+                                colors: { ...prev.colors, headerBg: v } 
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Header Text</Label>
+                            <ColorPicker
+                              value={newTheme.colors.headerText}
+                              onChange={(v) => setNewTheme(prev => ({ 
+                                ...prev, 
+                                colors: { ...prev.colors, headerText: v } 
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Body BG</Label>
+                            <ColorPicker
+                              value={newTheme.colors.bodyBg}
+                              onChange={(v) => setNewTheme(prev => ({ 
+                                ...prev, 
+                                colors: { ...prev.colors, bodyBg: v } 
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Body Text</Label>
+                            <ColorPicker
+                              value={newTheme.colors.bodyText}
+                              onChange={(v) => setNewTheme(prev => ({ 
+                                ...prev, 
+                                colors: { ...prev.colors, bodyText: v } 
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Button BG</Label>
+                            <ColorPicker
+                              value={newTheme.colors.buttonBg}
+                              onChange={(v) => setNewTheme(prev => ({ 
+                                ...prev, 
+                                colors: { ...prev.colors, buttonBg: v } 
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Button Text</Label>
+                            <ColorPicker
+                              value={newTheme.colors.buttonText}
+                              onChange={(v) => setNewTheme(prev => ({ 
+                                ...prev, 
+                                colors: { ...prev.colors, buttonText: v } 
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Accent</Label>
+                            <ColorPicker
+                              value={newTheme.colors.accentColor}
+                              onChange={(v) => setNewTheme(prev => ({ 
+                                ...prev, 
+                                colors: { ...prev.colors, accentColor: v } 
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Divider</Label>
+                            <ColorPicker
+                              value={newTheme.colors.dividerColor}
+                              onChange={(v) => setNewTheme(prev => ({ 
+                                ...prev, 
+                                colors: { ...prev.colors, dividerColor: v } 
+                              }))}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </button>
-                  ))}
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCreateThemeOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSaveCustomTheme} disabled={isSavingTheme}>
+                          {isSavingTheme ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          ) : (
+                            <Save className="w-4 h-4 mr-2" />
+                          )}
+                          Save Theme
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
+                <ScrollArea className="h-[200px]">
+                  <div className="grid grid-cols-1 gap-2 pr-2">
+                    {/* Built-in themes */}
+                    {emailThemes.map((theme) => (
+                      <button
+                        key={theme.id}
+                        onClick={() => applyTheme(theme.id)}
+                        className={cn(
+                          "p-2 rounded-lg border text-left transition-all hover:border-primary",
+                          selectedTheme === theme.id && "border-primary ring-1 ring-primary"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-0.5">
+                            <div 
+                              className="w-3 h-3 rounded-full border border-border" 
+                              style={{ backgroundColor: theme.colors.headerBg }}
+                            />
+                            <div 
+                              className="w-3 h-3 rounded-full border border-border" 
+                              style={{ backgroundColor: theme.colors.bodyBg }}
+                            />
+                            <div 
+                              className="w-3 h-3 rounded-full border border-border" 
+                              style={{ backgroundColor: theme.colors.buttonBg }}
+                            />
+                            <div 
+                              className="w-3 h-3 rounded-full border border-border" 
+                              style={{ backgroundColor: theme.colors.accentColor }}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium truncate">{theme.name}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">{theme.description}</div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                    
+                    {/* Custom themes */}
+                    {customThemes.length > 0 && (
+                      <>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide pt-2 pb-1 font-medium">
+                          Custom Themes
+                        </div>
+                        {customThemes.map((theme) => (
+                          <div
+                            key={theme.id}
+                            className={cn(
+                              "p-2 rounded-lg border text-left transition-all hover:border-primary group relative",
+                              selectedTheme === theme.id && "border-primary ring-1 ring-primary"
+                            )}
+                          >
+                            <button
+                              onClick={() => applyTheme(theme.id)}
+                              className="w-full text-left"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="flex gap-0.5">
+                                  <div 
+                                    className="w-3 h-3 rounded-full border border-border" 
+                                    style={{ backgroundColor: theme.colors.headerBg }}
+                                  />
+                                  <div 
+                                    className="w-3 h-3 rounded-full border border-border" 
+                                    style={{ backgroundColor: theme.colors.bodyBg }}
+                                  />
+                                  <div 
+                                    className="w-3 h-3 rounded-full border border-border" 
+                                    style={{ backgroundColor: theme.colors.buttonBg }}
+                                  />
+                                  <div 
+                                    className="w-3 h-3 rounded-full border border-border" 
+                                    style={{ backgroundColor: theme.colors.accentColor }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-medium truncate flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3 text-primary" />
+                                    {theme.name}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground truncate">{theme.description}</div>
+                                </div>
+                              </div>
+                            </button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteCustomTheme(theme.id);
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </ScrollArea>
               </div>
 
               <div className="border-t pt-4">
