@@ -5,6 +5,7 @@ import { AboutHero } from "@/components/about/AboutHero";
 import { ValuesSection } from "@/components/about/ValuesSection";
 import { StatsSection } from "@/components/about/StatsSection";
 import { StorySection } from "@/components/about/StorySection";
+import { JoinTeamSection } from "@/components/about/JoinTeamSection";
 import { CTASection } from "@/components/about/CTASection";
 
 const About = () => {
@@ -19,6 +20,7 @@ const About = () => {
       <ValuesSection />
       <StatsSection />
       <StorySection />
+      <JoinTeamSection />
       <CTASection />
     </Layout>
   );
