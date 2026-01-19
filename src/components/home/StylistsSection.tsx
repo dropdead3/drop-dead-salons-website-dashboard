@@ -234,7 +234,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
             onChange={(e) => handleChange("specialties", e.target.value)}
             placeholder="e.g., balayage, extensions, vivid colors..."
             rows={2}
-            className="w-full px-4 py-2.5 bg-background border border-border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-none"
+            className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-none"
           />
         </div>
 
@@ -246,7 +246,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
             onChange={(e) => handleChange("whyDropDead", e.target.value)}
             placeholder="Tell us what excites you about joining our team..."
             rows={3}
-            className="w-full px-4 py-2.5 bg-background border border-border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-none"
+            className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-none"
           />
         </div>
 
