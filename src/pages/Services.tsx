@@ -75,12 +75,14 @@ function ServiceCard({
   service, 
   index, 
   selectedLevel,
-  isAddOn = false
+  isAddOn = false,
+  isConsultation = false
 }: { 
   service: ServiceItem; 
   index: number;
   selectedLevel: StylistLevel;
   isAddOn?: boolean;
+  isConsultation?: boolean;
 }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
@@ -105,7 +107,7 @@ function ServiceCard({
         </div>
       )}
       <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : ''} ${service.isPopular ? 'border-primary/30' : ''}`}>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <h3 className="font-display text-sm lg:text-base text-foreground leading-tight tracking-wide">
@@ -129,6 +131,17 @@ function ServiceCard({
               )}
             </div>
           </div>
+          {isConsultation && (
+            <a
+              href="https://drop-dead-gorgeous-az.square.site"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-xs font-display tracking-[0.1em] uppercase rounded-full transition-all duration-300 hover:bg-primary/90 hover:scale-[1.02]"
+            >
+              Book Consult
+              <ArrowRight size={12} />
+            </a>
+          )}
         </div>
       </div>
     </motion.div>
@@ -194,6 +207,7 @@ function CategorySection({
             index={index}
             selectedLevel={selectedLevel}
             isAddOn={category.isAddOn}
+            isConsultation={category.category === "New-Client Consultations"}
           />
         ))}
       </div>
