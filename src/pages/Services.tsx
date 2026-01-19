@@ -360,46 +360,6 @@ export default function Services() {
         </div>
       </Section>
 
-      {/* CTA */}
-      <Section className="py-24 lg:py-32" theme="light">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.7, ease: editorialEasing }}
-          >
-            <Eyebrow className="text-muted-foreground mb-6">
-              Start Your Journey
-            </Eyebrow>
-            
-            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl text-foreground mb-6 leading-tight">
-              Ready to Begin?
-            </h2>
-            
-            <p className="text-lg text-muted-foreground font-sans font-light mb-10 max-w-xl mx-auto">
-              Book your consultation and let's discuss your vision. New clients are required to complete a consultation before booking services.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/booking"
-                className="inline-flex items-center gap-3 px-8 py-4 text-sm font-sans font-medium bg-foreground text-background rounded-full transition-all duration-300 hover:bg-foreground/90 hover:scale-105 hover:shadow-lg active:scale-[0.98]"
-              >
-                Book a Consultation
-                <ArrowUpRight size={16} />
-              </Link>
-              <Link
-                to="/extensions"
-                className="inline-flex items-center gap-2 px-8 py-4 text-sm font-sans font-medium border border-border text-foreground rounded-full transition-all duration-300 hover:border-foreground hover:scale-105 active:scale-[0.98]"
-              >
-                Explore Extensions
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </Section>
     </Layout>
   );
 }
