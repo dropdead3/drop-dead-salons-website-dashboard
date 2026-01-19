@@ -599,6 +599,42 @@ export type Database = {
         }
         Relationships: []
       }
+      impersonation_logs: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          target_role: string | null
+          target_user_id: string | null
+          target_user_name: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          target_role?: string | null
+          target_user_id?: string | null
+          target_user_name?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          target_role?: string | null
+          target_user_id?: string | null
+          target_user_name?: string | null
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           address: string
