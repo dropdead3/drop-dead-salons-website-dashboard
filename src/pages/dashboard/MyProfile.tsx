@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText } from 'lucide-react';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { locations } from '@/data/stylists';
@@ -43,6 +44,7 @@ export default function MyProfile() {
     dd_certified: false,
     emergency_contact: '',
     emergency_phone: '',
+    bio: '',
   });
 
   useEffect(() => {
@@ -67,6 +69,7 @@ export default function MyProfile() {
         dd_certified: profile.dd_certified || false,
         emergency_contact: profile.emergency_contact || '',
         emergency_phone: profile.emergency_phone || '',
+        bio: (profile as any).bio || '',
       });
     }
   }, [profile]);
@@ -438,6 +441,24 @@ export default function MyProfile() {
                       {formData.specialties.length}/4 selected
                     </p>
                   )}
+                </div>
+
+                {/* Bio for Website Card */}
+                <div className="space-y-2">
+                  <Label htmlFor="bio" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Website Bio
+                  </Label>
+                  <Textarea
+                    id="bio"
+                    value={formData.bio}
+                    onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value.slice(0, 200) }))}
+                    placeholder="A short bio that appears when clients tap your card on the website (max 200 characters)"
+                    className="min-h-[100px] resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.bio.length}/200 characters • This appears on the flip side of your stylist card on the website
+                  </p>
                 </div>
 
                 {/* Drop Dead Certified */}

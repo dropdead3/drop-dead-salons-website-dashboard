@@ -363,6 +363,7 @@ export type Database = {
           admin_approved_by: string | null
           approved_at: string | null
           approved_by: string | null
+          bio: string | null
           created_at: string
           dd_certified: boolean | null
           display_name: string | null
@@ -395,6 +396,7 @@ export type Database = {
           admin_approved_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          bio?: string | null
           created_at?: string
           dd_certified?: boolean | null
           display_name?: string | null
@@ -427,6 +429,7 @@ export type Database = {
           admin_approved_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          bio?: string | null
           created_at?: string
           dd_certified?: boolean | null
           display_name?: string | null

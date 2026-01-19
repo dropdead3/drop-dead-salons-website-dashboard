@@ -11,6 +11,7 @@ export interface Stylist {
   imageUrl: string;
   locations: Location[];
   isBooking?: boolean; // false = not currently booking
+  bio?: string; // short bio for card flip
 }
 
 // Helper to get location display name
