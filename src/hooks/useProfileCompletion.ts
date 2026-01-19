@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import { useEmployeeProfile } from './useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveUserId } from './useEffectiveUser';
-import { useUserRoles } from './useAdminProfile';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useProfileCompletion() {
   const { roles: actualRoles } = useAuth();
@@ -12,13 +13,25 @@ export function useProfileCompletion() {
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   
   // Fetch the impersonated user's roles when viewing as a specific user
-  const { data: impersonatedRoles, isLoading: rolesLoading } = useUserRoles(
-    isViewingAsUser ? effectiveUserId : undefined
-  );
+  const { data: impersonatedRoles, isLoading: rolesLoading } = useQuery({
+    queryKey: ['effective-user-roles', effectiveUserId, isViewingAsUser],
+    queryFn: async () => {
+      if (!effectiveUserId) return [];
+      
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', effectiveUserId);
+
+      if (error) throw error;
+      return data?.map(r => r.role) || [];
+    },
+    enabled: isViewingAsUser && !!effectiveUserId,
+  });
 
   // Determine effective roles: impersonated user's roles, viewAs role, or actual roles
   const effectiveRoles = useMemo(() => {
-    if (isViewingAsUser && impersonatedRoles) {
+    if (isViewingAsUser && impersonatedRoles && impersonatedRoles.length > 0) {
       return impersonatedRoles;
     }
     if (viewAsRole) {
@@ -58,5 +71,5 @@ export function useProfileCompletion() {
     return { percentage, missingCount };
   }, [profile, effectiveRoles]);
 
-  return { percentage, missingCount, isLoading: profileLoading || rolesLoading };
+  return { percentage, missingCount, isLoading: profileLoading || (isViewingAsUser && rolesLoading) };
 }
