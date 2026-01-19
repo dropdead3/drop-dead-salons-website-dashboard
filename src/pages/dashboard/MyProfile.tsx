@@ -225,9 +225,27 @@ export default function MyProfile() {
       return; // Stop if schedules fail - they're important
     }
     
-    // Update profile (excluding location_schedules and work_days which are stored separately)
-    const { location_schedules, work_days, ...profileData } = formData;
-    updateProfile.mutate(profileData as any, {
+    // Build profile update object with ONLY valid database columns
+    // Explicitly exclude location_schedules which is NOT a database column
+    const profileUpdate = {
+      full_name: formData.full_name,
+      display_name: formData.display_name,
+      email: formData.email,
+      phone: formData.phone,
+      instagram: formData.instagram,
+      tiktok: formData.tiktok,
+      birthday: formData.birthday,
+      location_id: formData.location_id,
+      location_ids: formData.location_ids,
+      stylist_level: formData.stylist_level,
+      specialties: formData.specialties,
+      dd_certified: formData.dd_certified,
+      emergency_contact: formData.emergency_contact,
+      emergency_phone: formData.emergency_phone,
+      bio: formData.bio,
+    };
+    
+    updateProfile.mutate(profileUpdate as any, {
       onSuccess: () => {
         setInitialFormData(formData);
         setHasUnsavedChanges(false);
