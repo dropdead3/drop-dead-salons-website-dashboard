@@ -18,7 +18,6 @@ import {
   Megaphone,
   Flame,
   Pin,
-  AlertTriangle,
   Hourglass,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -26,13 +25,12 @@ import { useDailyCompletion } from '@/hooks/useDailyCompletion';
 import { useTasks } from '@/hooks/useTasks';
 import { useCurrentUserApprovalStatus } from '@/hooks/useAccountApproval';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useMyDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { StylistsOverviewCard, StaffOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
-import DD75Logo from '@/assets/dd75-logo.svg';
-import DD75Icon from '@/assets/dd75-icon.svg';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -58,10 +56,14 @@ export default function DashboardHome() {
   const { tasks, createTask, toggleTask, deleteTask } = useTasks();
   const { data: approvalStatus } = useCurrentUserApprovalStatus();
   const { data: profile } = useEmployeeProfile();
+  const { data: visibility = {} } = useMyDashboardVisibility();
   const queryClient = useQueryClient();
   
   // Leadership team: super admins, admins, and managers
   const isLeadership = profile?.is_super_admin || roles.includes('admin') || roles.includes('manager');
+  
+  // Helper to check visibility
+  const isVisible = (key: string) => visibility[key] !== false;
   
   const { data: announcements } = useQuery({
     queryKey: ['announcements'],
@@ -146,232 +148,252 @@ export default function DashboardHome() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-blue-600" />
+        {isVisible('quick_stats') && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-display">0</p>
+                  <p className="text-xs text-muted-foreground font-sans">Today's Clients</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-display">0</p>
-                <p className="text-xs text-muted-foreground font-sans">Today's Clients</p>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500/10 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-display">$0</p>
+                  <p className="text-xs text-muted-foreground font-sans">This Week</p>
+                </div>
               </div>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-500/10 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-green-600" />
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-500/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-display">0</p>
+                  <p className="text-xs text-muted-foreground font-sans">New Clients</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-display">$0</p>
-                <p className="text-xs text-muted-foreground font-sans">This Week</p>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-500/10 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-display">0%</p>
+                  <p className="text-xs text-muted-foreground font-sans">Rebooking Rate</p>
+                </div>
               </div>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-500/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-display">0</p>
-                <p className="text-xs text-muted-foreground font-sans">New Clients</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-500/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-display">0%</p>
-                <p className="text-xs text-muted-foreground font-sans">Rebooking Rate</p>
-              </div>
-            </div>
-          </Card>
-        </div>
+            </Card>
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Schedule & Appointments */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-sm tracking-wide">TODAY'S SCHEDULE</h2>
-              <Clock className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <div className="space-y-3">
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm font-sans">No appointments today</p>
-                <p className="text-xs mt-1">Enjoy your day off!</p>
+          {isVisible('todays_schedule') && (
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-sm tracking-wide">TODAY'S SCHEDULE</h2>
+                <Clock className="w-4 h-4 text-muted-foreground" />
               </div>
-            </div>
-          </Card>
+              <div className="space-y-3">
+                <div className="text-center py-8 text-muted-foreground">
+                  <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-sans">No appointments today</p>
+                  <p className="text-xs mt-1">Enjoy your day off!</p>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Tasks & To-Dos */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-sm tracking-wide">MY TASKS</h2>
-              <AddTaskDialog onAdd={(task) => createTask.mutate(task)} isPending={createTask.isPending} />
-            </div>
-            <div className="space-y-3">
-              {tasks.length > 0 ? (
-                tasks.slice(0, 5).map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    onToggle={(id, completed) => toggleTask.mutate({ id, is_completed: completed })}
-                    onDelete={(id) => deleteTask.mutate(id)}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  <CheckSquare className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-sans">No tasks yet</p>
-                  <p className="text-xs mt-1">Add your first task above</p>
-                </div>
+          {isVisible('my_tasks') && (
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-sm tracking-wide">MY TASKS</h2>
+                <AddTaskDialog onAdd={(task) => createTask.mutate(task)} isPending={createTask.isPending} />
+              </div>
+              <div className="space-y-3">
+                {tasks.length > 0 ? (
+                  tasks.slice(0, 5).map((task) => (
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      onToggle={(id, completed) => toggleTask.mutate({ id, is_completed: completed })}
+                      onDelete={(id) => deleteTask.mutate(id)}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <CheckSquare className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm font-sans">No tasks yet</p>
+                    <p className="text-xs mt-1">Add your first task above</p>
+                  </div>
+                )}
+              </div>
+              {tasks.length > 5 && (
+                <p className="text-xs text-muted-foreground text-center mt-3">
+                  +{tasks.length - 5} more tasks
+                </p>
               )}
-            </div>
-            {tasks.length > 5 && (
-              <p className="text-xs text-muted-foreground text-center mt-3">
-                +{tasks.length - 5} more tasks
-              </p>
-            )}
-          </Card>
+            </Card>
+          )}
 
           {/* Announcements */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
-              <Megaphone className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <div className="space-y-3">
-              {announcements && announcements.length > 0 ? (
-                announcements.map((announcement) => (
-                  <div 
-                    key={announcement.id}
-                    className={`p-3 bg-muted/50 border-l-2 ${priorityColors[announcement.priority]}`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      {announcement.is_pinned && <Pin className="w-3 h-3" />}
-                      <p className="text-sm font-sans font-medium">{announcement.title}</p>
+          {isVisible('announcements') && (
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
+                <Megaphone className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="space-y-3">
+                {announcements && announcements.length > 0 ? (
+                  announcements.map((announcement) => (
+                    <div 
+                      key={announcement.id}
+                      className={`p-3 bg-muted/50 border-l-2 ${priorityColors[announcement.priority]}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        {announcement.is_pinned && <Pin className="w-3 h-3" />}
+                        <p className="text-sm font-sans font-medium">{announcement.title}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {announcement.content}
+                      </p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">
+                        {format(new Date(announcement.created_at), 'MMM d')}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {announcement.content}
-                    </p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">
-                      {format(new Date(announcement.created_at), 'MMM d')}
+                  ))
+                ) : (
+                  <div className="p-3 bg-muted/50 border-l-2 border-foreground">
+                    <p className="text-sm font-sans font-medium">Welcome to Drop Dead!</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Complete your onboarding to get started
                     </p>
                   </div>
-                ))
-              ) : (
-                <div className="p-3 bg-muted/50 border-l-2 border-foreground">
-                  <p className="text-sm font-sans font-medium">Welcome to Drop Dead!</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Complete your onboarding to get started
-                  </p>
-                </div>
-              )}
-            </div>
-          </Card>
+                )}
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Leadership-only: Team & Stylists Overview */}
-        {isLeadership && (
+        {isLeadership && (isVisible('team_overview') || isVisible('stylists_overview')) && (
           <div className="grid gap-6 lg:grid-cols-2">
-            <StaffOverviewCard />
-            <StylistsOverviewCard />
+            {isVisible('team_overview') && <StaffOverviewCard />}
+            {isVisible('stylists_overview') && <StylistsOverviewCard />}
           </div>
         )}
 
         {/* Drop Dead 75 Program Section */}
-        <Card className="p-6 border-2 border-foreground/20">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center">
-                <Target className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="font-display text-lg tracking-wide">CLIENT ENGINE</h2>
-                <p className="text-sm text-muted-foreground font-sans">
-                  75 days of execution. No excuses.
-                </p>
-              </div>
-            </div>
-            {enrollment && (
-              <div className="flex items-center gap-2 text-sm">
-                <Flame className="w-4 h-4 text-orange-500" />
-                <span className="font-display">{enrollment.streak_count} day streak</span>
-              </div>
-            )}
-          </div>
-          
-          {enrollment ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-sans text-muted-foreground">
-                  You're on <span className="text-foreground font-medium">Day {enrollment.current_day}</span> of 75
-                </p>
-                <div className="w-48 h-2 bg-muted mt-2 overflow-hidden">
-                  <div 
-                    className="h-full bg-foreground transition-all" 
-                    style={{ width: `${(enrollment.current_day / 75) * 100}%` }}
-                  />
+        {isVisible('client_engine') && (
+          <Card className="p-6 border-2 border-foreground/20">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center">
+                  <Target className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="font-display text-lg tracking-wide">CLIENT ENGINE</h2>
+                  <p className="text-sm text-muted-foreground font-sans">
+                    75 days of execution. No excuses.
+                  </p>
                 </div>
               </div>
-              <Button asChild>
-                <Link to="/dashboard/program">
-                  Continue Today
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Link>
-              </Button>
+              {enrollment && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  <span className="font-display">{enrollment.streak_count} day streak</span>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-sans text-muted-foreground">
-                Ready to transform your book? Start the challenge today.
-              </p>
-              <Button asChild>
-                <Link to="/dashboard/program">
-                  Start Program
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </Card>
+            
+            {enrollment ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-sans text-muted-foreground">
+                    You're on <span className="text-foreground font-medium">Day {enrollment.current_day}</span> of 75
+                  </p>
+                  <div className="w-48 h-2 bg-muted mt-2 overflow-hidden">
+                    <div 
+                      className="h-full bg-foreground transition-all" 
+                      style={{ width: `${(enrollment.current_day / 75) * 100}%` }}
+                    />
+                  </div>
+                </div>
+                <Button asChild>
+                  <Link to="/dashboard/program">
+                    Continue Today
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-sans text-muted-foreground">
+                  Ready to transform your book? Start the challenge today.
+                </p>
+                <Button asChild>
+                  <Link to="/dashboard/program">
+                    Start Program
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* Quick Actions */}
-        <div>
-          <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/dashboard/ring-the-bell">
-                <Bell className="w-5 h-5" />
-                <span className="text-xs">Ring the Bell</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/dashboard/stats">
-                <TrendingUp className="w-5 h-5" />
-                <span className="text-xs">Log Metrics</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/dashboard/training">
-                <Target className="w-5 h-5" />
-                <span className="text-xs">Training</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-              <Link to="/dashboard/handbooks">
-                <CheckSquare className="w-5 h-5" />
-                <span className="text-xs">Handbooks</span>
-              </Link>
-            </Button>
+        {isVisible('quick_actions') && (
+          <div>
+            <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {isVisible('ring_the_bell_action') && (
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+                  <Link to="/dashboard/ring-the-bell">
+                    <Bell className="w-5 h-5" />
+                    <span className="text-xs">Ring the Bell</span>
+                  </Link>
+                </Button>
+              )}
+              {isVisible('log_metrics_action') && (
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+                  <Link to="/dashboard/stats">
+                    <TrendingUp className="w-5 h-5" />
+                    <span className="text-xs">Log Metrics</span>
+                  </Link>
+                </Button>
+              )}
+              {isVisible('training_action') && (
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+                  <Link to="/dashboard/training">
+                    <Target className="w-5 h-5" />
+                    <span className="text-xs">Training</span>
+                  </Link>
+                </Button>
+              )}
+              {isVisible('handbooks_action') && (
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+                  <Link to="/dashboard/handbooks">
+                    <CheckSquare className="w-5 h-5" />
+                    <span className="text-xs">Handbooks</span>
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );

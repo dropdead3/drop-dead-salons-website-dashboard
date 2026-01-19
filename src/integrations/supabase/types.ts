@@ -357,6 +357,39 @@ export type Database = {
           },
         ]
       }
+      dashboard_element_visibility: {
+        Row: {
+          created_at: string
+          element_category: string
+          element_key: string
+          element_name: string
+          id: string
+          is_visible: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          element_category: string
+          element_key: string
+          element_name: string
+          id?: string
+          is_visible?: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          element_category?: string
+          element_key?: string
+          element_name?: string
+          id?: string
+          is_visible?: boolean
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_profiles: {
         Row: {
           admin_approved_at: string | null
