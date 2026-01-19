@@ -1,7 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Phone, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Phone, MapPin } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 
@@ -50,7 +50,6 @@ const hours = {
 function LocationCard({ location, index }: { location: typeof locations[0]; index: number }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const galleryImages = locationGalleries[location.id] || [];
   
@@ -81,17 +80,6 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
-    setCurrentImageIndex(0);
-  };
-
-  const nextImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % galleryImages.length);
-  };
-
-  const prevImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
   };
 
   return (
@@ -197,59 +185,26 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
             transform: "rotateY(180deg)"
           }}
         >
-          <div className="relative w-full h-full bg-foreground overflow-hidden rounded-2xl flex flex-col">
-            {/* Gallery Image */}
-            <div className="relative flex-1 overflow-hidden">
-              {galleryImages.length > 0 && (
-                <ImageWithSkeleton
-                  src={galleryImages[currentImageIndex]}
-                  alt={`${location.name} salon interior ${currentImageIndex + 1}`}
-                  className="w-full h-full object-cover"
-                  wrapperClassName="w-full h-full"
-                />
-              )}
-              
-              {/* Navigation Arrows */}
-              {galleryImages.length > 1 && (
-                <>
-                  <button
-                    onClick={prevImage}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors duration-200"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors duration-200"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </>
-              )}
-
-              {/* Image Indicators */}
-              {galleryImages.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                  {galleryImages.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentImageIndex(idx);
-                      }}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        idx === currentImageIndex 
-                          ? "bg-background w-6" 
-                          : "bg-background/50 hover:bg-background/70"
-                      }`}
-                    />
-                  ))}
+          <div className="relative w-full h-full bg-foreground overflow-hidden rounded-2xl flex flex-col p-3">
+            {/* Bento Box Gallery */}
+            <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-2 overflow-hidden rounded-xl">
+              {galleryImages.slice(0, 4).map((image, idx) => (
+                <div 
+                  key={idx} 
+                  className="relative overflow-hidden rounded-lg"
+                >
+                  <ImageWithSkeleton
+                    src={image}
+                    alt={`${location.name} salon interior ${idx + 1}`}
+                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                    wrapperClassName="w-full h-full"
+                  />
                 </div>
-              )}
+              ))}
             </div>
 
             {/* Location name and tap hint */}
-            <div className="p-5 text-center">
+            <div className="pt-4 pb-2 text-center">
               <h3 className="font-display text-xl text-background mb-1">{location.name}</h3>
               <p className="text-[10px] text-background/50 tracking-wide font-aeonik">
                 Tap to go back
