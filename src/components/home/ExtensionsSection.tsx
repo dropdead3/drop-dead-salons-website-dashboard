@@ -75,9 +75,9 @@ export function ExtensionsSection() {
               transition={{ duration: 0.8, delay: 0.1 }}
               className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]"
             >
-              <span className="whitespace-nowrap">Drop Dead</span>
+              <span className="whitespace-nowrap">Our Extensions Change</span>
               <br />
-              <span className="font-light text-oat">Method</span>
+              <span className="font-light text-oat">How Women See Themselves</span>
             </motion.h2>
 
             <motion.p
@@ -86,9 +86,8 @@ export function ExtensionsSection() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-lg md:text-xl font-sans font-light leading-relaxed text-background/80 max-w-xl"
             >
-              The most versatile and comfortable hidden beaded row method available. 
-              Our proprietary technique delivers flawless, natural-looking extensions 
-              that move and feel like your own hair.
+              Get instant transformation, volume and/or length with Drop Dead Extensions 
+              and the Drop Dead Method.
             </motion.p>
 
             <div ref={featuresRef} className="space-y-5">
