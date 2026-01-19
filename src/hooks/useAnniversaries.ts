@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { parseISO, differenceInYears, differenceInDays, setYear, isSameDay, addDays, isAfter, isBefore } from 'date-fns';
+import { useEffectiveUserContext } from './useEffectiveUser';
 
 export interface TeamMemberAnniversary {
   id: string;
@@ -12,6 +13,7 @@ export interface TeamMemberAnniversary {
   years: number;
   daysUntil: number;
   anniversaryDate: Date;
+  isCurrentUser?: boolean;
 }
 
 // Milestone years that we celebrate
@@ -67,8 +69,10 @@ export function isTodayAnniversary(hireDate: string): { isToday: boolean; years:
 }
 
 export function useTodaysAnniversaries() {
+  const { effectiveUserId } = useEffectiveUserContext();
+  
   return useQuery({
-    queryKey: ['todays-anniversaries'],
+    queryKey: ['todays-anniversaries', effectiveUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
@@ -96,6 +100,7 @@ export function useTodaysAnniversaries() {
             years,
             daysUntil: 0,
             anniversaryDate: today,
+            isCurrentUser: person.user_id === effectiveUserId,
           });
         }
       });
@@ -107,8 +112,10 @@ export function useTodaysAnniversaries() {
 }
 
 export function useUpcomingAnniversaries(withinDays: number = 30) {
+  const { effectiveUserId } = useEffectiveUserContext();
+  
   return useQuery({
-    queryKey: ['upcoming-anniversaries', withinDays],
+    queryKey: ['upcoming-anniversaries', withinDays, effectiveUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
@@ -136,6 +143,7 @@ export function useUpcomingAnniversaries(withinDays: number = 30) {
             years,
             daysUntil,
             anniversaryDate,
+            isCurrentUser: person.user_id === effectiveUserId,
           });
         }
       });
@@ -148,8 +156,10 @@ export function useUpcomingAnniversaries(withinDays: number = 30) {
 }
 
 export function useMilestoneAnniversaries() {
+  const { effectiveUserId } = useEffectiveUserContext();
+  
   return useQuery({
-    queryKey: ['milestone-anniversaries'],
+    queryKey: ['milestone-anniversaries', effectiveUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
@@ -178,6 +188,7 @@ export function useMilestoneAnniversaries() {
             daysUntil,
             anniversaryDate,
             isMilestone: true,
+            isCurrentUser: person.user_id === effectiveUserId,
           });
         }
       });

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDate, getMonth } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
+import { useEffectiveUserContext } from './useEffectiveUser';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -13,11 +14,13 @@ export interface TeamMemberBirthday {
   photo_url: string | null;
   birthday: string;
   roles?: AppRole[];
+  isCurrentUser?: boolean;
 }
 
 export function useTodaysBirthdays() {
+  const { effectiveUserId } = useEffectiveUserContext();
   return useQuery({
-    queryKey: ['todays-birthdays'],
+    queryKey: ['todays-birthdays', effectiveUserId],
     queryFn: async () => {
       const today = new Date();
       const month = today.getMonth() + 1; // 1-indexed
@@ -36,7 +39,10 @@ export function useTodaysBirthdays() {
         if (!person.birthday) return false;
         const bday = parseISO(person.birthday);
         return getMonth(bday) + 1 === month && getDate(bday) === day;
-      });
+      }).map(person => ({
+        ...person,
+        isCurrentUser: person.user_id === effectiveUserId,
+      }));
       
       return todaysBirthdays as TeamMemberBirthday[];
     },
@@ -45,8 +51,10 @@ export function useTodaysBirthdays() {
 }
 
 export function useUpcomingBirthdays(daysAhead: number = 30) {
+  const { effectiveUserId } = useEffectiveUserContext();
+  
   return useQuery({
-    queryKey: ['upcoming-birthdays', daysAhead],
+    queryKey: ['upcoming-birthdays', daysAhead, effectiveUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
@@ -77,6 +85,7 @@ export function useUpcomingBirthdays(daysAhead: number = 30) {
             ...person,
             nextBirthday: thisYearBday,
             daysUntil,
+            isCurrentUser: person.user_id === effectiveUserId,
           };
         })
         .filter(p => p && p.daysUntil <= daysAhead && p.daysUntil >= 0)
@@ -90,10 +99,10 @@ export function useUpcomingBirthdays(daysAhead: number = 30) {
 
 export function useMonthlyBirthdays(date: Date) {
   const monthStart = startOfMonth(date);
-  const monthEnd = endOfMonth(date);
+  const { effectiveUserId } = useEffectiveUserContext();
   
   return useQuery({
-    queryKey: ['monthly-birthdays', format(monthStart, 'yyyy-MM')],
+    queryKey: ['monthly-birthdays', format(monthStart, 'yyyy-MM'), effectiveUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
@@ -132,6 +141,7 @@ export function useMonthlyBirthdays(date: Date) {
           birthdaysByDay[day].push({
             ...person,
             roles: rolesMap[person.user_id] || [],
+            isCurrentUser: person.user_id === effectiveUserId,
           } as TeamMemberBirthday);
         }
       });
