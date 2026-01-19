@@ -5,10 +5,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Cake, Calendar, ChevronLeft, ChevronRight, PartyPopper, Users } from 'lucide-react';
 import { useMonthlyBirthdays, useUpcomingBirthdays, useTodaysBirthdays } from '@/hooks/useBirthdays';
 import { format, addMonths, subMonths, getMonth, getDate, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ROLE_LABELS } from '@/hooks/useUserRoles';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -249,18 +252,55 @@ export default function TeamBirthdays() {
                       </span>
                       {hasBirthday && (
                         <div className="flex -space-x-1 mt-1">
-                          {birthdayPeople.slice(0, 3).map((person, i) => (
-                            <Avatar key={person.id} className="w-5 h-5 border border-background">
-                              <AvatarImage src={person.photo_url || undefined} />
-                              <AvatarFallback className="text-[8px] bg-pink-200 text-pink-800">
-                                {(person.display_name || person.full_name)?.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
+                          {birthdayPeople.slice(0, 3).map((person) => (
+                            <HoverCard key={person.id} openDelay={100} closeDelay={50}>
+                              <HoverCardTrigger asChild>
+                                <Avatar className="w-5 h-5 border border-background cursor-pointer hover:z-10 hover:scale-110 transition-transform">
+                                  <AvatarImage src={person.photo_url || undefined} />
+                                  <AvatarFallback className="text-[8px] bg-pink-200 text-pink-800">
+                                    {(person.display_name || person.full_name)?.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-auto p-3" side="top">
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="w-10 h-10">
+                                    <AvatarImage src={person.photo_url || undefined} />
+                                    <AvatarFallback className="bg-pink-100 text-pink-800">
+                                      {(person.display_name || person.full_name)?.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="font-medium text-sm">
+                                      {person.display_name || person.full_name}
+                                    </p>
+                                    {person.roles && person.roles.length > 0 && (
+                                      <p className="text-xs text-muted-foreground">
+                                        {person.roles.map(role => ROLE_LABELS[role] || role).join(', ')}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </HoverCardContent>
+                            </HoverCard>
                           ))}
                           {birthdayPeople.length > 3 && (
-                            <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[8px] border border-background">
-                              +{birthdayPeople.length - 3}
-                            </div>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[8px] border border-background cursor-pointer">
+                                  +{birthdayPeople.length - 3}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="space-y-1">
+                                  {birthdayPeople.slice(3).map(p => (
+                                    <p key={p.id} className="text-xs">
+                                      {p.display_name || p.full_name}
+                                    </p>
+                                  ))}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                       )}

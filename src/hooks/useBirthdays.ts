@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDate, getMonth } from 'date-fns';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 export interface TeamMemberBirthday {
   id: string;
@@ -9,6 +12,7 @@ export interface TeamMemberBirthday {
   display_name: string | null;
   photo_url: string | null;
   birthday: string;
+  roles?: AppRole[];
 }
 
 export function useTodaysBirthdays() {
@@ -98,6 +102,22 @@ export function useMonthlyBirthdays(date: Date) {
         .not('birthday', 'is', null);
       
       if (error) throw error;
+
+      // Get all user IDs to fetch their roles
+      const userIds = (data || []).map(p => p.user_id);
+      
+      // Fetch roles for these users
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+      
+      // Create a map of user_id to roles
+      const rolesMap: Record<string, AppRole[]> = {};
+      (rolesData || []).forEach(r => {
+        if (!rolesMap[r.user_id]) rolesMap[r.user_id] = [];
+        rolesMap[r.user_id].push(r.role);
+      });
       
       // Group by day of month
       const birthdaysByDay: Record<number, TeamMemberBirthday[]> = {};
@@ -109,7 +129,10 @@ export function useMonthlyBirthdays(date: Date) {
         if (getMonth(bday) === targetMonth) {
           const day = getDate(bday);
           if (!birthdaysByDay[day]) birthdaysByDay[day] = [];
-          birthdaysByDay[day].push(person as TeamMemberBirthday);
+          birthdaysByDay[day].push({
+            ...person,
+            roles: rolesMap[person.user_id] || [],
+          } as TeamMemberBirthday);
         }
       });
       
