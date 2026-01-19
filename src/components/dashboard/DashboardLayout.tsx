@@ -775,7 +775,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </header>
 
-      {/* View As Banner */}
+      {/* Impersonation Indicator Banner */}
       <AnimatePresence>
         {isViewingAs && (
           <motion.div 
@@ -783,45 +783,74 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="bg-amber-500 text-white text-center text-sm font-medium lg:pl-64 overflow-hidden"
+            className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-amber-950 text-center text-sm font-medium lg:pl-64 overflow-hidden shadow-lg relative"
           >
+            {/* Animated background pattern */}
+            <motion.div 
+              className="absolute inset-0 opacity-10"
+              style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)' }}
+              animate={{ backgroundPosition: ['0px 0px', '40px 0px'] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            />
+            
             <motion.div 
               initial={{ y: -20 }}
               animate={{ y: 0 }}
               exit={{ y: -20 }}
               transition={{ duration: 0.2, delay: 0.1 }}
-              className="flex items-center justify-center gap-2 py-2 px-4"
+              className="flex items-center justify-center gap-3 py-2.5 px-4 relative z-10"
             >
+              {/* Pulsing eye indicator */}
               <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className="flex items-center gap-2"
               >
-                {isViewingAsUser && viewAsUser ? (
-                  <Avatar className="h-5 w-5 border border-white/50">
-                    <AvatarImage src={viewAsUser.photo_url || undefined} />
-                    <AvatarFallback className="text-[10px] bg-white/20 text-white">
-                      {viewAsUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
+                <div className="p-1.5 bg-amber-950/20 rounded-full">
                   <Eye className="w-4 h-4" />
-                )}
+                </div>
               </motion.div>
-              <span>
+
+              {/* User/Role info */}
+              <div className="flex items-center gap-2">
                 {isViewingAsUser && viewAsUser ? (
-                  <>Viewing as <strong>{viewAsUser.full_name}</strong> – This is a preview only</>
+                  <>
+                    <Avatar className="h-6 w-6 border-2 border-amber-950/30 shadow-sm">
+                      <AvatarImage src={viewAsUser.photo_url || undefined} />
+                      <AvatarFallback className="text-[10px] bg-amber-950/20 text-amber-950 font-bold">
+                        {viewAsUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="font-semibold">{viewAsUser.full_name}</span>
+                      <span className="text-[10px] text-amber-950/70">Impersonating User</span>
+                    </div>
+                  </>
                 ) : (
-                  <>Viewing as <strong>{viewAsRole ? ROLE_LABELS[viewAsRole] : 'Unknown'}</strong> – This is a preview only</>
+                  <div className="flex flex-col items-start leading-tight">
+                    <span className="font-semibold">{viewAsRole ? ROLE_LABELS[viewAsRole] : 'Unknown'}</span>
+                    <span className="text-[10px] text-amber-950/70">Viewing as Role</span>
+                  </div>
                 )}
+              </div>
+
+              {/* Separator */}
+              <div className="h-6 w-px bg-amber-950/20 mx-1" />
+
+              {/* Warning text */}
+              <span className="text-xs text-amber-950/80 hidden sm:inline">
+                Preview mode – Actions are read-only
               </span>
+
+              {/* Exit button */}
               <Button 
-                variant="ghost" 
+                variant="outline"
                 size="sm" 
                 onClick={() => clearViewAs()}
-                className="h-6 px-2 text-white hover:bg-amber-600 hover:text-white ml-2"
+                className="h-7 px-3 bg-amber-950 text-amber-100 border-amber-950 hover:bg-amber-900 hover:text-white ml-2 gap-1.5 font-medium shadow-sm"
               >
-                <X className="w-3 h-3 mr-1" />
-                Exit
+                <X className="w-3.5 h-3.5" />
+                Exit View
               </Button>
             </motion.div>
           </motion.div>
