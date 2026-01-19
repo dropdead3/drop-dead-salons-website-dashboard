@@ -112,7 +112,7 @@ export function ExtensionsSection() {
                       delay: index * 0.15 + 0.1,
                       ease: "easeOut"
                     }}
-                    className="flex-shrink-0 w-12 h-12 bg-oat/20 rounded-xl flex items-center justify-center transition-colors duration-300 group-hover:bg-oat/30"
+                    className="flex-shrink-0 w-12 h-12 bg-oat/20 rounded-full flex items-center justify-center transition-colors duration-300 group-hover:bg-oat/30"
                   >
                     <feature.icon className="w-5 h-5 text-oat" />
                   </motion.div>
