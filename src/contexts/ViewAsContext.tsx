@@ -9,7 +9,10 @@ const ROLE_LABELS: Record<AppRole, string> = {
   manager: 'Manager',
   stylist: 'Stylist',
   receptionist: 'Receptionist',
-  assistant: 'Assistant',
+  assistant: 'Assistant', // Legacy
+  stylist_assistant: 'Stylist Assistant',
+  admin_assistant: 'Admin Assistant',
+  operations_assistant: 'Operations Assistant',
 };
 
 interface ViewAsContextType {

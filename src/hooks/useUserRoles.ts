@@ -5,14 +5,17 @@ import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
-export const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'assistant'];
+export const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
 
 export const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Admin',
   manager: 'Manager',
   stylist: 'Stylist',
   receptionist: 'Receptionist',
-  assistant: 'Assistant',
+  assistant: 'Assistant', // Legacy - kept for backwards compatibility
+  stylist_assistant: 'Stylist Assistant',
+  admin_assistant: 'Admin Assistant',
+  operations_assistant: 'Operations Assistant',
 };
 
 export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
@@ -20,7 +23,10 @@ export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   manager: 'Can manage team, view reports, and approve requests',
   stylist: 'Access to stylist features and 75 Hard program',
   receptionist: 'Front desk and scheduling access',
-  assistant: 'Can be assigned to help stylists',
+  assistant: 'Legacy assistant role', // Legacy - kept for backwards compatibility
+  stylist_assistant: 'Assists stylists with client services',
+  admin_assistant: 'Provides administrative support to leadership',
+  operations_assistant: 'Supports daily salon operations',
 };
 
 interface UserWithRoles {

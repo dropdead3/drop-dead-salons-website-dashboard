@@ -57,17 +57,21 @@ import {
   Images,
   Layers,
   MapPin,
+  ClipboardList,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
-const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'assistant'];
+const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
 
 const roleColors: Record<AppRole, string> = {
   admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
   manager: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
   stylist: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   receptionist: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  assistant: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  assistant: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400', // Legacy
+  stylist_assistant: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+  admin_assistant: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
+  operations_assistant: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
 };
 
 interface DashboardLayoutProps {
@@ -177,7 +181,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
         'schedule_meetings', 'view_onboarding', 'view_handbooks'
       ],
-      assistant: [
+      assistant: [ // Legacy
+        'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
+        'view_assistant_schedule', 'manage_assistant_schedule', 'schedule_meetings',
+        'view_onboarding', 'view_handbooks'
+      ],
+      stylist_assistant: [
+        'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
+        'view_assistant_schedule', 'manage_assistant_schedule', 'schedule_meetings',
+        'view_onboarding', 'view_handbooks'
+      ],
+      admin_assistant: [
+        'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
+        'schedule_meetings', 'view_onboarding', 'view_handbooks', 'view_team_overview'
+      ],
+      operations_assistant: [
         'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
         'view_assistant_schedule', 'manage_assistant_schedule', 'schedule_meetings',
         'view_onboarding', 'view_handbooks'
@@ -443,7 +461,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       manager: Shield,
       stylist: Scissors,
       receptionist: Headset,
-      assistant: HandHelping,
+      assistant: HandHelping, // Legacy
+      stylist_assistant: HandHelping,
+      admin_assistant: UserCheck,
+      operations_assistant: ClipboardList,
     };
 
     const roleDescriptions: Record<AppRole, string> = {
@@ -451,7 +472,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       manager: 'Team management access',
       stylist: 'Stylist dashboard view',
       receptionist: 'Front desk access',
-      assistant: 'Assistant tools access',
+      assistant: 'Legacy assistant', // Legacy
+      stylist_assistant: 'Stylist assistant view',
+      admin_assistant: 'Admin assistant view',
+      operations_assistant: 'Operations assistant view',
     };
 
     return (

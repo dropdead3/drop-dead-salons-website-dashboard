@@ -21,11 +21,15 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 const emailSchema = z.string().trim().email({ message: 'Please enter a valid email address' });
 
-type AppRole = 'admin' | 'manager' | 'stylist' | 'receptionist' | 'assistant';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 const roleOptions: { value: AppRole; label: string; description: string }[] = [
   { value: 'stylist', label: 'Stylist', description: 'Hair stylist or extension specialist' },
-  { value: 'assistant', label: 'Assistant', description: 'Stylist assistant' },
+  { value: 'stylist_assistant', label: 'Stylist Assistant', description: 'Assists stylists with client services' },
+  { value: 'admin_assistant', label: 'Admin Assistant', description: 'Provides administrative support' },
+  { value: 'operations_assistant', label: 'Operations Assistant', description: 'Supports daily salon operations' },
   { value: 'receptionist', label: 'Receptionist', description: 'Front desk staff' },
   { value: 'manager', label: 'Manager', description: 'Salon manager or coach' },
   { value: 'admin', label: 'Admin', description: 'Full system access' },
@@ -133,7 +137,7 @@ export default function StaffLogin() {
           });
           return;
         }
-        const { error, data } = await signUp(email, password, fullName, invitation?.role || role);
+        const { error, data } = await signUp(email, password, fullName, (invitation?.role || role) as AppRole);
         if (error) {
           toast({
             variant: 'destructive',

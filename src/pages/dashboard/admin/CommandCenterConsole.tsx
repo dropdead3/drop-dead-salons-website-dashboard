@@ -13,6 +13,8 @@ import {
   Headset,
   HandHelping,
   AlertTriangle,
+  UserCheck,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
@@ -45,14 +47,17 @@ import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
-const ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'assistant'];
+const ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
 
 const ROLE_CONFIG: Record<AppRole, { label: string; shortLabel: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
   admin: { label: 'Admin', shortLabel: 'Admin', icon: Crown, color: 'text-amber-600' },
   manager: { label: 'Manager', shortLabel: 'Mgr', icon: Shield, color: 'text-purple-600' },
   stylist: { label: 'Stylist', shortLabel: 'Styl', icon: Scissors, color: 'text-blue-600' },
   receptionist: { label: 'Front Desk', shortLabel: 'FD', icon: Headset, color: 'text-green-600' },
-  assistant: { label: 'Assistant', shortLabel: 'Asst', icon: HandHelping, color: 'text-orange-600' },
+  assistant: { label: 'Assistant', shortLabel: 'Asst', icon: HandHelping, color: 'text-gray-600' }, // Legacy
+  stylist_assistant: { label: 'Stylist Asst', shortLabel: 'SA', icon: HandHelping, color: 'text-orange-600' },
+  admin_assistant: { label: 'Admin Asst', shortLabel: 'AA', icon: UserCheck, color: 'text-pink-600' },
+  operations_assistant: { label: 'Ops Asst', shortLabel: 'OA', icon: ClipboardList, color: 'text-teal-600' },
 };
 
 const CATEGORY_ORDER = ['Dashboard Cards', 'Leadership Cards', 'Program Cards', 'Actions'];
