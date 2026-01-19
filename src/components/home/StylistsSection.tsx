@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, memo, useCallback, startTransition } from "react";
 import { cn } from "@/lib/utils";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, Info, Star, X } from "lucide-react";
+import { ArrowRight, Sparkles, Info, Star, X, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import {
@@ -26,6 +26,7 @@ const toTitleCase = (str: string) => {
 // Expanded Application Form Component
 function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -43,12 +44,82 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     console.log("Application submitted:", formData);
     setIsSubmitting(false);
-    onClose();
+    setIsSubmitted(true);
+    // Auto-close after showing success
+    setTimeout(() => {
+      onClose();
+    }, 3000);
   };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  // Success state
+  if (isSubmitted) {
+    return (
+      <motion.div 
+        className="w-full max-w-2xl mx-auto text-center py-12"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1, type: "spring", stiffness: 200 }}
+          className="w-20 h-20 mx-auto mb-6 rounded-full bg-foreground/10 flex items-center justify-center"
+        >
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ duration: 0.4, delay: 0.3, type: "spring", stiffness: 200 }}
+          >
+            <CheckCircle className="w-10 h-10 text-foreground" />
+          </motion.div>
+        </motion.div>
+        
+        <motion.h3
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className="text-2xl md:text-3xl font-display mb-3"
+        >
+          Application Received!
+        </motion.h3>
+        
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.5 }}
+          className="text-foreground/60 text-sm max-w-sm mx-auto mb-6"
+        >
+          Thank you for your interest in joining Drop Dead. We'll review your application and get back to you soon.
+        </motion.p>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.6 }}
+          className="flex justify-center gap-1"
+        >
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="w-2 h-2 rounded-full bg-foreground/30"
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{
+                duration: 0.6,
+                repeat: Infinity,
+                delay: i * 0.2,
+              }}
+            />
+          ))}
+        </motion.div>
+      </motion.div>
+    );
+  }
+
 
   return (
     <div className="w-full max-w-2xl mx-auto">
