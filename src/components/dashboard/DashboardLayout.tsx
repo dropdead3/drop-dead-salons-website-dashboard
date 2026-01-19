@@ -42,6 +42,7 @@ import {
   UserCircle,
   Contact,
   Globe,
+  UserPlus,
   Shield,
   Eye,
   EyeOff,
@@ -110,6 +111,7 @@ const managerNavItems: NavItem[] = [
 
 // Full admin-only items (not visible to managers)
 const adminOnlyNavItems: NavItem[] = [
+  { href: '/dashboard/admin/invitations', label: 'Staff Invitations', icon: UserPlus, permission: 'approve_accounts' },
   { href: '/dashboard/admin/approvals', label: 'Account Approvals', icon: UserCheck, permission: 'approve_accounts' },
   { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText, permission: 'manage_handbooks' },

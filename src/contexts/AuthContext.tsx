@@ -15,7 +15,7 @@ interface AuthContextType {
   hasAnyPermission: (permissionNames: string[]) => boolean;
   hasAllPermissions: (permissionNames: string[]) => boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<{ error: Error | null; data?: { user: User | null } }>;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
   refreshPermissions: () => Promise<void>;
@@ -191,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, fullName: string, role: AppRole) => {
-    const { error } = await supabase.auth.signUp({
+    const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -202,7 +202,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     });
-    return { error: error as Error | null };
+    return { 
+      error: error as Error | null, 
+      data: data ? { user: data.user } : undefined 
+    };
   };
 
   const signOut = async () => {
