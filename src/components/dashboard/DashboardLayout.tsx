@@ -9,6 +9,13 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -19,6 +26,7 @@ import {
 import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
+import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -63,6 +71,7 @@ import {
   MapPin,
   ClipboardList,
   Cake,
+  History,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -679,6 +688,32 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               )}
             </div>
           </ScrollArea>
+
+          <DropdownMenuSeparator className="my-2" />
+
+          {/* View History Button */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                className="flex items-center gap-3 px-3 py-2 cursor-pointer"
+              >
+                <div className="p-1.5 bg-muted">
+                  <History className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">View History</p>
+                  <p className="text-xs text-muted-foreground">See all impersonation activity</p>
+                </div>
+              </DropdownMenuItem>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Impersonation Audit Log</DialogTitle>
+              </DialogHeader>
+              <ImpersonationHistoryPanel limit={50} />
+            </DialogContent>
+          </Dialog>
         </DropdownMenuContent>
       </DropdownMenu>
     );

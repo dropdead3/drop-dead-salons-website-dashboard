@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -36,13 +38,62 @@ interface ViewAsContextType {
   
   // Clear all impersonation
   clearViewAs: () => void;
+  
+  // Session ID for audit tracking
+  sessionId: string | null;
 }
 
 const ViewAsContext = createContext<ViewAsContextType | undefined>(undefined);
 
+// Generate a UUID for session tracking
+function generateSessionId(): string {
+  return crypto.randomUUID();
+}
+
+// Log impersonation action to database
+async function logImpersonationAction(
+  adminUserId: string,
+  action: 'start_role' | 'start_user' | 'end' | 'switch_role' | 'switch_user',
+  sessionId: string,
+  targetRole?: string | null,
+  targetUserId?: string | null,
+  targetUserName?: string | null,
+) {
+  try {
+    const insertData: {
+      admin_user_id: string;
+      action: string;
+      session_id: string;
+      target_role?: string;
+      target_user_id?: string;
+      target_user_name?: string;
+    } = {
+      admin_user_id: adminUserId,
+      action,
+      session_id: sessionId,
+    };
+
+    if (targetRole) insertData.target_role = targetRole;
+    if (targetUserId) insertData.target_user_id = targetUserId;
+    if (targetUserName) insertData.target_user_name = targetUserName;
+
+    await supabase.from('impersonation_logs').insert(insertData);
+  } catch (error) {
+    console.error('Failed to log impersonation action:', error);
+  }
+}
+
 export function ViewAsProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [viewAsRole, setViewAsRoleState] = useState<AppRole | null>(null);
   const [viewAsUser, setViewAsUserState] = useState<ViewAsUser | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  
+  // Track previous state for comparison
+  const prevStateRef = useRef<{ role: AppRole | null; user: ViewAsUser | null }>({
+    role: null,
+    user: null,
+  });
 
   const setViewAsRole = useCallback((role: AppRole | null) => {
     const previousRole = viewAsRole;
@@ -55,67 +106,119 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
     
     setViewAsRoleState(role);
     
-    if (role && !previousRole && !wasViewingUser) {
-      // Entering view as mode
-      toast.success(`Now viewing as ${ROLE_LABELS[role]}`, {
-        description: 'Dashboard navigation updated to match role permissions',
-        icon: '👁️',
-        duration: 3000,
-      });
-    } else if (role && (previousRole || wasViewingUser)) {
-      // Switching between roles or from user to role
-      toast.info(`Switched to ${ROLE_LABELS[role]}`, {
-        icon: '🔄',
-        duration: 2000,
-      });
-    } else if (!role && previousRole) {
-      // Exiting view as mode
-      toast.success('Exited View As mode', {
-        description: 'Back to your full admin permissions',
-        icon: '✨',
-        duration: 2000,
-      });
+    // Audit logging
+    if (user?.id) {
+      if (role && !previousRole && !wasViewingUser) {
+        // Starting new session with role
+        const newSessionId = generateSessionId();
+        setSessionId(newSessionId);
+        logImpersonationAction(user.id, 'start_role', newSessionId, role);
+        
+        toast.success(`Now viewing as ${ROLE_LABELS[role]}`, {
+          description: 'Dashboard navigation updated to match role permissions',
+          icon: '👁️',
+          duration: 3000,
+        });
+      } else if (role && (previousRole || wasViewingUser)) {
+        // Switching between roles or from user to role
+        const currentSessionId = sessionId || generateSessionId();
+        if (!sessionId) setSessionId(currentSessionId);
+        logImpersonationAction(user.id, 'switch_role', currentSessionId, role);
+        
+        toast.info(`Switched to ${ROLE_LABELS[role]}`, {
+          icon: '🔄',
+          duration: 2000,
+        });
+      } else if (!role && previousRole && !wasViewingUser) {
+        // Exiting view as mode (only if not switching to user)
+        if (sessionId) {
+          logImpersonationAction(user.id, 'end', sessionId);
+          setSessionId(null);
+        }
+        
+        toast.success('Exited View As mode', {
+          description: 'Back to your full admin permissions',
+          icon: '✨',
+          duration: 2000,
+        });
+      }
     }
-  }, [viewAsRole, viewAsUser]);
+  }, [viewAsRole, viewAsUser, user?.id, sessionId]);
 
-  const setViewAsUser = useCallback((user: ViewAsUser | null) => {
+  const setViewAsUser = useCallback((targetUser: ViewAsUser | null) => {
     const wasViewingRole = !!viewAsRole;
     const previousUser = viewAsUser;
     
     // Clear role impersonation when switching to user-based
-    if (user) {
+    if (targetUser) {
       setViewAsRoleState(null);
     }
     
-    setViewAsUserState(user);
+    setViewAsUserState(targetUser);
     
-    if (user && !previousUser && !wasViewingRole) {
-      // Entering user impersonation
-      toast.success(`Now viewing as ${user.full_name}`, {
-        description: 'Seeing dashboard exactly as they would see it',
-        icon: '👤',
-        duration: 3000,
-      });
-    } else if (user && (previousUser || wasViewingRole)) {
-      // Switching to a different user
-      toast.info(`Switched to ${user.full_name}`, {
-        icon: '🔄',
-        duration: 2000,
-      });
-    } else if (!user && previousUser) {
-      // Exiting user impersonation
-      toast.success('Exited View As mode', {
-        description: 'Back to your full admin permissions',
-        icon: '✨',
-        duration: 2000,
-      });
+    // Audit logging
+    if (user?.id) {
+      if (targetUser && !previousUser && !wasViewingRole) {
+        // Starting new session with user
+        const newSessionId = generateSessionId();
+        setSessionId(newSessionId);
+        logImpersonationAction(
+          user.id, 
+          'start_user', 
+          newSessionId, 
+          null, 
+          targetUser.id, 
+          targetUser.full_name
+        );
+        
+        toast.success(`Now viewing as ${targetUser.full_name}`, {
+          description: 'Seeing dashboard exactly as they would see it',
+          icon: '👤',
+          duration: 3000,
+        });
+      } else if (targetUser && (previousUser || wasViewingRole)) {
+        // Switching to a different user
+        const currentSessionId = sessionId || generateSessionId();
+        if (!sessionId) setSessionId(currentSessionId);
+        logImpersonationAction(
+          user.id, 
+          'switch_user', 
+          currentSessionId, 
+          null, 
+          targetUser.id, 
+          targetUser.full_name
+        );
+        
+        toast.info(`Switched to ${targetUser.full_name}`, {
+          icon: '🔄',
+          duration: 2000,
+        });
+      } else if (!targetUser && previousUser && !wasViewingRole) {
+        // Exiting user impersonation (only if not switching to role)
+        if (sessionId) {
+          logImpersonationAction(user.id, 'end', sessionId);
+          setSessionId(null);
+        }
+        
+        toast.success('Exited View As mode', {
+          description: 'Back to your full admin permissions',
+          icon: '✨',
+          duration: 2000,
+        });
+      }
     }
-  }, [viewAsRole, viewAsUser]);
+  }, [viewAsRole, viewAsUser, user?.id, sessionId]);
 
   const clearViewAs = useCallback(() => {
     const wasViewing = !!viewAsRole || !!viewAsUser;
     setViewAsRoleState(null);
     setViewAsUserState(null);
+    
+    // Audit logging
+    if (wasViewing && user?.id && sessionId) {
+      logImpersonationAction(user.id, 'end', sessionId);
+      setSessionId(null);
+    }
     
     if (wasViewing) {
       toast.success('Exited View As mode', {
@@ -124,6 +227,11 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
         duration: 2000,
       });
     }
+  }, [viewAsRole, viewAsUser, user?.id, sessionId]);
+
+  // Update previous state ref
+  useEffect(() => {
+    prevStateRef.current = { role: viewAsRole, user: viewAsUser };
   }, [viewAsRole, viewAsUser]);
 
   return (
@@ -136,6 +244,7 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
         setViewAsUser,
         isViewingAsUser: viewAsUser !== null,
         clearViewAs,
+        sessionId,
       }}
     >
       {children}
