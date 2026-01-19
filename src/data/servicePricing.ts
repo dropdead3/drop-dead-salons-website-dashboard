@@ -26,7 +26,7 @@ export type ServiceCategory = {
 
 export const services: ServiceCategory[] = [
   {
-    category: "Consultations",
+    category: "New-Client Consultations",
     description: "Start your journey with a personalized consultation.",
     items: [
       { name: "Color And/Or Cut Consultation", description: "Consultation included with color service", prices: { 'new-talent': '$15', 'emerging': '$15', 'lead': '$15', 'senior': '$15', 'signature': '$15', 'icon': '$15' } },
