@@ -52,6 +52,7 @@ import {
   Save,
   Sparkles,
   Link,
+  Copy,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -636,6 +637,24 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     [newBlocks[index], newBlocks[swapIndex]] = [newBlocks[swapIndex], newBlocks[index]];
     updateBlocksAndHtml(newBlocks);
+  };
+
+  const duplicateBlock = (id: string) => {
+    const blockToDuplicate = blocks.find(b => b.id === id);
+    if (!blockToDuplicate) return;
+    
+    const duplicatedBlock: EmailBlock = {
+      ...blockToDuplicate,
+      id: crypto.randomUUID(),
+      styles: { ...blockToDuplicate.styles },
+    };
+    
+    const index = blocks.findIndex(b => b.id === id);
+    const newBlocks = [...blocks];
+    newBlocks.splice(index + 1, 0, duplicatedBlock);
+    updateBlocksAndHtml(newBlocks);
+    setSelectedBlockId(duplicatedBlock.id);
+    toast.success('Block duplicated');
   };
 
   const handleImageUpload = async (blockId: string, file: File) => {
@@ -1458,9 +1477,18 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                           onClick={(e) => { e.stopPropagation(); moveBlock(block.id, 'down'); }}
                           disabled={index === blocks.length - 1}
                         >
-                          <ChevronDown className="w-3 h-3" />
+                        <ChevronDown className="w-3 h-3" />
                         </Button>
                         <div className="w-px h-4 bg-border" />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6" 
+                          onClick={(e) => { e.stopPropagation(); duplicateBlock(block.id); }}
+                          title="Duplicate block"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
                         <Button 
                           variant="ghost" 
                           size="icon" 
