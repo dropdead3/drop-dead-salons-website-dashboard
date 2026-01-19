@@ -58,6 +58,7 @@ import {
   Layers,
   MapPin,
   ClipboardList,
+  Cake,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -115,6 +116,7 @@ const statsNavItems: NavItem[] = [
 // Manager-accessible admin items
 const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/team', label: 'Team Overview', icon: Users, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/birthdays', label: 'Team Birthdays', icon: Cake, permission: 'view_team_overview' },
   { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Bell, permission: 'manage_announcements' },
 ];
 
