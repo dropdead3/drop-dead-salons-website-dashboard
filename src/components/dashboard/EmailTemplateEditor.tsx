@@ -117,6 +117,7 @@ interface EmailBlock {
     height?: string;
     buttonColor?: string;
     buttonTextColor?: string;
+    buttonVariant?: 'primary' | 'secondary';
   };
   imageUrl?: string;
   linkUrl?: string;
@@ -300,10 +301,15 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
           <img src="${block.imageUrl || 'https://via.placeholder.com/400x200'}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}" />
         </div>`;
-      case 'button':
+      case 'button': {
+        const isSecondary = block.styles.buttonVariant === 'secondary';
+        const buttonStyles = isSecondary
+          ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a'}; padding: 16px 32px; text-decoration: none; font-weight: bold; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : 'border-radius: 8px;'}`
+          : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: 16px 32px; text-decoration: none; font-weight: bold; ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : 'border-radius: 8px;'}`;
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
-          <a href="${block.linkUrl || '{{dashboard_url}}'}" style="display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: 16px 32px; text-decoration: none; font-weight: bold; ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : 'border-radius: 8px;'}">${block.content}</a>
+          <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}</a>
         </div>`;
+      }
       case 'divider':
         return `<hr style="border: none; border-top: 1px solid ${block.styles.textColor || '#e5e7eb'}; margin: ${block.styles.padding || '16px 0'};" />`;
       case 'spacer':
@@ -1132,6 +1138,33 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                     {selectedBlock.type === 'button' && (
                       <>
                         <div className="space-y-2">
+                          <Label className="text-xs">Button Style</Label>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => updateBlockStyles(selectedBlock.id, { buttonVariant: 'primary' })}
+                              className={cn(
+                                "flex-1 py-2 px-3 rounded-lg border-2 text-xs font-medium transition-all",
+                                (!selectedBlock.styles.buttonVariant || selectedBlock.styles.buttonVariant === 'primary')
+                                  ? "border-foreground bg-foreground text-background"
+                                  : "border-border bg-transparent hover:bg-muted/50"
+                              )}
+                            >
+                              Primary
+                            </button>
+                            <button
+                              onClick={() => updateBlockStyles(selectedBlock.id, { buttonVariant: 'secondary' })}
+                              className={cn(
+                                "flex-1 py-2 px-3 rounded-lg border-2 text-xs font-medium transition-all",
+                                selectedBlock.styles.buttonVariant === 'secondary'
+                                  ? "border-foreground bg-background text-foreground"
+                                  : "border-border bg-transparent hover:bg-muted/50"
+                              )}
+                            >
+                              Secondary
+                            </button>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
                           <Label className="text-xs">Button Text</Label>
                           <Input
                             value={selectedBlock.content}
@@ -1150,19 +1183,23 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-2">
-                            <Label className="text-xs">Button Color</Label>
+                            <Label className="text-xs">
+                              {selectedBlock.styles.buttonVariant === 'secondary' ? 'Border/Text Color' : 'Button Color'}
+                            </Label>
                             <ColorPicker
                               value={selectedBlock.styles.buttonColor || '#3b82f6'}
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                             />
                           </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs">Text Color</Label>
-                            <ColorPicker
-                              value={selectedBlock.styles.buttonTextColor || '#ffffff'}
-                              onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonTextColor: v })}
-                            />
-                          </div>
+                          {selectedBlock.styles.buttonVariant !== 'secondary' && (
+                            <div className="space-y-2">
+                              <Label className="text-xs">Text Color</Label>
+                              <ColorPicker
+                                value={selectedBlock.styles.buttonTextColor || '#ffffff'}
+                                onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonTextColor: v })}
+                              />
+                            </div>
+                          )}
                         </div>
                       </>
                     )}
