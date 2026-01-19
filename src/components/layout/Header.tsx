@@ -189,7 +189,7 @@ export function Header() {
             <motion.nav 
               className="hidden lg:flex items-center gap-6 xl:gap-10"
               animate={{ 
-                x: isScrollingUp ? 0 : 250,
+                x: isScrollingUp ? 0 : 300,
               }}
               transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
             >
