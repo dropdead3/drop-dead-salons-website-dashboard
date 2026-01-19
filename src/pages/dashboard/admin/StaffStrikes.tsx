@@ -46,6 +46,7 @@ import {
   User,
   FileText,
   Trash2,
+  Pencil,
 } from 'lucide-react';
 import {
   useStaffStrikes,
@@ -61,6 +62,7 @@ import {
 } from '@/hooks/useStaffStrikes';
 import { AddStrikeDialog } from '@/components/dashboard/AddStrikeDialog';
 import { AddStrikeToStaffDialog } from '@/components/dashboard/AddStrikeToStaffDialog';
+import { EditStrikeDialog } from '@/components/dashboard/EditStrikeDialog';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { cn } from '@/lib/utils';
 
@@ -74,6 +76,7 @@ export default function StaffStrikes() {
   const [statusFilter, setStatusFilter] = useState<string>('active');
   const [selectedStrike, setSelectedStrike] = useState<StaffStrikeWithDetails | null>(null);
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<string>(initialUserId);
 
@@ -381,6 +384,21 @@ export default function StaffStrikes() {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedStrike(strike);
+                                  setEditDialogOpen(true);
+                                }}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit</TooltipContent>
+                          </Tooltip>
                           {!strike.is_resolved && (
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -473,6 +491,18 @@ export default function StaffStrikes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
+      {selectedStrike && (
+        <EditStrikeDialog
+          strike={selectedStrike}
+          open={editDialogOpen}
+          onOpenChange={(open) => {
+            setEditDialogOpen(open);
+            if (!open) setSelectedStrike(null);
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }
