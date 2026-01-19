@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Sparkles, Heart, Users, Palette } from "lucide-react";
+import { Sparkles, Heart, Users, Palette, Sun } from "lucide-react";
 
 const values = [
   {
@@ -22,6 +22,11 @@ const values = [
     icon: Palette,
     title: "Fearless Creativity",
     description: "From subtle enhancements to bold transformations, we encourage you to explore and express yourself without limits.",
+  },
+  {
+    icon: Sun,
+    title: "Positivity Always",
+    description: "No gossip, no tearing others down—just respect and support for our peers. We lift each other up and celebrate every win.",
   },
 ];
 
