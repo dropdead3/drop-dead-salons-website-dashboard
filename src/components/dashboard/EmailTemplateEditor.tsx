@@ -65,6 +65,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
+import { ColorWheelPicker } from '@/components/ui/color-wheel-picker';
 
 // Import brand logos
 import dropDeadLogo from '@/assets/drop-dead-logo.svg';
@@ -1162,38 +1163,23 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                           <div className="text-xs font-medium">Theme Colors (5)</div>
                           <div className="flex gap-2 justify-center p-3 rounded-lg border bg-muted/20">
                             {[
-                              { key: 'headerBg', label: 'Dark', color: newTheme.colors.headerBg },
-                              { key: 'bodyBg', label: 'Light', color: newTheme.colors.bodyBg },
-                              { key: 'buttonBg', label: 'Primary', color: newTheme.colors.buttonBg },
-                              { key: 'accentColor', label: 'Accent', color: newTheme.colors.accentColor },
-                              { key: 'white', label: 'White', color: newTheme.colors.white },
+                              { key: 'headerBg', label: 'Dark', color: newTheme.colors.headerBg, colorType: 'dark' as const },
+                              { key: 'bodyBg', label: 'Light', color: newTheme.colors.bodyBg, colorType: 'light' as const },
+                              { key: 'buttonBg', label: 'Primary', color: newTheme.colors.buttonBg, colorType: 'primary' as const },
+                              { key: 'accentColor', label: 'Accent', color: newTheme.colors.accentColor, colorType: 'accent' as const },
+                              { key: 'white', label: 'White', color: newTheme.colors.white, colorType: 'white' as const },
                             ].map((swatch) => (
-                              <Popover key={swatch.key}>
-                                <PopoverTrigger asChild>
-                                  <button
-                                    className="flex flex-col items-center gap-1 group"
-                                    type="button"
-                                  >
-                                    <div 
-                                      className="w-10 h-10 rounded-lg border-2 border-border shadow-sm transition-all group-hover:scale-110 group-hover:shadow-md cursor-pointer"
-                                      style={{ backgroundColor: swatch.color }}
-                                    />
-                                    <span className="text-[10px] text-muted-foreground">{swatch.label}</span>
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-3" align="center">
-                                  <div className="space-y-2">
-                                    <Label className="text-xs font-medium">{swatch.label} Color</Label>
-                                    <ColorPicker
-                                      value={swatch.color}
-                                      onChange={(v) => setNewTheme(prev => ({ 
-                                        ...prev, 
-                                        colors: { ...prev.colors, [swatch.key]: v } 
-                                      }))}
-                                    />
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
+                              <div key={swatch.key} className="flex flex-col items-center gap-1">
+                                <ColorWheelPicker
+                                  value={swatch.color}
+                                  colorType={swatch.colorType}
+                                  onChange={(v) => setNewTheme(prev => ({ 
+                                    ...prev, 
+                                    colors: { ...prev.colors, [swatch.key]: v } 
+                                  }))}
+                                />
+                                <span className="text-[10px] text-muted-foreground">{swatch.label}</span>
+                              </div>
                             ))}
                           </div>
                         </div>
@@ -1247,8 +1233,9 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                           <div className="mt-3 grid grid-cols-2 gap-3">
                             <div className="space-y-1">
                               <Label className="text-xs">Header Text</Label>
-                              <ColorPicker
+                              <ColorWheelPicker
                                 value={newTheme.colors.headerText}
+                                colorType="text"
                                 onChange={(v) => setNewTheme(prev => ({ 
                                   ...prev, 
                                   colors: { ...prev.colors, headerText: v } 
@@ -1257,8 +1244,9 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Body Text</Label>
-                              <ColorPicker
+                              <ColorWheelPicker
                                 value={newTheme.colors.bodyText}
+                                colorType="text"
                                 onChange={(v) => setNewTheme(prev => ({ 
                                   ...prev, 
                                   colors: { ...prev.colors, bodyText: v } 
@@ -1267,8 +1255,9 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Button Text</Label>
-                              <ColorPicker
+                              <ColorWheelPicker
                                 value={newTheme.colors.buttonText}
+                                colorType="white"
                                 onChange={(v) => setNewTheme(prev => ({ 
                                   ...prev, 
                                   colors: { ...prev.colors, buttonText: v } 
@@ -1277,8 +1266,9 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Divider</Label>
-                              <ColorPicker
+                              <ColorWheelPicker
                                 value={newTheme.colors.dividerColor}
+                                colorType="divider"
                                 onChange={(v) => setNewTheme(prev => ({ 
                                   ...prev, 
                                   colors: { ...prev.colors, dividerColor: v } 
@@ -1612,16 +1602,18 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                             <Label className="text-xs">
                               {selectedBlock.styles.buttonVariant === 'secondary' ? 'Border/Text Color' : 'Button Color'}
                             </Label>
-                            <ColorPicker
+                            <ColorWheelPicker
                               value={selectedBlock.styles.buttonColor || '#3b82f6'}
+                              colorType="primary"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                             />
                           </div>
                           {selectedBlock.styles.buttonVariant !== 'secondary' && (
                             <div className="space-y-2">
                               <Label className="text-xs">Text Color</Label>
-                              <ColorPicker
+                              <ColorWheelPicker
                                 value={selectedBlock.styles.buttonTextColor || '#ffffff'}
+                                colorType="white"
                                 onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonTextColor: v })}
                               />
                             </div>
@@ -1651,8 +1643,9 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                         </div>
                         <div className="space-y-2">
                           <Label className="text-xs">Link Color</Label>
-                          <ColorPicker
+                          <ColorWheelPicker
                             value={selectedBlock.styles.buttonColor || '#3b82f6'}
+                            colorType="primary"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                           />
                         </div>
@@ -1823,8 +1816,9 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                         </div>
                         <div className="space-y-2">
                           <Label className="text-xs">Icon Color</Label>
-                          <ColorPicker
+                          <ColorWheelPicker
                             value={selectedBlock.styles.buttonColor || '#1a1a1a'}
+                            colorType="dark"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                           />
                         </div>
@@ -1952,8 +1946,9 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                             })}
                             <div className="space-y-2">
                               <Label className="text-xs">Icon Color</Label>
-                              <ColorPicker
+                              <ColorWheelPicker
                                 value={selectedBlock.styles.buttonColor || '#f5f0e8'}
+                                colorType="light"
                                 onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                               />
                             </div>
@@ -2133,15 +2128,17 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-2">
                             <Label className="text-xs">Background</Label>
-                            <ColorPicker
+                            <ColorWheelPicker
                               value={selectedBlock.styles.backgroundColor || 'transparent'}
+                              colorType="light"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { backgroundColor: v })}
                             />
                           </div>
                           <div className="space-y-2">
                             <Label className="text-xs">Text Color</Label>
-                            <ColorPicker
+                            <ColorWheelPicker
                               value={selectedBlock.styles.textColor || '#000000'}
+                              colorType="text"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { textColor: v })}
                             />
                           </div>
@@ -2441,50 +2438,5 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-// Simple color picker component
-function ColorPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2">
-          <div 
-            className="w-4 h-4 rounded border" 
-            style={{ backgroundColor: value === 'transparent' ? '#fff' : value }}
-          />
-          <span className="text-xs font-mono truncate">{value}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-2">
-        <div className="grid grid-cols-5 gap-1 mb-2">
-          {colorPresets.map(color => (
-            <button
-              key={color.value}
-              className={cn(
-                'w-6 h-6 rounded border transition-transform hover:scale-110',
-                value === color.value && 'ring-2 ring-primary ring-offset-1'
-              )}
-              style={{ backgroundColor: color.value }}
-              onClick={() => onChange(color.value)}
-              title={color.name}
-            />
-          ))}
-        </div>
-        <Input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="#000000"
-          className="h-7 text-xs font-mono"
-        />
-        <div className="flex gap-1 mt-1">
-          <Button variant="ghost" size="sm" className="text-xs h-6 flex-1" onClick={() => onChange('transparent')}>
-            Transparent
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }
