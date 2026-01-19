@@ -151,6 +151,54 @@ function getRecommendedColors(colorType: string, baseHue: number): string[] {
   }
 }
 
+type HarmonyType = 'complementary' | 'analogous' | 'triadic' | 'split-complementary';
+
+interface HarmonyColors {
+  type: HarmonyType;
+  label: string;
+  colors: string[];
+}
+
+function getColorHarmonies(h: number, s: number, l: number): HarmonyColors[] {
+  return [
+    {
+      type: 'complementary',
+      label: 'Complementary',
+      colors: [
+        hslToHex(h, s, l),
+        hslToHex((h + 180) % 360, s, l),
+      ],
+    },
+    {
+      type: 'analogous',
+      label: 'Analogous',
+      colors: [
+        hslToHex((h - 30 + 360) % 360, s, l),
+        hslToHex(h, s, l),
+        hslToHex((h + 30) % 360, s, l),
+      ],
+    },
+    {
+      type: 'triadic',
+      label: 'Triadic',
+      colors: [
+        hslToHex(h, s, l),
+        hslToHex((h + 120) % 360, s, l),
+        hslToHex((h + 240) % 360, s, l),
+      ],
+    },
+    {
+      type: 'split-complementary',
+      label: 'Split-Comp',
+      colors: [
+        hslToHex(h, s, l),
+        hslToHex((h + 150) % 360, s, l),
+        hslToHex((h + 210) % 360, s, l),
+      ],
+    },
+  ];
+}
+
 export function ColorWheelPicker({ value, onChange, colorType = 'primary', label }: ColorWheelPickerProps) {
   const wheelRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -259,6 +307,7 @@ export function ColorWheelPicker({ value, onChange, colorType = 'primary', label
   };
 
   const recommendedColors = getRecommendedColors(colorType, hsl.h);
+  const harmonies = getColorHarmonies(hsl.h, hsl.s, hsl.l);
 
   return (
     <Popover>
@@ -269,7 +318,7 @@ export function ColorWheelPicker({ value, onChange, colorType = 'primary', label
           style={{ backgroundColor: value === 'transparent' ? '#fff' : value }}
         />
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3" align="start">
+      <PopoverContent className="w-72 p-3" align="start">
         <div className="space-y-3">
           {label && <Label className="text-xs font-medium">{label}</Label>}
           
@@ -293,6 +342,43 @@ export function ColorWheelPicker({ value, onChange, colorType = 'primary', label
                     onChange(color);
                   }}
                 />
+              ))}
+            </div>
+          </div>
+
+          {/* Color Harmonies */}
+          <div className="space-y-1.5">
+            <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">
+              Color Harmonies
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              {harmonies.map((harmony) => (
+                <div 
+                  key={harmony.type}
+                  className="flex flex-col gap-1 p-1.5 rounded-md border border-border/50 bg-muted/30"
+                >
+                  <span className="text-[9px] text-muted-foreground font-medium">
+                    {harmony.label}
+                  </span>
+                  <div className="flex gap-0.5">
+                    {harmony.colors.map((color, i) => (
+                      <button
+                        key={i}
+                        className={cn(
+                          'flex-1 h-5 rounded transition-all hover:scale-y-125 first:rounded-l last:rounded-r',
+                          value === color ? 'ring-1 ring-foreground ring-offset-1' : ''
+                        )}
+                        style={{ backgroundColor: color }}
+                        onClick={() => {
+                          setHexInput(color);
+                          setHsl(hexToHsl(color));
+                          onChange(color);
+                        }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
