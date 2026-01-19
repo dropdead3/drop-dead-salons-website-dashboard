@@ -323,7 +323,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           {!hideDefaultVideoButton && (
             <motion.button
               onClick={handlePlayVideo}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex items-center gap-2 px-4 py-2 bg-background/90 backdrop-blur-sm rounded-full text-foreground hover:bg-background transition-colors duration-200"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 bg-background/90 backdrop-blur-sm rounded-full text-foreground hover:bg-background transition-colors duration-200"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
