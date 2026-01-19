@@ -31,7 +31,6 @@ import { format } from 'date-fns';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { StylistsOverviewCard, StaffOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
-import { BirthdayCalendarCard } from '@/components/dashboard/BirthdayCalendarCard';
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
 import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
 import { WorkScheduleWidget } from '@/components/dashboard/WorkScheduleWidget';
@@ -303,17 +302,12 @@ export default function DashboardHome() {
         <WidgetsSection />
 
         {/* Leadership-only: Team & Stylists Overview + Schedule Requests */}
-        {isLeadership && (isVisible('team_overview') || isVisible('stylists_overview') || isVisible('birthday_calendar')) && (
+        {isLeadership && (isVisible('team_overview') || isVisible('stylists_overview')) && (
           <div className="grid gap-6 lg:grid-cols-2">
             {isVisible('team_overview') && <StaffOverviewCard />}
             {isVisible('stylists_overview') && <StylistsOverviewCard />}
             <ScheduleRequestsCard />
           </div>
-        )}
-
-        {/* Leadership-only: Birthday Calendar */}
-        {isLeadership && isVisible('birthday_calendar') && (
-          <BirthdayCalendarCard />
         )}
 
         {/* Drop Dead 75 Program Section */}
