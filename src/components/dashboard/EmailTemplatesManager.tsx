@@ -33,11 +33,13 @@ import {
   Save,
   Loader2,
   Send,
+  Copy,
 } from 'lucide-react';
 import {
   useEmailTemplates,
   useUpdateEmailTemplate,
   useDeleteEmailTemplate,
+  useCreateEmailTemplate,
   EmailTemplate,
 } from '@/hooks/useEmailTemplates';
 import { cn } from '@/lib/utils';
@@ -50,6 +52,7 @@ export function EmailTemplatesManager() {
   const { data: templates, isLoading } = useEmailTemplates();
   const updateTemplate = useUpdateEmailTemplate();
   const deleteTemplate = useDeleteEmailTemplate();
+  const createTemplate = useCreateEmailTemplate();
   const { user } = useAuth();
 
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
@@ -57,6 +60,7 @@ export function EmailTemplatesManager() {
   const [testEmailTemplate, setTestEmailTemplate] = useState<EmailTemplate | null>(null);
   const [testEmailAddress, setTestEmailAddress] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     subject: '',
@@ -93,6 +97,36 @@ export function EmailTemplatesManager() {
 
   const handleDelete = async (id: string) => {
     await deleteTemplate.mutateAsync(id);
+  };
+
+  const handleDuplicate = async (template: EmailTemplate) => {
+    setIsDuplicating(template.id);
+    try {
+      // Generate a unique template key
+      const baseKey = template.template_key.replace(/_copy(_\d+)?$/, '');
+      const existingKeys = templates?.map(t => t.template_key) || [];
+      let newKey = `${baseKey}_copy`;
+      let counter = 1;
+      while (existingKeys.includes(newKey)) {
+        newKey = `${baseKey}_copy_${counter}`;
+        counter++;
+      }
+
+      await createTemplate.mutateAsync({
+        template_key: newKey,
+        name: `${template.name} (Copy)`,
+        subject: template.subject,
+        html_body: template.html_body,
+        description: template.description || undefined,
+        variables: template.variables,
+      });
+      
+      toast.success(`Template duplicated as "${template.name} (Copy)"`);
+    } catch (error) {
+      console.error('Error duplicating template:', error);
+    } finally {
+      setIsDuplicating(null);
+    }
   };
 
   const handleSendTestEmail = async () => {
@@ -219,6 +253,19 @@ export function EmailTemplatesManager() {
                       title="Preview"
                     >
                       <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicate(template)}
+                      disabled={isDuplicating === template.id}
+                      title="Duplicate"
+                    >
+                      {isDuplicating === template.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
                     </Button>
                     <Button
                       variant="outline"
