@@ -3,7 +3,7 @@ import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, ArrowRight, Sparkles, Clock, Star, UserPlus, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles, UserPlus, ChevronDown } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useRef, useState } from "react";
 import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
@@ -97,18 +97,9 @@ function ServiceCard({
       transition={{ duration: 0.5, delay: index * 0.05, ease: editorialEasing }}
       className="group relative"
     >
-      <div className={`p-6 lg:p-8 bg-card border border-border rounded-2xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-1 ${!hasPrice ? 'opacity-60' : ''}`}>
-        {service.featured && (
-          <div className="absolute -top-3 right-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-display uppercase tracking-wider bg-foreground text-background rounded-full">
-              <Star size={10} className="fill-current" />
-              Popular
-            </span>
-          </div>
-        )}
-        
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <h3 className="font-display text-base lg:text-lg text-foreground leading-tight">
+      <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : ''}`}>
+        <div className="flex items-center justify-between gap-4">
+          <h3 className="font-sans text-sm lg:text-base text-foreground leading-tight">
             {service.name}
           </h3>
           <div className="text-right shrink-0">
@@ -118,30 +109,10 @@ function ServiceCard({
               </span>
             ) : (
               <span className="text-xs text-muted-foreground italic">
-                N/A at this level
+                —
               </span>
             )}
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-          <Clock size={12} />
-          <span>{service.duration}</span>
-        </div>
-        
-        <p className="text-muted-foreground font-sans font-light leading-relaxed mb-4">
-          {service.description}
-        </p>
-        
-        {service.note && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground/70 font-sans">
-            <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">{service.note}</span>
-          </div>
-        )}
-        
-        {/* Hover arrow */}
-        <div className="absolute bottom-6 right-6 lg:bottom-8 lg:right-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <ArrowUpRight size={20} className="text-foreground" />
         </div>
       </div>
     </motion.div>
