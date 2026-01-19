@@ -121,10 +121,12 @@ export default function TeamDirectory() {
   
   const isSuperAdmin = currentUserProfile?.is_super_admin;
   const isAdmin = actualRoles.includes('admin');
+  const isManager = actualRoles.includes('manager');
+  const canViewStrikes = isAdmin || isManager;
   
-  // Get strike counts for all team members (only for admins)
+  // Get strike counts for all team members (only for admins/managers)
   const userIds = team.map(m => m.user_id);
-  const { data: strikeCounts = {} } = useStrikeCounts(isAdmin ? userIds : []);
+  const { data: strikeCounts = {} } = useStrikeCounts(canViewStrikes ? userIds : []);
 
   // Get all unique roles from team members for filter dropdown
   const allRoles = [...new Set(team.flatMap(member => 
@@ -350,7 +352,7 @@ export default function TeamDirectory() {
                         member={member} 
                         locations={locations}
                         isSuperAdmin={isSuperAdmin}
-                        isAdmin={isAdmin}
+                        canViewStrikes={canViewStrikes}
                         strikeCount={strikeCounts[member.user_id] || 0}
                         onViewProfile={() => navigate(`/dashboard/profile/${member.user_id}`)}
                       />
@@ -388,12 +390,12 @@ interface TeamMemberCardProps {
   };
   locations: Array<{ id: string; name: string }>;
   isSuperAdmin?: boolean;
-  isAdmin?: boolean;
+  canViewStrikes?: boolean;
   strikeCount?: number;
   onViewProfile?: () => void;
 }
 
-function TeamMemberCard({ member, locations, isSuperAdmin, isAdmin, strikeCount = 0, onViewProfile }: TeamMemberCardProps) {
+function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strikeCount = 0, onViewProfile }: TeamMemberCardProps) {
   const navigate = useNavigate();
   const [strikeDialogOpen, setStrikeDialogOpen] = useState(false);
   const timeAtCompany = getTimeAtCompany(member.hire_date);
@@ -450,8 +452,8 @@ function TeamMemberCard({ member, locations, isSuperAdmin, isAdmin, strikeCount 
           </div>
         )}
 
-        {/* Strike indicator for admins - clickable with dropdown */}
-        {isAdmin && (
+        {/* Strike indicator for admins/managers - clickable with dropdown */}
+        {canViewStrikes && (
           <>
             <HoverCard openDelay={100} closeDelay={100}>
               <HoverCardTrigger asChild>
