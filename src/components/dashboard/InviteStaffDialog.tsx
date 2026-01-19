@@ -29,8 +29,11 @@ const emailSchema = z.string().email('Please enter a valid email address');
 
 const roleOptions: { value: AppRole; label: string; description: string }[] = [
   { value: 'stylist', label: 'Stylist', description: 'Hair stylist or extension specialist' },
-  { value: 'assistant', label: 'Assistant', description: 'Stylist assistant' },
+  { value: 'stylist_assistant', label: 'Stylist Assistant', description: 'Assists stylists with services' },
+  { value: 'assistant', label: 'Assistant', description: 'General assistant' },
   { value: 'receptionist', label: 'Receptionist', description: 'Front desk staff' },
+  { value: 'admin_assistant', label: 'Admin Assistant', description: 'Administrative support' },
+  { value: 'operations_assistant', label: 'Operations Assistant', description: 'Operations support' },
   { value: 'manager', label: 'Manager', description: 'Salon manager or coach' },
   { value: 'admin', label: 'Admin', description: 'Full system access' },
 ];
