@@ -261,14 +261,14 @@ export function Header() {
                   <DropdownMenuContent 
                     align="center" 
                     sideOffset={12}
-                    className="w-[200px] rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-2"
+                    className="w-[180px] rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5"
                   >
                     {aboutLinks.map((link) => (
                       <DropdownMenuItem key={link.href} asChild>
                         <Link
                           to={link.href}
                           className={cn(
-                            "flex items-center gap-3 select-none rounded-lg px-4 py-3 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
+                            "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
                             location.pathname === link.href 
                               ? "bg-accent text-accent-foreground" 
                               : "text-foreground/80"
