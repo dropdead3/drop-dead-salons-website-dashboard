@@ -394,6 +394,7 @@ interface TeamMemberCardProps {
 }
 
 function TeamMemberCard({ member, locations, isSuperAdmin, isAdmin, strikeCount = 0, onViewProfile }: TeamMemberCardProps) {
+  const navigate = useNavigate();
   const [strikeDialogOpen, setStrikeDialogOpen] = useState(false);
   const timeAtCompany = getTimeAtCompany(member.hire_date);
   const memberLocations = member.location_ids || [];
@@ -449,36 +450,57 @@ function TeamMemberCard({ member, locations, isSuperAdmin, isAdmin, strikeCount 
           </div>
         )}
 
-        {/* Strike indicator for admins - clickable to add strike */}
+        {/* Strike indicator for admins - clickable with dropdown */}
         {isAdmin && (
           <>
-            <div className="absolute top-3 right-3 z-10">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+            <HoverCard openDelay={100} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setStrikeDialogOpen(true);
+                  }}
+                  className={cn(
+                    "absolute top-3 right-3 z-10 p-1.5 rounded-full shadow-sm transition-all hover:scale-110",
+                    strikeCount > 0
+                      ? "bg-destructive text-destructive-foreground"
+                      : "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                </button>
+              </HoverCardTrigger>
+              <HoverCardContent 
+                side="left" 
+                align="start" 
+                className="w-48 p-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="space-y-1">
+                  <p className="text-xs font-medium px-2 py-1">
+                    {strikeCount > 0 
+                      ? `${strikeCount} active strike${strikeCount > 1 ? 's' : ''}`
+                      : 'No active strikes'}
+                  </p>
+                  <button
+                    onClick={() => setStrikeDialogOpen(true)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-md hover:bg-muted transition-colors text-left"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Add new strike
+                  </button>
+                  {strikeCount > 0 && (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setStrikeDialogOpen(true);
-                      }}
-                      className={cn(
-                        "p-1.5 rounded-full shadow-sm transition-all hover:scale-110",
-                        strikeCount > 0
-                          ? "bg-destructive text-destructive-foreground"
-                          : "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
+                      onClick={() => navigate(`/dashboard/admin/staff-strikes?userId=${member.user_id}`)}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-md hover:bg-muted transition-colors text-left text-primary"
                     >
-                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      View all strikes
                     </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left" className="text-xs">
-                    {strikeCount > 0
-                      ? `${strikeCount} active strike${strikeCount > 1 ? 's' : ''} – Click to add`
-                      : 'Add strike'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+                  )}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
             <AddStrikeDialog
               userId={member.user_id}
               userName={member.display_name || member.full_name}
