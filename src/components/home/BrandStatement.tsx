@@ -32,12 +32,16 @@ export function BrandStatement() {
   const blurFilter = useTransform(blur, (v) => `blur(${v}px)`);
   const y = useTransform(scrollYProgress, [0, 0.7], [40, 0]);
 
-  // Typewriter effect
+  // Typewriter effect with natural variation
   useEffect(() => {
     const currentWord = rotatingWords[currentWordIndex];
-    const typingSpeed = 80;
-    const deletingSpeed = 50;
-    const pauseDuration = 2000;
+    const baseTypingSpeed = 100;
+    const baseDeletingSpeed = 60;
+    const pauseDuration = 2500;
+
+    // Add random variation for natural feel
+    const getTypingSpeed = () => baseTypingSpeed + Math.random() * 80 - 40; // 60-140ms
+    const getDeletingSpeed = () => baseDeletingSpeed + Math.random() * 30 - 15; // 45-75ms
 
     let timeout: NodeJS.Timeout;
 
@@ -46,7 +50,7 @@ export function BrandStatement() {
       if (displayText.length < currentWord.length) {
         timeout = setTimeout(() => {
           setDisplayText(currentWord.slice(0, displayText.length + 1));
-        }, typingSpeed);
+        }, getTypingSpeed());
       } else {
         // Word complete, pause then start deleting
         timeout = setTimeout(() => {
@@ -58,7 +62,7 @@ export function BrandStatement() {
       if (displayText.length > 0) {
         timeout = setTimeout(() => {
           setDisplayText(displayText.slice(0, -1));
-        }, deletingSpeed);
+        }, getDeletingSpeed());
       } else {
         // Word deleted, move to next word
         setIsDeleting(false);
@@ -93,14 +97,11 @@ export function BrandStatement() {
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
               Not Your
               <br />
-              <span className="font-light inline-block relative">
-                {/* Invisible text to maintain width */}
-                <span className="invisible">{longestWord}</span>
-                {/* Actual animated text */}
-                <span className="absolute left-0 top-0">
+              <span className="font-light inline-flex items-baseline whitespace-nowrap">
+                <span className="inline-block min-w-0">
                   {displayText}
-                  <span className="inline-block w-[3px] h-[0.9em] bg-background/80 ml-1 animate-pulse align-middle" />
                 </span>
+                <span className="inline-block w-[3px] h-[0.85em] bg-background/80 ml-0.5 animate-pulse flex-shrink-0" />
               </span>
               <br />
               <span className="font-light">Salon</span>
