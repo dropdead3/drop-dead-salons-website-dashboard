@@ -74,20 +74,19 @@ function StylistLevelSelector({
 function ServiceCard({ 
   service, 
   index, 
-  selectedLevel 
+  selectedLevel,
+  isAddOn = false
 }: { 
   service: ServiceItem; 
   index: number;
   selectedLevel: StylistLevel;
+  isAddOn?: boolean;
 }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   
   const price = service.prices[selectedLevel];
   const hasPrice = price !== null;
-  
-  // Find the lowest available price for "starting at" display
-  const lowestPrice = Object.values(service.prices).find(p => p !== null);
 
   return (
     <motion.div
@@ -98,20 +97,36 @@ function ServiceCard({
       className="group relative"
     >
       <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : ''}`}>
-        <div className="flex items-center justify-between gap-4">
-          <h3 className="font-sans text-sm lg:text-base text-foreground leading-tight">
-            {service.name}
-          </h3>
-          <div className="text-right shrink-0">
-            {hasPrice ? (
-              <span className="font-display text-sm text-foreground">
-                {price}
-              </span>
-            ) : (
-              <span className="text-xs text-muted-foreground italic">
-                —
-              </span>
-            )}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <h3 className="font-display text-sm lg:text-base text-foreground leading-tight tracking-wide">
+                {service.name}
+              </h3>
+              {service.description && (
+                <p className="text-xs text-muted-foreground mt-1.5 font-sans font-light leading-relaxed">
+                  {service.description}
+                </p>
+              )}
+            </div>
+            <div className="text-right shrink-0">
+              {hasPrice ? (
+                <div className="flex flex-col items-end">
+                  {!isAddOn && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-sans">
+                      Starting at
+                    </span>
+                  )}
+                  <span className="font-display text-sm text-foreground">
+                    {price}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-xs text-muted-foreground italic">
+                  —
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -170,6 +185,7 @@ function CategorySection({
             service={service} 
             index={index}
             selectedLevel={selectedLevel}
+            isAddOn={category.isAddOn}
           />
         ))}
       </div>
