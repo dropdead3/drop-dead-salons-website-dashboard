@@ -97,11 +97,8 @@ export function BrandStatement() {
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
               Not Your
               <br />
-              <span className="font-light inline-flex items-baseline whitespace-nowrap">
-                <span className="inline-block min-w-0">
-                  {displayText}
-                </span>
-                <span className="inline-block w-[3px] h-[0.85em] bg-background/80 ml-0.5 animate-pulse flex-shrink-0" />
+              <span className="font-light">
+                {displayText}
               </span>
               <br />
               <span className="font-light">Salon</span>
