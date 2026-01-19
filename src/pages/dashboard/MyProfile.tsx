@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2 } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake } from 'lucide-react';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { locations } from '@/data/stylists';
@@ -50,6 +50,7 @@ export default function MyProfile() {
     phone: '',
     instagram: '',
     tiktok: '',
+    birthday: '',
     location_id: '',
     location_ids: [] as string[],
     stylist_level: '',
@@ -79,6 +80,7 @@ export default function MyProfile() {
         phone: profile.phone || '',
         instagram: profile.instagram || '',
         tiktok: profile.tiktok || '',
+        birthday: (profile as any).birthday || '',
         location_id: profile.location_id || '',
         location_ids: locationIds,
         stylist_level: profile.stylist_level || '',
@@ -415,6 +417,24 @@ export default function MyProfile() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Birthday Field */}
+              <div className="space-y-2">
+                <Label htmlFor="birthday" className="flex items-center gap-2">
+                  <Cake className="w-4 h-4 text-pink-500" />
+                  Birthday
+                </Label>
+                <Input
+                  id="birthday"
+                  type="date"
+                  value={formData.birthday}
+                  onChange={(e) => setFormData(prev => ({ ...prev, birthday: e.target.value }))}
+                  className="w-full md:w-auto"
+                />
+                <p className="text-xs text-muted-foreground">
+                  We'll celebrate with you! Your birthday appears on the team calendar.
+                </p>
               </div>
 
               <div className="space-y-2">

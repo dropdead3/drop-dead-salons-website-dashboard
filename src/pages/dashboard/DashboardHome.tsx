@@ -31,6 +31,7 @@ import { format } from 'date-fns';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { StylistsOverviewCard, StaffOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
+import { BirthdayCalendarCard } from '@/components/dashboard/BirthdayCalendarCard';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -288,11 +289,16 @@ export default function DashboardHome() {
         </div>
 
         {/* Leadership-only: Team & Stylists Overview */}
-        {isLeadership && (isVisible('team_overview') || isVisible('stylists_overview')) && (
+        {isLeadership && (isVisible('team_overview') || isVisible('stylists_overview') || isVisible('birthday_calendar')) && (
           <div className="grid gap-6 lg:grid-cols-2">
             {isVisible('team_overview') && <StaffOverviewCard />}
             {isVisible('stylists_overview') && <StylistsOverviewCard />}
           </div>
+        )}
+
+        {/* Leadership-only: Birthday Calendar */}
+        {isLeadership && isVisible('birthday_calendar') && (
+          <BirthdayCalendarCard />
         )}
 
         {/* Drop Dead 75 Program Section */}
