@@ -390,6 +390,33 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_location_schedules: {
+        Row: {
+          created_at: string | null
+          id: string
+          location_id: string
+          updated_at: string | null
+          user_id: string
+          work_days: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location_id: string
+          updated_at?: string | null
+          user_id: string
+          work_days?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location_id?: string
+          updated_at?: string | null
+          user_id?: string
+          work_days?: string[] | null
+        }
+        Relationships: []
+      }
       employee_profiles: {
         Row: {
           admin_approved_at: string | null
@@ -798,6 +825,51 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      schedule_change_requests: {
+        Row: {
+          created_at: string | null
+          current_days: string[] | null
+          id: string
+          location_id: string
+          reason: string | null
+          requested_days: string[]
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_days?: string[] | null
+          id?: string
+          location_id: string
+          reason?: string | null
+          requested_days: string[]
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_days?: string[] | null
+          id?: string
+          location_id?: string
+          reason?: string | null
+          requested_days?: string[]
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
