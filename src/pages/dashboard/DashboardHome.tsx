@@ -58,7 +58,7 @@ const priorityColors: Record<Priority, string> = {
 export default function DashboardHome() {
   const { user, roles } = useAuth();
   const { enrollment } = useDailyCompletion(user?.id);
-  const { tasks, createTask, toggleTask, deleteTask } = useTasks();
+  const { tasks, createTask, toggleTask, deleteTask, isImpersonating } = useTasks();
   const { data: approvalStatus } = useCurrentUserApprovalStatus();
   const { data: profile } = useEmployeeProfile();
   const { data: visibility = {} } = useMyDashboardVisibility();
@@ -230,8 +230,19 @@ export default function DashboardHome() {
           {isVisible('my_tasks') && (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-sm tracking-wide">MY TASKS</h2>
-                <AddTaskDialog onAdd={(task) => createTask.mutate(task)} isPending={createTask.isPending} />
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display text-sm tracking-wide">MY TASKS</h2>
+                  {isImpersonating && (
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                      View Only
+                    </span>
+                  )}
+                </div>
+                <AddTaskDialog 
+                  onAdd={(task) => createTask.mutate(task)} 
+                  isPending={createTask.isPending} 
+                  isReadOnly={isImpersonating}
+                />
               </div>
               <div className="space-y-3">
                 {tasks.length > 0 ? (
@@ -241,13 +252,14 @@ export default function DashboardHome() {
                       task={task}
                       onToggle={(id, completed) => toggleTask.mutate({ id, is_completed: completed })}
                       onDelete={(id) => deleteTask.mutate(id)}
+                      isReadOnly={isImpersonating}
                     />
                   ))
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
                     <CheckSquare className="w-6 h-6 mx-auto mb-2 opacity-50" />
                     <p className="text-sm font-sans">No tasks yet</p>
-                    <p className="text-xs mt-1">Add your first task above</p>
+                    <p className="text-xs mt-1">{isImpersonating ? 'This user has no tasks' : 'Add your first task above'}</p>
                   </div>
                 )}
               </div>

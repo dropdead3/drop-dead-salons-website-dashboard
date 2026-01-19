@@ -17,14 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus, Lock } from 'lucide-react';
 
 interface AddTaskDialogProps {
   onAdd: (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high' }) => void;
   isPending: boolean;
+  isReadOnly?: boolean;
 }
 
-export function AddTaskDialog({ onAdd, isPending }: AddTaskDialogProps) {
+export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -33,7 +35,7 @@ export function AddTaskDialog({ onAdd, isPending }: AddTaskDialogProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || isReadOnly) return;
 
     onAdd({
       title: title.trim(),
@@ -48,6 +50,28 @@ export function AddTaskDialog({ onAdd, isPending }: AddTaskDialogProps) {
     setPriority('normal');
     setOpen(false);
   };
+
+  // Show disabled button with tooltip when in read-only mode
+  if (isReadOnly) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-1 text-muted-foreground opacity-50 cursor-not-allowed"
+            disabled
+          >
+            <Lock className="w-3.5 h-3.5" />
+            Add task
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="text-xs">
+          View-only mode – cannot add tasks
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
