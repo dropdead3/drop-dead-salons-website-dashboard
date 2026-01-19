@@ -147,6 +147,13 @@ function CategorySection({
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
+  // Sort items so popular services appear first
+  const sortedItems = [...category.items].sort((a, b) => {
+    if (a.isPopular && !b.isPopular) return -1;
+    if (!a.isPopular && b.isPopular) return 1;
+    return 0;
+  });
+
   return (
     <motion.div
       ref={ref}
@@ -180,7 +187,7 @@ function CategorySection({
 
       {/* Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-        {category.items.map((service, index) => (
+        {sortedItems.map((service, index) => (
           <ServiceCard 
             key={service.name} 
             service={service} 
