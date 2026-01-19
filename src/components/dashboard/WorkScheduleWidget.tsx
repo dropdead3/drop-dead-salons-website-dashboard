@@ -2,19 +2,26 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, Send, Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, Send, Loader2, CheckCircle, XCircle, AlertCircle, MapPin, ChevronDown } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
 import { 
   useLocationSchedule, 
+  useLocationSchedules,
   useUpsertLocationSchedule, 
   useCreateScheduleChangeRequest,
   useMyScheduleChangeRequests 
 } from '@/hooks/useLocationSchedules';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const DAYS_OF_WEEK = [
   { key: 'Mon', label: 'Monday' },
@@ -30,6 +37,7 @@ export function WorkScheduleWidget() {
   const { data: profile } = useEmployeeProfile();
   const { data: locations } = useLocations();
   const { data: myRequests } = useMyScheduleChangeRequests();
+  const { data: allSchedules } = useLocationSchedules();
   
   const userLocations = locations?.filter(loc => 
     profile?.location_ids?.includes(loc.id) || profile?.location_id === loc.id
@@ -58,7 +66,30 @@ export function WorkScheduleWidget() {
     }
   }, [requestDialogOpen, currentSchedule]);
 
+  // Get days used by other locations
+  const getDaysUsedByOtherLocations = () => {
+    const otherSchedules = allSchedules?.filter(s => s.location_id !== selectedLocationId) || [];
+    return otherSchedules.flatMap(s => s.work_days || []);
+  };
+
   const toggleDay = (day: string) => {
+    const daysUsedElsewhere = getDaysUsedByOtherLocations();
+    
+    // Check if trying to add a day that's used elsewhere
+    if (!requestedDays.includes(day) && daysUsedElsewhere.includes(day)) {
+      const otherLocation = allSchedules?.find(
+        s => s.location_id !== selectedLocationId && s.work_days?.includes(day)
+      );
+      const otherLocationName = locations?.find(l => l.id === otherLocation?.location_id)?.name || 'another location';
+      
+      toast({
+        title: "Day unavailable",
+        description: `${DAYS_OF_WEEK.find(d => d.key === day)?.label} is already assigned to ${otherLocationName}. Days cannot overlap between locations.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setRequestedDays(prev => 
       prev.includes(day) 
         ? prev.filter(d => d !== day) 
@@ -86,6 +117,12 @@ export function WorkScheduleWidget() {
 
   const selectedLocation = locations?.find(l => l.id === selectedLocationId);
 
+  // Get schedule summary for each location
+  const getLocationScheduleSummary = (locationId: string) => {
+    const schedule = allSchedules?.find(s => s.location_id === locationId);
+    return schedule?.work_days?.length || 0;
+  };
+
   if (userLocations.length === 0) {
     return (
       <Card>
@@ -106,6 +143,8 @@ export function WorkScheduleWidget() {
       </Card>
     );
   }
+
+  const daysUsedElsewhere = getDaysUsedByOtherLocations();
 
   return (
     <Card>
@@ -140,24 +179,40 @@ export function WorkScheduleWidget() {
                 <div>
                   <label className="text-sm font-medium mb-2 block">Select your preferred work days</label>
                   <div className="flex flex-wrap gap-2">
-                    {DAYS_OF_WEEK.map((day) => (
-                      <Button
-                        key={day.key}
-                        type="button"
-                        variant={requestedDays.includes(day.key) ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => toggleDay(day.key)}
-                        className={cn(
-                          "min-w-[60px]",
-                          requestedDays.includes(day.key) && "bg-primary text-primary-foreground"
-                        )}
-                      >
-                        {day.key}
-                      </Button>
-                    ))}
+                    {DAYS_OF_WEEK.map((day) => {
+                      const isUsedElsewhere = daysUsedElsewhere.includes(day.key);
+                      const otherLocation = allSchedules?.find(
+                        s => s.location_id !== selectedLocationId && s.work_days?.includes(day.key)
+                      );
+                      const otherLocationName = locations?.find(l => l.id === otherLocation?.location_id)?.name;
+                      
+                      return (
+                        <Button
+                          key={day.key}
+                          type="button"
+                          variant={requestedDays.includes(day.key) ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => toggleDay(day.key)}
+                          disabled={isUsedElsewhere}
+                          title={isUsedElsewhere ? `Assigned to ${otherLocationName}` : undefined}
+                          className={cn(
+                            "min-w-[60px]",
+                            requestedDays.includes(day.key) && "bg-primary text-primary-foreground",
+                            isUsedElsewhere && "opacity-40 cursor-not-allowed line-through"
+                          )}
+                        >
+                          {day.key}
+                        </Button>
+                      );
+                    })}
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     {requestedDays.length} days selected
+                    {daysUsedElsewhere.length > 0 && (
+                      <span className="ml-2 text-amber-600">
+                        • {daysUsedElsewhere.length} days assigned to other locations
+                      </span>
+                    )}
                   </p>
                 </div>
 
@@ -195,26 +250,72 @@ export function WorkScheduleWidget() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Location selector */}
+        {/* Location selector - improved dropdown */}
         {userLocations.length > 1 && (
-          <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select location" />
-            </SelectTrigger>
-            <SelectContent>
-              {userLocations.map(loc => (
-                <SelectItem key={loc.id} value={loc.id}>
-                  {loc.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full justify-between h-auto py-3 px-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium">{selectedLocation?.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {getLocationScheduleSummary(selectedLocationId)} days scheduled
+                    </div>
+                  </div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] bg-background border shadow-lg z-50">
+              {userLocations.map(loc => {
+                const scheduleDays = getLocationScheduleSummary(loc.id);
+                const isSelected = loc.id === selectedLocationId;
+                return (
+                  <DropdownMenuItem 
+                    key={loc.id} 
+                    onClick={() => setSelectedLocationId(loc.id)}
+                    className={cn(
+                      "flex items-center gap-3 py-3 px-4 cursor-pointer",
+                      isSelected && "bg-accent"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center",
+                      isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
+                    )}>
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{loc.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {scheduleDays} days scheduled
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <CheckCircle className="w-4 h-4 text-primary" />
+                    )}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
         {userLocations.length === 1 && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="w-4 h-4" />
-            {userLocations[0].name}
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <div className="font-medium text-sm">{userLocations[0].name}</div>
+              <div className="text-xs text-muted-foreground">Your assigned location</div>
+            </div>
           </div>
         )}
 
