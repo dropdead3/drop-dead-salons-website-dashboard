@@ -140,7 +140,7 @@ export function StickyFooterBar() {
                   className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-full transition-all duration-200"
                 >
                   <Phone size={14} />
-                  <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap font-termina">
+                  <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap font-display">
                     {locations[0].name}
                   </span>
                 </a>
@@ -153,7 +153,7 @@ export function StickyFooterBar() {
                   className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-full transition-all duration-200"
                 >
                   <Phone size={14} />
-                  <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap font-termina">
+                  <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap font-display">
                     {locations[1].name}
                   </span>
                 </a>
