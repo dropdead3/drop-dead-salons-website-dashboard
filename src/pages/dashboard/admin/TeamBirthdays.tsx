@@ -12,6 +12,7 @@ import { useMonthlyBirthdays, useUpcomingBirthdays, useTodaysBirthdays } from '@
 import { format, addMonths, subMonths, getMonth, getDate, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
+import { BirthdayExportButton } from '@/components/dashboard/BirthdayExportButton';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -73,14 +74,17 @@ export default function TeamBirthdays() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="font-display text-3xl lg:text-4xl mb-2 flex items-center gap-3">
-            <Cake className="w-8 h-8" />
-            Team Birthdays
-          </h1>
-          <p className="text-muted-foreground font-sans">
-            Celebrate your team members' special days
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl lg:text-4xl mb-2 flex items-center gap-3">
+              <Cake className="w-8 h-8" />
+              Team Birthdays
+            </h1>
+            <p className="text-muted-foreground font-sans">
+              Celebrate your team members' special days
+            </p>
+          </div>
+          <BirthdayExportButton birthdays={upcomingBirthdays || []} />
         </div>
 
         {/* Today's Birthdays Banner */}
