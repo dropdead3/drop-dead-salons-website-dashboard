@@ -161,22 +161,18 @@ export function StaffOverviewCard() {
           })}
         </div>
         
-        {(multiLocationStaff > 0 || unassignedStaff > 0) && (
-          <div className="pt-2 border-t space-y-1">
-            {multiLocationStaff > 0 && (
-              <p className="text-xs text-muted-foreground flex items-center justify-between">
-                <span>Works at both locations</span>
-                <span>{multiLocationStaff}</span>
-              </p>
-            )}
-            {unassignedStaff > 0 && (
-              <p className="text-xs text-muted-foreground flex items-center justify-between">
-                <span>No location assigned</span>
-                <span>{unassignedStaff}</span>
-              </p>
-            )}
-          </div>
-        )}
+        <div className="pt-2 border-t space-y-1">
+          <p className="text-xs text-muted-foreground flex items-center justify-between">
+            <span>Multi-location staff</span>
+            <span>{multiLocationStaff}</span>
+          </p>
+          {unassignedStaff > 0 && (
+            <p className="text-xs text-muted-foreground flex items-center justify-between">
+              <span>No location assigned</span>
+              <span>{unassignedStaff}</span>
+            </p>
+          )}
+        </div>
         
         {totalStaff === 0 && (
           <p className="text-xs text-muted-foreground text-center pt-2">
