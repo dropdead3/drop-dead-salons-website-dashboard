@@ -6,7 +6,6 @@ import { ValuesSection } from "@/components/about/ValuesSection";
 import { StatsSection } from "@/components/about/StatsSection";
 import { StorySection } from "@/components/about/StorySection";
 import { JoinTeamSection } from "@/components/about/JoinTeamSection";
-import { CTASection } from "@/components/about/CTASection";
 
 const About = () => {
   return (
@@ -21,7 +20,6 @@ const About = () => {
       <StatsSection />
       <StorySection />
       <JoinTeamSection />
-      <CTASection />
     </Layout>
   );
 };
