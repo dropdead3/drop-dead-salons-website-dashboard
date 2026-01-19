@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,7 +36,7 @@ import {
   Loader2,
   Code,
   Variable,
-  Plus,
+  Send,
 } from 'lucide-react';
 import {
   useEmailTemplates,
@@ -45,14 +45,21 @@ import {
   EmailTemplate,
 } from '@/hooks/useEmailTemplates';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function EmailTemplatesManager() {
   const { data: templates, isLoading } = useEmailTemplates();
   const updateTemplate = useUpdateEmailTemplate();
   const deleteTemplate = useDeleteEmailTemplate();
+  const { user } = useAuth();
 
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
+  const [testEmailTemplate, setTestEmailTemplate] = useState<EmailTemplate | null>(null);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     subject: '',
@@ -72,6 +79,12 @@ export function EmailTemplatesManager() {
     });
   };
 
+  const openTestEmailDialog = (template: EmailTemplate) => {
+    setTestEmailTemplate(template);
+    // Pre-fill with user's email if available
+    setTestEmailAddress(user?.email || '');
+  };
+
   const handleSave = async () => {
     if (!editingTemplate) return;
     await updateTemplate.mutateAsync({
@@ -83,6 +96,37 @@ export function EmailTemplatesManager() {
 
   const handleDelete = async (id: string) => {
     await deleteTemplate.mutateAsync(id);
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!testEmailTemplate || !testEmailAddress) return;
+
+    setIsSendingTest(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const response = await supabase.functions.invoke('send-test-email', {
+        body: {
+          template_id: testEmailTemplate.id,
+          recipient_email: testEmailAddress,
+        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to send test email');
+      }
+
+      toast.success(`Test email sent to ${testEmailAddress}`);
+      setTestEmailTemplate(null);
+      setTestEmailAddress('');
+    } catch (error: any) {
+      console.error('Error sending test email:', error);
+      toast.error(error.message || 'Failed to send test email');
+    } finally {
+      setIsSendingTest(false);
+    }
   };
 
   const renderPreviewHtml = (html: string, variables: string[]) => {
@@ -166,7 +210,16 @@ export function EmailTemplatesManager() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => openTestEmailDialog(template)}
+                      title="Send Test Email"
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setPreviewTemplate(template)}
+                      title="Preview"
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
@@ -174,6 +227,7 @@ export function EmailTemplatesManager() {
                       variant="outline"
                       size="sm"
                       onClick={() => openEditDialog(template)}
+                      title="Edit"
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -183,6 +237,7 @@ export function EmailTemplatesManager() {
                           variant="ghost"
                           size="sm"
                           className="text-destructive hover:text-destructive"
+                          title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -369,6 +424,67 @@ export function EmailTemplatesManager() {
               />
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Test Email Dialog */}
+      <Dialog
+        open={!!testEmailTemplate}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTestEmailTemplate(null);
+            setTestEmailAddress('');
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Test Email</DialogTitle>
+            <DialogDescription>
+              Send a test email for "{testEmailTemplate?.name}" with sample data to preview how it will look in your inbox.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="test-email">Recipient Email</Label>
+              <Input
+                id="test-email"
+                type="email"
+                placeholder="Enter email address..."
+                value={testEmailAddress}
+                onChange={(e) => setTestEmailAddress(e.target.value)}
+              />
+            </div>
+            <div className="p-3 bg-muted rounded-lg text-sm">
+              <p className="text-muted-foreground">
+                <strong>Note:</strong> The test email will include a banner indicating it's a test, and all template variables will be replaced with sample data.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setTestEmailTemplate(null);
+                setTestEmailAddress('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendTestEmail}
+              disabled={isSendingTest || !testEmailAddress}
+            >
+              {isSendingTest ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4 mr-2" />
+              )}
+              Send Test Email
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
