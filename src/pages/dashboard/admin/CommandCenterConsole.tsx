@@ -117,44 +117,77 @@ export default function CommandCenterConsole() {
           </div>
         </div>
 
-        {/* Bulk Controls - Horizontal Pills */}
-        <Card className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quick Actions</h2>
-          </div>
-          <div className="flex flex-wrap gap-2">
+        {/* Bulk Controls - Clean Grid */}
+        <Card className="p-5">
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {ROLES.map((role) => {
               const config = ROLE_CONFIG[role];
               const Icon = config.icon;
               const stats = getRoleVisibilityStats(role);
               const allVisible = stats.visible === stats.total;
               const noneVisible = stats.visible === 0;
+              const percentage = stats.total > 0 ? Math.round((stats.visible / stats.total) * 100) : 0;
               
               return (
-                <div key={role} className="flex items-center gap-1 bg-muted/50 rounded-full pl-3 pr-1 py-1">
-                  <Icon className={cn("w-3.5 h-3.5", config.color)} />
-                  <span className="text-xs font-medium mr-1">{config.label}</span>
-                  <span className="text-[10px] text-muted-foreground tabular-nums">{stats.visible}/{stats.total}</span>
-                  <div className="flex gap-0.5 ml-1">
+                <div 
+                  key={role} 
+                  className="group relative bg-muted/30 hover:bg-muted/50 border border-border/50 rounded-xl p-4 transition-all duration-200"
+                >
+                  {/* Role Header */}
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center",
+                      "bg-background border border-border/50"
+                    )}>
+                      <Icon className={cn("w-4 h-4", config.color)} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium truncate">{config.label}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {stats.visible} of {stats.total} visible
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-3">
+                    <div 
+                      className={cn(
+                        "h-full rounded-full transition-all duration-300",
+                        percentage === 100 ? "bg-green-500" : percentage === 0 ? "bg-muted-foreground/30" : "bg-primary"
+                      )}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
                     <Button
-                      size="icon"
-                      variant={allVisible ? "default" : "ghost"}
-                      className="h-6 w-6 rounded-full"
+                      size="sm"
+                      variant={allVisible ? "secondary" : "outline"}
+                      className={cn(
+                        "flex-1 h-8 text-xs gap-1.5",
+                        allVisible && "bg-green-500/10 text-green-600 border-green-500/30 hover:bg-green-500/20"
+                      )}
                       onClick={() => handleBulkToggle(role, true)}
                       disabled={allVisible || bulkUpdate.isPending}
-                      title={`Show all for ${config.label}`}
                     >
-                      <Eye className="w-3 h-3" />
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Show All</span>
                     </Button>
                     <Button
-                      size="icon"
-                      variant={noneVisible ? "default" : "ghost"}
-                      className="h-6 w-6 rounded-full"
+                      size="sm"
+                      variant={noneVisible ? "secondary" : "outline"}
+                      className={cn(
+                        "flex-1 h-8 text-xs gap-1.5",
+                        noneVisible && "bg-muted text-muted-foreground"
+                      )}
                       onClick={() => setConfirmHideRole(role)}
                       disabled={noneVisible || bulkUpdate.isPending}
-                      title={`Hide all for ${config.label}`}
                     >
-                      <EyeOff className="w-3 h-3" />
+                      <EyeOff className="w-3.5 h-3.5" />
+                      <span>Hide All</span>
                     </Button>
                   </div>
                 </div>
