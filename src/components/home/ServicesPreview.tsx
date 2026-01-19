@@ -371,6 +371,7 @@ export function ServicesPreview() {
                     className="!absolute inset-0 !aspect-auto w-full h-full"
                     hideDefaultVideoButton={true}
                     hoverMode={true}
+                    compactBadges={true}
                   />
                 ) : (
                   <>
