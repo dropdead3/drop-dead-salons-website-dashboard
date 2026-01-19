@@ -489,6 +489,9 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
   }, [onHtmlChange]);
 
   const addBlock = (type: BlockType) => {
+    // Get the current theme colors for new blocks
+    const currentTheme = allThemes.find(t => t.id === selectedTheme) || emailThemes[0];
+    
     const newBlock: EmailBlock = {
       id: crypto.randomUUID(),
       type,
@@ -497,7 +500,27 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
         textAlign: 'center',
         fontSize: type === 'heading' ? '24px' : '16px',
         padding: '16px',
-        ...(type === 'button' && { buttonColor: '#3b82f6', buttonTextColor: '#ffffff', borderRadius: '8px' }),
+        // Apply theme colors based on block type
+        ...(type === 'heading' && { 
+          backgroundColor: currentTheme.colors.headerBg, 
+          textColor: currentTheme.colors.headerText 
+        }),
+        ...(type === 'text' && { 
+          backgroundColor: currentTheme.colors.bodyBg, 
+          textColor: currentTheme.colors.bodyText 
+        }),
+        ...(type === 'button' && { 
+          buttonColor: currentTheme.colors.buttonBg, 
+          buttonTextColor: currentTheme.colors.buttonText, 
+          borderRadius: '8px',
+          backgroundColor: currentTheme.colors.bodyBg
+        }),
+        ...(type === 'image' && { 
+          backgroundColor: currentTheme.colors.bodyBg 
+        }),
+        ...(type === 'divider' && { 
+          textColor: currentTheme.colors.dividerColor 
+        }),
         ...(type === 'spacer' && { height: '24px' }),
       },
       ...(type === 'button' && { linkUrl: '{{dashboard_url}}' }),
