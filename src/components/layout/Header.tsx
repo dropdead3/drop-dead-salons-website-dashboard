@@ -12,13 +12,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { href: "/services", label: "Services" },
@@ -248,46 +246,40 @@ export function Header() {
                 }}
                 className="relative"
               >
-                <NavigationMenu hideViewport>
-                  <NavigationMenuList>
-                    <NavigationMenuItem>
-                      <NavigationMenuTrigger 
-                        className={cn(
-                          "text-sm tracking-wide font-sans font-medium transition-opacity leading-none bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent px-0 h-auto py-0",
-                          (location.pathname === "/about" || location.pathname === "/policies")
-                            ? "opacity-100"
-                            : "opacity-70 hover:opacity-100"
-                        )}
-                      >
-                        About
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent className="absolute left-1/2 -translate-x-1/2 top-full mt-3">
-                        <div className="w-[200px] rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl overflow-hidden">
-                          <ul className="p-2 space-y-0.5">
-                            {aboutLinks.map((link) => (
-                              <li key={link.href}>
-                                <NavigationMenuLink asChild>
-                                  <Link
-                                    to={link.href}
-                                    className={cn(
-                                      "flex items-center gap-3 select-none rounded-lg px-4 py-3 text-sm font-medium leading-none no-underline outline-none transition-all duration-200",
-                                      "hover:bg-accent/80 focus:bg-accent/80",
-                                      location.pathname === link.href 
-                                        ? "bg-accent text-accent-foreground" 
-                                        : "text-foreground/80 hover:text-foreground"
-                                    )}
-                                  >
-                                    {link.label}
-                                  </Link>
-                                </NavigationMenuLink>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </NavigationMenuContent>
-                    </NavigationMenuItem>
-                  </NavigationMenuList>
-                </NavigationMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger 
+                    className={cn(
+                      "flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none outline-none",
+                      (location.pathname === "/about" || location.pathname === "/policies")
+                        ? "opacity-100"
+                        : "opacity-70 hover:opacity-100"
+                    )}
+                  >
+                    About
+                    <ChevronDown size={14} className="transition-transform duration-200" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="center" 
+                    sideOffset={12}
+                    className="w-[200px] rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-2"
+                  >
+                    {aboutLinks.map((link) => (
+                      <DropdownMenuItem key={link.href} asChild>
+                        <Link
+                          to={link.href}
+                          className={cn(
+                            "flex items-center gap-3 select-none rounded-lg px-4 py-3 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
+                            location.pathname === link.href 
+                              ? "bg-accent text-accent-foreground" 
+                              : "text-foreground/80"
+                          )}
+                        >
+                          {link.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </motion.div>
 
               {/* Remaining Nav Links */}
