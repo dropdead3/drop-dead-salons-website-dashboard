@@ -158,37 +158,25 @@ export function Header() {
                 className="flex items-center hover:opacity-70 transition-opacity relative h-10"
               >
                 {/* Primary Logo - shows when not scrolled OR scrolling up */}
-                <motion.img
+                <img
                   src={Logo}
                   alt="Drop Dead"
-                  animate={{ 
+                  style={{ 
                     opacity: !isScrolled || isScrollingUp ? 1 : 0,
+                    transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
                   }}
-                  transition={{ 
-                    duration: 0.4,
-                    ease: [0.4, 0, 0.2, 1]
-                  }}
-                  style={{ willChange: "opacity" }}
                   className={cn(
                     "h-10 w-auto",
                     isOverDark && "invert"
                   )}
                 />
                 {/* Secondary Logo - shows when scrolled AND scrolling down */}
-                <motion.img
+                <img
                   src={LogoIcon}
                   alt="Drop Dead"
-                  animate={{ 
-                    opacity: isScrolled && !isScrollingUp ? 1 : 0,
-                  }}
-                  transition={{ 
-                    duration: 0.4,
-                    ease: [0.4, 0, 0.2, 1]
-                  }}
                   style={{ 
-                    willChange: "opacity",
-                    imageRendering: "crisp-edges",
-                    WebkitFontSmoothing: "antialiased"
+                    opacity: isScrolled && !isScrollingUp ? 1 : 0,
+                    transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
                   }}
                   className={cn(
                     "h-6 w-auto absolute left-0",
