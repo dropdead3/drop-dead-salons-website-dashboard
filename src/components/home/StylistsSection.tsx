@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo, useCallback } from "react";
+import { useState, useRef, useEffect, memo, useCallback, startTransition } from "react";
 import { cn } from "@/lib/utils";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Info, Star, X } from "lucide-react";
@@ -23,14 +23,14 @@ const toTitleCase = (str: string) => {
   return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-// Join Team Card with dynamic column spanning - memoized to prevent re-renders
-const JoinTeamCard = memo(({ 
+// Join Team Card with dynamic column spanning - completely static, no state dependencies
+function JoinTeamCardComponent({ 
   stylistCount, 
   onOpenForm 
 }: { 
   stylistCount: number; 
   onOpenForm: () => void;
-}) => {
+}) {
   // Calculate remaining spots for xl (4 cols)
   const remainderXl = stylistCount % 4;
   const spanXl = remainderXl === 0 ? 4 : 4 - remainderXl;
@@ -52,6 +52,15 @@ const JoinTeamCard = memo(({
     return `col-span-1 ${smClass} ${lgClass} ${xlClass}`;
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Use setTimeout to defer state update outside of current render cycle
+    setTimeout(() => {
+      onOpenForm();
+    }, 0);
+  };
+
   return (
     <div
       className={`${getSpanClass()} relative bg-muted/50 border border-border rounded-2xl flex flex-col items-center justify-center p-8 min-h-[300px]`}
@@ -71,7 +80,8 @@ const JoinTeamCard = memo(({
         </p>
         
         <button
-          onClick={onOpenForm}
+          type="button"
+          onClick={handleClick}
           className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
         >
           <span>Apply now</span>
@@ -80,7 +90,9 @@ const JoinTeamCard = memo(({
       </div>
     </div>
   );
-});
+}
+
+const JoinTeamCard = memo(JoinTeamCardComponent);
 
 const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; index: number; selectedLocation: Location }) => {
   return (
@@ -241,7 +253,9 @@ export function StylistsSection() {
     });
 
   const handleOpenFormDialog = useCallback(() => {
-    setIsFormDialogOpen(true);
+    startTransition(() => {
+      setIsFormDialogOpen(true);
+    });
   }, []);
 
   return (
@@ -413,41 +427,37 @@ export function StylistsSection() {
 
       {/* Stylists Grid */}
       <div className="container mx-auto px-6 mt-8">
-        <AnimatePresence mode="popLayout">
-          {filteredStylists.length > 0 ? (
-            <motion.div
-              key={`${selectedLocation}-${selectedSpecialty}-${selectedLevel}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            >
-              {filteredStylists.map((stylist, index) => (
-                <StylistFlipCard key={stylist.id} stylist={stylist} index={index} selectedLocation={selectedLocation} />
-              ))}
-              
-              {/* Join Our Team Card - dynamically spans remaining columns */}
-              <JoinTeamCard 
-                stylistCount={filteredStylists.length} 
-                onOpenForm={handleOpenFormDialog}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="no-results"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-center py-16 px-6"
-            >
-              <p className="text-lg text-muted-foreground">
-                No stylists match your selected filters
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {filteredStylists.length > 0 ? (
+          <motion.div
+            key={`${selectedLocation}-${selectedSpecialty}-${selectedLevel}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
+            {filteredStylists.map((stylist, index) => (
+              <StylistFlipCard key={stylist.id} stylist={stylist} index={index} selectedLocation={selectedLocation} />
+            ))}
+            
+            {/* Join Our Team Card - dynamically spans remaining columns */}
+            <JoinTeamCard 
+              stylistCount={filteredStylists.length} 
+              onOpenForm={handleOpenFormDialog}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="no-results"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="text-center py-16 px-6"
+          >
+            <p className="text-lg text-muted-foreground">
+              No stylists match your selected filters
+            </p>
+          </motion.div>
+        )}
       </div>
 
       {/* Application Form Dialog */}
