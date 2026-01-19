@@ -6,6 +6,7 @@ export interface Stylist {
   id: string;
   name: string;
   instagram: string;
+  tiktok?: string;
   level: string;
   specialties: string[];
   imageUrl: string;
