@@ -70,30 +70,30 @@ const App = () => (
               <Route path="/staff-login" element={<StaffLogin />} />
 
               {/* Protected dashboard routes */}
-              <Route path="/dashboard" element={<ProtectedRoute requiredPermission="dashboard.view"><DashboardHome /></ProtectedRoute>} />
-              <Route path="/dashboard/profile" element={<ProtectedRoute requiredPermission="profile.edit"><MyProfile /></ProtectedRoute>} />
-              <Route path="/dashboard/directory" element={<ProtectedRoute requiredPermission="team.view"><TeamDirectory /></ProtectedRoute>} />
-              <Route path="/dashboard/program" element={<ProtectedRoute requiredPermission="program.view"><Program /></ProtectedRoute>} />
-              <Route path="/dashboard/progress" element={<ProtectedRoute requiredPermission="program.view"><Progress /></ProtectedRoute>} />
-              <Route path="/dashboard/stats" element={<ProtectedRoute requiredPermission="program.view"><Stats /></ProtectedRoute>} />
-              <Route path="/dashboard/leaderboard" element={<ProtectedRoute requiredPermission="leaderboard.view"><Leaderboard /></ProtectedRoute>} />
-              <Route path="/dashboard/ring-the-bell" element={<ProtectedRoute requiredPermission="ring_the_bell.view"><RingTheBell /></ProtectedRoute>} />
-              <Route path="/dashboard/training" element={<ProtectedRoute requiredPermission="training.view"><Training /></ProtectedRoute>} />
-              <Route path="/dashboard/weekly-wins" element={<ProtectedRoute requiredPermission="program.view"><WeeklyWins /></ProtectedRoute>} />
-              <Route path="/dashboard/handbooks" element={<ProtectedRoute requiredPermission="handbooks.view"><MyHandbooks /></ProtectedRoute>} />
-              <Route path="/dashboard/onboarding" element={<ProtectedRoute requiredPermission="dashboard.view"><Onboarding /></ProtectedRoute>} />
-              <Route path="/dashboard/assistant-schedule" element={<ProtectedRoute requiredPermission="assistant.request"><AssistantSchedule /></ProtectedRoute>} />
-              <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="meetings.schedule"><ScheduleMeeting /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
+              <Route path="/dashboard/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
+              <Route path="/dashboard/directory" element={<ProtectedRoute requiredPermission="view_team_directory"><TeamDirectory /></ProtectedRoute>} />
+              <Route path="/dashboard/program" element={<ProtectedRoute requiredPermission="access_client_engine"><Program /></ProtectedRoute>} />
+              <Route path="/dashboard/progress" element={<ProtectedRoute requiredPermission="access_client_engine"><Progress /></ProtectedRoute>} />
+              <Route path="/dashboard/stats" element={<ProtectedRoute requiredPermission="view_own_stats"><Stats /></ProtectedRoute>} />
+              <Route path="/dashboard/leaderboard" element={<ProtectedRoute requiredPermission="view_leaderboard"><Leaderboard /></ProtectedRoute>} />
+              <Route path="/dashboard/ring-the-bell" element={<ProtectedRoute requiredPermission="ring_the_bell"><RingTheBell /></ProtectedRoute>} />
+              <Route path="/dashboard/training" element={<ProtectedRoute requiredPermission="view_training"><Training /></ProtectedRoute>} />
+              <Route path="/dashboard/weekly-wins" element={<ProtectedRoute requiredPermission="access_client_engine"><WeeklyWins /></ProtectedRoute>} />
+              <Route path="/dashboard/handbooks" element={<ProtectedRoute requiredPermission="view_handbooks"><MyHandbooks /></ProtectedRoute>} />
+              <Route path="/dashboard/onboarding" element={<ProtectedRoute requiredPermission="view_onboarding"><Onboarding /></ProtectedRoute>} />
+              <Route path="/dashboard/assistant-schedule" element={<ProtectedRoute requiredPermission="view_assistant_schedule"><AssistantSchedule /></ProtectedRoute>} />
+              <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
               
               {/* Admin routes */}
-              <Route path="/dashboard/admin/team" element={<ProtectedRoute requiredPermission="team.manage"><TeamOverview /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="handbooks.manage"><Handbooks /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="announcements.manage"><AdminAnnouncements /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/homepage-stylists" element={<ProtectedRoute requiredPermission="homepage.manage"><HomepageStylists /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/roles" element={<ProtectedRoute requiredPermission="roles.manage"><ManageRoles /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/approvals" element={<ProtectedRoute requiredPermission="accounts.approve"><AccountApprovals /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/invitations" element={<ProtectedRoute requiredPermission="accounts.approve"><StaffInvitations /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="settings.manage"><AdminSettings /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/homepage-stylists" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><HomepageStylists /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/roles" element={<ProtectedRoute requiredPermission="manage_user_roles"><ManageRoles /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/approvals" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountApprovals /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/invitations" element={<ProtectedRoute requiredPermission="approve_accounts"><StaffInvitations /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
