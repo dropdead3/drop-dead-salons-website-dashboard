@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.assign-assistant]
 verify_jwt = false
+
+[functions.send-birthday-reminders]
+verify_jwt = false
