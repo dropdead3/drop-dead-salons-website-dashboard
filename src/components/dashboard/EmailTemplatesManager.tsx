@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,17 +98,47 @@ export function EmailTemplatesManager() {
     variables: [] as string[],
   });
   const [newVariable, setNewVariable] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const initialEditFormRef = useRef<typeof editForm | null>(null);
+  const hasShownUnsavedToastRef = useRef(false);
 
   const openEditDialog = (template: EmailTemplate) => {
     setEditingTemplate(template);
-    setEditForm({
+    const formData = {
       name: template.name,
       subject: template.subject,
       html_body: template.html_body,
       description: template.description || '',
       is_active: template.is_active,
-    });
+    };
+    setEditForm(formData);
+    initialEditFormRef.current = formData;
+    setHasUnsavedChanges(false);
+    hasShownUnsavedToastRef.current = false;
   };
+
+  // Track unsaved changes in edit form
+  useEffect(() => {
+    if (!editingTemplate || !initialEditFormRef.current) return;
+    
+    const hasChanges = 
+      editForm.name !== initialEditFormRef.current.name ||
+      editForm.subject !== initialEditFormRef.current.subject ||
+      editForm.html_body !== initialEditFormRef.current.html_body ||
+      editForm.description !== initialEditFormRef.current.description ||
+      editForm.is_active !== initialEditFormRef.current.is_active;
+    
+    setHasUnsavedChanges(hasChanges);
+    
+    // Show toast once when changes are first detected
+    if (hasChanges && !hasShownUnsavedToastRef.current) {
+      toast.info('You have unsaved changes', { 
+        id: 'unsaved-changes',
+        duration: 3000 
+      });
+      hasShownUnsavedToastRef.current = true;
+    }
+  }, [editForm, editingTemplate]);
 
   const openTestEmailDialog = (template: EmailTemplate) => {
     setTestEmailTemplate(template);
@@ -416,17 +446,30 @@ export function EmailTemplatesManager() {
       {/* Edit Dialog */}
       <Dialog
         open={!!editingTemplate}
-        onOpenChange={(open) => !open && setEditingTemplate(null)}
+        onOpenChange={(open) => {
+          if (!open && hasUnsavedChanges) {
+            toast.warning('You have unsaved changes. Click Cancel to discard or Save to keep them.');
+            return;
+          }
+          if (!open) setEditingTemplate(null);
+        }}
       >
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Edit Email Template</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Edit Email Template
+              {hasUnsavedChanges && (
+                <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800">
+                  Unsaved Changes
+                </Badge>
+              )}
+            </DialogTitle>
             <DialogDescription>
               Use the visual editor to design your email template, or switch to HTML code for full control.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Template Name</Label>
@@ -474,19 +517,35 @@ export function EmailTemplatesManager() {
             />
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingTemplate(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={updateTemplate.isPending}>
-              {updateTemplate.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 mr-2" />
-              )}
-              Save Changes
-            </Button>
-          </DialogFooter>
+          {/* Sticky Footer */}
+          <div className="sticky bottom-0 -mx-6 -mb-6 px-6 py-4 bg-background border-t mt-4 flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {hasUnsavedChanges && 'Remember to save your changes'}
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setEditingTemplate(null);
+                  setHasUnsavedChanges(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={updateTemplate.isPending || !hasUnsavedChanges}
+                className={cn(hasUnsavedChanges && 'animate-pulse')}
+              >
+                {updateTemplate.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save Changes
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
