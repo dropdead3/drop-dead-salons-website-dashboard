@@ -98,7 +98,7 @@ function ServiceCard({
     >
       <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : ''}`}>
         <div className="flex flex-col gap-2">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <h3 className="font-display text-sm lg:text-base text-foreground leading-tight tracking-wide">
                 {service.name}
@@ -109,7 +109,7 @@ function ServiceCard({
                 </p>
               )}
             </div>
-            <div className="text-right shrink-0">
+            <div className="flex items-center justify-center shrink-0">
               {hasPrice ? (
                 <span className="font-display text-sm text-foreground">
                   {isAddOn ? price : `${price}+`}
