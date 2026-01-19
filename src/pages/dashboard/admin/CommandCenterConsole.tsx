@@ -17,9 +17,11 @@ import { cn } from '@/lib/utils';
 import { 
   useDashboardVisibility, 
   useToggleDashboardVisibility,
+  useBulkUpdateVisibility,
   groupVisibilityByElement,
   groupByCategory,
 } from '@/hooks/useDashboardVisibility';
+import { Button } from '@/components/ui/button';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -39,6 +41,7 @@ const CATEGORY_ORDER = ['Dashboard Cards', 'Leadership Cards', 'Program Cards', 
 export default function CommandCenterConsole() {
   const { data: visibilityData, isLoading } = useDashboardVisibility();
   const toggleVisibility = useToggleDashboardVisibility();
+  const bulkUpdate = useBulkUpdateVisibility();
 
   const elements = visibilityData ? groupVisibilityByElement(visibilityData) : [];
   const categories = groupByCategory(elements);
@@ -56,6 +59,26 @@ export default function CommandCenterConsole() {
 
   const getVisibleCount = (roles: Record<AppRole, boolean>) => {
     return Object.values(roles).filter(Boolean).length;
+  };
+
+  const getRoleVisibilityStats = (role: AppRole) => {
+    const roleElements = elements.filter(el => el.roles[role] !== undefined);
+    const visibleCount = roleElements.filter(el => el.roles[role]).length;
+    return { visible: visibleCount, total: roleElements.length };
+  };
+
+  const handleBulkToggle = (role: AppRole, setVisible: boolean) => {
+    const updates = elements
+      .filter(el => el.roles[role] !== undefined && el.roles[role] !== setVisible)
+      .map(el => ({
+        elementKey: el.element_key,
+        role,
+        isVisible: setVisible,
+      }));
+    
+    if (updates.length > 0) {
+      bulkUpdate.mutate(updates);
+    }
   };
 
   return (
@@ -76,17 +99,48 @@ export default function CommandCenterConsole() {
           </div>
         </div>
 
-        {/* Role Legend */}
+        {/* Bulk Role Controls */}
         <Card className="p-4">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Roles</p>
-          <div className="flex flex-wrap gap-3">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Bulk Controls</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {ROLES.map((role) => {
               const config = ROLE_CONFIG[role];
               const Icon = config.icon;
+              const stats = getRoleVisibilityStats(role);
+              const allVisible = stats.visible === stats.total;
+              const noneVisible = stats.visible === 0;
+              
               return (
-                <div key={role} className="flex items-center gap-2">
-                  <Icon className={cn("w-4 h-4", config.color)} />
-                  <span className="text-sm font-medium">{config.label}</span>
+                <div key={role} className="flex flex-col gap-2 p-3 border rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Icon className={cn("w-4 h-4", config.color)} />
+                    <span className="text-sm font-medium">{config.label}</span>
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      {stats.visible}/{stats.total}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant={allVisible ? "default" : "outline"}
+                      className="flex-1 text-xs h-7"
+                      onClick={() => handleBulkToggle(role, true)}
+                      disabled={allVisible || bulkUpdate.isPending}
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      Show All
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={noneVisible ? "default" : "outline"}
+                      className="flex-1 text-xs h-7"
+                      onClick={() => handleBulkToggle(role, false)}
+                      disabled={noneVisible || bulkUpdate.isPending}
+                    >
+                      <EyeOff className="w-3 h-3 mr-1" />
+                      Hide All
+                    </Button>
+                  </div>
                 </div>
               );
             })}
