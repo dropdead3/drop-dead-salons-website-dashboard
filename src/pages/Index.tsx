@@ -31,6 +31,13 @@ const Index = () => {
       <GallerySection />
       {/* Primary conversion CTA */}
       <NewClientSection />
+      {/* Gradient transition from light to grey */}
+      <div 
+        className="h-32 md:h-48 -mt-1"
+        style={{ 
+          background: 'linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)' 
+        }}
+      />
       {/* Build trust with team */}
       <StylistsSection />
       <LocationsSection />
