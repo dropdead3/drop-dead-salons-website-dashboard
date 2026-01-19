@@ -1,12 +1,15 @@
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Cake, PartyPopper } from 'lucide-react';
+import { Cake, PartyPopper, Eye } from 'lucide-react';
 import { useTodaysBirthdays, useUpcomingBirthdays } from '@/hooks/useBirthdays';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useViewAs } from '@/contexts/ViewAsContext';
+import { cn } from '@/lib/utils';
 
 export function BirthdayWidget() {
   const { data: todaysBirthdays, isLoading: loadingToday } = useTodaysBirthdays();
   const { data: upcomingBirthdays, isLoading: loadingUpcoming } = useUpcomingBirthdays();
+  const { isViewingAsUser } = useViewAs();
 
   const isLoading = loadingToday || loadingUpcoming;
 
@@ -48,15 +51,27 @@ export function BirthdayWidget() {
           </div>
           <div className="space-y-2">
             {todaysBirthdays.map((person) => (
-              <div key={person.id} className="flex items-center gap-2">
-                <Avatar className="w-6 h-6">
+              <div 
+                key={person.id} 
+                className={cn(
+                  "flex items-center gap-2 p-1.5 rounded-md -mx-1.5",
+                  isViewingAsUser && person.isCurrentUser && "bg-primary/10 ring-1 ring-primary/30"
+                )}
+              >
+                <Avatar className={cn(
+                  "w-6 h-6",
+                  isViewingAsUser && person.isCurrentUser && "ring-2 ring-primary"
+                )}>
                   <AvatarImage src={person.photo_url || undefined} />
                   <AvatarFallback className="text-[10px] bg-pink-100 text-pink-700">
                     {(person.display_name || person.full_name)?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium truncate">
+                <span className="text-sm font-medium truncate flex items-center gap-1">
                   {person.display_name || person.full_name}
+                  {isViewingAsUser && person.isCurrentUser && (
+                    <Eye className="w-3 h-3 text-primary shrink-0" />
+                  )}
                 </span>
               </div>
             ))}
@@ -74,16 +89,28 @@ export function BirthdayWidget() {
           </p>
           <div className="space-y-1.5">
             {nextUpcoming.map((person) => (
-              <div key={person.id} className="flex items-center justify-between gap-2">
+              <div 
+                key={person.id} 
+                className={cn(
+                  "flex items-center justify-between gap-2 p-1.5 rounded-md -mx-1.5",
+                  isViewingAsUser && person.isCurrentUser && "bg-primary/10 ring-1 ring-primary/30"
+                )}
+              >
                 <div className="flex items-center gap-2 min-w-0">
-                  <Avatar className="w-5 h-5">
+                  <Avatar className={cn(
+                    "w-5 h-5",
+                    isViewingAsUser && person.isCurrentUser && "ring-2 ring-primary"
+                  )}>
                     <AvatarImage src={person.photo_url || undefined} />
                     <AvatarFallback className="text-[8px] bg-muted">
                       {(person.display_name || person.full_name)?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-xs truncate">
+                  <span className="text-xs truncate flex items-center gap-1">
                     {person.display_name || person.full_name}
+                    {isViewingAsUser && person.isCurrentUser && (
+                      <Eye className="w-3 h-3 text-primary shrink-0" />
+                    )}
                   </span>
                 </div>
                 <span className="text-[10px] text-muted-foreground shrink-0">
