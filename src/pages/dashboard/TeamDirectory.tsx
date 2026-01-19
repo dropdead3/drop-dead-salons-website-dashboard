@@ -19,7 +19,6 @@ import { cn } from '@/lib/utils';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStrikeCounts } from '@/hooks/useStaffStrikes';
-import { AddStrikeDialog } from '@/components/dashboard/AddStrikeDialog';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -397,7 +396,6 @@ interface TeamMemberCardProps {
 
 function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strikeCount = 0, onViewProfile }: TeamMemberCardProps) {
   const navigate = useNavigate();
-  const [strikeDialogOpen, setStrikeDialogOpen] = useState(false);
   const timeAtCompany = getTimeAtCompany(member.hire_date);
   const memberLocations = member.location_ids || [];
   const hasSchedules = Object.keys(member.location_schedules).length > 0;
@@ -438,56 +436,33 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
     <CardContent className="p-4">
         {/* Bottom-right action icons - appear on hover */}
         <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-1.5">
-          {/* Strike indicator for admins/managers */}
+          {/* Strike indicator for admins/managers - links to Staff Strikes page */}
           {canViewStrikes && (
-            <HoverCard openDelay={100} closeDelay={100}>
-              <HoverCardTrigger asChild>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setStrikeDialogOpen(true);
-                  }}
-                  className={cn(
-                    "p-1.5 rounded-md shadow-sm transition-all hover:scale-110",
-                    strikeCount > 0
-                      ? "bg-destructive text-destructive-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                  )}
-                >
-                  <AlertTriangle className="w-3 h-3" />
-                </button>
-              </HoverCardTrigger>
-              <HoverCardContent 
-                side="left" 
-                align="start" 
-                className="w-48 p-2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="space-y-1">
-                  <p className="text-xs font-medium px-2 py-1">
-                    {strikeCount > 0 
-                      ? `${strikeCount} active strike${strikeCount > 1 ? 's' : ''}`
-                      : 'No active strikes'}
-                  </p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <button
-                    onClick={() => setStrikeDialogOpen(true)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-md hover:bg-muted transition-colors text-left"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/dashboard/admin/staff-strikes?userId=${member.user_id}`);
+                    }}
+                    className={cn(
+                      "p-1.5 rounded-md shadow-sm transition-all hover:scale-110",
+                      strikeCount > 0
+                        ? "bg-destructive text-destructive-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                    )}
                   >
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    Add new strike
+                    <AlertTriangle className="w-3 h-3" />
                   </button>
-                  {strikeCount > 0 && (
-                    <button
-                      onClick={() => navigate(`/dashboard/admin/staff-strikes?userId=${member.user_id}`)}
-                      className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-md hover:bg-muted transition-colors text-left text-primary"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      View all strikes
-                    </button>
-                  )}
-                </div>
-              </HoverCardContent>
-            </HoverCard>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  {strikeCount > 0 
+                    ? `${strikeCount} active strike${strikeCount > 1 ? 's' : ''}`
+                    : 'No active strikes'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           
           {/* Super admin edit indicator */}
@@ -504,16 +479,6 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
             </TooltipProvider>
           )}
         </div>
-        
-        {/* Strike dialog */}
-        {canViewStrikes && (
-          <AddStrikeDialog
-            userId={member.user_id}
-            userName={member.display_name || member.full_name}
-            open={strikeDialogOpen}
-            onOpenChange={setStrikeDialogOpen}
-          />
-        )}
         
         {/* Main content - horizontal layout */}
         <div className="flex gap-4">
