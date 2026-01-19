@@ -91,6 +91,116 @@ const colorPresets = [
 
 const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '40px'];
 
+// Email color themes
+interface EmailTheme {
+  id: string;
+  name: string;
+  description: string;
+  colors: {
+    headerBg: string;
+    headerText: string;
+    bodyBg: string;
+    bodyText: string;
+    buttonBg: string;
+    buttonText: string;
+    accentColor: string;
+    dividerColor: string;
+  };
+}
+
+const emailThemes: EmailTheme[] = [
+  {
+    id: 'drop-dead',
+    name: 'Drop Dead Standard',
+    description: 'Cream, oat & black luxury palette',
+    colors: {
+      headerBg: '#1a1a1a',
+      headerText: '#f5f0e8',
+      bodyBg: '#f5f0e8',
+      bodyText: '#1a1a1a',
+      buttonBg: '#1a1a1a',
+      buttonText: '#f5f0e8',
+      accentColor: '#d4c5b0',
+      dividerColor: '#d4c5b0',
+    },
+  },
+  {
+    id: 'modern-minimal',
+    name: 'Modern Minimal',
+    description: 'Clean black & white',
+    colors: {
+      headerBg: '#000000',
+      headerText: '#ffffff',
+      bodyBg: '#ffffff',
+      bodyText: '#000000',
+      buttonBg: '#000000',
+      buttonText: '#ffffff',
+      accentColor: '#f3f4f6',
+      dividerColor: '#e5e7eb',
+    },
+  },
+  {
+    id: 'warm-neutral',
+    name: 'Warm Neutral',
+    description: 'Soft beige & warm tones',
+    colors: {
+      headerBg: '#292524',
+      headerText: '#faf7f5',
+      bodyBg: '#faf7f5',
+      bodyText: '#292524',
+      buttonBg: '#78716c',
+      buttonText: '#faf7f5',
+      accentColor: '#e7e5e4',
+      dividerColor: '#d6d3d1',
+    },
+  },
+  {
+    id: 'ocean-breeze',
+    name: 'Ocean Breeze',
+    description: 'Fresh blue tones',
+    colors: {
+      headerBg: '#0f172a',
+      headerText: '#f0f9ff',
+      bodyBg: '#f0f9ff',
+      bodyText: '#0f172a',
+      buttonBg: '#3b82f6',
+      buttonText: '#ffffff',
+      accentColor: '#dbeafe',
+      dividerColor: '#bfdbfe',
+    },
+  },
+  {
+    id: 'forest-green',
+    name: 'Forest Green',
+    description: 'Earthy green palette',
+    colors: {
+      headerBg: '#14532d',
+      headerText: '#f0fdf4',
+      bodyBg: '#f0fdf4',
+      bodyText: '#14532d',
+      buttonBg: '#16a34a',
+      buttonText: '#ffffff',
+      accentColor: '#dcfce7',
+      dividerColor: '#bbf7d0',
+    },
+  },
+  {
+    id: 'rose-blush',
+    name: 'Rose Blush',
+    description: 'Soft pink elegance',
+    colors: {
+      headerBg: '#831843',
+      headerText: '#fdf2f8',
+      bodyBg: '#fdf2f8',
+      bodyText: '#831843',
+      buttonBg: '#db2777',
+      buttonText: '#ffffff',
+      accentColor: '#fce7f3',
+      dividerColor: '#fbcfe8',
+    },
+  },
+];
+
 // Parse existing HTML into blocks (simplified parser)
 function parseHtmlToBlocks(html: string): EmailBlock[] {
   // For complex HTML, we'll just create a single HTML block
@@ -157,6 +267,7 @@ ${blockHtml}
 }
 
 export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: EmailTemplateEditorProps) {
+  const defaultTheme = emailThemes[0]; // Drop Dead Standard
   const [blocks, setBlocks] = useState<EmailBlock[]>(() => {
     const parsed = parseHtmlToBlocks(initialHtml);
     return parsed.length > 0 ? parsed : [
@@ -164,19 +275,39 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
         id: crypto.randomUUID(),
         type: 'heading',
         content: '📧 Email Title',
-        styles: { textAlign: 'center', fontSize: '24px', textColor: '#ffffff', backgroundColor: '#3b82f6', padding: '24px', borderRadius: '12px 12px 0 0' },
+        styles: { 
+          textAlign: 'center', 
+          fontSize: '24px', 
+          textColor: defaultTheme.colors.headerText, 
+          backgroundColor: defaultTheme.colors.headerBg, 
+          padding: '24px', 
+          borderRadius: '12px 12px 0 0' 
+        },
       },
       {
         id: crypto.randomUUID(),
         type: 'text',
         content: 'Hi {{employee_name}},\n\nAdd your email content here...',
-        styles: { textAlign: 'left', fontSize: '16px', padding: '24px', backgroundColor: '#f0f9ff' },
+        styles: { 
+          textAlign: 'left', 
+          fontSize: '16px', 
+          padding: '24px', 
+          backgroundColor: defaultTheme.colors.bodyBg,
+          textColor: defaultTheme.colors.bodyText
+        },
       },
       {
         id: crypto.randomUUID(),
         type: 'button',
         content: 'Take Action',
-        styles: { textAlign: 'center', padding: '24px', buttonColor: '#3b82f6', buttonTextColor: '#ffffff', borderRadius: '8px' },
+        styles: { 
+          textAlign: 'center', 
+          padding: '24px', 
+          buttonColor: defaultTheme.colors.buttonBg, 
+          buttonTextColor: defaultTheme.colors.buttonText, 
+          borderRadius: '8px',
+          backgroundColor: defaultTheme.colors.bodyBg
+        },
         linkUrl: '{{dashboard_url}}',
       },
     ];
@@ -185,6 +316,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
   const [activeTab, setActiveTab] = useState<'visual' | 'code' | 'preview'>('visual');
   const [isUploading, setIsUploading] = useState(false);
   const [rawHtml, setRawHtml] = useState(initialHtml);
+  const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead');
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId);
 
@@ -296,6 +428,38 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
     onHtmlChange(html);
   };
 
+  const applyTheme = (themeId: string) => {
+    const theme = emailThemes.find(t => t.id === themeId);
+    if (!theme) return;
+
+    setSelectedTheme(themeId);
+    
+    const newBlocks = blocks.map(block => {
+      const updatedStyles = { ...block.styles };
+      
+      if (block.type === 'heading') {
+        updatedStyles.backgroundColor = theme.colors.headerBg;
+        updatedStyles.textColor = theme.colors.headerText;
+      } else if (block.type === 'text') {
+        updatedStyles.backgroundColor = theme.colors.bodyBg;
+        updatedStyles.textColor = theme.colors.bodyText;
+      } else if (block.type === 'button') {
+        updatedStyles.buttonColor = theme.colors.buttonBg;
+        updatedStyles.buttonTextColor = theme.colors.buttonText;
+        updatedStyles.backgroundColor = theme.colors.bodyBg;
+      } else if (block.type === 'divider') {
+        updatedStyles.textColor = theme.colors.dividerColor;
+      } else if (block.type === 'image') {
+        updatedStyles.backgroundColor = theme.colors.bodyBg;
+      }
+      
+      return { ...block, styles: updatedStyles };
+    });
+    
+    updateBlocksAndHtml(newBlocks);
+    toast.success(`Applied "${theme.name}" theme`);
+  };
+
   const renderPreviewHtml = (html: string) => {
     let preview = html;
     variables.forEach((variable) => {
@@ -347,34 +511,82 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
 
         <TabsContent value="visual" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Block palette */}
+            {/* Block palette and theme selector */}
             <div className="space-y-4">
-              <div className="font-medium text-sm">Add Block</div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" size="sm" onClick={() => addBlock('heading')} className="justify-start gap-2">
-                  <Type className="w-4 h-4" />
-                  Heading
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => addBlock('text')} className="justify-start gap-2">
-                  <AlignLeft className="w-4 h-4" />
-                  Text
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => addBlock('image')} className="justify-start gap-2">
-                  <Image className="w-4 h-4" />
-                  Image
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => addBlock('button')} className="justify-start gap-2">
-                  <MousePointerClick className="w-4 h-4" />
-                  Button
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => addBlock('divider')} className="justify-start gap-2">
-                  <Minus className="w-4 h-4" />
-                  Divider
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => addBlock('spacer')} className="justify-start gap-2">
-                  <Square className="w-4 h-4" />
-                  Spacer
-                </Button>
+              {/* Theme Selector */}
+              <div>
+                <div className="font-medium text-sm mb-2 flex items-center gap-2">
+                  <Palette className="w-4 h-4" />
+                  Color Theme
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {emailThemes.map((theme) => (
+                    <button
+                      key={theme.id}
+                      onClick={() => applyTheme(theme.id)}
+                      className={cn(
+                        "p-2 rounded-lg border text-left transition-all hover:border-primary",
+                        selectedTheme === theme.id && "border-primary ring-1 ring-primary"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        {/* Color preview dots */}
+                        <div className="flex gap-0.5">
+                          <div 
+                            className="w-3 h-3 rounded-full border border-border" 
+                            style={{ backgroundColor: theme.colors.headerBg }}
+                          />
+                          <div 
+                            className="w-3 h-3 rounded-full border border-border" 
+                            style={{ backgroundColor: theme.colors.bodyBg }}
+                          />
+                          <div 
+                            className="w-3 h-3 rounded-full border border-border" 
+                            style={{ backgroundColor: theme.colors.buttonBg }}
+                          />
+                          <div 
+                            className="w-3 h-3 rounded-full border border-border" 
+                            style={{ backgroundColor: theme.colors.accentColor }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium truncate">{theme.name}</div>
+                          <div className="text-[10px] text-muted-foreground truncate">{theme.description}</div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="font-medium text-sm mb-2">Add Block</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" size="sm" onClick={() => addBlock('heading')} className="justify-start gap-2">
+                    <Type className="w-4 h-4" />
+                    Heading
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('text')} className="justify-start gap-2">
+                    <AlignLeft className="w-4 h-4" />
+                    Text
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('image')} className="justify-start gap-2">
+                    <Image className="w-4 h-4" />
+                    Image
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('button')} className="justify-start gap-2">
+                    <MousePointerClick className="w-4 h-4" />
+                    Button
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('divider')} className="justify-start gap-2">
+                    <Minus className="w-4 h-4" />
+                    Divider
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('spacer')} className="justify-start gap-2">
+                    <Square className="w-4 h-4" />
+                    Spacer
+                  </Button>
+                </div>
               </div>
 
               {/* Block properties panel */}
