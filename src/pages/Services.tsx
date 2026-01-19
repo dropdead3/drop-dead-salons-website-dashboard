@@ -95,7 +95,7 @@ function StylistLevelSelector({
   );
 }
 
-function StylistAvatars({ selectedLevel }: { selectedLevel: StylistLevel }) {
+function StylistAvatars({ selectedLevel, isSticky }: { selectedLevel: StylistLevel; isSticky: boolean }) {
   const levelStylists = getStylistsForLevel(selectedLevel);
   
   if (levelStylists.length === 0) return null;
@@ -103,7 +103,7 @@ function StylistAvatars({ selectedLevel }: { selectedLevel: StylistLevel }) {
   return (
     <TooltipProvider delayDuration={100}>
       <div className="hidden sm:flex items-center gap-3 ml-auto">
-        <span className="text-xs text-muted-foreground font-sans">
+        <span className={`text-xs font-sans transition-colors duration-300 ${isSticky ? 'text-white/60' : 'text-muted-foreground'}`}>
           {levelStylists.length} stylist{levelStylists.length !== 1 ? 's' : ''} at this level
         </span>
         <div className="flex -space-x-2">
@@ -116,7 +116,9 @@ function StylistAvatars({ selectedLevel }: { selectedLevel: StylistLevel }) {
                     animate={{ opacity: 1, scale: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.8, x: 10 }}
                     transition={{ duration: 0.2, delay: idx * 0.05 }}
-                    className="w-9 h-9 rounded-full border-2 border-background overflow-hidden shadow-sm cursor-pointer hover:scale-110 hover:z-20 transition-transform"
+                    className={`w-9 h-9 rounded-full border-2 overflow-hidden shadow-sm cursor-pointer hover:scale-110 hover:z-20 transition-all duration-300 ${
+                      isSticky ? 'border-[#2a2a2a]' : 'border-background'
+                    }`}
                     style={{ zIndex: 10 - idx }}
                   >
                     <img
@@ -350,9 +352,9 @@ export default function Services() {
       {/* Stylist Level Selector + Pricing Note - Sticky */}
       <div 
         ref={stickyRef}
-        className={`sticky top-[120px] z-30 py-4 transition-all duration-300 ${
+        className={`sticky top-[120px] z-30 py-4 transition-all duration-500 ${
           isSticky 
-            ? 'bg-secondary/98 backdrop-blur-md shadow-md' 
+            ? 'bg-[#2a2a2a] shadow-lg' 
             : 'bg-background/95 backdrop-blur-md'
         }`}
       >
@@ -368,10 +370,10 @@ export default function Services() {
               onLevelChange={setSelectedLevel}
               isSticky={isSticky}
             />
-            <p className="text-sm font-sans text-muted-foreground flex-shrink-0">
-              <span className="font-medium text-foreground">Pricing varies by stylist level</span>
+            <p className={`text-sm font-sans flex-shrink-0 transition-colors duration-300 ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`}>
+              <span className={`font-medium transition-colors duration-300 ${isSticky ? 'text-white' : 'text-foreground'}`}>Pricing varies by stylist level</span>
             </p>
-            <StylistAvatars selectedLevel={selectedLevel} />
+            <StylistAvatars selectedLevel={selectedLevel} isSticky={isSticky} />
           </motion.div>
         </div>
       </div>
