@@ -1,0 +1,735 @@
+import { useState, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Type,
+  Image,
+  Square,
+  Minus,
+  MousePointerClick,
+  Trash2,
+  GripVertical,
+  Plus,
+  Bold,
+  Italic,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  ChevronUp,
+  ChevronDown,
+  Code,
+  Eye,
+  Palette,
+  Variable,
+  Upload,
+  Loader2,
+} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+// Block types for the email editor
+type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer';
+
+interface EmailBlock {
+  id: string;
+  type: BlockType;
+  content: string;
+  styles: {
+    backgroundColor?: string;
+    textColor?: string;
+    fontSize?: string;
+    fontWeight?: string;
+    textAlign?: 'left' | 'center' | 'right';
+    padding?: string;
+    borderRadius?: string;
+    width?: string;
+    height?: string;
+    buttonColor?: string;
+    buttonTextColor?: string;
+  };
+  imageUrl?: string;
+  linkUrl?: string;
+}
+
+interface EmailTemplateEditorProps {
+  initialHtml: string;
+  variables: string[];
+  onHtmlChange: (html: string) => void;
+}
+
+const colorPresets = [
+  { name: 'Black', value: '#000000' },
+  { name: 'White', value: '#ffffff' },
+  { name: 'Gray', value: '#6b7280' },
+  { name: 'Red', value: '#ef4444' },
+  { name: 'Orange', value: '#f97316' },
+  { name: 'Yellow', value: '#eab308' },
+  { name: 'Green', value: '#22c55e' },
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Purple', value: '#a855f7' },
+  { name: 'Pink', value: '#ec4899' },
+];
+
+const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '40px'];
+
+// Parse existing HTML into blocks (simplified parser)
+function parseHtmlToBlocks(html: string): EmailBlock[] {
+  // For complex HTML, we'll just create a single HTML block
+  // In a real implementation, you'd parse the HTML properly
+  if (!html || html.trim() === '') {
+    return [
+      {
+        id: crypto.randomUUID(),
+        type: 'heading',
+        content: 'Email Title',
+        styles: { textAlign: 'center', fontSize: '24px', textColor: '#ffffff', backgroundColor: '#3b82f6', padding: '24px' },
+      },
+      {
+        id: crypto.randomUUID(),
+        type: 'text',
+        content: 'Add your email content here...',
+        styles: { textAlign: 'left', fontSize: '16px', padding: '16px' },
+      },
+    ];
+  }
+  
+  // Return empty to let user start fresh or import
+  return [];
+}
+
+// Generate HTML from blocks
+function blocksToHtml(blocks: EmailBlock[]): string {
+  const blockHtml = blocks.map(block => {
+    const baseStyles = `
+      ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''}
+      ${block.styles.textColor ? `color: ${block.styles.textColor};` : ''}
+      ${block.styles.fontSize ? `font-size: ${block.styles.fontSize};` : ''}
+      ${block.styles.fontWeight ? `font-weight: ${block.styles.fontWeight};` : ''}
+      ${block.styles.textAlign ? `text-align: ${block.styles.textAlign};` : ''}
+      ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}
+      ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}
+    `.trim();
+
+    switch (block.type) {
+      case 'heading':
+        return `<h1 style="${baseStyles}; margin: 0;">${block.content}</h1>`;
+      case 'text':
+        return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">${block.content}</p>`;
+      case 'image':
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
+          <img src="${block.imageUrl || 'https://via.placeholder.com/400x200'}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}" />
+        </div>`;
+      case 'button':
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
+          <a href="${block.linkUrl || '{{dashboard_url}}'}" style="display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: 16px 32px; text-decoration: none; font-weight: bold; ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : 'border-radius: 8px;'}">${block.content}</a>
+        </div>`;
+      case 'divider':
+        return `<hr style="border: none; border-top: 1px solid ${block.styles.textColor || '#e5e7eb'}; margin: ${block.styles.padding || '16px 0'};" />`;
+      case 'spacer':
+        return `<div style="height: ${block.styles.height || '24px'};"></div>`;
+      default:
+        return '';
+    }
+  }).join('\n');
+
+  return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
+${blockHtml}
+</div>`;
+}
+
+export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: EmailTemplateEditorProps) {
+  const [blocks, setBlocks] = useState<EmailBlock[]>(() => {
+    const parsed = parseHtmlToBlocks(initialHtml);
+    return parsed.length > 0 ? parsed : [
+      {
+        id: crypto.randomUUID(),
+        type: 'heading',
+        content: '📧 Email Title',
+        styles: { textAlign: 'center', fontSize: '24px', textColor: '#ffffff', backgroundColor: '#3b82f6', padding: '24px', borderRadius: '12px 12px 0 0' },
+      },
+      {
+        id: crypto.randomUUID(),
+        type: 'text',
+        content: 'Hi {{employee_name}},\n\nAdd your email content here...',
+        styles: { textAlign: 'left', fontSize: '16px', padding: '24px', backgroundColor: '#f0f9ff' },
+      },
+      {
+        id: crypto.randomUUID(),
+        type: 'button',
+        content: 'Take Action',
+        styles: { textAlign: 'center', padding: '24px', buttonColor: '#3b82f6', buttonTextColor: '#ffffff', borderRadius: '8px' },
+        linkUrl: '{{dashboard_url}}',
+      },
+    ];
+  });
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'visual' | 'code' | 'preview'>('visual');
+  const [isUploading, setIsUploading] = useState(false);
+  const [rawHtml, setRawHtml] = useState(initialHtml);
+
+  const selectedBlock = blocks.find(b => b.id === selectedBlockId);
+
+  const updateBlocksAndHtml = useCallback((newBlocks: EmailBlock[]) => {
+    setBlocks(newBlocks);
+    const html = blocksToHtml(newBlocks);
+    setRawHtml(html);
+    onHtmlChange(html);
+  }, [onHtmlChange]);
+
+  const addBlock = (type: BlockType) => {
+    const newBlock: EmailBlock = {
+      id: crypto.randomUUID(),
+      type,
+      content: type === 'heading' ? 'New Heading' : type === 'text' ? 'New text block...' : type === 'button' ? 'Click Here' : '',
+      styles: {
+        textAlign: 'center',
+        fontSize: type === 'heading' ? '24px' : '16px',
+        padding: '16px',
+        ...(type === 'button' && { buttonColor: '#3b82f6', buttonTextColor: '#ffffff', borderRadius: '8px' }),
+        ...(type === 'spacer' && { height: '24px' }),
+      },
+      ...(type === 'button' && { linkUrl: '{{dashboard_url}}' }),
+    };
+    updateBlocksAndHtml([...blocks, newBlock]);
+    setSelectedBlockId(newBlock.id);
+  };
+
+  const updateBlock = (id: string, updates: Partial<EmailBlock>) => {
+    const newBlocks = blocks.map(block => 
+      block.id === id ? { ...block, ...updates } : block
+    );
+    updateBlocksAndHtml(newBlocks);
+  };
+
+  const updateBlockStyles = (id: string, styleUpdates: Partial<EmailBlock['styles']>) => {
+    const block = blocks.find(b => b.id === id);
+    if (!block) return;
+    updateBlock(id, { styles: { ...block.styles, ...styleUpdates } });
+  };
+
+  const deleteBlock = (id: string) => {
+    updateBlocksAndHtml(blocks.filter(block => block.id !== id));
+    if (selectedBlockId === id) setSelectedBlockId(null);
+  };
+
+  const moveBlock = (id: string, direction: 'up' | 'down') => {
+    const index = blocks.findIndex(b => b.id === id);
+    if (index === -1) return;
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === blocks.length - 1) return;
+    
+    const newBlocks = [...blocks];
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    [newBlocks[index], newBlocks[swapIndex]] = [newBlocks[swapIndex], newBlocks[index]];
+    updateBlocksAndHtml(newBlocks);
+  };
+
+  const handleImageUpload = async (blockId: string, file: File) => {
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `email-images/${crypto.randomUUID()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('email-assets')
+        .upload(fileName, file);
+
+      if (error) {
+        // Try to create the bucket if it doesn't exist
+        if (error.message.includes('Bucket not found')) {
+          toast.error('Storage bucket not configured. Please contact an administrator.');
+          return;
+        }
+        throw error;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('email-assets')
+        .getPublicUrl(fileName);
+
+      updateBlock(blockId, { imageUrl: urlData.publicUrl });
+      toast.success('Image uploaded successfully');
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const insertVariable = (variable: string) => {
+    if (!selectedBlockId) {
+      toast.error('Select a block first to insert a variable');
+      return;
+    }
+    const block = blocks.find(b => b.id === selectedBlockId);
+    if (!block) return;
+    
+    if (block.type === 'button') {
+      updateBlock(selectedBlockId, { linkUrl: `{{${variable}}}` });
+    } else {
+      updateBlock(selectedBlockId, { content: block.content + `{{${variable}}}` });
+    }
+  };
+
+  const handleRawHtmlChange = (html: string) => {
+    setRawHtml(html);
+    onHtmlChange(html);
+  };
+
+  const renderPreviewHtml = (html: string) => {
+    let preview = html;
+    variables.forEach((variable) => {
+      const placeholder = `<span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px;">[${variable}]</span>`;
+      preview = preview.replace(new RegExp(`{{${variable}}}`, 'g'), placeholder);
+    });
+    return preview;
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Variables toolbar */}
+      {variables.length > 0 && (
+        <div className="p-3 bg-muted rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <Variable className="w-4 h-4" />
+            <span className="text-sm font-medium">Click to insert variable:</span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {variables.map((variable) => (
+              <Badge
+                key={variable}
+                variant="secondary"
+                className="text-xs font-mono cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                onClick={() => insertVariable(variable)}
+              >
+                {`{{${variable}}}`}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+        <TabsList className="w-full">
+          <TabsTrigger value="visual" className="flex-1 gap-2">
+            <Palette className="w-4 h-4" />
+            Visual Editor
+          </TabsTrigger>
+          <TabsTrigger value="code" className="flex-1 gap-2">
+            <Code className="w-4 h-4" />
+            HTML Code
+          </TabsTrigger>
+          <TabsTrigger value="preview" className="flex-1 gap-2">
+            <Eye className="w-4 h-4" />
+            Preview
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="visual" className="mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Block palette */}
+            <div className="space-y-4">
+              <div className="font-medium text-sm">Add Block</div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" size="sm" onClick={() => addBlock('heading')} className="justify-start gap-2">
+                  <Type className="w-4 h-4" />
+                  Heading
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => addBlock('text')} className="justify-start gap-2">
+                  <AlignLeft className="w-4 h-4" />
+                  Text
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => addBlock('image')} className="justify-start gap-2">
+                  <Image className="w-4 h-4" />
+                  Image
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => addBlock('button')} className="justify-start gap-2">
+                  <MousePointerClick className="w-4 h-4" />
+                  Button
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => addBlock('divider')} className="justify-start gap-2">
+                  <Minus className="w-4 h-4" />
+                  Divider
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => addBlock('spacer')} className="justify-start gap-2">
+                  <Square className="w-4 h-4" />
+                  Spacer
+                </Button>
+              </div>
+
+              {/* Block properties panel */}
+              {selectedBlock && (
+                <Card className="mt-4">
+                  <CardContent className="p-4 space-y-4">
+                    <div className="font-medium text-sm capitalize">{selectedBlock.type} Settings</div>
+                    
+                    {(selectedBlock.type === 'heading' || selectedBlock.type === 'text') && (
+                      <>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Content</Label>
+                          <Textarea
+                            value={selectedBlock.content}
+                            onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
+                            className="min-h-[80px] text-sm"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Font Size</Label>
+                          <Select
+                            value={selectedBlock.styles.fontSize || '16px'}
+                            onValueChange={(v) => updateBlockStyles(selectedBlock.id, { fontSize: v })}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {fontSizes.map(size => (
+                                <SelectItem key={size} value={size}>{size}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant={selectedBlock.styles.fontWeight === 'bold' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => updateBlockStyles(selectedBlock.id, { 
+                              fontWeight: selectedBlock.styles.fontWeight === 'bold' ? 'normal' : 'bold' 
+                            })}
+                          >
+                            <Bold className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+
+                    {selectedBlock.type === 'button' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Button Text</Label>
+                          <Input
+                            value={selectedBlock.content}
+                            onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Link URL</Label>
+                          <Input
+                            value={selectedBlock.linkUrl || ''}
+                            onChange={(e) => updateBlock(selectedBlock.id, { linkUrl: e.target.value })}
+                            placeholder="https://... or {{variable}}"
+                            className="h-8 text-sm font-mono"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-2">
+                            <Label className="text-xs">Button Color</Label>
+                            <ColorPicker
+                              value={selectedBlock.styles.buttonColor || '#3b82f6'}
+                              onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Text Color</Label>
+                            <ColorPicker
+                              value={selectedBlock.styles.buttonTextColor || '#ffffff'}
+                              onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonTextColor: v })}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {selectedBlock.type === 'image' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Image</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={selectedBlock.imageUrl || ''}
+                              onChange={(e) => updateBlock(selectedBlock.id, { imageUrl: e.target.value })}
+                              placeholder="https://..."
+                              className="h-8 text-sm flex-1"
+                            />
+                            <label className="cursor-pointer">
+                              <Button variant="outline" size="sm" disabled={isUploading} asChild>
+                                <span>
+                                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                                </span>
+                              </Button>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleImageUpload(selectedBlock.id, file);
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Alt Text</Label>
+                          <Input
+                            value={selectedBlock.content}
+                            onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
+                            placeholder="Image description"
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {selectedBlock.type === 'spacer' && (
+                      <div className="space-y-2">
+                        <Label className="text-xs">Height</Label>
+                        <Select
+                          value={selectedBlock.styles.height || '24px'}
+                          onValueChange={(v) => updateBlockStyles(selectedBlock.id, { height: v })}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['8px', '16px', '24px', '32px', '48px', '64px'].map(size => (
+                              <SelectItem key={size} value={size}>{size}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Common settings */}
+                    {selectedBlock.type !== 'divider' && selectedBlock.type !== 'spacer' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Alignment</Label>
+                          <div className="flex gap-1">
+                            {(['left', 'center', 'right'] as const).map(align => (
+                              <Button
+                                key={align}
+                                variant={selectedBlock.styles.textAlign === align ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => updateBlockStyles(selectedBlock.id, { textAlign: align })}
+                              >
+                                {align === 'left' && <AlignLeft className="w-4 h-4" />}
+                                {align === 'center' && <AlignCenter className="w-4 h-4" />}
+                                {align === 'right' && <AlignRight className="w-4 h-4" />}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-2">
+                            <Label className="text-xs">Background</Label>
+                            <ColorPicker
+                              value={selectedBlock.styles.backgroundColor || 'transparent'}
+                              onChange={(v) => updateBlockStyles(selectedBlock.id, { backgroundColor: v })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Text Color</Label>
+                            <ColorPicker
+                              value={selectedBlock.styles.textColor || '#000000'}
+                              onChange={(v) => updateBlockStyles(selectedBlock.id, { textColor: v })}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Canvas */}
+            <div className="lg:col-span-2">
+              <div className="font-medium text-sm mb-2">Email Canvas</div>
+              <ScrollArea className="h-[500px] border rounded-lg bg-gray-100 p-4">
+                <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
+                  {blocks.map((block, index) => (
+                    <div
+                      key={block.id}
+                      className={cn(
+                        'relative group cursor-pointer transition-all',
+                        selectedBlockId === block.id && 'ring-2 ring-primary ring-offset-2'
+                      )}
+                      onClick={() => setSelectedBlockId(block.id)}
+                    >
+                      {/* Block controls */}
+                      <div className={cn(
+                        'absolute -left-10 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity',
+                        selectedBlockId === block.id && 'opacity-100'
+                      )}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); moveBlock(block.id, 'up'); }}>
+                          <ChevronUp className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); moveBlock(block.id, 'down'); }}>
+                          <ChevronDown className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}>
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+
+                      {/* Block content preview */}
+                      <div 
+                        style={{
+                          backgroundColor: block.styles.backgroundColor,
+                          color: block.styles.textColor,
+                          fontSize: block.styles.fontSize,
+                          fontWeight: block.styles.fontWeight,
+                          textAlign: block.styles.textAlign,
+                          padding: block.styles.padding,
+                        }}
+                      >
+                        {block.type === 'heading' && (
+                          <h1 style={{ margin: 0, fontSize: block.styles.fontSize }}>{block.content}</h1>
+                        )}
+                        {block.type === 'text' && (
+                          <p style={{ margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{block.content}</p>
+                        )}
+                        {block.type === 'image' && (
+                          <div style={{ textAlign: block.styles.textAlign }}>
+                            {block.imageUrl ? (
+                              <img 
+                                src={block.imageUrl} 
+                                alt={block.content || 'Email image'} 
+                                style={{ maxWidth: '100%', borderRadius: block.styles.borderRadius }}
+                              />
+                            ) : (
+                              <div className="bg-muted flex items-center justify-center h-32 rounded">
+                                <Image className="w-8 h-8 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {block.type === 'button' && (
+                          <div style={{ textAlign: block.styles.textAlign }}>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                backgroundColor: block.styles.buttonColor || '#3b82f6',
+                                color: block.styles.buttonTextColor || '#ffffff',
+                                padding: '16px 32px',
+                                fontWeight: 'bold',
+                                borderRadius: block.styles.borderRadius || '8px',
+                              }}
+                            >
+                              {block.content}
+                            </span>
+                          </div>
+                        )}
+                        {block.type === 'divider' && (
+                          <hr style={{ border: 'none', borderTop: `1px solid ${block.styles.textColor || '#e5e7eb'}` }} />
+                        )}
+                        {block.type === 'spacer' && (
+                          <div style={{ height: block.styles.height || '24px' }} className="bg-gray-50 border-dashed border opacity-50" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {blocks.length === 0 && (
+                    <div className="p-8 text-center text-muted-foreground">
+                      <Plus className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>Add blocks to build your email</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="code" className="mt-4">
+          <Textarea
+            value={rawHtml}
+            onChange={(e) => handleRawHtmlChange(e.target.value)}
+            className="font-mono text-xs min-h-[500px]"
+            placeholder="HTML email body..."
+          />
+        </TabsContent>
+
+        <TabsContent value="preview" className="mt-4">
+          <div className="border rounded-lg bg-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto p-0 overflow-hidden">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: renderPreviewHtml(blocksToHtml(blocks)),
+                }}
+              />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// Simple color picker component
+function ColorPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2">
+          <div 
+            className="w-4 h-4 rounded border" 
+            style={{ backgroundColor: value === 'transparent' ? '#fff' : value }}
+          />
+          <span className="text-xs font-mono truncate">{value}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-2">
+        <div className="grid grid-cols-5 gap-1 mb-2">
+          {colorPresets.map(color => (
+            <button
+              key={color.value}
+              className={cn(
+                'w-6 h-6 rounded border transition-transform hover:scale-110',
+                value === color.value && 'ring-2 ring-primary ring-offset-1'
+              )}
+              style={{ backgroundColor: color.value }}
+              onClick={() => onChange(color.value)}
+              title={color.name}
+            />
+          ))}
+        </div>
+        <Input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="#000000"
+          className="h-7 text-xs font-mono"
+        />
+        <div className="flex gap-1 mt-1">
+          <Button variant="ghost" size="sm" className="text-xs h-6 flex-1" onClick={() => onChange('transparent')}>
+            Transparent
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
