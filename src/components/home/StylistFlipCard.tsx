@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ArrowRight, Star, Info, X } from "lucide-react";
+import { ArrowRight, Star, Info, X, Instagram, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import {
@@ -129,7 +129,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                 {stylist.instagram}
               </a>
               
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-center">
                 {stylist.isBooking === false ? (
                   <div className="shrink-0 inline-flex items-center gap-2 bg-white/20 text-white/70 px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap cursor-not-allowed border border-white/40">
                     <X className="w-4 h-4 shrink-0" />
@@ -145,14 +145,6 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                     <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/btn:translate-x-1" />
                   </Link>
                 )}
-                
-                {/* Location callout */}
-                <p className="text-xs text-white/60 text-right leading-tight min-w-0 pr-1">
-                  {stylist.locations.length > 1 
-                    ? stylist.locations.map(loc => getLocationName(loc)).join(" & ")
-                    : getLocationName(stylist.locations[0])
-                  }
-                </p>
               </div>
 
               {/* Tap hint - visible on hover */}
@@ -178,27 +170,40 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
           }}
         >
           <div className="relative w-full h-full bg-foreground overflow-hidden rounded-2xl shadow-md flex flex-col items-center justify-center p-6 text-center">
-            {/* Circular headshot */}
-            <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-background/20 mb-5 shadow-lg">
-              <ImageWithSkeleton
-                src={stylist.imageUrl}
-                alt={stylist.name}
-                className="w-full h-full object-cover"
-                wrapperClassName="w-full h-full"
-              />
-            </div>
-
             {/* Name */}
-            <h3 className="text-xl font-display text-background mb-1">{stylist.name}</h3>
-            <p className="text-xs tracking-[0.2em] text-background/60 mb-4">{stylist.level}</p>
+            <h3 className="text-2xl font-display text-background mb-1">{stylist.name}</h3>
+            <p className="text-xs tracking-[0.2em] text-background/60 mb-5">{stylist.level}</p>
 
             {/* Bio */}
-            <p className="text-sm text-background/80 leading-relaxed max-w-[90%]">
+            <p className="text-sm text-background/80 leading-relaxed max-w-[90%] mb-6">
               {stylist.bio || "No bio available"}
             </p>
 
+            {/* Instagram */}
+            <a 
+              href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors duration-200 mb-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Instagram className="w-4 h-4" />
+              <span>{stylist.instagram}</span>
+            </a>
+
+            {/* Location */}
+            <div className="inline-flex items-center gap-1.5 text-xs text-background/50 mb-6">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>
+                {stylist.locations.length > 1 
+                  ? stylist.locations.map(loc => getLocationName(loc)).join(" & ")
+                  : getLocationName(stylist.locations[0])
+                }
+              </span>
+            </div>
+
             {/* Book button */}
-            <div className="mt-6">
+            <div>
               {stylist.isBooking !== false && (
                 <Link
                   to="/booking"
@@ -212,7 +217,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
             </div>
 
             {/* Tap hint */}
-            <p className="text-[10px] text-background/40 mt-4 tracking-wide">
+            <p className="text-[10px] text-background/40 mt-5 tracking-wide">
               Tap to go back
             </p>
           </div>
