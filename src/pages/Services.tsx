@@ -240,8 +240,38 @@ export default function Services() {
         description="Explore our luxury hair services including custom color, blonding, extensions, precision cuts, and restorative treatments. Book your transformation today."
       />
       
+      {/* New Client Notice */}
+      <section className="pt-28 pb-0">
+        <div className="container mx-auto px-6 lg:px-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: editorialEasing }}
+            className="max-w-4xl"
+          >
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 md:p-8">
+              <p className="font-display text-xs tracking-[0.2em] uppercase text-primary mb-3">
+                New Clients
+              </p>
+              <p className="font-sans text-base md:text-lg text-foreground/80 leading-relaxed mb-4">
+                All new clients must request a <span className="text-foreground font-medium">New-Client Consultation</span> to match you with the stylist most skilled for your desired service — and to understand your current look and how to best achieve your vision.
+              </p>
+              <a
+                href="https://drop-dead-gorgeous-az.square.site"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 font-display text-xs tracking-[0.15em] uppercase text-primary hover:text-primary/80 transition-colors"
+              >
+                Request Consultation
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Hero */}
-      <section ref={heroRef} className="pt-32 lg:pt-40 pb-16 lg:pb-24" data-theme="light">
+      <section ref={heroRef} className="pt-12 lg:pt-16 pb-16 lg:pb-24" data-theme="light">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-4xl">
             <motion.div
