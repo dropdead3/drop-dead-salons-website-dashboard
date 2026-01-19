@@ -219,11 +219,16 @@ export default function Services() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
   const [selectedLevel, setSelectedLevel] = useState<StylistLevel>('new-talent');
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isSticky, setIsSticky] = useState(false);
+  const stickyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100);
+      if (stickyRef.current) {
+        const rect = stickyRef.current.getBoundingClientRect();
+        // The element is sticky when its top equals the sticky offset (120px)
+        setIsSticky(rect.top <= 120);
+      }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -274,7 +279,7 @@ export default function Services() {
       </section>
 
       {/* Stylist Level Selector + Pricing Note - Sticky */}
-      <div className={`sticky top-[120px] z-30 backdrop-blur-md py-4 transition-colors duration-300 ${isScrolled ? 'bg-secondary/95' : 'bg-background/95'}`}>
+      <div ref={stickyRef} className={`sticky top-[120px] z-30 backdrop-blur-md py-4 transition-colors duration-300 ${isSticky ? 'bg-secondary/95' : 'bg-background/95'}`}>
         <div className="container mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
