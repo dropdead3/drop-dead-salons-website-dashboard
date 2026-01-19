@@ -1364,7 +1364,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                       )}
                       onClick={() => setSelectedBlockId(block.id)}
                     >
-                      {/* Block controls */}
+                      {/* Block controls - left side */}
                       <div className={cn(
                         'absolute -left-10 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity',
                         selectedBlockId === block.id && 'opacity-100'
@@ -1375,7 +1375,19 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); moveBlock(block.id, 'down'); }}>
                           <ChevronDown className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}>
+                      </div>
+                      
+                      {/* Delete button - right side */}
+                      <div className={cn(
+                        'absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity',
+                        selectedBlockId === block.id && 'opacity-100'
+                      )}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                          onClick={(e) => { e.stopPropagation(); deleteBlock(block.id); }}
+                        >
                           <Trash2 className="w-3 h-3" />
                         </Button>
                       </div>
