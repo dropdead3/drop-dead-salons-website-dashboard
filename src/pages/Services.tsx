@@ -46,15 +46,15 @@ function StylistLevelSelector({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-3 px-4 py-2.5 border rounded-full text-sm font-sans transition-all duration-300 hover:border-foreground/30 ${
+        className={`flex items-center gap-3 px-4 py-2.5 border rounded-full text-sm font-sans transition-all duration-300 ${
           isSticky 
-            ? 'bg-foreground text-background border-foreground' 
-            : 'bg-card text-foreground border-border'
+            ? 'bg-white/10 text-white border-white/40 hover:border-white/60 hover:bg-white/15' 
+            : 'bg-card text-foreground border-border hover:border-foreground/30'
         }`}
       >
-        <span className={isSticky ? 'text-background/70' : 'text-muted-foreground'}>Service Pricing Level:</span>
-        <span className="font-medium">{selectedClientLabel} Stylist — {selectedLabel}</span>
-        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isSticky ? 'text-background/70' : 'text-muted-foreground'}`} />
+        <span className={isSticky ? 'text-white/70' : 'text-muted-foreground'}>Service Pricing Level:</span>
+        <span className={`font-medium ${isSticky ? 'text-white' : ''}`}>{selectedClientLabel} Stylist — {selectedLabel}</span>
+        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`} />
       </button>
       
       <AnimatePresence>
