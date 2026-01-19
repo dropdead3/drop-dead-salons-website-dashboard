@@ -932,8 +932,10 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                         key={theme.id}
                         onClick={() => applyTheme(theme.id)}
                         className={cn(
-                          "p-2 rounded-lg border text-left transition-all hover:border-primary",
-                          selectedTheme === theme.id && "border-primary ring-1 ring-primary"
+                          "p-2 rounded-lg border-2 text-left transition-all",
+                          selectedTheme === theme.id 
+                            ? "border-foreground bg-accent/50" 
+                            : "border-transparent bg-muted/30 hover:bg-muted/50"
                         )}
                       >
                         <div className="flex items-center gap-2">
@@ -973,8 +975,10 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                           <div
                             key={theme.id}
                             className={cn(
-                              "p-2 rounded-lg border text-left transition-all hover:border-primary group relative",
-                              selectedTheme === theme.id && "border-primary ring-1 ring-primary"
+                              "p-2 rounded-lg border-2 text-left transition-all group relative",
+                              selectedTheme === theme.id 
+                                ? "border-foreground bg-accent/50" 
+                                : "border-transparent bg-muted/30 hover:bg-muted/50"
                             )}
                           >
                             <button
