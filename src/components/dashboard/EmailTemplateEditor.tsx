@@ -51,6 +51,7 @@ import {
   Loader2,
   Save,
   Sparkles,
+  Link,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -99,7 +100,7 @@ const brandLogos: BrandLogo[] = [
 ];
 
 // Block types for the email editor
-type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer';
+type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link';
 
 interface EmailBlock {
   id: string;
@@ -310,6 +311,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}</a>
         </div>`;
       }
+      case 'link':
+        return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">
+          <a href="${block.linkUrl || '#'}" style="color: ${block.styles.buttonColor || '#3b82f6'}; text-decoration: underline;">${block.content}</a>
+        </p>`;
       case 'divider':
         return `<hr style="border: none; border-top: 1px solid ${block.styles.textColor || '#e5e7eb'}; margin: ${block.styles.padding || '16px 0'};" />`;
       case 'spacer':
@@ -542,9 +547,9 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
     const newBlock: EmailBlock = {
       id: crypto.randomUUID(),
       type,
-      content: type === 'heading' ? 'New Heading' : type === 'text' ? 'New text block...' : type === 'button' ? 'Click Here' : '',
+      content: type === 'heading' ? 'New Heading' : type === 'text' ? 'New text block...' : type === 'button' ? 'Click Here' : type === 'link' ? 'Click here to learn more' : '',
       styles: {
-        textAlign: 'center',
+        textAlign: type === 'link' ? 'left' : 'center',
         fontSize: type === 'heading' ? '24px' : '16px',
         padding: '16px',
         // Apply theme colors based on block type
@@ -563,6 +568,11 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           backgroundColor: currentTheme.colors.bodyBg,
           buttonVariant: buttonVariant || 'primary'
         }),
+        ...(type === 'link' && { 
+          backgroundColor: currentTheme.colors.bodyBg, 
+          textColor: currentTheme.colors.bodyText,
+          buttonColor: currentTheme.colors.buttonBg
+        }),
         ...(type === 'image' && { 
           backgroundColor: currentTheme.colors.bodyBg 
         }),
@@ -572,6 +582,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
         ...(type === 'spacer' && { height: '24px' }),
       },
       ...(type === 'button' && { linkUrl: '{{dashboard_url}}' }),
+      ...(type === 'link' && { linkUrl: '{{dashboard_url}}' }),
     };
     updateBlocksAndHtml([...blocks, newBlock]);
     setSelectedBlockId(newBlock.id);
@@ -1086,6 +1097,10 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                       <span className="text-xs">Secondary Button</span>
                     </div>
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('link')} className="justify-start gap-2">
+                    <Link className="w-4 h-4" />
+                    Link
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => addBlock('divider')} className="justify-start gap-2">
                     <Minus className="w-4 h-4" />
                     Divider
@@ -1229,6 +1244,35 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                               />
                             </div>
                           )}
+                        </div>
+                      </>
+                    )}
+
+                    {selectedBlock.type === 'link' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Link Text</Label>
+                          <Input
+                            value={selectedBlock.content}
+                            onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Link URL</Label>
+                          <Input
+                            value={selectedBlock.linkUrl || ''}
+                            onChange={(e) => updateBlock(selectedBlock.id, { linkUrl: e.target.value })}
+                            placeholder="https://... or {{variable}}"
+                            className="h-8 text-sm font-mono"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Link Color</Label>
+                          <ColorPicker
+                            value={selectedBlock.styles.buttonColor || '#3b82f6'}
+                            onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
+                          />
                         </div>
                       </>
                     )}
@@ -1491,11 +1535,26 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                             )}
                           </div>
                         )}
+                        {block.type === 'link' && (
+                          <p style={{ margin: 0, lineHeight: 1.6 }}>
+                            <a 
+                              href="#" 
+                              onClick={(e) => e.preventDefault()}
+                              style={{ 
+                                color: block.styles.buttonColor || '#3b82f6', 
+                                textDecoration: 'underline',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {block.content}
+                            </a>
+                          </p>
+                        )}
                         {block.type === 'divider' && (
                           <hr style={{ border: 'none', borderTop: `1px solid ${block.styles.textColor || '#e5e7eb'}` }} />
                         )}
                         {block.type === 'spacer' && (
-                          <div style={{ height: block.styles.height || '24px' }} className="bg-gray-50 border-dashed border opacity-50" />
+                          <div style={{ height: block.styles.height || '24px' }} className="border-dashed border opacity-50 bg-muted/30" />
                         )}
                       </div>
                     </div>
