@@ -409,19 +409,55 @@ export default function StylistLevels() {
               </div>
             </div>
 
-            {/* Preview Panel */}
+            {/* Stylist Card Preview */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Eye className="w-4 h-4" />
-                <span>Services Page Preview</span>
+                <span>Stylist Card Preview</span>
+              </div>
+              
+              {/* Mini stylist card mockup */}
+              <div className="relative rounded-xl overflow-hidden aspect-[3/4] bg-gradient-to-b from-neutral-600 to-neutral-800">
+                {/* Fake image placeholder */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                
+                {/* Card content overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                  <p className="text-[10px] tracking-[0.2em] text-white/70 mb-1">
+                    LEVEL {previewLevel + 1} STYLIST
+                  </p>
+                  <h3 className="font-display text-lg">Stylist Name</h3>
+                </div>
+              </div>
+              
+              {/* Level selector for preview */}
+              <div className="flex flex-wrap gap-1">
+                {levels.map((level, idx) => (
+                  <button
+                    key={level.id}
+                    onClick={() => setPreviewLevel(idx)}
+                    className={cn(
+                      "px-2 py-1 rounded text-[10px] transition-colors",
+                      previewLevel === idx 
+                        ? "bg-foreground text-background" 
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {idx + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Services Page Preview */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Eye className="w-4 h-4" />
+                <span>Services Dropdown</span>
               </div>
               
               {/* Preview of the dropdown selector */}
               <div className="bg-foreground rounded-xl p-4 space-y-3">
-                <p className="text-[10px] uppercase tracking-wider text-background/50 font-sans">
-                  Client view
-                </p>
-                
                 {/* Fake dropdown button */}
                 <button
                   className="w-full flex items-center justify-between gap-2 px-3 py-2 border border-background/30 rounded-full text-xs font-sans bg-background/10 text-background"
@@ -434,7 +470,7 @@ export default function StylistLevels() {
                 </button>
 
                 {/* Preview dropdown items */}
-                <div className="bg-card rounded-lg border shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                <div className="bg-card rounded-lg border shadow-lg overflow-hidden max-h-32 overflow-y-auto">
                   {levels.map((level, idx) => (
                     <button
                       key={level.id}
