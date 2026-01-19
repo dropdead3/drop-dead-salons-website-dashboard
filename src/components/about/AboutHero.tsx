@@ -54,7 +54,7 @@ export function AboutHero() {
             More Than a Salon
           </h1>
           <div className="flex justify-center my-6">
-            <div className="w-8 h-[1px] bg-foreground/40"></div>
+            <div className="w-16 h-[2px] bg-foreground/40"></div>
           </div>
           <div className="min-h-[5.5rem] md:min-h-[7.5rem] lg:min-h-[9rem] flex items-start justify-center mb-6">
             <span className="text-4xl md:text-5xl lg:text-6xl font-display text-foreground text-center">
