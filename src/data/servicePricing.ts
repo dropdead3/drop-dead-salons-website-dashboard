@@ -36,7 +36,7 @@ export const services: ServiceCategory[] = [
     category: "Cutting & Styling",
     description: "Modern cuts and styles tailored to your features and lifestyle. All cuts include wash and blowout, except Maintenance Cut and Add-On Cut.",
     items: [
-      { name: "Maintenance Cut", description: "Bang trim or men's neck clean up", prices: { 'new-talent': '$15', 'emerging': '$17', 'lead': '$20', 'senior': '$23', 'signature': '$26', 'icon': '$30' } },
+      { name: "Maintenance Cut", description: "Bang trim or men's neck clean up (wash & blowout not included)", prices: { 'new-talent': '$15', 'emerging': '$17', 'lead': '$20', 'senior': '$23', 'signature': '$26', 'icon': '$30' } },
       { name: "Add-On Cut", description: "Haircut added to any color service (wash & blowout not included)", prices: { 'new-talent': '$45', 'emerging': '$52', 'lead': '$60', 'senior': '$68', 'signature': '$79', 'icon': '$91' } },
       { name: "Signature Cut", description: "Our signature precision haircut — includes wash & blowout", prices: { 'new-talent': '$65', 'emerging': '$75', 'lead': '$86', 'senior': '$99', 'signature': '$114', 'icon': '$131' } },
       { name: "Specialty Cut", description: "Advanced cutting techniques for unique styles — includes wash & blowout", prices: { 'new-talent': '$75', 'emerging': '$86', 'lead': '$99', 'senior': '$114', 'signature': '$131', 'icon': '$151' } },
