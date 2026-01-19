@@ -52,11 +52,12 @@ export function AboutHero() {
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-display mb-6 leading-tight">
             More Than a Salon—
-            <br />
-            <span className="text-foreground">
+          </h1>
+          <div className="min-h-[3.5rem] md:min-h-[4rem] lg:min-h-[4.5rem] flex items-center justify-center mb-6">
+            <span className="text-4xl md:text-5xl lg:text-6xl font-display text-foreground">
               {displayText}
             </span>
-          </h1>
+          </div>
           <p className="text-lg md:text-xl text-foreground/60 max-w-2xl mx-auto leading-relaxed">
             Drop Dead was born from a belief that great hair should come with an 
             unforgettable experience. We're redefining what it means to feel beautiful.
