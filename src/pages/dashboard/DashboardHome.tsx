@@ -33,6 +33,8 @@ import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { StylistsOverviewCard, StaffOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
 import { BirthdayCalendarCard } from '@/components/dashboard/BirthdayCalendarCard';
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
+import { WorkScheduleWidget } from '@/components/dashboard/WorkScheduleWidget';
+import { ScheduleRequestsCard } from '@/components/dashboard/ScheduleRequestsCard';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -292,11 +294,17 @@ export default function DashboardHome() {
           )}
         </div>
 
-        {/* Leadership-only: Team & Stylists Overview */}
+        {/* Work Schedule Widget - visible to all */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <WorkScheduleWidget />
+        </div>
+
+        {/* Leadership-only: Team & Stylists Overview + Schedule Requests */}
         {isLeadership && (isVisible('team_overview') || isVisible('stylists_overview') || isVisible('birthday_calendar')) && (
           <div className="grid gap-6 lg:grid-cols-2">
             {isVisible('team_overview') && <StaffOverviewCard />}
             {isVisible('stylists_overview') && <StylistsOverviewCard />}
+            <ScheduleRequestsCard />
           </div>
         )}
 
