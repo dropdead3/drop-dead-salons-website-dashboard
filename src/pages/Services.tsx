@@ -487,10 +487,10 @@ export default function Services() {
           </div>
           <Link
             to="/policies"
-            className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground link-underline"
+            className="inline-flex flex-row items-center justify-center gap-2 text-sm font-sans font-medium text-foreground link-underline"
           >
-            View our policies
-            <ArrowRight size={14} />
+            <span>View our policies</span>
+            <ArrowRight size={14} className="shrink-0" />
           </Link>
         </div>
       </Section>
