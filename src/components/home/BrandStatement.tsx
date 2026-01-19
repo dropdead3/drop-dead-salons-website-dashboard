@@ -40,7 +40,7 @@ export function BrandStatement() {
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
               Not Your
               <br />
-              <span className="font-light">Average Salon.</span>
+              <span className="font-light">Average Salon</span>
             </h2>
           </motion.div>
 
