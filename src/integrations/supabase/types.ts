@@ -390,6 +390,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          html_body: string
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          updated_at: string | null
+          variables: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          html_body: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          template_key: string
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          html_body?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Relationships: []
+      }
       employee_location_schedules: {
         Row: {
           created_at: string | null
