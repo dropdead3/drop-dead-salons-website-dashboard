@@ -47,7 +47,7 @@ export function AboutHero() {
           transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
           className="max-w-4xl mx-auto text-center"
         >
-          <span className="inline-block text-xs uppercase tracking-[0.25em] text-muted-foreground mb-6">
+          <span className="inline-block text-xs uppercase tracking-[0.25em] text-muted-foreground mb-6 font-display">
             Our Story
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-display leading-tight">
