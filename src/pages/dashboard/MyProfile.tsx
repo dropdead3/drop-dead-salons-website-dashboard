@@ -101,6 +101,7 @@ export default function MyProfile() {
 
   const [initialFormData, setInitialFormData] = useState(formData);
 
+  // Combined effect to load profile and schedules together
   useEffect(() => {
     if (profile) {
       // Support both old location_id and new location_ids
@@ -109,6 +110,14 @@ export default function MyProfile() {
         : profile.location_id 
           ? [profile.location_id] 
           : [];
+      
+      // Build location schedules from existing data
+      const schedules: Record<string, string[]> = {};
+      if (existingSchedules && existingSchedules.length > 0) {
+        existingSchedules.forEach(schedule => {
+          schedules[schedule.location_id] = schedule.work_days || [];
+        });
+      }
       
       const newFormData = {
         full_name: profile.full_name || '',
@@ -127,31 +136,13 @@ export default function MyProfile() {
         emergency_phone: profile.emergency_phone || '',
         bio: (profile as any).bio || '',
         work_days: profile.work_days || [],
-        location_schedules: {} as Record<string, string[]>,
+        location_schedules: schedules,
       };
       setFormData(newFormData);
       setInitialFormData(newFormData);
       setHasUnsavedChanges(false);
     }
-  }, [profile]);
-
-  // Load existing location schedules into form data
-  useEffect(() => {
-    if (existingSchedules && existingSchedules.length > 0) {
-      const schedules: Record<string, string[]> = {};
-      existingSchedules.forEach(schedule => {
-        schedules[schedule.location_id] = schedule.work_days || [];
-      });
-      setFormData(prev => ({
-        ...prev,
-        location_schedules: schedules,
-      }));
-      setInitialFormData(prev => ({
-        ...prev,
-        location_schedules: schedules,
-      }));
-    }
-  }, [existingSchedules]);
+  }, [profile, existingSchedules]);
 
   // Track changes and show toast
   useEffect(() => {
