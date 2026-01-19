@@ -115,8 +115,12 @@ const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/approvals', label: 'Account Approvals', icon: UserCheck, permission: 'approve_accounts' },
   { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText, permission: 'manage_handbooks' },
-  { href: '/dashboard/admin/homepage-stylists', label: 'Homepage Stylists', icon: Globe, permission: 'manage_homepage_stylists' },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
+];
+
+// Website management items
+const websiteNavItems: NavItem[] = [
+  { href: '/dashboard/admin/homepage-stylists', label: 'Homepage Stylists', icon: Globe, permission: 'manage_homepage_stylists' },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -361,6 +365,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   {...item} 
                   badgeCount={item.href === '/dashboard/admin/announcements' ? unreadCount : undefined}
                 />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Website Section - visible to those with homepage management permissions */}
+        {filterNavItems(websiteNavItems).length > 0 && (
+          <>
+            <div className="my-4 px-4">
+              <div className="h-px bg-border" />
+            </div>
+            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
+              Website
+            </p>
+            <div className="space-y-1">
+              {filterNavItems(websiteNavItems).map((item) => (
+                <NavLink key={item.href} {...item} />
               ))}
             </div>
           </>
