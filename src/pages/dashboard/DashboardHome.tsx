@@ -32,6 +32,7 @@ import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { StylistsOverviewCard, StaffOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
 import { BirthdayCalendarCard } from '@/components/dashboard/BirthdayCalendarCard';
+import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -137,6 +138,9 @@ export default function DashboardHome() {
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Today's Birthday Banner - visible to all */}
+        <TodaysBirthdayBanner />
 
         {/* Header */}
         <div>
