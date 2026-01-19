@@ -87,9 +87,23 @@ export function useTeamDirectory(locationFilter?: string) {
         rolesMap.set(r.user_id, [...existing, r.role]);
       });
 
+      // Fetch location schedules for all users
+      const { data: schedulesData } = await supabase
+        .from('employee_location_schedules')
+        .select('*')
+        .in('user_id', userIds);
+
+      const schedulesMap = new Map<string, Record<string, string[]>>();
+      schedulesData?.forEach(s => {
+        const existing = schedulesMap.get(s.user_id) || {};
+        existing[s.location_id] = s.work_days || [];
+        schedulesMap.set(s.user_id, existing);
+      });
+
       return (data || []).map(profile => ({
         ...profile,
         roles: rolesMap.get(profile.user_id) || [],
+        location_schedules: schedulesMap.get(profile.user_id) || {},
       }));
     },
   });

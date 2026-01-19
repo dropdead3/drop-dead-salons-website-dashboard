@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock } from 'lucide-react';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
-import { locations, getLocationName } from '@/data/stylists';
-import type { Location } from '@/data/stylists';
+import { useLocations } from '@/hooks/useLocations';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { differenceInYears, differenceInMonths, parseISO, format } from 'date-fns';
 
 const roleLabels: Record<string, string> = {
   admin: 'Admin',
@@ -23,17 +24,16 @@ const roleLabels: Record<string, string> = {
 };
 
 const roleColors: Record<string, string> = {
-  admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  manager: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-  stylist: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  receptionist: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  assistant: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-  stylist_assistant: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
-  admin_assistant: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
-  operations_assistant: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+  admin: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
+  manager: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800',
+  stylist: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
+  receptionist: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
+  assistant: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+  stylist_assistant: 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-800',
+  admin_assistant: 'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-800',
+  operations_assistant: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800',
 };
 
-// Role priority for sorting (lower = higher priority)
 const rolePriority: Record<string, number> = {
   admin: 1,
   manager: 2,
@@ -47,10 +47,27 @@ const rolePriority: Record<string, number> = {
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+function getTimeAtCompany(hireDate: string | null): string {
+  if (!hireDate) return '';
+  const start = parseISO(hireDate);
+  const years = differenceInYears(new Date(), start);
+  const months = differenceInMonths(new Date(), start) % 12;
+  
+  if (years > 0 && months > 0) {
+    return `${years}y ${months}mo`;
+  } else if (years > 0) {
+    return `${years} year${years > 1 ? 's' : ''}`;
+  } else if (months > 0) {
+    return `${months} month${months > 1 ? 's' : ''}`;
+  }
+  return 'New';
+}
+
 export default function TeamDirectory() {
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
   const { data: team = [], isLoading } = useTeamDirectory(locationFilter === 'all' ? undefined : locationFilter);
+  const { data: locations = [] } = useLocations();
 
   const filteredTeam = team.filter(member => {
     if (!searchQuery) return true;
@@ -63,7 +80,6 @@ export default function TeamDirectory() {
     );
   });
 
-  // Sort by highest role priority
   const sortByRole = (members: typeof team) => {
     return [...members].sort((a, b) => {
       const aHighestRole = Math.min(...a.roles.map(r => rolePriority[r] ?? 99));
@@ -72,7 +88,6 @@ export default function TeamDirectory() {
     });
   };
 
-  // Group by location, then sort by role within each group
   const teamByLocation = filteredTeam.reduce((acc, member) => {
     const loc = member.location_id || 'unassigned';
     if (!acc[loc]) acc[loc] = [];
@@ -80,18 +95,18 @@ export default function TeamDirectory() {
     return acc;
   }, {} as Record<string, typeof team>);
 
-  // Sort each location group by role
   Object.keys(teamByLocation).forEach(loc => {
     teamByLocation[loc] = sortByRole(teamByLocation[loc]);
   });
 
-  // Sort locations: assigned first (alphabetically), then unassigned last
+  const getLocationName = (id: string) => {
+    return locations.find(l => l.id === id)?.name || id;
+  };
+
   const sortedLocationIds = Object.keys(teamByLocation).sort((a, b) => {
     if (a === 'unassigned') return 1;
     if (b === 'unassigned') return -1;
-    const nameA = getLocationName(a as Location);
-    const nameB = getLocationName(b as Location);
-    return nameA.localeCompare(nameB);
+    return getLocationName(a).localeCompare(getLocationName(b));
   });
 
   return (
@@ -104,7 +119,6 @@ export default function TeamDirectory() {
           </p>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -147,12 +161,12 @@ export default function TeamDirectory() {
                 <div key={locationId}>
                   <h2 className="text-lg font-display font-medium mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                    {locationId === 'unassigned' ? 'No Location Assigned' : getLocationName(locationId as Location)}
+                    {locationId === 'unassigned' ? 'No Location Assigned' : getLocationName(locationId)}
                     <Badge variant="secondary" className="ml-2">{members.length}</Badge>
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {members.map(member => (
-                      <TeamMemberCard key={member.id} member={member} />
+                      <TeamMemberCard key={member.id} member={member} locations={locations} />
                     ))}
                   </div>
                 </div>
@@ -180,82 +194,114 @@ interface TeamMemberCardProps {
     specialties: string[] | null;
     roles: string[];
     work_days: string[] | null;
+    hire_date: string | null;
+    location_ids: string[] | null;
+    location_schedules: Record<string, string[]>;
   };
+  locations: Array<{ id: string; name: string }>;
 }
 
-function TeamMemberCard({ member }: TeamMemberCardProps) {
-  const workDays = member.work_days || [];
+function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
+  const timeAtCompany = getTimeAtCompany(member.hire_date);
+  const memberLocations = member.location_ids || [];
+  const hasSchedules = Object.keys(member.location_schedules).length > 0;
+  
+  const getLocationName = (id: string) => {
+    return locations.find(l => l.id === id)?.name || id;
+  };
   
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-4">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+      <CardContent className="p-5">
+        {/* Header: Avatar, Name, Roles, Calendar Icon */}
         <div className="flex items-start gap-4">
-          <Avatar className="w-14 h-14">
+          <Avatar className="w-16 h-16 border-2 border-background shadow-sm">
             <AvatarImage src={member.photo_url || undefined} alt={member.full_name} />
-            <AvatarFallback className="bg-muted text-lg">
+            <AvatarFallback className="bg-muted text-xl font-medium">
               {member.full_name?.charAt(0) || <User className="w-6 h-6" />}
             </AvatarFallback>
           </Avatar>
+          
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-medium truncate">
-                {member.display_name || member.full_name}
-              </h3>
-              {/* Work Days Quick View */}
-              {workDays.length > 0 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="p-1 hover:bg-muted rounded transition-colors shrink-0">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left" className="p-3">
-                      <p className="text-xs font-medium mb-2">Work Days</p>
-                      <div className="flex gap-1">
-                        {DAYS_OF_WEEK.map(day => (
-                          <span
-                            key={day}
-                            className={`text-xs px-1.5 py-0.5 rounded ${
-                              workDays.includes(day)
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-muted-foreground'
-                            }`}
-                          >
-                            {day.charAt(0)}
-                          </span>
-                        ))}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+              <div>
+                <h3 className="font-display font-medium text-lg leading-tight">
+                  {member.display_name || member.full_name}
+                </h3>
+                {/* Time at company */}
+                {timeAtCompany && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Clock className="w-3 h-3" />
+                    {timeAtCompany}
+                  </p>
+                )}
+              </div>
+              
+              {/* Calendar Hover */}
+              {hasSchedules && (
+                <HoverCard openDelay={100} closeDelay={50}>
+                  <HoverCardTrigger asChild>
+                    <button className="p-1.5 hover:bg-muted rounded-md transition-colors shrink-0">
+                      <Calendar className="w-5 h-5 text-muted-foreground" />
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent side="left" align="start" className="w-64 p-4">
+                    <p className="text-sm font-medium mb-3">Work Schedule</p>
+                    <div className="space-y-3">
+                      {memberLocations.map(locId => {
+                        const schedule = member.location_schedules[locId] || [];
+                        return (
+                          <div key={locId}>
+                            <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {getLocationName(locId)}
+                            </p>
+                            <div className="flex gap-1">
+                              {DAYS_OF_WEEK.map(day => (
+                                <span
+                                  key={day}
+                                  className={`text-xs px-1.5 py-1 rounded font-medium ${
+                                    schedule.includes(day)
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'bg-muted text-muted-foreground/50'
+                                  }`}
+                                >
+                                  {day.charAt(0)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
               )}
             </div>
-            <div className="flex flex-wrap gap-1 mt-1">
+            
+            {/* Role Badges */}
+            <div className="flex flex-wrap gap-1.5 mt-2">
               {member.roles.map(role => (
                 <Badge 
                   key={role} 
-                  variant="secondary" 
-                  className={`text-xs ${roleColors[role] || ''}`}
+                  variant="outline" 
+                  className={`text-xs font-medium border ${roleColors[role] || ''}`}
                 >
                   {roleLabels[role] || role}
                 </Badge>
               ))}
             </div>
-            {member.stylist_level && (
-              <p className="text-xs text-muted-foreground mt-1">{member.stylist_level}</p>
-            )}
           </div>
         </div>
 
         {/* Contact Info */}
-        <div className="mt-4 space-y-2 text-sm">
+        <div className="mt-4 space-y-1.5 text-sm">
           {member.phone && (
             <a 
               href={`tel:${member.phone}`}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors py-0.5"
             >
-              <Phone className="w-4 h-4" />
+              <Phone className="w-4 h-4 shrink-0" />
               <span>{member.phone}</span>
             </a>
           )}
@@ -264,51 +310,22 @@ function TeamMemberCard({ member }: TeamMemberCardProps) {
               href={`https://instagram.com/${member.instagram.replace('@', '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors py-0.5"
             >
-              <Instagram className="w-4 h-4" />
+              <Instagram className="w-4 h-4 shrink-0" />
               <span>{member.instagram}</span>
-            </a>
-          )}
-          {member.tiktok && (
-            <a 
-              href={`https://tiktok.com/@${member.tiktok.replace('@', '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-              </svg>
-              <span>{member.tiktok}</span>
             </a>
           )}
           {member.email && (
             <a 
               href={`mailto:${member.email}`}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors py-0.5"
             >
-              <Mail className="w-4 h-4" />
+              <Mail className="w-4 h-4 shrink-0" />
               <span className="truncate">{member.email}</span>
             </a>
           )}
         </div>
-
-        {/* Specialties */}
-        {member.specialties && member.specialties.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1">
-            {member.specialties.slice(0, 3).map(specialty => (
-              <Badge key={specialty} variant="outline" className="text-xs">
-                {specialty}
-              </Badge>
-            ))}
-            {member.specialties.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{member.specialties.length - 3} more
-              </Badge>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
