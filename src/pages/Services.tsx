@@ -249,7 +249,7 @@ export default function Services() {
               onLevelChange={setSelectedLevel}
             />
             <p className="text-sm text-muted-foreground font-sans">
-              <span className="font-medium text-foreground">Pricing is variable based on stylist level.</span> View all price levels by selecting a level.
+              <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
             </p>
           </motion.div>
         </div>
