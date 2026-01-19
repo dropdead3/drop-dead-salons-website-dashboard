@@ -186,7 +186,13 @@ export function Header() {
             </div>
 
             {/* Desktop Navigation - Center */}
-            <nav className="hidden lg:flex items-center gap-6 xl:gap-10">
+            <motion.nav 
+              className="hidden lg:flex items-center gap-6 xl:gap-10"
+              animate={{ 
+                x: isScrollingUp ? 0 : 80,
+              }}
+              transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            >
               {navLinks.map((link, index) => (
                 <motion.div
                   key={link.href}
@@ -217,7 +223,7 @@ export function Header() {
                   </Link>
                 </motion.div>
               ))}
-            </nav>
+            </motion.nav>
 
             {/* Right Side - Contact & Book */}
             <motion.div 
