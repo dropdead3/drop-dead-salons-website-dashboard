@@ -292,14 +292,19 @@ export default function Services() {
   const [isSticky, setIsSticky] = useState(false);
 
   // Detect when sticky bar is in sticky state
+  // Detect when sticky bar is in sticky state
   useEffect(() => {
     const handleScroll = () => {
       if (stickyRef.current) {
         const rect = stickyRef.current.getBoundingClientRect();
-        // Check if the element is at its sticky position (top: 120px)
-        setIsSticky(rect.top <= 120);
+        // Element is sticky when its top position matches the sticky offset (120px)
+        // We use a small threshold to account for subpixel rendering
+        setIsSticky(rect.top <= 121);
       }
     };
+    
+    // Run on mount to set initial state
+    handleScroll();
     
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
