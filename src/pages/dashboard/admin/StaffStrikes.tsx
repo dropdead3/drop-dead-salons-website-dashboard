@@ -64,6 +64,7 @@ import {
 import { AddStrikeDialog } from '@/components/dashboard/AddStrikeDialog';
 import { AddStrikeToStaffDialog } from '@/components/dashboard/AddStrikeToStaffDialog';
 import { EditStrikeDialog } from '@/components/dashboard/EditStrikeDialog';
+import { StrikeExportButton } from '@/components/dashboard/StrikeExportButton';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { cn } from '@/lib/utils';
 
@@ -177,7 +178,10 @@ export default function StaffStrikes() {
               Track write-ups, complaints, warnings, and issues for team members.
             </p>
           </div>
-          <AddStrikeToStaffDialog />
+          <div className="flex items-center gap-2">
+            <StrikeExportButton strikes={strikes} filteredStrikes={filteredStrikes} />
+            <AddStrikeToStaffDialog />
+          </div>
         </div>
 
         {/* Stats Cards */}
