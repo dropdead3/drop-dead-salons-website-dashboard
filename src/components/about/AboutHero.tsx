@@ -43,9 +43,8 @@ export function AboutHero() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-display mb-6 leading-tight">
             More Than a Salon—
             <br />
-            <span className="text-foreground/70">
+            <span className="text-foreground">
               {displayText}
-              <span className="animate-pulse">|</span>
             </span>
           </h1>
           <p className="text-lg md:text-xl text-foreground/60 max-w-2xl mx-auto leading-relaxed">
