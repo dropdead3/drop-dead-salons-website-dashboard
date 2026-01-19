@@ -140,39 +140,42 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
               <span className="text-sm font-medium">{location.phone}</span>
             </a>
 
-            {/* CTAs */}
-            <div className="flex flex-col items-center gap-3 relative z-10 mt-auto pt-4">
-              <Link
-                to={location.bookingUrl}
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center justify-center bg-foreground text-background px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/link w-full overflow-hidden"
-              >
-                <span>Book consult</span>
-                <ArrowRight className="w-0 h-4 opacity-0 group-hover/link:w-4 group-hover/link:ml-2 group-hover/link:opacity-100 transition-all duration-300" />
-              </Link>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const stylistsSection = document.getElementById('stylists-section');
-                  if (stylistsSection) {
-                    stylistsSection.scrollIntoView({ behavior: 'smooth' });
-                    window.dispatchEvent(new CustomEvent('setLocationFilter', { 
-                      detail: { location: location.stylistFilterId } 
-                    }));
-                  }
-                }}
-                className="inline-flex items-center justify-center bg-background border border-border text-foreground px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-muted hover:border-foreground/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/stylists w-full overflow-hidden"
-              >
-                <span>Check out the stylists</span>
-                <ArrowRight className="w-0 h-4 opacity-0 group-hover/stylists:w-4 group-hover/stylists:ml-2 group-hover/stylists:opacity-100 transition-all duration-300" />
-              </button>
-            </div>
-
-            {/* Tap hint */}
-            <div className="mt-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150 translate-y-2 group-hover:translate-y-0">
-              <p className="text-xs text-foreground/60 tracking-wide font-aeonik animate-pulse">
-                Tap here to see inside
-              </p>
+            {/* CTAs and Tap hint container */}
+            <div className="relative z-10 mt-auto">
+              {/* Tap hint - positioned below buttons, revealed on hover */}
+              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100">
+                <p className="text-xs text-foreground/60 tracking-wide font-aeonik animate-pulse">
+                  Tap here to see inside
+                </p>
+              </div>
+              
+              {/* CTAs - move up on hover to reveal hint */}
+              <div className="flex flex-col items-center gap-3 transform transition-transform duration-300 group-hover:-translate-y-6">
+                <Link
+                  to={location.bookingUrl}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center justify-center bg-foreground text-background px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/link w-full overflow-hidden"
+                >
+                  <span>Book consult</span>
+                  <ArrowRight className="w-0 h-4 opacity-0 group-hover/link:w-4 group-hover/link:ml-2 group-hover/link:opacity-100 transition-all duration-300" />
+                </Link>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const stylistsSection = document.getElementById('stylists-section');
+                    if (stylistsSection) {
+                      stylistsSection.scrollIntoView({ behavior: 'smooth' });
+                      window.dispatchEvent(new CustomEvent('setLocationFilter', { 
+                        detail: { location: location.stylistFilterId } 
+                      }));
+                    }
+                  }}
+                  className="inline-flex items-center justify-center bg-background border border-border text-foreground px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-muted hover:border-foreground/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/stylists w-full overflow-hidden"
+                >
+                  <span>Check out the stylists</span>
+                  <ArrowRight className="w-0 h-4 opacity-0 group-hover/stylists:w-4 group-hover/stylists:ml-2 group-hover/stylists:opacity-100 transition-all duration-300" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
