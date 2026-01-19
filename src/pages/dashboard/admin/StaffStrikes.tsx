@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -63,6 +64,9 @@ import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { cn } from '@/lib/utils';
 
 export default function StaffStrikes() {
+  const [searchParams] = useSearchParams();
+  const initialUserId = searchParams.get('userId') || 'all';
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -70,12 +74,20 @@ export default function StaffStrikes() {
   const [selectedStrike, setSelectedStrike] = useState<StaffStrikeWithDetails | null>(null);
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
   const [resolutionNotes, setResolutionNotes] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
+  const [selectedEmployee, setSelectedEmployee] = useState<string>(initialUserId);
 
   const { data: strikes = [], isLoading } = useStaffStrikes();
   const { data: team = [] } = useTeamDirectory();
   const resolveStrike = useResolveStrike();
   const deleteStrike = useDeleteStrike();
+
+  // Sync with URL param on mount
+  useEffect(() => {
+    const userId = searchParams.get('userId');
+    if (userId) {
+      setSelectedEmployee(userId);
+    }
+  }, [searchParams]);
 
   // Filter strikes
   const filteredStrikes = strikes.filter((strike) => {
