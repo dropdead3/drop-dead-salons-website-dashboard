@@ -29,7 +29,7 @@ function StylistLevelSelector({
         className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full text-sm font-sans transition-all duration-300 hover:border-foreground/30"
       >
         <span className="text-muted-foreground">Service Pricing Level:</span>
-        <span className="font-medium text-foreground">{selectedClientLabel} — {selectedLabel}</span>
+        <span className="font-medium text-foreground">{selectedClientLabel} Stylist — {selectedLabel}</span>
         <ChevronDown size={16} className={`text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
@@ -60,7 +60,7 @@ function StylistLevelSelector({
                       : 'hover:bg-secondary text-foreground'
                   }`}
                 >
-                  <span>{level.clientLabel} — {level.label}</span>
+                  <span>{level.clientLabel} Stylist — {level.label}</span>
                 </button>
               ))}
             </motion.div>
