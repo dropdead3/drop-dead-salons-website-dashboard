@@ -296,7 +296,7 @@ export function JoinTeamSection() {
                 </button>
               </div>
               
-            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left max-w-6xl mx-auto">
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-left w-full">
               {[
                 { icon: Calendar, title: "Flexible Schedule", desc: "Build your ideal work-life balance with flexible booking options." },
                 { icon: GraduationCap, title: "Education & Growth", desc: "Access ongoing training, workshops, and industry certifications." },
@@ -317,13 +317,13 @@ export function JoinTeamSection() {
                     delay: index * 0.1,
                     ease: [0.4, 0, 0.2, 1]
                   }}
-                  className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
+                  className="bg-background rounded-2xl p-10 md:p-12 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer min-h-[280px]"
                 >
-                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4">
-                    <benefit.icon className="w-5 h-5 text-foreground" />
+                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-6">
+                    <benefit.icon className="w-6 h-6 text-foreground" />
                   </div>
-                  <h3 className="font-display text-lg mb-2">{benefit.title}</h3>
-                  <p className="text-sm text-foreground/60">{benefit.desc}</p>
+                  <h3 className="font-display text-xl mb-3">{benefit.title}</h3>
+                  <p className="text-sm text-foreground/60 leading-relaxed">{benefit.desc}</p>
                 </motion.div>
               ))}
               </div>
