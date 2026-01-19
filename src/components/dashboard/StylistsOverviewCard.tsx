@@ -1,8 +1,9 @@
-import { Users } from 'lucide-react';
+import { Users, MapPin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { stylistLevels } from '@/data/servicePricing';
+import { locations } from '@/data/stylists';
 
 export function StylistsOverviewCard() {
   // Fetch stylists with their levels to show counts
@@ -37,7 +38,7 @@ export function StylistsOverviewCard() {
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-sm tracking-wide">STYLISTS OVERVIEW</h2>
+        <h2 className="font-display text-sm tracking-wide">STYLISTS BY LEVEL</h2>
         <Users className="w-4 h-4 text-muted-foreground" />
       </div>
       
@@ -77,6 +78,109 @@ export function StylistsOverviewCard() {
         {totalAssigned === 0 && (
           <p className="text-xs text-muted-foreground text-center pt-2">
             No stylists assigned to levels yet
+          </p>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+export function StaffOverviewCard() {
+  // Fetch all active staff with their location info
+  const { data: staffData } = useQuery({
+    queryKey: ['staff-by-location'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('id, location_id, location_ids')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Calculate unique total and per-location counts
+  const totalStaff = staffData?.length || 0;
+  
+  const staffByLocation = locations.map(loc => {
+    const count = staffData?.filter(staff => {
+      // Check both location_id and location_ids array
+      const inSingleLocation = staff.location_id === loc.id;
+      const inMultipleLocations = staff.location_ids?.includes(loc.id);
+      return inSingleLocation || inMultipleLocations;
+    }).length || 0;
+    
+    return { ...loc, count };
+  });
+
+  // Staff at multiple locations
+  const multiLocationStaff = staffData?.filter(staff => 
+    staff.location_ids && staff.location_ids.length > 1
+  ).length || 0;
+
+  // Unassigned staff (no location)
+  const unassignedStaff = staffData?.filter(staff => 
+    !staff.location_id && (!staff.location_ids || staff.location_ids.length === 0)
+  ).length || 0;
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-sm tracking-wide">TEAM OVERVIEW</h2>
+        <MapPin className="w-4 h-4 text-muted-foreground" />
+      </div>
+      
+      <div className="space-y-3">
+        <div className="flex items-center justify-between pb-3 border-b">
+          <span className="text-sm text-muted-foreground">Total Staff</span>
+          <span className="text-2xl font-display font-bold">{totalStaff}</span>
+        </div>
+        
+        <div className="space-y-2">
+          {staffByLocation.map((loc) => {
+            const percentage = totalStaff > 0 ? (loc.count / totalStaff) * 100 : 0;
+            
+            return (
+              <div key={loc.id} className="flex items-center gap-3">
+                <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-sm truncate">{loc.name}</span>
+                    <span className="text-sm text-muted-foreground shrink-0">{loc.count}</span>
+                  </div>
+                  <div className="h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-foreground/30 transition-all duration-300"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        {(multiLocationStaff > 0 || unassignedStaff > 0) && (
+          <div className="pt-2 border-t space-y-1">
+            {multiLocationStaff > 0 && (
+              <p className="text-xs text-muted-foreground flex items-center justify-between">
+                <span>Works at both locations</span>
+                <span>{multiLocationStaff}</span>
+              </p>
+            )}
+            {unassignedStaff > 0 && (
+              <p className="text-xs text-muted-foreground flex items-center justify-between">
+                <span>No location assigned</span>
+                <span>{unassignedStaff}</span>
+              </p>
+            )}
+          </div>
+        )}
+        
+        {totalStaff === 0 && (
+          <p className="text-xs text-muted-foreground text-center pt-2">
+            No active staff members yet
           </p>
         )}
       </div>
