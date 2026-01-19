@@ -57,6 +57,47 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
+// Import brand logos
+import dropDeadLogo from '@/assets/drop-dead-logo.svg';
+import ddSecondaryLogo from '@/assets/dd-secondary-logo.svg';
+import dd75Icon from '@/assets/dd75-icon.svg';
+import dd75Logo from '@/assets/dd75-logo.svg';
+
+// Brand logo presets
+interface BrandLogo {
+  id: string;
+  name: string;
+  src: string;
+  description: string;
+}
+
+const brandLogos: BrandLogo[] = [
+  {
+    id: 'drop-dead-main',
+    name: 'Drop Dead Logo',
+    src: dropDeadLogo,
+    description: 'Primary wordmark logo',
+  },
+  {
+    id: 'dd-secondary',
+    name: 'DD Secondary',
+    src: ddSecondaryLogo,
+    description: 'Secondary icon logo',
+  },
+  {
+    id: 'dd75-icon',
+    name: 'DD75 Icon',
+    src: dd75Icon,
+    description: 'Circular icon mark',
+  },
+  {
+    id: 'dd75-logo',
+    name: 'DD75 Logo',
+    src: dd75Logo,
+    description: 'DD75 wordmark',
+  },
+];
+
 // Block types for the email editor
 type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer';
 
@@ -529,6 +570,26 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
     setSelectedBlockId(newBlock.id);
   };
 
+  const addLogoBlock = (logo: BrandLogo) => {
+    const currentTheme = allThemes.find(t => t.id === selectedTheme) || emailThemes[0];
+    
+    const newBlock: EmailBlock = {
+      id: crypto.randomUUID(),
+      type: 'image',
+      content: logo.name,
+      styles: {
+        backgroundColor: currentTheme.colors.headerBg,
+        textAlign: 'center',
+        padding: '24px',
+        width: '180px',
+      },
+      imageUrl: logo.src,
+    };
+    updateBlocksAndHtml([...blocks, newBlock]);
+    setSelectedBlockId(newBlock.id);
+    toast.success(`Added ${logo.name}`);
+  };
+
   const updateBlock = (id: string, updates: Partial<EmailBlock>) => {
     const newBlocks = blocks.map(block => 
       block.id === id ? { ...block, ...updates } : block
@@ -996,6 +1057,27 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                   </Button>
                 </div>
               </div>
+              
+              {/* Brand Logo Shortcuts */}
+              <div className="border-t pt-4">
+                <div className="font-medium text-sm mb-2">Brand Logos</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {brandLogos.map((logo) => (
+                    <Button
+                      key={logo.id}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addLogoBlock(logo)}
+                      className="justify-start gap-2 h-auto py-2"
+                    >
+                      <div className="w-6 h-6 flex items-center justify-center bg-muted rounded">
+                        <img src={logo.src} alt={logo.name} className="w-5 h-5 object-contain" />
+                      </div>
+                      <span className="text-xs truncate">{logo.name}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
               {/* Block properties panel */}
               {selectedBlock && (
@@ -1083,8 +1165,35 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
 
                     {selectedBlock.type === 'image' && (
                       <>
+                        {/* Brand Logos Quick Select */}
                         <div className="space-y-2">
-                          <Label className="text-xs">Image</Label>
+                          <Label className="text-xs">Brand Logos</Label>
+                          <div className="grid grid-cols-2 gap-1">
+                            {brandLogos.map((logo) => (
+                              <button
+                                key={logo.id}
+                                onClick={() => {
+                                  updateBlock(selectedBlock.id, { 
+                                    imageUrl: logo.src,
+                                    content: logo.name
+                                  });
+                                }}
+                                className={cn(
+                                  "flex items-center gap-2 p-2 rounded border text-left transition-all hover:border-primary",
+                                  selectedBlock.imageUrl === logo.src && "border-primary bg-primary/5"
+                                )}
+                              >
+                                <div className="w-8 h-8 flex items-center justify-center bg-muted rounded">
+                                  <img src={logo.src} alt={logo.name} className="w-6 h-6 object-contain" />
+                                </div>
+                                <span className="text-[10px] truncate flex-1">{logo.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs">Custom Image</Label>
                           <div className="flex gap-2">
                             <Input
                               value={selectedBlock.imageUrl || ''}
@@ -1118,6 +1227,22 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                             placeholder="Image description"
                             className="h-8 text-sm"
                           />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Max Width</Label>
+                          <Select
+                            value={selectedBlock.styles.width || 'auto'}
+                            onValueChange={(v) => updateBlockStyles(selectedBlock.id, { width: v })}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['auto', '100px', '120px', '150px', '180px', '200px', '250px', '300px', '100%'].map(size => (
+                                <SelectItem key={size} value={size}>{size}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </>
                     )}
