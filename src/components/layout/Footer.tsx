@@ -10,7 +10,12 @@ const footerLinks = [
 
 export function Footer() {
   const { data: locations = [] } = useActiveLocations();
-    <footer 
+  
+  // Get hours from the first location for display
+  const hours = locations.length > 0 ? formatHoursForDisplay(locations[0].hours_json) : '';
+
+  return (
+    <footer
       className="bg-secondary text-foreground"
       data-theme="light"
     >
