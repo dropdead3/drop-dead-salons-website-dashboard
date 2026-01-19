@@ -1157,116 +1157,136 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                           />
                         </div>
                         
+                        {/* 5 Color Swatches */}
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium">Theme Colors (5)</div>
+                          <div className="flex gap-2 justify-center p-3 rounded-lg border bg-muted/20">
+                            {[
+                              { key: 'headerBg', label: 'Dark', color: newTheme.colors.headerBg },
+                              { key: 'bodyBg', label: 'Light', color: newTheme.colors.bodyBg },
+                              { key: 'buttonBg', label: 'Primary', color: newTheme.colors.buttonBg },
+                              { key: 'accentColor', label: 'Accent', color: newTheme.colors.accentColor },
+                              { key: 'white', label: 'White', color: newTheme.colors.white },
+                            ].map((swatch) => (
+                              <Popover key={swatch.key}>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    className="flex flex-col items-center gap-1 group"
+                                    type="button"
+                                  >
+                                    <div 
+                                      className="w-10 h-10 rounded-lg border-2 border-border shadow-sm transition-all group-hover:scale-110 group-hover:shadow-md cursor-pointer"
+                                      style={{ backgroundColor: swatch.color }}
+                                    />
+                                    <span className="text-[10px] text-muted-foreground">{swatch.label}</span>
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-3" align="center">
+                                  <div className="space-y-2">
+                                    <Label className="text-xs font-medium">{swatch.label} Color</Label>
+                                    <ColorPicker
+                                      value={swatch.color}
+                                      onChange={(v) => setNewTheme(prev => ({ 
+                                        ...prev, 
+                                        colors: { ...prev.colors, [swatch.key]: v } 
+                                      }))}
+                                    />
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            ))}
+                          </div>
+                        </div>
+
                         {/* Color preview */}
                         <div className="p-3 rounded-lg border">
                           <div className="text-xs font-medium mb-2">Preview</div>
                           <div className="rounded-lg overflow-hidden shadow-sm">
                             <div 
                               className="p-3 text-center text-sm font-medium"
-                              style={{ backgroundColor: newTheme.colors.headerBg, color: newTheme.colors.headerText }}
+                              style={{ backgroundColor: newTheme.colors.headerBg, color: newTheme.colors.white }}
                             >
                               Header Preview
                             </div>
                             <div 
                               className="p-3 text-sm"
-                              style={{ backgroundColor: newTheme.colors.bodyBg, color: newTheme.colors.bodyText }}
+                              style={{ backgroundColor: newTheme.colors.bodyBg, color: newTheme.colors.headerBg }}
                             >
                               Body content preview text
-                              <div className="mt-2 flex justify-center">
+                              <div className="mt-2 flex justify-center gap-2">
                                 <span
                                   className="px-4 py-1 rounded text-xs font-medium"
-                                  style={{ backgroundColor: newTheme.colors.buttonBg, color: newTheme.colors.buttonText }}
+                                  style={{ backgroundColor: newTheme.colors.buttonBg, color: newTheme.colors.white }}
                                 >
-                                  Button
+                                  Primary
+                                </span>
+                                <span
+                                  className="px-4 py-1 rounded text-xs font-medium border-2"
+                                  style={{ 
+                                    backgroundColor: newTheme.colors.bodyBg, 
+                                    color: newTheme.colors.buttonBg,
+                                    borderColor: newTheme.colors.buttonBg 
+                                  }}
+                                >
+                                  Secondary
                                 </span>
                               </div>
+                              <div 
+                                className="mt-2 h-1 rounded"
+                                style={{ backgroundColor: newTheme.colors.accentColor }}
+                              />
                             </div>
                           </div>
                         </div>
 
-                        {/* Color pickers grid */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <Label className="text-xs">Header BG</Label>
-                            <ColorPicker
-                              value={newTheme.colors.headerBg}
-                              onChange={(v) => setNewTheme(prev => ({ 
-                                ...prev, 
-                                colors: { ...prev.colors, headerBg: v } 
-                              }))}
-                            />
+                        {/* Advanced color options */}
+                        <details className="group">
+                          <summary className="text-xs font-medium cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
+                            Advanced Colors
+                          </summary>
+                          <div className="mt-3 grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Header Text</Label>
+                              <ColorPicker
+                                value={newTheme.colors.headerText}
+                                onChange={(v) => setNewTheme(prev => ({ 
+                                  ...prev, 
+                                  colors: { ...prev.colors, headerText: v } 
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Body Text</Label>
+                              <ColorPicker
+                                value={newTheme.colors.bodyText}
+                                onChange={(v) => setNewTheme(prev => ({ 
+                                  ...prev, 
+                                  colors: { ...prev.colors, bodyText: v } 
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Button Text</Label>
+                              <ColorPicker
+                                value={newTheme.colors.buttonText}
+                                onChange={(v) => setNewTheme(prev => ({ 
+                                  ...prev, 
+                                  colors: { ...prev.colors, buttonText: v } 
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Divider</Label>
+                              <ColorPicker
+                                value={newTheme.colors.dividerColor}
+                                onChange={(v) => setNewTheme(prev => ({ 
+                                  ...prev, 
+                                  colors: { ...prev.colors, dividerColor: v } 
+                                }))}
+                              />
+                            </div>
                           </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Header Text</Label>
-                            <ColorPicker
-                              value={newTheme.colors.headerText}
-                              onChange={(v) => setNewTheme(prev => ({ 
-                                ...prev, 
-                                colors: { ...prev.colors, headerText: v } 
-                              }))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Body BG</Label>
-                            <ColorPicker
-                              value={newTheme.colors.bodyBg}
-                              onChange={(v) => setNewTheme(prev => ({ 
-                                ...prev, 
-                                colors: { ...prev.colors, bodyBg: v } 
-                              }))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Body Text</Label>
-                            <ColorPicker
-                              value={newTheme.colors.bodyText}
-                              onChange={(v) => setNewTheme(prev => ({ 
-                                ...prev, 
-                                colors: { ...prev.colors, bodyText: v } 
-                              }))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Button BG</Label>
-                            <ColorPicker
-                              value={newTheme.colors.buttonBg}
-                              onChange={(v) => setNewTheme(prev => ({ 
-                                ...prev, 
-                                colors: { ...prev.colors, buttonBg: v } 
-                              }))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Button Text</Label>
-                            <ColorPicker
-                              value={newTheme.colors.buttonText}
-                              onChange={(v) => setNewTheme(prev => ({ 
-                                ...prev, 
-                                colors: { ...prev.colors, buttonText: v } 
-                              }))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Accent</Label>
-                            <ColorPicker
-                              value={newTheme.colors.accentColor}
-                              onChange={(v) => setNewTheme(prev => ({ 
-                                ...prev, 
-                                colors: { ...prev.colors, accentColor: v } 
-                              }))}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Divider</Label>
-                            <ColorPicker
-                              value={newTheme.colors.dividerColor}
-                              onChange={(v) => setNewTheme(prev => ({ 
-                                ...prev, 
-                                colors: { ...prev.colors, dividerColor: v } 
-                              }))}
-                            />
-                          </div>
-                        </div>
+                        </details>
                       </div>
                       <DialogFooter>
                         <Button variant="outline" onClick={() => setIsCreateThemeOpen(false)}>
@@ -1316,6 +1336,10 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                               className="w-3 h-3 rounded-full border border-border" 
                               style={{ backgroundColor: theme.colors.accentColor }}
                             />
+                            <div 
+                              className="w-3 h-3 rounded-full border border-border" 
+                              style={{ backgroundColor: theme.colors.white }}
+                            />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-xs font-medium truncate">{theme.name}</div>
@@ -1362,6 +1386,10 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                                   <div 
                                     className="w-3 h-3 rounded-full border border-border" 
                                     style={{ backgroundColor: theme.colors.accentColor }}
+                                  />
+                                  <div 
+                                    className="w-3 h-3 rounded-full border border-border" 
+                                    style={{ backgroundColor: theme.colors.white }}
                                   />
                                 </div>
                                 <div className="flex-1 min-w-0">
