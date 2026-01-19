@@ -423,6 +423,7 @@ export type Database = {
           stylist_type: Database["public"]["Enums"]["stylist_type"] | null
           updated_at: string
           user_id: string
+          work_days: string[] | null
         }
         Insert: {
           admin_approved_at?: string | null
@@ -456,6 +457,7 @@ export type Database = {
           stylist_type?: Database["public"]["Enums"]["stylist_type"] | null
           updated_at?: string
           user_id: string
+          work_days?: string[] | null
         }
         Update: {
           admin_approved_at?: string | null
@@ -489,6 +491,7 @@ export type Database = {
           stylist_type?: Database["public"]["Enums"]["stylist_type"] | null
           updated_at?: string
           user_id?: string
+          work_days?: string[] | null
         }
         Relationships: []
       }

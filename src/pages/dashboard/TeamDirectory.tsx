@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar } from 'lucide-react';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { locations, getLocationName } from '@/data/stylists';
 import type { Location } from '@/data/stylists';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const roleLabels: Record<string, string> = {
   admin: 'Admin',
@@ -16,6 +17,9 @@ const roleLabels: Record<string, string> = {
   stylist: 'Stylist',
   receptionist: 'Receptionist',
   assistant: 'Assistant',
+  stylist_assistant: 'Stylist Assistant',
+  admin_assistant: 'Admin Assistant',
+  operations_assistant: 'Operations Assistant',
 };
 
 const roleColors: Record<string, string> = {
@@ -24,7 +28,24 @@ const roleColors: Record<string, string> = {
   stylist: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   receptionist: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   assistant: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  stylist_assistant: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
+  admin_assistant: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
+  operations_assistant: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
 };
+
+// Role priority for sorting (lower = higher priority)
+const rolePriority: Record<string, number> = {
+  admin: 1,
+  manager: 2,
+  stylist: 3,
+  receptionist: 4,
+  stylist_assistant: 5,
+  admin_assistant: 6,
+  operations_assistant: 7,
+  assistant: 8,
+};
+
+const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function TeamDirectory() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,13 +63,36 @@ export default function TeamDirectory() {
     );
   });
 
-  // Group by location
+  // Sort by highest role priority
+  const sortByRole = (members: typeof team) => {
+    return [...members].sort((a, b) => {
+      const aHighestRole = Math.min(...a.roles.map(r => rolePriority[r] ?? 99));
+      const bHighestRole = Math.min(...b.roles.map(r => rolePriority[r] ?? 99));
+      return aHighestRole - bHighestRole;
+    });
+  };
+
+  // Group by location, then sort by role within each group
   const teamByLocation = filteredTeam.reduce((acc, member) => {
     const loc = member.location_id || 'unassigned';
     if (!acc[loc]) acc[loc] = [];
     acc[loc].push(member);
     return acc;
   }, {} as Record<string, typeof team>);
+
+  // Sort each location group by role
+  Object.keys(teamByLocation).forEach(loc => {
+    teamByLocation[loc] = sortByRole(teamByLocation[loc]);
+  });
+
+  // Sort locations: assigned first (alphabetically), then unassigned last
+  const sortedLocationIds = Object.keys(teamByLocation).sort((a, b) => {
+    if (a === 'unassigned') return 1;
+    if (b === 'unassigned') return -1;
+    const nameA = getLocationName(a as Location);
+    const nameB = getLocationName(b as Location);
+    return nameA.localeCompare(nameB);
+  });
 
   return (
     <DashboardLayout>
@@ -95,30 +139,25 @@ export default function TeamDirectory() {
               No team members found.
             </CardContent>
           </Card>
-        ) : locationFilter === 'all' ? (
-          // Show grouped by location when viewing all
-          <div className="space-y-8">
-            {Object.entries(teamByLocation).map(([locationId, members]) => (
-              <div key={locationId}>
-                <h2 className="text-lg font-display font-medium mb-4 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  {locationId === 'unassigned' ? 'No Location Assigned' : getLocationName(locationId as Location)}
-                  <Badge variant="secondary" className="ml-2">{members.length}</Badge>
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {members.map(member => (
-                    <TeamMemberCard key={member.id} member={member} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
         ) : (
-          // Show flat grid when filtering by location
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTeam.map(member => (
-              <TeamMemberCard key={member.id} member={member} />
-            ))}
+          <div className="space-y-8">
+            {sortedLocationIds.map(locationId => {
+              const members = teamByLocation[locationId];
+              return (
+                <div key={locationId}>
+                  <h2 className="text-lg font-display font-medium mb-4 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    {locationId === 'unassigned' ? 'No Location Assigned' : getLocationName(locationId as Location)}
+                    <Badge variant="secondary" className="ml-2">{members.length}</Badge>
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {members.map(member => (
+                      <TeamMemberCard key={member.id} member={member} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -139,10 +178,13 @@ interface TeamMemberCardProps {
     stylist_level: string | null;
     specialties: string[] | null;
     roles: string[];
+    work_days: string[] | null;
   };
 }
 
 function TeamMemberCard({ member }: TeamMemberCardProps) {
+  const workDays = member.work_days || [];
+  
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-4">
@@ -154,9 +196,40 @@ function TeamMemberCard({ member }: TeamMemberCardProps) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium truncate">
-              {member.display_name || member.full_name}
-            </h3>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-medium truncate">
+                {member.display_name || member.full_name}
+              </h3>
+              {/* Work Days Quick View */}
+              {workDays.length > 0 && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="p-1 hover:bg-muted rounded transition-colors shrink-0">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="p-3">
+                      <p className="text-xs font-medium mb-2">Work Days</p>
+                      <div className="flex gap-1">
+                        {DAYS_OF_WEEK.map(day => (
+                          <span
+                            key={day}
+                            className={`text-xs px-1.5 py-0.5 rounded ${
+                              workDays.includes(day)
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-muted-foreground'
+                            }`}
+                          >
+                            {day.charAt(0)}
+                          </span>
+                        ))}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
             <div className="flex flex-wrap gap-1 mt-1">
               {member.roles.map(role => (
                 <Badge 
@@ -176,15 +249,6 @@ function TeamMemberCard({ member }: TeamMemberCardProps) {
 
         {/* Contact Info */}
         <div className="mt-4 space-y-2 text-sm">
-          {member.email && (
-            <a 
-              href={`mailto:${member.email}`}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Mail className="w-4 h-4" />
-              <span className="truncate">{member.email}</span>
-            </a>
-          )}
           {member.phone && (
             <a 
               href={`tel:${member.phone}`}
@@ -203,6 +267,15 @@ function TeamMemberCard({ member }: TeamMemberCardProps) {
             >
               <Instagram className="w-4 h-4" />
               <span>{member.instagram}</span>
+            </a>
+          )}
+          {member.email && (
+            <a 
+              href={`mailto:${member.email}`}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Mail className="w-4 h-4" />
+              <span className="truncate">{member.email}</span>
             </a>
           )}
         </div>

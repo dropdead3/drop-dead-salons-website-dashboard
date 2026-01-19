@@ -9,13 +9,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar } from 'lucide-react';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { locations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
+const DAYS_OF_WEEK = [
+  { key: 'Mon', label: 'Monday' },
+  { key: 'Tue', label: 'Tuesday' },
+  { key: 'Wed', label: 'Wednesday' },
+  { key: 'Thu', label: 'Thursday' },
+  { key: 'Fri', label: 'Friday' },
+  { key: 'Sat', label: 'Saturday' },
+  { key: 'Sun', label: 'Sunday' },
+];
 const stylistLevels = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4'];
 
 const specialtyOptions = [
@@ -45,6 +54,7 @@ export default function MyProfile() {
     emergency_contact: '',
     emergency_phone: '',
     bio: '',
+    work_days: [] as string[],
   });
 
   useEffect(() => {
@@ -70,6 +80,7 @@ export default function MyProfile() {
         emergency_contact: profile.emergency_contact || '',
         emergency_phone: profile.emergency_phone || '',
         bio: (profile as any).bio || '',
+        work_days: profile.work_days || [],
       });
     }
   }, [profile]);
@@ -86,6 +97,7 @@ export default function MyProfile() {
       { key: 'phone', label: 'Phone', filled: !!formData.phone },
       { key: 'instagram', label: 'Instagram', filled: !!formData.instagram },
       { key: 'location_ids', label: 'Location', filled: formData.location_ids.length > 0 },
+      { key: 'work_days', label: 'Work Days', filled: formData.work_days.length > 0 },
       { key: 'emergency_contact', label: 'Emergency Contact', filled: !!formData.emergency_contact },
       { key: 'emergency_phone', label: 'Emergency Phone', filled: !!formData.emergency_phone },
     ];
@@ -388,6 +400,53 @@ export default function MyProfile() {
                   )}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Work Days Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Work Schedule
+              </CardTitle>
+              <CardDescription>
+                Select the days you typically work. This helps the team know when you're available.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-7 gap-2">
+                {DAYS_OF_WEEK.map(day => {
+                  const isSelected = formData.work_days.includes(day.key);
+                  return (
+                    <button
+                      key={day.key}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          work_days: isSelected
+                            ? prev.work_days.filter(d => d !== day.key)
+                            : [...prev.work_days, day.key],
+                        }));
+                      }}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all",
+                        isSelected
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <span className="text-xs font-medium">{day.key}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {formData.work_days.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-3">
+                  Working {formData.work_days.length} day{formData.work_days.length !== 1 ? 's' : ''} per week
+                </p>
+              )}
             </CardContent>
           </Card>
 
