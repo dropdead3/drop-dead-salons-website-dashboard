@@ -535,7 +535,9 @@ export type Database = {
           created_at: string | null
           display_order: number | null
           google_maps_url: string | null
+          holiday_closures: Json | null
           hours: string | null
+          hours_json: Json | null
           id: string
           is_active: boolean | null
           name: string
@@ -549,7 +551,9 @@ export type Database = {
           created_at?: string | null
           display_order?: number | null
           google_maps_url?: string | null
+          holiday_closures?: Json | null
           hours?: string | null
+          hours_json?: Json | null
           id: string
           is_active?: boolean | null
           name: string
@@ -563,7 +567,9 @@ export type Database = {
           created_at?: string | null
           display_order?: number | null
           google_maps_url?: string | null
+          holiday_closures?: Json | null
           hours?: string | null
+          hours_json?: Json | null
           id?: string
           is_active?: boolean | null
           name?: string
