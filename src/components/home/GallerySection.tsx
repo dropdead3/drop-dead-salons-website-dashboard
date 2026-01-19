@@ -95,7 +95,7 @@ export function GallerySection() {
                 beforeLabel={transform.beforeLabel}
                 afterLabel={transform.afterLabel}
                 hoverMode={true}
-                badgePositionClass="top-[60px] left-[60px]"
+                badgePositionClass="top-[40px] left-[40px]"
                 className="rounded-3xl"
               />
             </motion.div>
