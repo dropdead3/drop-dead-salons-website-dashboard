@@ -3,7 +3,7 @@ import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, UserPlus, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useRef, useState } from "react";
 import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
@@ -96,7 +96,15 @@ function ServiceCard({
       transition={{ duration: 0.5, delay: index * 0.05, ease: editorialEasing }}
       className="group relative"
     >
-      <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : ''}`}>
+      {service.isPopular && (
+        <div className="absolute -top-2 left-4 z-10">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary text-primary-foreground text-[10px] font-display tracking-wider uppercase rounded-full">
+            <Star size={10} className="fill-current" />
+            Popular
+          </span>
+        </div>
+      )}
+      <div className={`p-5 lg:p-6 bg-card border border-border rounded-xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 ${!hasPrice ? 'opacity-50' : ''} ${service.isPopular ? 'border-primary/30' : ''}`}>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
