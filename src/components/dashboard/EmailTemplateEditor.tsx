@@ -192,6 +192,7 @@ interface EmailTheme {
     buttonText: string;
     accentColor: string;
     dividerColor: string;
+    white: string;
   };
 }
 
@@ -206,9 +207,10 @@ const emailThemes: EmailTheme[] = [
       bodyBg: '#f5f0e8',
       bodyText: '#1a1a1a',
       buttonBg: '#1a1a1a',
-      buttonText: '#f5f0e8',
+      buttonText: '#ffffff',
       accentColor: '#d4c5b0',
       dividerColor: '#d4c5b0',
+      white: '#ffffff',
     },
   },
   {
@@ -224,6 +226,7 @@ const emailThemes: EmailTheme[] = [
       buttonText: '#ffffff',
       accentColor: '#f3f4f6',
       dividerColor: '#e5e7eb',
+      white: '#ffffff',
     },
   },
   {
@@ -236,9 +239,10 @@ const emailThemes: EmailTheme[] = [
       bodyBg: '#faf7f5',
       bodyText: '#292524',
       buttonBg: '#78716c',
-      buttonText: '#faf7f5',
+      buttonText: '#ffffff',
       accentColor: '#e7e5e4',
       dividerColor: '#d6d3d1',
+      white: '#ffffff',
     },
   },
   {
@@ -254,6 +258,7 @@ const emailThemes: EmailTheme[] = [
       buttonText: '#ffffff',
       accentColor: '#dbeafe',
       dividerColor: '#bfdbfe',
+      white: '#ffffff',
     },
   },
   {
@@ -269,6 +274,7 @@ const emailThemes: EmailTheme[] = [
       buttonText: '#ffffff',
       accentColor: '#dcfce7',
       dividerColor: '#bbf7d0',
+      white: '#ffffff',
     },
   },
   {
@@ -284,6 +290,7 @@ const emailThemes: EmailTheme[] = [
       buttonText: '#ffffff',
       accentColor: '#fce7f3',
       dividerColor: '#fbcfe8',
+      white: '#ffffff',
     },
   },
 ];
@@ -531,7 +538,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
   const [isSavingTheme, setIsSavingTheme] = useState(false);
-  const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
+const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
     name: '',
     description: '',
     colors: {
@@ -540,9 +547,10 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
       bodyBg: '#f5f0e8',
       bodyText: '#1a1a1a',
       buttonBg: '#1a1a1a',
-      buttonText: '#f5f0e8',
+      buttonText: '#ffffff',
       accentColor: '#d4c5b0',
       dividerColor: '#d4c5b0',
+      white: '#ffffff',
     },
   });
 
@@ -572,9 +580,10 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           bodyBg: t.body_bg,
           bodyText: t.body_text,
           buttonBg: t.button_bg,
-          buttonText: t.button_text,
+          buttonText: '#ffffff',
           accentColor: t.accent_color,
           dividerColor: t.divider_color,
+          white: '#ffffff',
         },
       }));
       setCustomThemes(themes);
@@ -625,9 +634,10 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           bodyBg: data.body_bg,
           bodyText: data.body_text,
           buttonBg: data.button_bg,
-          buttonText: data.button_text,
+          buttonText: '#ffffff',
           accentColor: data.accent_color,
           dividerColor: data.divider_color,
+          white: '#ffffff',
         },
       };
 
@@ -642,9 +652,10 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           bodyBg: '#f5f0e8',
           bodyText: '#1a1a1a',
           buttonBg: '#1a1a1a',
-          buttonText: '#f5f0e8',
+          buttonText: '#ffffff',
           accentColor: '#d4c5b0',
           dividerColor: '#d4c5b0',
+          white: '#ffffff',
         },
       });
       toast.success('Custom theme saved!');
