@@ -55,6 +55,9 @@ import {
   Copy,
   Undo2,
   Redo2,
+  Share2,
+  Instagram,
+  Mail,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -104,7 +107,13 @@ const brandLogos: BrandLogo[] = [
 ];
 
 // Block types for the email editor
-type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link';
+type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social';
+
+interface SocialLink {
+  platform: 'instagram' | 'tiktok' | 'email';
+  url: string;
+  enabled: boolean;
+}
 
 interface EmailBlock {
   id: string;
@@ -126,6 +135,7 @@ interface EmailBlock {
   };
   imageUrl?: string;
   linkUrl?: string;
+  socialLinks?: SocialLink[];
 }
 
 interface EmailTemplateEditorProps {
@@ -323,6 +333,36 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         return `<hr style="border: none; border-top: 1px solid ${block.styles.textColor || '#e5e7eb'}; margin: ${block.styles.padding || '16px 0'};" />`;
       case 'spacer':
         return `<div style="height: ${block.styles.height || '24px'};"></div>`;
+      case 'social': {
+        const enabledLinks = (block.socialLinks || []).filter(link => link.enabled);
+        if (enabledLinks.length === 0) return '';
+        
+        const iconStyle = `display: inline-block; width: 32px; height: 32px; margin: 0 8px; text-decoration: none;`;
+        const socialIcons = enabledLinks.map(link => {
+          const iconColor = block.styles.buttonColor || '#1a1a1a';
+          let svg = '';
+          let href = link.url;
+          
+          switch (link.platform) {
+            case 'instagram':
+              svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>`;
+              break;
+            case 'tiktok':
+              svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>`;
+              break;
+            case 'email':
+              svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`;
+              if (!href.startsWith('mailto:')) href = `mailto:${href}`;
+              break;
+          }
+          
+          return `<a href="${href}" style="${iconStyle}" target="_blank" rel="noopener">${svg}</a>`;
+        }).join('');
+        
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''} ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''}">
+          ${socialIcons}
+        </div>`;
+      }
       default:
         return '';
     }
@@ -636,9 +676,20 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           textColor: currentTheme.colors.dividerColor 
         }),
         ...(type === 'spacer' && { height: '24px' }),
+        ...(type === 'social' && { 
+          backgroundColor: currentTheme.colors.bodyBg,
+          buttonColor: currentTheme.colors.buttonBg
+        }),
       },
       ...(type === 'button' && { linkUrl: '{{dashboard_url}}' }),
       ...(type === 'link' && { linkUrl: '{{dashboard_url}}' }),
+      ...(type === 'social' && { 
+        socialLinks: [
+          { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadhair', enabled: true },
+          { platform: 'tiktok' as const, url: 'https://tiktok.com/@dropdeadhair', enabled: true },
+          { platform: 'email' as const, url: 'hello@dropdeadhair.com', enabled: true },
+        ]
+      }),
     };
     updateBlocksAndHtml([...blocks, newBlock]);
     setSelectedBlockId(newBlock.id);
@@ -1259,6 +1310,10 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                     <Square className="w-4 h-4" />
                     Spacer
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('social')} className="justify-start gap-2 col-span-2">
+                    <Share2 className="w-4 h-4" />
+                    Social Icons
+                  </Button>
                 </div>
               </div>
               
@@ -1530,6 +1585,75 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                       </div>
                     )}
 
+                    {selectedBlock.type === 'social' && (
+                      <>
+                        <div className="space-y-3">
+                          <Label className="text-xs font-medium">Social Platforms</Label>
+                          {(['instagram', 'tiktok', 'email'] as const).map((platform) => {
+                            const link = (selectedBlock.socialLinks || []).find(l => l.platform === platform);
+                            const isEnabled = link?.enabled ?? false;
+                            const url = link?.url ?? '';
+                            
+                            return (
+                              <div key={platform} className="space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={isEnabled}
+                                    onChange={(e) => {
+                                      const newLinks = [...(selectedBlock.socialLinks || [])];
+                                      const existingIndex = newLinks.findIndex(l => l.platform === platform);
+                                      if (existingIndex >= 0) {
+                                        newLinks[existingIndex] = { ...newLinks[existingIndex], enabled: e.target.checked };
+                                      } else {
+                                        newLinks.push({ platform, url: '', enabled: e.target.checked });
+                                      }
+                                      updateBlock(selectedBlock.id, { socialLinks: newLinks });
+                                    }}
+                                    className="h-4 w-4 rounded border-border"
+                                  />
+                                  <div className="flex items-center gap-1.5">
+                                    {platform === 'instagram' && <Instagram className="w-4 h-4" />}
+                                    {platform === 'tiktok' && (
+                                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
+                                      </svg>
+                                    )}
+                                    {platform === 'email' && <Mail className="w-4 h-4" />}
+                                    <span className="text-xs capitalize">{platform === 'email' ? 'Email' : platform}</span>
+                                  </div>
+                                </div>
+                                {isEnabled && (
+                                  <Input
+                                    value={url}
+                                    onChange={(e) => {
+                                      const newLinks = [...(selectedBlock.socialLinks || [])];
+                                      const existingIndex = newLinks.findIndex(l => l.platform === platform);
+                                      if (existingIndex >= 0) {
+                                        newLinks[existingIndex] = { ...newLinks[existingIndex], url: e.target.value };
+                                      } else {
+                                        newLinks.push({ platform, url: e.target.value, enabled: true });
+                                      }
+                                      updateBlock(selectedBlock.id, { socialLinks: newLinks });
+                                    }}
+                                    placeholder={platform === 'email' ? 'email@example.com' : `https://${platform}.com/...`}
+                                    className="h-7 text-xs"
+                                  />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Icon Color</Label>
+                          <ColorPicker
+                            value={selectedBlock.styles.buttonColor || '#1a1a1a'}
+                            onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
+                          />
+                        </div>
+                      </>
+                    )}
+
                     {/* Common settings */}
                     {selectedBlock.type !== 'divider' && selectedBlock.type !== 'spacer' && (
                       <>
@@ -1729,6 +1853,28 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                         )}
                         {block.type === 'spacer' && (
                           <div style={{ height: block.styles.height || '24px' }} className="border-dashed border opacity-50 bg-muted/30" />
+                        )}
+                        {block.type === 'social' && (
+                          <div style={{ textAlign: block.styles.textAlign || 'center' }} className="flex items-center justify-center gap-4">
+                            {(block.socialLinks || []).filter(link => link.enabled).map((link) => (
+                              <div 
+                                key={link.platform}
+                                className="w-8 h-8 flex items-center justify-center"
+                                style={{ color: block.styles.buttonColor || '#1a1a1a' }}
+                              >
+                                {link.platform === 'instagram' && <Instagram className="w-6 h-6" />}
+                                {link.platform === 'tiktok' && (
+                                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
+                                  </svg>
+                                )}
+                                {link.platform === 'email' && <Mail className="w-6 h-6" />}
+                              </div>
+                            ))}
+                            {(block.socialLinks || []).filter(link => link.enabled).length === 0 && (
+                              <span className="text-xs text-muted-foreground">No icons enabled</span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
