@@ -52,6 +52,7 @@ import {
   Headset,
   HandHelping,
   User,
+  ExternalLink,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -376,9 +377,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="my-4 px-4">
               <div className="h-px bg-border" />
             </div>
-            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Website
-            </p>
+            <div className="px-4 mb-2 flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wider text-foreground font-display font-medium">
+                Website
+              </p>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a 
+                    href="/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-1 rounded hover:bg-muted transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="right">View Website</TooltipContent>
+              </Tooltip>
+            </div>
             <div className="space-y-1">
               {filterNavItems(websiteNavItems).map((item) => (
                 <NavLink key={item.href} {...item} />
