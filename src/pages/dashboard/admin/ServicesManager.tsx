@@ -35,12 +35,15 @@ import {
   Search,
   Palette,
   Layers,
+  Settings2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { services as initialServices, stylistLevels, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
+import { services as initialServices, stylistLevels as initialStylistLevels, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
+import { StylistLevelsEditor, type StylistLevel } from '@/components/dashboard/StylistLevelsEditor';
 
 export default function ServicesManager() {
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(initialServices);
+  const [stylistLevels, setStylistLevels] = useState<StylistLevel[]>([...initialStylistLevels]);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingService, setEditingService] = useState<{ categoryIndex: number; itemIndex: number; item: ServiceItem } | null>(null);
 
@@ -108,15 +111,27 @@ export default function ServicesManager() {
             </p>
           </div>
           
-          <Button className="gap-2" disabled>
-            <Plus className="w-4 h-4" />
-            Add Service
-            <Badge variant="secondary" className="ml-1">Coming Soon</Badge>
-          </Button>
+          <div className="flex items-center gap-2">
+            <StylistLevelsEditor
+              levels={stylistLevels}
+              onLevelsChange={setStylistLevels}
+              trigger={
+                <Button variant="outline" className="gap-2">
+                  <Settings2 className="w-4 h-4" />
+                  Manage Levels
+                </Button>
+              }
+            />
+            <Button className="gap-2" disabled>
+              <Plus className="w-4 h-4" />
+              Add Service
+              <Badge variant="secondary" className="ml-1">Coming Soon</Badge>
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
@@ -136,6 +151,17 @@ export default function ServicesManager() {
               <div>
                 <p className="text-2xl font-bold">{serviceCategories.length}</p>
                 <p className="text-sm text-muted-foreground">Categories</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                <Settings2 className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stylistLevels.length}</p>
+                <p className="text-sm text-muted-foreground">Stylist Levels</p>
               </div>
             </CardContent>
           </Card>
