@@ -14,7 +14,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { TogglePill } from "@/components/ui/toggle-pill";
 import { StylistFlipCard } from "./StylistFlipCard";
-import { ApplicationFormDialog } from "./ApplicationFormDialog";
+
 
 import { stylists, locations, allSpecialties, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
 
@@ -23,13 +23,179 @@ const toTitleCase = (str: string) => {
   return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-// Join Team Card with dynamic column spanning - completely static, no state dependencies
+// Expanded Application Form Component
+function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    instagram: "",
+    experience: "",
+    clientBook: "",
+    specialties: "",
+    whyDropDead: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Application submitted:", formData);
+    setIsSubmitting(false);
+    onClose();
+  };
+
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <div className="w-full max-w-2xl mx-auto">
+      <div className="text-center mb-6">
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <Sparkles className="w-4 h-4 text-foreground/50" />
+          <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
+            Join Our Team
+          </p>
+        </div>
+        <h3 className="text-2xl md:text-3xl font-display mb-2">
+          Apply to Drop Dead
+        </h3>
+        <p className="text-foreground/60 text-sm">
+          Fill out the form below and we'll be in touch soon.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Full Name *</label>
+          <input
+            type="text"
+            required
+            value={formData.name}
+            onChange={(e) => handleChange("name", e.target.value)}
+            placeholder="Your name"
+            className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Email *</label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              placeholder="you@email.com"
+              className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+            />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Phone *</label>
+            <input
+              type="tel"
+              required
+              value={formData.phone}
+              onChange={(e) => handleChange("phone", e.target.value)}
+              placeholder="(555) 555-5555"
+              className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Instagram</label>
+            <input
+              type="text"
+              value={formData.instagram}
+              onChange={(e) => handleChange("instagram", e.target.value)}
+              placeholder="@yourusername"
+              className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+            />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Experience *</label>
+            <select
+              required
+              value={formData.experience}
+              onChange={(e) => handleChange("experience", e.target.value)}
+              className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+            >
+              <option value="">Select</option>
+              <option value="0-2">0-2 years</option>
+              <option value="2-5">2-5 years</option>
+              <option value="5-10">5-10 years</option>
+              <option value="10+">10+ years</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Current Client Book *</label>
+          <select
+            required
+            value={formData.clientBook}
+            onChange={(e) => handleChange("clientBook", e.target.value)}
+            className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+          >
+            <option value="">Select</option>
+            <option value="less-than-10">Less than 10</option>
+            <option value="10-20">10-20 clients</option>
+            <option value="20-30">20-30 clients</option>
+            <option value="30-50">30-50 clients</option>
+            <option value="50+">50+ clients</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Your Specialties *</label>
+          <textarea
+            required
+            value={formData.specialties}
+            onChange={(e) => handleChange("specialties", e.target.value)}
+            placeholder="e.g., balayage, extensions, vivid colors..."
+            rows={2}
+            className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-none"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Why Drop Dead? *</label>
+          <textarea
+            required
+            value={formData.whyDropDead}
+            onChange={(e) => handleChange("whyDropDead", e.target.value)}
+            placeholder="Tell us what excites you about joining our team..."
+            rows={3}
+            className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 resize-none"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full inline-flex items-center justify-center gap-2 bg-foreground text-background rounded-full px-6 py-3 text-sm font-medium hover:bg-foreground/90 transition-colors group disabled:opacity-50"
+        >
+          <span>{isSubmitting ? "Submitting..." : "Submit Application"}</span>
+          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// Join Team Card with dynamic column spanning and expanding form animation
 function JoinTeamCardComponent({ 
   stylistCount, 
-  onOpenForm 
+  isExpanded,
+  onToggleExpand
 }: { 
   stylistCount: number; 
-  onOpenForm: () => void;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
 }) {
   // Calculate remaining spots for xl (4 cols)
   const remainderXl = stylistCount % 4;
@@ -55,40 +221,83 @@ function JoinTeamCardComponent({
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Use setTimeout to defer state update outside of current render cycle
     setTimeout(() => {
-      onOpenForm();
+      onToggleExpand();
     }, 0);
   };
 
   return (
-    <div
-      className={`${getSpanClass()} relative bg-muted/50 border border-foreground/15 rounded-2xl flex flex-col items-center justify-center p-8 min-h-[300px]`}
+    <motion.div
+      layout
+      className={`${getSpanClass()} relative bg-muted/50 border border-foreground/15 rounded-2xl flex flex-col items-center justify-center p-8`}
+      animate={{
+        minHeight: isExpanded ? "auto" : 300,
+      }}
+      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
     >
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-foreground/50" />
-          <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
-            Join Our Team
-          </p>
-        </div>
-        <h3 className="text-2xl md:text-3xl font-display mb-3">
-          Work at Drop Dead
-        </h3>
-        <p className="text-foreground/60 text-sm max-w-sm mx-auto mb-5">
-          Passionate stylist looking for your next opportunity? We'd love to hear from you.
-        </p>
-        
-        <button
-          type="button"
-          onClick={handleClick}
-          className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
-        >
-          <span>Apply now</span>
-          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-        </button>
-      </div>
-    </div>
+      <AnimatePresence mode="wait">
+        {!isExpanded ? (
+          <motion.div 
+            key="card-content"
+            className="text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-foreground/50" />
+              <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
+                Join Our Team
+              </p>
+            </div>
+            <h3 className="text-2xl md:text-3xl font-display mb-3">
+              Work at Drop Dead
+            </h3>
+            <p className="text-foreground/60 text-sm max-w-sm mx-auto mb-5">
+              Passionate stylist looking for your next opportunity? We'd love to hear from you.
+            </p>
+            
+            <button
+              type="button"
+              onClick={handleClick}
+              className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
+            >
+              <span>Apply now</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </button>
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="form-content"
+            className="w-full"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <ExpandedApplicationForm onClose={onToggleExpand} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Close button when expanded */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            type="button"
+            onClick={handleClick}
+            className="absolute right-4 top-4 rounded-full p-2 bg-foreground/5 hover:bg-foreground/10 transition-colors"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
@@ -206,7 +415,8 @@ export function StylistsSection() {
   const [selectedLocation, setSelectedLocation] = useState<Location>("north-mesa");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
-  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
+  
+  const [isFormExpanded, setIsFormExpanded] = useState(false);
 
   // Listen for location filter events from LocationsSection
   useEffect(() => {
@@ -252,9 +462,9 @@ export function StylistsSection() {
       return (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99);
     });
 
-  const handleOpenFormDialog = useCallback(() => {
+  const handleToggleFormExpand = useCallback(() => {
     startTransition(() => {
-      setIsFormDialogOpen(true);
+      setIsFormExpanded(prev => !prev);
     });
   }, []);
 
@@ -441,7 +651,8 @@ export function StylistsSection() {
             {/* Join Our Team Card - dynamically spans remaining columns */}
             <JoinTeamCard 
               stylistCount={filteredStylists.length} 
-              onOpenForm={handleOpenFormDialog}
+              isExpanded={isFormExpanded}
+              onToggleExpand={handleToggleFormExpand}
             />
           </motion.div>
         ) : (
@@ -459,8 +670,6 @@ export function StylistsSection() {
         )}
       </div>
 
-      {/* Application Form Dialog */}
-      <ApplicationFormDialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen} />
 
       {/* View All Link */}
       <motion.div
