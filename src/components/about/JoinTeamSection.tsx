@@ -282,21 +282,12 @@ export function JoinTeamSection() {
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
                 Work at Drop Dead
               </h2>
-              <p className="text-lg text-foreground/60 mb-8 max-w-xl mx-auto">
+              <p className="text-lg text-foreground/60 mb-12 max-w-xl mx-auto">
                 Are you a passionate stylist looking for your next opportunity? 
                 We're always looking for talented artists who share our vision for excellence.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => setIsFormOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 bg-foreground text-background rounded-full px-8 py-3.5 text-sm font-medium hover:bg-foreground/90 transition-colors group"
-                >
-                  <span>Apply Now</span>
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </button>
-              </div>
               
-            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 text-left w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left w-full">
               {[
                 { icon: Calendar, title: "Flexible Schedule", desc: "Build your ideal work-life balance with flexible booking options." },
                 { icon: GraduationCap, title: "Education & Growth", desc: "Access ongoing training, workshops, and industry certifications." },
@@ -326,6 +317,16 @@ export function JoinTeamSection() {
                   <p className="text-sm text-foreground/60 leading-relaxed">{benefit.desc}</p>
                 </motion.div>
               ))}
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
+                <button
+                  onClick={() => setIsFormOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 bg-foreground text-background rounded-full px-8 py-3.5 text-sm font-medium hover:bg-foreground/90 transition-colors group"
+                >
+                  <span>Apply Now</span>
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </button>
               </div>
             </motion.div>
           ) : (
