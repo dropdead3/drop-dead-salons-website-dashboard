@@ -470,12 +470,21 @@ export default function Services() {
       <Section className="bg-secondary py-16 lg:py-20" theme="light">
         <div className="max-w-3xl mx-auto text-center">
           <Sparkles size={32} className="mx-auto mb-6 text-foreground/30" />
-          <h3 className="font-display text-xl md:text-2xl text-foreground mb-4">
+          <h3 className="font-display text-xl md:text-2xl text-foreground mb-6">
             Before you book, check our policies.
           </h3>
-          <p className="text-lg font-sans font-light leading-relaxed text-foreground/80 mb-6">
-            Services are by appointment only. <span className="inline-flex items-center gap-1.5 font-medium text-foreground"><CalendarX size={18} className="text-primary" />Walk-ins not accepted.</span> Typically we can schedule you in within 1 business day.
-          </p>
+          <div className="space-y-3 mb-8">
+            <p className="flex items-center justify-center gap-2 text-lg font-sans font-medium text-foreground">
+              <CalendarX size={20} className="text-primary" />
+              Walk-ins not accepted.
+            </p>
+            <p className="text-lg font-sans font-light text-foreground/80">
+              Services are by appointment only.
+            </p>
+            <p className="text-lg font-sans font-light text-foreground/80">
+              Typically we can schedule you in within 1 business day.
+            </p>
+          </div>
           <Link
             to="/policies"
             className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground link-underline"
