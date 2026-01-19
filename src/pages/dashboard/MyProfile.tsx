@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake } from 'lucide-react';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocations } from '@/hooks/useLocations';
+import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { useLocationSchedules, useUpsertLocationSchedule } from '@/hooks/useLocationSchedules';
 import { locations as staticLocations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
@@ -593,6 +593,9 @@ export default function MyProfile() {
                     .filter(([locId]) => locId !== locationId)
                     .flatMap(([, days]) => days);
 
+                  // Get days when this location is closed
+                  const closedDays = getClosedDaysArray(location.hours_json);
+
                   return (
                     <div key={locationId} className="space-y-3">
                       <div className="flex items-center gap-2">
@@ -603,25 +606,41 @@ export default function MyProfile() {
                             {currentSchedule.length} day{currentSchedule.length !== 1 ? 's' : ''}
                           </Badge>
                         )}
+                        {closedDays.length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            Closed {closedDays.join(' & ')}
+                          </span>
+                        )}
                       </div>
                       <div className="grid grid-cols-7 gap-2">
                         {DAYS_OF_WEEK.map(day => {
                           const isSelected = currentSchedule.includes(day.key);
                           const isUsedElsewhere = usedByOtherLocations.includes(day.key);
+                          const isLocationClosed = closedDays.includes(day.key);
+                          const isDisabled = isUsedElsewhere || isLocationClosed;
+                          
                           const otherLocation = isUsedElsewhere 
                             ? locations.find(l => 
                                 l.id !== locationId && 
                                 formData.location_schedules[l.id]?.includes(day.key)
                               )
                             : null;
+
+                          // Build tooltip text
+                          let tooltipText: string | undefined;
+                          if (isLocationClosed) {
+                            tooltipText = `${location.name} is closed on ${day.label}`;
+                          } else if (isUsedElsewhere) {
+                            tooltipText = `Already scheduled at ${otherLocation?.name}`;
+                          }
                           
                           return (
                             <button
                               key={day.key}
                               type="button"
-                              disabled={isUsedElsewhere}
+                              disabled={isDisabled}
                               onClick={() => {
-                                if (isUsedElsewhere) return;
+                                if (isDisabled) return;
                                 setFormData(prev => ({
                                   ...prev,
                                   location_schedules: {
@@ -632,12 +651,13 @@ export default function MyProfile() {
                                   },
                                 }));
                               }}
-                              title={isUsedElsewhere ? `Already scheduled at ${otherLocation?.name}` : undefined}
+                              title={tooltipText}
                               className={cn(
                                 "flex flex-col items-center justify-center p-2.5 rounded-lg border-2 transition-all text-xs",
                                 isSelected && "border-primary bg-primary/10 text-primary font-medium",
-                                !isSelected && !isUsedElsewhere && "border-border hover:border-primary/50",
-                                isUsedElsewhere && "border-muted bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50"
+                                !isSelected && !isDisabled && "border-border hover:border-primary/50",
+                                isLocationClosed && "border-muted bg-muted/30 text-muted-foreground/50 cursor-not-allowed line-through",
+                                isUsedElsewhere && !isLocationClosed && "border-muted bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50"
                               )}
                             >
                               {day.key}

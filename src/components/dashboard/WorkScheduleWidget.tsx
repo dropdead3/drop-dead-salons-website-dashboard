@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar, Clock, Send, Loader2, CheckCircle, XCircle, AlertCircle, MapPin, ChevronDown } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
-import { useLocations } from '@/hooks/useLocations';
+import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { 
   useLocationSchedule, 
   useLocationSchedules,
@@ -178,42 +178,65 @@ export function WorkScheduleWidget() {
               <div className="space-y-4 py-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Select your preferred work days</label>
-                  <div className="flex flex-wrap gap-2">
-                    {DAYS_OF_WEEK.map((day) => {
-                      const isUsedElsewhere = daysUsedElsewhere.includes(day.key);
-                      const otherLocation = allSchedules?.find(
-                        s => s.location_id !== selectedLocationId && s.work_days?.includes(day.key)
-                      );
-                      const otherLocationName = locations?.find(l => l.id === otherLocation?.location_id)?.name;
-                      
-                      return (
-                        <Button
-                          key={day.key}
-                          type="button"
-                          variant={requestedDays.includes(day.key) ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => toggleDay(day.key)}
-                          disabled={isUsedElsewhere}
-                          title={isUsedElsewhere ? `Assigned to ${otherLocationName}` : undefined}
-                          className={cn(
-                            "min-w-[60px]",
-                            requestedDays.includes(day.key) && "bg-primary text-primary-foreground",
-                            isUsedElsewhere && "opacity-40 cursor-not-allowed line-through"
+                  {(() => {
+                    const closedDays = getClosedDaysArray(selectedLocation?.hours_json || null);
+                    return (
+                      <>
+                        <div className="flex flex-wrap gap-2">
+                          {DAYS_OF_WEEK.map((day) => {
+                            const isUsedElsewhere = daysUsedElsewhere.includes(day.key);
+                            const isLocationClosed = closedDays.includes(day.key);
+                            const isDisabled = isUsedElsewhere || isLocationClosed;
+                            
+                            const otherLocation = allSchedules?.find(
+                              s => s.location_id !== selectedLocationId && s.work_days?.includes(day.key)
+                            );
+                            const otherLocationName = locations?.find(l => l.id === otherLocation?.location_id)?.name;
+                            
+                            let tooltipText: string | undefined;
+                            if (isLocationClosed) {
+                              tooltipText = `${selectedLocation?.name} is closed on ${day.label}`;
+                            } else if (isUsedElsewhere) {
+                              tooltipText = `Assigned to ${otherLocationName}`;
+                            }
+                            
+                            return (
+                              <Button
+                                key={day.key}
+                                type="button"
+                                variant={requestedDays.includes(day.key) ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleDay(day.key)}
+                                disabled={isDisabled}
+                                title={tooltipText}
+                                className={cn(
+                                  "min-w-[60px]",
+                                  requestedDays.includes(day.key) && "bg-primary text-primary-foreground",
+                                  isLocationClosed && "opacity-30 cursor-not-allowed line-through",
+                                  isUsedElsewhere && !isLocationClosed && "opacity-40 cursor-not-allowed line-through"
+                                )}
+                              >
+                                {day.key}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {requestedDays.length} days selected
+                          {closedDays.length > 0 && (
+                            <span className="ml-2">
+                              • Closed {closedDays.join(' & ')}
+                            </span>
                           )}
-                        >
-                          {day.key}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {requestedDays.length} days selected
-                    {daysUsedElsewhere.length > 0 && (
-                      <span className="ml-2 text-amber-600">
-                        • {daysUsedElsewhere.length} days assigned to other locations
-                      </span>
-                    )}
-                  </p>
+                          {daysUsedElsewhere.length > 0 && (
+                            <span className="ml-2 text-amber-600">
+                              • {daysUsedElsewhere.length} days at other locations
+                            </span>
+                          )}
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div>
