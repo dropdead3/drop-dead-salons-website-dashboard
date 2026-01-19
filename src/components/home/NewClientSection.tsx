@@ -16,7 +16,12 @@ export const NewClientSection = () => {
   const { ref: scrollRef, opacity, y, blurFilter } = useScrollReveal();
 
   return (
-    <section className="py-12 md:py-16 bg-background">
+    <section 
+      className="py-12 md:py-16"
+      style={{ 
+        background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)' 
+      }}
+    >
       <div className="container mx-auto px-6">
         <motion.div 
           ref={scrollRef}
