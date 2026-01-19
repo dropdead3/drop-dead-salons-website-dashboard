@@ -40,6 +40,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4, delay: index * 0.08 }}
       className="group relative aspect-[3/4] perspective-1000"
+      onMouseLeave={() => setIsFlipped(false)}
     >
       <div
         className={cn(
@@ -214,10 +215,6 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
               )}
             </div>
 
-            {/* Tap hint */}
-            <p className="text-[10px] text-background/40 mt-5 tracking-wide">
-              Tap to go back
-            </p>
           </div>
         </div>
       </div>
