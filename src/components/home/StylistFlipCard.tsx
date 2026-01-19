@@ -129,7 +129,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                 {stylist.instagram}
               </a>
               
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-start">
                 {stylist.isBooking === false ? (
                   <div className="shrink-0 inline-flex items-center gap-2 bg-white/20 text-white/70 px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap cursor-not-allowed border border-white/40">
                     <X className="w-4 h-4 shrink-0" />
