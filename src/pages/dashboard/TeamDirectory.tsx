@@ -7,6 +7,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
@@ -105,6 +106,7 @@ export default function TeamDirectory() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
   const { data: team = [], isLoading } = useTeamDirectory(locationFilter === 'all' ? undefined : locationFilter);
   const { data: locations = [] } = useLocations();
   const { data: currentUserProfile } = useEmployeeProfile();
@@ -113,15 +115,33 @@ export default function TeamDirectory() {
   
   const isSuperAdmin = currentUserProfile?.is_super_admin;
 
+  // Get all unique roles from team members for filter dropdown
+  const allRoles = [...new Set(team.flatMap(member => 
+    member.is_super_admin ? ['super_admin', ...member.roles] : member.roles
+  ))].sort((a, b) => (rolePriority[a] ?? 99) - (rolePriority[b] ?? 99));
+
   const filteredTeam = team.filter(member => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      member.full_name?.toLowerCase().includes(query) ||
-      member.display_name?.toLowerCase().includes(query) ||
-      member.email?.toLowerCase().includes(query) ||
-      member.specialties?.some(s => s.toLowerCase().includes(query))
-    );
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        member.full_name?.toLowerCase().includes(query) ||
+        member.display_name?.toLowerCase().includes(query) ||
+        member.email?.toLowerCase().includes(query) ||
+        member.specialties?.some(s => s.toLowerCase().includes(query));
+      if (!matchesSearch) return false;
+    }
+    
+    // Role filter
+    if (roleFilter !== 'all') {
+      if (roleFilter === 'super_admin') {
+        if (!member.is_super_admin) return false;
+      } else {
+        if (!member.roles.includes(roleFilter)) return false;
+      }
+    }
+    
+    return true;
   });
 
   const sortByRole = (members: typeof team) => {
@@ -256,6 +276,19 @@ export default function TeamDirectory() {
               className="pl-10"
             />
           </div>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filter by role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              {allRoles.map(role => (
+                <SelectItem key={role} value={role}>
+                  {roleLabels[role] || role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <LocationSelect
             value={locationFilter}
             onValueChange={setLocationFilter}
@@ -349,6 +382,15 @@ function TeamMemberCard({ member, locations, isSuperAdmin, onViewProfile }: Team
   };
 
   const primaryRole = getPrimaryRole();
+
+  // Format phone number for display
+  const formatPhone = (phone: string) => {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length === 10) {
+      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    }
+    return phone;
+  };
   
   return (
     <Card 
@@ -359,7 +401,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, onViewProfile }: Team
       )}
       onClick={isSuperAdmin ? onViewProfile : undefined}
     >
-      <CardContent className="p-0">
+      <CardContent className="p-4">
         {/* Super admin edit indicator */}
         {isSuperAdmin && (
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -376,14 +418,14 @@ function TeamMemberCard({ member, locations, isSuperAdmin, onViewProfile }: Team
           </div>
         )}
         
-        {/* Top section with avatar and info */}
-        <div className="p-4 flex gap-3">
-          {/* Avatar */}
+        {/* Main content - horizontal layout */}
+        <div className="flex gap-4">
+          {/* Larger Avatar */}
           <div className="relative shrink-0">
-            <Avatar className="w-11 h-11 ring-2 ring-background shadow-md">
+            <Avatar className="w-16 h-16 ring-2 ring-background shadow-md">
               <AvatarImage src={member.photo_url || undefined} alt={member.full_name} className="object-cover" />
-              <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-sm font-semibold">
-                {member.full_name?.charAt(0) || <User className="w-4 h-4" />}
+              <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-lg font-semibold">
+                {member.full_name?.charAt(0) || <User className="w-6 h-6" />}
               </AvatarFallback>
             </Avatar>
             {/* Anniversary indicator */}
@@ -394,14 +436,16 @@ function TeamMemberCard({ member, locations, isSuperAdmin, onViewProfile }: Team
             )}
           </div>
           
-          {/* Info */}
+          {/* Info column */}
           <div className="flex-1 min-w-0">
+            {/* Name and actions row */}
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <h3 className="font-display font-semibold text-sm leading-tight truncate">
                   {member.display_name || member.full_name}
                 </h3>
-                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">
+                {/* Meta info */}
+                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                   {timeAtCompany && (
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
@@ -426,110 +470,110 @@ function TeamMemberCard({ member, locations, isSuperAdmin, onViewProfile }: Team
                 </div>
               </div>
               
-              {/* Schedule button */}
-              {hasSchedules && (
-                <HoverCard openDelay={100} closeDelay={50}>
-                  <HoverCardTrigger asChild>
-                    <button className="p-1.5 hover:bg-muted rounded-lg transition-colors opacity-60 hover:opacity-100">
-                      <Calendar className="w-4 h-4" />
-                    </button>
-                  </HoverCardTrigger>
-                  <HoverCardContent side="left" align="start" className="w-56 p-3">
-                    <p className="text-xs font-semibold mb-2">Schedule</p>
-                    <div className="space-y-2">
-                      {memberLocations.map(locId => {
-                        const schedule = member.location_schedules[locId] || [];
-                        return (
-                          <div key={locId}>
-                            <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
-                              <MapPin className="w-2.5 h-2.5" />
-                              {getLocationName(locId)}
-                            </p>
-                            <div className="flex gap-0.5">
-                              {DAYS_OF_WEEK.map(day => (
-                                <span
-                                  key={day}
-                                  className={cn(
-                                    "text-[10px] w-5 h-5 flex items-center justify-center rounded font-medium",
-                                    schedule.includes(day)
-                                      ? 'bg-primary text-primary-foreground'
-                                      : 'bg-muted/50 text-muted-foreground/40'
-                                  )}
-                                >
-                                  {day.charAt(0)}
-                                </span>
-                              ))}
+              {/* Role badge + Calendar on right side */}
+              <div className="flex items-center gap-2 shrink-0">
+                {primaryRole && (
+                  <Badge 
+                    variant="outline" 
+                    className={cn("text-[10px] font-medium h-5 px-2", primaryRole.color)}
+                  >
+                    {primaryRole.label}
+                  </Badge>
+                )}
+                {hasSchedules && (
+                  <HoverCard openDelay={100} closeDelay={50}>
+                    <HoverCardTrigger asChild>
+                      <button 
+                        className="p-1.5 hover:bg-muted rounded-lg transition-colors opacity-60 hover:opacity-100"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Calendar className="w-4 h-4" />
+                      </button>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="left" align="start" className="w-56 p-3">
+                      <p className="text-xs font-semibold mb-2">Schedule</p>
+                      <div className="space-y-2">
+                        {memberLocations.map(locId => {
+                          const schedule = member.location_schedules[locId] || [];
+                          return (
+                            <div key={locId}>
+                              <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+                                <MapPin className="w-2.5 h-2.5" />
+                                {getLocationName(locId)}
+                              </p>
+                              <div className="flex gap-0.5">
+                                {DAYS_OF_WEEK.map(day => (
+                                  <span
+                                    key={day}
+                                    className={cn(
+                                      "text-[10px] w-5 h-5 flex items-center justify-center rounded font-medium",
+                                      schedule.includes(day)
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-muted/50 text-muted-foreground/40'
+                                    )}
+                                  >
+                                    {day.charAt(0)}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              )}
+                          );
+                        })}
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
+                )}
+              </div>
             </div>
             
-            {/* Role badge */}
-            {primaryRole && (
-              <Badge 
-                variant="outline" 
-                className={cn("mt-2 text-[10px] font-medium h-5 px-2", primaryRole.color)}
+            {/* Phone number displayed */}
+            {member.phone && (
+              <a 
+                href={`tel:${member.phone}`}
+                className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                onClick={(e) => e.stopPropagation()}
               >
-                {primaryRole.label}
-              </Badge>
+                <Phone className="w-3 h-3" />
+                {formatPhone(member.phone)}
+              </a>
             )}
+            
+            {/* Contact icons row */}
+            <div className="flex items-center gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
+              {member.email && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a 
+                        href={`mailto:${member.email}`}
+                        className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs max-w-48 truncate">{member.email}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              {member.instagram && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a 
+                        href={`https://instagram.com/${member.instagram.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                      >
+                        <Instagram className="w-3.5 h-3.5" />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">{member.instagram}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
           </div>
-        </div>
-        
-        {/* Contact bar - stop propagation to prevent card click */}
-        <div className="px-4 pb-3 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          {member.phone && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a 
-                    href={`tel:${member.phone}`}
-                    className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                  >
-                    <Phone className="w-3.5 h-3.5" />
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">{member.phone}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          {member.email && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a 
-                    href={`mailto:${member.email}`}
-                    className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs max-w-48 truncate">{member.email}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          {member.instagram && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a 
-                    href={`https://instagram.com/${member.instagram.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                  >
-                    <Instagram className="w-3.5 h-3.5" />
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">{member.instagram}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
         </div>
       </CardContent>
     </Card>
