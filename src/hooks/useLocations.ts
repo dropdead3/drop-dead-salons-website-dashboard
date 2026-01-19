@@ -100,6 +100,15 @@ export function getClosedDays(hoursJson: HoursJson | null): string {
   return `Closed ${closedDays.map(d => DAY_ABBREV[d]).join(' & ')}`;
 }
 
+// Get closed days as abbreviation array (Mon, Tue, etc.)
+export function getClosedDaysArray(hoursJson: HoursJson | null): string[] {
+  if (!hoursJson) return [];
+  
+  return DAYS
+    .filter(day => hoursJson[day]?.closed)
+    .map(day => DAY_ABBREV[day]);
+}
+
 function formatTime(time: string): string {
   const [hours, minutes] = time.split(':').map(Number);
   const period = hours >= 12 ? 'pm' : 'am';
