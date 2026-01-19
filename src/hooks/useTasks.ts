@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
+import { useEffectiveUserContext } from '@/hooks/useEffectiveUser';
 import { toast } from 'sonner';
 
 export interface Task {
@@ -22,7 +22,7 @@ export interface Task {
  */
 export function useTasks() {
   const { user } = useAuth();
-  const effectiveUserId = useEffectiveUserId();
+  const { effectiveUserId, actualUserId, isImpersonating } = useEffectiveUserContext();
   const queryClient = useQueryClient();
 
   const tasksQuery = useQuery({
@@ -42,12 +42,18 @@ export function useTasks() {
     enabled: !!effectiveUserId,
   });
 
+  // Create task - always uses actual user ID (not impersonated)
   const createTask = useMutation({
     mutationFn: async (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high' }) => {
+      // When impersonating, don't allow task creation
+      if (isImpersonating) {
+        throw new Error('Cannot create tasks while impersonating');
+      }
+      
       const { data, error } = await supabase
         .from('tasks')
         .insert({
-          user_id: user!.id,
+          user_id: actualUserId!,
           title: task.title,
           description: task.description || null,
           due_date: task.due_date || null,
@@ -63,13 +69,22 @@ export function useTasks() {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Task created');
     },
-    onError: () => {
-      toast.error('Failed to create task');
+    onError: (error: Error) => {
+      if (error.message === 'Cannot create tasks while impersonating') {
+        toast.error('View-only mode', { description: 'Cannot create tasks while impersonating' });
+      } else {
+        toast.error('Failed to create task');
+      }
     },
   });
 
+  // Toggle task - prevented during impersonation
   const toggleTask = useMutation({
     mutationFn: async ({ id, is_completed }: { id: string; is_completed: boolean }) => {
+      if (isImpersonating) {
+        throw new Error('Cannot modify tasks while impersonating');
+      }
+      
       const { error } = await supabase
         .from('tasks')
         .update({
@@ -83,13 +98,22 @@ export function useTasks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
-    onError: () => {
-      toast.error('Failed to update task');
+    onError: (error: Error) => {
+      if (error.message === 'Cannot modify tasks while impersonating') {
+        toast.error('View-only mode', { description: 'Cannot modify tasks while impersonating' });
+      } else {
+        toast.error('Failed to update task');
+      }
     },
   });
 
+  // Delete task - prevented during impersonation
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
+      if (isImpersonating) {
+        throw new Error('Cannot delete tasks while impersonating');
+      }
+      
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -101,14 +125,19 @@ export function useTasks() {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Task deleted');
     },
-    onError: () => {
-      toast.error('Failed to delete task');
+    onError: (error: Error) => {
+      if (error.message === 'Cannot delete tasks while impersonating') {
+        toast.error('View-only mode', { description: 'Cannot delete tasks while impersonating' });
+      } else {
+        toast.error('Failed to delete task');
+      }
     },
   });
 
   return {
     tasks: tasksQuery.data || [],
     isLoading: tasksQuery.isLoading,
+    isImpersonating,
     createTask,
     toggleTask,
     deleteTask,
