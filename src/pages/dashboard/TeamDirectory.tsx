@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2 } from 'lucide-react';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -407,6 +407,22 @@ function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
                     <Clock className="w-3 h-3" />
                     {timeAtCompany}
                   </p>
+                )}
+                {/* Multi-location indicator */}
+                {memberLocations.length > 1 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="text-xs text-primary flex items-center gap-1 mt-0.5 font-medium">
+                          <Building2 className="w-3 h-3" />
+                          {memberLocations.length} locations
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">Works at: {memberLocations.map(id => getLocationName(id)).join(', ')}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
               
