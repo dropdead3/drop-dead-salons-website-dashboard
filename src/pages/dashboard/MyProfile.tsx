@@ -46,6 +46,7 @@ export default function MyProfile() {
     email: '',
     phone: '',
     instagram: '',
+    tiktok: '',
     location_id: '',
     location_ids: [] as string[],
     stylist_level: '',
@@ -72,6 +73,7 @@ export default function MyProfile() {
         email: profile.email || '',
         phone: profile.phone || '',
         instagram: profile.instagram || '',
+        tiktok: profile.tiktok || '',
         location_id: profile.location_id || '',
         location_ids: locationIds,
         stylist_level: profile.stylist_level || '',
@@ -365,40 +367,60 @@ export default function MyProfile() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Locations</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {locations.map(loc => {
-                      const isSelected = formData.location_ids.includes(loc.id);
-                      return (
-                        <Badge
-                          key={loc.id}
-                          variant={isSelected ? 'default' : 'outline'}
-                          className="cursor-pointer transition-all"
-                          onClick={() => {
-                            setFormData(prev => ({
-                              ...prev,
-                              location_ids: isSelected
-                                ? prev.location_ids.filter(id => id !== loc.id)
-                                : [...prev.location_ids, loc.id],
-                              // Keep location_id in sync with first selected location
-                              location_id: isSelected 
-                                ? prev.location_ids.filter(id => id !== loc.id)[0] || ''
-                                : prev.location_id || loc.id,
-                            }));
-                          }}
-                        >
-                          <MapPin className="w-3 h-3 mr-1" />
-                          {loc.name}
-                        </Badge>
-                      );
-                    })}
+                  <Label htmlFor="tiktok">TikTok</Label>
+                  <div className="relative">
+                    <svg 
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
+                      viewBox="0 0 24 24" 
+                      fill="currentColor"
+                    >
+                      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                    </svg>
+                    <Input
+                      id="tiktok"
+                      value={formData.tiktok}
+                      onChange={(e) => setFormData(prev => ({ ...prev, tiktok: e.target.value }))}
+                      className="pl-10"
+                      placeholder="@yourhandle"
+                    />
                   </div>
-                  {formData.location_ids.length > 1 && (
-                    <p className="text-xs text-muted-foreground">
-                      Working at {formData.location_ids.length} locations
-                    </p>
-                  )}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Locations</Label>
+                <div className="flex flex-wrap gap-2">
+                  {locations.map(loc => {
+                    const isSelected = formData.location_ids.includes(loc.id);
+                    return (
+                      <Badge
+                        key={loc.id}
+                        variant={isSelected ? 'default' : 'outline'}
+                        className="cursor-pointer transition-all"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            location_ids: isSelected
+                              ? prev.location_ids.filter(id => id !== loc.id)
+                              : [...prev.location_ids, loc.id],
+                            // Keep location_id in sync with first selected location
+                            location_id: isSelected 
+                              ? prev.location_ids.filter(id => id !== loc.id)[0] || ''
+                              : prev.location_id || loc.id,
+                          }));
+                        }}
+                      >
+                        <MapPin className="w-3 h-3 mr-1" />
+                        {loc.name}
+                      </Badge>
+                    );
+                  })}
+                </div>
+                {formData.location_ids.length > 1 && (
+                  <p className="text-xs text-muted-foreground">
+                    Working at {formData.location_ids.length} locations
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
