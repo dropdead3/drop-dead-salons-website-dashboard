@@ -150,250 +150,189 @@ export default function StylistLevels() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-3xl mx-auto space-y-6">
+      <div className="p-6 max-w-2xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-display font-bold flex items-center gap-2">
-              <Layers className="w-6 h-6" />
-              Stylist Levels
-            </h1>
-            <p className="text-muted-foreground">
-              Manage experience levels for stylists and pricing tiers
+            <h1 className="text-2xl font-display font-bold">Stylist Levels</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Manage experience levels and pricing tiers
             </p>
           </div>
           
-          <Button 
-            className="gap-2" 
-            onClick={handleSave} 
-            disabled={!hasChanges}
-          >
-            <Save className="w-4 h-4" />
-            Save Changes
-          </Button>
-        </div>
-
-        {/* Info Card */}
-        <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900">
-          <CardContent className="p-4 flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800 dark:text-blue-200">
-              <p className="font-medium">About Stylist Levels</p>
-              <p className="mt-1 text-blue-700 dark:text-blue-300">
-                Levels determine pricing tiers across all services. Stylists are assigned to levels based on experience. 
-                Changing level names here will update how they appear throughout the website.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
-                <Layers className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{levels.length}</p>
-                <p className="text-sm text-muted-foreground">Total Levels</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
-                <Users className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0)}
-                </p>
-                <p className="text-sm text-muted-foreground">Stylists Assigned</p>
-              </div>
-            </CardContent>
-          </Card>
+          {hasChanges && (
+            <Button 
+              className="gap-2" 
+              onClick={handleSave}
+            >
+              <Save className="w-4 h-4" />
+              Save Changes
+            </Button>
+          )}
         </div>
 
         {/* Levels List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-sans font-medium normal-case">All Levels</CardTitle>
-            <CardDescription>
-              Drag to reorder, or use the arrow buttons. Lower levels are typically less experienced.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {levels.map((level, index) => {
-              const stylistCount = getStylistCount(level.id);
-              const hasStylists = stylistCount > 0;
-              
-              return (
-                <div
-                  key={level.id}
-                  className={cn(
-                    "flex items-center gap-3 p-4 rounded-lg border bg-card transition-colors",
-                    editingIndex === index && "ring-2 ring-primary"
-                  )}
-                >
-                  {/* Reorder buttons */}
-                  <div className="flex flex-col gap-0.5">
+        <div className="space-y-2">
+          {levels.map((level, index) => {
+            const stylistCount = getStylistCount(level.id);
+            const hasStylists = stylistCount > 0;
+            
+            return (
+              <div
+                key={level.id}
+                className={cn(
+                  "group flex items-center gap-4 px-4 py-3 rounded-xl bg-card border transition-all duration-200 hover:shadow-sm",
+                  editingIndex === index && "ring-2 ring-primary/50 shadow-sm"
+                )}
+              >
+                {/* Reorder buttons - subtle */}
+                <div className="flex flex-col opacity-40 group-hover:opacity-100 transition-opacity">
+                  <button
+                    className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                    disabled={index === 0}
+                    onClick={() => handleMoveUp(index)}
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button
+                    className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                    disabled={index === levels.length - 1}
+                    onClick={() => handleMoveDown(index)}
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Level number - minimal */}
+                <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
+                  {index + 1}
+                </span>
+
+                {/* Level name - editable or display */}
+                {editingIndex === index ? (
+                  <div className="flex-1 flex items-center gap-2">
+                    <Input
+                      value={level.label}
+                      onChange={(e) => handleRename(index, e.target.value)}
+                      className="h-8 text-sm"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') setEditingIndex(null);
+                        if (e.key === 'Escape') setEditingIndex(null);
+                      }}
+                    />
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      disabled={index === 0}
-                      onClick={() => handleMoveUp(index)}
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => setEditingIndex(null)}
                     >
-                      <ChevronUp className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      disabled={index === levels.length - 1}
-                      onClick={() => handleMoveDown(index)}
-                    >
-                      <ChevronDown className="w-4 h-4" />
+                      Done
                     </Button>
                   </div>
-
-                  {/* Level number badge */}
-                  <Badge variant="secondary" className="shrink-0 font-mono text-sm px-3 py-1">
-                    {index + 1}
-                  </Badge>
-
-                  {/* Level name - editable or display */}
-                  {editingIndex === index ? (
-                    <div className="flex-1 flex items-center gap-2">
-                      <Input
-                        value={level.label}
-                        onChange={(e) => handleRename(index, e.target.value)}
-                        className="h-9"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') setEditingIndex(null);
-                          if (e.key === 'Escape') setEditingIndex(null);
-                        }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 shrink-0"
-                        onClick={() => setEditingIndex(null)}
+                ) : (
+                  <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="font-medium truncate">{level.label}</span>
+                      {hasStylists && (
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        className="p-2 rounded-md hover:bg-muted transition-colors"
+                        onClick={() => setEditingIndex(index)}
                       >
-                        <Save className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex items-center justify-between gap-2">
-                      <div>
-                        <span className="font-medium">{level.label}</span>
-                        {hasStylists && (
-                          <Badge variant="outline" className="ml-3 text-xs">
-                            <Users className="w-3 h-3 mr-1" />
-                            {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9"
-                          onClick={() => setEditingIndex(index)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 text-destructive hover:text-destructive"
-                              disabled={levels.length <= 1}
+                        <Pencil className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            className="p-2 rounded-md hover:bg-destructive/10 transition-colors disabled:opacity-30"
+                            disabled={levels.length <= 1}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                              {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+                              Delete "{level.label}"?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription asChild>
+                              <div className="space-y-3">
+                                {hasStylists ? (
+                                  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
+                                    <p className="font-medium flex items-center gap-2">
+                                      <AlertTriangle className="w-4 h-4" />
+                                      Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
+                                    </p>
+                                    <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
+                                      You'll need to reassign these stylists to a different level.
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <p>No stylists are currently assigned to this level.</p>
+                                )}
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => handleDelete(index)}
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="flex items-center gap-2">
-                                {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
-                                Delete "{level.label}"?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription asChild>
-                                <div className="space-y-3">
-                                  {hasStylists ? (
-                                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
-                                      <p className="font-medium flex items-center gap-2">
-                                        <AlertTriangle className="w-4 h-4" />
-                                        Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
-                                      </p>
-                                      <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
-                                        You'll need to reassign these stylists to a different level before or after deletion.
-                                      </p>
-                                    </div>
-                                  ) : (
-                                    <p>No stylists are currently assigned to this level.</p>
-                                  )}
-                                  <p>
-                                    This will remove this level from all services. Service pricing will need to be updated for the remaining levels.
-                                  </p>
-                                </div>
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                onClick={() => handleDelete(index)}
-                              >
-                                Delete Level
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-            {/* Add new level */}
-            {isAddingNew ? (
-              <div className="flex items-center gap-3 p-4 rounded-lg border border-dashed bg-muted/50">
-                <Badge variant="secondary" className="shrink-0 font-mono text-sm px-3 py-1">
-                  {levels.length + 1}
-                </Badge>
-                <Input
-                  value={newLevelName}
-                  onChange={(e) => setNewLevelName(e.target.value)}
-                  placeholder="Enter level name..."
-                  className="h-9 flex-1"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleAddNew();
-                    if (e.key === 'Escape') {
-                      setIsAddingNew(false);
-                      setNewLevelName('');
-                    }
-                  }}
-                />
+          {/* Add new level */}
+          {isAddingNew ? (
+            <div className="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
+              <div className="w-8" /> {/* Spacer for alignment */}
+              <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
+                {levels.length + 1}
+              </span>
+              <Input
+                value={newLevelName}
+                onChange={(e) => setNewLevelName(e.target.value)}
+                placeholder="Enter level name..."
+                className="h-8 text-sm flex-1 border-0 bg-transparent focus-visible:ring-0 px-0"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddNew();
+                  if (e.key === 'Escape') {
+                    setIsAddingNew(false);
+                    setNewLevelName('');
+                  }
+                }}
+              />
+              <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 shrink-0"
+                  size="sm"
+                  className="h-8"
                   onClick={handleAddNew}
                   disabled={!newLevelName.trim()}
                 >
-                  <Save className="w-4 h-4" />
+                  Add
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 shrink-0"
+                  size="sm"
+                  className="h-8 px-2"
                   onClick={() => {
                     setIsAddingNew(false);
                     setNewLevelName('');
@@ -402,26 +341,22 @@ export default function StylistLevels() {
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full gap-2 border-dashed h-12"
-                onClick={() => setIsAddingNew(true)}
-              >
-                <Plus className="w-4 h-4" />
-                Add New Level
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          ) : (
+            <button
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 transition-all"
+              onClick={() => setIsAddingNew(true)}
+            >
+              <Plus className="w-4 h-4" />
+              <span className="text-sm font-medium">Add Level</span>
+            </button>
+          )}
+        </div>
 
-        {/* Unsaved changes indicator */}
-        {hasChanges && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium">
-            <AlertTriangle className="w-4 h-4" />
-            You have unsaved changes
-          </div>
-        )}
+        {/* Helper text */}
+        <p className="text-xs text-muted-foreground text-center">
+          Levels determine pricing tiers. Reorder using the arrows on the left.
+        </p>
       </div>
     </DashboardLayout>
   );
