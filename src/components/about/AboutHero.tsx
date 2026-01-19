@@ -1,32 +1,42 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
-const fullText = "A Movement";
+const rotatingWords = [
+  "A Movement",
+  "A Community",
+  "A Support System",
+  "A Space to Grow",
+  "Your Path to Success"
+];
 
 export function AboutHero() {
   const [displayText, setDisplayText] = useState("");
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    if (hasAnimated) return;
+    const currentWord = rotatingWords[currentWordIndex];
     
-    const startDelay = setTimeout(() => {
-      let currentIndex = 0;
-      const interval = setInterval(() => {
-        if (currentIndex <= fullText.length) {
-          setDisplayText(fullText.slice(0, currentIndex));
-          currentIndex++;
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (displayText.length < currentWord.length) {
+          setDisplayText(currentWord.slice(0, displayText.length + 1));
         } else {
-          clearInterval(interval);
-          setHasAnimated(true);
+          // Pause before deleting
+          setTimeout(() => setIsDeleting(true), 2000);
         }
-      }, 80);
+      } else {
+        if (displayText.length > 0) {
+          setDisplayText(displayText.slice(0, -1));
+        } else {
+          setIsDeleting(false);
+          setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+        }
+      }
+    }, isDeleting ? 50 : 80);
 
-      return () => clearInterval(interval);
-    }, 800);
-
-    return () => clearTimeout(startDelay);
-  }, [hasAnimated]);
+    return () => clearTimeout(timeout);
+  }, [displayText, currentWordIndex, isDeleting]);
 
   return (
     <section className="pt-32 pb-16 md:pt-40 md:pb-24 bg-background">
