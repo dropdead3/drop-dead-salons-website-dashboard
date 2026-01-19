@@ -28,7 +28,7 @@ function StylistLevelSelector({
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full text-sm font-sans transition-all duration-300 hover:border-foreground/30"
       >
-        <span className="text-muted-foreground">Stylist Level:</span>
+        <span className="text-muted-foreground">Service Pricing Level:</span>
         <span className="font-medium text-foreground">{selectedClientLabel} — {selectedLabel}</span>
         <ChevronDown size={16} className={`text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
