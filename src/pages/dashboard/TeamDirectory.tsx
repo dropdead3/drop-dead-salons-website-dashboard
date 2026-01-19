@@ -394,6 +394,7 @@ interface TeamMemberCardProps {
 }
 
 function TeamMemberCard({ member, locations, isSuperAdmin, isAdmin, strikeCount = 0, onViewProfile }: TeamMemberCardProps) {
+  const [strikeDialogOpen, setStrikeDialogOpen] = useState(false);
   const timeAtCompany = getTimeAtCompany(member.hire_date);
   const memberLocations = member.location_ids || [];
   const hasSchedules = Object.keys(member.location_schedules).length > 0;
@@ -448,22 +449,43 @@ function TeamMemberCard({ member, locations, isSuperAdmin, isAdmin, strikeCount 
           </div>
         )}
 
-        {/* Strike indicator for admins */}
-        {isAdmin && strikeCount > 0 && (
-          <div className="absolute top-3 right-3 z-10">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="p-1.5 bg-destructive text-destructive-foreground rounded-full shadow-sm">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="text-xs">
-                  {strikeCount} active strike{strikeCount > 1 ? 's' : ''}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+        {/* Strike indicator for admins - clickable to add strike */}
+        {isAdmin && (
+          <>
+            <div className="absolute top-3 right-3 z-10">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStrikeDialogOpen(true);
+                      }}
+                      className={cn(
+                        "p-1.5 rounded-full shadow-sm transition-all hover:scale-110",
+                        strikeCount > 0
+                          ? "bg-destructive text-destructive-foreground"
+                          : "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="text-xs">
+                    {strikeCount > 0
+                      ? `${strikeCount} active strike${strikeCount > 1 ? 's' : ''} – Click to add`
+                      : 'Add strike'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <AddStrikeDialog
+              userId={member.user_id}
+              userName={member.display_name || member.full_name}
+              open={strikeDialogOpen}
+              onOpenChange={setStrikeDialogOpen}
+            />
+          </>
         )}
         
         {/* Main content - horizontal layout */}
