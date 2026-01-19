@@ -1,8 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
+import { useEffectiveUserId } from './useEffectiveUser';
+import { useUserRoles } from './useAdminProfile';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
+import { useMemo } from 'react';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -34,19 +38,37 @@ export function useDashboardVisibility() {
   });
 }
 
-// Fetch visibility settings for the current user's roles
+// Fetch visibility settings for the current user's roles (respects impersonation)
 export function useMyDashboardVisibility() {
-  const { roles } = useAuth();
+  const { roles: actualRoles } = useAuth();
+  const { isViewingAsUser, viewAsRole } = useViewAs();
+  const effectiveUserId = useEffectiveUserId();
+  
+  // Fetch the impersonated user's roles when viewing as a specific user
+  const { data: impersonatedRoles } = useUserRoles(
+    isViewingAsUser ? effectiveUserId : undefined
+  );
+
+  // Determine effective roles: impersonated user's roles, viewAs role, or actual roles
+  const effectiveRoles = useMemo(() => {
+    if (isViewingAsUser && impersonatedRoles) {
+      return impersonatedRoles;
+    }
+    if (viewAsRole) {
+      return [viewAsRole];
+    }
+    return actualRoles;
+  }, [isViewingAsUser, impersonatedRoles, viewAsRole, actualRoles]);
 
   return useQuery({
-    queryKey: ['dashboard-visibility', 'my', roles],
+    queryKey: ['dashboard-visibility', 'my', effectiveRoles],
     queryFn: async () => {
-      if (!roles || roles.length === 0) return {};
+      if (!effectiveRoles || effectiveRoles.length === 0) return {};
 
       const { data, error } = await supabase
         .from('dashboard_element_visibility')
         .select('*')
-        .in('role', roles);
+        .in('role', effectiveRoles);
 
       if (error) throw error;
 
@@ -64,7 +86,7 @@ export function useMyDashboardVisibility() {
 
       return visibilityMap;
     },
-    enabled: roles.length > 0,
+    enabled: effectiveRoles.length > 0,
   });
 }
 

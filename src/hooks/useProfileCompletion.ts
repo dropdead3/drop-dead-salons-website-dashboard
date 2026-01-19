@@ -1,15 +1,36 @@
 import { useMemo } from 'react';
 import { useEmployeeProfile } from './useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveUserId } from './useEffectiveUser';
+import { useUserRoles } from './useAdminProfile';
+import { useViewAs } from '@/contexts/ViewAsContext';
 
 export function useProfileCompletion() {
-  const { roles } = useAuth();
-  const { data: profile, isLoading } = useEmployeeProfile();
+  const { roles: actualRoles } = useAuth();
+  const { isViewingAsUser, viewAsRole } = useViewAs();
+  const effectiveUserId = useEffectiveUserId();
+  const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
+  
+  // Fetch the impersonated user's roles when viewing as a specific user
+  const { data: impersonatedRoles, isLoading: rolesLoading } = useUserRoles(
+    isViewingAsUser ? effectiveUserId : undefined
+  );
+
+  // Determine effective roles: impersonated user's roles, viewAs role, or actual roles
+  const effectiveRoles = useMemo(() => {
+    if (isViewingAsUser && impersonatedRoles) {
+      return impersonatedRoles;
+    }
+    if (viewAsRole) {
+      return [viewAsRole];
+    }
+    return actualRoles;
+  }, [isViewingAsUser, impersonatedRoles, viewAsRole, actualRoles]);
 
   const { percentage, missingCount } = useMemo(() => {
     if (!profile) return { percentage: 0, missingCount: 0 };
 
-    const isStylist = roles.includes('stylist');
+    const isStylist = effectiveRoles.includes('stylist');
     
     const fields = [
       { filled: !!profile.photo_url },
@@ -35,7 +56,7 @@ export function useProfileCompletion() {
     const missingCount = fields.length - filledCount;
 
     return { percentage, missingCount };
-  }, [profile, roles]);
+  }, [profile, effectiveRoles]);
 
-  return { percentage, missingCount, isLoading };
+  return { percentage, missingCount, isLoading: profileLoading || rolesLoading };
 }
