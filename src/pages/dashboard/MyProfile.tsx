@@ -86,6 +86,7 @@ export default function MyProfile() {
     instagram: '',
     tiktok: '',
     birthday: '',
+    hire_date: '',
     location_id: '',
     location_ids: [] as string[],
     stylist_level: '',
@@ -127,6 +128,7 @@ export default function MyProfile() {
         instagram: profile.instagram || '',
         tiktok: profile.tiktok || '',
         birthday: (profile as any).birthday || '',
+        hire_date: profile.hire_date || '',
         location_id: profile.location_id || '',
         location_ids: locationIds,
         stylist_level: profile.stylist_level || '',
@@ -226,6 +228,7 @@ export default function MyProfile() {
       instagram: formData.instagram,
       tiktok: formData.tiktok,
       birthday: formData.birthday,
+      hire_date: formData.hire_date || null,
       location_id: formData.location_id,
       location_ids: formData.location_ids,
       stylist_level: formData.stylist_level,
@@ -522,22 +525,38 @@ export default function MyProfile() {
                 </div>
               </div>
 
-              {/* Birthday Field */}
-              <div className="space-y-2">
-                <Label htmlFor="birthday" className="flex items-center gap-2">
-                  <Cake className="w-4 h-4 text-pink-500" />
-                  Birthday
-                </Label>
-                <Input
-                  id="birthday"
-                  type="date"
-                  value={formData.birthday}
-                  onChange={(e) => setFormData(prev => ({ ...prev, birthday: e.target.value }))}
-                  className="w-full md:w-auto"
-                />
-                <p className="text-xs text-muted-foreground">
-                  We'll celebrate with you! Your birthday appears on the team calendar.
-                </p>
+              {/* Birthday & Start Date Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="birthday" className="flex items-center gap-2">
+                    <Cake className="w-4 h-4 text-pink-500" />
+                    Birthday
+                  </Label>
+                  <Input
+                    id="birthday"
+                    type="date"
+                    value={formData.birthday}
+                    onChange={(e) => setFormData(prev => ({ ...prev, birthday: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Your birthday appears on the team calendar.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hire_date" className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    Start Date
+                  </Label>
+                  <Input
+                    id="hire_date"
+                    type="date"
+                    value={formData.hire_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, hire_date: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    When you joined the team.
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
