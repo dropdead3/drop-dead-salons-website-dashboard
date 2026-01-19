@@ -321,132 +321,106 @@ function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
   const memberLocations = member.location_ids || [];
   const hasSchedules = Object.keys(member.location_schedules).length > 0;
   const anniversaryInfo = getAnniversaryInfo(member.hire_date);
-  const milestone = member.hire_date ? getAnniversaryMilestone(differenceInYears(new Date(), parseISO(member.hire_date))) : null;
   
   const getLocationName = (id: string) => {
     return locations.find(l => l.id === id)?.name || id;
   };
+
+  // Get primary role to display
+  const getPrimaryRole = () => {
+    if (member.is_super_admin) return { key: 'super_admin', label: roleLabels['super_admin'], color: roleColors['super_admin'] };
+    const sortedRoles = [...member.roles].sort((a, b) => (rolePriority[a] ?? 99) - (rolePriority[b] ?? 99));
+    const primaryRole = sortedRoles[0];
+    return primaryRole ? { key: primaryRole, label: roleLabels[primaryRole] || primaryRole, color: roleColors[primaryRole] || '' } : null;
+  };
+
+  const primaryRole = getPrimaryRole();
   
   return (
     <Card className={cn(
-      "overflow-hidden hover:shadow-md transition-shadow relative",
-      anniversaryInfo?.isToday && "ring-2 ring-amber-400 bg-gradient-to-br from-amber-50/50 to-background dark:from-amber-950/20"
+      "group overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 relative",
+      anniversaryInfo?.isToday && "ring-2 ring-amber-400"
     )}>
-      {/* Anniversary Badge */}
-      {anniversaryInfo?.isToday && (
-        <div className="absolute top-2 right-2 z-10">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                  <PartyPopper className="w-3 h-3" />
-                  {anniversaryInfo.years}yr
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>🎉 {anniversaryInfo.years} year anniversary today!</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      )}
-      
-      {/* Upcoming Anniversary Indicator */}
-      {anniversaryInfo?.isUpcoming && !anniversaryInfo?.isToday && (
-        <div className="absolute top-2 right-2 z-10">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                  <Award className="w-3 h-3" />
-                  {anniversaryInfo.daysUntil}d
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{anniversaryInfo.years} year anniversary in {anniversaryInfo.daysUntil} days</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      )}
-      
-      <CardContent className="p-4">
-        {/* Header: Avatar, Name, Roles, Calendar Icon */}
-        <div className="flex items-start gap-3">
-          <div className="relative">
-            <Avatar className="w-12 h-12 border-2 border-background shadow-sm">
-              <AvatarImage src={member.photo_url || undefined} alt={member.full_name} />
-              <AvatarFallback className="bg-muted text-lg font-medium">
-                {member.full_name?.charAt(0) || <User className="w-5 h-5" />}
+      <CardContent className="p-0">
+        {/* Top section with avatar and info */}
+        <div className="p-4 flex gap-3">
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <Avatar className="w-11 h-11 ring-2 ring-background shadow-md">
+              <AvatarImage src={member.photo_url || undefined} alt={member.full_name} className="object-cover" />
+              <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-sm font-semibold">
+                {member.full_name?.charAt(0) || <User className="w-4 h-4" />}
               </AvatarFallback>
             </Avatar>
-            {/* Milestone Badge on Avatar */}
-            {milestone && milestone >= 5 && (
-              <div className="absolute -bottom-0.5 -right-0.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-[9px] font-bold px-1 py-0.5 rounded-full shadow-sm">
-                {milestone}yr
+            {/* Anniversary indicator */}
+            {anniversaryInfo?.isToday && (
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center shadow-md">
+                <PartyPopper className="w-3 h-3 text-white" />
               </div>
             )}
           </div>
           
+          {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-display font-medium text-base leading-tight">
+              <div className="min-w-0">
+                <h3 className="font-display font-semibold text-sm leading-tight truncate">
                   {member.display_name || member.full_name}
                 </h3>
-                {/* Time at company */}
-                {timeAtCompany && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <Clock className="w-3 h-3" />
-                    {timeAtCompany}
-                  </p>
-                )}
-                {/* Multi-location indicator */}
-                {memberLocations.length > 1 && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <p className="text-xs text-primary flex items-center gap-1 mt-0.5 font-medium">
-                          <Building2 className="w-3 h-3" />
-                          {memberLocations.length} locations
-                        </p>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">Works at: {memberLocations.map(id => getLocationName(id)).join(', ')}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">
+                  {timeAtCompany && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {timeAtCompany}
+                    </span>
+                  )}
+                  {memberLocations.length > 1 && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 text-primary font-medium cursor-help">
+                            <Building2 className="w-3 h-3" />
+                            {memberLocations.length}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">
+                          {memberLocations.map(id => getLocationName(id)).join(', ')}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
               </div>
               
-              {/* Calendar Hover */}
+              {/* Schedule button */}
               {hasSchedules && (
                 <HoverCard openDelay={100} closeDelay={50}>
                   <HoverCardTrigger asChild>
-                    <button className="p-1.5 hover:bg-muted rounded-md transition-colors shrink-0">
-                      <Calendar className="w-5 h-5 text-muted-foreground" />
+                    <button className="p-1.5 hover:bg-muted rounded-lg transition-colors opacity-60 hover:opacity-100">
+                      <Calendar className="w-4 h-4" />
                     </button>
                   </HoverCardTrigger>
-                  <HoverCardContent side="left" align="start" className="w-64 p-4">
-                    <p className="text-sm font-medium mb-3">Work Schedule</p>
-                    <div className="space-y-3">
+                  <HoverCardContent side="left" align="start" className="w-56 p-3">
+                    <p className="text-xs font-semibold mb-2">Schedule</p>
+                    <div className="space-y-2">
                       {memberLocations.map(locId => {
                         const schedule = member.location_schedules[locId] || [];
                         return (
                           <div key={locId}>
-                            <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
+                            <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+                              <MapPin className="w-2.5 h-2.5" />
                               {getLocationName(locId)}
                             </p>
-                            <div className="flex gap-1">
+                            <div className="flex gap-0.5">
                               {DAYS_OF_WEEK.map(day => (
                                 <span
                                   key={day}
-                                  className={`text-xs px-1.5 py-1 rounded font-medium ${
+                                  className={cn(
+                                    "text-[10px] w-5 h-5 flex items-center justify-center rounded font-medium",
                                     schedule.includes(day)
                                       ? 'bg-primary text-primary-foreground'
-                                      : 'bg-muted text-muted-foreground/50'
-                                  }`}
+                                      : 'bg-muted/50 text-muted-foreground/40'
+                                  )}
                                 >
                                   {day.charAt(0)}
                                 </span>
@@ -461,63 +435,66 @@ function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
               )}
             </div>
             
-            {/* Role Badges */}
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {/* Super Admin badge first if applicable */}
-              {member.is_super_admin && (
-                <Badge 
-                  variant="outline" 
-                  className={`text-xs font-medium border ${roleColors['super_admin']}`}
-                >
-                  {roleLabels['super_admin']}
-                </Badge>
-              )}
-              {/* Other roles - exclude admin if super admin to avoid redundancy */}
-              {member.roles
-                .filter(role => !(member.is_super_admin && role === 'admin'))
-                .map(role => (
-                  <Badge 
-                    key={role} 
-                    variant="outline" 
-                    className={`text-xs font-medium border ${roleColors[role] || ''}`}
-                  >
-                    {roleLabels[role] || role}
-                  </Badge>
-                ))}
-            </div>
+            {/* Role badge */}
+            {primaryRole && (
+              <Badge 
+                variant="outline" 
+                className={cn("mt-2 text-[10px] font-medium h-5 px-2", primaryRole.color)}
+              >
+                {primaryRole.label}
+              </Badge>
+            )}
           </div>
         </div>
-
-        {/* Contact Info */}
-        <div className="mt-4 space-y-1.5 text-sm">
+        
+        {/* Contact bar */}
+        <div className="px-4 pb-3 flex items-center gap-1">
           {member.phone && (
-            <a 
-              href={`tel:${member.phone}`}
-              className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors py-0.5"
-            >
-              <Phone className="w-4 h-4 shrink-0" />
-              <span>{member.phone}</span>
-            </a>
-          )}
-          {member.instagram && (
-            <a 
-              href={`https://instagram.com/${member.instagram.replace('@', '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors py-0.5"
-            >
-              <Instagram className="w-4 h-4 shrink-0" />
-              <span>{member.instagram}</span>
-            </a>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a 
+                    href={`tel:${member.phone}`}
+                    className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">{member.phone}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {member.email && (
-            <a 
-              href={`mailto:${member.email}`}
-              className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors py-0.5"
-            >
-              <Mail className="w-4 h-4 shrink-0" />
-              <span className="truncate">{member.email}</span>
-            </a>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a 
+                    href={`mailto:${member.email}`}
+                    className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs max-w-48 truncate">{member.email}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {member.instagram && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a 
+                    href={`https://instagram.com/${member.instagram.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                  >
+                    <Instagram className="w-3.5 h-3.5" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">{member.instagram}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
       </CardContent>
