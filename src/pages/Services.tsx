@@ -279,7 +279,7 @@ export default function Services() {
       </section>
 
       {/* Stylist Level Selector + Pricing Note - Sticky */}
-      <div ref={stickyRef} className={`sticky top-[120px] z-30 backdrop-blur-md py-4 transition-colors duration-300 ${isSticky ? 'bg-secondary/95' : 'bg-background/95'}`}>
+      <div ref={stickyRef} className={`sticky top-[120px] z-30 backdrop-blur-md py-4 transition-all duration-300 ${isSticky ? 'bg-secondary/95 shadow-md' : 'bg-background/95'}`}>
         <div className="container mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
