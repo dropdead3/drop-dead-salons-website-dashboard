@@ -33,9 +33,9 @@ const Index = () => {
       <NewClientSection />
       {/* Gradient transition from light to grey */}
       <div 
-        className="h-16 sm:h-24 md:h-32 lg:h-40 -mt-1"
+        className="h-12 sm:h-16 md:h-20 lg:h-24 -mt-1"
         style={{ 
-          background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 10%, hsl(var(--secondary)) 100%)' 
+          background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)' 
         }}
       />
       {/* Build trust with team */}
