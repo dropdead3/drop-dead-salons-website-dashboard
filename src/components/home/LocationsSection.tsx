@@ -171,7 +171,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
             {/* Tap hint */}
             <div className="mt-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150 translate-y-2 group-hover:translate-y-0">
               <p className="text-xs text-foreground/60 tracking-wide font-aeonik animate-pulse">
-                Tap to see inside
+                Tap here to see inside
               </p>
             </div>
           </div>
