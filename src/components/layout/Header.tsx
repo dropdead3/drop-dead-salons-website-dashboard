@@ -155,33 +155,46 @@ export function Header() {
             <div className="w-40 lg:w-56 flex items-center">
               <Link
                 to="/"
-                className="inline-flex items-center hover:opacity-70 transition-opacity"
+                className="inline-flex items-center hover:opacity-70 transition-opacity relative h-10"
               >
-                <AnimatePresence mode="wait">
-                  {isScrolled ? (
-                    <motion.img
-                      key="icon"
-                      src={LogoIcon}
-                      alt="Drop Dead"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className={cn("h-5 w-auto transition-all duration-300", isOverDark && "invert")}
-                    />
-                  ) : (
-                    <motion.img
-                      key="full"
-                      src={Logo}
-                      alt="Drop Dead"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      className={cn("h-10 w-auto transition-all duration-300", isOverDark && "invert")}
-                    />
+                {/* Primary Logo - shows when not scrolled OR scrolling up */}
+                <motion.img
+                  src={Logo}
+                  alt="Drop Dead"
+                  initial={false}
+                  animate={{ 
+                    opacity: !isScrolled || isScrollingUp ? 1 : 0,
+                    scale: !isScrolled || isScrollingUp ? 1 : 0.9,
+                    filter: !isScrolled || isScrollingUp ? "blur(0px)" : "blur(4px)"
+                  }}
+                  transition={{ 
+                    duration: 0.5, 
+                    ease: [0.25, 0.1, 0.25, 1]
+                  }}
+                  className={cn(
+                    "h-10 w-auto absolute left-0 top-1/2 -translate-y-1/2",
+                    isOverDark && "invert"
                   )}
-                </AnimatePresence>
+                />
+                {/* Secondary Logo - shows when scrolled AND scrolling down */}
+                <motion.img
+                  src={LogoIcon}
+                  alt="Drop Dead"
+                  initial={false}
+                  animate={{ 
+                    opacity: isScrolled && !isScrollingUp ? 1 : 0,
+                    scale: isScrolled && !isScrollingUp ? 1 : 0.9,
+                    filter: isScrolled && !isScrollingUp ? "blur(0px)" : "blur(4px)"
+                  }}
+                  transition={{ 
+                    duration: 0.5, 
+                    ease: [0.25, 0.1, 0.25, 1]
+                  }}
+                  className={cn(
+                    "h-5 w-auto absolute left-0 top-1/2 -translate-y-1/2",
+                    isOverDark && "invert"
+                  )}
+                />
               </Link>
             </div>
 
