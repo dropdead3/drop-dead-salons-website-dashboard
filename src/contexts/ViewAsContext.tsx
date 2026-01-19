@@ -234,6 +234,30 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
     prevStateRef.current = { role: viewAsRole, user: viewAsUser };
   }, [viewAsRole, viewAsUser]);
 
+  // Escape key shortcut to exit impersonation mode
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only trigger if Escape is pressed and we're currently impersonating
+      if (event.key === 'Escape' && (viewAsRole !== null || viewAsUser !== null)) {
+        // Don't trigger if user is typing in an input, textarea, or contenteditable
+        const target = event.target as HTMLElement;
+        const isEditing = 
+          target.tagName === 'INPUT' || 
+          target.tagName === 'TEXTAREA' || 
+          target.isContentEditable ||
+          target.closest('[role="dialog"]') !== null; // Don't close if in a modal
+        
+        if (!isEditing) {
+          event.preventDefault();
+          clearViewAs();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewAsRole, viewAsUser, clearViewAs]);
+
   return (
     <ViewAsContext.Provider
       value={{
