@@ -155,44 +155,45 @@ export function Header() {
             <div className="w-40 lg:w-56 flex items-center h-full">
               <Link
                 to="/"
-                className="flex items-center justify-start hover:opacity-70 transition-opacity relative min-w-[140px]"
+                className="flex items-center justify-start hover:opacity-70 transition-opacity relative min-w-[140px] h-10"
               >
                 {/* Primary Logo - shows when not scrolled OR scrolling up */}
                 <motion.img
                   src={Logo}
                   alt="Drop Dead"
-                  initial={false}
+                  initial={{ opacity: 1, scale: 1, y: 0 }}
                   animate={{ 
                     opacity: !isScrolled || isScrollingUp ? 1 : 0,
-                    scale: !isScrolled || isScrollingUp ? 1 : 0.9,
-                    filter: !isScrolled || isScrollingUp ? "blur(0px)" : "blur(4px)"
+                    scale: !isScrolled || isScrollingUp ? 1 : 0.85,
+                    y: !isScrolled || isScrollingUp ? 0 : -8
                   }}
                   transition={{ 
-                    duration: 0.5, 
-                    ease: [0.25, 0.1, 0.25, 1]
+                    duration: 0.6,
+                    ease: [0.4, 0, 0.2, 1],
+                    opacity: { duration: 0.4, ease: "easeOut" }
                   }}
                   className={cn(
-                    "h-10 w-auto",
-                    isOverDark && "invert",
-                    isScrolled && !isScrollingUp && "absolute"
+                    "h-10 w-auto absolute left-0 top-1/2 -translate-y-1/2",
+                    isOverDark && "invert"
                   )}
                 />
                 {/* Secondary Logo - shows when scrolled AND scrolling down */}
                 <motion.img
                   src={LogoIcon}
                   alt="Drop Dead"
-                  initial={false}
+                  initial={{ opacity: 0, scale: 0.85, y: 8 }}
                   animate={{ 
                     opacity: isScrolled && !isScrollingUp ? 1 : 0,
-                    scale: isScrolled && !isScrollingUp ? 1 : 0.9,
-                    filter: isScrolled && !isScrollingUp ? "blur(0px)" : "blur(4px)"
+                    scale: isScrolled && !isScrollingUp ? 1 : 0.85,
+                    y: isScrolled && !isScrollingUp ? 0 : 8
                   }}
                   transition={{ 
-                    duration: 0.5, 
-                    ease: [0.25, 0.1, 0.25, 1]
+                    duration: 0.6,
+                    ease: [0.4, 0, 0.2, 1],
+                    opacity: { duration: 0.4, delay: 0.1, ease: "easeOut" }
                   }}
                   className={cn(
-                    "h-5 w-auto absolute",
+                    "h-5 w-auto absolute left-0 top-1/2 -translate-y-1/2",
                     isOverDark && "invert"
                   )}
                 />
