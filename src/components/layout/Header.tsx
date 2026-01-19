@@ -246,13 +246,14 @@ export function Header() {
                   delay: 0.15,
                   ease: [0.25, 0.1, 0.25, 1] 
                 }}
+                className="relative"
               >
-                <NavigationMenu>
+                <NavigationMenu hideViewport>
                   <NavigationMenuList>
                     <NavigationMenuItem>
                       <NavigationMenuTrigger 
                         className={cn(
-                          "text-sm tracking-wide font-sans font-medium transition-opacity leading-none bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent px-0 h-auto",
+                          "text-sm tracking-wide font-sans font-medium transition-opacity leading-none bg-transparent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent px-0 h-auto py-0",
                           (location.pathname === "/about" || location.pathname === "/policies")
                             ? "opacity-100"
                             : "opacity-70 hover:opacity-100"
@@ -260,24 +261,29 @@ export function Header() {
                       >
                         About
                       </NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <ul className="grid w-[180px] gap-1 p-2 bg-background">
-                          {aboutLinks.map((link) => (
-                            <li key={link.href}>
-                              <NavigationMenuLink asChild>
-                                <Link
-                                  to={link.href}
-                                  className={cn(
-                                    "block select-none rounded-md px-3 py-2 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-                                    location.pathname === link.href && "bg-accent/50"
-                                  )}
-                                >
-                                  {link.label}
-                                </Link>
-                              </NavigationMenuLink>
-                            </li>
-                          ))}
-                        </ul>
+                      <NavigationMenuContent className="absolute left-1/2 -translate-x-1/2 top-full mt-3">
+                        <div className="w-[200px] rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl overflow-hidden">
+                          <ul className="p-2 space-y-0.5">
+                            {aboutLinks.map((link) => (
+                              <li key={link.href}>
+                                <NavigationMenuLink asChild>
+                                  <Link
+                                    to={link.href}
+                                    className={cn(
+                                      "flex items-center gap-3 select-none rounded-lg px-4 py-3 text-sm font-medium leading-none no-underline outline-none transition-all duration-200",
+                                      "hover:bg-accent/80 focus:bg-accent/80",
+                                      location.pathname === link.href 
+                                        ? "bg-accent text-accent-foreground" 
+                                        : "text-foreground/80 hover:text-foreground"
+                                    )}
+                                  >
+                                    {link.label}
+                                  </Link>
+                                </NavigationMenuLink>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </NavigationMenuContent>
                     </NavigationMenuItem>
                   </NavigationMenuList>
