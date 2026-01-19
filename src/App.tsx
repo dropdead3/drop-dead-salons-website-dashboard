@@ -42,6 +42,7 @@ import TestimonialsManager from "./pages/dashboard/admin/TestimonialsManager";
 import GalleryManager from "./pages/dashboard/admin/GalleryManager";
 import ServicesManager from "./pages/dashboard/admin/ServicesManager";
 import StylistLevels from "./pages/dashboard/admin/StylistLevels";
+import LocationsManager from "./pages/dashboard/admin/LocationsManager";
 import MyHandbooks from "./pages/dashboard/MyHandbooks";
 import Onboarding from "./pages/dashboard/Onboarding";
 import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
@@ -101,6 +102,7 @@ const App = () => (
               <Route path="/dashboard/admin/approvals" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountApprovals /></ProtectedRoute>} />
               <Route path="/dashboard/admin/invitations" element={<ProtectedRoute requiredPermission="approve_accounts"><StaffInvitations /></ProtectedRoute>} />
               <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/locations" element={<ProtectedRoute requiredPermission="manage_settings"><LocationsManager /></ProtectedRoute>} />
               <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />

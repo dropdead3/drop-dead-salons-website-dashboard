@@ -527,6 +527,51 @@ export type Database = {
         }
         Relationships: []
       }
+      locations: {
+        Row: {
+          address: string
+          booking_url: string | null
+          city: string
+          created_at: string | null
+          display_order: number | null
+          google_maps_url: string | null
+          hours: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          booking_url?: string | null
+          city: string
+          created_at?: string | null
+          display_order?: number | null
+          google_maps_url?: string | null
+          hours?: string | null
+          id: string
+          is_active?: boolean | null
+          name: string
+          phone: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          booking_url?: string | null
+          city?: string
+          created_at?: string | null
+          display_order?: number | null
+          google_maps_url?: string | null
+          hours?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       one_on_one_meetings: {
         Row: {
           coach_id: string
