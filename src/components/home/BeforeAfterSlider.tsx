@@ -12,6 +12,7 @@ interface BeforeAfterSliderProps {
   hideDefaultVideoButton?: boolean;
   hoverMode?: boolean; // New prop: slider follows mouse on hover
   compactBadges?: boolean; // Reduced padding for badges
+  badgePositionClass?: string; // Custom badge positioning class (e.g., "top-[60px] left-[60px]")
 }
 
 export interface BeforeAfterSliderHandle {
@@ -29,7 +30,8 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
   videoUrl = "https://www.w3schools.com/html/mov_bbb.mp4",
   hideDefaultVideoButton = false,
   hoverMode = false,
-  compactBadges = false
+  compactBadges = false,
+  badgePositionClass
 }, ref) => {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
@@ -334,7 +336,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           )}
 
           {/* Labels - positioned at top corners */}
-          <div className={`absolute z-20 ${compactBadges ? 'top-4 left-4' : 'top-8 left-8'}`}>
+          <div className={`absolute z-20 ${badgePositionClass ? badgePositionClass : (compactBadges ? 'top-4 left-4' : 'top-8 left-8')}`}>
             <span 
               className="text-[10px] uppercase tracking-[0.15em] font-display px-4 py-2 bg-background/90 rounded-full text-foreground"
               style={{ opacity: sliderPosition > 20 ? 1 : 0, transition: 'opacity 0.2s' }}
@@ -342,7 +344,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
               {beforeLabel}
             </span>
           </div>
-          <div className={`absolute z-20 ${compactBadges ? 'top-4 right-4' : 'top-8 right-8'}`}>
+          <div className={`absolute z-20 ${badgePositionClass ? badgePositionClass.replace('left-', 'right-') : (compactBadges ? 'top-4 right-4' : 'top-8 right-8')}`}>
             <span 
               className="text-[10px] uppercase tracking-[0.15em] font-display px-4 py-2 bg-background/90 rounded-full text-foreground"
               style={{ opacity: sliderPosition < 80 ? 1 : 0, transition: 'opacity 0.2s' }}
