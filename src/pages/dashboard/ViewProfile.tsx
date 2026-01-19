@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { services } from '@/data/servicePricing';
+import { StrikeHistoryTimeline } from '@/components/dashboard/StrikeHistoryTimeline';
 
 const DAYS_OF_WEEK = [
   { key: 'Mon', label: 'Monday' },
@@ -920,6 +921,9 @@ export default function ViewProfile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Strike History Timeline */}
+          {userId && <StrikeHistoryTimeline userId={userId} />}
         </form>
 
         {/* Sticky Save Bar */}
