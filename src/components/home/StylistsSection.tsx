@@ -495,7 +495,7 @@ export function StylistsSection() {
               <JoinTeamCard 
                 stylistCount={filteredStylists.length} 
                 isFormExpanded={isFormExpanded}
-                onToggleForm={() => setIsFormExpanded(!isFormExpanded)}
+                onToggleForm={() => setIsFormExpanded(prev => !prev)}
               />
             </motion.div>
           ) : (
@@ -516,14 +516,14 @@ export function StylistsSection() {
       </div>
 
       {/* Collapsible Application Form */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isFormExpanded && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-            className="overflow-hidden"
+            key="application-form"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <div className="container mx-auto px-6 pt-8">
               <div className="max-w-2xl mx-auto">
