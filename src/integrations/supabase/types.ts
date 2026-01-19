@@ -1095,7 +1095,15 @@ export type Database = {
       is_coach_or_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "manager" | "stylist" | "receptionist" | "assistant"
+      app_role:
+        | "admin"
+        | "manager"
+        | "stylist"
+        | "receptionist"
+        | "assistant"
+        | "stylist_assistant"
+        | "admin_assistant"
+        | "operations_assistant"
       lead_source:
         | "content"
         | "ads"
@@ -1233,7 +1241,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "manager", "stylist", "receptionist", "assistant"],
+      app_role: [
+        "admin",
+        "manager",
+        "stylist",
+        "receptionist",
+        "assistant",
+        "stylist_assistant",
+        "admin_assistant",
+        "operations_assistant",
+      ],
       lead_source: ["content", "ads", "referral", "google", "walkin", "other"],
       program_status: ["active", "paused", "completed", "restarted"],
       stylist_type: ["independent", "commission", "salon_owner"],
