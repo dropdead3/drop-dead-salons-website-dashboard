@@ -516,203 +516,198 @@ export function StylistsSection() {
         </AnimatePresence>
       </div>
 
-      {/* Collapsible Application Form */}
-      <AnimatePresence>
-        {isFormExpanded && (
-          <motion.div
-            key="application-form"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            <div className="container mx-auto px-6 pt-8">
-              <div className="max-w-2xl mx-auto">
-                <div className="bg-background border border-border rounded-2xl p-6 md:p-8">
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs uppercase tracking-wider">Full Name *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Your name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs uppercase tracking-wider">Email *</FormLabel>
-                              <FormControl>
-                                <Input type="email" placeholder="you@email.com" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs uppercase tracking-wider">Phone *</FormLabel>
-                              <FormControl>
-                                <Input type="tel" placeholder="(555) 555-5555" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="instagram"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs uppercase tracking-wider">Instagram</FormLabel>
-                              <FormControl>
-                                <Input placeholder="@yourusername" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="experience"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs uppercase tracking-wider">Experience *</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="0-2">0-2 years</SelectItem>
-                                  <SelectItem value="2-5">2-5 years</SelectItem>
-                                  <SelectItem value="5-10">5-10 years</SelectItem>
-                                  <SelectItem value="10+">10+ years</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="clientBook"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs uppercase tracking-wider">Do you currently have a book of clients? *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="less-than-10">Less than 10</SelectItem>
-                                <SelectItem value="10-20">Yes - 10-20 clients</SelectItem>
-                                <SelectItem value="20-30">Yes - 20-30 clients</SelectItem>
-                                <SelectItem value="30-50">Yes - 30-50 clients</SelectItem>
-                                <SelectItem value="50+">Yes - 50+ clients</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="specialties"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs uppercase tracking-wider">Your Specialties *</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="e.g., balayage, extensions, vivid colors..." 
-                                {...field} 
-                                className="resize-none"
-                                rows={2}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="whyDropDead"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs uppercase tracking-wider">What's the biggest reason you want to work at Drop Dead? *</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Tell us what excites you about joining our team..." 
-                                {...field} 
-                                className="resize-none"
-                                rows={3}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="message"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs uppercase tracking-wider">Message (optional)</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Anything else you'd like us to know?" 
-                                {...field} 
-                                className="resize-none"
-                                rows={2}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Button 
-                        type="submit" 
-                        disabled={isSubmitting}
-                        className="w-full group"
-                      >
-                        <span>{isSubmitting ? "Submitting..." : "Submit Application"}</span>
-                        <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                      </Button>
-                    </form>
-                  </Form>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+      {/* Collapsible Application Form - Using CSS visibility instead of conditional render */}
+      <div 
+        className={cn(
+          "transition-all duration-300 ease-out overflow-hidden",
+          isFormExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
         )}
-      </AnimatePresence>
+      >
+        <div className="container mx-auto px-6 pt-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-background border border-border rounded-2xl p-6 md:p-8">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs uppercase tracking-wider">Full Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs uppercase tracking-wider">Email *</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="you@email.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs uppercase tracking-wider">Phone *</FormLabel>
+                          <FormControl>
+                            <Input type="tel" placeholder="(555) 555-5555" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="instagram"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs uppercase tracking-wider">Instagram</FormLabel>
+                          <FormControl>
+                            <Input placeholder="@yourusername" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="experience"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs uppercase tracking-wider">Experience *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="0-2">0-2 years</SelectItem>
+                              <SelectItem value="2-5">2-5 years</SelectItem>
+                              <SelectItem value="5-10">5-10 years</SelectItem>
+                              <SelectItem value="10+">10+ years</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="clientBook"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs uppercase tracking-wider">Do you currently have a book of clients? *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="less-than-10">Less than 10</SelectItem>
+                            <SelectItem value="10-20">Yes - 10-20 clients</SelectItem>
+                            <SelectItem value="20-30">Yes - 20-30 clients</SelectItem>
+                            <SelectItem value="30-50">Yes - 30-50 clients</SelectItem>
+                            <SelectItem value="50+">Yes - 50+ clients</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="specialties"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs uppercase tracking-wider">Your Specialties *</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="e.g., balayage, extensions, vivid colors..." 
+                            {...field} 
+                            className="resize-none"
+                            rows={2}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="whyDropDead"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs uppercase tracking-wider">What's the biggest reason you want to work at Drop Dead? *</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Tell us what excites you about joining our team..." 
+                            {...field} 
+                            className="resize-none"
+                            rows={3}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs uppercase tracking-wider">Message (optional)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Anything else you'd like us to know?" 
+                            {...field} 
+                            className="resize-none"
+                            rows={2}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    className="w-full group"
+                  >
+                    <span>{isSubmitting ? "Submitting..." : "Submit Application"}</span>
+                    <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                  </Button>
+                </form>
+              </Form>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* View All Link */}
       <motion.div
