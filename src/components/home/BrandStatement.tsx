@@ -1,12 +1,25 @@
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
 import { Section } from "@/components/ui/section";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+
+const rotatingWords = [
+  "Average",
+  "Boring",
+  "Mom's",
+  "Standard",
+  "Typical",
+  "Basic",
+  "Ordinary",
+];
 
 export function BrandStatement() {
   const containerRef = useRef(null);
   const contentRef = useRef(null);
   const isInView = useInView(contentRef, { once: true, margin: "-100px" });
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [displayText, setDisplayText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Scroll-based opacity and blur: starts transparent/blurred, fully visible sooner
   const { scrollYProgress } = useScroll({
@@ -18,6 +31,46 @@ export function BrandStatement() {
   const blur = useTransform(scrollYProgress, [0, 0.5], [8, 0]);
   const blurFilter = useTransform(blur, (v) => `blur(${v}px)`);
   const y = useTransform(scrollYProgress, [0, 0.7], [40, 0]);
+
+  // Typewriter effect
+  useEffect(() => {
+    const currentWord = rotatingWords[currentWordIndex];
+    const typingSpeed = 80;
+    const deletingSpeed = 50;
+    const pauseDuration = 2000;
+
+    let timeout: NodeJS.Timeout;
+
+    if (!isDeleting) {
+      // Typing
+      if (displayText.length < currentWord.length) {
+        timeout = setTimeout(() => {
+          setDisplayText(currentWord.slice(0, displayText.length + 1));
+        }, typingSpeed);
+      } else {
+        // Word complete, pause then start deleting
+        timeout = setTimeout(() => {
+          setIsDeleting(true);
+        }, pauseDuration);
+      }
+    } else {
+      // Deleting
+      if (displayText.length > 0) {
+        timeout = setTimeout(() => {
+          setDisplayText(displayText.slice(0, -1));
+        }, deletingSpeed);
+      } else {
+        // Word deleted, move to next word
+        setIsDeleting(false);
+        setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, currentWordIndex]);
+
+  // Find the longest word to set a fixed width
+  const longestWord = rotatingWords.reduce((a, b) => a.length > b.length ? a : b);
 
   return (
     <Section className="bg-background" theme="light">
@@ -40,7 +93,17 @@ export function BrandStatement() {
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
               Not Your
               <br />
-              <span className="font-light">Average Salon</span>
+              <span className="font-light inline-block relative">
+                {/* Invisible text to maintain width */}
+                <span className="invisible">{longestWord}</span>
+                {/* Actual animated text */}
+                <span className="absolute left-0 top-0">
+                  {displayText}
+                  <span className="inline-block w-[3px] h-[0.9em] bg-background/80 ml-1 animate-pulse align-middle" />
+                </span>
+              </span>
+              <br />
+              <span className="font-light">Salon</span>
             </h2>
           </motion.div>
 
