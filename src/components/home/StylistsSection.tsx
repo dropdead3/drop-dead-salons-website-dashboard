@@ -478,7 +478,7 @@ export function StylistsSection() {
 
       {/* Stylists Grid */}
       <div className="container mx-auto px-6 mt-8">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           {filteredStylists.length > 0 ? (
             <motion.div
               key={`${selectedLocation}-${selectedSpecialty}-${selectedLevel}`}
