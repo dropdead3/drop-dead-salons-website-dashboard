@@ -3,9 +3,9 @@ import { motion, useInView } from "framer-motion";
 import { useCounterAnimation } from "@/hooks/use-counter-animation";
 
 const stats = [
-  { value: 8, suffix: "+", label: "Years of Excellence" },
-  { value: 25, suffix: "+", label: "Expert Stylists" },
-  { value: 15, suffix: "K+", label: "Happy Clients" },
+  { value: 5, suffix: "+", label: "Years of Excellence" },
+  { value: 2, suffix: "K+", label: "Extension Installs" },
+  { value: 10, suffix: "K+", label: "Services Performed" },
   { value: 2, suffix: "", label: "Valley Locations" },
 ];
 
