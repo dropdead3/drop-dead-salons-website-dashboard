@@ -28,7 +28,9 @@ import {
   Eye,
   ChevronDown as ChevronDownIcon,
   Users,
+  Info,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -39,14 +41,25 @@ type StylistLevel = {
   id: string;
   label: string;
   clientLabel: string;
+  description: string;
 };
+
+const defaultDescriptions = [
+  'Rising talent building their craft',
+  'Skilled stylist with proven expertise',
+  'Master artist & senior specialist',
+  'Elite specialist & industry leader',
+  'Signature artist with distinguished reputation',
+  'Icon-level artist at the pinnacle of the craft',
+];
 
 export default function StylistLevels() {
   const [levels, setLevels] = useState<StylistLevel[]>(() => 
     initialLevels.map((l, idx) => ({ 
       id: l.id, 
       label: l.label, 
-      clientLabel: `Level ${idx + 1}` 
+      clientLabel: `Level ${idx + 1}`,
+      description: defaultDescriptions[idx] || 'Experienced stylist',
     }))
   );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -114,6 +127,16 @@ export default function StylistLevels() {
     setHasChanges(true);
   };
 
+  const handleDescriptionChange = (index: number, newDescription: string) => {
+    const newLevels = [...levels];
+    newLevels[index] = {
+      ...newLevels[index],
+      description: newDescription,
+    };
+    setLevels(newLevels);
+    setHasChanges(true);
+  };
+
   const handleDelete = (index: number) => {
     const newLevels = levels.filter((_, idx) => idx !== index);
     const updatedLevels = newLevels.map((level, idx) => ({
@@ -133,6 +156,7 @@ export default function StylistLevels() {
       id: newId,
       label: newLevelName.trim(),
       clientLabel: `Level ${levels.length + 1}`,
+      description: defaultDescriptions[levels.length] || 'Experienced stylist',
     };
     
     setLevels([...levels, newLevel]);
@@ -181,122 +205,136 @@ export default function StylistLevels() {
               const hasStylists = stylistCount > 0;
               
               return (
-                <div
+              <div
                   key={level.id}
                   className={cn(
-                    "group flex items-center gap-4 px-4 py-3 rounded-xl bg-card border transition-all duration-200 hover:shadow-sm",
+                    "group rounded-xl bg-card border transition-all duration-200 hover:shadow-sm",
                     editingIndex === index && "ring-2 ring-primary/50 shadow-sm"
                   )}
                 >
-                  {/* Reorder buttons - subtle */}
-                  <div className="flex flex-col opacity-40 group-hover:opacity-100 transition-opacity">
-                    <button
-                      className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
-                      disabled={index === 0}
-                      onClick={() => handleMoveUp(index)}
-                    >
-                      <ChevronUp className="w-4 h-4" />
-                    </button>
-                    <button
-                      className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
-                      disabled={index === levels.length - 1}
-                      onClick={() => handleMoveDown(index)}
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Level number - minimal */}
-                  <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
-                    {index + 1}
-                  </span>
-
-                  {/* Level name - editable or display */}
-                  {editingIndex === index ? (
-                    <div className="flex-1 flex items-center gap-2">
-                      <Input
-                        value={level.label}
-                        onChange={(e) => handleRename(index, e.target.value)}
-                        className="h-8 text-sm"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') setEditingIndex(null);
-                          if (e.key === 'Escape') setEditingIndex(null);
-                        }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2"
-                        onClick={() => setEditingIndex(null)}
+                  <div className="flex items-center gap-4 px-4 py-3">
+                    {/* Reorder buttons - subtle */}
+                    <div className="flex flex-col opacity-40 group-hover:opacity-100 transition-opacity">
+                      <button
+                        className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                        disabled={index === 0}
+                        onClick={() => handleMoveUp(index)}
                       >
-                        Done
-                      </Button>
+                        <ChevronUp className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                        disabled={index === levels.length - 1}
+                        onClick={() => handleMoveDown(index)}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
                     </div>
-                  ) : (
-                    <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="font-medium truncate">{level.label}</span>
-                        {hasStylists && (
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          className="p-2 rounded-md hover:bg-muted transition-colors"
-                          onClick={() => setEditingIndex(index)}
+
+                    {/* Level number - minimal */}
+                    <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
+                      {index + 1}
+                    </span>
+
+                    {/* Level name - editable or display */}
+                    {editingIndex === index ? (
+                      <div className="flex-1 flex items-center gap-2">
+                        <Input
+                          value={level.label}
+                          onChange={(e) => handleRename(index, e.target.value)}
+                          className="h-8 text-sm"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') setEditingIndex(null);
+                            if (e.key === 'Escape') setEditingIndex(null);
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => setEditingIndex(null)}
                         >
-                          <Pencil className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <button
-                              className="p-2 rounded-md hover:bg-destructive/10 transition-colors disabled:opacity-30"
-                              disabled={levels.length <= 1}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="flex items-center gap-2">
-                                {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
-                                Delete "{level.label}"?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription asChild>
-                                <div className="space-y-3">
-                                  {hasStylists ? (
-                                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
-                                      <p className="font-medium flex items-center gap-2">
-                                        <AlertTriangle className="w-4 h-4" />
-                                        Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
-                                      </p>
-                                      <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
-                                        You'll need to reassign these stylists to a different level.
-                                      </p>
-                                    </div>
-                                  ) : (
-                                    <p>No stylists are currently assigned to this level.</p>
-                                  )}
-                                </div>
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                onClick={() => handleDelete(index)}
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                          Done
+                        </Button>
                       </div>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="font-medium truncate">{level.label}</span>
+                          {hasStylists && (
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            className="p-2 rounded-md hover:bg-muted transition-colors"
+                            onClick={() => setEditingIndex(index)}
+                          >
+                            <Pencil className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <button
+                                className="p-2 rounded-md hover:bg-destructive/10 transition-colors disabled:opacity-30"
+                                disabled={levels.length <= 1}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="flex items-center gap-2">
+                                  {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+                                  Delete "{level.label}"?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription asChild>
+                                  <div className="space-y-3">
+                                    {hasStylists ? (
+                                      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
+                                        <p className="font-medium flex items-center gap-2">
+                                          <AlertTriangle className="w-4 h-4" />
+                                          Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
+                                        </p>
+                                        <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
+                                          You'll need to reassign these stylists to a different level.
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <p>No stylists are currently assigned to this level.</p>
+                                    )}
+                                  </div>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => handleDelete(index)}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Description field */}
+                  <div className="px-4 pb-3 pt-0">
+                    <div className="flex items-start gap-2 pl-14">
+                      <Input
+                        value={level.description}
+                        onChange={(e) => handleDescriptionChange(index, e.target.value)}
+                        placeholder="Brief description for tooltip..."
+                        className="h-7 text-xs text-muted-foreground bg-muted/50 border-0 focus-visible:ring-1"
+                      />
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
@@ -409,11 +447,34 @@ export default function StylistLevels() {
               </div>
             </div>
 
+            {/* Tooltip Preview */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Info className="w-4 h-4" />
+                <span>Tooltip Preview</span>
+              </div>
+              
+              <div className="bg-card border rounded-xl p-4 space-y-3">
+                <p className="font-medium text-sm">Stylist Level System</p>
+                <ul className="text-xs space-y-1.5 text-muted-foreground">
+                  {levels.map((level, idx) => (
+                    <li key={level.id}>
+                      <span className="font-medium text-foreground">Level {idx + 1}:</span>{' '}
+                      {level.description || 'No description'}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground/70 pt-1 border-t">
+                  Higher levels reflect experience, training, and demand.
+                </p>
+              </div>
+            </div>
+
             {/* Stylist Card Preview */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Eye className="w-4 h-4" />
-                <span>Stylist Card Preview</span>
+                <span>Card Preview</span>
               </div>
               
               {/* Mini stylist card mockup */}
@@ -423,9 +484,31 @@ export default function StylistLevels() {
                 
                 {/* Card content overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                  <p className="text-[10px] tracking-[0.2em] text-white/70 mb-1">
-                    LEVEL {previewLevel + 1} STYLIST
-                  </p>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <p className="text-[10px] tracking-[0.2em] text-white/70">
+                      LEVEL {previewLevel + 1} STYLIST
+                    </p>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-white/50 hover:text-white/90 transition-colors">
+                            <Info className="w-3 h-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[240px] p-3">
+                          <p className="font-medium text-xs mb-1.5">Stylist Level System</p>
+                          <ul className="text-[10px] space-y-1 text-muted-foreground">
+                            {levels.map((level, idx) => (
+                              <li key={level.id}>
+                                <span className="font-medium text-foreground">Level {idx + 1}:</span>{' '}
+                                {level.description}
+                              </li>
+                            ))}
+                          </ul>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <h3 className="font-display text-lg">Stylist Name</h3>
                 </div>
               </div>
