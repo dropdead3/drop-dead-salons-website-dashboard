@@ -186,10 +186,10 @@ function CategorySection({
         >
           <div>
             <Eyebrow className="text-muted-foreground mb-3">
-              0{categoryIndex + 1}
+              {category.category === "New-Client Consultations" ? "New-Client" : `0${categoryIndex + 1}`}
             </Eyebrow>
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground leading-tight">
-              {category.category}
+              {category.category === "New-Client Consultations" ? "Consultations" : category.category}
             </h2>
           </div>
           <p className="text-muted-foreground font-sans font-light max-w-md lg:text-right">
