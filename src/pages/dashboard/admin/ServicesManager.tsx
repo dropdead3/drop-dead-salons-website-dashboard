@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { 
   Scissors, 
@@ -36,6 +37,9 @@ import {
   Palette,
   Layers,
   Settings2,
+  GripVertical,
+  Check,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { services as initialServices, stylistLevels as initialStylistLevels, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
@@ -46,6 +50,10 @@ export default function ServicesManager() {
   const [stylistLevels, setStylistLevels] = useState<StylistLevel[]>([...initialStylistLevels]);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingService, setEditingService] = useState<{ categoryIndex: number; itemIndex: number; item: ServiceItem } | null>(null);
+  const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
+  const [draggedCategoryIndex, setDraggedCategoryIndex] = useState<number | null>(null);
+  const [dragOverCategoryIndex, setDragOverCategoryIndex] = useState<number | null>(null);
 
   const totalServices = serviceCategories.reduce((sum, cat) => sum + cat.items.length, 0);
   const popularServices = serviceCategories.reduce(
@@ -82,13 +90,66 @@ export default function ServicesManager() {
     setEditingService(null);
   };
 
-  const filteredCategories = serviceCategories.map(category => ({
-    ...category,
-    items: category.items.filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-  })).filter(category => category.items.length > 0);
+  const handleRenameCategory = (index: number) => {
+    if (!editingCategoryName.trim()) return;
+    setServiceCategories(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], category: editingCategoryName.trim() };
+      return updated;
+    });
+    setEditingCategoryIndex(null);
+    setEditingCategoryName('');
+  };
+
+  const handleCategoryDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedCategoryIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleCategoryDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedCategoryIndex !== null && draggedCategoryIndex !== index) {
+      setDragOverCategoryIndex(index);
+    }
+  };
+
+  const handleCategoryDragLeave = () => {
+    setDragOverCategoryIndex(null);
+  };
+
+  const handleCategoryDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedCategoryIndex === null || draggedCategoryIndex === targetIndex) {
+      setDraggedCategoryIndex(null);
+      setDragOverCategoryIndex(null);
+      return;
+    }
+
+    setServiceCategories(prev => {
+      const updated = [...prev];
+      const [draggedItem] = updated.splice(draggedCategoryIndex, 1);
+      updated.splice(targetIndex, 0, draggedItem);
+      return updated;
+    });
+
+    setDraggedCategoryIndex(null);
+    setDragOverCategoryIndex(null);
+  };
+
+  const handleCategoryDragEnd = () => {
+    setDraggedCategoryIndex(null);
+    setDragOverCategoryIndex(null);
+  };
+
+  const filteredCategories = searchQuery
+    ? serviceCategories.map(category => ({
+        ...category,
+        items: category.items.filter(item => 
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        ),
+      })).filter(category => category.items.length > 0)
+    : serviceCategories;
 
   const getCategoryIcon = (category: string) => {
     if (category.includes('Cut') || category.includes('Styling')) return Scissors;
@@ -191,18 +252,39 @@ export default function ServicesManager() {
 
         {/* Service Categories */}
         <Accordion type="multiple" className="space-y-3">
-          {filteredCategories.map((category, categoryIndex) => {
+          {filteredCategories.map((category, idx) => {
             const CategoryIcon = getCategoryIcon(category.category);
             const originalCategoryIndex = serviceCategories.findIndex(c => c.category === category.category);
+            const isEditing = editingCategoryIndex === originalCategoryIndex;
+            const isDragging = draggedCategoryIndex === originalCategoryIndex;
+            const isDragOver = dragOverCategoryIndex === originalCategoryIndex;
             
             return (
               <AccordionItem 
                 key={category.category} 
                 value={category.category}
-                className="border rounded-lg overflow-hidden"
+                className={cn(
+                  "border rounded-lg overflow-hidden transition-all group",
+                  isDragging && "opacity-50",
+                  isDragOver && "ring-2 ring-primary ring-offset-2"
+                )}
+                draggable={!searchQuery}
+                onDragStart={(e) => handleCategoryDragStart(e, originalCategoryIndex)}
+                onDragOver={(e) => handleCategoryDragOver(e, originalCategoryIndex)}
+                onDragLeave={handleCategoryDragLeave}
+                onDrop={(e) => handleCategoryDrop(e, originalCategoryIndex)}
+                onDragEnd={handleCategoryDragEnd}
               >
-                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&>svg]:shrink-0">
                   <div className="flex items-center gap-3 flex-1">
+                    {!searchQuery && (
+                      <div 
+                        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
+                        <GripVertical className="w-4 h-4" />
+                      </div>
+                    )}
                     <div className={cn(
                       "p-2 rounded-lg",
                       category.isAddOn 
@@ -214,13 +296,68 @@ export default function ServicesManager() {
                         category.isAddOn ? "text-green-600" : "text-foreground"
                       )} />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-medium">{category.category}</h3>
-                      <p className="text-xs text-muted-foreground font-normal">
-                        {category.items.length} services
-                      </p>
-                    </div>
-                    {category.isAddOn && (
+                    {isEditing ? (
+                      <div 
+                        className="flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Input
+                          value={editingCategoryName}
+                          onChange={(e) => setEditingCategoryName(e.target.value)}
+                          className="h-8 w-48"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleRenameCategory(originalCategoryIndex);
+                            } else if (e.key === 'Escape') {
+                              setEditingCategoryIndex(null);
+                              setEditingCategoryName('');
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleRenameCategory(originalCategoryIndex)}
+                        >
+                          <Check className="w-4 h-4 text-green-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditingCategoryIndex(null);
+                            setEditingCategoryName('');
+                          }}
+                        >
+                          <X className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-left">
+                          <h3 className="font-display font-medium">{category.category}</h3>
+                          <p className="text-xs text-muted-foreground font-normal">
+                            {category.items.length} services
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 ml-1 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingCategoryIndex(originalCategoryIndex);
+                            setEditingCategoryName(category.category);
+                          }}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
+                    )}
+                    {category.isAddOn && !isEditing && (
                       <Badge variant="outline" className="ml-2 text-green-600 border-green-300">
                         Add-On
                       </Badge>
