@@ -155,9 +155,9 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                 </p>
               </div>
 
-              {/* Tap hint */}
+              {/* Tap hint - visible on hover */}
               {stylist.bio && (
-                <p className="text-[10px] text-white/40 mt-3 text-center tracking-wide">
+                <p className="text-[10px] text-white/40 mt-3 text-center tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   Tap to learn more
                 </p>
               )}
