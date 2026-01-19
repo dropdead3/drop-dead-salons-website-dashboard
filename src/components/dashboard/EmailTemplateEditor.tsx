@@ -1437,18 +1437,34 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                         )}
                         {block.type === 'button' && (
                           <div style={{ textAlign: block.styles.textAlign }}>
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                backgroundColor: block.styles.buttonColor || '#3b82f6',
-                                color: block.styles.buttonTextColor || '#ffffff',
-                                padding: '16px 32px',
-                                fontWeight: 'bold',
-                                borderRadius: block.styles.borderRadius || '8px',
-                              }}
-                            >
-                              {block.content}
-                            </span>
+                            {block.styles.buttonVariant === 'secondary' ? (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  backgroundColor: block.styles.backgroundColor || '#f5f0e8',
+                                  color: block.styles.buttonColor || '#1a1a1a',
+                                  padding: '16px 32px',
+                                  fontWeight: 'bold',
+                                  borderRadius: block.styles.borderRadius || '8px',
+                                  border: `2px solid ${block.styles.buttonColor || '#1a1a1a'}`,
+                                }}
+                              >
+                                {block.content}
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  backgroundColor: block.styles.buttonColor || '#3b82f6',
+                                  color: block.styles.buttonTextColor || '#ffffff',
+                                  padding: '16px 32px',
+                                  fontWeight: 'bold',
+                                  borderRadius: block.styles.borderRadius || '8px',
+                                }}
+                              >
+                                {block.content}
+                              </span>
+                            )}
                           </div>
                         )}
                         {block.type === 'divider' && (
