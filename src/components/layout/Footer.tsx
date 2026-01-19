@@ -50,7 +50,7 @@ export function Footer() {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-4">
             <Link
               to="/booking"
               className="group inline-flex items-center gap-3 px-8 py-4 text-base font-sans font-medium bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all duration-300 active:scale-[0.98]"
@@ -69,7 +69,7 @@ export function Footer() {
                     className="inline-flex items-center gap-1.5 text-sm font-sans text-foreground/70 hover:text-foreground transition-colors"
                   >
                     <Phone size={14} />
-                    <span className="hidden sm:inline">{loc.name}</span>
+                    <span>{loc.name}</span>
                   </a>
                   {index < locations.length - 1 && <span className="mx-2 text-foreground/30">·</span>}
                 </span>
