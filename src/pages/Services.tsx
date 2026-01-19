@@ -5,32 +5,77 @@ import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
+import { stylists } from "@/data/stylists";
 
 const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
+// Map stylist levels to their corresponding data level strings
+const levelToDataLevel: Record<StylistLevel, string> = {
+  'new-talent': 'LEVEL 1 STYLIST',
+  'emerging': 'LEVEL 2 STYLIST',
+  'lead': 'LEVEL 3 STYLIST',
+  'senior': 'LEVEL 4 STYLIST',
+  'signature': 'LEVEL 5 STYLIST',
+  'icon': 'LEVEL 6 STYLIST',
+};
+
+// Get stylist avatars for a given level
+const getStylistsForLevel = (level: StylistLevel) => {
+  const dataLevel = levelToDataLevel[level];
+  return stylists.filter(s => s.level === dataLevel).slice(0, 3);
+};
+
 function StylistLevelSelector({ 
   selectedLevel, 
-  onLevelChange 
+  onLevelChange,
+  isSticky
 }: { 
   selectedLevel: StylistLevel; 
   onLevelChange: (level: StylistLevel) => void;
+  isSticky: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const selectedItem = stylistLevels.find(l => l.id === selectedLevel);
   const selectedLabel = selectedItem?.label || 'New Talent';
   const selectedClientLabel = selectedItem?.clientLabel || 'Level 1';
+  const levelStylists = getStylistsForLevel(selectedLevel);
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full text-sm font-sans transition-all duration-300 hover:border-foreground/30"
+        className={`flex items-center gap-3 px-4 py-2.5 border rounded-full text-sm font-sans transition-all duration-300 hover:border-foreground/30 ${
+          isSticky 
+            ? 'bg-foreground text-background border-foreground' 
+            : 'bg-card text-foreground border-border'
+        }`}
       >
-        <span className="text-muted-foreground">Service Pricing Level:</span>
-        <span className="font-medium text-foreground">{selectedClientLabel} Stylist — {selectedLabel}</span>
-        <ChevronDown size={16} className={`text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        {/* Stylist Avatars */}
+        {levelStylists.length > 0 && (
+          <div className="flex -space-x-2">
+            {levelStylists.map((stylist, idx) => (
+              <div
+                key={stylist.id}
+                className="w-7 h-7 rounded-full border-2 overflow-hidden"
+                style={{ 
+                  borderColor: isSticky ? 'hsl(var(--foreground))' : 'hsl(var(--background))',
+                  zIndex: 10 - idx 
+                }}
+              >
+                <img
+                  src={stylist.imageUrl}
+                  alt={stylist.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+        <span className={isSticky ? 'text-background/70' : 'text-muted-foreground'}>Service Pricing Level:</span>
+        <span className="font-medium">{selectedClientLabel} Stylist — {selectedLabel}</span>
+        <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isSticky ? 'text-background/70' : 'text-muted-foreground'}`} />
       </button>
       
       <AnimatePresence>
@@ -47,22 +92,46 @@ function StylistLevelSelector({
               transition={{ duration: 0.2 }}
               className="absolute top-full left-0 mt-2 min-w-full w-max bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50"
             >
-              {stylistLevels.map((level) => (
-                <button
-                  key={level.id}
-                  onClick={() => {
-                    onLevelChange(level.id);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full px-4 py-3 text-left text-sm font-sans transition-colors duration-200 flex items-center justify-between ${
-                    selectedLevel === level.id 
-                      ? 'bg-foreground text-background' 
-                      : 'hover:bg-secondary text-foreground'
-                  }`}
-                >
-                  <span>{level.clientLabel} Stylist — {level.label}</span>
-                </button>
-              ))}
+              {stylistLevels.map((level) => {
+                const levelStylistsOption = getStylistsForLevel(level.id);
+                return (
+                  <button
+                    key={level.id}
+                    onClick={() => {
+                      onLevelChange(level.id);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left text-sm font-sans transition-colors duration-200 flex items-center gap-3 ${
+                      selectedLevel === level.id 
+                        ? 'bg-foreground text-background' 
+                        : 'hover:bg-secondary text-foreground'
+                    }`}
+                  >
+                    {/* Avatars in dropdown */}
+                    {levelStylistsOption.length > 0 && (
+                      <div className="flex -space-x-1.5">
+                        {levelStylistsOption.map((stylist, idx) => (
+                          <div
+                            key={stylist.id}
+                            className="w-6 h-6 rounded-full border-2 overflow-hidden"
+                            style={{ 
+                              borderColor: selectedLevel === level.id ? 'hsl(var(--foreground))' : 'hsl(var(--card))',
+                              zIndex: 10 - idx 
+                            }}
+                          >
+                            <img
+                              src={stylist.imageUrl}
+                              alt={stylist.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <span>{level.clientLabel} Stylist — {level.label}</span>
+                  </button>
+                );
+              })}
             </motion.div>
           </>
         )}
@@ -219,6 +288,22 @@ export default function Services() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
   const [selectedLevel, setSelectedLevel] = useState<StylistLevel>('new-talent');
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const [isSticky, setIsSticky] = useState(false);
+
+  // Detect when sticky bar is in sticky state
+  useEffect(() => {
+    const handleScroll = () => {
+      if (stickyRef.current) {
+        const rect = stickyRef.current.getBoundingClientRect();
+        // Check if the element is at its sticky position (top: 120px)
+        setIsSticky(rect.top <= 120);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <Layout>
@@ -265,7 +350,14 @@ export default function Services() {
       </section>
 
       {/* Stylist Level Selector + Pricing Note - Sticky */}
-      <div className="sticky top-[120px] z-30 bg-background/95 backdrop-blur-md py-4">
+      <div 
+        ref={stickyRef}
+        className={`sticky top-[120px] z-30 py-4 transition-all duration-300 ${
+          isSticky 
+            ? 'bg-secondary/98 backdrop-blur-md shadow-md' 
+            : 'bg-background/95 backdrop-blur-md'
+        }`}
+      >
         <div className="container mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -276,8 +368,9 @@ export default function Services() {
             <StylistLevelSelector 
               selectedLevel={selectedLevel}
               onLevelChange={setSelectedLevel}
+              isSticky={isSticky}
             />
-            <p className="text-sm text-muted-foreground font-sans">
+            <p className={`text-sm font-sans transition-colors duration-300 ${isSticky ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
               <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
             </p>
           </motion.div>
