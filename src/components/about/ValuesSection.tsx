@@ -51,13 +51,33 @@ export function ValuesSection() {
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {values.map((value, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {values.slice(0, 3).map((value, index) => (
             <motion.div
               key={value.title}
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="bg-secondary rounded-2xl p-6 lg:p-8 text-center"
+            >
+              <div className="w-12 h-12 mx-auto mb-5 rounded-full bg-background flex items-center justify-center">
+                <value.icon className="w-5 h-5 text-foreground" />
+              </div>
+              <h3 className="text-lg font-display mb-3">{value.title}</h3>
+              <p className="text-sm text-foreground/60 leading-relaxed">
+                {value.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mt-6 lg:mt-8 max-w-2xl lg:max-w-3xl mx-auto">
+          {values.slice(3).map((value, index) => (
+            <motion.div
+              key={value.title}
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: (index + 3) * 0.1 }}
               className="bg-secondary rounded-2xl p-6 lg:p-8 text-center"
             >
               <div className="w-12 h-12 mx-auto mb-5 rounded-full bg-background flex items-center justify-center">
