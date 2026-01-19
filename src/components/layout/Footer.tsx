@@ -1,32 +1,15 @@
 import { Link } from "react-router-dom";
 import { Instagram, ArrowUpRight, MapPin, Phone } from "lucide-react";
 import Logo from "@/assets/drop-dead-logo.svg";
-
+import { useActiveLocations, formatHoursForDisplay, getClosedDays } from "@/hooks/useLocations";
 
 const footerLinks = [
   { href: "/services", label: "Services" },
   { href: "/booking", label: "Book" },
 ];
 
-const locations = [
-  {
-    name: "North Mesa",
-    address: "2036 N Gilbert Rd Ste 1",
-    city: "Mesa, AZ 85203",
-    phone: "(480) 548-1886",
-  },
-  {
-    name: "Val Vista Lakes",
-    address: "3641 E Baseline Rd Suite Q-103",
-    city: "Gilbert, AZ 85234",
-    phone: "(480) 548-1886",
-  },
-];
-
-const hours = "Tue–Sat: 10am–6pm · Closed Sun & Mon";
-
 export function Footer() {
-  return (
+  const { data: locations = [] } = useActiveLocations();
     <footer 
       className="bg-secondary text-foreground"
       data-theme="light"

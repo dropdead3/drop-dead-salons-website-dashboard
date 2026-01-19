@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Phone, MapPin } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { useActiveLocations, formatHoursForDisplay, getClosedDays, type Location } from "@/hooks/useLocations";
 
 // Placeholder gallery images - replace with actual salon photos
 const locationGalleries: Record<string, string[]> = {
@@ -21,33 +22,7 @@ const locationGalleries: Record<string, string[]> = {
   ],
 };
 
-const locations = [
-  {
-    id: "north-mesa",
-    name: "North Mesa",
-    address: "2036 N Gilbert Rd Ste 1",
-    city: "Mesa, AZ 85203",
-    phone: "(480) 548-1886",
-    bookingUrl: "/booking?location=north-mesa",
-    stylistFilterId: "north-mesa",
-  },
-  {
-    id: "val-vista-lakes",
-    name: "Val Vista Lakes",
-    address: "3641 E Baseline Rd Suite Q-103",
-    city: "Gilbert, AZ 85234",
-    phone: "(480) 548-1886",
-    bookingUrl: "/booking?location=val-vista-lakes",
-    stylistFilterId: "val-vista-lakes",
-  },
-];
-
-const hours = {
-  open: "Tue–Sat: 10am–6pm",
-  closed: "Closed Sun & Mon"
-};
-
-function LocationCard({ location, index }: { location: typeof locations[0]; index: number }) {
+function LocationCard({ location, index }: { location: Location; index: number }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isFlipped, setIsFlipped] = useState(false);
   
@@ -82,6 +57,11 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
     setIsFlipped(!isFlipped);
   };
 
+  // Format hours for this location
+  const hoursDisplay = formatHoursForDisplay(location.hours_json);
+  const closedDays = getClosedDays(location.hours_json);
+  const bookingUrl = location.booking_url || `/booking?location=${location.id}`;
+
   return (
     <motion.div
       ref={cardRef}
@@ -111,12 +91,12 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
 
             {/* Hours */}
             <p className="text-sm text-foreground/50 mb-6">
-              {hours.open} · {hours.closed}
+              {hoursDisplay}{closedDays ? ` · ${closedDays}` : ''}
             </p>
 
             {/* Address */}
             <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
+              href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
@@ -151,7 +131,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
               {/* CTAs - move up on hover to reveal hint */}
               <div className="flex flex-col items-center gap-3 transform transition-transform duration-300 group-hover:-translate-y-8">
                 <Link
-                  to={location.bookingUrl}
+                  to={bookingUrl}
                   onClick={(e) => e.stopPropagation()}
                   className="inline-flex items-center justify-center bg-foreground text-background px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/link w-full overflow-hidden"
                 >
@@ -165,7 +145,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
                     if (stylistsSection) {
                       stylistsSection.scrollIntoView({ behavior: 'smooth' });
                       window.dispatchEvent(new CustomEvent('setLocationFilter', { 
-                        detail: { location: location.stylistFilterId } 
+                        detail: { location: location.id } 
                       }));
                     }
                   }}
@@ -232,7 +212,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
             <div className="pt-4 pb-2 text-center flex flex-col items-center gap-2">
               <h3 className="font-display text-xl text-foreground">{location.name}</h3>
               <Link
-                to={location.bookingUrl}
+                to={location.booking_url || `/booking?location=${location.id}`}
                 onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center justify-center bg-foreground text-background px-5 py-2 text-sm font-sans font-medium rounded-full hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
               >
@@ -248,6 +228,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
 
 export function LocationsSection() {
   const sectionRef = useRef<HTMLElement>(null);
+  const { data: locations = [] } = useActiveLocations();
   
   const { scrollYProgress } = useScroll({
     target: sectionRef,

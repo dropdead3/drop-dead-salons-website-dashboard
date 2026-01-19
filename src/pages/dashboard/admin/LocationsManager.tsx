@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +14,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -34,8 +35,8 @@ import {
   MapPin,
   Phone,
   Clock,
-  ExternalLink,
-  GripVertical,
+  Calendar,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
@@ -43,8 +44,34 @@ import {
   useCreateLocation, 
   useUpdateLocation, 
   useDeleteLocation,
-  type Location 
+  formatHoursForDisplay,
+  type Location,
+  type HoursJson,
+  type DayHours,
+  type HolidayClosure,
 } from '@/hooks/useLocations';
+import { format } from 'date-fns';
+
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+const DAY_LABELS: Record<string, string> = {
+  monday: 'Monday',
+  tuesday: 'Tuesday',
+  wednesday: 'Wednesday',
+  thursday: 'Thursday',
+  friday: 'Friday',
+  saturday: 'Saturday',
+  sunday: 'Sunday',
+};
+
+const defaultHours: HoursJson = {
+  monday: { closed: true },
+  tuesday: { open: '10:00', close: '18:00' },
+  wednesday: { open: '10:00', close: '18:00' },
+  thursday: { open: '10:00', close: '18:00' },
+  friday: { open: '10:00', close: '18:00' },
+  saturday: { open: '10:00', close: '18:00' },
+  sunday: { closed: true },
+};
 
 type LocationFormData = {
   id: string;
@@ -55,6 +82,8 @@ type LocationFormData = {
   booking_url: string;
   google_maps_url: string;
   hours: string;
+  hours_json: HoursJson;
+  holiday_closures: HolidayClosure[];
   is_active: boolean;
   display_order: number;
 };
@@ -67,7 +96,9 @@ const emptyForm: LocationFormData = {
   phone: '',
   booking_url: '',
   google_maps_url: '',
-  hours: 'Tue–Sat: 10am–6pm',
+  hours: '',
+  hours_json: defaultHours,
+  holiday_closures: [],
   is_active: true,
   display_order: 0,
 };
@@ -81,6 +112,8 @@ export default function LocationsManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [formData, setFormData] = useState<LocationFormData>(emptyForm);
+  const [newHolidayDate, setNewHolidayDate] = useState('');
+  const [newHolidayName, setNewHolidayName] = useState('');
 
   const handleOpenCreate = () => {
     setEditingLocation(null);
@@ -101,7 +134,9 @@ export default function LocationsManager() {
       phone: location.phone,
       booking_url: location.booking_url || '',
       google_maps_url: location.google_maps_url || '',
-      hours: location.hours || 'Tue–Sat: 10am–6pm',
+      hours: location.hours || '',
+      hours_json: location.hours_json || defaultHours,
+      holiday_closures: location.holiday_closures || [],
       is_active: location.is_active,
       display_order: location.display_order,
     });
@@ -117,7 +152,9 @@ export default function LocationsManager() {
       phone: formData.phone,
       booking_url: formData.booking_url || null,
       google_maps_url: formData.google_maps_url || null,
-      hours: formData.hours || null,
+      hours: formatHoursForDisplay(formData.hours_json),
+      hours_json: formData.hours_json,
+      holiday_closures: formData.holiday_closures,
       is_active: formData.is_active,
       display_order: formData.display_order,
     };
@@ -154,6 +191,36 @@ export default function LocationsManager() {
 
   const handleToggleActive = async (location: Location) => {
     await updateLocation.mutateAsync({ id: location.id, is_active: !location.is_active });
+  };
+
+  const updateDayHours = (day: typeof DAYS[number], field: keyof DayHours, value: string | boolean) => {
+    setFormData(f => ({
+      ...f,
+      hours_json: {
+        ...f.hours_json,
+        [day]: {
+          ...f.hours_json[day],
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  const addHoliday = () => {
+    if (!newHolidayDate || !newHolidayName) return;
+    setFormData(f => ({
+      ...f,
+      holiday_closures: [...f.holiday_closures, { date: newHolidayDate, name: newHolidayName }],
+    }));
+    setNewHolidayDate('');
+    setNewHolidayName('');
+  };
+
+  const removeHoliday = (index: number) => {
+    setFormData(f => ({
+      ...f,
+      holiday_closures: f.holiday_closures.filter((_, i) => i !== index),
+    }));
   };
 
   return (
@@ -231,10 +298,14 @@ export default function LocationsManager() {
                         <Phone className="w-3 h-3 shrink-0" />
                         {location.phone}
                       </p>
-                      {location.hours && (
+                      <p className="flex items-center gap-2">
+                        <Clock className="w-3 h-3 shrink-0" />
+                        {formatHoursForDisplay(location.hours_json) || location.hours || 'No hours set'}
+                      </p>
+                      {location.holiday_closures && location.holiday_closures.length > 0 && (
                         <p className="flex items-center gap-2">
-                          <Clock className="w-3 h-3 shrink-0" />
-                          {location.hours}
+                          <Calendar className="w-3 h-3 shrink-0" />
+                          {location.holiday_closures.length} holiday closure{location.holiday_closures.length !== 1 ? 's' : ''}
                         </p>
                       )}
                     </div>
@@ -285,7 +356,7 @@ export default function LocationsManager() {
 
         {/* Add/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingLocation ? 'Edit Location' : 'Add Location'}
@@ -298,88 +369,211 @@ export default function LocationsManager() {
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4 py-4">
-              <div className="grid gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Location Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
-                    placeholder="e.g., North Mesa"
-                  />
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="hours">Hours</TabsTrigger>
+                <TabsTrigger value="holidays">Holidays</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="details" className="space-y-4 py-4">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Location Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
+                      placeholder="e.g., North Mesa"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Street Address</Label>
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => setFormData(f => ({ ...f, address: e.target.value }))}
+                      placeholder="e.g., 2036 N Gilbert Rd Ste 1"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City, State, ZIP</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => setFormData(f => ({ ...f, city: e.target.value }))}
+                      placeholder="e.g., Mesa, AZ 85203"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData(f => ({ ...f, phone: e.target.value }))}
+                      placeholder="e.g., (480) 548-1886"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="booking_url">Booking URL (optional)</Label>
+                    <Input
+                      id="booking_url"
+                      value={formData.booking_url}
+                      onChange={(e) => setFormData(f => ({ ...f, booking_url: e.target.value }))}
+                      placeholder="e.g., /booking?location=north-mesa"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="google_maps_url">Google Maps URL (optional)</Label>
+                    <Input
+                      id="google_maps_url"
+                      value={formData.google_maps_url}
+                      onChange={(e) => setFormData(f => ({ ...f, google_maps_url: e.target.value }))}
+                      placeholder="https://maps.google.com/..."
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="is_active">Active</Label>
+                    <Switch
+                      id="is_active"
+                      checked={formData.is_active}
+                      onCheckedChange={(checked) => setFormData(f => ({ ...f, is_active: checked }))}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="hours" className="space-y-4 py-4">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Set operating hours for each day of the week
+                </p>
+                <div className="space-y-3">
+                  {DAYS.map(day => {
+                    const dayHours = formData.hours_json[day];
+                    const isClosed = dayHours?.closed;
+                    
+                    return (
+                      <div key={day} className="flex items-center gap-4 py-2 border-b last:border-0">
+                        <div className="w-24">
+                          <span className="text-sm font-medium">{DAY_LABELS[day]}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={!isClosed}
+                            onCheckedChange={(open) => {
+                              if (open) {
+                                updateDayHours(day, 'closed', false);
+                                if (!dayHours?.open) updateDayHours(day, 'open', '10:00');
+                                if (!dayHours?.close) updateDayHours(day, 'close', '18:00');
+                              } else {
+                                updateDayHours(day, 'closed', true);
+                              }
+                            }}
+                          />
+                          <span className="text-xs text-muted-foreground w-12">
+                            {isClosed ? 'Closed' : 'Open'}
+                          </span>
+                        </div>
+                        {!isClosed && (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="time"
+                              value={dayHours?.open || '10:00'}
+                              onChange={(e) => updateDayHours(day, 'open', e.target.value)}
+                              className="w-28 h-8 text-sm"
+                            />
+                            <span className="text-muted-foreground">to</span>
+                            <Input
+                              type="time"
+                              value={dayHours?.close || '18:00'}
+                              onChange={(e) => updateDayHours(day, 'close', e.target.value)}
+                              className="w-28 h-8 text-sm"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Preview: <span className="text-foreground">{formatHoursForDisplay(formData.hours_json)}</span>
+                  </p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="holidays" className="space-y-4 py-4">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Add dates when this location will be closed
+                </p>
+                
+                {/* Add new holiday */}
+                <div className="flex items-end gap-2">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Date</Label>
+                    <Input
+                      type="date"
+                      value={newHolidayDate}
+                      onChange={(e) => setNewHolidayDate(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Holiday Name</Label>
+                    <Input
+                      value={newHolidayName}
+                      onChange={(e) => setNewHolidayName(e.target.value)}
+                      placeholder="e.g., Christmas Day"
+                      className="h-9"
+                    />
+                  </div>
+                  <Button 
+                    size="sm" 
+                    onClick={addHoliday}
+                    disabled={!newHolidayDate || !newHolidayName}
+                  >
+                    Add
+                  </Button>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="address">Street Address</Label>
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData(f => ({ ...f, address: e.target.value }))}
-                    placeholder="e.g., 2036 N Gilbert Rd Ste 1"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="city">City, State, ZIP</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => setFormData(f => ({ ...f, city: e.target.value }))}
-                    placeholder="e.g., Mesa, AZ 85203"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(f => ({ ...f, phone: e.target.value }))}
-                    placeholder="e.g., (480) 548-1886"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="hours">Hours</Label>
-                  <Input
-                    id="hours"
-                    value={formData.hours}
-                    onChange={(e) => setFormData(f => ({ ...f, hours: e.target.value }))}
-                    placeholder="e.g., Tue–Sat: 10am–6pm"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="booking_url">Booking URL (optional)</Label>
-                  <Input
-                    id="booking_url"
-                    value={formData.booking_url}
-                    onChange={(e) => setFormData(f => ({ ...f, booking_url: e.target.value }))}
-                    placeholder="e.g., /booking?location=north-mesa"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="google_maps_url">Google Maps URL (optional)</Label>
-                  <Input
-                    id="google_maps_url"
-                    value={formData.google_maps_url}
-                    onChange={(e) => setFormData(f => ({ ...f, google_maps_url: e.target.value }))}
-                    placeholder="https://maps.google.com/..."
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="is_active">Active</Label>
-                  <Switch
-                    id="is_active"
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData(f => ({ ...f, is_active: checked }))}
-                  />
-                </div>
-              </div>
-            </div>
+                {/* Holiday list */}
+                {formData.holiday_closures.length > 0 ? (
+                  <div className="space-y-2 mt-4">
+                    {formData.holiday_closures
+                      .sort((a, b) => a.date.localeCompare(b.date))
+                      .map((holiday, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                        >
+                          <div>
+                            <p className="text-sm font-medium">{holiday.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(holiday.date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => removeHoliday(index)}
+                            className="p-1 hover:bg-destructive/10 rounded transition-colors"
+                          >
+                            <X className="w-4 h-4 text-destructive" />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No holiday closures scheduled
+                  </p>
+                )}
+              </TabsContent>
+            </Tabs>
             
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
