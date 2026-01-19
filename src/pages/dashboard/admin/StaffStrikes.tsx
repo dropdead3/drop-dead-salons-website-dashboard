@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
+import { StrikeStatisticsCard } from '@/components/dashboard/StrikeStatisticsCard';
 import {
   Select,
   SelectContent,
@@ -221,6 +222,9 @@ export default function StaffStrikes() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Statistics */}
+        <StrikeStatisticsCard strikes={strikes} />
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
