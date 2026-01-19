@@ -150,7 +150,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
               </div>
               
               {/* CTAs - move up on hover to reveal hint */}
-              <div className="flex flex-col items-center gap-3 transform transition-transform duration-300 group-hover:-translate-y-6">
+              <div className="flex flex-col items-center gap-3 transform transition-transform duration-300 group-hover:-translate-y-8">
                 <Link
                   to={location.bookingUrl}
                   onClick={(e) => e.stopPropagation()}
