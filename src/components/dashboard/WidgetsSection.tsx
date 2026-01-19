@@ -3,13 +3,15 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings2, Cake, Calendar } from 'lucide-react';
+import { Settings2, Cake, Calendar, Award } from 'lucide-react';
 import { BirthdayWidget } from './BirthdayWidget';
 import { WorkScheduleWidgetCompact } from './WorkScheduleWidgetCompact';
+import { AnniversaryWidget } from './AnniversaryWidget';
 
 // Widget configuration - add more widgets here as needed
 const AVAILABLE_WIDGETS = [
   { id: 'birthdays', label: 'Team Birthdays', icon: Cake },
+  { id: 'anniversaries', label: 'Work Anniversaries', icon: Award },
   { id: 'schedule', label: 'My Schedule', icon: Calendar },
 ] as const;
 
@@ -20,7 +22,7 @@ interface WidgetsSectionProps {
   defaultEnabledWidgets?: WidgetId[];
 }
 
-export function WidgetsSection({ defaultEnabledWidgets = ['birthdays', 'schedule'] }: WidgetsSectionProps) {
+export function WidgetsSection({ defaultEnabledWidgets = ['birthdays', 'anniversaries', 'schedule'] }: WidgetsSectionProps) {
   const [enabledWidgets, setEnabledWidgets] = useState<WidgetId[]>(defaultEnabledWidgets);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -109,6 +111,7 @@ export function WidgetsSection({ defaultEnabledWidgets = ['birthdays', 'schedule
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {isWidgetEnabled('birthdays') && <BirthdayWidget />}
+        {isWidgetEnabled('anniversaries') && <AnniversaryWidget />}
         {isWidgetEnabled('schedule') && <WorkScheduleWidgetCompact />}
       </div>
     </div>
