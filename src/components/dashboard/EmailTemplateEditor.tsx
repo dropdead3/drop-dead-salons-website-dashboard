@@ -1294,120 +1294,138 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                     </DialogContent>
                   </Dialog>
                 </div>
-                <ScrollArea className="h-[200px]">
-                  <div className="grid grid-cols-1 gap-2 pr-2">
-                    {/* Built-in themes */}
-                    {emailThemes.map((theme) => (
-                      <button
-                        key={theme.id}
-                        onClick={() => applyTheme(theme.id)}
-                        className={cn(
-                          "p-2 rounded-lg border-2 text-left transition-all",
-                          selectedTheme === theme.id 
-                            ? "border-foreground bg-accent/50" 
-                            : "border-transparent bg-muted/30 hover:bg-muted/50"
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="flex gap-0.5">
-                            <div 
-                              className="w-3 h-3 rounded-full border border-border" 
-                              style={{ backgroundColor: theme.colors.headerBg }}
-                            />
-                            <div 
-                              className="w-3 h-3 rounded-full border border-border" 
-                              style={{ backgroundColor: theme.colors.bodyBg }}
-                            />
-                            <div 
-                              className="w-3 h-3 rounded-full border border-border" 
-                              style={{ backgroundColor: theme.colors.buttonBg }}
-                            />
-                            <div 
-                              className="w-3 h-3 rounded-full border border-border" 
-                              style={{ backgroundColor: theme.colors.accentColor }}
-                            />
-                            <div 
-                              className="w-3 h-3 rounded-full border border-border" 
-                              style={{ backgroundColor: theme.colors.white }}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium truncate">{theme.name}</div>
-                            <div className="text-[10px] text-muted-foreground truncate">{theme.description}</div>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                    
-                    {/* Custom themes */}
-                    {customThemes.length > 0 && (
-                      <>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide pt-2 pb-1 font-medium">
-                          Custom Themes
-                        </div>
-                        {customThemes.map((theme) => (
-                          <div
+                <Tabs defaultValue="standard" className="w-full">
+                  <TabsList className="w-full h-8 mb-2">
+                    <TabsTrigger value="standard" className="flex-1 text-xs h-7">
+                      Standard
+                    </TabsTrigger>
+                    <TabsTrigger value="custom" className="flex-1 text-xs h-7">
+                      Custom {customThemes.length > 0 && `(${customThemes.length})`}
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="standard" className="mt-0">
+                    <ScrollArea className="h-[180px]">
+                      <div className="grid grid-cols-1 gap-2 pr-2">
+                        {emailThemes.map((theme) => (
+                          <button
                             key={theme.id}
+                            onClick={() => applyTheme(theme.id)}
                             className={cn(
-                              "p-2 rounded-lg border-2 text-left transition-all group relative",
+                              "p-2 rounded-lg border-2 text-left transition-all",
                               selectedTheme === theme.id 
                                 ? "border-foreground bg-accent/50" 
                                 : "border-transparent bg-muted/30 hover:bg-muted/50"
                             )}
                           >
-                            <button
-                              onClick={() => applyTheme(theme.id)}
-                              className="w-full text-left"
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className="flex gap-0.5">
-                                  <div 
-                                    className="w-3 h-3 rounded-full border border-border" 
-                                    style={{ backgroundColor: theme.colors.headerBg }}
-                                  />
-                                  <div 
-                                    className="w-3 h-3 rounded-full border border-border" 
-                                    style={{ backgroundColor: theme.colors.bodyBg }}
-                                  />
-                                  <div 
-                                    className="w-3 h-3 rounded-full border border-border" 
-                                    style={{ backgroundColor: theme.colors.buttonBg }}
-                                  />
-                                  <div 
-                                    className="w-3 h-3 rounded-full border border-border" 
-                                    style={{ backgroundColor: theme.colors.accentColor }}
-                                  />
-                                  <div 
-                                    className="w-3 h-3 rounded-full border border-border" 
-                                    style={{ backgroundColor: theme.colors.white }}
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-xs font-medium truncate flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3 text-primary" />
-                                    {theme.name}
-                                  </div>
-                                  <div className="text-[10px] text-muted-foreground truncate">{theme.description}</div>
-                                </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-0.5">
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-border" 
+                                  style={{ backgroundColor: theme.colors.headerBg }}
+                                />
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-border" 
+                                  style={{ backgroundColor: theme.colors.bodyBg }}
+                                />
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-border" 
+                                  style={{ backgroundColor: theme.colors.buttonBg }}
+                                />
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-border" 
+                                  style={{ backgroundColor: theme.colors.accentColor }}
+                                />
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-border" 
+                                  style={{ backgroundColor: theme.colors.white }}
+                                />
                               </div>
-                            </button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteCustomTheme(theme.id);
-                              }}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium truncate">{theme.name}</div>
+                                <div className="text-[10px] text-muted-foreground truncate">{theme.description}</div>
+                              </div>
+                            </div>
+                          </button>
                         ))}
-                      </>
-                    )}
-                  </div>
-                </ScrollArea>
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                  
+                  <TabsContent value="custom" className="mt-0">
+                    <ScrollArea className="h-[180px]">
+                      <div className="grid grid-cols-1 gap-2 pr-2">
+                        {customThemes.length > 0 ? (
+                          customThemes.map((theme) => (
+                            <div
+                              key={theme.id}
+                              className={cn(
+                                "p-2 rounded-lg border-2 text-left transition-all group relative",
+                                selectedTheme === theme.id 
+                                  ? "border-foreground bg-accent/50" 
+                                  : "border-transparent bg-muted/30 hover:bg-muted/50"
+                              )}
+                            >
+                              <button
+                                onClick={() => applyTheme(theme.id)}
+                                className="w-full text-left"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className="flex gap-0.5">
+                                    <div 
+                                      className="w-3 h-3 rounded-full border border-border" 
+                                      style={{ backgroundColor: theme.colors.headerBg }}
+                                    />
+                                    <div 
+                                      className="w-3 h-3 rounded-full border border-border" 
+                                      style={{ backgroundColor: theme.colors.bodyBg }}
+                                    />
+                                    <div 
+                                      className="w-3 h-3 rounded-full border border-border" 
+                                      style={{ backgroundColor: theme.colors.buttonBg }}
+                                    />
+                                    <div 
+                                      className="w-3 h-3 rounded-full border border-border" 
+                                      style={{ backgroundColor: theme.colors.accentColor }}
+                                    />
+                                    <div 
+                                      className="w-3 h-3 rounded-full border border-border" 
+                                      style={{ backgroundColor: theme.colors.white }}
+                                    />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-medium truncate flex items-center gap-1">
+                                      <Sparkles className="w-3 h-3 text-primary" />
+                                      {theme.name}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground truncate">{theme.description}</div>
+                                  </div>
+                                </div>
+                              </button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCustomTheme(theme.id);
+                                }}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-6 text-muted-foreground">
+                            <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                            <p className="text-xs">No custom themes yet</p>
+                            <p className="text-[10px] mt-1">Click "New Theme" to create one</p>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                </Tabs>
               </div>
 
               <div className="border-t pt-4">
