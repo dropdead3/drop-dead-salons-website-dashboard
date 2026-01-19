@@ -152,10 +152,10 @@ export function Header() {
           )}>
             <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo with scroll transition - fixed width container to prevent layout shift */}
-            <div className="w-40 lg:w-56 flex items-center">
+            <div className="w-40 lg:w-56 flex items-center h-full">
               <Link
                 to="/"
-                className="inline-flex items-center hover:opacity-70 transition-opacity relative h-10 min-w-[140px]"
+                className="flex items-center justify-start hover:opacity-70 transition-opacity relative min-w-[140px]"
               >
                 {/* Primary Logo - shows when not scrolled OR scrolling up */}
                 <motion.img
@@ -172,8 +172,9 @@ export function Header() {
                     ease: [0.25, 0.1, 0.25, 1]
                   }}
                   className={cn(
-                    "h-10 w-auto absolute left-0 top-1/2 -translate-y-1/2",
-                    isOverDark && "invert"
+                    "h-10 w-auto",
+                    isOverDark && "invert",
+                    isScrolled && !isScrollingUp && "absolute"
                   )}
                 />
                 {/* Secondary Logo - shows when scrolled AND scrolling down */}
@@ -191,7 +192,7 @@ export function Header() {
                     ease: [0.25, 0.1, 0.25, 1]
                   }}
                   className={cn(
-                    "h-5 w-auto absolute left-0 top-1/2 -translate-y-1/2",
+                    "h-5 w-auto absolute",
                     isOverDark && "invert"
                   )}
                 />
