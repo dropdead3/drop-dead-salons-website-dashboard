@@ -50,6 +50,7 @@ import Onboarding from "./pages/dashboard/Onboarding";
 import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
 import ScheduleMeeting from "./pages/dashboard/ScheduleMeeting";
 import MyProfile from "./pages/dashboard/MyProfile";
+import ViewProfile from "./pages/dashboard/ViewProfile";
 import TeamDirectory from "./pages/dashboard/TeamDirectory";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,7 @@ const App = () => (
               {/* Protected dashboard routes */}
               <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
               <Route path="/dashboard/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
+              <Route path="/dashboard/profile/:userId" element={<ProtectedRoute requireSuperAdmin><ViewProfile /></ProtectedRoute>} />
               <Route path="/dashboard/directory" element={<ProtectedRoute requiredPermission="view_team_directory"><TeamDirectory /></ProtectedRoute>} />
               <Route path="/dashboard/program" element={<ProtectedRoute requiredPermission="access_client_engine"><Program /></ProtectedRoute>} />
               <Route path="/dashboard/progress" element={<ProtectedRoute requiredPermission="access_client_engine"><Progress /></ProtectedRoute>} />

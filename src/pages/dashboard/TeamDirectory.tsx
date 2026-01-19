@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2 } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink } from 'lucide-react';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -100,12 +102,16 @@ function getAnniversaryInfo(hireDate: string | null): { isToday: boolean; isUpco
 }
 
 export default function TeamDirectory() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
   const { data: team = [], isLoading } = useTeamDirectory(locationFilter === 'all' ? undefined : locationFilter);
   const { data: locations = [] } = useLocations();
+  const { data: currentUserProfile } = useEmployeeProfile();
   const { data: todaysAnniversaries = [] } = useTodaysAnniversaries();
   const { data: upcomingAnniversaries = [] } = useUpcomingAnniversaries(30);
+  
+  const isSuperAdmin = currentUserProfile?.is_super_admin;
 
   const filteredTeam = team.filter(member => {
     if (!searchQuery) return true;
@@ -280,7 +286,13 @@ export default function TeamDirectory() {
                   </h2>
                   <div className="ml-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
                     {members.map(member => (
-                      <TeamMemberCard key={member.id} member={member} locations={locations} />
+                      <TeamMemberCard 
+                        key={member.id} 
+                        member={member} 
+                        locations={locations}
+                        isSuperAdmin={isSuperAdmin}
+                        onViewProfile={() => navigate(`/dashboard/profile/${member.user_id}`)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -314,9 +326,11 @@ interface TeamMemberCardProps {
     is_super_admin: boolean | null;
   };
   locations: Array<{ id: string; name: string }>;
+  isSuperAdmin?: boolean;
+  onViewProfile?: () => void;
 }
 
-function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
+function TeamMemberCard({ member, locations, isSuperAdmin, onViewProfile }: TeamMemberCardProps) {
   const timeAtCompany = getTimeAtCompany(member.hire_date);
   const memberLocations = member.location_ids || [];
   const hasSchedules = Object.keys(member.location_schedules).length > 0;
@@ -337,11 +351,31 @@ function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
   const primaryRole = getPrimaryRole();
   
   return (
-    <Card className={cn(
-      "group overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 relative",
-      anniversaryInfo?.isToday && "ring-2 ring-amber-400"
-    )}>
+    <Card 
+      className={cn(
+        "group overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 relative",
+        anniversaryInfo?.isToday && "ring-2 ring-amber-400",
+        isSuperAdmin && "cursor-pointer"
+      )}
+      onClick={isSuperAdmin ? onViewProfile : undefined}
+    >
       <CardContent className="p-0">
+        {/* Super admin edit indicator */}
+        {isSuperAdmin && (
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="p-1.5 bg-primary/90 text-primary-foreground rounded-md shadow-sm">
+                    <ExternalLink className="w-3 h-3" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="text-xs">View/Edit Profile</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )}
+        
         {/* Top section with avatar and info */}
         <div className="p-4 flex gap-3">
           {/* Avatar */}
@@ -447,8 +481,8 @@ function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
           </div>
         </div>
         
-        {/* Contact bar */}
-        <div className="px-4 pb-3 flex items-center gap-1">
+        {/* Contact bar - stop propagation to prevent card click */}
+        <div className="px-4 pb-3 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           {member.phone && (
             <TooltipProvider>
               <Tooltip>
