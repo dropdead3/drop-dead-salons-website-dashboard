@@ -265,7 +265,7 @@ export default function Services() {
       </section>
 
       {/* Stylist Level Selector + Pricing Note - Sticky */}
-      <div className="sticky top-[120px] z-30 bg-background/95 backdrop-blur-md border-b border-border/50 py-4">
+      <div className="sticky top-[120px] z-30 bg-background/95 backdrop-blur-md py-4">
         <div className="container mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
