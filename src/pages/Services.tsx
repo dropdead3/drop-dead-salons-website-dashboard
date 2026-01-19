@@ -111,16 +111,9 @@ function ServiceCard({
             </div>
             <div className="text-right shrink-0">
               {hasPrice ? (
-                <div className="flex flex-col items-end">
-                  {!isAddOn && (
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-sans">
-                      Starting at
-                    </span>
-                  )}
-                  <span className="font-display text-sm text-foreground">
-                    {price}
-                  </span>
-                </div>
+                <span className="font-display text-sm text-foreground">
+                  {isAddOn ? price : `${price}+`}
+                </span>
               ) : (
                 <span className="text-xs text-muted-foreground italic">
                   —
