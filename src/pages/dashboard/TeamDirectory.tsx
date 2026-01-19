@@ -15,6 +15,7 @@ import { useUpcomingAnniversaries, useTodaysAnniversaries, MILESTONE_YEARS, getA
 import { cn } from '@/lib/utils';
 
 const roleLabels: Record<string, string> = {
+  super_admin: 'Super Admin',
   admin: 'Admin',
   manager: 'Manager',
   stylist: 'Stylist',
@@ -26,6 +27,7 @@ const roleLabels: Record<string, string> = {
 };
 
 const roleColors: Record<string, string> = {
+  super_admin: 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-900 border-amber-300 dark:from-amber-900/40 dark:to-yellow-900/40 dark:text-amber-300 dark:border-amber-700',
   admin: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
   manager: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800',
   stylist: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
@@ -37,6 +39,7 @@ const roleColors: Record<string, string> = {
 };
 
 const rolePriority: Record<string, number> = {
+  super_admin: 0,
   admin: 1,
   manager: 2,
   stylist: 3,
@@ -304,6 +307,7 @@ interface TeamMemberCardProps {
     hire_date: string | null;
     location_ids: string[] | null;
     location_schedules: Record<string, string[]>;
+    is_super_admin: boolean | null;
   };
   locations: Array<{ id: string; name: string }>;
 }
@@ -439,15 +443,27 @@ function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
             
             {/* Role Badges */}
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {member.roles.map(role => (
+              {/* Super Admin badge first if applicable */}
+              {member.is_super_admin && (
                 <Badge 
-                  key={role} 
                   variant="outline" 
-                  className={`text-xs font-medium border ${roleColors[role] || ''}`}
+                  className={`text-xs font-medium border ${roleColors['super_admin']}`}
                 >
-                  {roleLabels[role] || role}
+                  {roleLabels['super_admin']}
                 </Badge>
-              ))}
+              )}
+              {/* Other roles - exclude admin if super admin to avoid redundancy */}
+              {member.roles
+                .filter(role => !(member.is_super_admin && role === 'admin'))
+                .map(role => (
+                  <Badge 
+                    key={role} 
+                    variant="outline" 
+                    className={`text-xs font-medium border ${roleColors[role] || ''}`}
+                  >
+                    {roleLabels[role] || role}
+                  </Badge>
+                ))}
             </div>
           </div>
         </div>
