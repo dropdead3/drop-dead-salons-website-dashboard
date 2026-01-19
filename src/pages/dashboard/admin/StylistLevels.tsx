@@ -27,6 +27,7 @@ import {
   AlertTriangle,
   Eye,
   ChevronDown as ChevronDownIcon,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -355,53 +356,101 @@ export default function StylistLevels() {
             )}
           </div>
 
-          {/* Preview Panel */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Eye className="w-4 h-4" />
-              <span>Services Page Preview</span>
-            </div>
-            
-            {/* Preview of the dropdown selector */}
-            <div className="bg-foreground rounded-2xl p-6 space-y-4">
-              <p className="text-xs text-background/60 font-sans">
-                How clients see the level selector:
-              </p>
+          {/* Right Column - Preview & Stats */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Stylists Overview */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Users className="w-4 h-4" />
+                <span>Stylists Overview</span>
+              </div>
               
-              {/* Fake dropdown button */}
-              <div className="relative">
-                <button
-                  className="w-full flex items-center justify-between gap-2 px-4 py-2.5 border border-background/30 rounded-full text-sm font-sans bg-background/10 text-background"
-                >
-                  <span className="text-background/70">Pricing Level:</span>
-                  <span className="font-medium">
-                    Level {previewLevel + 1} Stylist — {levels[previewLevel]?.label || 'New Talent'}
+              <div className="bg-card border rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between pb-3 border-b">
+                  <span className="text-sm text-muted-foreground">Total Assigned</span>
+                  <span className="text-lg font-semibold">
+                    {Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0)}
                   </span>
-                  <ChevronDownIcon size={16} className="text-background/70" />
+                </div>
+                
+                <div className="space-y-2">
+                  {levels.map((level, idx) => {
+                    const count = getStylistCount(level.id);
+                    const totalAssigned = Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0);
+                    const percentage = totalAssigned > 0 ? (count / totalAssigned) * 100 : 0;
+                    
+                    return (
+                      <div key={level.id} className="flex items-center gap-3">
+                        <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium text-muted-foreground shrink-0">
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-xs truncate">{level.label}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">{count}</span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary/60 rounded-full transition-all duration-300"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0) === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    No stylists assigned to levels yet
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Preview Panel */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Eye className="w-4 h-4" />
+                <span>Services Page Preview</span>
+              </div>
+              
+              {/* Preview of the dropdown selector */}
+              <div className="bg-foreground rounded-xl p-4 space-y-3">
+                <p className="text-[10px] uppercase tracking-wider text-background/50 font-sans">
+                  Client view
+                </p>
+                
+                {/* Fake dropdown button */}
+                <button
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2 border border-background/30 rounded-full text-xs font-sans bg-background/10 text-background"
+                >
+                  <span className="text-background/70">Level:</span>
+                  <span className="font-medium truncate">
+                    {levels[previewLevel]?.label || 'New Talent'}
+                  </span>
+                  <ChevronDownIcon size={14} className="text-background/70 shrink-0" />
                 </button>
-              </div>
 
-              {/* Preview dropdown items */}
-              <div className="bg-card rounded-xl border shadow-lg overflow-hidden">
-                {levels.map((level, idx) => (
-                  <button
-                    key={level.id}
-                    onClick={() => setPreviewLevel(idx)}
-                    className={cn(
-                      "w-full px-4 py-3 text-left text-sm font-sans transition-colors",
-                      previewLevel === idx 
-                        ? "bg-foreground text-background" 
-                        : "hover:bg-secondary text-foreground"
-                    )}
-                  >
-                    Level {idx + 1} Stylist — {level.label}
-                  </button>
-                ))}
+                {/* Preview dropdown items */}
+                <div className="bg-card rounded-lg border shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                  {levels.map((level, idx) => (
+                    <button
+                      key={level.id}
+                      onClick={() => setPreviewLevel(idx)}
+                      className={cn(
+                        "w-full px-3 py-2 text-left text-xs font-sans transition-colors",
+                        previewLevel === idx 
+                          ? "bg-foreground text-background" 
+                          : "hover:bg-secondary text-foreground"
+                      )}
+                    >
+                      Level {idx + 1} — {level.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-
-              <p className="text-xs text-background/50 leading-relaxed">
-                Click items above to preview how each level appears in the selector.
-              </p>
             </div>
           </div>
         </div>
