@@ -271,7 +271,7 @@ export function JoinTeamSection() {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
               transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-              className="max-w-3xl mx-auto text-center"
+              className="max-w-7xl mx-auto text-center"
             >
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Sparkles className="w-4 h-4 text-foreground/50" />
