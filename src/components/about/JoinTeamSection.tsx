@@ -275,7 +275,7 @@ export function JoinTeamSection() {
             >
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Sparkles className="w-4 h-4 text-foreground/50" />
-                <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+                <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-display">
                   Join Our Team
                 </span>
               </div>
@@ -331,7 +331,7 @@ export function JoinTeamSection() {
               <div className="text-center mb-8">
                 <div className="flex items-center justify-center gap-2 mb-4">
                   <Sparkles className="w-4 h-4 text-foreground/50" />
-                  <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+                  <span className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-display">
                     Join Our Team
                   </span>
                 </div>

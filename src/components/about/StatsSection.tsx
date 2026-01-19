@@ -49,7 +49,7 @@ export function StatsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12 lg:mb-16"
         >
-          <span className="inline-block text-xs uppercase tracking-[0.25em] text-muted-foreground mb-4">
+          <span className="inline-block text-xs uppercase tracking-[0.25em] text-muted-foreground mb-4 font-display">
             By The Numbers
           </span>
           <h2 className="text-3xl md:text-4xl font-display">
