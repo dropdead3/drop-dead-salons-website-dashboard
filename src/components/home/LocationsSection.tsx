@@ -228,7 +228,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
               </div>
             </div>
 
-            {/* Location name, book button, and tap hint */}
+            {/* Location name and book button */}
             <div className="pt-4 pb-2 text-center flex flex-col items-center gap-2">
               <h3 className="font-display text-xl text-foreground">{location.name}</h3>
               <Link
@@ -238,9 +238,6 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
               >
                 Book new-client consultation
               </Link>
-              <p className="text-[10px] text-foreground/50 tracking-wide font-aeonik">
-                Tap to go back
-              </p>
             </div>
           </div>
         </div>
