@@ -38,8 +38,8 @@ export const NewClientSection = () => {
                 transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
                 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6"
               >
-                <span className="whitespace-nowrap">New clients can get</span>{" "}
-                <span>started here</span>
+                <span className="whitespace-nowrap">New Clients</span>{" "}
+                <span>Start Here</span>
               </motion.h2>
               
               <motion.p
