@@ -17,6 +17,7 @@ import About from "./pages/About";
 import Booking from "./pages/Booking";
 import Stylists from "./pages/Stylists";
 import Extensions from "./pages/Extensions";
+import Policies from "./pages/Policies";
 import NotFound from "./pages/NotFound";
 import StaffLogin from "./pages/StaffLogin";
 
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="/booking" element={<Booking />} />
               <Route path="/stylists" element={<Stylists />} />
               <Route path="/extensions" element={<Extensions />} />
+              <Route path="/policies" element={<Policies />} />
               <Route path="/staff-login" element={<StaffLogin />} />
 
               {/* Protected dashboard routes */}
