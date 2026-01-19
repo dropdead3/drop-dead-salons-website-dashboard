@@ -414,8 +414,8 @@ export default function ServicesManager() {
                     ) : (
                       <>
                         <div className="text-left">
-                          <h3 className="font-display font-medium">{category.category}</h3>
-                          <p className="text-xs text-muted-foreground font-normal">
+                          <h3 className="font-display font-medium uppercase tracking-wide">{category.category}</h3>
+                          <p className="text-xs text-muted-foreground font-sans font-normal">
                             {category.items.length} services
                           </p>
                         </div>
