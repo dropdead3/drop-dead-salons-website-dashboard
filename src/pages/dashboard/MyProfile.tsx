@@ -12,7 +12,9 @@ import { Switch } from '@/components/ui/switch';
 import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake } from 'lucide-react';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
-import { locations } from '@/data/stylists';
+import { useLocations } from '@/hooks/useLocations';
+import { useLocationSchedules, useUpsertLocationSchedule } from '@/hooks/useLocationSchedules';
+import { locations as staticLocations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -67,6 +69,9 @@ const formatSocialHandle = (value: string) => {
 export default function MyProfile() {
   const { user, roles } = useAuth();
   const { data: profile, isLoading } = useEmployeeProfile();
+  const { data: locations = [] } = useLocations();
+  const { data: existingSchedules } = useLocationSchedules();
+  const upsertSchedule = useUpsertLocationSchedule();
   const updateProfile = useUpdateEmployeeProfile();
   const uploadPhoto = useUploadProfilePhoto();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,6 +95,8 @@ export default function MyProfile() {
     emergency_phone: '',
     bio: '',
     work_days: [] as string[],
+    // Location-specific schedules: { locationId: ['Mon', 'Tue', ...] }
+    location_schedules: {} as Record<string, string[]>,
   });
 
   const [initialFormData, setInitialFormData] = useState(formData);
@@ -120,12 +127,31 @@ export default function MyProfile() {
         emergency_phone: profile.emergency_phone || '',
         bio: (profile as any).bio || '',
         work_days: profile.work_days || [],
+        location_schedules: {} as Record<string, string[]>,
       };
       setFormData(newFormData);
       setInitialFormData(newFormData);
       setHasUnsavedChanges(false);
     }
   }, [profile]);
+
+  // Load existing location schedules into form data
+  useEffect(() => {
+    if (existingSchedules && existingSchedules.length > 0) {
+      const schedules: Record<string, string[]> = {};
+      existingSchedules.forEach(schedule => {
+        schedules[schedule.location_id] = schedule.work_days || [];
+      });
+      setFormData(prev => ({
+        ...prev,
+        location_schedules: schedules,
+      }));
+      setInitialFormData(prev => ({
+        ...prev,
+        location_schedules: schedules,
+      }));
+    }
+  }, [existingSchedules]);
 
   // Track changes and show toast
   useEffect(() => {
@@ -176,9 +202,25 @@ export default function MyProfile() {
 
   const missingFields = profileFields.filter(f => !f.filled);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile.mutate(formData, {
+    
+    // Save location schedules to the database
+    const schedulePromises = Object.entries(formData.location_schedules).map(
+      ([locationId, workDays]) => 
+        upsertSchedule.mutateAsync({ locationId, workDays })
+    );
+    
+    try {
+      await Promise.all(schedulePromises);
+    } catch (error) {
+      console.error('Error saving schedules:', error);
+      // Continue with profile update even if schedules fail
+    }
+    
+    // Update profile (excluding location_schedules which is stored separately)
+    const { location_schedules, ...profileData } = formData;
+    updateProfile.mutate(profileData as any, {
       onSuccess: () => {
         setInitialFormData(formData);
         setHasUnsavedChanges(false);
@@ -516,52 +558,97 @@ export default function MyProfile() {
             </CardContent>
           </Card>
 
-          {/* Work Days Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Work Schedule
-              </CardTitle>
-              <CardDescription>
-                Select the days you typically work. This helps the team know when you're available.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-7 gap-2">
-                {DAYS_OF_WEEK.map(day => {
-                  const isSelected = formData.work_days.includes(day.key);
+          {/* Work Days Selection - Per Location */}
+          {formData.location_ids.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Preferred Work Schedule
+                </CardTitle>
+                <CardDescription>
+                  Select the days you typically work at each location. Days cannot overlap between locations.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {formData.location_ids.map(locationId => {
+                  const location = locations.find(l => l.id === locationId);
+                  if (!location) return null;
+
+                  const currentSchedule = formData.location_schedules[locationId] || [];
+                  
+                  // Get all days used by OTHER locations
+                  const usedByOtherLocations = Object.entries(formData.location_schedules)
+                    .filter(([locId]) => locId !== locationId)
+                    .flatMap(([, days]) => days);
+
                   return (
-                    <button
-                      key={day.key}
-                      type="button"
-                      onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          work_days: isSelected
-                            ? prev.work_days.filter(d => d !== day.key)
-                            : [...prev.work_days, day.key],
-                        }));
-                      }}
-                      className={cn(
-                        "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all",
-                        isSelected
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      <span className="text-xs font-medium">{day.key}</span>
-                    </button>
+                    <div key={locationId} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium text-sm">{location.name}</span>
+                        {currentSchedule.length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {currentSchedule.length} day{currentSchedule.length !== 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-7 gap-2">
+                        {DAYS_OF_WEEK.map(day => {
+                          const isSelected = currentSchedule.includes(day.key);
+                          const isUsedElsewhere = usedByOtherLocations.includes(day.key);
+                          const otherLocation = isUsedElsewhere 
+                            ? locations.find(l => 
+                                l.id !== locationId && 
+                                formData.location_schedules[l.id]?.includes(day.key)
+                              )
+                            : null;
+                          
+                          return (
+                            <button
+                              key={day.key}
+                              type="button"
+                              disabled={isUsedElsewhere}
+                              onClick={() => {
+                                if (isUsedElsewhere) return;
+                                setFormData(prev => ({
+                                  ...prev,
+                                  location_schedules: {
+                                    ...prev.location_schedules,
+                                    [locationId]: isSelected
+                                      ? currentSchedule.filter(d => d !== day.key)
+                                      : [...currentSchedule, day.key],
+                                  },
+                                }));
+                              }}
+                              title={isUsedElsewhere ? `Already scheduled at ${otherLocation?.name}` : undefined}
+                              className={cn(
+                                "flex flex-col items-center justify-center p-2.5 rounded-lg border-2 transition-all text-xs",
+                                isSelected && "border-primary bg-primary/10 text-primary font-medium",
+                                !isSelected && !isUsedElsewhere && "border-border hover:border-primary/50",
+                                isUsedElsewhere && "border-muted bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50"
+                              )}
+                            >
+                              {day.key}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
-              </div>
-              {formData.work_days.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-3">
-                  Working {formData.work_days.length} day{formData.work_days.length !== 1 ? 's' : ''} per week
-                </p>
-              )}
-            </CardContent>
-          </Card>
+
+                {/* Total days summary */}
+                {Object.values(formData.location_schedules).flat().length > 0 && (
+                  <div className="pt-3 border-t">
+                    <p className="text-xs text-muted-foreground">
+                      Total: {Object.values(formData.location_schedules).flat().length} day{Object.values(formData.location_schedules).flat().length !== 1 ? 's' : ''} per week across all locations
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Professional Info - Only for stylists */}
           {roles.includes('stylist') && (
