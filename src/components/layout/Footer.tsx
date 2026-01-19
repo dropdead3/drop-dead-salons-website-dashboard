@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { Instagram, ArrowUpRight, MapPin, Phone } from "lucide-react";
+import { Instagram, ArrowUpRight, MapPin, Phone, AlertCircle } from "lucide-react";
 import Logo from "@/assets/drop-dead-logo.svg";
-import { useActiveLocations, formatHoursForDisplay, getClosedDays } from "@/hooks/useLocations";
+import { useActiveLocations, formatHoursForDisplay, isClosedForHoliday, isClosedToday } from "@/hooks/useLocations";
 
 const footerLinks = [
   { href: "/services", label: "Services" },
@@ -111,31 +111,52 @@ export function Footer() {
               Locations
             </h4>
             <div className="space-y-5">
-              {locations.map((location) => (
-                <div key={location.name} className="space-y-1">
-                  <a 
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start gap-2 group"
-                  >
-                    <MapPin className="w-4 h-4 text-foreground/40 group-hover:text-foreground flex-shrink-0 mt-0.5 transition-colors" />
-                    <div className="text-sm font-sans font-light text-foreground/70 group-hover:text-foreground transition-colors">
-                      <p className="font-medium text-foreground">{location.name}</p>
-                      <p>{location.address}</p>
-                      <p>{location.city}</p>
-                    </div>
-                  </a>
-                  <a 
-                    href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
-                    className="text-sm font-sans font-light text-foreground/50 hover:text-foreground transition-colors ml-6"
-                  >
-                    {location.phone}
-                  </a>
-                </div>
-              ))}
+              {locations.map((location) => {
+                const holidayClosure = isClosedForHoliday(location.holiday_closures);
+                const closedToday = isClosedToday(location.hours_json);
+                const showClosedNotice = holidayClosure || closedToday;
+                
+                return (
+                  <div key={location.name} className="space-y-1">
+                    {/* Closed Notice */}
+                    {showClosedNotice && (
+                      <div className="flex items-center gap-1.5 text-amber-600 mb-1">
+                        <AlertCircle className="w-3 h-3" />
+                        <span className="text-xs font-medium">
+                          {holidayClosure 
+                            ? `Closed today – ${holidayClosure.name}`
+                            : 'Closed today'
+                          }
+                        </span>
+                      </div>
+                    )}
+                    <a 
+                      href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-2 group"
+                    >
+                      <MapPin className="w-4 h-4 text-foreground/40 group-hover:text-foreground flex-shrink-0 mt-0.5 transition-colors" />
+                      <div className="text-sm font-sans font-light text-foreground/70 group-hover:text-foreground transition-colors">
+                        <p className="font-medium text-foreground">{location.name}</p>
+                        <p>{location.address}</p>
+                        <p>{location.city}</p>
+                      </div>
+                    </a>
+                    <a 
+                      href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
+                      className="text-sm font-sans font-light text-foreground/50 hover:text-foreground transition-colors ml-6"
+                    >
+                      {location.phone}
+                    </a>
+                    {/* Hours for this location */}
+                    <p className="text-xs text-foreground/40 ml-6">
+                      {formatHoursForDisplay(location.hours_json)}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
-            <p className="text-xs text-foreground/40 mt-4">{hours}</p>
           </div>
 
           {/* Contact */}
