@@ -249,7 +249,7 @@ export default function Services() {
               onLevelChange={setSelectedLevel}
             />
             <p className="text-sm text-muted-foreground font-sans">
-              <span className="font-medium text-foreground">Prices shown are starting at</span> and may vary based on hair length, density, and complexity.
+              <span className="font-medium text-foreground">Pricing is variable based on stylist level.</span> View all price levels by selecting a level.
             </p>
           </motion.div>
         </div>
