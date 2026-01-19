@@ -3,24 +3,15 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, Phone, ChevronUp } from "lucide-react";
 import { ScrollProgressButton } from "./ScrollProgressButton";
-
-const locations = [
-  {
-    name: "North Mesa",
-    phone: "(480) 548-1886",
-  },
-  {
-    name: "Val Vista Lakes",
-    phone: "(480) 548-1886",
-  },
-];
+import { useActiveLocations } from "@/hooks/useLocations";
 
 export function StickyFooterBar() {
   const [isVisible, setIsVisible] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
-  const isBookingPage = location.pathname === "/booking";
+  const routeLocation = useLocation();
+  const isBookingPage = routeLocation.pathname === "/booking";
+  const { data: locations = [] } = useActiveLocations();
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -133,30 +124,22 @@ export function StickyFooterBar() {
                 </AnimatePresence>
               </div>
 
-              {/* Desktop: Show both locations with divider between them */}
+              {/* Desktop: Show all locations with dividers between them */}
               <div className="hidden md:flex items-center">
-                <a
-                  href={`tel:${locations[0].phone.replace(/[^0-9]/g, "")}`}
-                  className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-full transition-all duration-200"
-                >
-                  <Phone size={14} />
-                  <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
-                    {locations[0].name}
-                  </span>
-                </a>
-                
-                {/* Divider between locations */}
-                <div className="w-px h-6 bg-foreground/15" />
-                
-                <a
-                  href={`tel:${locations[1].phone.replace(/[^0-9]/g, "")}`}
-                  className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-full transition-all duration-200"
-                >
-                  <Phone size={14} />
-                  <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
-                    {locations[1].name}
-                  </span>
-                </a>
+                {locations.map((loc, index) => (
+                  <div key={loc.id} className="flex items-center">
+                    {index > 0 && <div className="w-px h-6 bg-foreground/15" />}
+                    <a
+                      href={`tel:${loc.phone.replace(/[^0-9]/g, "")}`}
+                      className="flex items-center gap-2 px-4 py-3 text-foreground/70 hover:text-foreground hover:bg-foreground/5 rounded-full transition-all duration-200"
+                    >
+                      <Phone size={14} />
+                      <span className="text-xs font-medium uppercase tracking-wide whitespace-nowrap">
+                        {loc.name}
+                      </span>
+                    </a>
+                  </div>
+                ))}
               </div>
 
               {/* Book CTA */}
