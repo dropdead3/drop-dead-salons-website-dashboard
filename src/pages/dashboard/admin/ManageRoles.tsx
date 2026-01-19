@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key } from 'lucide-react';
+import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key, UserPlus } from 'lucide-react';
 import { useAllUsersWithRoles, useToggleUserRole, ALL_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/hooks/useUserRoles';
 import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
@@ -228,12 +228,20 @@ export default function ManageRoles() {
               className="pl-10"
             />
           </div>
-          <Button asChild variant="outline" className="gap-2">
-            <Link to="/dashboard/admin/approvals">
-              Account Approvals
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/dashboard/admin/invitations">
+                <UserPlus className="w-4 h-4" />
+                Invite Staff Member
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/dashboard/admin/approvals">
+                Account Approvals
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
