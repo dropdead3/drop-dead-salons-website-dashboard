@@ -421,6 +421,7 @@ export type Database = {
           specialties: string[] | null
           stylist_level: string | null
           stylist_type: Database["public"]["Enums"]["stylist_type"] | null
+          tiktok: string | null
           updated_at: string
           user_id: string
           work_days: string[] | null
@@ -455,6 +456,7 @@ export type Database = {
           specialties?: string[] | null
           stylist_level?: string | null
           stylist_type?: Database["public"]["Enums"]["stylist_type"] | null
+          tiktok?: string | null
           updated_at?: string
           user_id: string
           work_days?: string[] | null
@@ -489,6 +491,7 @@ export type Database = {
           specialties?: string[] | null
           stylist_level?: string | null
           stylist_type?: Database["public"]["Enums"]["stylist_type"] | null
+          tiktok?: string | null
           updated_at?: string
           user_id?: string
           work_days?: string[] | null
