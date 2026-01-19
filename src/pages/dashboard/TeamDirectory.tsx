@@ -436,25 +436,10 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
       onClick={isSuperAdmin ? onViewProfile : undefined}
     >
     <CardContent className="p-4">
-        {/* Super admin edit indicator - bottom right */}
-        {isSuperAdmin && (
-          <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="p-1.5 bg-primary/90 text-primary-foreground rounded-md shadow-sm">
-                    <ExternalLink className="w-3 h-3" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="text-xs">View/Edit Profile</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
-
-        {/* Strike indicator for admins/managers - clickable with dropdown */}
-        {canViewStrikes && (
-          <>
+        {/* Bottom-right action icons - appear on hover */}
+        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-1.5">
+          {/* Strike indicator for admins/managers */}
+          {canViewStrikes && (
             <HoverCard openDelay={100} closeDelay={100}>
               <HoverCardTrigger asChild>
                 <button
@@ -463,13 +448,13 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                     setStrikeDialogOpen(true);
                   }}
                   className={cn(
-                    "absolute top-3 right-3 z-10 p-1.5 rounded-full shadow-sm transition-all hover:scale-110",
+                    "p-1.5 rounded-md shadow-sm transition-all hover:scale-110",
                     strikeCount > 0
                       ? "bg-destructive text-destructive-foreground"
-                      : "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                   )}
                 >
-                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <AlertTriangle className="w-3 h-3" />
                 </button>
               </HoverCardTrigger>
               <HoverCardContent 
@@ -503,13 +488,31 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                 </div>
               </HoverCardContent>
             </HoverCard>
-            <AddStrikeDialog
-              userId={member.user_id}
-              userName={member.display_name || member.full_name}
-              open={strikeDialogOpen}
-              onOpenChange={setStrikeDialogOpen}
-            />
-          </>
+          )}
+          
+          {/* Super admin edit indicator */}
+          {isSuperAdmin && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="p-1.5 bg-primary/90 text-primary-foreground rounded-md shadow-sm">
+                    <ExternalLink className="w-3 h-3" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="text-xs">View/Edit Profile</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+        
+        {/* Strike dialog */}
+        {canViewStrikes && (
+          <AddStrikeDialog
+            userId={member.user_id}
+            userName={member.display_name || member.full_name}
+            open={strikeDialogOpen}
+            onOpenChange={setStrikeDialogOpen}
+          />
         )}
         
         {/* Main content - horizontal layout */}
