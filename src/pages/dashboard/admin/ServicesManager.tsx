@@ -36,12 +36,10 @@ import {
   Palette,
   Layers,
   Settings2,
-  FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { services as initialServices, stylistLevels as initialStylistLevels, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
 import { StylistLevelsEditor, type StylistLevel } from '@/components/dashboard/StylistLevelsEditor';
-import { ServiceCategoriesEditor } from '@/components/dashboard/ServiceCategoriesEditor';
 
 export default function ServicesManager() {
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(initialServices);
@@ -186,17 +184,6 @@ export default function ServicesManager() {
                     <Layers className="w-4 h-4" />
                     Stylist Levels
                     <Badge variant="secondary" className="ml-1">{stylistLevels.length}</Badge>
-                  </Button>
-                }
-              />
-              <ServiceCategoriesEditor
-                categories={serviceCategories}
-                onCategoriesChange={setServiceCategories}
-                trigger={
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <FolderOpen className="w-4 h-4" />
-                    Categories
-                    <Badge variant="secondary" className="ml-1">{serviceCategories.length}</Badge>
                   </Button>
                 }
               />
