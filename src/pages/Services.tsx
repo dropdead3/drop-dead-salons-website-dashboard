@@ -294,10 +294,25 @@ export default function Services() {
             transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
             className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
           >
-            <StylistLevelSelector 
-              selectedLevel={selectedLevel}
-              onLevelChange={setSelectedLevel}
-            />
+            <div className="flex items-center gap-4">
+              <AnimatePresence>
+                {isSticky && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3, ease: editorialEasing }}
+                    className="font-sans font-medium text-sm text-foreground whitespace-nowrap"
+                  >
+                    See Pricing by Level
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              <StylistLevelSelector 
+                selectedLevel={selectedLevel}
+                onLevelChange={setSelectedLevel}
+              />
+            </div>
             <p className="text-sm text-muted-foreground font-sans">
               <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
             </p>
