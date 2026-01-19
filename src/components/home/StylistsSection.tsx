@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, ChevronDown, Info, Star, X } from "lucide-react";
+import { ArrowRight, Sparkles, Info, Star, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import {
@@ -14,7 +14,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { TogglePill } from "@/components/ui/toggle-pill";
 import { StylistFlipCard } from "./StylistFlipCard";
-import { ApplicationForm } from "./ApplicationForm";
+import { ApplicationFormDialog } from "./ApplicationFormDialog";
 
 import { stylists, locations, allSpecialties, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
 
@@ -26,12 +26,10 @@ const toTitleCase = (str: string) => {
 // Join Team Card with dynamic column spanning - memoized to prevent re-renders
 const JoinTeamCard = memo(({ 
   stylistCount, 
-  isFormExpanded, 
-  onToggleForm 
+  onOpenForm 
 }: { 
   stylistCount: number; 
-  isFormExpanded: boolean;
-  onToggleForm: () => void;
+  onOpenForm: () => void;
 }) => {
   // Calculate remaining spots for xl (4 cols)
   const remainderXl = stylistCount % 4;
@@ -73,13 +71,11 @@ const JoinTeamCard = memo(({
         </p>
         
         <button
-          onClick={onToggleForm}
+          onClick={onOpenForm}
           className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
         >
-          <span>{isFormExpanded ? "Close" : "Apply now"}</span>
-          <ChevronDown 
-            className={`w-4 h-4 transition-transform duration-300 ${isFormExpanded ? "rotate-180" : ""}`} 
-          />
+          <span>Apply now</span>
+          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
         </button>
       </div>
     </div>
@@ -198,7 +194,7 @@ export function StylistsSection() {
   const [selectedLocation, setSelectedLocation] = useState<Location>("north-mesa");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
-  const [isFormExpanded, setIsFormExpanded] = useState(false);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
 
   // Listen for location filter events from LocationsSection
   useEffect(() => {
@@ -244,12 +240,8 @@ export function StylistsSection() {
       return (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99);
     });
 
-  const handleToggleForm = useCallback(() => {
-    setIsFormExpanded(prev => !prev);
-  }, []);
-
-  const handleCloseForm = useCallback(() => {
-    setIsFormExpanded(false);
+  const handleOpenFormDialog = useCallback(() => {
+    setIsFormDialogOpen(true);
   }, []);
 
   return (
@@ -438,8 +430,7 @@ export function StylistsSection() {
               {/* Join Our Team Card - dynamically spans remaining columns */}
               <JoinTeamCard 
                 stylistCount={filteredStylists.length} 
-                isFormExpanded={isFormExpanded}
-                onToggleForm={handleToggleForm}
+                onOpenForm={handleOpenFormDialog}
               />
             </motion.div>
           ) : (
@@ -459,10 +450,8 @@ export function StylistsSection() {
         </AnimatePresence>
       </div>
 
-      {/* Collapsible Application Form */}
-      {isFormExpanded && (
-        <ApplicationForm onClose={handleCloseForm} />
-      )}
+      {/* Application Form Dialog */}
+      <ApplicationFormDialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen} />
 
       {/* View All Link */}
       <motion.div
