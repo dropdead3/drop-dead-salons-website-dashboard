@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
 
 const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
@@ -219,6 +219,15 @@ export default function Services() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
   const [selectedLevel, setSelectedLevel] = useState<StylistLevel>('new-talent');
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <Layout>
@@ -265,7 +274,7 @@ export default function Services() {
       </section>
 
       {/* Stylist Level Selector + Pricing Note - Sticky */}
-      <div className="sticky top-[120px] z-30 bg-background/95 backdrop-blur-md py-4">
+      <div className={`sticky top-[120px] z-30 backdrop-blur-md py-4 transition-colors duration-300 ${isScrolled ? 'bg-secondary/95' : 'bg-background/95'}`}>
         <div className="container mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
