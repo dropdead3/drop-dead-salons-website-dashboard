@@ -53,11 +53,14 @@ import {
   Sparkles,
   Link,
   Copy,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
 
 // Import brand logos
 import dropDeadLogo from '@/assets/drop-dead-logo.svg';
@@ -332,7 +335,8 @@ ${blockHtml}
 
 export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: EmailTemplateEditorProps) {
   const defaultTheme = emailThemes[0]; // Drop Dead Standard
-  const [blocks, setBlocks] = useState<EmailBlock[]>(() => {
+  
+  const getInitialBlocks = (): EmailBlock[] => {
     const parsed = parseHtmlToBlocks(initialHtml);
     return parsed.length > 0 ? parsed : [
       {
@@ -375,7 +379,16 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
         linkUrl: '{{dashboard_url}}',
       },
     ];
-  });
+  };
+
+  const { 
+    state: blocks, 
+    setState: setBlocks, 
+    undo, 
+    redo, 
+    canUndo, 
+    canRedo 
+  } = useUndoRedo<EmailBlock[]>(getInitialBlocks());
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'visual' | 'code' | 'preview'>('visual');
   const [isUploading, setIsUploading] = useState(false);
@@ -539,7 +552,47 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
     const html = blocksToHtml(newBlocks);
     setRawHtml(html);
     onHtmlChange(html);
-  }, [onHtmlChange]);
+  }, [onHtmlChange, setBlocks]);
+
+  const handleUndo = useCallback(() => {
+    const previousBlocks = undo();
+    if (previousBlocks) {
+      const html = blocksToHtml(previousBlocks);
+      setRawHtml(html);
+      onHtmlChange(html);
+    }
+  }, [undo, onHtmlChange]);
+
+  const handleRedo = useCallback(() => {
+    const nextBlocks = redo();
+    if (nextBlocks) {
+      const html = blocksToHtml(nextBlocks);
+      setRawHtml(html);
+      onHtmlChange(html);
+    }
+  }, [redo, onHtmlChange]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          handleRedo();
+        } else {
+          e.preventDefault();
+          handleUndo();
+        }
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   const addBlock = (type: BlockType, buttonVariant?: 'primary' | 'secondary') => {
     // Get the current theme colors for new blocks
@@ -776,20 +829,46 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
       )}
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="w-full">
-          <TabsTrigger value="visual" className="flex-1 gap-2">
-            <Palette className="w-4 h-4" />
-            Visual Editor
-          </TabsTrigger>
-          <TabsTrigger value="code" className="flex-1 gap-2">
-            <Code className="w-4 h-4" />
-            HTML Code
-          </TabsTrigger>
-          <TabsTrigger value="preview" className="flex-1 gap-2">
-            <Eye className="w-4 h-4" />
-            Preview
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between gap-4 mb-2">
+          <TabsList className="flex-1">
+            <TabsTrigger value="visual" className="flex-1 gap-2">
+              <Palette className="w-4 h-4" />
+              Visual Editor
+            </TabsTrigger>
+            <TabsTrigger value="code" className="flex-1 gap-2">
+              <Code className="w-4 h-4" />
+              HTML Code
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="flex-1 gap-2">
+              <Eye className="w-4 h-4" />
+              Preview
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Undo/Redo buttons */}
+          <div className="flex items-center gap-1 border rounded-md p-1 bg-muted/50">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleUndo}
+              disabled={!canUndo}
+              className="h-7 w-7 p-0"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRedo}
+              disabled={!canRedo}
+              className="h-7 w-7 p-0"
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              <Redo2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
 
         <TabsContent value="visual" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
