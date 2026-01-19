@@ -235,14 +235,14 @@ export default function Services() {
         </div>
       </section>
 
-      {/* Stylist Level Selector + Pricing Note */}
-      <section className="pb-8 lg:pb-12">
+      {/* Stylist Level Selector + Pricing Note - Sticky */}
+      <div className="sticky top-[72px] z-30 bg-background/95 backdrop-blur-md border-b border-border/50 py-4">
         <div className="container mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
-            className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"
+            className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
           >
             <StylistLevelSelector 
               selectedLevel={selectedLevel}
@@ -253,7 +253,7 @@ export default function Services() {
             </p>
           </motion.div>
         </div>
-      </section>
+      </div>
 
       {/* New Client Notice */}
       <section className="pb-8 lg:pb-12">
