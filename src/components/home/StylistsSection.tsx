@@ -35,6 +35,7 @@ import {
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { TogglePill } from "@/components/ui/toggle-pill";
+import { StylistFlipCard } from "./StylistFlipCard";
 
 import { stylists, locations, allSpecialties, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
 
@@ -487,7 +488,7 @@ export function StylistsSection() {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
               {filteredStylists.map((stylist, index) => (
-                <StylistCard key={stylist.id} stylist={stylist} index={index} selectedLocation={selectedLocation} />
+                <StylistFlipCard key={stylist.id} stylist={stylist} index={index} selectedLocation={selectedLocation} />
               ))}
               
               {/* Join Our Team Card - dynamically spans remaining columns */}
