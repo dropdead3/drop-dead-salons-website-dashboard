@@ -160,7 +160,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]['items'][
           </div>
         )}
         
-        <h3 className="font-sans text-xl lg:text-2xl font-medium text-foreground mb-3 leading-tight">
+        <h3 className="font-display text-base lg:text-lg text-foreground mb-3 leading-tight">
           {service.name}
         </h3>
         
