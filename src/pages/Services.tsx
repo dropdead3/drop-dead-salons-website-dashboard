@@ -40,7 +40,6 @@ function StylistLevelSelector({
   const selectedItem = stylistLevels.find(l => l.id === selectedLevel);
   const selectedLabel = selectedItem?.label || 'New Talent';
   const selectedClientLabel = selectedItem?.clientLabel || 'Level 1';
-  const levelStylists = getStylistsForLevel(selectedLevel);
 
   return (
     <div className="relative">
@@ -52,27 +51,6 @@ function StylistLevelSelector({
             : 'bg-card text-foreground border-border'
         }`}
       >
-        {/* Stylist Avatars */}
-        {levelStylists.length > 0 && (
-          <div className="flex -space-x-2">
-            {levelStylists.map((stylist, idx) => (
-              <div
-                key={stylist.id}
-                className="w-7 h-7 rounded-full border-2 overflow-hidden"
-                style={{ 
-                  borderColor: isSticky ? 'hsl(var(--foreground))' : 'hsl(var(--background))',
-                  zIndex: 10 - idx 
-                }}
-              >
-                <img
-                  src={stylist.imageUrl}
-                  alt={stylist.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        )}
         <span className={isSticky ? 'text-background/70' : 'text-muted-foreground'}>Service Pricing Level:</span>
         <span className="font-medium">{selectedClientLabel} Stylist — {selectedLabel}</span>
         <ChevronDown size={16} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isSticky ? 'text-background/70' : 'text-muted-foreground'}`} />
@@ -92,50 +70,61 @@ function StylistLevelSelector({
               transition={{ duration: 0.2 }}
               className="absolute top-full left-0 mt-2 min-w-full w-max bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50"
             >
-              {stylistLevels.map((level) => {
-                const levelStylistsOption = getStylistsForLevel(level.id);
-                return (
-                  <button
-                    key={level.id}
-                    onClick={() => {
-                      onLevelChange(level.id);
-                      setIsOpen(false);
-                    }}
-                    className={`w-full px-4 py-3 text-left text-sm font-sans transition-colors duration-200 flex items-center gap-3 ${
-                      selectedLevel === level.id 
-                        ? 'bg-foreground text-background' 
-                        : 'hover:bg-secondary text-foreground'
-                    }`}
-                  >
-                    {/* Avatars in dropdown */}
-                    {levelStylistsOption.length > 0 && (
-                      <div className="flex -space-x-1.5">
-                        {levelStylistsOption.map((stylist, idx) => (
-                          <div
-                            key={stylist.id}
-                            className="w-6 h-6 rounded-full border-2 overflow-hidden"
-                            style={{ 
-                              borderColor: selectedLevel === level.id ? 'hsl(var(--foreground))' : 'hsl(var(--card))',
-                              zIndex: 10 - idx 
-                            }}
-                          >
-                            <img
-                              src={stylist.imageUrl}
-                              alt={stylist.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <span>{level.clientLabel} Stylist — {level.label}</span>
-                  </button>
-                );
-              })}
+              {stylistLevels.map((level) => (
+                <button
+                  key={level.id}
+                  onClick={() => {
+                    onLevelChange(level.id);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-4 py-3 text-left text-sm font-sans transition-colors duration-200 ${
+                    selectedLevel === level.id 
+                      ? 'bg-foreground text-background' 
+                      : 'hover:bg-secondary text-foreground'
+                  }`}
+                >
+                  <span>{level.clientLabel} Stylist — {level.label}</span>
+                </button>
+              ))}
             </motion.div>
           </>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function StylistAvatars({ selectedLevel }: { selectedLevel: StylistLevel }) {
+  const levelStylists = getStylistsForLevel(selectedLevel);
+  
+  if (levelStylists.length === 0) return null;
+  
+  return (
+    <div className="hidden sm:flex items-center gap-3 ml-auto">
+      <span className="text-xs text-muted-foreground font-sans">
+        {levelStylists.length} stylist{levelStylists.length !== 1 ? 's' : ''} at this level
+      </span>
+      <div className="flex -space-x-2">
+        <AnimatePresence mode="popLayout">
+          {levelStylists.map((stylist, idx) => (
+            <motion.div
+              key={stylist.id}
+              initial={{ opacity: 0, scale: 0.8, x: -10 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.8, x: 10 }}
+              transition={{ duration: 0.2, delay: idx * 0.05 }}
+              className="w-9 h-9 rounded-full border-2 border-background overflow-hidden shadow-sm"
+              style={{ zIndex: 10 - idx }}
+            >
+              <img
+                src={stylist.imageUrl}
+                alt={stylist.name}
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -370,9 +359,10 @@ export default function Services() {
               onLevelChange={setSelectedLevel}
               isSticky={isSticky}
             />
-            <p className={`text-sm font-sans transition-colors duration-300 ${isSticky ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-              <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
+            <p className="text-sm font-sans text-muted-foreground flex-shrink-0">
+              <span className="font-medium text-foreground">Pricing varies by stylist level</span>
             </p>
+            <StylistAvatars selectedLevel={selectedLevel} />
           </motion.div>
         </div>
       </div>
