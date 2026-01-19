@@ -3,7 +3,7 @@ import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { ArrowUpRight, ArrowRight, Sparkles, Clock, Star } from "lucide-react";
+import { ArrowUpRight, ArrowRight, Sparkles, Clock, Star, UserPlus } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useRef } from "react";
 
@@ -287,7 +287,8 @@ export default function Services() {
             className="max-w-4xl"
           >
             <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 md:p-8">
-              <p className="font-display text-xs tracking-[0.2em] uppercase text-primary mb-3">
+              <p className="inline-flex items-center gap-2 font-display text-xs tracking-[0.2em] uppercase text-primary mb-3">
+                <UserPlus size={14} />
                 New Clients
               </p>
               <p className="font-sans text-base md:text-lg text-foreground/80 leading-relaxed mb-4">
