@@ -1,11 +1,11 @@
 // Stylist levels in order of experience
 export const stylistLevels = [
-  { id: 'new-talent', label: 'New Talent' },
-  { id: 'emerging', label: 'Emerging Artist' },
-  { id: 'lead', label: 'Lead Artist' },
-  { id: 'senior', label: 'Senior Artist' },
-  { id: 'signature', label: 'Signature Artist' },
-  { id: 'icon', label: 'Icon Artist' },
+  { id: 'new-talent', label: 'New Talent', clientLabel: 'Level 1' },
+  { id: 'emerging', label: 'Emerging Artist', clientLabel: 'Level 2' },
+  { id: 'lead', label: 'Lead Artist', clientLabel: 'Level 3' },
+  { id: 'senior', label: 'Senior Artist', clientLabel: 'Level 4' },
+  { id: 'signature', label: 'Signature Artist', clientLabel: 'Level 5' },
+  { id: 'icon', label: 'Icon Artist', clientLabel: 'Level 6' },
 ] as const;
 
 export type StylistLevel = typeof stylistLevels[number]['id'];
