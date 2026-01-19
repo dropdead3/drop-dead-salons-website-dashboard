@@ -44,6 +44,7 @@ import ServicesManager from "./pages/dashboard/admin/ServicesManager";
 import StylistLevels from "./pages/dashboard/admin/StylistLevels";
 import LocationsManager from "./pages/dashboard/admin/LocationsManager";
 import CommandCenterConsole from "./pages/dashboard/admin/CommandCenterConsole";
+import TeamBirthdays from "./pages/dashboard/admin/TeamBirthdays";
 import MyHandbooks from "./pages/dashboard/MyHandbooks";
 import Onboarding from "./pages/dashboard/Onboarding";
 import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
@@ -93,6 +94,7 @@ const App = () => (
               
               {/* Admin routes */}
               <Route path="/dashboard/admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/birthdays" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamBirthdays /></ProtectedRoute>} />
               <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
               <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
               <Route path="/dashboard/admin/homepage-stylists" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><HomepageStylists /></ProtectedRoute>} />
