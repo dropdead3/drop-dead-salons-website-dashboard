@@ -220,18 +220,22 @@ export default function Services() {
   const heroInView = useInView(heroRef, { once: true });
   const [selectedLevel, setSelectedLevel] = useState<StylistLevel>('new-talent');
   const [isSticky, setIsSticky] = useState(false);
-  const stickyRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (stickyRef.current) {
-        const rect = stickyRef.current.getBoundingClientRect();
-        // The element is sticky when its top equals the sticky offset (120px)
-        setIsSticky(rect.top <= 120);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When sentinel is not visible (scrolled past), the bar is sticky
+        setIsSticky(!entry.isIntersecting);
+      },
+      { threshold: 0, rootMargin: '-120px 0px 0px 0px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -278,8 +282,11 @@ export default function Services() {
         </div>
       </section>
 
+      {/* Sentinel for sticky detection */}
+      <div ref={sentinelRef} className="h-0" />
+
       {/* Stylist Level Selector + Pricing Note - Sticky */}
-      <div ref={stickyRef} className={`sticky top-[120px] z-30 backdrop-blur-md py-4 transition-all duration-300 ${isSticky ? 'bg-muted/95 shadow-md' : 'bg-background/95'}`}>
+      <div className={`sticky top-[120px] z-30 backdrop-blur-md py-4 transition-all duration-300 ease-out ${isSticky ? 'bg-foreground/10 shadow-lg' : 'bg-background/95'}`}>
         <div className="container mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
