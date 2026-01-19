@@ -4,29 +4,11 @@ import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
-import { stylists } from "@/data/stylists";
 
 const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
-
-// Map StylistLevel IDs to stylist data level strings
-const levelMapping: Record<StylistLevel, string> = {
-  'new-talent': 'LEVEL 1 STYLIST',
-  'emerging': 'LEVEL 2 STYLIST',
-  'lead': 'LEVEL 3 STYLIST',
-  'senior': 'LEVEL 4 STYLIST',
-  'signature': 'LEVEL 5 STYLIST',
-  'icon': 'LEVEL 6 STYLIST',
-};
-
-// Get stylists filtered by the selected pricing level
-const getStylistsByLevel = (level: StylistLevel) => {
-  const mappedLevel = levelMapping[level];
-  return stylists.filter(s => s.level === mappedLevel);
-};
 
 function StylistLevelSelector({ 
   selectedLevel, 
@@ -237,24 +219,6 @@ export default function Services() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
   const [selectedLevel, setSelectedLevel] = useState<StylistLevel>('new-talent');
-  const [isSticky, setIsSticky] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // When sentinel is not visible (scrolled past), the bar is sticky
-        setIsSticky(!entry.isIntersecting);
-      },
-      { threshold: 0, rootMargin: '-120px 0px 0px 0px' }
-    );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <Layout>
@@ -300,81 +264,22 @@ export default function Services() {
         </div>
       </section>
 
-      {/* Sentinel for sticky detection */}
-      <div ref={sentinelRef} className="h-0" />
-
       {/* Stylist Level Selector + Pricing Note - Sticky */}
-      <div className={`sticky top-[120px] z-30 backdrop-blur-md py-4 transition-all duration-300 ease-out ${isSticky ? 'bg-foreground/10 shadow-lg' : 'bg-background/95'}`}>
+      <div className="sticky top-[120px] z-30 bg-background/95 backdrop-blur-md py-4">
         <div className="container mx-auto px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6"
+            className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
           >
-            <div className="flex items-center gap-4">
-              <AnimatePresence>
-                {isSticky && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: editorialEasing }}
-                    className="font-sans font-medium text-sm text-foreground whitespace-nowrap"
-                  >
-                    See Pricing by Level
-                  </motion.span>
-                )}
-              </AnimatePresence>
-              <StylistLevelSelector 
-                selectedLevel={selectedLevel}
-                onLevelChange={setSelectedLevel}
-              />
-              <p className="hidden lg:block text-sm text-muted-foreground font-sans">
-                <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
-              </p>
-            </div>
-            
-            {/* Stylist Headshots */}
-            <div className="hidden sm:flex items-center gap-1">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={selectedLevel}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3, ease: editorialEasing }}
-                  className="flex items-center -space-x-2"
-                >
-                  {getStylistsByLevel(selectedLevel).slice(0, 5).map((stylist, index) => (
-                    <TooltipProvider key={stylist.id} delayDuration={0}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3, delay: index * 0.05, ease: editorialEasing }}
-                            className="relative cursor-pointer"
-                          >
-                            <img
-                              src={stylist.imageUrl}
-                              alt={stylist.name}
-                              className="w-10 h-10 rounded-full object-cover border-2 border-background shadow-sm transition-transform duration-200 hover:scale-110 hover:z-10"
-                            />
-                          </motion.div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="font-sans text-xs">
-                          {stylist.name}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ))}
-                  {getStylistsByLevel(selectedLevel).length === 0 && (
-                    <span className="text-xs text-muted-foreground font-sans italic">No stylists at this level yet</span>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
+            <StylistLevelSelector 
+              selectedLevel={selectedLevel}
+              onLevelChange={setSelectedLevel}
+            />
+            <p className="text-sm text-muted-foreground font-sans">
+              <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
+            </p>
           </motion.div>
         </div>
       </div>
