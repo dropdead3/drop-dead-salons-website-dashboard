@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,9 +39,12 @@ import {
   Send,
   UserPlus,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  QrCode,
+  Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { QRCodeCanvas } from 'qrcode.react';
 
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
@@ -57,6 +60,98 @@ const STATUS_CONFIG: Record<string, { icon: typeof Clock; color: string; label: 
   expired: { icon: AlertTriangle, color: 'text-gray-500', label: 'Expired' },
   cancelled: { icon: XCircle, color: 'text-red-600', label: 'Cancelled' },
 };
+
+// Get the base URL for the staff login page
+const getStaffLoginUrl = () => {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/staff-login`;
+  }
+  return '/staff-login';
+};
+
+// QR Code Card Component
+function QRCodeCard() {
+  const qrRef = useRef<HTMLDivElement>(null);
+  const staffLoginUrl = getStaffLoginUrl();
+
+  const downloadQRCode = () => {
+    const canvas = qrRef.current?.querySelector('canvas');
+    if (!canvas) return;
+
+    // Create a new canvas with padding and branding
+    const paddedCanvas = document.createElement('canvas');
+    const ctx = paddedCanvas.getContext('2d');
+    if (!ctx) return;
+
+    const padding = 40;
+    const textHeight = 80;
+    paddedCanvas.width = canvas.width + padding * 2;
+    paddedCanvas.height = canvas.height + padding * 2 + textHeight;
+
+    // White background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, paddedCanvas.width, paddedCanvas.height);
+
+    // Draw QR code
+    ctx.drawImage(canvas, padding, padding);
+
+    // Add title text
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Create Your Staff Account', paddedCanvas.width / 2, canvas.height + padding + 35);
+    
+    // Add URL text
+    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#666666';
+    ctx.fillText('Scan to get started', paddedCanvas.width / 2, canvas.height + padding + 60);
+
+    // Download
+    const link = document.createElement('a');
+    link.download = 'staff-signup-qr-code.png';
+    link.href = paddedCanvas.toDataURL('image/png');
+    link.click();
+  };
+
+  return (
+    <Card className="bg-muted/50">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <QrCode className="w-4 h-4" />
+          Staff Signup QR Code
+        </CardTitle>
+        <CardDescription>
+          Print this for your handbook or post in the break room
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div 
+          ref={qrRef}
+          className="flex justify-center p-4 bg-white rounded-lg"
+        >
+          <QRCodeCanvas 
+            value={staffLoginUrl} 
+            size={160}
+            level="H"
+            marginSize={2}
+          />
+        </div>
+        <div className="text-center text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">Create Your Staff Account</p>
+          <p className="text-xs mt-1 break-all">{staffLoginUrl}</p>
+        </div>
+        <Button 
+          onClick={downloadQRCode} 
+          variant="outline" 
+          className="w-full gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Download for Print
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function StaffInvitations() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -313,26 +408,32 @@ export default function StaffInvitations() {
           </TabsContent>
         </Tabs>
 
-        {/* Info Card */}
-        <Card className="bg-muted/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              How Invitations Work
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground space-y-2">
-            <p>
-              <strong className="text-foreground">Sending:</strong> When you invite someone, they receive an invitation to create their account.
-            </p>
-            <p>
-              <strong className="text-foreground">Expiration:</strong> Invitations expire after 7 days. You can resend expired invitations.
-            </p>
-            <p>
-              <strong className="text-foreground">Auto-approval:</strong> Users who sign up with a valid invitation are automatically approved with their assigned role.
-            </p>
-          </CardContent>
-        </Card>
+        {/* QR Code and Info Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* QR Code Card */}
+          <QRCodeCard />
+
+          {/* Info Card */}
+          <Card className="bg-muted/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                How Invitations Work
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground space-y-2">
+              <p>
+                <strong className="text-foreground">Sending:</strong> When you invite someone, they receive an invitation to create their account.
+              </p>
+              <p>
+                <strong className="text-foreground">Expiration:</strong> Invitations expire after 7 days. You can resend expired invitations.
+              </p>
+              <p>
+                <strong className="text-foreground">Auto-approval:</strong> Users who sign up with a valid invitation are automatically approved with their assigned role.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
