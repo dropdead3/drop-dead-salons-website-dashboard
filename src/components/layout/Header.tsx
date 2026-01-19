@@ -155,7 +155,7 @@ export function Header() {
             <div className="w-40 lg:w-56 flex items-center">
               <Link
                 to="/"
-                className="inline-flex items-center hover:opacity-70 transition-opacity relative h-10"
+                className="inline-flex items-center hover:opacity-70 transition-opacity relative h-10 min-w-[140px]"
               >
                 {/* Primary Logo - shows when not scrolled OR scrolling up */}
                 <motion.img
