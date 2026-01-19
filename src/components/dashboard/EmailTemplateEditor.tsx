@@ -535,7 +535,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
     onHtmlChange(html);
   }, [onHtmlChange]);
 
-  const addBlock = (type: BlockType) => {
+  const addBlock = (type: BlockType, buttonVariant?: 'primary' | 'secondary') => {
     // Get the current theme colors for new blocks
     const currentTheme = allThemes.find(t => t.id === selectedTheme) || emailThemes[0];
     
@@ -560,7 +560,8 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           buttonColor: currentTheme.colors.buttonBg, 
           buttonTextColor: currentTheme.colors.buttonText, 
           borderRadius: '8px',
-          backgroundColor: currentTheme.colors.bodyBg
+          backgroundColor: currentTheme.colors.bodyBg,
+          buttonVariant: buttonVariant || 'primary'
         }),
         ...(type === 'image' && { 
           backgroundColor: currentTheme.colors.bodyBg 
@@ -1053,9 +1054,13 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                     <Image className="w-4 h-4" />
                     Image
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('button')} className="justify-start gap-2">
+                  <Button variant="outline" size="sm" onClick={() => addBlock('button', 'primary')} className="justify-start gap-2">
                     <MousePointerClick className="w-4 h-4" />
-                    Button
+                    Primary Button
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('button', 'secondary')} className="justify-start gap-2">
+                    <Square className="w-4 h-4" />
+                    Secondary Button
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => addBlock('divider')} className="justify-start gap-2">
                     <Minus className="w-4 h-4" />
