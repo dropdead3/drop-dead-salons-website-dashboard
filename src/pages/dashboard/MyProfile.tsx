@@ -34,6 +34,36 @@ const specialtyOptions = [
   'VIVIDS', 'CORRECTIVE COLOR', 'KERATIN', 'BRIDAL'
 ];
 
+// Format phone number as XXX-XXX-XXXX
+const formatPhoneNumber = (value: string) => {
+  // Remove all non-numeric characters
+  const digits = value.replace(/\D/g, '');
+  
+  // Limit to 10 digits
+  const limited = digits.slice(0, 10);
+  
+  // Format with dashes
+  if (limited.length <= 3) {
+    return limited;
+  } else if (limited.length <= 6) {
+    return `${limited.slice(0, 3)}-${limited.slice(3)}`;
+  } else {
+    return `${limited.slice(0, 3)}-${limited.slice(3, 6)}-${limited.slice(6)}`;
+  }
+};
+
+// Ensure social handle starts with @
+const formatSocialHandle = (value: string) => {
+  // Remove any existing @ symbols and trim
+  const clean = value.replace(/@/g, '').trim();
+  
+  // Return empty if nothing left
+  if (!clean) return '';
+  
+  // Add @ prefix
+  return `@${clean}`;
+};
+
 export default function MyProfile() {
   const { user, roles } = useAuth();
   const { data: profile, isLoading } = useEmployeeProfile();
@@ -376,9 +406,10 @@ export default function MyProfile() {
                       id="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
                       className="pl-10"
-                      placeholder="(480) 555-1234"
+                      placeholder="480-555-1234"
+                      maxLength={12}
                     />
                   </div>
                 </div>
@@ -392,7 +423,12 @@ export default function MyProfile() {
                     <Input
                       id="instagram"
                       value={formData.instagram}
-                      onChange={(e) => setFormData(prev => ({ ...prev, instagram: e.target.value }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, instagram: formatSocialHandle(e.target.value) }))}
+                      onBlur={(e) => {
+                        if (e.target.value && !e.target.value.startsWith('@')) {
+                          setFormData(prev => ({ ...prev, instagram: formatSocialHandle(prev.instagram) }));
+                        }
+                      }}
                       className="pl-10"
                       placeholder="@yourhandle"
                     />
@@ -411,7 +447,12 @@ export default function MyProfile() {
                     <Input
                       id="tiktok"
                       value={formData.tiktok}
-                      onChange={(e) => setFormData(prev => ({ ...prev, tiktok: e.target.value }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, tiktok: formatSocialHandle(e.target.value) }))}
+                      onBlur={(e) => {
+                        if (e.target.value && !e.target.value.startsWith('@')) {
+                          setFormData(prev => ({ ...prev, tiktok: formatSocialHandle(prev.tiktok) }));
+                        }
+                      }}
                       className="pl-10"
                       placeholder="@yourhandle"
                     />
