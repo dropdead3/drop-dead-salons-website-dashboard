@@ -342,17 +342,21 @@ function JoinTeamCardComponent({
       animate={{
         minHeight: isExpanded ? "auto" : 300,
       }}
-      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ 
+        duration: 0.8, 
+        ease: [0.4, 0, 0.2, 1],
+        layout: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
+      }}
     >
       <AnimatePresence mode="wait">
         {!isExpanded ? (
           <motion.div 
             key="card-content"
             className="text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -10 }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           >
             <div className="flex items-center justify-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-foreground/50" />
@@ -380,10 +384,10 @@ function JoinTeamCardComponent({
           <motion.div 
             key="form-content"
             className="w-full"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
             <ExpandedApplicationForm onClose={onToggleExpand} />
           </motion.div>
@@ -394,9 +398,10 @@ function JoinTeamCardComponent({
       <AnimatePresence>
         {isExpanded && (
           <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
             type="button"
             onClick={handleClick}
             className="absolute right-4 top-4 rounded-full p-2 bg-foreground/5 hover:bg-foreground/10 transition-colors"
