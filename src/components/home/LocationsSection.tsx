@@ -187,21 +187,44 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
           }}
         >
           <div className="relative w-full h-full bg-secondary overflow-hidden rounded-2xl flex flex-col p-3">
-            {/* Bento Box Gallery */}
-            <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-2 overflow-hidden rounded-xl">
-              {galleryImages.slice(0, 4).map((image, idx) => (
-                <div 
-                  key={idx} 
-                  className="relative overflow-hidden rounded-lg"
-                >
-                  <ImageWithSkeleton
-                    src={image}
-                    alt={`${location.name} salon interior ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                    wrapperClassName="w-full h-full"
-                  />
-                </div>
-              ))}
+            {/* Asymmetric Bento Box Gallery */}
+            <div className="flex-1 grid grid-cols-3 grid-rows-2 gap-2 overflow-hidden rounded-xl">
+              {/* Large featured image - spans 2 columns */}
+              <div className="relative overflow-hidden rounded-lg col-span-2 row-span-1 group/img">
+                <ImageWithSkeleton
+                  src={galleryImages[0]}
+                  alt={`${location.name} salon interior 1`}
+                  className="w-full h-full object-cover transition-all duration-500 group-hover/img:scale-105 group-hover/img:brightness-110"
+                  wrapperClassName="w-full h-full"
+                />
+              </div>
+              {/* Top right small image */}
+              <div className="relative overflow-hidden rounded-lg group/img">
+                <ImageWithSkeleton
+                  src={galleryImages[1]}
+                  alt={`${location.name} salon interior 2`}
+                  className="w-full h-full object-cover transition-all duration-500 group-hover/img:scale-105 group-hover/img:brightness-110"
+                  wrapperClassName="w-full h-full"
+                />
+              </div>
+              {/* Bottom left small image */}
+              <div className="relative overflow-hidden rounded-lg group/img">
+                <ImageWithSkeleton
+                  src={galleryImages[2]}
+                  alt={`${location.name} salon interior 3`}
+                  className="w-full h-full object-cover transition-all duration-500 group-hover/img:scale-105 group-hover/img:brightness-110"
+                  wrapperClassName="w-full h-full"
+                />
+              </div>
+              {/* Large bottom right image - spans 2 columns */}
+              <div className="relative overflow-hidden rounded-lg col-span-2 row-span-1 group/img">
+                <ImageWithSkeleton
+                  src={galleryImages[3]}
+                  alt={`${location.name} salon interior 4`}
+                  className="w-full h-full object-cover transition-all duration-500 group-hover/img:scale-105 group-hover/img:brightness-110"
+                  wrapperClassName="w-full h-full"
+                />
+              </div>
             </div>
 
             {/* Location name, book button, and tap hint */}
