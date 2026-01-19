@@ -551,6 +551,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {ROLE_LABELS[viewAsRole]?.charAt(0)}
               </Badge>
             )}
+            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80 p-2 bg-card border border-border shadow-lg">
