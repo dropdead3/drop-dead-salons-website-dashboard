@@ -15,6 +15,26 @@ interface EmployeeWithPending {
   pending_handbooks: string[];
 }
 
+interface EmailTemplate {
+  id: string;
+  template_key: string;
+  name: string;
+  subject: string;
+  html_body: string;
+  variables: string[] | null;
+  is_active: boolean;
+}
+
+// Replace template variables with actual values
+function replaceTemplateVariables(template: string, variables: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    result = result.replace(regex, value);
+  }
+  return result;
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,6 +46,22 @@ serve(async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch the email template from the database
+    const { data: templateData, error: templateError } = await supabase
+      .from("email_templates")
+      .select("*")
+      .eq("template_key", "handbook_reminder")
+      .eq("is_active", true)
+      .single();
+
+    if (templateError || !templateData) {
+      console.error("Error fetching email template:", templateError);
+      throw new Error("Handbook reminder email template not found or inactive");
+    }
+
+    const template = templateData as EmailTemplate;
+    console.log(`Using email template: ${template.name}`);
 
     // Get all active handbooks
     const { data: handbooks, error: handbooksError } = await supabase
@@ -121,12 +157,26 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Found ${employeesToRemind.length} employees with pending handbooks`);
 
     const emailResults = [];
+    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadgorgeous.com";
 
     for (const employee of employeesToRemind) {
       try {
         const handbookList = employee.pending_handbooks
           .map(title => `<li style="margin-bottom: 8px;">${title}</li>`)
           .join("");
+
+        // Prepare template variables
+        const templateVariables: Record<string, string> = {
+          employee_name: employee.full_name,
+          handbook_count: employee.pending_handbooks.length.toString(),
+          handbook_list: handbookList,
+          handbook_names: employee.pending_handbooks.join(", "),
+          dashboard_url: `${siteUrl}/dashboard/onboarding`,
+        };
+
+        // Replace variables in template
+        const emailSubject = replaceTemplateVariables(template.subject, templateVariables);
+        const emailHtml = replaceTemplateVariables(template.html_body, templateVariables);
 
         const emailRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -135,40 +185,10 @@ serve(async (req: Request): Promise<Response> => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "Client Engine Program <onboarding@resend.dev>",
+            from: "Drop Dead Gorgeous <onboarding@resend.dev>",
             to: [employee.email],
-            subject: `📋 ${employee.pending_handbooks.length} handbook${employee.pending_handbooks.length > 1 ? 's' : ''} pending your acknowledgment`,
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1 style="font-size: 24px; margin-bottom: 16px;">
-                  Hey ${employee.full_name}! 👋
-                </h1>
-                
-                <p style="font-size: 16px; line-height: 1.6; color: #333;">
-                  You have <strong>${employee.pending_handbooks.length} handbook${employee.pending_handbooks.length > 1 ? 's' : ''}</strong> 
-                  that still need${employee.pending_handbooks.length === 1 ? 's' : ''} your acknowledgment:
-                </p>
-                
-                <ul style="font-size: 14px; color: #666; line-height: 1.8; padding-left: 20px;">
-                  ${handbookList}
-                </ul>
-                
-                <p style="font-size: 16px; line-height: 1.6; color: #333;">
-                  Please review and acknowledge these documents to complete your onboarding.
-                </p>
-                
-                <div style="margin: 32px 0;">
-                  <a href="${Deno.env.get("SITE_URL") || "https://dropdeadgorgeous.com"}/dashboard/onboarding" 
-                     style="background: #000; color: #fff; padding: 16px 32px; text-decoration: none; font-weight: bold; display: inline-block;">
-                    REVIEW HANDBOOKS
-                  </a>
-                </div>
-                
-                <p style="font-size: 14px; color: #999; margin-top: 32px;">
-                  Questions? Reply to this email or reach out to your manager.
-                </p>
-              </div>
-            `,
+            subject: emailSubject,
+            html: emailHtml,
           }),
         });
 
@@ -195,6 +215,7 @@ serve(async (req: Request): Promise<Response> => {
         message: "Handbook reminders processed",
         totalEmployees: employees.length,
         employeesWithPending: employeesToRemind.length,
+        template_used: template.name,
         results: emailResults,
       }),
       {

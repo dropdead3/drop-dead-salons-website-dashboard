@@ -3,8 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
-
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -15,6 +13,26 @@ interface StylistWithIncomplete {
   current_day: number;
   email: string;
   full_name: string;
+}
+
+interface EmailTemplate {
+  id: string;
+  template_key: string;
+  name: string;
+  subject: string;
+  html_body: string;
+  variables: string[] | null;
+  is_active: boolean;
+}
+
+// Replace template variables with actual values
+function replaceTemplateVariables(template: string, variables: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    result = result.replace(regex, value);
+  }
+  return result;
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -38,6 +56,23 @@ serve(async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch the appropriate email template from the database
+    const templateKey = isLateReminder ? "daily_program_reminder_urgent" : "daily_program_reminder";
+    const { data: templateData, error: templateError } = await supabase
+      .from("email_templates")
+      .select("*")
+      .eq("template_key", templateKey)
+      .eq("is_active", true)
+      .single();
+
+    if (templateError || !templateData) {
+      console.error("Error fetching email template:", templateError);
+      throw new Error(`Daily program reminder email template (${templateKey}) not found or inactive`);
+    }
+
+    const template = templateData as EmailTemplate;
+    console.log(`Using email template: ${template.name}`);
 
     // Get today's date
     const today = new Date().toISOString().split("T")[0];
@@ -94,30 +129,21 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Sending reminders to ${stylistsToRemind.length} stylists`);
 
     const emailResults = [];
+    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadgorgeous.com";
 
     for (const stylist of stylistsToRemind) {
       try {
-        const subject = isLateReminder 
-          ? `🚨 URGENT: Day ${stylist.current_day} ends in 3 hours!`
-          : `⏰ Day ${stylist.current_day} Check-In Reminder`;
+        // Prepare template variables
+        const templateVariables: Record<string, string> = {
+          stylist_name: stylist.full_name,
+          current_day: stylist.current_day.toString(),
+          dashboard_url: `${siteUrl}/dashboard`,
+          is_urgent: isLateReminder ? "true" : "false",
+        };
 
-        const urgentMessage = isLateReminder
-          ? `
-            <p style="font-size: 18px; line-height: 1.6; color: #c00; font-weight: bold;">
-              ⚠️ You only have about 3 hours left to complete Day ${stylist.current_day}!
-            </p>
-            <p style="font-size: 16px; line-height: 1.6; color: #333;">
-              If you don't complete your check-in by midnight, <strong>you will have to restart the entire 75-day program</strong>.
-            </p>
-          `
-          : `
-            <p style="font-size: 16px; line-height: 1.6; color: #333;">
-              You haven't completed your <strong>Day ${stylist.current_day}</strong> check-in yet.
-            </p>
-            <p style="font-size: 16px; line-height: 1.6; color: #333;">
-              Remember, missing a day means restarting the entire 75-day program. Don't let today be that day!
-            </p>
-          `;
+        // Replace variables in template
+        const emailSubject = replaceTemplateVariables(template.subject, templateVariables);
+        const emailHtml = replaceTemplateVariables(template.html_body, templateVariables);
 
         const emailRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -126,38 +152,10 @@ serve(async (req: Request): Promise<Response> => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "Client Engine Program <onboarding@resend.dev>",
+            from: "Drop Dead Gorgeous <onboarding@resend.dev>",
             to: [stylist.email],
-            subject,
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1 style="font-size: 24px; margin-bottom: 16px;">${isLateReminder ? '🚨' : ''} Hey ${stylist.full_name}!</h1>
-                
-                ${urgentMessage}
-                
-                <div style="margin: 32px 0;">
-                  <a href="${Deno.env.get("SITE_URL") || "https://dropdeadgorgeous.com"}/dashboard" 
-                     style="background: ${isLateReminder ? '#c00' : '#000'}; color: #fff; padding: 16px 32px; text-decoration: none; font-weight: bold; display: inline-block;">
-                    ${isLateReminder ? '⚡ COMPLETE NOW - TIME IS RUNNING OUT' : `COMPLETE DAY ${stylist.current_day} NOW`}
-                  </a>
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">
-                  Today's tasks:
-                </p>
-                <ul style="font-size: 14px; color: #666; line-height: 1.8;">
-                  <li>Post content (reel, story, or carousel)</li>
-                  <li>Respond to all DMs within 2 hours</li>
-                  <li>Follow up with 3 potential clients</li>
-                  <li>Log your daily metrics</li>
-                  <li>Upload proof of work</li>
-                </ul>
-                
-                <p style="font-size: 14px; color: #999; margin-top: 32px;">
-                  ${isLateReminder ? 'Stop what you\'re doing and get this done. NOW. 🔥' : 'You\'ve got this. No excuses. 💪'}
-                </p>
-              </div>
-            `,
+            subject: emailSubject,
+            html: emailHtml,
           }),
         });
 
@@ -175,6 +173,7 @@ serve(async (req: Request): Promise<Response> => {
         message: "Daily reminders processed",
         totalChecked: enrollments?.length || 0,
         remindersNeeded: stylistsToRemind.length,
+        template_used: template.name,
         results: emailResults,
       }),
       {
