@@ -53,8 +53,8 @@ export function AboutHero() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-display mb-6 leading-tight">
             More Than a Salon—
           </h1>
-          <div className="min-h-[3.5rem] md:min-h-[4rem] lg:min-h-[4.5rem] flex items-center justify-center mb-6">
-            <span className="text-4xl md:text-5xl lg:text-6xl font-display text-foreground">
+          <div className="min-h-[5.5rem] md:min-h-[7.5rem] lg:min-h-[9rem] flex items-start justify-center mb-6">
+            <span className="text-4xl md:text-5xl lg:text-6xl font-display text-foreground text-center">
               {displayText}
             </span>
           </div>
