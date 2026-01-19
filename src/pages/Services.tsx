@@ -389,8 +389,8 @@ export default function Services() {
       </Section>
 
       {/* Policy Note */}
-      <Section className="bg-secondary py-16 lg:py-20 relative overflow-hidden" theme="light">
-        <div className="max-w-3xl mx-auto text-center relative z-10">
+      <Section className="bg-secondary py-16 lg:py-20" theme="light">
+        <div className="max-w-3xl mx-auto text-center">
           <Sparkles size={32} className="mx-auto mb-6 text-foreground/30" />
           <p className="text-lg font-sans font-light leading-relaxed text-foreground/80 mb-6">
             Appointments are reserved specifically for you. Please review our booking and cancellation policies prior to scheduling.
@@ -403,8 +403,6 @@ export default function Services() {
             <ArrowRight size={14} />
           </Link>
         </div>
-        {/* Bottom blur fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-secondary via-secondary/80 to-transparent backdrop-blur-sm pointer-events-none" />
       </Section>
 
     </Layout>
