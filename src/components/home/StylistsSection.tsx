@@ -353,10 +353,10 @@ function JoinTeamCardComponent({
           <motion.div 
             key="card-content"
             className="text-center"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: -10 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.92, y: 10 }}
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
           >
             <div className="flex items-center justify-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-foreground/50" />
@@ -386,8 +386,8 @@ function JoinTeamCardComponent({
             className="w-full"
             initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.4, 0, 0.2, 1] }}
           >
             <ExpandedApplicationForm onClose={onToggleExpand} />
           </motion.div>
@@ -401,7 +401,7 @@ function JoinTeamCardComponent({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
             type="button"
             onClick={handleClick}
             className="absolute right-4 top-4 rounded-full p-2 bg-foreground/5 hover:bg-foreground/10 transition-colors"
