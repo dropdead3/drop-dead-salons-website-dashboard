@@ -191,7 +191,7 @@ export function ExtensionsSection() {
               afterImage="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=750&fit=crop"
               beforeLabel="Before"
               afterLabel="After Extensions"
-              className="aspect-[4/5]"
+              className="aspect-[4/5] rounded-3xl"
               hideDefaultVideoButton={true}
               hoverMode={true}
             />
