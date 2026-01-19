@@ -1353,7 +1353,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
             {/* Canvas */}
             <div className="lg:col-span-2">
               <div className="font-medium text-sm mb-2">Email Canvas</div>
-              <ScrollArea className="h-[500px] border rounded-lg bg-gray-100 p-4">
+              <ScrollArea className="h-[500px] border rounded-lg bg-muted/50 p-4">
                 <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
                   {blocks.map((block, index) => (
                     <div
@@ -1364,24 +1364,30 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                       )}
                       onClick={() => setSelectedBlockId(block.id)}
                     >
-                      {/* Block controls - left side */}
+                      {/* Block toolbar - top right corner */}
                       <div className={cn(
-                        'absolute -left-10 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity',
+                        'absolute right-2 top-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm rounded-md shadow-sm border p-0.5',
                         selectedBlockId === block.id && 'opacity-100'
                       )}>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); moveBlock(block.id, 'up'); }}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6" 
+                          onClick={(e) => { e.stopPropagation(); moveBlock(block.id, 'up'); }}
+                          disabled={index === 0}
+                        >
                           <ChevronUp className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); moveBlock(block.id, 'down'); }}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6" 
+                          onClick={(e) => { e.stopPropagation(); moveBlock(block.id, 'down'); }}
+                          disabled={index === blocks.length - 1}
+                        >
                           <ChevronDown className="w-3 h-3" />
                         </Button>
-                      </div>
-                      
-                      {/* Delete button - right side */}
-                      <div className={cn(
-                        'absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity',
-                        selectedBlockId === block.id && 'opacity-100'
-                      )}>
+                        <div className="w-px h-4 bg-border" />
                         <Button 
                           variant="ghost" 
                           size="icon" 
