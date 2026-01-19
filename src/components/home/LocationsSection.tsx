@@ -91,7 +91,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
       onMouseLeave={() => setIsFlipped(false)}
     >
       <div
-        className="relative w-full h-full transition-transform duration-700 ease-out"
+        className="relative w-full h-full transition-transform duration-1000 ease-out"
         style={{
           transformStyle: "preserve-3d",
           transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)"
