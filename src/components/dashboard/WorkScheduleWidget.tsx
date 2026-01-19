@@ -92,8 +92,11 @@ export function WorkScheduleWidget() {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Work Schedule
+            Preferred Work Schedule
           </CardTitle>
+          <CardDescription className="mt-1">
+            Your general availability, not day-to-day schedule
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -111,10 +114,10 @@ export function WorkScheduleWidget() {
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Work Schedule
+              Preferred Work Schedule
             </CardTitle>
             <CardDescription className="mt-1">
-              Your schedule by location
+              Your general availability preferences, not day-to-day schedule
             </CardDescription>
           </div>
           <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
@@ -126,16 +129,16 @@ export function WorkScheduleWidget() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Request Schedule Change</DialogTitle>
+                <DialogTitle>Request Preference Change</DialogTitle>
                 <DialogDescription>
-                  Submit a request to change your schedule at {selectedLocation?.name}. 
-                  Leadership will review and approve your request.
+                  Submit a request to update your preferred work days at {selectedLocation?.name}. 
+                  This reflects your general availability, not specific dates. Leadership will review your request.
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4 py-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Select your requested days</label>
+                  <label className="text-sm font-medium mb-2 block">Select your preferred work days</label>
                   <div className="flex flex-wrap gap-2">
                     {DAYS_OF_WEEK.map((day) => (
                       <Button
