@@ -7,8 +7,25 @@ import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star } from "lucide-react"
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useRef, useState, useEffect } from "react";
 import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
+import { stylists } from "@/data/stylists";
 
 const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
+
+// Map StylistLevel IDs to stylist data level strings
+const levelMapping: Record<StylistLevel, string> = {
+  'new-talent': 'LEVEL 1 STYLIST',
+  'emerging': 'LEVEL 2 STYLIST',
+  'lead': 'LEVEL 3 STYLIST',
+  'senior': 'LEVEL 4 STYLIST',
+  'signature': 'LEVEL 5 STYLIST',
+  'icon': 'LEVEL 6 STYLIST',
+};
+
+// Get stylists filtered by the selected pricing level
+const getStylistsByLevel = (level: StylistLevel) => {
+  const mappedLevel = levelMapping[level];
+  return stylists.filter(s => s.level === mappedLevel);
+};
 
 function StylistLevelSelector({ 
   selectedLevel, 
@@ -292,7 +309,7 @@ export default function Services() {
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
-            className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6"
           >
             <div className="flex items-center gap-4">
               <AnimatePresence>
@@ -312,10 +329,43 @@ export default function Services() {
                 selectedLevel={selectedLevel}
                 onLevelChange={setSelectedLevel}
               />
+              <p className="hidden lg:block text-sm text-muted-foreground font-sans">
+                <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground font-sans">
-              <span className="font-medium text-foreground">Pricing varies by stylist level</span> and may adjust based on consultation and your unique needs.
-            </p>
+            
+            {/* Stylist Headshots */}
+            <div className="hidden sm:flex items-center gap-1">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedLevel}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3, ease: editorialEasing }}
+                  className="flex items-center -space-x-2"
+                >
+                  {getStylistsByLevel(selectedLevel).slice(0, 5).map((stylist, index) => (
+                    <motion.div
+                      key={stylist.id}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: index * 0.05, ease: editorialEasing }}
+                      className="relative"
+                    >
+                      <img
+                        src={stylist.imageUrl}
+                        alt={stylist.name}
+                        className="w-8 h-8 rounded-full object-cover border-2 border-background shadow-sm"
+                      />
+                    </motion.div>
+                  ))}
+                  {getStylistsByLevel(selectedLevel).length === 0 && (
+                    <span className="text-xs text-muted-foreground font-sans italic">No stylists at this level yet</span>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </motion.div>
         </div>
       </div>
