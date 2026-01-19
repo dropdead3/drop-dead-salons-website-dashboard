@@ -160,7 +160,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]['items'][
           </div>
         )}
         
-        <h3 className="font-serif text-xl lg:text-2xl font-normal text-foreground mb-3 leading-tight">
+        <h3 className="font-sans text-xl lg:text-2xl font-medium text-foreground mb-3 leading-tight">
           {service.name}
         </h3>
         
@@ -209,7 +209,7 @@ function CategorySection({ category, categoryIndex }: { category: typeof service
             <Eyebrow className="text-muted-foreground mb-3">
               0{categoryIndex + 1}
             </Eyebrow>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-normal text-foreground leading-tight">
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground leading-tight">
               {category.category}
             </h2>
           </div>
@@ -258,10 +258,10 @@ export default function Services() {
               initial={{ opacity: 0, y: 30 }}
               animate={heroInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.7, delay: 0.1, ease: editorialEasing }}
-              className="font-serif text-5xl md:text-6xl lg:text-7xl font-normal tracking-tight text-foreground leading-[1.05] mb-8"
+              className="font-display text-5xl md:text-6xl lg:text-7xl text-foreground leading-[1.05] mb-8"
             >
               Services &<br />
-              <span className="font-light italic">Experiences</span>
+              Experiences
             </motion.h1>
             
             <motion.p
@@ -339,8 +339,8 @@ export default function Services() {
               Start Your Journey
             </Eyebrow>
             
-            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-normal text-foreground mb-6 leading-tight">
-              Ready to <span className="font-light italic">Begin?</span>
+            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl text-foreground mb-6 leading-tight">
+              Ready to Begin?
             </h2>
             
             <p className="text-lg text-muted-foreground font-sans font-light mb-10 max-w-xl mx-auto">
