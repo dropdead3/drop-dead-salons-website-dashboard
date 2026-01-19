@@ -66,7 +66,7 @@ export function ExtensionsSection() {
               transition={{ duration: 0.6, delay: 0.05 }}
               className="text-sm font-display uppercase tracking-widest text-oat/70 mb-1"
             >
-              Check out the
+              Get the most comfortable extensions with the
             </motion.p>
 
             <motion.h2
