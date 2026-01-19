@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star } from 'lucide-react';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { differenceInYears, differenceInMonths, parseISO, format } from 'date-fns';
+import { differenceInYears, differenceInMonths, parseISO, format, setYear, isSameDay, differenceInDays, isBefore } from 'date-fns';
+import { useUpcomingAnniversaries, useTodaysAnniversaries, MILESTONE_YEARS, getAnniversaryMilestone } from '@/hooks/useAnniversaries';
+import { cn } from '@/lib/utils';
 
 const roleLabels: Record<string, string> = {
   admin: 'Admin',
@@ -63,11 +65,44 @@ function getTimeAtCompany(hireDate: string | null): string {
   return 'New';
 }
 
+function getAnniversaryInfo(hireDate: string | null): { isToday: boolean; isUpcoming: boolean; years: number; daysUntil: number } | null {
+  if (!hireDate) return null;
+  
+  const start = parseISO(hireDate);
+  const today = new Date();
+  const thisYearAnniversary = setYear(start, today.getFullYear());
+  
+  // Check if today is anniversary
+  if (isSameDay(thisYearAnniversary, today)) {
+    const years = differenceInYears(today, start);
+    if (years >= 1) {
+      return { isToday: true, isUpcoming: false, years, daysUntil: 0 };
+    }
+  }
+  
+  // Check upcoming (within 7 days)
+  let anniversaryDate = thisYearAnniversary;
+  if (isBefore(thisYearAnniversary, today)) {
+    anniversaryDate = setYear(start, today.getFullYear() + 1);
+  }
+  
+  const daysUntil = differenceInDays(anniversaryDate, today);
+  const yearsAtAnniversary = differenceInYears(anniversaryDate, start);
+  
+  if (daysUntil > 0 && daysUntil <= 7 && yearsAtAnniversary >= 1) {
+    return { isToday: false, isUpcoming: true, years: yearsAtAnniversary, daysUntil };
+  }
+  
+  return null;
+}
+
 export default function TeamDirectory() {
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
   const { data: team = [], isLoading } = useTeamDirectory(locationFilter === 'all' ? undefined : locationFilter);
   const { data: locations = [] } = useLocations();
+  const { data: todaysAnniversaries = [] } = useTodaysAnniversaries();
+  const { data: upcomingAnniversaries = [] } = useUpcomingAnniversaries(30);
 
   const filteredTeam = team.filter(member => {
     if (!searchQuery) return true;
@@ -118,6 +153,78 @@ export default function TeamDirectory() {
             View all team members across salon locations.
           </p>
         </div>
+
+        {/* Today's Anniversaries Banner */}
+        {todaysAnniversaries.length > 0 && (
+          <Card className="mb-6 border-2 border-amber-400/50 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-full">
+                  <PartyPopper className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="font-medium text-amber-800 dark:text-amber-200">
+                    🎉 Work Anniversary Today!
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    {todaysAnniversaries.map((a, i) => (
+                      <span key={a.id}>
+                        {i > 0 && (i === todaysAnniversaries.length - 1 ? ' and ' : ', ')}
+                        <strong>{a.display_name || a.full_name}</strong> ({a.years} year{a.years > 1 ? 's' : ''})
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Upcoming Anniversaries */}
+        {upcomingAnniversaries.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Award className="w-4 h-4 text-amber-500" />
+                Upcoming Work Anniversaries
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                {upcomingAnniversaries.slice(0, 5).map(anniversary => {
+                  const isMilestone = MILESTONE_YEARS.includes(anniversary.years);
+                  return (
+                    <div
+                      key={anniversary.id}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg border",
+                        isMilestone
+                          ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800"
+                          : "bg-muted/50 border-border"
+                      )}
+                    >
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={anniversary.photo_url || undefined} />
+                        <AvatarFallback className="text-xs">
+                          {anniversary.full_name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-sm">
+                        <p className="font-medium leading-tight">
+                          {anniversary.display_name || anniversary.full_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          {isMilestone && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
+                          {anniversary.years} year{anniversary.years > 1 ? 's' : ''} • {format(anniversary.anniversaryDate, 'MMM d')}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1 max-w-md">
@@ -205,22 +312,73 @@ function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
   const timeAtCompany = getTimeAtCompany(member.hire_date);
   const memberLocations = member.location_ids || [];
   const hasSchedules = Object.keys(member.location_schedules).length > 0;
+  const anniversaryInfo = getAnniversaryInfo(member.hire_date);
+  const milestone = member.hire_date ? getAnniversaryMilestone(differenceInYears(new Date(), parseISO(member.hire_date))) : null;
   
   const getLocationName = (id: string) => {
     return locations.find(l => l.id === id)?.name || id;
   };
   
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card className={cn(
+      "overflow-hidden hover:shadow-md transition-shadow relative",
+      anniversaryInfo?.isToday && "ring-2 ring-amber-400 bg-gradient-to-br from-amber-50/50 to-background dark:from-amber-950/20"
+    )}>
+      {/* Anniversary Badge */}
+      {anniversaryInfo?.isToday && (
+        <div className="absolute top-2 right-2 z-10">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                  <PartyPopper className="w-3 h-3" />
+                  {anniversaryInfo.years}yr
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>🎉 {anniversaryInfo.years} year anniversary today!</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )}
+      
+      {/* Upcoming Anniversary Indicator */}
+      {anniversaryInfo?.isUpcoming && !anniversaryInfo?.isToday && (
+        <div className="absolute top-2 right-2 z-10">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                  <Award className="w-3 h-3" />
+                  {anniversaryInfo.daysUntil}d
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{anniversaryInfo.years} year anniversary in {anniversaryInfo.daysUntil} days</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )}
+      
       <CardContent className="p-5">
         {/* Header: Avatar, Name, Roles, Calendar Icon */}
         <div className="flex items-start gap-4">
-          <Avatar className="w-16 h-16 border-2 border-background shadow-sm">
-            <AvatarImage src={member.photo_url || undefined} alt={member.full_name} />
-            <AvatarFallback className="bg-muted text-xl font-medium">
-              {member.full_name?.charAt(0) || <User className="w-6 h-6" />}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="w-16 h-16 border-2 border-background shadow-sm">
+              <AvatarImage src={member.photo_url || undefined} alt={member.full_name} />
+              <AvatarFallback className="bg-muted text-xl font-medium">
+                {member.full_name?.charAt(0) || <User className="w-6 h-6" />}
+              </AvatarFallback>
+            </Avatar>
+            {/* Milestone Badge on Avatar */}
+            {milestone && milestone >= 5 && (
+              <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                {milestone}yr
+              </div>
+            )}
+          </div>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
