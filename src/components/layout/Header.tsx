@@ -168,6 +168,7 @@ export function Header() {
                     duration: 0.4,
                     ease: [0.4, 0, 0.2, 1]
                   }}
+                  style={{ willChange: "opacity" }}
                   className={cn(
                     "h-10 w-auto",
                     isOverDark && "invert"
@@ -184,8 +185,13 @@ export function Header() {
                     duration: 0.4,
                     ease: [0.4, 0, 0.2, 1]
                   }}
+                  style={{ 
+                    willChange: "opacity",
+                    imageRendering: "crisp-edges",
+                    WebkitFontSmoothing: "antialiased"
+                  }}
                   className={cn(
-                    "h-5 w-auto absolute left-0",
+                    "h-6 w-auto absolute left-0",
                     isOverDark && "invert"
                   )}
                 />
