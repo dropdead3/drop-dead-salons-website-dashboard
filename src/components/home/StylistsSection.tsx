@@ -389,7 +389,6 @@ export function StylistsSection() {
                     className="px-5 py-2.5 text-sm font-medium border border-border rounded-full"
                   >
                     <span>{level.name}</span>
-                    <span className="ml-2 opacity-60">{level.price}</span>
                   </motion.button>
                 ))}
               </div>
