@@ -15,6 +15,17 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -54,6 +65,10 @@ export default function ServicesManager() {
   const [editingCategoryName, setEditingCategoryName] = useState('');
   const [draggedCategoryIndex, setDraggedCategoryIndex] = useState<number | null>(null);
   const [dragOverCategoryIndex, setDragOverCategoryIndex] = useState<number | null>(null);
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryIsAddOn, setNewCategoryIsAddOn] = useState(false);
+  const [deletingCategoryIndex, setDeletingCategoryIndex] = useState<number | null>(null);
 
   const totalServices = serviceCategories.reduce((sum, cat) => sum + cat.items.length, 0);
   const popularServices = serviceCategories.reduce(
@@ -99,6 +114,25 @@ export default function ServicesManager() {
     });
     setEditingCategoryIndex(null);
     setEditingCategoryName('');
+  };
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    const newCategory: ServiceCategory = {
+      category: newCategoryName.trim(),
+      description: '',
+      isAddOn: newCategoryIsAddOn,
+      items: [],
+    };
+    setServiceCategories(prev => [...prev, newCategory]);
+    setNewCategoryName('');
+    setNewCategoryIsAddOn(false);
+    setIsAddCategoryOpen(false);
+  };
+
+  const handleDeleteCategory = (index: number) => {
+    setServiceCategories(prev => prev.filter((_, i) => i !== index));
+    setDeletingCategoryIndex(null);
   };
 
   const handleCategoryDragStart = (e: React.DragEvent, index: number) => {
@@ -183,11 +217,53 @@ export default function ServicesManager() {
                 </Button>
               }
             />
-            <Button className="gap-2" disabled>
-              <Plus className="w-4 h-4" />
-              Add Service
-              <Badge variant="secondary" className="ml-1">Coming Soon</Badge>
-            </Button>
+            <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Category
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Category</DialogTitle>
+                  <DialogDescription>
+                    Create a new service category
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Category Name</Label>
+                    <Input 
+                      placeholder="e.g. Bridal Services"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleAddCategory();
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id="add-on-toggle"
+                      checked={newCategoryIsAddOn}
+                      onCheckedChange={setNewCategoryIsAddOn}
+                    />
+                    <Label htmlFor="add-on-toggle" className="cursor-pointer">
+                      This is an Add-On category
+                    </Label>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddCategoryOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddCategory} disabled={!newCategoryName.trim()}>
+                    Add Category
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -343,22 +419,58 @@ export default function ServicesManager() {
                             {category.items.length} services
                           </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 ml-1 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingCategoryIndex(originalCategoryIndex);
-                            setEditingCategoryName(category.category);
-                          }}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
+                        <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingCategoryIndex(originalCategoryIndex);
+                              setEditingCategoryName(category.category);
+                            }}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{category.category}"? 
+                                  {category.items.length > 0 && (
+                                    <span className="block mt-2 text-destructive font-medium">
+                                      This will also delete {category.items.length} service{category.items.length > 1 ? 's' : ''} in this category.
+                                    </span>
+                                  )}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => handleDeleteCategory(originalCategoryIndex)}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </>
                     )}
                     {category.isAddOn && !isEditing && (
-                      <Badge variant="outline" className="ml-2 text-green-600 border-green-300">
+                      <Badge variant="outline" className="ml-auto text-green-600 border-green-300">
                         Add-On
                       </Badge>
                     )}
