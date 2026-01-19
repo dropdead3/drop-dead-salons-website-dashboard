@@ -14,7 +14,7 @@ export function FounderWelcome() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="bg-secondary rounded-2xl p-8 md:p-12 lg:p-16"
+          className="bg-white rounded-2xl p-8 md:p-12 lg:p-16 border border-border"
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-16 items-center">
             {/* Left Column - Founder Photo (1/3) */}
