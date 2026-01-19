@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Section } from "@/components/ui/section";
-import { ArrowRight, Star, Award, MapPin, Play } from "lucide-react";
+import { ArrowRight, Star, Award, MapPin, Play, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BeforeAfterSlider, BeforeAfterSliderHandle } from "./BeforeAfterSlider";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
@@ -86,9 +86,7 @@ export function ExtensionsSection() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-lg md:text-xl font-sans font-light leading-relaxed text-background/80 max-w-xl"
             >
-              The most versatile and comfortable hidden beaded row method available. 
-              Our proprietary technique delivers flawless, natural-looking extensions 
-              that move and feel like your own hair.
+              Get instant transformation, volume and or length with Drop Dead Extensions and the Drop Dead Method.
             </motion.p>
 
             <div ref={featuresRef} className="space-y-5">
@@ -207,13 +205,10 @@ export function ExtensionsSection() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-                      <Award className="w-4 h-4 text-oat-foreground" />
+                      <Heart className="w-4 h-4 text-oat-foreground" />
                     </div>
-                    <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Nationally Recognized</span>
+                    <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">Our Extensions Change How Women See Themselves</span>
                   </div>
-                  <p className="text-sm text-foreground leading-relaxed">
-                    Salons across the country travel to learn and proudly showcase the Drop Dead Method.
-                  </p>
                 </div>
                 <button
                   onClick={() => sliderRef.current?.playVideo()}
