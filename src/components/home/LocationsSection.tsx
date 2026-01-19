@@ -1,10 +1,18 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Phone, MapPin } from "lucide-react";
+import { ArrowRight, Phone, MapPin, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
-import { useActiveLocations, formatHoursForDisplay, getClosedDays, type Location } from "@/hooks/useLocations";
+import { 
+  useActiveLocations, 
+  formatHoursForDisplay, 
+  getClosedDays, 
+  isClosedForHoliday, 
+  isClosedToday,
+  type Location 
+} from "@/hooks/useLocations";
 
 // Placeholder gallery images - replace with actual salon photos
 const locationGalleries: Record<string, string[]> = {
@@ -61,6 +69,11 @@ function LocationCard({ location, index }: { location: Location; index: number }
   const hoursDisplay = formatHoursForDisplay(location.hours_json);
   const closedDays = getClosedDays(location.hours_json);
   const bookingUrl = location.booking_url || `/booking?location=${location.id}`;
+  
+  // Check for closures
+  const holidayClosure = isClosedForHoliday(location.holiday_closures);
+  const closedToday = isClosedToday(location.hours_json);
+  const showClosedNotice = holidayClosure || closedToday;
 
   return (
     <motion.div
@@ -83,9 +96,25 @@ function LocationCard({ location, index }: { location: Location; index: number }
           style={{ backfaceVisibility: "hidden" }}
         >
           <div className="relative w-full h-full bg-secondary p-10 md:p-12 text-center overflow-hidden rounded-2xl transition-all duration-500 flex flex-col">
+            
+            {/* Closed Today Notice */}
+            {showClosedNotice && (
+              <div className="absolute top-4 left-4 right-4 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span className="text-xs text-amber-700 font-medium">
+                  {holidayClosure 
+                    ? `Closed today for ${holidayClosure.name}`
+                    : 'Closed today'
+                  }
+                </span>
+              </div>
+            )}
 
             {/* Location Title */}
-            <h3 className="font-display text-2xl md:text-3xl text-foreground tracking-tight mb-2 whitespace-nowrap">
+            <h3 className={cn(
+              "font-display text-2xl md:text-3xl text-foreground tracking-tight mb-2 whitespace-nowrap",
+              showClosedNotice && "mt-8"
+            )}>
               {location.name}
             </h3>
 
