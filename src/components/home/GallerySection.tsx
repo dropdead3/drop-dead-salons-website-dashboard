@@ -53,7 +53,7 @@ export function GallerySection() {
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
           <SectionHeader
             title="Get the Look"
-            titleHighlight="You've Always Wanted."
+            titleHighlight="You've Always Wanted"
             animate
             isInView={isInView}
           />
