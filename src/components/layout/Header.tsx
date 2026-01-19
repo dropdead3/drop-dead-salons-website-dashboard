@@ -22,15 +22,27 @@ const navLinks = [
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrollingUp, setIsScrollingUp] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOverDark, setIsOverDark] = useState(false);
   const [isStaffMenuOpen, setIsStaffMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const lastScrollY = useRef(0);
   const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const currentScrollY = window.scrollY;
+      
+      // Determine scroll direction
+      if (currentScrollY < lastScrollY.current || currentScrollY < 50) {
+        setIsScrollingUp(true);
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        setIsScrollingUp(false);
+      }
+      
+      lastScrollY.current = currentScrollY;
+      setIsScrolled(currentScrollY > 50);
     };
     
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -210,8 +222,12 @@ export function Header() {
             {/* Right Side - Contact & Book */}
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+              animate={{ 
+                opacity: isScrollingUp ? 1 : 0, 
+                y: isScrollingUp ? 0 : -10,
+                pointerEvents: isScrollingUp ? "auto" : "none"
+              }}
+              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
               className="hidden md:flex items-center gap-6"
             >
               <Link
