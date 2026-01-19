@@ -933,20 +933,6 @@ export default function MyProfile() {
             </CardContent>
           </Card>
 
-          {/* Submit Button */}
-          <Button type="submit" className="w-full" disabled={updateProfile.isPending || !hasUnsavedChanges}>
-            {updateProfile.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                {hasUnsavedChanges ? 'Save Changes' : 'No Changes'}
-              </>
-            )}
-          </Button>
         </form>
 
         {/* Sticky Save Bar */}
@@ -986,19 +972,10 @@ export default function MyProfile() {
                       size="sm"
                       variant="secondary"
                       className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-                      disabled={updateProfile.isPending}
-                      onClick={() => {
-                        updateProfile.mutate(formData, {
-                          onSuccess: () => {
-                            setInitialFormData(formData);
-                            setHasUnsavedChanges(false);
-                            setShowUnsavedToast(false);
-                            toast.success('Profile saved successfully!');
-                          }
-                        });
-                      }}
+                      disabled={updateProfile.isPending || upsertSchedule.isPending}
+                      onClick={(e) => handleSubmit(e as any)}
                     >
-                      {updateProfile.isPending ? (
+                      {(updateProfile.isPending || upsertSchedule.isPending) ? (
                         <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                       ) : (
                         <Save className="w-4 h-4 mr-1" />
