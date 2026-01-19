@@ -9,12 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2 } from 'lucide-react';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { locations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const DAYS_OF_WEEK = [
   { key: 'Mon', label: 'Monday' },
@@ -39,6 +40,8 @@ export default function MyProfile() {
   const updateProfile = useUpdateEmployeeProfile();
   const uploadPhoto = useUploadProfilePhoto();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedToast, setShowUnsavedToast] = useState(false);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -58,6 +61,8 @@ export default function MyProfile() {
     work_days: [] as string[],
   });
 
+  const [initialFormData, setInitialFormData] = useState(formData);
+
   useEffect(() => {
     if (profile) {
       // Support both old location_id and new location_ids
@@ -67,7 +72,7 @@ export default function MyProfile() {
           ? [profile.location_id] 
           : [];
       
-      setFormData({
+      const newFormData = {
         full_name: profile.full_name || '',
         display_name: profile.display_name || '',
         email: profile.email || '',
@@ -83,9 +88,27 @@ export default function MyProfile() {
         emergency_phone: profile.emergency_phone || '',
         bio: (profile as any).bio || '',
         work_days: profile.work_days || [],
-      });
+      };
+      setFormData(newFormData);
+      setInitialFormData(newFormData);
+      setHasUnsavedChanges(false);
     }
   }, [profile]);
+
+  // Track changes and show toast
+  useEffect(() => {
+    const isChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    setHasUnsavedChanges(isChanged);
+    
+    if (isChanged && !showUnsavedToast) {
+      setShowUnsavedToast(true);
+      toast.info('You have unsaved changes', {
+        description: 'Remember to save your profile when you\'re done editing.',
+        duration: 4000,
+        id: 'unsaved-changes',
+      });
+    }
+  }, [formData, initialFormData, showUnsavedToast]);
 
   // Calculate profile completion
   const profileFields = useMemo(() => {
@@ -123,7 +146,14 @@ export default function MyProfile() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile.mutate(formData);
+    updateProfile.mutate(formData, {
+      onSuccess: () => {
+        setInitialFormData(formData);
+        setHasUnsavedChanges(false);
+        setShowUnsavedToast(false);
+        toast.success('Profile saved successfully!');
+      }
+    });
   };
 
   const handlePhotoClick = () => {
@@ -707,7 +737,7 @@ export default function MyProfile() {
           </Card>
 
           {/* Submit Button */}
-          <Button type="submit" className="w-full" disabled={updateProfile.isPending}>
+          <Button type="submit" className="w-full" disabled={updateProfile.isPending || !hasUnsavedChanges}>
             {updateProfile.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -716,11 +746,74 @@ export default function MyProfile() {
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Save Changes
+                {hasUnsavedChanges ? 'Save Changes' : 'No Changes'}
               </>
             )}
           </Button>
         </form>
+
+        {/* Sticky Save Bar */}
+        <AnimatePresence>
+          {hasUnsavedChanges && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 p-4 md:pl-[280px]"
+            >
+              <div className="max-w-3xl mx-auto">
+                <div className="bg-primary text-primary-foreground rounded-xl shadow-lg px-4 py-3 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary-foreground/80 animate-pulse" />
+                    <span className="text-sm font-medium">You have unsaved changes</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                      onClick={() => {
+                        setFormData(initialFormData);
+                        setHasUnsavedChanges(false);
+                        setShowUnsavedToast(false);
+                        toast.info('Changes discarded');
+                      }}
+                    >
+                      <Undo2 className="w-4 h-4 mr-1" />
+                      Discard
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                      disabled={updateProfile.isPending}
+                      onClick={() => {
+                        updateProfile.mutate(formData, {
+                          onSuccess: () => {
+                            setInitialFormData(formData);
+                            setHasUnsavedChanges(false);
+                            setShowUnsavedToast(false);
+                            toast.success('Profile saved successfully!');
+                          }
+                        });
+                      }}
+                    >
+                      {updateProfile.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4 mr-1" />
+                      )}
+                      Save Now
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </DashboardLayout>
   );
