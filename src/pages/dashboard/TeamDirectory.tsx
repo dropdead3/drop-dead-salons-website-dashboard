@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2 } from 'lucide-react';
@@ -250,18 +250,11 @@ export default function TeamDirectory() {
               className="pl-10"
             />
           </div>
-          <Select value={locationFilter} onValueChange={setLocationFilter}>
-            <SelectTrigger className="w-full sm:w-48">
-              <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="All Locations" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {locations.map(loc => (
-                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <LocationSelect
+            value={locationFilter}
+            onValueChange={setLocationFilter}
+            triggerClassName="w-full sm:w-48"
+          />
         </div>
 
         {isLoading ? (
