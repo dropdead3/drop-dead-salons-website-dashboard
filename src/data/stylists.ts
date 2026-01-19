@@ -32,7 +32,8 @@ export const stylists: Stylist[] = [
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: kristiImage,
     locations: ["north-mesa", "val-vista-lakes"],
-    isBooking: false
+    isBooking: false,
+    bio: "Founder & creative director of Drop Dead Salon. Passionate about transforming hair and empowering stylists to reach their full potential."
   },
   {
     id: "2",
@@ -41,7 +42,8 @@ export const stylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["EXTENSIONS", "BLONDING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&h=800&fit=crop",
-    locations: ["north-mesa"]
+    locations: ["north-mesa"],
+    bio: "Extension specialist with a love for creating seamless, natural-looking length. Your dream hair is my mission."
   },
   {
     id: "3",
@@ -50,7 +52,8 @@ export const stylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "EXTENSIONS"],
     imageUrl: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=600&h=800&fit=crop",
-    locations: ["north-mesa"]
+    locations: ["north-mesa"],
+    bio: "Blonding enthusiast who lives for that perfect, dimensional color. Let's create something beautiful together!"
   },
   {
     id: "4",
@@ -59,7 +62,8 @@ export const stylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["AIRTOUCH", "COLOR BLOCKING", "CREATIVE COLOR"],
     imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop",
-    locations: ["north-mesa"]
+    locations: ["north-mesa"],
+    bio: "Airtouch master and color blocking artist. I believe hair is the ultimate form of self-expression."
   },
   {
     id: "5",
@@ -68,7 +72,8 @@ export const stylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["LAYERED CUTS", "CREATIVE COLOR", "COLOR BLOCKING"],
     imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=800&fit=crop",
-    locations: ["north-mesa"]
+    locations: ["north-mesa"],
+    bio: "Precision cutting meets artistic vision. Specializing in transformative cuts that frame your unique beauty."
   },
   {
     id: "6",
@@ -77,7 +82,8 @@ export const stylists: Stylist[] = [
     level: "LEVEL 1 STYLIST",
     specialties: ["BLONDING", "CREATIVE COLOR", "CUSTOM CUTS"],
     imageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&h=800&fit=crop",
-    locations: ["north-mesa"]
+    locations: ["north-mesa"],
+    bio: "Rising talent with fresh ideas and endless creativity. Ready to bring your hair vision to life!"
   }
 ];
 
