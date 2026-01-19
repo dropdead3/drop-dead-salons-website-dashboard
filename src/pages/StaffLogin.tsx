@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import { z } from 'zod';
+import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
+import { useDebounce } from '@/hooks/use-debounce';
 
 const emailSchema = z.string().trim().email({ message: 'Please enter a valid email address' });
 
@@ -43,10 +46,22 @@ export default function StaffLogin() {
   const passwordMatchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPasswordMatchStateRef = useRef<boolean | null>(null);
   
-  const { signIn, signUp, resetPassword } = useAuth();
+  const { signIn, signUp, resetPassword, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const acceptInvitation = useAcceptInvitation();
+
+  // Debounce email for invitation check
+  const debouncedEmail = useDebounce(email, 500);
+  const { data: invitation, isLoading: checkingInvitation } = useCheckInvitation(debouncedEmail);
+
+  // When an invitation is found, auto-set the role
+  useEffect(() => {
+    if (invitation && !isLogin) {
+      setRole(invitation.role);
+    }
+  }, [invitation, isLogin]);
 
   const from = location.state?.from?.pathname || '/dashboard';
 
@@ -118,7 +133,7 @@ export default function StaffLogin() {
           });
           return;
         }
-        const { error } = await signUp(email, password, fullName, role);
+        const { error, data } = await signUp(email, password, fullName, invitation?.role || role);
         if (error) {
           toast({
             variant: 'destructive',
@@ -126,9 +141,15 @@ export default function StaffLogin() {
             description: error.message,
           });
         } else {
+          // If there was an invitation, mark it as accepted
+          if (invitation && data?.user) {
+            acceptInvitation.mutate({ email, userId: data.user.id });
+          }
           toast({
-            title: 'Account created',
-            description: `Welcome! You've been registered as ${roleOptions.find(r => r.value === role)?.label}.`,
+            title: invitation ? 'Welcome to the team!' : 'Account created',
+            description: invitation 
+              ? `Your account has been created with the ${roleOptions.find(r => r.value === invitation.role)?.label} role.`
+              : `Welcome! You've been registered as ${roleOptions.find(r => r.value === role)?.label}.`,
           });
           navigate('/dashboard', { replace: true });
         }
@@ -197,21 +218,35 @@ export default function StaffLogin() {
                   <Label className="text-xs uppercase tracking-wider">
                     Your Role
                   </Label>
-                  <Select value={role} onValueChange={(v) => setRole(v as AppRole)} required>
-                    <SelectTrigger className="h-12 bg-card border-border">
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roleOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">{option.label}</span>
-                            <span className="text-xs text-muted-foreground">{option.description}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {invitation ? (
+                    <div className="h-12 px-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 flex items-center gap-3 rounded-md">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <div className="flex-1">
+                        <span className="font-medium text-green-800 dark:text-green-200">
+                          {roleOptions.find(r => r.value === invitation.role)?.label}
+                        </span>
+                        <span className="text-xs text-green-600 dark:text-green-400 ml-2">
+                          (assigned by invitation)
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <Select value={role} onValueChange={(v) => setRole(v as AppRole)} required>
+                      <SelectTrigger className="h-12 bg-card border-border">
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roleOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex flex-col items-start">
+                              <span className="font-medium">{option.label}</span>
+                              <span className="text-xs text-muted-foreground">{option.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               </>
             )}
@@ -220,20 +255,38 @@ export default function StaffLogin() {
               <Label htmlFor="email" className="text-xs uppercase tracking-wider">
                 Email
               </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setEmailError(null);
-                }}
-                placeholder="you@dropdeadsalon.com"
-                required
-                className={`h-12 bg-card border-border ${emailError ? 'border-destructive' : ''}`}
-              />
+              <div className="relative">
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailError(null);
+                  }}
+                  placeholder="you@dropdeadsalon.com"
+                  required
+                  className={`h-12 bg-card border-border pr-10 ${emailError ? 'border-destructive' : ''} ${invitation && !isLogin ? 'border-green-500' : ''}`}
+                />
+                {!isLogin && checkingInvitation && debouncedEmail.includes('@') && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                {!isLogin && invitation && !checkingInvitation && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  </div>
+                )}
+              </div>
               {emailError && (
                 <p className="text-xs text-destructive">{emailError}</p>
+              )}
+              {!isLogin && invitation && (
+                <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+                  <Mail className="w-3 h-3" />
+                  <span>You have a pending invitation!</span>
+                </div>
               )}
             </div>
 
