@@ -126,10 +126,21 @@ export default function TeamDirectory() {
     });
   };
 
+  // Group team members by location - members with multiple locations appear in all their locations
   const teamByLocation = filteredTeam.reduce((acc, member) => {
-    const loc = member.location_id || 'unassigned';
-    if (!acc[loc]) acc[loc] = [];
-    acc[loc].push(member);
+    const memberLocations = member.location_ids && member.location_ids.length > 0 
+      ? member.location_ids 
+      : [member.location_id || 'unassigned'];
+    
+    memberLocations.forEach(loc => {
+      const locationKey = loc || 'unassigned';
+      if (!acc[locationKey]) acc[locationKey] = [];
+      // Avoid duplicates
+      if (!acc[locationKey].some(m => m.id === member.id)) {
+        acc[locationKey].push(member);
+      }
+    });
+    
     return acc;
   }, {} as Record<string, typeof team>);
 
