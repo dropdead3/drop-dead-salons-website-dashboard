@@ -1,28 +1,33 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
 type EmployeeProfile = Database['public']['Tables']['employee_profiles']['Row'];
 type EmployeeProfileUpdate = Database['public']['Tables']['employee_profiles']['Update'];
 
+/**
+ * Fetches the employee profile for the effective user.
+ * When a super admin is impersonating a user, this returns that user's profile.
+ */
 export function useEmployeeProfile() {
-  const { user } = useAuth();
+  const effectiveUserId = useEffectiveUserId();
 
   return useQuery({
-    queryKey: ['employee-profile', user?.id],
+    queryKey: ['employee-profile', effectiveUserId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', effectiveUserId!)
         .maybeSingle();
 
       if (error) throw error;
       return data as EmployeeProfile | null;
     },
-    enabled: !!user,
+    enabled: !!effectiveUserId,
   });
 }
 
