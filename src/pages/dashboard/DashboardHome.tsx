@@ -302,11 +302,6 @@ export default function DashboardHome() {
         {/* Widgets Section */}
         <WidgetsSection />
 
-        {/* Work Schedule Widget - visible to all */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <WorkScheduleWidget />
-        </div>
-
         {/* Leadership-only: Team & Stylists Overview + Schedule Requests */}
         {isLeadership && (isVisible('team_overview') || isVisible('stylists_overview') || isVisible('birthday_calendar')) && (
           <div className="grid gap-6 lg:grid-cols-2">
