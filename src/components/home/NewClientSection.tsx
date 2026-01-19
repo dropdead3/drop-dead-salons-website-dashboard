@@ -80,7 +80,7 @@ export const NewClientSection = () => {
                 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6"
               >
                 <span className="whitespace-nowrap">New Clients</span>{" "}
-                <span className="inline-block min-w-[180px] md:min-w-[220px]">{displayText}<span className="animate-pulse">|</span></span>
+                <span className="inline-block min-w-[180px] md:min-w-[220px]">{displayText}</span>
               </motion.h2>
               
               <motion.p
