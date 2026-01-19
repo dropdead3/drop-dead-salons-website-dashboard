@@ -629,7 +629,7 @@ export default function ServicesManager() {
         {/* Info Card */}
         <Card className="bg-muted/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2 font-sans font-medium">
+            <CardTitle className="text-base flex items-center gap-2 font-sans font-medium normal-case">
               <DollarSign className="w-4 h-4" />
               About Service Pricing
             </CardTitle>
