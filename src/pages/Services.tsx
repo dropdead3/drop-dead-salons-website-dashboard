@@ -45,7 +45,7 @@ function StylistLevelSelector({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="absolute top-full left-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50"
+              className="absolute top-full left-0 mt-2 min-w-full w-max bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50"
             >
               {stylistLevels.map((level) => (
                 <button
