@@ -3,10 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useEffectiveUserId } from './useEffectiveUser';
-import { useUserRoles } from './useAdminProfile';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
-import { useMemo } from 'react';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -43,32 +41,34 @@ export function useMyDashboardVisibility() {
   const { roles: actualRoles } = useAuth();
   const { isViewingAsUser, viewAsRole } = useViewAs();
   const effectiveUserId = useEffectiveUserId();
-  
-  // Fetch the impersonated user's roles when viewing as a specific user
-  const { data: impersonatedRoles } = useUserRoles(
-    isViewingAsUser ? effectiveUserId : undefined
-  );
 
-  // Determine effective roles: impersonated user's roles, viewAs role, or actual roles
-  const effectiveRoles = useMemo(() => {
-    if (isViewingAsUser && impersonatedRoles) {
-      return impersonatedRoles;
-    }
-    if (viewAsRole) {
-      return [viewAsRole];
-    }
-    return actualRoles;
-  }, [isViewingAsUser, impersonatedRoles, viewAsRole, actualRoles]);
-
+  // Fetch roles and visibility in a single query that handles impersonation
   return useQuery({
-    queryKey: ['dashboard-visibility', 'my', effectiveRoles],
+    queryKey: ['dashboard-visibility', 'my', effectiveUserId, viewAsRole, isViewingAsUser, actualRoles],
     queryFn: async () => {
-      if (!effectiveRoles || effectiveRoles.length === 0) return {};
+      let rolesToCheck: AppRole[] = actualRoles as AppRole[];
+
+      // If viewing as a specific user, fetch their roles
+      if (isViewingAsUser && effectiveUserId) {
+        const { data: userRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', effectiveUserId);
+
+        if (!rolesError && userRoles && userRoles.length > 0) {
+          rolesToCheck = userRoles.map(r => r.role);
+        }
+      } else if (viewAsRole) {
+        // If viewing as a role (not a specific user)
+        rolesToCheck = [viewAsRole];
+      }
+
+      if (rolesToCheck.length === 0) return {};
 
       const { data, error } = await supabase
         .from('dashboard_element_visibility')
         .select('*')
-        .in('role', effectiveRoles);
+        .in('role', rolesToCheck);
 
       if (error) throw error;
 
@@ -86,7 +86,7 @@ export function useMyDashboardVisibility() {
 
       return visibilityMap;
     },
-    enabled: effectiveRoles.length > 0,
+    enabled: actualRoles.length > 0 || isViewingAsUser || !!viewAsRole,
   });
 }
 
