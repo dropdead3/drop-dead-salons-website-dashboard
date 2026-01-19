@@ -88,6 +88,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
       style={{ opacity, y, scale }}
       className="group relative h-[420px] md:h-[460px] cursor-pointer perspective-1000"
       onClick={handleFlip}
+      onMouseLeave={() => setIsFlipped(false)}
     >
       <div
         className="relative w-full h-full transition-transform duration-700 ease-out"
