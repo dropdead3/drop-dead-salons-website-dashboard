@@ -3,7 +3,7 @@ import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star } from "lucide-react";
+import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star, CalendarX } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useRef, useState, useEffect } from "react";
@@ -474,7 +474,7 @@ export default function Services() {
             Before you book, check our policies.
           </h3>
           <p className="text-lg font-sans font-light leading-relaxed text-foreground/80 mb-6">
-            Services are by appointment only. Walk-ins not accepted. Typically we can schedule you in within 1 business day.
+            Services are by appointment only. <span className="inline-flex items-center gap-1.5 font-medium text-foreground"><CalendarX size={18} className="text-primary" />Walk-ins not accepted.</span> Typically we can schedule you in within 1 business day.
           </p>
           <Link
             to="/policies"
