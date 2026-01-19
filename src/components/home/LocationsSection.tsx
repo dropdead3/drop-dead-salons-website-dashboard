@@ -102,8 +102,6 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
           style={{ backfaceVisibility: "hidden" }}
         >
           <div className="relative w-full h-full bg-secondary p-10 md:p-12 text-center overflow-hidden rounded-2xl transition-all duration-500 flex flex-col">
-            {/* Top accent line */}
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-foreground/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
             {/* Location Title */}
             <h3 className="font-display text-2xl md:text-3xl text-foreground tracking-tight mb-2 whitespace-nowrap">
