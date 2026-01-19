@@ -58,6 +58,7 @@ import {
   Share2,
   Instagram,
   Mail,
+  LayoutTemplate,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -107,7 +108,7 @@ const brandLogos: BrandLogo[] = [
 ];
 
 // Block types for the email editor
-type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social';
+type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social' | 'footer';
 
 interface SocialLink {
   platform: 'instagram' | 'tiktok' | 'email';
@@ -136,6 +137,12 @@ interface EmailBlock {
   imageUrl?: string;
   linkUrl?: string;
   socialLinks?: SocialLink[];
+  footerConfig?: {
+    showLogo: boolean;
+    logoId: string;
+    showSocialIcons: boolean;
+    copyrightText: string;
+  };
 }
 
 interface EmailTemplateEditorProps {
@@ -361,6 +368,53 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''} ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''}">
           ${socialIcons}
+        </div>`;
+      }
+      case 'footer': {
+        const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main', showSocialIcons: true, copyrightText: '© 2025 Drop Dead Gorgeous. All rights reserved.' };
+        const logo = brandLogos.find(l => l.id === footerConfig.logoId) || brandLogos[0];
+        const bgColor = block.styles.backgroundColor || '#1a1a1a';
+        const textColor = block.styles.textColor || '#f5f0e8';
+        const iconColor = block.styles.buttonColor || '#f5f0e8';
+        
+        let logoHtml = '';
+        if (footerConfig.showLogo) {
+          logoHtml = `<div style="margin-bottom: 16px;">
+            <img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto;" />
+          </div>`;
+        }
+        
+        let socialHtml = '';
+        if (footerConfig.showSocialIcons) {
+          const enabledLinks = (block.socialLinks || []).filter(link => link.enabled);
+          if (enabledLinks.length > 0) {
+            const iconStyle = `display: inline-block; width: 24px; height: 24px; margin: 0 8px; text-decoration: none;`;
+            socialHtml = `<div style="margin-bottom: 16px;">` + enabledLinks.map(link => {
+              let svg = '';
+              let href = link.url;
+              
+              switch (link.platform) {
+                case 'instagram':
+                  svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>`;
+                  break;
+                case 'tiktok':
+                  svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>`;
+                  break;
+                case 'email':
+                  svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`;
+                  if (!href.startsWith('mailto:')) href = `mailto:${href}`;
+                  break;
+              }
+              
+              return `<a href="${href}" style="${iconStyle}" target="_blank" rel="noopener">${svg}</a>`;
+            }).join('') + `</div>`;
+          }
+        }
+        
+        return `<div style="text-align: center; background-color: ${bgColor}; color: ${textColor}; padding: ${block.styles.padding || '32px 24px'}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px'};">
+          ${logoHtml}
+          ${socialHtml}
+          <p style="margin: 0; font-size: 12px; opacity: 0.8;">${footerConfig.copyrightText}</p>
         </div>`;
       }
       default:
@@ -680,6 +734,13 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           backgroundColor: currentTheme.colors.bodyBg,
           buttonColor: currentTheme.colors.buttonBg
         }),
+        ...(type === 'footer' && {
+          backgroundColor: currentTheme.colors.headerBg,
+          textColor: currentTheme.colors.headerText,
+          buttonColor: currentTheme.colors.headerText,
+          padding: '32px 24px',
+          borderRadius: '0 0 12px 12px'
+        }),
       },
       ...(type === 'button' && { linkUrl: '{{dashboard_url}}' }),
       ...(type === 'link' && { linkUrl: '{{dashboard_url}}' }),
@@ -689,6 +750,19 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
           { platform: 'tiktok' as const, url: 'https://tiktok.com/@dropdeadhair', enabled: true },
           { platform: 'email' as const, url: 'hello@dropdeadhair.com', enabled: true },
         ]
+      }),
+      ...(type === 'footer' && {
+        socialLinks: [
+          { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadhair', enabled: true },
+          { platform: 'tiktok' as const, url: 'https://tiktok.com/@dropdeadhair', enabled: true },
+          { platform: 'email' as const, url: 'hello@dropdeadhair.com', enabled: true },
+        ],
+        footerConfig: {
+          showLogo: true,
+          logoId: 'drop-dead-main',
+          showSocialIcons: true,
+          copyrightText: '© 2025 Drop Dead Gorgeous. All rights reserved.',
+        }
       }),
     };
     updateBlocksAndHtml([...blocks, newBlock]);
@@ -1310,9 +1384,13 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                     <Square className="w-4 h-4" />
                     Spacer
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('social')} className="justify-start gap-2 col-span-2">
+                  <Button variant="outline" size="sm" onClick={() => addBlock('social')} className="justify-start gap-2">
                     <Share2 className="w-4 h-4" />
                     Social Icons
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => addBlock('footer')} className="justify-start gap-2">
+                    <LayoutTemplate className="w-4 h-4" />
+                    Footer
                   </Button>
                 </div>
               </div>
@@ -1654,6 +1732,154 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                       </>
                     )}
 
+                    {selectedBlock.type === 'footer' && (
+                      <>
+                        <div className="space-y-3">
+                          <Label className="text-xs font-medium">Footer Options</Label>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedBlock.footerConfig?.showLogo ?? true}
+                                onChange={(e) => {
+                                  updateBlock(selectedBlock.id, {
+                                    footerConfig: {
+                                      ...selectedBlock.footerConfig!,
+                                      showLogo: e.target.checked,
+                                    }
+                                  });
+                                }}
+                                className="h-4 w-4 rounded border-border"
+                              />
+                              <span className="text-xs">Show Logo</span>
+                            </div>
+                            {selectedBlock.footerConfig?.showLogo && (
+                              <Select
+                                value={selectedBlock.footerConfig?.logoId || 'drop-dead-main'}
+                                onValueChange={(v) => {
+                                  updateBlock(selectedBlock.id, {
+                                    footerConfig: {
+                                      ...selectedBlock.footerConfig!,
+                                      logoId: v,
+                                    }
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {brandLogos.map((logo) => (
+                                    <SelectItem key={logo.id} value={logo.id}>{logo.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedBlock.footerConfig?.showSocialIcons ?? true}
+                              onChange={(e) => {
+                                updateBlock(selectedBlock.id, {
+                                  footerConfig: {
+                                    ...selectedBlock.footerConfig!,
+                                    showSocialIcons: e.target.checked,
+                                  }
+                                });
+                              }}
+                              className="h-4 w-4 rounded border-border"
+                            />
+                            <span className="text-xs">Show Social Icons</span>
+                          </div>
+                        </div>
+
+                        {selectedBlock.footerConfig?.showSocialIcons && (
+                          <div className="space-y-3">
+                            <Label className="text-xs font-medium">Social Platforms</Label>
+                            {(['instagram', 'tiktok', 'email'] as const).map((platform) => {
+                              const link = (selectedBlock.socialLinks || []).find(l => l.platform === platform);
+                              const isEnabled = link?.enabled ?? false;
+                              const url = link?.url ?? '';
+                              
+                              return (
+                                <div key={platform} className="space-y-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={isEnabled}
+                                      onChange={(e) => {
+                                        const newLinks = [...(selectedBlock.socialLinks || [])];
+                                        const existingIndex = newLinks.findIndex(l => l.platform === platform);
+                                        if (existingIndex >= 0) {
+                                          newLinks[existingIndex] = { ...newLinks[existingIndex], enabled: e.target.checked };
+                                        } else {
+                                          newLinks.push({ platform, url: '', enabled: e.target.checked });
+                                        }
+                                        updateBlock(selectedBlock.id, { socialLinks: newLinks });
+                                      }}
+                                      className="h-4 w-4 rounded border-border"
+                                    />
+                                    <div className="flex items-center gap-1.5">
+                                      {platform === 'instagram' && <Instagram className="w-4 h-4" />}
+                                      {platform === 'tiktok' && (
+                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
+                                        </svg>
+                                      )}
+                                      {platform === 'email' && <Mail className="w-4 h-4" />}
+                                      <span className="text-xs capitalize">{platform === 'email' ? 'Email' : platform}</span>
+                                    </div>
+                                  </div>
+                                  {isEnabled && (
+                                    <Input
+                                      value={url}
+                                      onChange={(e) => {
+                                        const newLinks = [...(selectedBlock.socialLinks || [])];
+                                        const existingIndex = newLinks.findIndex(l => l.platform === platform);
+                                        if (existingIndex >= 0) {
+                                          newLinks[existingIndex] = { ...newLinks[existingIndex], url: e.target.value };
+                                        } else {
+                                          newLinks.push({ platform, url: e.target.value, enabled: true });
+                                        }
+                                        updateBlock(selectedBlock.id, { socialLinks: newLinks });
+                                      }}
+                                      placeholder={platform === 'email' ? 'email@example.com' : `https://${platform}.com/...`}
+                                      className="h-7 text-xs"
+                                    />
+                                  )}
+                                </div>
+                              );
+                            })}
+                            <div className="space-y-2">
+                              <Label className="text-xs">Icon Color</Label>
+                              <ColorPicker
+                                value={selectedBlock.styles.buttonColor || '#f5f0e8'}
+                                onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <Label className="text-xs">Copyright Text</Label>
+                          <Input
+                            value={selectedBlock.footerConfig?.copyrightText || ''}
+                            onChange={(e) => {
+                              updateBlock(selectedBlock.id, {
+                                footerConfig: {
+                                  ...selectedBlock.footerConfig!,
+                                  copyrightText: e.target.value,
+                                }
+                              });
+                            }}
+                            placeholder="© 2025 Company Name"
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                      </>
+                    )}
+
                     {/* Common settings */}
                     {selectedBlock.type !== 'divider' && selectedBlock.type !== 'spacer' && (
                       <>
@@ -1876,6 +2102,45 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                             )}
                           </div>
                         )}
+                        {block.type === 'footer' && (() => {
+                          const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main', showSocialIcons: true, copyrightText: '© 2025 Drop Dead Gorgeous. All rights reserved.' };
+                          const logo = brandLogos.find(l => l.id === footerConfig.logoId) || brandLogos[0];
+                          const enabledLinks = (block.socialLinks || []).filter(l => l.enabled);
+                          
+                          return (
+                            <div className="text-center">
+                              {footerConfig.showLogo && (
+                                <div className="mb-3">
+                                  <img 
+                                    src={logo.src} 
+                                    alt={logo.name} 
+                                    style={{ maxWidth: '120px', height: 'auto', margin: '0 auto', filter: block.styles.textColor === '#f5f0e8' || block.styles.textColor === '#ffffff' ? 'invert(1)' : 'none' }}
+                                  />
+                                </div>
+                              )}
+                              {footerConfig.showSocialIcons && enabledLinks.length > 0 && (
+                                <div className="flex items-center justify-center gap-3 mb-3">
+                                  {enabledLinks.map((link) => (
+                                    <div 
+                                      key={link.platform}
+                                      className="w-6 h-6 flex items-center justify-center"
+                                      style={{ color: block.styles.buttonColor || '#f5f0e8' }}
+                                    >
+                                      {link.platform === 'instagram' && <Instagram className="w-5 h-5" />}
+                                      {link.platform === 'tiktok' && (
+                                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
+                                        </svg>
+                                      )}
+                                      {link.platform === 'email' && <Mail className="w-5 h-5" />}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <p style={{ margin: 0, fontSize: '11px', opacity: 0.8 }}>{footerConfig.copyrightText}</p>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}
