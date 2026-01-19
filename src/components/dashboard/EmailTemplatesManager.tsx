@@ -34,6 +34,7 @@ import {
   Loader2,
   Send,
   Copy,
+  Plus,
 } from 'lucide-react';
 import {
   useEmailTemplates,
@@ -48,6 +49,25 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { EmailTemplateEditor } from './EmailTemplateEditor';
 
+// Default HTML for new templates
+function getDefaultEmailHtml() {
+  return `<div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background-color: #1a1a1a; padding: 24px; text-align: center;">
+    <h1 style="color: #f5f0e8; margin: 0; font-size: 24px;">Email Title</h1>
+  </div>
+  <div style="background-color: #f5f0e8; padding: 24px;">
+    <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6;">
+      Your email content goes here. Use the visual editor to customize this template.
+    </p>
+  </div>
+  <div style="background-color: #f5f0e8; padding: 24px; text-align: center;">
+    <a href="{{dashboard_url}}" style="display: inline-block; background-color: #1a1a1a; color: #f5f0e8; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+      Click Here
+    </a>
+  </div>
+</div>`;
+}
+
 export function EmailTemplatesManager() {
   const { data: templates, isLoading } = useEmailTemplates();
   const updateTemplate = useUpdateEmailTemplate();
@@ -61,6 +81,7 @@ export function EmailTemplatesManager() {
   const [testEmailAddress, setTestEmailAddress] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     subject: '',
@@ -68,6 +89,15 @@ export function EmailTemplatesManager() {
     description: '',
     is_active: true,
   });
+  const [createForm, setCreateForm] = useState({
+    template_key: '',
+    name: '',
+    subject: '',
+    html_body: getDefaultEmailHtml(),
+    description: '',
+    variables: [] as string[],
+  });
+  const [newVariable, setNewVariable] = useState('');
 
   const openEditDialog = (template: EmailTemplate) => {
     setEditingTemplate(template);
@@ -129,6 +159,68 @@ export function EmailTemplatesManager() {
     }
   };
 
+  const openCreateDialog = () => {
+    setCreateForm({
+      template_key: '',
+      name: '',
+      subject: '',
+      html_body: getDefaultEmailHtml(),
+      description: '',
+      variables: ['dashboard_url'],
+    });
+    setNewVariable('');
+    setIsCreating(true);
+  };
+
+  const handleCreate = async () => {
+    if (!createForm.template_key || !createForm.name || !createForm.subject) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Check for duplicate template key
+    const existingKeys = templates?.map(t => t.template_key) || [];
+    if (existingKeys.includes(createForm.template_key)) {
+      toast.error('Template key already exists. Please use a unique key.');
+      return;
+    }
+
+    try {
+      await createTemplate.mutateAsync({
+        template_key: createForm.template_key,
+        name: createForm.name,
+        subject: createForm.subject,
+        html_body: createForm.html_body,
+        description: createForm.description || undefined,
+        variables: createForm.variables,
+      });
+      setIsCreating(false);
+    } catch (error) {
+      console.error('Error creating template:', error);
+    }
+  };
+
+  const addVariable = () => {
+    if (!newVariable.trim()) return;
+    const formatted = newVariable.trim().toLowerCase().replace(/\s+/g, '_');
+    if (createForm.variables.includes(formatted)) {
+      toast.error('Variable already exists');
+      return;
+    }
+    setCreateForm(prev => ({
+      ...prev,
+      variables: [...prev.variables, formatted],
+    }));
+    setNewVariable('');
+  };
+
+  const removeVariable = (variable: string) => {
+    setCreateForm(prev => ({
+      ...prev,
+      variables: prev.variables.filter(v => v !== variable),
+    }));
+  };
+
   const handleSendTestEmail = async () => {
     if (!testEmailTemplate || !testEmailAddress) return;
 
@@ -185,6 +277,10 @@ export function EmailTemplatesManager() {
         <p className="text-sm text-muted-foreground font-sans">
           Customize email templates for automated notifications.
         </p>
+        <Button onClick={openCreateDialog} size="sm" className="gap-2">
+          <Plus className="w-4 h-4" />
+          New Template
+        </Button>
       </div>
 
       {templates?.length === 0 ? (
@@ -192,6 +288,10 @@ export function EmailTemplatesManager() {
           <CardContent className="py-8 text-center text-muted-foreground">
             <Mail className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No email templates configured.</p>
+            <Button onClick={openCreateDialog} variant="outline" className="mt-4 gap-2">
+              <Plus className="w-4 h-4" />
+              Create Your First Template
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -473,6 +573,128 @@ export function EmailTemplatesManager() {
                 <Send className="w-4 h-4 mr-2" />
               )}
               Send Test Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create New Template Dialog */}
+      <Dialog
+        open={isCreating}
+        onOpenChange={(open) => !open && setIsCreating(false)}
+      >
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Email Template</DialogTitle>
+            <DialogDescription>
+              Design a new email template from scratch using the visual editor.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Template Key *</Label>
+                <Input
+                  value={createForm.template_key}
+                  onChange={(e) => setCreateForm({ ...createForm, template_key: e.target.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '') })}
+                  placeholder="e.g., welcome_email, password_reset"
+                  className="font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Unique identifier used in code to reference this template
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Template Name *</Label>
+                <Input
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  placeholder="e.g., Welcome Email, Password Reset"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Subject Line *</Label>
+              <Input
+                value={createForm.subject}
+                onChange={(e) => setCreateForm({ ...createForm, subject: e.target.value })}
+                placeholder="e.g., Welcome to Drop Dead Gorgeous!"
+                className="font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                placeholder="Brief description of when this email is sent..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Template Variables</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={newVariable}
+                  onChange={(e) => setNewVariable(e.target.value)}
+                  placeholder="Add a variable (e.g., user_name)"
+                  className="font-mono"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addVariable();
+                    }
+                  }}
+                />
+                <Button type="button" variant="outline" onClick={addVariable}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              {createForm.variables.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {createForm.variables.map((variable) => (
+                    <Badge
+                      key={variable}
+                      variant="secondary"
+                      className="text-xs font-mono cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                      onClick={() => removeVariable(variable)}
+                      title="Click to remove"
+                    >
+                      {`{{${variable}}}`} ×
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Variables can be inserted into the email content. Click a variable to remove it.
+              </p>
+            </div>
+
+            {/* Visual Editor */}
+            <EmailTemplateEditor
+              initialHtml={createForm.html_body}
+              variables={createForm.variables}
+              onHtmlChange={(html) => setCreateForm({ ...createForm, html_body: html })}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreating(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreate} 
+              disabled={createTemplate.isPending || !createForm.template_key || !createForm.name || !createForm.subject}
+            >
+              {createTemplate.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Create Template
             </Button>
           </DialogFooter>
         </DialogContent>
