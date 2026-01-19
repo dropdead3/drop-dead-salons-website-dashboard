@@ -38,6 +38,9 @@ import HomepageStylists from "./pages/dashboard/admin/HomepageStylists";
 import ManageRoles from "./pages/dashboard/admin/ManageRoles";
 import AccountApprovals from "./pages/dashboard/admin/AccountApprovals";
 import StaffInvitations from "./pages/dashboard/admin/StaffInvitations";
+import TestimonialsManager from "./pages/dashboard/admin/TestimonialsManager";
+import GalleryManager from "./pages/dashboard/admin/GalleryManager";
+import ServicesManager from "./pages/dashboard/admin/ServicesManager";
 import MyHandbooks from "./pages/dashboard/MyHandbooks";
 import Onboarding from "./pages/dashboard/Onboarding";
 import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
@@ -90,6 +93,9 @@ const App = () => (
               <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
               <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
               <Route path="/dashboard/admin/homepage-stylists" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><HomepageStylists /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/testimonials" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><TestimonialsManager /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/gallery" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><GalleryManager /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/services" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><ServicesManager /></ProtectedRoute>} />
               <Route path="/dashboard/admin/roles" element={<ProtectedRoute requiredPermission="manage_user_roles"><ManageRoles /></ProtectedRoute>} />
               <Route path="/dashboard/admin/approvals" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountApprovals /></ProtectedRoute>} />
               <Route path="/dashboard/admin/invitations" element={<ProtectedRoute requiredPermission="approve_accounts"><StaffInvitations /></ProtectedRoute>} />
