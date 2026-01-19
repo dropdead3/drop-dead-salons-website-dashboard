@@ -401,10 +401,10 @@ function TeamMemberCard({ member, locations, isSuperAdmin, onViewProfile }: Team
       )}
       onClick={isSuperAdmin ? onViewProfile : undefined}
     >
-      <CardContent className="p-4">
-        {/* Super admin edit indicator */}
+    <CardContent className="p-4">
+        {/* Super admin edit indicator - bottom right */}
         {isSuperAdmin && (
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
