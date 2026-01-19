@@ -89,7 +89,7 @@ export function useUpsertLocationSchedule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['location-schedules'] });
       queryClient.invalidateQueries({ queryKey: ['location-schedule'] });
-      toast.success('Schedule updated');
+      // Toast removed - will be shown by the parent save operation
     },
     onError: (error) => {
       console.error('Error updating schedule:', error);
