@@ -157,14 +157,14 @@ export function ExtensionsSection() {
                   to="/booking"
                   className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-6 py-3.5 text-sm font-medium tracking-wide rounded-full hover:bg-oat/90 transition-all duration-300"
                 >
-                  <span>BOOK EXTENSION CONSULT</span>
+                  <span>Book Extension Consult</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
                 <Link
                   to="/services"
                   className="group inline-flex items-center gap-3 border border-background/30 text-background px-6 py-3.5 text-sm font-medium tracking-wide rounded-full hover:bg-background/10 transition-all duration-300"
                 >
-                  <span>LEARN MORE</span>
+                  <span>Learn More</span>
                   <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </div>
