@@ -843,7 +843,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 Preview mode – Actions are read-only
               </span>
 
-              {/* Exit button */}
+              {/* Exit button with ESC hint */}
               <Button 
                 variant="outline"
                 size="sm" 
@@ -852,6 +852,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 <X className="w-3.5 h-3.5" />
                 Exit View
+                <kbd className="hidden sm:inline-flex items-center justify-center h-4 px-1.5 ml-1 text-[10px] font-mono bg-amber-100/20 text-amber-100 rounded border border-amber-100/30">
+                  ESC
+                </kbd>
               </Button>
             </motion.div>
           </motion.div>
