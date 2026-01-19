@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { stylistLevels } from '@/data/servicePricing';
-import { locations } from '@/data/stylists';
+import { useActiveLocations } from '@/hooks/useLocations';
 
 export function StylistsOverviewCard() {
   // Fetch stylists with their levels to show counts
@@ -86,6 +86,9 @@ export function StylistsOverviewCard() {
 }
 
 export function StaffOverviewCard() {
+  // Fetch locations from database
+  const { data: locations = [] } = useActiveLocations();
+  
   // Fetch all active staff with their location info
   const { data: staffData } = useQuery({
     queryKey: ['staff-by-location'],

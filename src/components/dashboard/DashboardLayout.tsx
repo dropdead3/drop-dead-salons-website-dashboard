@@ -56,6 +56,7 @@ import {
   Quote,
   Images,
   Layers,
+  MapPin,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -129,6 +130,7 @@ const websiteNavItems: NavItem[] = [
   { href: '/dashboard/admin/testimonials', label: 'Testimonials', icon: Quote, permission: 'manage_homepage_stylists' },
   { href: '/dashboard/admin/gallery', label: 'Gallery', icon: Images, permission: 'manage_homepage_stylists' },
   { href: '/dashboard/admin/services', label: 'Services', icon: Scissors, permission: 'manage_homepage_stylists' },
+  { href: '/dashboard/admin/locations', label: 'Locations', icon: MapPin, permission: 'manage_settings' },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
