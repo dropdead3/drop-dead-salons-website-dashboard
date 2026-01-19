@@ -17,7 +17,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { 
-  Layers, 
   Plus, 
   Pencil, 
   Trash2, 
@@ -25,9 +24,9 @@ import {
   ChevronDown,
   Save,
   X,
-  Users,
   AlertTriangle,
-  Info,
+  Eye,
+  ChevronDown as ChevronDownIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -148,9 +147,11 @@ export default function StylistLevels() {
     setHasChanges(false);
   };
 
+  const [previewLevel, setPreviewLevel] = useState(0);
+
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-2xl mx-auto space-y-8">
+      <div className="p-6 max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -171,192 +172,239 @@ export default function StylistLevels() {
           )}
         </div>
 
-        {/* Levels List */}
-        <div className="space-y-2">
-          {levels.map((level, index) => {
-            const stylistCount = getStylistCount(level.id);
-            const hasStylists = stylistCount > 0;
-            
-            return (
-              <div
-                key={level.id}
-                className={cn(
-                  "group flex items-center gap-4 px-4 py-3 rounded-xl bg-card border transition-all duration-200 hover:shadow-sm",
-                  editingIndex === index && "ring-2 ring-primary/50 shadow-sm"
-                )}
-              >
-                {/* Reorder buttons - subtle */}
-                <div className="flex flex-col opacity-40 group-hover:opacity-100 transition-opacity">
-                  <button
-                    className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
-                    disabled={index === 0}
-                    onClick={() => handleMoveUp(index)}
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                  <button
-                    className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
-                    disabled={index === levels.length - 1}
-                    onClick={() => handleMoveDown(index)}
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Level number - minimal */}
-                <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
-                  {index + 1}
-                </span>
-
-                {/* Level name - editable or display */}
-                {editingIndex === index ? (
-                  <div className="flex-1 flex items-center gap-2">
-                    <Input
-                      value={level.label}
-                      onChange={(e) => handleRename(index, e.target.value)}
-                      className="h-8 text-sm"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') setEditingIndex(null);
-                        if (e.key === 'Escape') setEditingIndex(null);
-                      }}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2"
-                      onClick={() => setEditingIndex(null)}
+        <div className="grid lg:grid-cols-5 gap-8">
+          {/* Levels List */}
+          <div className="lg:col-span-3 space-y-2">
+            {levels.map((level, index) => {
+              const stylistCount = getStylistCount(level.id);
+              const hasStylists = stylistCount > 0;
+              
+              return (
+                <div
+                  key={level.id}
+                  className={cn(
+                    "group flex items-center gap-4 px-4 py-3 rounded-xl bg-card border transition-all duration-200 hover:shadow-sm",
+                    editingIndex === index && "ring-2 ring-primary/50 shadow-sm"
+                  )}
+                >
+                  {/* Reorder buttons - subtle */}
+                  <div className="flex flex-col opacity-40 group-hover:opacity-100 transition-opacity">
+                    <button
+                      className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                      disabled={index === 0}
+                      onClick={() => handleMoveUp(index)}
                     >
-                      Done
-                    </Button>
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-0.5 hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                      disabled={index === levels.length - 1}
+                      onClick={() => handleMoveDown(index)}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
                   </div>
-                ) : (
-                  <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="font-medium truncate">{level.label}</span>
-                      {hasStylists && (
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        className="p-2 rounded-md hover:bg-muted transition-colors"
-                        onClick={() => setEditingIndex(index)}
+
+                  {/* Level number - minimal */}
+                  <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
+                    {index + 1}
+                  </span>
+
+                  {/* Level name - editable or display */}
+                  {editingIndex === index ? (
+                    <div className="flex-1 flex items-center gap-2">
+                      <Input
+                        value={level.label}
+                        onChange={(e) => handleRename(index, e.target.value)}
+                        className="h-8 text-sm"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') setEditingIndex(null);
+                          if (e.key === 'Escape') setEditingIndex(null);
+                        }}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2"
+                        onClick={() => setEditingIndex(null)}
                       >
-                        <Pencil className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <button
-                            className="p-2 rounded-md hover:bg-destructive/10 transition-colors disabled:opacity-30"
-                            disabled={levels.length <= 1}
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="flex items-center gap-2">
-                              {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
-                              Delete "{level.label}"?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription asChild>
-                              <div className="space-y-3">
-                                {hasStylists ? (
-                                  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
-                                    <p className="font-medium flex items-center gap-2">
-                                      <AlertTriangle className="w-4 h-4" />
-                                      Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
-                                    </p>
-                                    <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
-                                      You'll need to reassign these stylists to a different level.
-                                    </p>
-                                  </div>
-                                ) : (
-                                  <p>No stylists are currently assigned to this level.</p>
-                                )}
-                              </div>
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => handleDelete(index)}
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        Done
+                      </Button>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  ) : (
+                    <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="font-medium truncate">{level.label}</span>
+                        {hasStylists && (
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          className="p-2 rounded-md hover:bg-muted transition-colors"
+                          onClick={() => setEditingIndex(index)}
+                        >
+                          <Pencil className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              className="p-2 rounded-md hover:bg-destructive/10 transition-colors disabled:opacity-30"
+                              disabled={levels.length <= 1}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="flex items-center gap-2">
+                                {hasStylists && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+                                Delete "{level.label}"?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription asChild>
+                                <div className="space-y-3">
+                                  {hasStylists ? (
+                                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-200">
+                                      <p className="font-medium flex items-center gap-2">
+                                        <AlertTriangle className="w-4 h-4" />
+                                        Warning: {stylistCount} stylist{stylistCount !== 1 ? 's are' : ' is'} assigned to this level
+                                      </p>
+                                      <p className="text-sm mt-1 text-amber-700 dark:text-amber-300">
+                                        You'll need to reassign these stylists to a different level.
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <p>No stylists are currently assigned to this level.</p>
+                                  )}
+                                </div>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => handleDelete(index)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
-          {/* Add new level */}
-          {isAddingNew ? (
-            <div className="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
-              <div className="w-8" /> {/* Spacer for alignment */}
-              <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
-                {levels.length + 1}
-              </span>
-              <Input
-                value={newLevelName}
-                onChange={(e) => setNewLevelName(e.target.value)}
-                placeholder="Enter level name..."
-                className="h-8 text-sm flex-1 border-0 bg-transparent focus-visible:ring-0 px-0"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddNew();
-                  if (e.key === 'Escape') {
-                    setIsAddingNew(false);
-                    setNewLevelName('');
-                  }
-                }}
-              />
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8"
-                  onClick={handleAddNew}
-                  disabled={!newLevelName.trim()}
-                >
-                  Add
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2"
-                  onClick={() => {
-                    setIsAddingNew(false);
-                    setNewLevelName('');
+            {/* Add new level */}
+            {isAddingNew ? (
+              <div className="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5">
+                <div className="w-8" /> {/* Spacer for alignment */}
+                <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
+                  {levels.length + 1}
+                </span>
+                <Input
+                  value={newLevelName}
+                  onChange={(e) => setNewLevelName(e.target.value)}
+                  placeholder="Enter level name..."
+                  className="h-8 text-sm flex-1 border-0 bg-transparent focus-visible:ring-0 px-0"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddNew();
+                    if (e.key === 'Escape') {
+                      setIsAddingNew(false);
+                      setNewLevelName('');
+                    }
                   }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+                />
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8"
+                    onClick={handleAddNew}
+                    disabled={!newLevelName.trim()}
+                  >
+                    Add
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={() => {
+                      setIsAddingNew(false);
+                      setNewLevelName('');
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <button
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 transition-all"
-              onClick={() => setIsAddingNew(true)}
-            >
-              <Plus className="w-4 h-4" />
-              <span className="text-sm font-medium">Add Level</span>
-            </button>
-          )}
-        </div>
+            ) : (
+              <button
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 transition-all"
+                onClick={() => setIsAddingNew(true)}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-sm font-medium">Add Level</span>
+              </button>
+            )}
+          </div>
 
-        {/* Helper text */}
-        <p className="text-xs text-muted-foreground text-center">
-          Levels determine pricing tiers. Reorder using the arrows on the left.
-        </p>
+          {/* Preview Panel */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Eye className="w-4 h-4" />
+              <span>Services Page Preview</span>
+            </div>
+            
+            {/* Preview of the dropdown selector */}
+            <div className="bg-foreground rounded-2xl p-6 space-y-4">
+              <p className="text-xs text-background/60 font-sans">
+                How clients see the level selector:
+              </p>
+              
+              {/* Fake dropdown button */}
+              <div className="relative">
+                <button
+                  className="w-full flex items-center justify-between gap-2 px-4 py-2.5 border border-background/30 rounded-full text-sm font-sans bg-background/10 text-background"
+                >
+                  <span className="text-background/70">Pricing Level:</span>
+                  <span className="font-medium">
+                    Level {previewLevel + 1} Stylist — {levels[previewLevel]?.label || 'New Talent'}
+                  </span>
+                  <ChevronDownIcon size={16} className="text-background/70" />
+                </button>
+              </div>
+
+              {/* Preview dropdown items */}
+              <div className="bg-card rounded-xl border shadow-lg overflow-hidden">
+                {levels.map((level, idx) => (
+                  <button
+                    key={level.id}
+                    onClick={() => setPreviewLevel(idx)}
+                    className={cn(
+                      "w-full px-4 py-3 text-left text-sm font-sans transition-colors",
+                      previewLevel === idx 
+                        ? "bg-foreground text-background" 
+                        : "hover:bg-secondary text-foreground"
+                    )}
+                  >
+                    Level {idx + 1} Stylist — {level.label}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-xs text-background/50 leading-relaxed">
+                Click items above to preview how each level appears in the selector.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
