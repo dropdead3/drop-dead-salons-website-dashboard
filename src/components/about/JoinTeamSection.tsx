@@ -297,62 +297,35 @@ export function JoinTeamSection() {
               </div>
               
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left max-w-6xl mx-auto">
-              <div className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer">
+              {[
+                { icon: Calendar, title: "Flexible Schedule", desc: "Build your ideal work-life balance with flexible booking options." },
+                { icon: GraduationCap, title: "Education & Growth", desc: "Access ongoing training, workshops, and industry certifications." },
+                { icon: Heart, title: "Supportive Culture", desc: "Join a collaborative team that celebrates your success." },
+                { icon: Users, title: "Client Leads", desc: "We bring clients to you through marketing and referrals." },
+                { icon: Camera, title: "Pro Photo Equipment", desc: "Access professional lighting and equipment for stunning content." },
+                { icon: Settings, title: "Advanced Systems", desc: "Streamlined booking, payments, and client management tools." },
+                { icon: Award, title: "Industry Events", desc: "Attend shows, competitions, and networking opportunities." },
+                { icon: UsersRound, title: "Monthly Team Meetings", desc: "Stay connected with regular team gatherings and updates." },
+              ].map((benefit, index) => (
+                <motion.div
+                  key={benefit.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: index * 0.1,
+                    ease: [0.4, 0, 0.2, 1]
+                  }}
+                  className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
+                >
                   <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4">
-                    <Calendar className="w-5 h-5 text-foreground" />
+                    <benefit.icon className="w-5 h-5 text-foreground" />
                   </div>
-                  <h3 className="font-display text-lg mb-2">Flexible Schedule</h3>
-                  <p className="text-sm text-foreground/60">Build your ideal work-life balance with flexible booking options.</p>
-                </div>
-              <div className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4">
-                  <GraduationCap className="w-5 h-5 text-foreground" />
-                  </div>
-                  <h3 className="font-display text-lg mb-2">Education & Growth</h3>
-                  <p className="text-sm text-foreground/60">Access ongoing training, workshops, and industry certifications.</p>
-                </div>
-              <div className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4">
-                  <Heart className="w-5 h-5 text-foreground" />
-                  </div>
-                  <h3 className="font-display text-lg mb-2">Supportive Culture</h3>
-                  <p className="text-sm text-foreground/60">Join a collaborative team that celebrates your success.</p>
-                </div>
-              <div className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4">
-                  <Users className="w-5 h-5 text-foreground" />
-                  </div>
-                  <h3 className="font-display text-lg mb-2">Client Leads</h3>
-                  <p className="text-sm text-foreground/60">We bring clients to you through marketing and referrals.</p>
-                </div>
-              <div className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4">
-                  <Camera className="w-5 h-5 text-foreground" />
-                  </div>
-                  <h3 className="font-display text-lg mb-2">Pro Photo Equipment</h3>
-                  <p className="text-sm text-foreground/60">Access professional lighting and equipment for stunning content.</p>
-                </div>
-              <div className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4">
-                  <Settings className="w-5 h-5 text-foreground" />
-                  </div>
-                  <h3 className="font-display text-lg mb-2">Advanced Systems</h3>
-                  <p className="text-sm text-foreground/60">Streamlined booking, payments, and client management tools.</p>
-                </div>
-              <div className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4">
-                  <Award className="w-5 h-5 text-foreground" />
-                  </div>
-                  <h3 className="font-display text-lg mb-2">Industry Events</h3>
-                  <p className="text-sm text-foreground/60">Attend shows, competitions, and networking opportunities.</p>
-                </div>
-              <div className="bg-background rounded-xl p-8 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4">
-                  <UsersRound className="w-5 h-5 text-foreground" />
-                  </div>
-                  <h3 className="font-display text-lg mb-2">Monthly Team Meetings</h3>
-                  <p className="text-sm text-foreground/60">Stay connected with regular team gatherings and updates.</p>
-                </div>
+                  <h3 className="font-display text-lg mb-2">{benefit.title}</h3>
+                  <p className="text-sm text-foreground/60">{benefit.desc}</p>
+                </motion.div>
+              ))}
               </div>
             </motion.div>
           ) : (
