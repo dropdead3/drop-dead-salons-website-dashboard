@@ -25,26 +25,20 @@ const Index = () => {
       />
       <HeroSection />
       <BrandStatement />
+      {/* Social proof early for trust */}
+      <TestimonialSection />
       <ServicesPreview />
-      <PopularServices />
-      <BrandsSection />
-      <NewClientSection />
-      <LocationsSection />
       <GallerySection />
-      {/* Combined Reviews & FAQ Section with Gradient */}
-      <div 
-        data-theme="light"
-        className="relative"
-        style={{ 
-          background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(40 25% 95%) 30%, hsl(40 30% 94%) 70%, hsl(40 20% 92%) 100%)' 
-        }}
-      >
-        <TestimonialSection />
-        <FAQSection />
-      </div>
-      <ExtensionsSection />
+      {/* Primary conversion CTA */}
+      <NewClientSection />
+      {/* Build trust with team */}
       <StylistsSection />
-      
+      <LocationsSection />
+      {/* FAQ to overcome objections */}
+      <FAQSection />
+      {/* Specialty services */}
+      <ExtensionsSection />
+      <BrandsSection />
       <DrinkMenuSection />
     </Layout>
   );
