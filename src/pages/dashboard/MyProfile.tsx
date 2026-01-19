@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Star, X } from 'lucide-react';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
@@ -35,6 +35,10 @@ const specialtyOptions = [
   'COLOR BLOCKING', 'LAYERED CUTS', 'CUSTOM CUTS', 'BALAYAGE',
   'VIVIDS', 'CORRECTIVE COLOR', 'KERATIN', 'BRIDAL'
 ];
+
+// Get all service names for highlighted services selection
+import { services } from '@/data/servicePricing';
+const allServiceNames = services.flatMap(cat => cat.items.map(item => item.name));
 
 // Format phone number as XXX-XXX-XXXX
 const formatPhoneNumber = (value: string) => {
@@ -91,6 +95,7 @@ export default function MyProfile() {
     location_ids: [] as string[],
     stylist_level: '',
     specialties: [] as string[],
+    highlighted_services: [] as string[],
     dd_certified: false,
     emergency_contact: '',
     emergency_phone: '',
@@ -133,6 +138,7 @@ export default function MyProfile() {
         location_ids: locationIds,
         stylist_level: profile.stylist_level || '',
         specialties: profile.specialties || [],
+        highlighted_services: (profile as any).highlighted_services || [],
         dd_certified: profile.dd_certified || false,
         emergency_contact: profile.emergency_contact || '',
         emergency_phone: profile.emergency_phone || '',
@@ -163,7 +169,7 @@ export default function MyProfile() {
 
   // Calculate profile completion
   const profileFields = useMemo(() => {
-    const isStylist = roles.includes('stylist');
+    const isStylist = roles.includes('stylist') || roles.includes('stylist_assistant');
     
     const fields = [
       { key: 'photo', label: 'Profile Photo', filled: !!profile?.photo_url },
@@ -233,6 +239,7 @@ export default function MyProfile() {
       location_ids: formData.location_ids,
       stylist_level: formData.stylist_level,
       specialties: formData.specialties,
+      highlighted_services: formData.highlighted_services,
       dd_certified: formData.dd_certified,
       emergency_contact: formData.emergency_contact,
       emergency_phone: formData.emergency_phone,
@@ -276,6 +283,21 @@ export default function MyProfile() {
         return prev;
       }
       return { ...prev, specialties: [...prev.specialties, specialty] };
+    });
+  };
+
+  const toggleHighlightedService = (service: string) => {
+    setFormData(prev => {
+      const isSelected = prev.highlighted_services.includes(service);
+      if (isSelected) {
+        return { ...prev, highlighted_services: prev.highlighted_services.filter(s => s !== service) };
+      }
+      // Limit to 3 highlighted services
+      if (prev.highlighted_services.length >= 3) {
+        toast.error('You can select up to 3 highlighted services');
+        return prev;
+      }
+      return { ...prev, highlighted_services: [...prev.highlighted_services, service] };
     });
   };
 
@@ -709,8 +731,8 @@ export default function MyProfile() {
             </Card>
           )}
 
-          {/* Professional Info - Only for stylists */}
-          {roles.includes('stylist') && (
+          {/* Professional Info - For stylists and stylist assistants */}
+          {(roles.includes('stylist') || roles.includes('stylist_assistant')) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Professional Details</CardTitle>
@@ -759,6 +781,53 @@ export default function MyProfile() {
                       {formData.specialties.length}/4 selected
                     </p>
                   )}
+                </div>
+
+                {/* Highlighted Services for Website Card */}
+                <div className="space-y-2 pt-4 border-t">
+                  <Label className="flex items-center gap-2">
+                    <Star className="w-4 h-4" />
+                    Highlighted Services
+                    <span className="text-muted-foreground text-xs font-normal">(select up to 3)</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    These services will appear as badges on your stylist card on the website homepage.
+                  </p>
+                  <Select
+                    value=""
+                    onValueChange={(value) => toggleHighlightedService(value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Search and add services..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {allServiceNames
+                        .filter(s => !formData.highlighted_services.includes(s))
+                        .map(service => (
+                          <SelectItem key={service} value={service}>
+                            {service}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.highlighted_services.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {formData.highlighted_services.map(service => (
+                        <Badge
+                          key={service}
+                          variant="default"
+                          className="cursor-pointer pr-1 gap-1"
+                          onClick={() => toggleHighlightedService(service)}
+                        >
+                          {service}
+                          <X className="w-3 h-3 ml-1" />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {formData.highlighted_services.length}/3 selected
+                  </p>
                 </div>
 
                 {/* Bio for Website Card */}

@@ -432,6 +432,7 @@ export type Database = {
           emergency_contact: string | null
           emergency_phone: string | null
           full_name: string
+          highlighted_services: string[] | null
           hire_date: string | null
           homepage_requested: boolean | null
           homepage_requested_at: string | null
@@ -468,6 +469,7 @@ export type Database = {
           emergency_contact?: string | null
           emergency_phone?: string | null
           full_name: string
+          highlighted_services?: string[] | null
           hire_date?: string | null
           homepage_requested?: boolean | null
           homepage_requested_at?: string | null
@@ -504,6 +506,7 @@ export type Database = {
           emergency_contact?: string | null
           emergency_phone?: string | null
           full_name?: string
+          highlighted_services?: string[] | null
           hire_date?: string | null
           homepage_requested?: boolean | null
           homepage_requested_at?: string | null
