@@ -35,7 +35,10 @@ const roleColors: Record<AppRole, string> = {
   manager: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800',
   stylist: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800',
   receptionist: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800',
-  assistant: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+  assistant: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200 dark:border-gray-800', // Legacy
+  stylist_assistant: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800',
+  admin_assistant: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400 border-pink-200 dark:border-pink-800',
+  operations_assistant: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800',
 };
 
 export default function ManageRoles() {
@@ -75,7 +78,10 @@ export default function ManageRoles() {
       manager: 0,
       stylist: 0,
       receptionist: 0,
-      assistant: 0,
+      assistant: 0, // Legacy
+      stylist_assistant: 0,
+      admin_assistant: 0,
+      operations_assistant: 0,
     };
 
     users.forEach(user => {
@@ -146,7 +152,9 @@ export default function ManageRoles() {
               role === 'manager' && "border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/10",
               role === 'stylist' && "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/10",
               role === 'receptionist' && "border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/10",
-              role === 'assistant' && "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/10",
+              role === 'stylist_assistant' && "border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/10",
+              role === 'admin_assistant' && "border-pink-200 dark:border-pink-800 bg-pink-50/50 dark:bg-pink-950/10",
+              role === 'operations_assistant' && "border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-teal-950/10",
             )}>
               <CardContent className="p-4 text-center">
                 <p className={cn(
@@ -155,7 +163,9 @@ export default function ManageRoles() {
                   role === 'manager' && "text-purple-700 dark:text-purple-400",
                   role === 'stylist' && "text-blue-700 dark:text-blue-400",
                   role === 'receptionist' && "text-green-700 dark:text-green-400",
-                  role === 'assistant' && "text-amber-700 dark:text-amber-400",
+                  role === 'stylist_assistant' && "text-orange-700 dark:text-orange-400",
+                  role === 'admin_assistant' && "text-pink-700 dark:text-pink-400",
+                  role === 'operations_assistant' && "text-teal-700 dark:text-teal-400",
                 )}>{roleStats[role]}</p>
                 <p className="text-xs text-muted-foreground">{ROLE_LABELS[role]}s</p>
               </CardContent>

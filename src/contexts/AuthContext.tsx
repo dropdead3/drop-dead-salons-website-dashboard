@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
-type AppRole = 'admin' | 'manager' | 'stylist' | 'receptionist' | 'assistant';
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface AuthContextType {
   user: User | null;

@@ -23,13 +23,15 @@ import {
   Users,
   Settings,
   Sparkles,
+  UserCheck,
+  ClipboardList,
 } from 'lucide-react';
 
 type AppRole = Database['public']['Enums']['app_role'];
 type RoleOrSuperAdmin = AppRole | 'super_admin';
 
-const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'assistant'];
-const ALL_ROLES_WITH_SUPER: RoleOrSuperAdmin[] = ['super_admin', 'admin', 'manager', 'stylist', 'receptionist', 'assistant'];
+const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
+const ALL_ROLES_WITH_SUPER: RoleOrSuperAdmin[] = ['super_admin', 'admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
 
 const roleIcons: Record<RoleOrSuperAdmin, React.ComponentType<{ className?: string }>> = {
   super_admin: Sparkles,
@@ -37,7 +39,10 @@ const roleIcons: Record<RoleOrSuperAdmin, React.ComponentType<{ className?: stri
   manager: Shield,
   stylist: Scissors,
   receptionist: Headset,
-  assistant: HandHelping,
+  assistant: HandHelping, // Legacy
+  stylist_assistant: HandHelping,
+  admin_assistant: UserCheck,
+  operations_assistant: ClipboardList,
 };
 
 const roleColors: Record<RoleOrSuperAdmin, string> = {
@@ -46,7 +51,10 @@ const roleColors: Record<RoleOrSuperAdmin, string> = {
   manager: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800',
   stylist: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800',
   receptionist: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800',
-  assistant: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+  assistant: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200 dark:border-gray-800', // Legacy
+  stylist_assistant: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800',
+  admin_assistant: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400 border-pink-200 dark:border-pink-800',
+  operations_assistant: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800',
 };
 
 const roleLabels: Record<RoleOrSuperAdmin, string> = {
