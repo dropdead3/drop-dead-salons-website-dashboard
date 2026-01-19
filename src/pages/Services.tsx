@@ -4,6 +4,7 @@ import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useRef, useState, useEffect } from "react";
 import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
@@ -346,19 +347,27 @@ export default function Services() {
                   className="flex items-center -space-x-2"
                 >
                   {getStylistsByLevel(selectedLevel).slice(0, 5).map((stylist, index) => (
-                    <motion.div
-                      key={stylist.id}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: index * 0.05, ease: editorialEasing }}
-                      className="relative"
-                    >
-                      <img
-                        src={stylist.imageUrl}
-                        alt={stylist.name}
-                        className="w-8 h-8 rounded-full object-cover border-2 border-background shadow-sm"
-                      />
-                    </motion.div>
+                    <TooltipProvider key={stylist.id} delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3, delay: index * 0.05, ease: editorialEasing }}
+                            className="relative cursor-pointer"
+                          >
+                            <img
+                              src={stylist.imageUrl}
+                              alt={stylist.name}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-background shadow-sm transition-transform duration-200 hover:scale-110 hover:z-10"
+                            />
+                          </motion.div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="font-sans text-xs">
+                          {stylist.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   ))}
                   {getStylistsByLevel(selectedLevel).length === 0 && (
                     <span className="text-xs text-muted-foreground font-sans italic">No stylists at this level yet</span>
