@@ -532,7 +532,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </>
           )}
           <div className="space-y-1">
-            {ALL_ROLES.filter(role => role !== 'admin').map(role => {
+            {ALL_ROLES.map(role => {
               const RoleIcon = roleIcons[role];
               const isSelected = viewAsRole === role;
               return (
