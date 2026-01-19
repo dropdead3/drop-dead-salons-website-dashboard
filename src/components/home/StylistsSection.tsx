@@ -10,6 +10,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { TogglePill } from "@/components/ui/toggle-pill";
@@ -189,36 +196,34 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Experience *</label>
-            <select
-              required
-              value={formData.experience}
-              onChange={(e) => handleChange("experience", e.target.value)}
-              className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
-            >
-              <option value="">Select</option>
-              <option value="0-2">0-2 years</option>
-              <option value="2-5">2-5 years</option>
-              <option value="5-10">5-10 years</option>
-              <option value="10+">10+ years</option>
-            </select>
+            <Select value={formData.experience} onValueChange={(value) => handleChange("experience", value)} required>
+              <SelectTrigger className="w-full h-11 bg-background border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0-2">0-2 years</SelectItem>
+                <SelectItem value="2-5">2-5 years</SelectItem>
+                <SelectItem value="5-10">5-10 years</SelectItem>
+                <SelectItem value="10+">10+ years</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div>
           <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Current Client Book *</label>
-          <select
-            required
-            value={formData.clientBook}
-            onChange={(e) => handleChange("clientBook", e.target.value)}
-            className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
-          >
-            <option value="">Select</option>
-            <option value="less-than-10">Less than 10</option>
-            <option value="10-20">10-20 clients</option>
-            <option value="20-30">20-30 clients</option>
-            <option value="30-50">30-50 clients</option>
-            <option value="50+">50+ clients</option>
-          </select>
+          <Select value={formData.clientBook} onValueChange={(value) => handleChange("clientBook", value)} required>
+            <SelectTrigger className="w-full h-11 bg-background border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="less-than-10">Less than 10</SelectItem>
+              <SelectItem value="10-20">10-20 clients</SelectItem>
+              <SelectItem value="20-30">20-30 clients</SelectItem>
+              <SelectItem value="30-50">30-50 clients</SelectItem>
+              <SelectItem value="50+">50+ clients</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
