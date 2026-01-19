@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,7 +25,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Mail,
   Pencil,
@@ -34,8 +32,6 @@ import {
   Eye,
   Save,
   Loader2,
-  Code,
-  Variable,
   Send,
 } from 'lucide-react';
 import {
@@ -48,6 +44,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { EmailTemplateEditor } from './EmailTemplateEditor';
 
 export function EmailTemplatesManager() {
   const { data: templates, isLoading } = useEmailTemplates();
@@ -274,16 +271,16 @@ export function EmailTemplatesManager() {
         open={!!editingTemplate}
         onOpenChange={(open) => !open && setEditingTemplate(null)}
       >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Email Template</DialogTitle>
             <DialogDescription>
-              Customize the email template. Use {`{{variable}}`} syntax for dynamic content.
+              Use the visual editor to design your email template, or switch to HTML code for full control.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Template Name</Label>
                 <Input
@@ -322,66 +319,12 @@ export function EmailTemplatesManager() {
               />
             </div>
 
-            {editingTemplate?.variables && editingTemplate.variables.length > 0 && (
-              <div className="p-3 bg-muted rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Variable className="w-4 h-4" />
-                  <span className="text-sm font-medium">Available Variables</span>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {editingTemplate.variables.map((variable) => (
-                    <Badge
-                      key={variable}
-                      variant="secondary"
-                      className="text-xs font-mono cursor-pointer hover:bg-primary/20"
-                      onClick={() => {
-                        setEditForm({
-                          ...editForm,
-                          html_body: editForm.html_body + `{{${variable}}}`,
-                        });
-                      }}
-                    >
-                      {`{{${variable}}}`}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <Tabs defaultValue="code">
-              <TabsList>
-                <TabsTrigger value="code" className="gap-2">
-                  <Code className="w-4 h-4" />
-                  HTML Code
-                </TabsTrigger>
-                <TabsTrigger value="preview" className="gap-2">
-                  <Eye className="w-4 h-4" />
-                  Preview
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="code">
-                <Textarea
-                  value={editForm.html_body}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, html_body: e.target.value })
-                  }
-                  className="font-mono text-xs min-h-[400px]"
-                  placeholder="HTML email body..."
-                />
-              </TabsContent>
-              <TabsContent value="preview">
-                <div className="border rounded-lg p-4 bg-white min-h-[400px]">
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: renderPreviewHtml(
-                        editForm.html_body,
-                        editingTemplate?.variables || []
-                      ),
-                    }}
-                  />
-                </div>
-              </TabsContent>
-            </Tabs>
+            {/* Advanced Visual Editor */}
+            <EmailTemplateEditor
+              initialHtml={editForm.html_body}
+              variables={editingTemplate?.variables || []}
+              onHtmlChange={(html) => setEditForm({ ...editForm, html_body: html })}
+            />
           </div>
 
           <DialogFooter>
