@@ -40,7 +40,7 @@ const strikeSchema = z.object({
   user_id: z.string().min(1, 'Please select a staff member'),
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
   description: z.string().max(2000, 'Description must be less than 2000 characters').optional(),
-  strike_type: z.enum(['write_up', 'complaint', 'red_flag', 'warning', 'issue', 'other']),
+  strike_type: z.enum(['write_up', 'complaint', 'red_flag', 'warning', 'issue', 'dress_code', 'other']),
   severity: z.enum(['low', 'medium', 'high', 'critical']),
   incident_date: z.date(),
 });

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export type StrikeType = 'write_up' | 'complaint' | 'red_flag' | 'warning' | 'issue' | 'other';
+export type StrikeType = 'write_up' | 'complaint' | 'red_flag' | 'warning' | 'issue' | 'dress_code' | 'other';
 export type StrikeSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export interface StaffStrike {
@@ -35,6 +35,7 @@ export const STRIKE_TYPE_LABELS: Record<StrikeType, string> = {
   red_flag: 'Red Flag',
   warning: 'Warning',
   issue: 'Issue',
+  dress_code: 'Dress Code Issue',
   other: 'Other',
 };
 
@@ -44,6 +45,7 @@ export const STRIKE_TYPE_COLORS: Record<StrikeType, string> = {
   red_flag: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
   warning: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
   issue: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
+  dress_code: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800',
   other: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800',
 };
 
