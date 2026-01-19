@@ -273,12 +273,12 @@ export default function TeamDirectory() {
               const members = teamByLocation[locationId];
               return (
                 <div key={locationId}>
-                  <h2 className="text-lg font-display font-medium mb-4 flex items-center gap-2">
+                  <h2 className="text-lg font-display font-medium mb-3 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
                     {locationId === 'unassigned' ? 'No Location Assigned' : getLocationName(locationId)}
                     <Badge variant="secondary" className="ml-2">{members.length}</Badge>
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="ml-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
                     {members.map(member => (
                       <TeamMemberCard key={member.id} member={member} locations={locations} />
                     ))}
@@ -370,19 +370,19 @@ function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
         </div>
       )}
       
-      <CardContent className="p-5">
+      <CardContent className="p-4">
         {/* Header: Avatar, Name, Roles, Calendar Icon */}
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <div className="relative">
-            <Avatar className="w-16 h-16 border-2 border-background shadow-sm">
+            <Avatar className="w-12 h-12 border-2 border-background shadow-sm">
               <AvatarImage src={member.photo_url || undefined} alt={member.full_name} />
-              <AvatarFallback className="bg-muted text-xl font-medium">
-                {member.full_name?.charAt(0) || <User className="w-6 h-6" />}
+              <AvatarFallback className="bg-muted text-lg font-medium">
+                {member.full_name?.charAt(0) || <User className="w-5 h-5" />}
               </AvatarFallback>
             </Avatar>
             {/* Milestone Badge on Avatar */}
             {milestone && milestone >= 5 && (
-              <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+              <div className="absolute -bottom-0.5 -right-0.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-[9px] font-bold px-1 py-0.5 rounded-full shadow-sm">
                 {milestone}yr
               </div>
             )}
@@ -391,7 +391,7 @@ function TeamMemberCard({ member, locations }: TeamMemberCardProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-display font-medium text-lg leading-tight">
+                <h3 className="font-display font-medium text-base leading-tight">
                   {member.display_name || member.full_name}
                 </h3>
                 {/* Time at company */}
