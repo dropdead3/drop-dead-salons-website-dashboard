@@ -1054,13 +1054,37 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                     <Image className="w-4 h-4" />
                     Image
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('button', 'primary')} className="justify-start gap-2">
-                    <MousePointerClick className="w-4 h-4" />
-                    Primary Button
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => addBlock('button', 'primary')} 
+                    className="justify-start gap-2 h-auto py-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="px-2 py-1 text-[8px] font-bold rounded"
+                        style={{ backgroundColor: '#1a1a1a', color: '#f5f0e8' }}
+                      >
+                        Aa
+                      </div>
+                      <span className="text-xs">Primary Button</span>
+                    </div>
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('button', 'secondary')} className="justify-start gap-2">
-                    <Square className="w-4 h-4" />
-                    Secondary Button
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => addBlock('button', 'secondary')} 
+                    className="justify-start gap-2 h-auto py-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="px-2 py-1 text-[8px] font-bold rounded border-2"
+                        style={{ backgroundColor: '#f5f0e8', color: '#1a1a1a', borderColor: '#1a1a1a' }}
+                      >
+                        Aa
+                      </div>
+                      <span className="text-xs">Secondary Button</span>
+                    </div>
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => addBlock('divider')} className="justify-start gap-2">
                     <Minus className="w-4 h-4" />
