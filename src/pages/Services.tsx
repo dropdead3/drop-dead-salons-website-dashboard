@@ -18,7 +18,9 @@ function StylistLevelSelector({
   onLevelChange: (level: StylistLevel) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const selectedLabel = stylistLevels.find(l => l.id === selectedLevel)?.label || 'New Talent';
+  const selectedItem = stylistLevels.find(l => l.id === selectedLevel);
+  const selectedLabel = selectedItem?.label || 'New Talent';
+  const selectedClientLabel = selectedItem?.clientLabel || 'Level 1';
 
   return (
     <div className="relative">
@@ -27,7 +29,7 @@ function StylistLevelSelector({
         className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full text-sm font-sans transition-all duration-300 hover:border-foreground/30"
       >
         <span className="text-muted-foreground">Stylist Level:</span>
-        <span className="font-medium text-foreground">{selectedLabel}</span>
+        <span className="font-medium text-foreground">{selectedClientLabel} — {selectedLabel}</span>
         <ChevronDown size={16} className={`text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
@@ -52,13 +54,13 @@ function StylistLevelSelector({
                     onLevelChange(level.id);
                     setIsOpen(false);
                   }}
-                  className={`w-full px-4 py-3 text-left text-sm font-sans transition-colors duration-200 ${
+                  className={`w-full px-4 py-3 text-left text-sm font-sans transition-colors duration-200 flex items-center justify-between ${
                     selectedLevel === level.id 
                       ? 'bg-foreground text-background' 
                       : 'hover:bg-secondary text-foreground'
                   }`}
                 >
-                  {level.label}
+                  <span>{level.clientLabel} — {level.label}</span>
                 </button>
               ))}
             </motion.div>
