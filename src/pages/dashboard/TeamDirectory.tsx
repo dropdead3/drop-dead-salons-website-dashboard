@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -16,6 +16,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { differenceInYears, differenceInMonths, parseISO, format, setYear, isSameDay, differenceInDays, isBefore } from 'date-fns';
 import { useUpcomingAnniversaries, useTodaysAnniversaries, MILESTONE_YEARS, getAnniversaryMilestone } from '@/hooks/useAnniversaries';
 import { cn } from '@/lib/utils';
+import { useViewAs } from '@/contexts/ViewAsContext';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -112,6 +113,7 @@ export default function TeamDirectory() {
   const { data: currentUserProfile } = useEmployeeProfile();
   const { data: todaysAnniversaries = [] } = useTodaysAnniversaries();
   const { data: upcomingAnniversaries = [] } = useUpcomingAnniversaries(30);
+  const { isViewingAsUser } = useViewAs();
   
   const isSuperAdmin = currentUserProfile?.is_super_admin;
 
@@ -208,9 +210,17 @@ export default function TeamDirectory() {
                   </p>
                   <p className="text-sm text-amber-700 dark:text-amber-300">
                     {todaysAnniversaries.map((a, i) => (
-                      <span key={a.id}>
+                      <span 
+                        key={a.id}
+                        className={cn(
+                          isViewingAsUser && a.isCurrentUser && "bg-primary/20 px-1.5 py-0.5 rounded ring-1 ring-primary/30"
+                        )}
+                      >
                         {i > 0 && (i === todaysAnniversaries.length - 1 ? ' and ' : ', ')}
-                        <strong>{a.display_name || a.full_name}</strong> ({a.years} year{a.years > 1 ? 's' : ''})
+                        <strong className="inline-flex items-center gap-1">
+                          {a.display_name || a.full_name}
+                          {isViewingAsUser && a.isCurrentUser && <Eye className="w-3 h-3 text-primary" />}
+                        </strong> ({a.years} year{a.years > 1 ? 's' : ''})
                       </span>
                     ))}
                   </p>
@@ -233,25 +243,32 @@ export default function TeamDirectory() {
               <div className="flex flex-wrap gap-3">
                 {upcomingAnniversaries.slice(0, 5).map(anniversary => {
                   const isMilestone = MILESTONE_YEARS.includes(anniversary.years);
+                  const isImpersonatedUser = isViewingAsUser && anniversary.isCurrentUser;
                   return (
                     <div
                       key={anniversary.id}
                       className={cn(
                         "flex items-center gap-2 px-3 py-2 rounded-lg border",
-                        isMilestone
-                          ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800"
-                          : "bg-muted/50 border-border"
+                        isImpersonatedUser 
+                          ? "bg-primary/10 border-primary/30 ring-1 ring-primary/30"
+                          : isMilestone
+                            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800"
+                            : "bg-muted/50 border-border"
                       )}
                     >
-                      <Avatar className="w-8 h-8">
+                      <Avatar className={cn(
+                        "w-8 h-8",
+                        isImpersonatedUser && "ring-2 ring-primary"
+                      )}>
                         <AvatarImage src={anniversary.photo_url || undefined} />
                         <AvatarFallback className="text-xs">
                           {anniversary.full_name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="text-sm">
-                        <p className="font-medium leading-tight">
+                        <p className="font-medium leading-tight flex items-center gap-1">
                           {anniversary.display_name || anniversary.full_name}
+                          {isImpersonatedUser && <Eye className="w-3 h-3 text-primary" />}
                         </p>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           {isMilestone && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}

@@ -13,7 +13,8 @@ import {
   ChevronUp,
   PartyPopper,
   Gift,
-  Bell
+  Bell,
+  Eye
 } from 'lucide-react';
 import { 
   format, 
@@ -27,6 +28,7 @@ import {
 } from 'date-fns';
 import { useMonthlyBirthdays, useTodaysBirthdays, useUpcomingBirthdays } from '@/hooks/useBirthdays';
 import { cn } from '@/lib/utils';
+import { useViewAs } from '@/contexts/ViewAsContext';
 
 export function BirthdayCalendarCard() {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +36,7 @@ export function BirthdayCalendarCard() {
   const { data: monthlyBirthdays, isLoading: loadingMonthly } = useMonthlyBirthdays(currentMonth);
   const { data: todaysBirthdays, isLoading: loadingToday } = useTodaysBirthdays();
   const { data: upcomingBirthdays, isLoading: loadingUpcoming } = useUpcomingBirthdays(14);
+  const { isViewingAsUser } = useViewAs();
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -110,15 +113,25 @@ export function BirthdayCalendarCard() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {todaysBirthdays.map(person => (
-                    <div key={person.id} className="flex items-center gap-2 bg-background/80 rounded-full pl-1 pr-3 py-1">
-                      <Avatar className="w-5 h-5">
+                    <div 
+                      key={person.id} 
+                      className={cn(
+                        "flex items-center gap-2 bg-background/80 rounded-full pl-1 pr-3 py-1",
+                        isViewingAsUser && person.isCurrentUser && "ring-2 ring-primary bg-primary/10"
+                      )}
+                    >
+                      <Avatar className={cn(
+                        "w-5 h-5",
+                        isViewingAsUser && person.isCurrentUser && "ring-2 ring-primary"
+                      )}>
                         <AvatarImage src={person.photo_url || undefined} />
                         <AvatarFallback className="text-[10px]">
                           {(person.display_name || person.full_name)?.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-xs font-medium">
+                      <span className="text-xs font-medium flex items-center gap-1">
                         {person.display_name || person.full_name}
+                        {isViewingAsUser && person.isCurrentUser && <Eye className="w-3 h-3 text-primary" />}
                       </span>
                     </div>
                   ))}
@@ -198,16 +211,26 @@ export function BirthdayCalendarCard() {
                 </h4>
                 <div className="space-y-1.5">
                   {upcomingBirthdays.slice(0, 4).map(person => (
-                    <div key={person.id} className="flex items-center gap-2">
-                      <Avatar className="w-6 h-6">
+                    <div 
+                      key={person.id} 
+                      className={cn(
+                        "flex items-center gap-2 p-1.5 rounded-md -mx-1.5",
+                        isViewingAsUser && person.isCurrentUser && "bg-primary/10 ring-1 ring-primary/30"
+                      )}
+                    >
+                      <Avatar className={cn(
+                        "w-6 h-6",
+                        isViewingAsUser && person.isCurrentUser && "ring-2 ring-primary"
+                      )}>
                         <AvatarImage src={person.photo_url || undefined} />
                         <AvatarFallback className="text-[10px]">
                           {(person.display_name || person.full_name)?.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">
+                        <p className="text-xs font-medium truncate flex items-center gap-1">
                           {person.display_name || person.full_name}
+                          {isViewingAsUser && person.isCurrentUser && <Eye className="w-3 h-3 text-primary shrink-0" />}
                         </p>
                       </div>
                       <Badge 
