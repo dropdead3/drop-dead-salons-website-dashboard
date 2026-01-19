@@ -9,6 +9,7 @@ export interface Stylist {
   tiktok?: string;
   level: string;
   specialties: string[];
+  highlighted_services?: string[];
   imageUrl: string;
   locations: Location[];
   isBooking?: boolean; // false = not currently booking

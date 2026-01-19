@@ -437,27 +437,33 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
       
       <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
-        {/* Specialty badges - EXTENSIONS first */}
-        {[...stylist.specialties].sort((a, b) => {
-          if (a === "EXTENSIONS") return -1;
-          if (b === "EXTENSIONS") return 1;
-          return 0;
-        }).map((specialty, idx) => (
-          <motion.span
-            key={specialty}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 + index * 0.1 }}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-full ${
-              specialty === "EXTENSIONS"
-                ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
-                : "bg-background/70 text-foreground"
-            }`}
-          >
-            {specialty === "EXTENSIONS" && <Star className="w-3 h-3 fill-current" />}
-            {toTitleCase(specialty)}
-          </motion.span>
-        ))}
+        {/* Display highlighted_services if available, otherwise fall back to specialties */}
+        {(() => {
+          const displayItems = (stylist.highlighted_services && stylist.highlighted_services.length > 0)
+            ? stylist.highlighted_services.slice(0, 3)
+            : [...stylist.specialties].sort((a, b) => {
+                if (a === "EXTENSIONS") return -1;
+                if (b === "EXTENSIONS") return 1;
+                return 0;
+              });
+          
+          return displayItems.map((item, idx) => (
+            <motion.span
+              key={item}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 + index * 0.1 }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-full ${
+                item === "EXTENSIONS" || stylist.specialties.includes("EXTENSIONS")
+                  ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
+                  : "bg-background/70 text-foreground"
+              }`}
+            >
+              {item === "EXTENSIONS" && <Star className="w-3 h-3 fill-current" />}
+              {toTitleCase(item)}
+            </motion.span>
+          ));
+        })()}
       </div>
       
       <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform transition-transform duration-500 group-hover:translate-y-[-4px]">
