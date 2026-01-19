@@ -63,7 +63,7 @@ function JoinTeamCardComponent({
 
   return (
     <div
-      className={`${getSpanClass()} relative bg-muted/50 border border-border rounded-2xl flex flex-col items-center justify-center p-8 min-h-[300px]`}
+      className={`${getSpanClass()} relative bg-muted/50 border border-foreground/15 rounded-2xl flex flex-col items-center justify-center p-8 min-h-[300px]`}
     >
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-3">
