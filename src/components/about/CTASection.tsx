@@ -8,7 +8,7 @@ export function CTASection() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
   return (
-    <section ref={sectionRef} className="py-16 lg:py-24 bg-foreground text-background">
+    <section ref={sectionRef} data-theme="dark" className="py-16 lg:py-24 bg-foreground text-background">
       <div className="container mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
