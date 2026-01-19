@@ -1,5 +1,5 @@
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, X, ArrowRight, ChevronUp } from "lucide-react";
 import {
@@ -40,11 +40,53 @@ const faqs = [
   }
 ];
 
+const rotatingWords = ["Asked", "Answered"];
+
 export function FAQSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [searchQuery, setSearchQuery] = useState("");
   const [openItem, setOpenItem] = useState<string>("");
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [displayText, setDisplayText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Typewriter effect with natural variation
+  useEffect(() => {
+    const currentWord = rotatingWords[currentWordIndex];
+    const baseTypingSpeed = 100;
+    const baseDeletingSpeed = 60;
+    const pauseDuration = 2500;
+
+    // Add random variation for natural feel
+    const getTypingSpeed = () => baseTypingSpeed + Math.random() * 80 - 40;
+    const getDeletingSpeed = () => baseDeletingSpeed + Math.random() * 30 - 15;
+
+    let timeout: NodeJS.Timeout;
+
+    if (!isDeleting) {
+      if (displayText.length < currentWord.length) {
+        timeout = setTimeout(() => {
+          setDisplayText(currentWord.slice(0, displayText.length + 1));
+        }, getTypingSpeed());
+      } else {
+        timeout = setTimeout(() => {
+          setIsDeleting(true);
+        }, pauseDuration);
+      }
+    } else {
+      if (displayText.length > 0) {
+        timeout = setTimeout(() => {
+          setDisplayText(displayText.slice(0, -1));
+        }, getDeletingSpeed());
+      } else {
+        setIsDeleting(false);
+        setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, currentWordIndex]);
 
   const filteredFaqs = useMemo(() => {
     if (!searchQuery.trim()) return faqs;
@@ -91,8 +133,10 @@ export function FAQSection() {
             className="lg:sticky lg:top-32 lg:self-start"
           >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
-              Frequently asked<br />
-              <span>questions...</span>
+              Frequently<br />
+              <span className="font-light">{displayText}</span>
+              <br />
+              Questions
             </h2>
             
             <div className="space-y-4 text-foreground/80 mb-8">
