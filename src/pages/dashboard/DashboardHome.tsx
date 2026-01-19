@@ -25,10 +25,12 @@ import { Link } from 'react-router-dom';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
 import { useTasks } from '@/hooks/useTasks';
 import { useCurrentUserApprovalStatus } from '@/hooks/useAccountApproval';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
+import { StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
 import DD75Logo from '@/assets/dd75-logo.svg';
 import DD75Icon from '@/assets/dd75-icon.svg';
 
@@ -51,11 +53,15 @@ const priorityColors: Record<Priority, string> = {
 };
 
 export default function DashboardHome() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const { enrollment } = useDailyCompletion(user?.id);
   const { tasks, createTask, toggleTask, deleteTask } = useTasks();
   const { data: approvalStatus } = useCurrentUserApprovalStatus();
+  const { data: profile } = useEmployeeProfile();
   const queryClient = useQueryClient();
+  
+  // Leadership team: super admins, admins, and managers
+  const isLeadership = profile?.is_super_admin || roles.includes('admin') || roles.includes('manager');
   
   const { data: announcements } = useQuery({
     queryKey: ['announcements'],
@@ -270,6 +276,13 @@ export default function DashboardHome() {
             </div>
           </Card>
         </div>
+
+        {/* Leadership-only: Stylists Overview */}
+        {isLeadership && (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <StylistsOverviewCard />
+          </div>
+        )}
 
         {/* Drop Dead 75 Program Section */}
         <Card className="p-6 border-2 border-foreground/20">
