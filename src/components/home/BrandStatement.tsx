@@ -6,7 +6,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 const rotatingWords = [
   "Average",
   "Boring",
-  "Mom's",
+  "Mother's",
   "Standard",
   "Typical",
   "Basic",
