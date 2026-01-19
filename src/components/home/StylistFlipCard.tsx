@@ -157,9 +157,13 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
 
               {/* Tap hint - visible on hover */}
               {stylist.bio && (
-                <p className="text-[10px] text-white/40 mt-3 text-center tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150">
-                  Tap to learn more
-                </p>
+                <div className="mt-4 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150 translate-y-2 group-hover:translate-y-0">
+                  <span className="w-8 h-px bg-white/40" />
+                  <p className="text-xs text-white/80 tracking-widest uppercase font-medium animate-pulse">
+                    Tap to learn more
+                  </p>
+                  <span className="w-8 h-px bg-white/40" />
+                </div>
               )}
             </div>
           </div>
