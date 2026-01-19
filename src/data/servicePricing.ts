@@ -29,7 +29,7 @@ export const services: ServiceCategory[] = [
     category: "Consultations",
     description: "Start your journey with a personalized consultation.",
     items: [
-      { name: "Color Cut", description: "Consultation included with color service", prices: { 'new-talent': '$15', 'emerging': '$15', 'lead': '$15', 'senior': '$15', 'signature': '$15', 'icon': '$15' } },
+      { name: "Color And/Or Cut Consultation", description: "Consultation included with color service", prices: { 'new-talent': '$15', 'emerging': '$15', 'lead': '$15', 'senior': '$15', 'signature': '$15', 'icon': '$15' } },
       { name: "Extension Consultation", description: "Explore length and volume options tailored to you", prices: { 'new-talent': '$15', 'emerging': '$15', 'lead': '$15', 'senior': '$15', 'signature': '$15', 'icon': '$15' } },
     ],
   },
