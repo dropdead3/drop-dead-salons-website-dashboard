@@ -214,7 +214,7 @@ function LocationCard({ location, index }: { location: typeof locations[0]; inde
                 onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center justify-center bg-foreground text-background px-5 py-2 text-sm font-sans font-medium rounded-full hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
               >
-                Book here
+                Book new-client consultation
               </Link>
               <p className="text-[10px] text-foreground/50 tracking-wide font-aeonik">
                 Tap to go back
