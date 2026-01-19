@@ -296,7 +296,7 @@ export function JoinTeamSection() {
                 </button>
               </div>
               
-            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-left w-full">
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 text-left w-full">
               {[
                 { icon: Calendar, title: "Flexible Schedule", desc: "Build your ideal work-life balance with flexible booking options." },
                 { icon: GraduationCap, title: "Education & Growth", desc: "Access ongoing training, workshops, and industry certifications." },
@@ -317,7 +317,7 @@ export function JoinTeamSection() {
                     delay: index * 0.1,
                     ease: [0.4, 0, 0.2, 1]
                   }}
-                  className="bg-background rounded-2xl p-10 md:p-12 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 cursor-pointer min-h-[280px]"
+                  className="bg-background rounded-2xl p-10 md:p-12 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
                 >
                   <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-6">
                     <benefit.icon className="w-6 h-6 text-foreground" />
