@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, ChevronDown, Info, Star, X } from "lucide-react";
@@ -58,8 +58,8 @@ const toTitleCase = (str: string) => {
   return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-// Join Team Card with dynamic column spanning
-const JoinTeamCard = ({ 
+// Join Team Card with dynamic column spanning - memoized to prevent re-renders
+const JoinTeamCard = memo(({ 
   stylistCount, 
   isFormExpanded, 
   onToggleForm 
@@ -90,10 +90,7 @@ const JoinTeamCard = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: stylistCount * 0.08 }}
+    <div
       className={`${getSpanClass()} relative bg-muted/50 border border-border rounded-2xl flex flex-col items-center justify-center p-8 min-h-[300px]`}
     >
       <div className="text-center">
@@ -120,9 +117,9 @@ const JoinTeamCard = ({
           />
         </button>
       </div>
-    </motion.div>
+    </div>
   );
-};
+});
 
 const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; index: number; selectedLocation: Location }) => {
   return (
@@ -297,6 +294,10 @@ export function StylistsSection() {
       message: "",
     },
   });
+
+  const handleToggleForm = useCallback(() => {
+    setIsFormExpanded(prev => !prev);
+  }, []);
 
   const onSubmit = async (data: ApplicationFormData) => {
     setIsSubmitting(true);
@@ -495,7 +496,7 @@ export function StylistsSection() {
               <JoinTeamCard 
                 stylistCount={filteredStylists.length} 
                 isFormExpanded={isFormExpanded}
-                onToggleForm={() => setIsFormExpanded(prev => !prev)}
+                onToggleForm={handleToggleForm}
               />
             </motion.div>
           ) : (
@@ -516,13 +517,13 @@ export function StylistsSection() {
       </div>
 
       {/* Collapsible Application Form */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {isFormExpanded && (
           <motion.div
             key="application-form"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <div className="container mx-auto px-6 pt-8">
