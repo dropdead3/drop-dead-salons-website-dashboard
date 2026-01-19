@@ -24,6 +24,26 @@ interface LeadershipMember {
   full_name: string;
 }
 
+interface EmailTemplate {
+  id: string;
+  template_key: string;
+  name: string;
+  subject: string;
+  html_body: string;
+  variables: string[] | null;
+  is_active: boolean;
+}
+
+// Replace template variables with actual values
+function replaceTemplateVariables(template: string, variables: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    result = result.replace(regex, value);
+  }
+  return result;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -55,6 +75,22 @@ const handler = async (req: Request): Promise<Response> => {
     const targetDay = targetDate.getDate();
 
     console.log(`Checking for birthdays on ${targetMonth}/${targetDay} (${daysBeforeBirthday} days from now)`);
+
+    // Fetch the email template from the database
+    const { data: templateData, error: templateError } = await supabase
+      .from("email_templates")
+      .select("*")
+      .eq("template_key", "birthday_reminder")
+      .eq("is_active", true)
+      .single();
+
+    if (templateError || !templateData) {
+      console.error("Error fetching email template:", templateError);
+      throw new Error("Birthday reminder email template not found or inactive");
+    }
+
+    const template = templateData as EmailTemplate;
+    console.log(`Using email template: ${template.name}`);
 
     // Find employees with birthdays on the target date
     const { data: employees, error: employeesError } = await supabase
@@ -133,7 +169,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending reminders to ${leadershipEmails.length} leadership member(s)`);
 
-    // Build email content
+    // Build birthday list for template
     const birthdayList = upcomingBirthdays
       .map((emp: EmployeeProfile) => {
         const name = emp.display_name || emp.full_name;
@@ -141,33 +177,30 @@ const handler = async (req: Request): Promise<Response> => {
       })
       .join("");
 
+    const birthdayNames = upcomingBirthdays
+      .map((emp: EmployeeProfile) => emp.display_name || emp.full_name)
+      .join(", ");
+
     const dateFormatted = targetDate.toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
       day: "numeric",
     });
 
-    const emailHtml = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #ec4899, #8b5cf6); padding: 24px; border-radius: 12px 12px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 24px;">🎉 Upcoming Birthday Reminder</h1>
-        </div>
-        <div style="background: #fdf2f8; padding: 24px; border-radius: 0 0 12px 12px;">
-          <p style="color: #374151; font-size: 16px; margin-bottom: 16px;">
-            The following team member${upcomingBirthdays.length > 1 ? "s have" : " has"} a birthday coming up on <strong>${dateFormatted}</strong>:
-          </p>
-          <ul style="list-style: none; padding: 0; margin: 0 0 24px 0;">
-            ${birthdayList}
-          </ul>
-          <p style="color: #6b7280; font-size: 14px; margin: 0;">
-            Don't forget to wish them a happy birthday! 🎈
-          </p>
-        </div>
-        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 16px;">
-          This is an automated reminder from Drop Dead Gorgeous.
-        </p>
-      </div>
-    `;
+    // Prepare template variables
+    const templateVariables: Record<string, string> = {
+      birthday_date: dateFormatted,
+      birthday_count: upcomingBirthdays.length.toString(),
+      birthday_list: birthdayList,
+      birthday_names: birthdayNames,
+      days_until: daysBeforeBirthday.toString(),
+    };
+
+    // Replace variables in template
+    const emailSubject = replaceTemplateVariables(template.subject, templateVariables);
+    const emailHtml = replaceTemplateVariables(template.html_body, templateVariables);
+
+    console.log(`Email subject: ${emailSubject}`);
 
     // Send email to all leadership members using Resend API directly
     const emailResponse = await fetch("https://api.resend.com/emails", {
@@ -179,7 +212,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Drop Dead Gorgeous <onboarding@resend.dev>",
         to: leadershipEmails,
-        subject: `🎂 Birthday Reminder: ${upcomingBirthdays.length} upcoming birthday${upcomingBirthdays.length > 1 ? "s" : ""} on ${dateFormatted}`,
+        subject: emailSubject,
         html: emailHtml,
       }),
     });
@@ -199,6 +232,7 @@ const handler = async (req: Request): Promise<Response> => {
         message: `Birthday reminders sent for ${upcomingBirthdays.length} team member(s)`,
         recipients: leadershipEmails.length,
         birthdays: upcomingBirthdays.map((e: EmployeeProfile) => e.display_name || e.full_name),
+        template_used: template.name,
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
