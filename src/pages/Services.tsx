@@ -4,6 +4,7 @@ import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useRef, useState, useEffect } from "react";
 import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
@@ -100,32 +101,40 @@ function StylistAvatars({ selectedLevel }: { selectedLevel: StylistLevel }) {
   if (levelStylists.length === 0) return null;
   
   return (
-    <div className="hidden sm:flex items-center gap-3 ml-auto">
-      <span className="text-xs text-muted-foreground font-sans">
-        {levelStylists.length} stylist{levelStylists.length !== 1 ? 's' : ''} at this level
-      </span>
-      <div className="flex -space-x-2">
-        <AnimatePresence mode="popLayout">
-          {levelStylists.map((stylist, idx) => (
-            <motion.div
-              key={stylist.id}
-              initial={{ opacity: 0, scale: 0.8, x: -10 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.8, x: 10 }}
-              transition={{ duration: 0.2, delay: idx * 0.05 }}
-              className="w-9 h-9 rounded-full border-2 border-background overflow-hidden shadow-sm"
-              style={{ zIndex: 10 - idx }}
-            >
-              <img
-                src={stylist.imageUrl}
-                alt={stylist.name}
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+    <TooltipProvider delayDuration={100}>
+      <div className="hidden sm:flex items-center gap-3 ml-auto">
+        <span className="text-xs text-muted-foreground font-sans">
+          {levelStylists.length} stylist{levelStylists.length !== 1 ? 's' : ''} at this level
+        </span>
+        <div className="flex -space-x-2">
+          <AnimatePresence mode="popLayout">
+            {levelStylists.map((stylist, idx) => (
+              <Tooltip key={stylist.id}>
+                <TooltipTrigger asChild>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8, x: -10 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, x: 10 }}
+                    transition={{ duration: 0.2, delay: idx * 0.05 }}
+                    className="w-9 h-9 rounded-full border-2 border-background overflow-hidden shadow-sm cursor-pointer hover:scale-110 hover:z-20 transition-transform"
+                    style={{ zIndex: 10 - idx }}
+                  >
+                    <img
+                      src={stylist.imageUrl}
+                      alt={stylist.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-foreground text-background">
+                  <p className="font-medium">{stylist.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 
