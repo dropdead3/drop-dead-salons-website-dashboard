@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, memo, useCallback, startTransition } from "react";
 import { cn } from "@/lib/utils";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, Info, Star, X, CheckCircle } from "lucide-react";
+import { ArrowRight, Sparkles, Info, Star, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { toast } from "@/hooks/use-toast";
 import {
   Tooltip,
   TooltipContent,
@@ -45,8 +46,45 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
     whyDropDead: "",
   });
 
+  const validateForm = () => {
+    const missingFields: string[] = [];
+    
+    if (!formData.name.trim()) missingFields.push("Full Name");
+    if (!formData.email.trim()) missingFields.push("Email");
+    if (!formData.phone.trim()) missingFields.push("Phone");
+    if (!formData.experience) missingFields.push("Experience");
+    if (!formData.clientBook) missingFields.push("Current Client Book");
+    if (!formData.specialties.trim()) missingFields.push("Your Specialties");
+    if (!formData.whyDropDead.trim()) missingFields.push("Why Drop Dead");
+    
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email.trim() && !emailRegex.test(formData.email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (missingFields.length > 0) {
+      toast({
+        title: "Required Fields Missing",
+        description: `Please fill out: ${missingFields.join(", ")}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+    
     setIsSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     console.log("Application submitted:", formData);
@@ -145,12 +183,11 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div>
           <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Full Name *</label>
           <input
             type="text"
-            required
             value={formData.name}
             onChange={(e) => handleChange("name", e.target.value)}
             placeholder="Your name"
@@ -163,7 +200,6 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
             <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Email *</label>
             <input
               type="email"
-              required
               value={formData.email}
               onChange={(e) => handleChange("email", e.target.value)}
               placeholder="you@email.com"
@@ -174,7 +210,6 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
             <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Phone *</label>
             <input
               type="tel"
-              required
               value={formData.phone}
               onChange={(e) => handleChange("phone", e.target.value)}
               placeholder="(555) 555-5555"
@@ -196,7 +231,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Experience *</label>
-            <Select value={formData.experience} onValueChange={(value) => handleChange("experience", value)} required>
+            <Select value={formData.experience} onValueChange={(value) => handleChange("experience", value)}>
               <SelectTrigger className="w-full h-11 bg-background border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
@@ -212,7 +247,7 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
 
         <div>
           <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Current Client Book *</label>
-          <Select value={formData.clientBook} onValueChange={(value) => handleChange("clientBook", value)} required>
+          <Select value={formData.clientBook} onValueChange={(value) => handleChange("clientBook", value)}>
             <SelectTrigger className="w-full h-11 bg-background border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20">
               <SelectValue placeholder="Select" />
             </SelectTrigger>
@@ -229,7 +264,6 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
         <div>
           <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Your Specialties *</label>
           <textarea
-            required
             value={formData.specialties}
             onChange={(e) => handleChange("specialties", e.target.value)}
             placeholder="e.g., balayage, extensions, vivid colors..."
@@ -241,7 +275,6 @@ function ExpandedApplicationForm({ onClose }: { onClose: () => void }) {
         <div>
           <label className="text-xs uppercase tracking-wider text-foreground/70 mb-1.5 block">Why Drop Dead? *</label>
           <textarea
-            required
             value={formData.whyDropDead}
             onChange={(e) => handleChange("whyDropDead", e.target.value)}
             placeholder="Tell us what excites you about joining our team..."
