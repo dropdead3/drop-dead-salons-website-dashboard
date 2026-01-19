@@ -2,602 +2,90 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
-import { motion, useInView } from "framer-motion";
-import { ArrowUpRight, ArrowRight, Sparkles, Clock, Star, UserPlus } from "lucide-react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { ArrowUpRight, ArrowRight, Sparkles, Clock, Star, UserPlus, ChevronDown } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
 
-const services = [
-  {
-    category: "Blonding",
-    description: "Expert lightening services from dimensional highlights to full platinum transformations.",
-    items: [
-      {
-        name: "Transformational Blonding",
-        description: "Taking hair from single color to lightening the majority. Includes K18 treatment, toner, blowout + hot tool styling.",
-        duration: "4 hrs",
-        price: "$275+",
-        note: null,
-        featured: true,
-      },
-      {
-        name: "Full Blonding",
-        description: "Traditional full highlight on all sections. Includes K18 treatment, toner, blowout + hot tool styling.",
-        duration: "4 hrs 30 mins",
-        price: "$240+",
-        note: null,
-        featured: true,
-      },
-      {
-        name: "Partial Blonding",
-        description: "Highlight on mohawk parting and around face. Includes K18 treatment, toner, blowout + hot tool styling.",
-        duration: "3 hrs",
-        price: "$185+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Mini Highlight",
-        description: "Face framing / money piece / hairline 'halo' foil. Includes K18 treatment, toner, blowout + hot tool styling.",
-        duration: "2 hrs",
-        price: "$135+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Global Blonding",
-        description: "All hair lighter with no drop out. Includes K18, toner + styling.",
-        duration: "4 hrs 30 mins",
-        price: "$325+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Lightener Retouch",
-        description: "Near scalp lightener for 4-8 weeks regrowth maintenance. Includes K18, toner + styling.",
-        duration: "2 hrs",
-        price: "$130+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Transformational Lightener Retouch",
-        description: "9+ weeks regrowth retouch. Includes K18, toner + styling.",
-        duration: "2 hrs 30 mins",
-        price: "$160+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Face Frame Highlight",
-        description: "Highlights focused on face-framing sections. Includes toner + styling.",
-        duration: "1 hr 30 mins",
-        price: "$115+",
-        note: null,
-        featured: false,
-      },
-    ],
-  },
-  {
-    category: "Balayage",
-    description: "Hand-painted artistry for natural, sun-kissed dimension and lived-in color.",
-    items: [
-      {
-        name: "Transformational Balayage",
-        description: "From single color to multi-dimensional lived-in color. Includes K18 treatment, toner + styling.",
-        duration: "4 hrs",
-        price: "$300+",
-        note: null,
-        featured: true,
-      },
-      {
-        name: "Full Balayage",
-        description: "Hand-painted highlights throughout for maximum dimension. Includes K18, toner + styling.",
-        duration: "4 hrs 30 mins",
-        price: "$240+",
-        note: null,
-        featured: true,
-      },
-      {
-        name: "Partial Balayage",
-        description: "Hand-painted highlights focused on face-framing and crown. Includes K18, toner + styling.",
-        duration: "3 hrs",
-        price: "$185+",
-        note: null,
-        featured: false,
-      },
-    ],
-  },
-  {
-    category: "Color Services",
-    description: "From natural coverage to bold vivids, tailored color for every vision.",
-    items: [
-      {
-        name: "Single Process Color",
-        description: "Single color applied all over with pull through. Includes complimentary blowout + hot tool styling.",
-        duration: "1 hr 30 mins",
-        price: "$140+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Natural Root Retouch",
-        description: "Maintenance for 4-8 weeks color regrowth. Includes blowout + hot tool styling.",
-        duration: "1 hr 30 mins",
-        price: "$100+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Root Smudge",
-        description: "8-12 week color retouch for a more lived-in look. Includes blowout + styling.",
-        duration: "1 hr 30 mins",
-        price: "$100+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Color Melt",
-        description: "Multiple formulas melting roots to ends. Natural or vivid tones. Includes blowout + styling.",
-        duration: "1 hr 30 mins",
-        price: "$135+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Single Glaze",
-        description: "Single color glaze on damp hair for refresh and shine. Includes blowout + styling.",
-        duration: "1 hr",
-        price: "$100+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Tint Back",
-        description: "Returning lightened hair to a darker shade. Includes blowout + styling.",
-        duration: "1 hr 30 mins",
-        price: "$160+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Lowlight + Root Smudge",
-        description: "Add dimension with lowlights and root smudge. Includes blowout + styling.",
-        duration: "1 hr 30 mins",
-        price: "$145+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Color Correction",
-        description: "Extensive service to fix poorly serviced or maintained hair. Priced by the hour.",
-        duration: "4+ hrs",
-        price: "$85+/hr",
-        note: "Consultation required",
-        featured: false,
-      },
-    ],
-  },
-  {
-    category: "Vivid Colors",
-    description: "Bold, creative color for those who dare to stand out.",
-    items: [
-      {
-        name: "Custom Vivid",
-        description: "Multi-tone vivid color placement. Lightening may be necessary. Includes blowout + styling.",
-        duration: "3 hrs 30 mins",
-        price: "$170+",
-        note: null,
-        featured: true,
-      },
-      {
-        name: "Specialty Vivid",
-        description: "Creative vivid placement and techniques. Includes blowout + styling.",
-        duration: "1 hr 30 mins",
-        price: "$150+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Max Vivid",
-        description: "Single color vivid application. Lightening may be necessary. Includes blowout + styling.",
-        duration: "1 hr",
-        price: "$130+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Partial Vivid",
-        description: "Partial vivid color application. Includes blowout + styling.",
-        duration: "1 hr",
-        price: "$105+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Mini Vivid",
-        description: "Small vivid accent pieces. Includes blowout + styling.",
-        duration: "1 hr",
-        price: "$95+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Singular Color Block",
-        description: "Bold single color block placement.",
-        duration: "2 hrs",
-        price: "$145+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Double Color Block",
-        description: "Two-tone color block placement.",
-        duration: "2 hrs 30 mins",
-        price: "$185+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "3+ Color Blocks / Calico",
-        description: "Multiple color blocks or calico placement.",
-        duration: "3 hrs",
-        price: "$225+",
-        note: null,
-        featured: false,
-      },
-    ],
-  },
-  {
-    category: "Extensions",
-    description: "Premium extensions installed with precision for natural volume and length.",
-    items: [
-      {
-        name: "3 Row Initial Install",
-        description: "Full beaded row initial install. Includes cutting to blend. Hair cost separate.",
-        duration: "2 hrs 30 mins",
-        price: "$325+",
-        note: "Consultation required",
-        featured: true,
-      },
-      {
-        name: "2 Row Initial Install",
-        description: "Two row beaded install. Includes cutting to blend. Hair cost separate.",
-        duration: "2 hrs",
-        price: "$225+",
-        note: "Consultation required",
-        featured: true,
-      },
-      {
-        name: "1 Row Initial Install",
-        description: "Single row beaded install. Includes cutting to blend. Hair cost separate.",
-        duration: "1 hr 30 mins",
-        price: "$125+",
-        note: "Consultation required",
-        featured: false,
-      },
-      {
-        name: "3 Row Reinstall",
-        description: "Full maintenance reinstall for existing clients.",
-        duration: "3 hrs 30 mins",
-        price: "$300+",
-        note: "For existing clients",
-        featured: false,
-      },
-      {
-        name: "2 Row Reinstall",
-        description: "Two row maintenance reinstall.",
-        duration: "2 hrs 30 mins",
-        price: "$200+",
-        note: "For existing clients",
-        featured: false,
-      },
-      {
-        name: "1 Row Reinstall",
-        description: "Single row maintenance reinstall.",
-        duration: "1 hr 30 mins",
-        price: "$100+",
-        note: "For existing clients",
-        featured: false,
-      },
-      {
-        name: "3 Row Mini Moveup",
-        description: "Quick maintenance moveup for 3 rows.",
-        duration: "1 hr 30 mins",
-        price: "$175+",
-        note: "For existing clients",
-        featured: false,
-      },
-      {
-        name: "2 Row Mini Moveup",
-        description: "Quick maintenance moveup for 2 rows.",
-        duration: "1 hr",
-        price: "$125+",
-        note: "For existing clients",
-        featured: false,
-      },
-      {
-        name: "1 Row Mini Moveup",
-        description: "Quick maintenance moveup for 1 row.",
-        duration: "45 mins",
-        price: "$75+",
-        note: "For existing clients",
-        featured: false,
-      },
-      {
-        name: "Weft Removal",
-        description: "Remove existing weft extensions.",
-        duration: "30 mins",
-        price: "$75+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Tape Removal",
-        description: "Remove existing tape-in extensions.",
-        duration: "30 mins",
-        price: "$75+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "18\" SecreTapes",
-        description: "Premium 18 inch tape-in extensions.",
-        duration: "1 hr",
-        price: "$400",
-        note: "Hair cost",
-        featured: false,
-      },
-      {
-        name: "22\" SecreTapes",
-        description: "Premium 22 inch tape-in extensions.",
-        duration: "1 hr",
-        price: "$600",
-        note: "Hair cost",
-        featured: false,
-      },
-      {
-        name: "18\" SuperWeft",
-        description: "Premium 18 inch hand-tied weft.",
-        duration: "Varies",
-        price: "$450",
-        note: "Hair cost",
-        featured: false,
-      },
-      {
-        name: "20\" SuperWeft",
-        description: "Premium 20 inch hand-tied weft.",
-        duration: "Varies",
-        price: "$550",
-        note: "Hair cost",
-        featured: false,
-      },
-      {
-        name: "22\" SuperWeft",
-        description: "Premium 22 inch hand-tied weft.",
-        duration: "Varies",
-        price: "$650",
-        note: "Hair cost",
-        featured: false,
-      },
-      {
-        name: "24\" SuperWeft",
-        description: "Premium 24 inch hand-tied weft.",
-        duration: "Varies",
-        price: "$750",
-        note: "Hair cost",
-        featured: false,
-      },
-      {
-        name: "Extension Wash + Blowdry",
-        description: "For clients with sewn or tape-in extensions. Does not include hot tool styling.",
-        duration: "1 hr",
-        price: "$65+",
-        note: null,
-        featured: false,
-      },
-    ],
-  },
-  {
-    category: "Cutting & Styling",
-    description: "Modern cuts and styles tailored to your features and lifestyle.",
-    items: [
-      {
-        name: "Signature Haircut",
-        description: "Our signature cut experience. Includes shampoo + blowdry.",
-        duration: "1 hr",
-        price: "$65+",
-        note: null,
-        featured: true,
-      },
-      {
-        name: "Transformation Cut",
-        description: "Big change in length or style, not maintaining prior look.",
-        duration: "1 hr 30 mins",
-        price: "$75+",
-        note: "Consultation required",
-        featured: true,
-      },
-      {
-        name: "Specialty Cut",
-        description: "Creative or technical cutting requiring advanced skills.",
-        duration: "1 hr 30 mins",
-        price: "$75+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Combo Cut",
-        description: "Combination of scissors and clippers.",
-        duration: "1 hr",
-        price: "$60+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Fade",
-        description: "Precision fade cut. Includes shampoo + styling.",
-        duration: "45 mins",
-        price: "$50+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Clipper Cut",
-        description: "Clippers used for most of the cut. Includes shampoo + blowdry.",
-        duration: "45 mins",
-        price: "$40+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Buzz Cut",
-        description: "One length clipper cut. Includes shampoo + blowdry.",
-        duration: "15 mins",
-        price: "$35+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Maintenance Cut",
-        description: "Dry cut bang trim, clean up around neck/ears.",
-        duration: "15 mins",
-        price: "$15+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Haircut Add-On",
-        description: "Add a cut to any color service.",
-        duration: "30 mins",
-        price: "$45+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Wash + Blowdry",
-        description: "Shampoo and style with blow dryer and brush. Hot tools not included.",
-        duration: "30 mins",
-        price: "$50+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Member Blowout",
-        description: "Blowout service for members.",
-        duration: "30 mins",
-        price: "$45+",
-        note: "Members only",
-        featured: false,
-      },
-      {
-        name: "Member Extension Blowout",
-        description: "Extension blowout service for members.",
-        duration: "45 mins",
-        price: "$60+",
-        note: "Members only",
-        featured: false,
-      },
-    ],
-  },
-  {
-    category: "Treatments & Add-Ons",
-    description: "Enhance any service with our restorative treatments.",
-    items: [
-      {
-        name: "CPR Add-On",
-        description: "Color protecting and repairing treatment.",
-        duration: "15 mins",
-        price: "$50+",
-        note: null,
-        featured: true,
-      },
-      {
-        name: "Color Remover Add-On",
-        description: "Remove unwanted color before new application.",
-        duration: "30 mins",
-        price: "$50+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Lowlight Add-On",
-        description: "Add dimension with lowlights alongside other services.",
-        duration: "30 mins",
-        price: "$50+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Root Smudge Add-On",
-        description: "Add root smudge to any lightening service.",
-        duration: "15 mins",
-        price: "$50+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Vivid Toner Add-On",
-        description: "Add vivid toner to any service.",
-        duration: "15 mins",
-        price: "$25+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Hot Tool Style Add-On",
-        description: "Style with flat iron, curling iron, etc. Add-on to other services.",
-        duration: "15 mins",
-        price: "$15+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Stand Alone Hot Tool Style",
-        description: "Hot tool styling as a standalone service.",
-        duration: "30 mins",
-        price: "$25+",
-        note: null,
-        featured: false,
-      },
-    ],
-  },
-  {
-    category: "Consultations",
-    description: "Start your journey with a personalized consultation.",
-    items: [
-      {
-        name: "Color Consultation",
-        description: "In-depth consultation to discuss your color goals and create a plan.",
-        duration: "30 mins",
-        price: "$15+",
-        note: null,
-        featured: true,
-      },
-      {
-        name: "Cut Consultation",
-        description: "Discuss your cut goals and lifestyle for the perfect style.",
-        duration: "30 mins",
-        price: "$15+",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Extension Consultation",
-        description: "Explore extension options and determine the best method for you.",
-        duration: "30 mins",
-        price: "$15+",
-        note: null,
-        featured: true,
-      },
-    ],
-  },
-];
 const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
-function ServiceCard({ service, index }: { service: typeof services[0]['items'][0]; index: number }) {
+function StylistLevelSelector({ 
+  selectedLevel, 
+  onLevelChange 
+}: { 
+  selectedLevel: StylistLevel; 
+  onLevelChange: (level: StylistLevel) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedLabel = stylistLevels.find(l => l.id === selectedLevel)?.label || 'New Talent';
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full text-sm font-sans transition-all duration-300 hover:border-foreground/30"
+      >
+        <span className="text-muted-foreground">Stylist Level:</span>
+        <span className="font-medium text-foreground">{selectedLabel}</span>
+        <ChevronDown size={16} className={`text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setIsOpen(false)} 
+            />
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-full left-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50"
+            >
+              {stylistLevels.map((level) => (
+                <button
+                  key={level.id}
+                  onClick={() => {
+                    onLevelChange(level.id);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-4 py-3 text-left text-sm font-sans transition-colors duration-200 ${
+                    selectedLevel === level.id 
+                      ? 'bg-foreground text-background' 
+                      : 'hover:bg-secondary text-foreground'
+                  }`}
+                >
+                  {level.label}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ServiceCard({ 
+  service, 
+  index, 
+  selectedLevel 
+}: { 
+  service: ServiceItem; 
+  index: number;
+  selectedLevel: StylistLevel;
+}) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
+  
+  const price = service.prices[selectedLevel];
+  const hasPrice = price !== null;
+  
+  // Find the lowest available price for "starting at" display
+  const lowestPrice = Object.values(service.prices).find(p => p !== null);
 
   return (
     <motion.div
@@ -607,7 +95,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]['items'][
       transition={{ duration: 0.5, delay: index * 0.05, ease: editorialEasing }}
       className="group relative"
     >
-      <div className="p-6 lg:p-8 bg-card border border-border rounded-2xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-1">
+      <div className={`p-6 lg:p-8 bg-card border border-border rounded-2xl transition-all duration-500 hover:border-foreground/20 hover:shadow-lg hover:-translate-y-1 ${!hasPrice ? 'opacity-60' : ''}`}>
         {service.featured && (
           <div className="absolute -top-3 right-6">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-display uppercase tracking-wider bg-foreground text-background rounded-full">
@@ -621,9 +109,17 @@ function ServiceCard({ service, index }: { service: typeof services[0]['items'][
           <h3 className="font-display text-base lg:text-lg text-foreground leading-tight">
             {service.name}
           </h3>
-          <span className="font-display text-sm text-foreground shrink-0">
-            {service.price}
-          </span>
+          <div className="text-right shrink-0">
+            {hasPrice ? (
+              <span className="font-display text-sm text-foreground">
+                {price}
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground italic">
+                N/A at this level
+              </span>
+            )}
+          </div>
         </div>
         
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
@@ -637,8 +133,7 @@ function ServiceCard({ service, index }: { service: typeof services[0]['items'][
         
         {service.note && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground/70 font-sans">
-            <Clock size={14} />
-            <span>{service.note}</span>
+            <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">{service.note}</span>
           </div>
         )}
         
@@ -651,7 +146,15 @@ function ServiceCard({ service, index }: { service: typeof services[0]['items'][
   );
 }
 
-function CategorySection({ category, categoryIndex }: { category: typeof services[0]; categoryIndex: number }) {
+function CategorySection({ 
+  category, 
+  categoryIndex,
+  selectedLevel 
+}: { 
+  category: ServiceCategory; 
+  categoryIndex: number;
+  selectedLevel: StylistLevel;
+}) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -689,7 +192,12 @@ function CategorySection({ category, categoryIndex }: { category: typeof service
       {/* Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
         {category.items.map((service, index) => (
-          <ServiceCard key={service.name} service={service} index={index} />
+          <ServiceCard 
+            key={service.name} 
+            service={service} 
+            index={index}
+            selectedLevel={selectedLevel}
+          />
         ))}
       </div>
     </motion.div>
@@ -699,6 +207,7 @@ function CategorySection({ category, categoryIndex }: { category: typeof service
 export default function Services() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
+  const [selectedLevel, setSelectedLevel] = useState<StylistLevel>('new-talent');
 
   return (
     <Layout>
@@ -741,6 +250,26 @@ export default function Services() {
               Explore our full menu of services designed to elevate your look.
             </motion.p>
           </div>
+        </div>
+      </section>
+
+      {/* Stylist Level Selector + Pricing Note */}
+      <section className="pb-8 lg:pb-12">
+        <div className="container mx-auto px-6 lg:px-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={heroInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
+            className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"
+          >
+            <StylistLevelSelector 
+              selectedLevel={selectedLevel}
+              onLevelChange={setSelectedLevel}
+            />
+            <p className="text-sm text-muted-foreground font-sans">
+              <span className="font-medium text-foreground">Prices shown are starting at</span> and may vary based on hair length, density, and complexity.
+            </p>
+          </motion.div>
         </div>
       </section>
 
@@ -805,7 +334,8 @@ export default function Services() {
             <CategorySection 
               key={category.category} 
               category={category} 
-              categoryIndex={categoryIndex} 
+              categoryIndex={categoryIndex}
+              selectedLevel={selectedLevel}
             />
           ))}
         </div>
