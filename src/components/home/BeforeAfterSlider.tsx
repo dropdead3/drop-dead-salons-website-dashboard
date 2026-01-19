@@ -332,7 +332,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
           )}
 
           {/* Labels - positioned at top corners */}
-          <div className="absolute top-4 left-4 z-20">
+          <div className="absolute top-6 left-6 z-20">
             <span 
               className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 rounded-full text-foreground"
               style={{ opacity: sliderPosition > 20 ? 1 : 0, transition: 'opacity 0.2s' }}
@@ -340,7 +340,7 @@ export const BeforeAfterSlider = forwardRef<BeforeAfterSliderHandle, BeforeAfter
               {beforeLabel}
             </span>
           </div>
-          <div className="absolute top-4 right-4 z-20">
+          <div className="absolute top-6 right-6 z-20">
             <span 
               className="text-[10px] uppercase tracking-[0.15em] font-sans px-2 py-1 bg-background/90 rounded-full text-foreground"
               style={{ opacity: sliderPosition < 80 ? 1 : 0, transition: 'opacity 0.2s' }}
