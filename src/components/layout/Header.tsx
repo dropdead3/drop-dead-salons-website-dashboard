@@ -163,7 +163,8 @@ export function Header() {
                   alt="Drop Dead"
                   style={{ 
                     opacity: !isScrolled || isScrollingUp ? 1 : 0,
-                    transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+                    transform: !isScrolled || isScrollingUp ? "scale(1)" : "scale(0.95)",
+                    transition: "opacity 0.5s ease-out, transform 0.5s ease-out"
                   }}
                   className={cn(
                     "h-10 w-auto",
@@ -176,7 +177,8 @@ export function Header() {
                   alt="Drop Dead"
                   style={{ 
                     opacity: isScrolled && !isScrollingUp ? 1 : 0,
-                    transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+                    transform: isScrolled && !isScrollingUp ? "scale(1)" : "scale(0.95)",
+                    transition: "opacity 0.5s ease-out 0.1s, transform 0.5s ease-out 0.1s"
                   }}
                   className={cn(
                     "h-6 w-auto absolute left-0",
