@@ -1,6 +1,11 @@
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { FounderWelcome } from "@/components/home/FounderWelcome";
+import { AboutHero } from "@/components/about/AboutHero";
+import { ValuesSection } from "@/components/about/ValuesSection";
+import { StatsSection } from "@/components/about/StatsSection";
+import { StorySection } from "@/components/about/StorySection";
+import { CTASection } from "@/components/about/CTASection";
 
 const About = () => {
   return (
@@ -9,9 +14,12 @@ const About = () => {
         title="About Us | Drop Dead Salon"
         description="Learn about Drop Dead Salon, our story, and founder Kristi Day. Discover what makes us the Phoenix Valley's premier destination for expert hair color, extensions, and styling."
       />
-      <div className="pt-24 md:pt-32">
-        <FounderWelcome />
-      </div>
+      <AboutHero />
+      <FounderWelcome />
+      <ValuesSection />
+      <StatsSection />
+      <StorySection />
+      <CTASection />
     </Layout>
   );
 };
