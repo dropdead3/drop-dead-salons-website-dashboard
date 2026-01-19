@@ -13,33 +13,52 @@ const services = [
     description: "From subtle dimension to bold transformations, our colorists craft personalized results.",
     items: [
       {
-        name: "Custom Color",
-        description: "Tailored color work designed specifically for you.",
-        note: "Pricing determined by consultation",
+        name: "Root Color",
+        description: "Fresh, seamless root coverage for a polished look.",
+        price: "$70+",
+        note: null,
         featured: false,
       },
       {
-        name: "Blonding & Highlights",
-        description: "Dimensional, lived-in blonding with expert precision.",
-        note: "By consultation",
+        name: "Full Color",
+        description: "All-over color tailored to your desired shade.",
+        price: "$90+",
+        note: null,
+        featured: false,
+      },
+      {
+        name: "Balayage",
+        description: "Hand-painted highlights for natural, sun-kissed dimension.",
+        price: "$160+",
+        note: null,
         featured: true,
+      },
+      {
+        name: "Partial Highlight",
+        description: "Dimensional highlights focused on face-framing sections.",
+        price: "$90+",
+        note: null,
+        featured: false,
+      },
+      {
+        name: "Full Highlight",
+        description: "All-over highlights for maximum brightness and dimension.",
+        price: "$150+",
+        note: null,
+        featured: true,
+      },
+      {
+        name: "Toner / Glaze",
+        description: "Refresh and enhance your color with glossy, vibrant tones.",
+        price: "$30+",
+        note: null,
+        featured: false,
       },
       {
         name: "Color Correction",
         description: "Restorative color work to achieve your vision.",
+        price: "By consultation",
         note: "Consultation required",
-        featured: false,
-      },
-      {
-        name: "Root Smudge",
-        description: "Seamless root blending for a natural grow-out.",
-        note: null,
-        featured: false,
-      },
-      {
-        name: "Gray Coverage",
-        description: "Natural-looking coverage tailored to your preference.",
-        note: null,
         featured: false,
       },
     ],
@@ -51,24 +70,28 @@ const services = [
       {
         name: "Drop Dead® Hand-Tied Extensions",
         description: "Our signature hand-tied method for natural volume and length.",
+        price: "By consultation",
         note: "Consultation required",
         featured: true,
       },
       {
         name: "SecreTape Tape-In Extensions",
         description: "Quick application with seamless, lightweight results.",
+        price: "By consultation",
         note: "Consultation required",
         featured: true,
       },
       {
         name: "Keratin Tip Extensions",
         description: "Individual strand bonding for versatile styling.",
+        price: "By consultation",
         note: "Consultation required",
         featured: false,
       },
       {
         name: "Extension Maintenance",
         description: "Keep your extensions looking flawless and fresh.",
+        price: "By consultation",
         note: "For existing clients",
         featured: false,
       },
@@ -79,27 +102,45 @@ const services = [
     description: "Modern cuts and styles tailored to your features and lifestyle.",
     items: [
       {
-        name: "Precision Cut",
-        description: "Modern cuts tailored to your features and lifestyle.",
-        note: "Includes consultation & styling",
+        name: "Women's Haircut",
+        description: "Precision cut including wash, scalp massage, and blow-dry.",
+        price: "$55+",
+        note: null,
         featured: true,
       },
       {
-        name: "Creative Cut",
-        description: "Artistry meets precision for unique shapes and styles.",
-        note: "Includes consultation & styling",
-        featured: false,
-      },
-      {
-        name: "Blowout & Styling",
-        description: "Professional styling for any occasion.",
+        name: "Men's Haircut",
+        description: "Classic or modern cuts tailored to your style.",
+        price: "$25+",
         note: null,
         featured: false,
       },
       {
-        name: "Special Occasion Styling",
-        description: "Elegant updos and styling for your special moments.",
-        note: "Inquire for pricing",
+        name: "Children's Haircut",
+        description: "Gentle, patient service for our youngest guests.",
+        price: "$20+",
+        note: null,
+        featured: false,
+      },
+      {
+        name: "Wash & Blow Dry",
+        description: "Professional styling for any occasion.",
+        price: "$30+",
+        note: null,
+        featured: false,
+      },
+      {
+        name: "Updo",
+        description: "Elegant styling for your special moments.",
+        price: "$85+",
+        note: null,
+        featured: false,
+      },
+      {
+        name: "Makeup Application",
+        description: "Professional makeup for any occasion.",
+        price: "$85+",
+        note: null,
         featured: false,
       },
     ],
@@ -109,26 +150,64 @@ const services = [
     description: "Restore, rejuvenate, and protect with our curated treatments.",
     items: [
       {
-        name: "Deep Conditioning Treatment",
+        name: "Deep Conditioning",
         description: "Intensive treatment to restore and nourish.",
+        price: "$30+",
         note: null,
         featured: false,
-      },
-      {
-        name: "Bond Repair Treatment",
-        description: "Strengthen and rebuild damaged hair from within.",
-        note: null,
-        featured: true,
       },
       {
         name: "Brazilian Blowout",
         description: "Smooth, frizz-free results lasting up to 12 weeks.",
+        price: "$300+",
+        note: null,
+        featured: true,
+      },
+      {
+        name: "GK Keratin Treatment",
+        description: "Long-lasting smoothing and shine treatment.",
+        price: "$300+",
+        note: null,
+        featured: true,
+      },
+      {
+        name: "Perm",
+        description: "Classic waves and curls with modern techniques.",
+        price: "$95+",
+        note: null,
+        featured: false,
+      },
+    ],
+  },
+  {
+    category: "Waxing & More",
+    description: "Quick, precise grooming services for a polished finish.",
+    items: [
+      {
+        name: "Eyebrow Wax",
+        description: "Perfectly shaped brows to frame your face.",
+        price: "$10",
         note: null,
         featured: false,
       },
       {
-        name: "Scalp Treatment",
-        description: "Therapeutic treatments for optimal scalp health.",
+        name: "Lip Wax",
+        description: "Quick and gentle upper lip hair removal.",
+        price: "$8",
+        note: null,
+        featured: false,
+      },
+      {
+        name: "Chin Wax",
+        description: "Smooth, clean finish for the chin area.",
+        price: "$8",
+        note: null,
+        featured: false,
+      },
+      {
+        name: "Brow Tint",
+        description: "Add definition and depth to your brows.",
+        price: "$20",
         note: null,
         featured: false,
       },
@@ -160,9 +239,14 @@ function ServiceCard({ service, index }: { service: typeof services[0]['items'][
           </div>
         )}
         
-        <h3 className="font-display text-base lg:text-lg text-foreground mb-3 leading-tight">
-          {service.name}
-        </h3>
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <h3 className="font-display text-base lg:text-lg text-foreground leading-tight">
+            {service.name}
+          </h3>
+          <span className="font-display text-sm text-foreground shrink-0">
+            {service.price}
+          </span>
+        </div>
         
         <p className="text-muted-foreground font-sans font-light leading-relaxed mb-4">
           {service.description}
