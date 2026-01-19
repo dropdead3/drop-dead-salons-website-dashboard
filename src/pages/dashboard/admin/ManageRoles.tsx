@@ -356,7 +356,9 @@ export default function ManageRoles() {
                       {ALL_ROLES.map(role => {
                         const hasRole = user.roles.includes(role);
                         const isAdminRole = role === 'admin';
-                        const isLocked = isAdminRole && !canApproveAdmin;
+                        const isLockedByPermission = isAdminRole && !canApproveAdmin;
+                        const isLockedBySuperAdmin = isSuperAdmin; // Lock all roles when user is super admin
+                        const isLocked = isLockedByPermission || isLockedBySuperAdmin;
                         
                         return (
                           <div key={role} className="flex items-center gap-2">
@@ -369,7 +371,7 @@ export default function ManageRoles() {
                             >
                               {ROLE_LABELS[role]}
                             </label>
-                            {isLocked && (
+                            {isLockedByPermission && !isLockedBySuperAdmin && (
                               <Tooltip>
                                 <TooltipTrigger>
                                   <Lock className="w-3 h-3 text-muted-foreground" />
@@ -377,9 +379,17 @@ export default function ManageRoles() {
                                 <TooltipContent>Super Admin required</TooltipContent>
                               </Tooltip>
                             )}
+                            {isLockedBySuperAdmin && (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Lock className="w-3 h-3 text-muted-foreground" />
+                                </TooltipTrigger>
+                                <TooltipContent>Super Admins have full access</TooltipContent>
+                              </Tooltip>
+                            )}
                             <Switch
                               id={`${user.user_id}-${role}`}
-                              checked={hasRole}
+                              checked={isLockedBySuperAdmin ? false : hasRole}
                               onCheckedChange={() => handleToggleRole(user.user_id, role, hasRole)}
                               disabled={toggleRole.isPending || isLocked}
                             />
