@@ -33,6 +33,7 @@ import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { StylistsOverviewCard, StaffOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
 import { BirthdayCalendarCard } from '@/components/dashboard/BirthdayCalendarCard';
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
+import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
 import { WorkScheduleWidget } from '@/components/dashboard/WorkScheduleWidget';
 import { ScheduleRequestsCard } from '@/components/dashboard/ScheduleRequestsCard';
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
@@ -297,6 +298,9 @@ export default function DashboardHome() {
             </Card>
           )}
         </div>
+
+        {/* Widgets Section */}
+        <WidgetsSection />
 
         {/* Work Schedule Widget - visible to all */}
         <div className="grid gap-6 lg:grid-cols-2">
