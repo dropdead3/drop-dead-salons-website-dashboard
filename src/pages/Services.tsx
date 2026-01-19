@@ -470,8 +470,11 @@ export default function Services() {
       <Section className="bg-secondary py-16 lg:py-20" theme="light">
         <div className="max-w-3xl mx-auto text-center">
           <Sparkles size={32} className="mx-auto mb-6 text-foreground/30" />
+          <h3 className="font-display text-xl md:text-2xl text-foreground mb-4">
+            Before you book, check our policies.
+          </h3>
           <p className="text-lg font-sans font-light leading-relaxed text-foreground/80 mb-6">
-            Appointments are reserved specifically for you. Please review our booking and cancellation policies prior to scheduling.
+            Services are by appointment only. Walk-ins not accepted. Typically we can schedule you in within 1 business day.
           </p>
           <Link
             to="/policies"
