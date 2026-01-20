@@ -2420,8 +2420,8 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                             ))}
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1.5">
+                        <div className="flex gap-4">
+                          <div className="flex items-center gap-2">
                             <Label className="text-xs text-muted-foreground">Background</Label>
                             <ColorWheelPicker
                               value={selectedBlock.styles.backgroundColor || 'transparent'}
@@ -2429,7 +2429,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { backgroundColor: v })}
                             />
                           </div>
-                          <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
                             <Label className="text-xs text-muted-foreground">Text Color</Label>
                             <ColorWheelPicker
                               value={selectedBlock.styles.textColor || '#000000'}

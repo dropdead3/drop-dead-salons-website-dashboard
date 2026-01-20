@@ -325,7 +325,7 @@ export function ColorWheelPicker({ value, onChange, colorType = 'primary', label
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="w-10 h-10 rounded-lg border-2 border-border shadow-sm transition-all hover:scale-105 hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="w-7 h-7 rounded-md border border-border shadow-sm transition-all hover:scale-105 hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
           style={{ backgroundColor: value === 'transparent' ? '#fff' : value }}
         />
       </PopoverTrigger>
