@@ -194,7 +194,10 @@ const getLogoById = (id: string): BrandLogo | undefined => {
 // Block types for the email editor
 type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social' | 'footer' | 'header' | 'signature' | 'columns';
 
-// Column content item - simplified content for column cells
+// Block types that can be placed inside columns (excludes header, footer, columns)
+type ColumnBlockType = Exclude<BlockType, 'header' | 'footer' | 'columns'>;
+
+// Column content item - simplified content for column cells (legacy support)
 interface ColumnContent {
   id: string;
   type: 'text' | 'button' | 'image' | 'spacer';
@@ -296,10 +299,11 @@ interface EmailBlock {
     showEmail?: boolean;
     email?: string;
   };
-  // Columns configuration
+  // Columns configuration - supports full blocks inside columns
   columnsConfig?: {
     columnCount: 2 | 3;
-    columns: ColumnContent[][];
+    columns: ColumnContent[][]; // Legacy support for simple content
+    columnBlocks?: EmailBlock[][]; // Full blocks support (new)
     gap?: number; // 0-24px gap between columns
   };
 }
@@ -883,7 +887,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'columns': {
-        const config = block.columnsConfig || { columnCount: 2, columns: [[], []], gap: 16 };
+        const config = block.columnsConfig || { columnCount: 2, columns: [[], []], columnBlocks: [[], []], gap: 16 };
         const columnCount = config.columnCount;
         const gap = config.gap || 16;
         const columnWidth = columnCount === 2 ? '50%' : '33.33%';
@@ -891,8 +895,103 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const textColor = block.styles.textColor || '#1a1a1a';
         const padding = computePadding(block.styles);
         
+        // Use columnBlocks if available (new format), otherwise fall back to columns (legacy)
+        const useBlocks = config.columnBlocks && config.columnBlocks.some(col => col.length > 0);
+        
+        // Helper to generate HTML for a single block inside a column
+        const generateColumnBlockHtml = (columnBlock: EmailBlock): string => {
+          const blockPadding = computePadding(columnBlock.styles);
+          const formatContent = (content: string) => content.replace(/\n/g, '<br/>');
+          
+          switch (columnBlock.type) {
+            case 'heading':
+              return `<h2 style="margin: 0; font-size: ${columnBlock.styles.fontSize || '20px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.3; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? `background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</h2>`;
+            case 'text':
+              return `<p style="margin: 0; font-size: ${columnBlock.styles.fontSize || '14px'}; color: ${columnBlock.styles.textColor || textColor}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.5; padding: ${blockPadding}; ${columnBlock.styles.backgroundColor ? `background-color: ${columnBlock.styles.backgroundColor};` : ''}">${formatContent(columnBlock.content)}</p>`;
+            case 'button': {
+              const isSecondary = columnBlock.styles.buttonVariant === 'secondary';
+              const sizeScale = (columnBlock.styles.buttonSize || 100) / 100;
+              const basePaddingV = Math.round(12 * sizeScale);
+              const basePaddingH = Math.round(24 * sizeScale);
+              const baseFontSize = Math.round(14 * sizeScale);
+              const shapeRadius = columnBlock.styles.buttonShape === 'pill' ? '9999px' : columnBlock.styles.buttonShape === 'rectangle' ? '0px' : '6px';
+              const buttonStyles = isSecondary
+                ? `display: inline-block; background-color: transparent; color: ${columnBlock.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${columnBlock.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
+                : `display: inline-block; background-color: ${columnBlock.styles.buttonColor || '#000000'}; color: ${columnBlock.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding};">
+                <a href="${columnBlock.linkUrl || '#'}" style="${buttonStyles}">${columnBlock.content}</a>
+              </div>`;
+            }
+            case 'image': {
+              const imgUrl = columnBlock.imageUrl || '';
+              if (!imgUrl) return '';
+              const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
+              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding};">
+                <img src="${absoluteImgUrl}" alt="${columnBlock.content || 'Image'}" style="max-width: 100%; height: auto; ${columnBlock.styles.borderRadius ? `border-radius: ${columnBlock.styles.borderRadius};` : ''}" />
+              </div>`;
+            }
+            case 'link': {
+              const linkFontSize = Math.round(16 * ((columnBlock.styles.linkSize || 100) / 100));
+              return `<p style="margin: 0; padding: ${blockPadding}; text-align: ${columnBlock.styles.textAlign || 'center'}; line-height: 1.6;">
+                <a href="${columnBlock.linkUrl || '#'}" style="color: ${columnBlock.styles.buttonColor || '#3b82f6'}; text-decoration: underline; font-size: ${linkFontSize}px;">${columnBlock.content}</a>
+              </p>`;
+            }
+            case 'divider': {
+              const thickness = columnBlock.styles.dividerThickness || 1;
+              const divStyle = columnBlock.styles.dividerStyle || 'solid';
+              const divWidth = columnBlock.styles.dividerWidth || 100;
+              const divColor = columnBlock.styles.textColor || '#e5e7eb';
+              return `<div style="text-align: center; padding: ${columnBlock.styles.padding || '8px 0'};">
+                <hr style="border: none; border-top: ${thickness}px ${divStyle} ${divColor}; margin: 0 auto; width: ${divWidth}%;" />
+              </div>`;
+            }
+            case 'spacer': {
+              const height = parseInt(columnBlock.styles.height || '24') || 24;
+              return `<div style="height: ${height}px;"></div>`;
+            }
+            case 'social': {
+              const enabledLinks = (columnBlock.socialLinks || []).filter(link => link.enabled);
+              if (enabledLinks.length === 0) return '';
+              const iconSize = columnBlock.styles.iconSize || 24;
+              const iconStyle = `display: inline-block; width: ${iconSize}px; height: ${iconSize}px; margin: 0 8px; text-decoration: none;`;
+              const socialIcons = enabledLinks.map(link => {
+                const iconColor = columnBlock.styles.buttonColor || '#1a1a1a';
+                let svg = '';
+                let href = link.url;
+                switch (link.platform) {
+                  case 'instagram':
+                    svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>`;
+                    break;
+                  case 'tiktok':
+                    svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>`;
+                    break;
+                  case 'email':
+                    svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`;
+                    if (!href.startsWith('mailto:')) href = `mailto:${href}`;
+                    break;
+                }
+                return `<a href="${href}" style="${iconStyle}" target="_blank" rel="noopener">${svg}</a>`;
+              }).join('');
+              return `<div style="text-align: ${columnBlock.styles.textAlign || 'center'}; padding: ${blockPadding}; font-size: 14px; line-height: 1;">
+                ${socialIcons}
+              </div>`;
+            }
+            default:
+              return '';
+          }
+        };
+        
         // Generate content for each column
-        const columnCells = config.columns.map((columnItems, colIndex) => {
+        const columnCells = (useBlocks ? config.columnBlocks! : []).map((columnBlocks, colIndex) => {
+          const cellContent = columnBlocks.map(generateColumnBlockHtml).join('');
+          
+          return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? `0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
+            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>'}
+          </td>`;
+        }).join('');
+        
+        // Legacy support: if no columnBlocks, use legacy columns format
+        const legacyColumnCells = (!useBlocks ? config.columns : []).map((columnItems, colIndex) => {
           const cellContent = columnItems.map(item => {
             if (item.type === 'text') {
               return `<p style="margin: 0; font-size: ${item.styles.fontSize || '14px'}; color: ${item.styles.textColor || textColor}; text-align: ${item.styles.textAlign || 'center'}; line-height: 1.5;">${item.content}</p>`;
@@ -929,7 +1028,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         
         return `<div style="background-color: ${bgColor}; padding: ${padding};">
           <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
-            <tr>${columnCells}</tr>
+            <tr>${useBlocks ? columnCells : legacyColumnCells}</tr>
           </table>
         </div>`;
       }
@@ -1576,16 +1675,17 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
       ...(type === 'columns' && {
         columnsConfig: {
           columnCount: (buttonVariant === 'secondary' ? 3 : 2) as 2 | 3,
-          columns: buttonVariant === 'secondary' 
+          columns: [], // Legacy - keep empty
+          columnBlocks: buttonVariant === 'secondary' 
             ? [
-                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 1', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
-                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 2', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
-                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 3', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
-              ]
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 1', styles: { textAlign: 'center' as const, fontSize: '14px', padding: '8px' } }],
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 2', styles: { textAlign: 'center' as const, fontSize: '14px', padding: '8px' } }],
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 3', styles: { textAlign: 'center' as const, fontSize: '14px', padding: '8px' } }],
+              ] as EmailBlock[][]
             : [
-                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 1', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
-                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 2', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
-              ],
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 1', styles: { textAlign: 'center' as const, fontSize: '14px', padding: '8px' } }],
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 2', styles: { textAlign: 'center' as const, fontSize: '14px', padding: '8px' } }],
+              ] as EmailBlock[][],
           gap: 16,
         }
       }),
@@ -3908,37 +4008,76 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
 
                     {/* Columns Controls */}
                     {selectedBlock.type === 'columns' && (() => {
-                      const config = selectedBlock.columnsConfig || { columnCount: 2, columns: [[], []], gap: 16 };
+                      const config = selectedBlock.columnsConfig || { columnCount: 2, columns: [], columnBlocks: [[], []], gap: 16 };
+                      const columnBlocks = config.columnBlocks || [[], []];
                       
-                      const updateColumnContent = (colIndex: number, itemIndex: number, updates: Partial<ColumnContent>) => {
-                        const newColumns = [...config.columns];
-                        if (newColumns[colIndex] && newColumns[colIndex][itemIndex]) {
-                          newColumns[colIndex][itemIndex] = { ...newColumns[colIndex][itemIndex], ...updates };
-                          updateBlock(selectedBlock.id, { columnsConfig: { ...config, columns: newColumns } });
-                        }
+                      const updateColumnBlock = (colIndex: number, blockIndex: number, updates: Partial<EmailBlock>) => {
+                        const newColumnBlocks = columnBlocks.map((col, i) => 
+                          i === colIndex 
+                            ? col.map((blk, j) => j === blockIndex ? { ...blk, ...updates } : blk)
+                            : [...col]
+                        );
+                        updateBlock(selectedBlock.id, { columnsConfig: { ...config, columnBlocks: newColumnBlocks } });
                       };
                       
-                      const addColumnItem = (colIndex: number, type: ColumnContent['type']) => {
-                        const newColumns = [...config.columns];
-                        if (!newColumns[colIndex]) newColumns[colIndex] = [];
-                        const newItem: ColumnContent = {
+                      const addColumnBlock = (colIndex: number, type: ColumnBlockType) => {
+                        const currentTheme = allThemes.find(t => t.id === selectedTheme) || emailThemes[0];
+                        const newBlock: EmailBlock = {
                           id: crypto.randomUUID(),
                           type,
-                          content: type === 'text' ? 'New text' : type === 'button' ? 'Button' : '',
-                          styles: { textAlign: 'center', fontSize: '14px' },
-                          ...(type === 'button' && { linkUrl: '#' }),
-                          ...(type === 'spacer' && { styles: { height: '16px' } }),
+                          content: type === 'heading' ? 'Heading' : type === 'text' ? 'Text content' : type === 'button' ? 'Button' : type === 'link' ? 'Click here' : '',
+                          styles: {
+                            textAlign: 'center',
+                            fontSize: type === 'heading' ? '18px' : '14px',
+                            padding: '8px',
+                            ...(type === 'heading' && { 
+                              backgroundColor: currentTheme.colors.headerBg, 
+                              textColor: currentTheme.colors.headerText 
+                            }),
+                            ...(type === 'text' && { 
+                              backgroundColor: 'transparent', 
+                              textColor: currentTheme.colors.bodyText 
+                            }),
+                            ...(type === 'button' && { 
+                              buttonColor: currentTheme.colors.buttonBg, 
+                              buttonTextColor: currentTheme.colors.buttonText,
+                              buttonVariant: 'primary' as const
+                            }),
+                            ...(type === 'link' && { 
+                              buttonColor: currentTheme.colors.buttonBg
+                            }),
+                            ...(type === 'divider' && { 
+                              textColor: currentTheme.colors.dividerColor 
+                            }),
+                            ...(type === 'spacer' && { height: '16px' }),
+                            ...(type === 'social' && { 
+                              buttonColor: currentTheme.colors.buttonBg
+                            }),
+                          },
+                          ...(type === 'button' && { linkUrl: '{{dashboard_url}}' }),
+                          ...(type === 'link' && { linkUrl: '{{dashboard_url}}' }),
+                          ...(type === 'social' && { 
+                            socialLinks: [
+                              { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadsalon', enabled: true },
+                              { platform: 'email' as const, url: 'contact@dropdeadsalon.com', enabled: true },
+                            ]
+                          }),
                         };
-                        newColumns[colIndex].push(newItem);
-                        updateBlock(selectedBlock.id, { columnsConfig: { ...config, columns: newColumns } });
+                        const newColumnBlocks = columnBlocks.map((col, i) => 
+                          i === colIndex ? [...col, newBlock] : [...col]
+                        );
+                        // Ensure we have enough columns
+                        while (newColumnBlocks.length < config.columnCount) {
+                          newColumnBlocks.push([]);
+                        }
+                        updateBlock(selectedBlock.id, { columnsConfig: { ...config, columnBlocks: newColumnBlocks } });
                       };
                       
-                      const removeColumnItem = (colIndex: number, itemIndex: number) => {
-                        const newColumns = [...config.columns];
-                        if (newColumns[colIndex]) {
-                          newColumns[colIndex].splice(itemIndex, 1);
-                          updateBlock(selectedBlock.id, { columnsConfig: { ...config, columns: newColumns } });
-                        }
+                      const removeColumnBlock = (colIndex: number, blockIndex: number) => {
+                        const newColumnBlocks = columnBlocks.map((col, i) => 
+                          i === colIndex ? col.filter((_, j) => j !== blockIndex) : [...col]
+                        );
+                        updateBlock(selectedBlock.id, { columnsConfig: { ...config, columnBlocks: newColumnBlocks } });
                       };
                       
                       return (
@@ -3952,10 +4091,10 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 size="sm"
                                 className="flex-1 h-8"
                                 onClick={() => {
-                                  const newColumns = config.columns.slice(0, 2);
-                                  while (newColumns.length < 2) newColumns.push([]);
+                                  const newColumnBlocks = columnBlocks.slice(0, 2);
+                                  while (newColumnBlocks.length < 2) newColumnBlocks.push([]);
                                   updateBlock(selectedBlock.id, { 
-                                    columnsConfig: { ...config, columnCount: 2, columns: newColumns } 
+                                    columnsConfig: { ...config, columnCount: 2, columnBlocks: newColumnBlocks } 
                                   });
                                 }}
                               >
@@ -3968,10 +4107,10 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 size="sm"
                                 className="flex-1 h-8"
                                 onClick={() => {
-                                  const newColumns = [...config.columns];
-                                  while (newColumns.length < 3) newColumns.push([]);
+                                  const newColumnBlocks = [...columnBlocks];
+                                  while (newColumnBlocks.length < 3) newColumnBlocks.push([]);
                                   updateBlock(selectedBlock.id, { 
-                                    columnsConfig: { ...config, columnCount: 3, columns: newColumns } 
+                                    columnsConfig: { ...config, columnCount: 3, columnBlocks: newColumnBlocks } 
                                   });
                                 }}
                               >
@@ -4000,54 +4139,77 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           
                           <div className="space-y-3 pt-2 border-t">
                             <Label className="text-xs font-medium flex items-center gap-2">
-                              Column Content
-                              <span className="text-[10px] font-normal text-muted-foreground">(drag to reorder)</span>
+                              Column Blocks
+                              <span className="text-[10px] font-normal text-muted-foreground">(add any block type)</span>
                             </Label>
-                            {config.columns.slice(0, config.columnCount).map((columnItems, colIndex) => (
-                              <div 
-                                key={colIndex} 
-                                className="space-y-1"
-                                data-column-drop-zone
-                                onDragOver={(e) => {
-                                  if (columnItems.length === 0) {
-                                    handleColumnItemDragOver(e, selectedBlock.id, colIndex, null);
-                                  }
-                                }}
-                                onDrop={(e) => {
-                                  if (columnItems.length === 0) {
-                                    handleColumnItemDrop(e, selectedBlock.id, colIndex, null);
-                                  }
-                                }}
-                                onDragLeave={handleColumnItemDragLeave}
-                              >
+                            {columnBlocks.slice(0, config.columnCount).map((colBlocks, colIndex) => (
+                              <div key={colIndex} className="space-y-1">
                                 <div className="flex items-center justify-between">
                                   <span className="text-[11px] font-medium text-muted-foreground">Column {colIndex + 1}</span>
                                   <Popover>
                                     <PopoverTrigger asChild>
                                       <Button variant="outline" size="sm" className="h-6 text-[10px] px-2">
                                         <Plus className="w-3 h-3 mr-1" />
-                                        Add
+                                        Add Block
                                       </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-40 p-2" align="end">
-                                      <div className="space-y-1">
+                                    <PopoverContent className="w-48 p-2" align="end">
+                                      <div className="grid grid-cols-2 gap-1">
                                         <button 
-                                          onClick={() => addColumnItem(colIndex, 'text')}
-                                          className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                          onClick={() => addColumnBlock(colIndex, 'heading')}
+                                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
+                                          <Type className="w-3 h-3" />
+                                          Heading
+                                        </button>
+                                        <button 
+                                          onClick={() => addColumnBlock(colIndex, 'text')}
+                                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                        >
+                                          <AlignLeft className="w-3 h-3" />
                                           Text
                                         </button>
                                         <button 
-                                          onClick={() => addColumnItem(colIndex, 'button')}
-                                          className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                          onClick={() => addColumnBlock(colIndex, 'button')}
+                                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
+                                          <MousePointerClick className="w-3 h-3" />
                                           Button
                                         </button>
                                         <button 
-                                          onClick={() => addColumnItem(colIndex, 'spacer')}
-                                          className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                          onClick={() => addColumnBlock(colIndex, 'link')}
+                                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
                                         >
+                                          <Link className="w-3 h-3" />
+                                          Link
+                                        </button>
+                                        <button 
+                                          onClick={() => addColumnBlock(colIndex, 'image')}
+                                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                        >
+                                          <Image className="w-3 h-3" />
+                                          Image
+                                        </button>
+                                        <button 
+                                          onClick={() => addColumnBlock(colIndex, 'divider')}
+                                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                        >
+                                          <Minus className="w-3 h-3" />
+                                          Divider
+                                        </button>
+                                        <button 
+                                          onClick={() => addColumnBlock(colIndex, 'spacer')}
+                                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                        >
+                                          <Square className="w-3 h-3" />
                                           Spacer
+                                        </button>
+                                        <button 
+                                          onClick={() => addColumnBlock(colIndex, 'social')}
+                                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                        >
+                                          <Share2 className="w-3 h-3" />
+                                          Social
                                         </button>
                                       </div>
                                     </PopoverContent>
@@ -4055,146 +4217,174 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 </div>
                                 
                                 <div className="space-y-1">
-                                  {columnItems.map((item, itemIndex) => (
-                                    <div key={item.id}>
-                                      {/* Drop zone above item */}
-                                      <div
-                                        data-column-drop-zone
-                                        className={cn(
-                                          "h-1 rounded transition-all duration-200",
-                                          dropTargetColumn?.blockId === selectedBlock.id &&
-                                          dropTargetColumn?.colIndex === colIndex &&
-                                          dropTargetColumn?.itemIndex === itemIndex
-                                            ? "bg-primary h-2"
-                                            : "bg-transparent"
-                                        )}
-                                        onDragOver={(e) => handleColumnItemDragOver(e, selectedBlock.id, colIndex, itemIndex)}
-                                        onDrop={(e) => handleColumnItemDrop(e, selectedBlock.id, colIndex, itemIndex)}
-                                      />
-                                      <div 
-                                        className={cn(
-                                          "bg-muted/40 rounded-lg p-2 space-y-2 cursor-grab active:cursor-grabbing transition-all duration-200",
-                                          draggedColumnItem?.item.id === item.id && "opacity-50 scale-95"
-                                        )}
-                                        draggable
-                                        onDragStart={(e) => handleColumnItemDragStart(e, selectedBlock.id, colIndex, itemIndex, item)}
-                                        onDragEnd={handleColumnItemDragEnd}
-                                      >
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-1">
-                                            <GripVertical className="w-3 h-3 text-muted-foreground" />
-                                            <span className="text-[10px] font-medium capitalize text-muted-foreground">{item.type}</span>
-                                          </div>
-                                          <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-5 w-5 text-destructive hover:text-destructive"
-                                            onClick={() => removeColumnItem(colIndex, itemIndex)}
-                                          >
-                                            <Trash2 className="w-3 h-3" />
-                                          </Button>
+                                  {colBlocks.map((colBlock, blockIndex) => (
+                                    <div 
+                                      key={colBlock.id}
+                                      className="bg-muted/40 rounded-lg p-2 space-y-2"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1">
+                                          <GripVertical className="w-3 h-3 text-muted-foreground" />
+                                          <span className="text-[10px] font-medium capitalize text-muted-foreground">{colBlock.type}</span>
                                         </div>
-                                        
-                                        {item.type === 'text' && (
+                                        <Button 
+                                          variant="ghost" 
+                                          size="icon" 
+                                          className="h-5 w-5 text-destructive hover:text-destructive"
+                                          onClick={() => removeColumnBlock(colIndex, blockIndex)}
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                      
+                                      {/* Block-specific editors */}
+                                      {(colBlock.type === 'heading' || colBlock.type === 'text') && (
+                                        <Textarea
+                                          value={colBlock.content}
+                                          onChange={(e) => updateColumnBlock(colIndex, blockIndex, { content: e.target.value })}
+                                          placeholder={colBlock.type === 'heading' ? 'Heading...' : 'Text content...'}
+                                          className="min-h-[60px] text-xs resize-y"
+                                        />
+                                      )}
+                                      
+                                      {colBlock.type === 'button' && (
+                                        <>
                                           <Input
-                                            value={item.content}
-                                            onChange={(e) => updateColumnContent(colIndex, itemIndex, { content: e.target.value })}
-                                            placeholder="Enter text..."
+                                            value={colBlock.content}
+                                            onChange={(e) => updateColumnBlock(colIndex, blockIndex, { content: e.target.value })}
+                                            placeholder="Button text..."
                                             className="h-7 text-xs"
                                           />
-                                        )}
-                                        
-                                        {item.type === 'button' && (
-                                          <>
-                                            <Input
-                                              value={item.content}
-                                              onChange={(e) => updateColumnContent(colIndex, itemIndex, { content: e.target.value })}
-                                              placeholder="Button text..."
-                                              className="h-7 text-xs"
-                                            />
-                                            <Input
-                                              value={item.linkUrl || ''}
-                                              onChange={(e) => updateColumnContent(colIndex, itemIndex, { linkUrl: e.target.value })}
-                                              placeholder="Button URL..."
-                                              className="h-7 text-xs"
-                                            />
-                                            <div className="flex gap-1">
-                                              <Button
-                                                type="button"
-                                                variant={item.styles.buttonVariant !== 'secondary' ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="flex-1 h-6 text-[10px]"
-                                                onClick={() => updateColumnContent(colIndex, itemIndex, { 
-                                                  styles: { ...item.styles, buttonVariant: 'primary' } 
-                                                })}
-                                              >
-                                                Primary
-                                              </Button>
-                                              <Button
-                                                type="button"
-                                                variant={item.styles.buttonVariant === 'secondary' ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="flex-1 h-6 text-[10px]"
-                                                onClick={() => updateColumnContent(colIndex, itemIndex, { 
-                                                  styles: { ...item.styles, buttonVariant: 'secondary' } 
-                                                })}
-                                              >
-                                                Secondary
-                                              </Button>
-                                            </div>
-                                          </>
-                                        )}
-                                        
-                                        {item.type === 'spacer' && (
-                                          <Select
-                                            value={item.styles.height || '16px'}
-                                            onValueChange={(v) => updateColumnContent(colIndex, itemIndex, { 
-                                              styles: { ...item.styles, height: v } 
+                                          <Input
+                                            value={colBlock.linkUrl || ''}
+                                            onChange={(e) => updateColumnBlock(colIndex, blockIndex, { linkUrl: e.target.value })}
+                                            placeholder="Button URL..."
+                                            className="h-7 text-xs"
+                                          />
+                                          <div className="flex gap-1">
+                                            <Button
+                                              type="button"
+                                              variant={colBlock.styles.buttonVariant !== 'secondary' ? 'default' : 'outline'}
+                                              size="sm"
+                                              className="flex-1 h-6 text-[10px]"
+                                              onClick={() => updateColumnBlock(colIndex, blockIndex, { 
+                                                styles: { ...colBlock.styles, buttonVariant: 'primary' } 
+                                              })}
+                                            >
+                                              Primary
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant={colBlock.styles.buttonVariant === 'secondary' ? 'default' : 'outline'}
+                                              size="sm"
+                                              className="flex-1 h-6 text-[10px]"
+                                              onClick={() => updateColumnBlock(colIndex, blockIndex, { 
+                                                styles: { ...colBlock.styles, buttonVariant: 'secondary' } 
+                                              })}
+                                            >
+                                              Secondary
+                                            </Button>
+                                          </div>
+                                        </>
+                                      )}
+                                      
+                                      {colBlock.type === 'link' && (
+                                        <>
+                                          <Input
+                                            value={colBlock.content}
+                                            onChange={(e) => updateColumnBlock(colIndex, blockIndex, { content: e.target.value })}
+                                            placeholder="Link text..."
+                                            className="h-7 text-xs"
+                                          />
+                                          <Input
+                                            value={colBlock.linkUrl || ''}
+                                            onChange={(e) => updateColumnBlock(colIndex, blockIndex, { linkUrl: e.target.value })}
+                                            placeholder="URL..."
+                                            className="h-7 text-xs"
+                                          />
+                                        </>
+                                      )}
+                                      
+                                      {colBlock.type === 'image' && (
+                                        <div className="space-y-2">
+                                          <Input
+                                            value={colBlock.imageUrl || ''}
+                                            onChange={(e) => updateColumnBlock(colIndex, blockIndex, { imageUrl: e.target.value })}
+                                            placeholder="Image URL..."
+                                            className="h-7 text-xs"
+                                          />
+                                          <Input
+                                            value={colBlock.content || ''}
+                                            onChange={(e) => updateColumnBlock(colIndex, blockIndex, { content: e.target.value })}
+                                            placeholder="Alt text..."
+                                            className="h-7 text-xs"
+                                          />
+                                        </div>
+                                      )}
+                                      
+                                      {colBlock.type === 'spacer' && (
+                                        <Select
+                                          value={colBlock.styles.height || '16px'}
+                                          onValueChange={(v) => updateColumnBlock(colIndex, blockIndex, { 
+                                            styles: { ...colBlock.styles, height: v } 
+                                          })}
+                                        >
+                                          <SelectTrigger className="h-7 text-xs">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {['8px', '12px', '16px', '24px', '32px', '48px'].map(size => (
+                                              <SelectItem key={size} value={size}>{size}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      )}
+                                      
+                                      {colBlock.type === 'divider' && (
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-[10px] text-muted-foreground">Width:</span>
+                                          <Slider
+                                            variant="filled"
+                                            min={20}
+                                            max={100}
+                                            step={10}
+                                            value={[colBlock.styles.dividerWidth || 100]}
+                                            onValueChange={([v]) => updateColumnBlock(colIndex, blockIndex, { 
+                                              styles: { ...colBlock.styles, dividerWidth: v } 
                                             })}
-                                          >
-                                            <SelectTrigger className="h-7 text-xs">
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              {['8px', '12px', '16px', '24px', '32px'].map(size => (
-                                                <SelectItem key={size} value={size}>{size}</SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
-                                        )}
-                                      </div>
+                                            className="flex-1"
+                                          />
+                                          <span className="text-[10px] text-muted-foreground w-8">{colBlock.styles.dividerWidth || 100}%</span>
+                                        </div>
+                                      )}
+                                      
+                                      {/* Alignment control for all content blocks */}
+                                      {['heading', 'text', 'button', 'link', 'image'].includes(colBlock.type) && (
+                                        <div className="flex gap-1 pt-1 border-t border-border/50">
+                                          {(['left', 'center', 'right'] as const).map(align => (
+                                            <Button
+                                              key={align}
+                                              variant={colBlock.styles.textAlign === align ? 'default' : 'ghost'}
+                                              size="sm"
+                                              className="h-6 w-6 p-0"
+                                              onClick={() => updateColumnBlock(colIndex, blockIndex, { 
+                                                styles: { ...colBlock.styles, textAlign: align } 
+                                              })}
+                                            >
+                                              {align === 'left' && <AlignLeft className="w-3 h-3" />}
+                                              {align === 'center' && <AlignCenter className="w-3 h-3" />}
+                                              {align === 'right' && <AlignRight className="w-3 h-3" />}
+                                            </Button>
+                                          ))}
+                                        </div>
+                                      )}
                                     </div>
                                   ))}
-                                  
-                                  {/* Drop zone at end of column */}
-                                  {columnItems.length > 0 && (
-                                    <div
-                                      data-column-drop-zone
-                                      className={cn(
-                                        "h-1 rounded transition-all duration-200",
-                                        dropTargetColumn?.blockId === selectedBlock.id &&
-                                        dropTargetColumn?.colIndex === colIndex &&
-                                        dropTargetColumn?.itemIndex === null
-                                          ? "bg-primary h-2"
-                                          : "bg-transparent"
-                                      )}
-                                      onDragOver={(e) => handleColumnItemDragOver(e, selectedBlock.id, colIndex, null)}
-                                      onDrop={(e) => handleColumnItemDrop(e, selectedBlock.id, colIndex, null)}
-                                    />
-                                  )}
                                 </div>
                                 
-                                {columnItems.length === 0 && (
-                                  <div 
-                                    className={cn(
-                                      "text-[10px] text-muted-foreground italic py-3 text-center border border-dashed rounded transition-all duration-200",
-                                      dropTargetColumn?.blockId === selectedBlock.id &&
-                                      dropTargetColumn?.colIndex === colIndex
-                                        ? "border-primary bg-primary/10"
-                                        : ""
-                                    )}
-                                  >
-                                    {draggedColumnItem ? "Drop here" : "No content yet"}
+                                {colBlocks.length === 0 && (
+                                  <div className="text-[10px] text-muted-foreground italic py-3 text-center border border-dashed rounded">
+                                    No blocks yet - click "Add Block" above
                                   </div>
                                 )}
                               </div>
@@ -4878,142 +5068,112 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           );
                         })()}
                         {block.type === 'columns' && (() => {
-                          const config = block.columnsConfig || { columnCount: 2, columns: [[], []], gap: 16 };
+                          const config = block.columnsConfig || { columnCount: 2, columns: [], columnBlocks: [[], []], gap: 16 };
                           const columnCount = config.columnCount;
                           const gap = config.gap || 16;
+                          const columnBlocks = config.columnBlocks || [[], []];
                           
                           return (
                             <div className="flex w-full" style={{ gap: `${gap}px` }}>
-                              {config.columns.slice(0, columnCount).map((columnItems, colIndex) => (
+                              {columnBlocks.slice(0, columnCount).map((colBlocks, colIndex) => (
                                 <div 
                                   key={colIndex}
-                                  data-column-drop-zone
-                                  className={cn(
-                                    "flex-1 min-h-[60px] rounded border border-dashed border-muted-foreground/30 p-2 transition-all duration-200",
-                                    dropTargetColumn?.blockId === block.id &&
-                                    dropTargetColumn?.colIndex === colIndex &&
-                                    columnItems.length === 0
-                                      ? "border-primary bg-primary/10"
-                                      : ""
-                                  )}
-                                  onDragOver={(e) => {
-                                    if (columnItems.length === 0) {
-                                      handleColumnItemDragOver(e, block.id, colIndex, null);
-                                    }
-                                  }}
-                                  onDrop={(e) => {
-                                    if (columnItems.length === 0) {
-                                      handleColumnItemDrop(e, block.id, colIndex, null);
-                                    }
-                                  }}
-                                  onDragLeave={handleColumnItemDragLeave}
+                                  className="flex-1 min-h-[60px] rounded border border-dashed border-muted-foreground/30 p-2"
                                 >
-                                  {columnItems.length === 0 ? (
+                                  {colBlocks.length === 0 ? (
                                     <div className="h-full flex items-center justify-center text-[10px] text-muted-foreground italic">
-                                      {draggedColumnItem ? "Drop here" : `Column ${colIndex + 1}`}
+                                      Column {colIndex + 1}
                                     </div>
                                   ) : (
-                                    <div className="space-y-0.5">
-                                      {columnItems.map((item, itemIndex) => (
-                                        <div key={item.id}>
-                                          {/* Drop indicator above item */}
-                                          <div
-                                            data-column-drop-zone
-                                            className={cn(
-                                              "h-0.5 rounded transition-all duration-200 -mx-1",
-                                              dropTargetColumn?.blockId === block.id &&
-                                              dropTargetColumn?.colIndex === colIndex &&
-                                              dropTargetColumn?.itemIndex === itemIndex
-                                                ? "bg-primary h-1"
-                                                : "bg-transparent"
-                                            )}
-                                            onDragOver={(e) => handleColumnItemDragOver(e, block.id, colIndex, itemIndex)}
-                                            onDrop={(e) => handleColumnItemDrop(e, block.id, colIndex, itemIndex)}
-                                          />
-                                          <div 
-                                            className={cn(
-                                              "group relative mb-1 last:mb-0 rounded transition-all duration-200",
-                                              draggedColumnItem?.item.id === item.id && "opacity-40 scale-95",
-                                              selectedBlockId === block.id && "hover:bg-muted/30 cursor-grab"
-                                            )}
-                                            draggable={selectedBlockId === block.id}
-                                            onDragStart={(e) => handleColumnItemDragStart(e, block.id, colIndex, itemIndex, item)}
-                                            onDragEnd={handleColumnItemDragEnd}
-                                          >
-                                            {/* Drag handle overlay - only show when block is selected */}
-                                            {selectedBlockId === block.id && (
-                                              <div className="absolute -left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <GripVertical className="w-3 h-3 text-muted-foreground" />
+                                    <div className="space-y-1">
+                                      {colBlocks.map((colBlock) => (
+                                        <div key={colBlock.id} className="rounded">
+                                          {colBlock.type === 'heading' && (
+                                            <h3 style={{ 
+                                              margin: 0, 
+                                              fontSize: colBlock.styles.fontSize || '18px',
+                                              textAlign: colBlock.styles.textAlign || 'center',
+                                              color: colBlock.styles.textColor,
+                                              fontWeight: 'bold',
+                                              lineHeight: 1.3
+                                            }}>
+                                              {colBlock.content}
+                                            </h3>
+                                          )}
+                                          {colBlock.type === 'text' && (
+                                            <p style={{ 
+                                              margin: 0, 
+                                              fontSize: colBlock.styles.fontSize || '14px',
+                                              textAlign: colBlock.styles.textAlign || 'center',
+                                              color: colBlock.styles.textColor,
+                                              lineHeight: 1.5
+                                            }}>
+                                              {colBlock.content}
+                                            </p>
+                                          )}
+                                          {colBlock.type === 'button' && (() => {
+                                            const isSecondary = colBlock.styles.buttonVariant === 'secondary';
+                                            const sizeScale = (colBlock.styles.buttonSize || 100) / 100;
+                                            const paddingV = Math.round(10 * sizeScale);
+                                            const paddingH = Math.round(20 * sizeScale);
+                                            const fontSize = Math.round(13 * sizeScale);
+                                            const shapeRadius = colBlock.styles.buttonShape === 'pill' ? '9999px' : colBlock.styles.buttonShape === 'rectangle' ? '0px' : '6px';
+                                            return (
+                                              <div style={{ textAlign: colBlock.styles.textAlign || 'center' }}>
+                                                <span
+                                                  style={{
+                                                    display: 'inline-block',
+                                                    backgroundColor: isSecondary ? 'transparent' : (colBlock.styles.buttonColor || '#000000'),
+                                                    color: isSecondary ? (colBlock.styles.buttonColor || '#000000') : (colBlock.styles.buttonTextColor || '#ffffff'),
+                                                    padding: `${paddingV}px ${paddingH}px`,
+                                                    fontWeight: 'bold',
+                                                    fontSize: `${fontSize}px`,
+                                                    borderRadius: shapeRadius,
+                                                    border: isSecondary ? `2px solid ${colBlock.styles.buttonColor || '#000000'}` : 'none',
+                                                  }}
+                                                >
+                                                  {colBlock.content}
+                                                </span>
                                               </div>
-                                            )}
-                                            {item.type === 'text' && (
-                                              <p 
-                                                style={{ 
-                                                  margin: 0, 
-                                                  fontSize: item.styles.fontSize || '14px',
-                                                  textAlign: item.styles.textAlign || 'center',
-                                                  color: item.styles.textColor,
-                                                  fontWeight: item.styles.fontWeight
-                                                }}
-                                              >
-                                                {item.content}
-                                              </p>
-                                            )}
-                                            {item.type === 'button' && (() => {
-                                              const isSecondary = item.styles.buttonVariant === 'secondary';
-                                              const sizeScale = (item.styles.buttonSize || 100) / 100;
-                                              const paddingV = Math.round(10 * sizeScale);
-                                              const paddingH = Math.round(20 * sizeScale);
-                                              const fontSize = Math.round(13 * sizeScale);
-                                              const shapeRadius = item.styles.buttonShape === 'pill' ? '9999px' : item.styles.buttonShape === 'rectangle' ? '0px' : '6px';
-                                              return (
-                                                <div style={{ textAlign: item.styles.textAlign || 'center' }}>
-                                                  <span
-                                                    style={{
-                                                      display: 'inline-block',
-                                                      backgroundColor: isSecondary ? 'transparent' : (item.styles.buttonColor || '#000000'),
-                                                      color: isSecondary ? (item.styles.buttonColor || '#000000') : (item.styles.buttonTextColor || '#ffffff'),
-                                                      padding: `${paddingV}px ${paddingH}px`,
-                                                      fontWeight: 'bold',
-                                                      fontSize: `${fontSize}px`,
-                                                      borderRadius: shapeRadius,
-                                                      border: isSecondary ? `2px solid ${item.styles.buttonColor || '#000000'}` : 'none',
-                                                    }}
-                                                  >
-                                                    {item.content}
-                                                  </span>
+                                            );
+                                          })()}
+                                          {colBlock.type === 'link' && (
+                                            <p style={{ margin: 0, textAlign: colBlock.styles.textAlign || 'center' }}>
+                                              <span style={{ color: colBlock.styles.buttonColor || '#3b82f6', textDecoration: 'underline', fontSize: '14px' }}>
+                                                {colBlock.content}
+                                              </span>
+                                            </p>
+                                          )}
+                                          {colBlock.type === 'image' && colBlock.imageUrl && (
+                                            <div style={{ textAlign: colBlock.styles.textAlign || 'center' }}>
+                                              <img src={colBlock.imageUrl} alt={colBlock.content || 'Image'} className="max-w-full h-auto" />
+                                            </div>
+                                          )}
+                                          {colBlock.type === 'divider' && (
+                                            <div style={{ textAlign: 'center', padding: '4px 0' }}>
+                                              <hr style={{ 
+                                                border: 'none', 
+                                                borderTop: `${colBlock.styles.dividerThickness || 1}px ${colBlock.styles.dividerStyle || 'solid'} ${colBlock.styles.textColor || '#e5e7eb'}`,
+                                                margin: '0 auto',
+                                                width: `${colBlock.styles.dividerWidth || 100}%`
+                                              }} />
+                                            </div>
+                                          )}
+                                          {colBlock.type === 'spacer' && (
+                                            <div style={{ height: colBlock.styles.height || '16px' }} />
+                                          )}
+                                          {colBlock.type === 'social' && (
+                                            <div style={{ textAlign: colBlock.styles.textAlign || 'center' }} className="flex items-center justify-center gap-2">
+                                              {(colBlock.socialLinks || []).filter(link => link.enabled).map((link) => (
+                                                <div key={link.platform} style={{ color: colBlock.styles.buttonColor || '#1a1a1a' }}>
+                                                  {link.platform === 'instagram' && <Instagram className="w-5 h-5" />}
+                                                  {link.platform === 'email' && <Mail className="w-5 h-5" />}
                                                 </div>
-                                              );
-                                            })()}
-                                            {item.type === 'image' && item.imageUrl && (
-                                              <div style={{ textAlign: item.styles.textAlign || 'center' }}>
-                                                <img 
-                                                  src={item.imageUrl} 
-                                                  alt={item.content || 'Image'} 
-                                                  className="max-w-full h-auto"
-                                                />
-                                              </div>
-                                            )}
-                                            {item.type === 'spacer' && (
-                                              <div style={{ height: item.styles.height || '16px' }} />
-                                            )}
-                                          </div>
+                                              ))}
+                                            </div>
+                                          )}
                                         </div>
                                       ))}
-                                      {/* Drop zone at end of column */}
-                                      <div
-                                        data-column-drop-zone
-                                        className={cn(
-                                          "h-0.5 rounded transition-all duration-200 -mx-1",
-                                          dropTargetColumn?.blockId === block.id &&
-                                          dropTargetColumn?.colIndex === colIndex &&
-                                          dropTargetColumn?.itemIndex === null
-                                            ? "bg-primary h-1"
-                                            : "bg-transparent"
-                                        )}
-                                        onDragOver={(e) => handleColumnItemDragOver(e, block.id, colIndex, null)}
-                                        onDrop={(e) => handleColumnItemDrop(e, block.id, colIndex, null)}
-                                      />
                                     </div>
                                   )}
                                 </div>
