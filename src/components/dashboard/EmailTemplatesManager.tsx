@@ -511,11 +511,11 @@ export function EmailTemplatesManager() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You have unsaved changes to this email template. Are you sure you want to close without saving? Your changes will be lost.
+                  You have unsaved changes to this email template. Are you sure you want to close without saving?
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+              <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                <AlertDialogCancel className="mt-0">Keep Editing</AlertDialogCancel>
                 <AlertDialogAction 
                   onClick={() => {
                     setShowDiscardConfirm(false);
@@ -525,6 +525,16 @@ export function EmailTemplatesManager() {
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Discard Changes
+                </AlertDialogAction>
+                <AlertDialogAction 
+                  onClick={async () => {
+                    setShowDiscardConfirm(false);
+                    await handleSave();
+                    setEditingTemplate(null);
+                  }}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Save & Close
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
