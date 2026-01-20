@@ -27,40 +27,53 @@ export function useBellHighFives(entryIds: string[]) {
       return;
     }
 
-    const { data, error } = await supabase
+    // Fetch high fives
+    const { data: highFivesData, error } = await supabase
       .from('bell_entry_high_fives')
-      .select(`
-        *,
-        employee_profiles!bell_entry_high_fives_user_id_fkey(display_name, full_name, photo_url)
-      `)
+      .select('*')
       .in('entry_id', entryIds);
 
     if (error) {
       console.error('Error fetching high fives:', error);
-      // Fallback without join
-      const { data: fallbackData } = await supabase
-        .from('bell_entry_high_fives')
-        .select('*')
-        .in('entry_id', entryIds);
-      
-      const grouped: HighFivesByEntry = {};
-      (fallbackData || []).forEach((hf: any) => {
-        if (!grouped[hf.entry_id]) grouped[hf.entry_id] = [];
-        grouped[hf.entry_id].push(hf);
-      });
-      setHighFives(grouped);
-    } else {
-      const grouped: HighFivesByEntry = {};
-      (data || []).forEach((hf: any) => {
-        if (!grouped[hf.entry_id]) grouped[hf.entry_id] = [];
-        grouped[hf.entry_id].push({
-          ...hf,
-          user_name: hf.employee_profiles?.display_name || hf.employee_profiles?.full_name || 'Team Member',
-          user_photo: hf.employee_profiles?.photo_url || null,
-        });
-      });
-      setHighFives(grouped);
+      setHighFives({});
+      setLoading(false);
+      return;
     }
+
+    // Get unique user IDs
+    const userIds = [...new Set((highFivesData || []).map(hf => hf.user_id))];
+
+    // Fetch profiles for those users
+    let profilesMap: Record<string, { display_name: string | null; full_name: string; photo_url: string | null }> = {};
+    
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('employee_profiles')
+        .select('user_id, display_name, full_name, photo_url')
+        .in('user_id', userIds);
+
+      (profiles || []).forEach(p => {
+        profilesMap[p.user_id] = {
+          display_name: p.display_name,
+          full_name: p.full_name,
+          photo_url: p.photo_url,
+        };
+      });
+    }
+
+    // Group high fives by entry and attach profile data
+    const grouped: HighFivesByEntry = {};
+    (highFivesData || []).forEach((hf: any) => {
+      if (!grouped[hf.entry_id]) grouped[hf.entry_id] = [];
+      const profile = profilesMap[hf.user_id];
+      grouped[hf.entry_id].push({
+        ...hf,
+        user_name: profile?.display_name || profile?.full_name || 'Team Member',
+        user_photo: profile?.photo_url || null,
+      });
+    });
+
+    setHighFives(grouped);
     setLoading(false);
   };
 
