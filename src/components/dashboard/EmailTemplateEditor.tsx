@@ -1190,6 +1190,19 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     colIndex: number;
     blockIndex: number | null; // null means drop at end
   } | null>(null);
+  
+  // Cross-drag state: main block dragged into column
+  const [mainBlockDragTarget, setMainBlockDragTarget] = useState<{
+    parentBlockId: string;
+    colIndex: number;
+    blockIndex: number | null;
+  } | null>(null);
+  
+  // Cross-drag state: column block dragged to main list
+  const [columnBlockToMainTarget, setColumnBlockToMainTarget] = useState<{
+    targetBlockId: string;
+    position: 'above' | 'below';
+  } | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead-premium');
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
@@ -1963,6 +1976,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     setDraggedBlockId(null);
     setDragOverBlockId(null);
     setDropPosition(null);
+    setMainBlockDragTarget(null);
   };
 
   // Column item drag and drop handlers
@@ -2248,6 +2262,190 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   const handleColumnBlockDragEnd = () => {
     setDraggedColumnBlock(null);
     setDropTargetColumnBlock(null);
+    setColumnBlockToMainTarget(null);
+  };
+
+  // Cross-drag: Main block being dragged over a column drop zone
+  const handleMainBlockDragOverColumn = (
+    e: React.DragEvent,
+    parentBlockId: string,
+    colIndex: number,
+    blockIndex: number | null
+  ) => {
+    // Only accept if we're dragging a main block (not a column block)
+    if (!draggedBlockId || draggedColumnBlock) return;
+    
+    // Check if the block type is allowed in columns
+    const block = blocks.find(b => b.id === draggedBlockId);
+    if (!block) return;
+    
+    const disallowedTypes: BlockType[] = ['header', 'footer', 'columns'];
+    if (disallowedTypes.includes(block.type)) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    setMainBlockDragTarget({ parentBlockId, colIndex, blockIndex });
+  };
+
+  const handleMainBlockDragLeaveColumn = (e: React.DragEvent) => {
+    e.stopPropagation();
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget?.closest('[data-column-block-drop-zone]')) {
+      setMainBlockDragTarget(null);
+    }
+  };
+
+  // Cross-drag: Drop a main block into a column
+  const handleMainBlockDropInColumn = (
+    e: React.DragEvent,
+    targetParentBlockId: string,
+    targetColIndex: number,
+    targetBlockIndex: number | null
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!draggedBlockId) {
+      setMainBlockDragTarget(null);
+      return;
+    }
+    
+    const sourceBlock = blocks.find(b => b.id === draggedBlockId);
+    if (!sourceBlock) {
+      setMainBlockDragTarget(null);
+      setDraggedBlockId(null);
+      return;
+    }
+    
+    // Check if the block type is allowed in columns
+    const disallowedTypes: BlockType[] = ['header', 'footer', 'columns'];
+    if (disallowedTypes.includes(sourceBlock.type)) {
+      toast.error(`${sourceBlock.type} blocks cannot be placed in columns`);
+      setMainBlockDragTarget(null);
+      setDraggedBlockId(null);
+      return;
+    }
+    
+    const targetParentBlock = blocks.find(b => b.id === targetParentBlockId);
+    if (!targetParentBlock?.columnsConfig?.columnBlocks) {
+      setMainBlockDragTarget(null);
+      setDraggedBlockId(null);
+      return;
+    }
+    
+    // Clone blocks, remove from main list, add to column
+    const newBlocks = blocks.filter(b => b.id !== draggedBlockId).map(b => ({ ...b }));
+    const targetParentIndex = newBlocks.findIndex(b => b.id === targetParentBlockId);
+    
+    if (targetParentIndex === -1) {
+      setMainBlockDragTarget(null);
+      setDraggedBlockId(null);
+      return;
+    }
+    
+    // Deep clone column config
+    const newTargetConfig = {
+      ...newBlocks[targetParentIndex].columnsConfig!,
+      columnBlocks: newBlocks[targetParentIndex].columnsConfig!.columnBlocks!.map(col => [...col])
+    };
+    
+    // Insert at target position
+    const insertIndex = targetBlockIndex ?? newTargetConfig.columnBlocks![targetColIndex].length;
+    newTargetConfig.columnBlocks![targetColIndex].splice(insertIndex, 0, { ...sourceBlock });
+    
+    newBlocks[targetParentIndex] = { ...newBlocks[targetParentIndex], columnsConfig: newTargetConfig };
+    
+    updateBlocksAndHtml(newBlocks);
+    setSelectedBlockId(null);
+    
+    setMainBlockDragTarget(null);
+    setDraggedBlockId(null);
+    setDragOverBlockId(null);
+    setDropPosition(null);
+    
+    toast.success('Block moved into column');
+  };
+
+  // Cross-drag: Column block being dragged over main block list
+  const handleColumnBlockDragOverMain = (e: React.DragEvent, blockId: string) => {
+    if (!draggedColumnBlock) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    
+    // Determine position based on mouse
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midpoint = rect.top + rect.height / 2;
+    const position: 'above' | 'below' = e.clientY < midpoint ? 'above' : 'below';
+    
+    setColumnBlockToMainTarget({ targetBlockId: blockId, position });
+  };
+
+  const handleColumnBlockDragLeaveMain = () => {
+    setColumnBlockToMainTarget(null);
+  };
+
+  // Cross-drag: Drop a column block into main list
+  const handleColumnBlockDropToMain = (e: React.DragEvent, targetBlockId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!draggedColumnBlock || !columnBlockToMainTarget) {
+      setDraggedColumnBlock(null);
+      setDropTargetColumnBlock(null);
+      setColumnBlockToMainTarget(null);
+      return;
+    }
+    
+    const { parentBlockId, colIndex, blockIndex, block } = draggedColumnBlock;
+    const { position } = columnBlockToMainTarget;
+    
+    // Find the source parent block
+    const sourceParentBlock = blocks.find(b => b.id === parentBlockId);
+    if (!sourceParentBlock?.columnsConfig?.columnBlocks) {
+      setDraggedColumnBlock(null);
+      setDropTargetColumnBlock(null);
+      setColumnBlockToMainTarget(null);
+      return;
+    }
+    
+    // Clone blocks
+    const newBlocks = blocks.map(b => ({ ...b }));
+    const sourceParentIndex = newBlocks.findIndex(b => b.id === parentBlockId);
+    const targetIndex = newBlocks.findIndex(b => b.id === targetBlockId);
+    
+    if (sourceParentIndex === -1 || targetIndex === -1) {
+      setDraggedColumnBlock(null);
+      setDropTargetColumnBlock(null);
+      setColumnBlockToMainTarget(null);
+      return;
+    }
+    
+    // Deep clone and remove from source column
+    const newSourceConfig = {
+      ...newBlocks[sourceParentIndex].columnsConfig!,
+      columnBlocks: newBlocks[sourceParentIndex].columnsConfig!.columnBlocks!.map(col => [...col])
+    };
+    newSourceConfig.columnBlocks![colIndex].splice(blockIndex, 1);
+    newBlocks[sourceParentIndex] = { ...newBlocks[sourceParentIndex], columnsConfig: newSourceConfig };
+    
+    // Insert into main list at the correct position
+    const insertIndex = position === 'above' ? targetIndex : targetIndex + 1;
+    newBlocks.splice(insertIndex, 0, { ...block, id: crypto.randomUUID() });
+    
+    updateBlocksAndHtml(newBlocks);
+    
+    // Trigger animation
+    setRecentlyMovedBlockId(newBlocks[insertIndex].id);
+    setTimeout(() => setRecentlyMovedBlockId(null), 400);
+    
+    setDraggedColumnBlock(null);
+    setDropTargetColumnBlock(null);
+    setColumnBlockToMainTarget(null);
+    
+    toast.success('Block moved out of column');
   };
 
   const handleImageUpload = async (blockId: string, file: File) => {
@@ -4892,9 +5090,24 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       key={block.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, block.id)}
-                      onDragOver={(e) => handleDragOver(e, block.id)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, block.id)}
+                      onDragOver={(e) => {
+                        // Handle normal block reordering
+                        handleDragOver(e, block.id);
+                        // Handle column block being dragged to main list
+                        handleColumnBlockDragOverMain(e, block.id);
+                      }}
+                      onDragLeave={() => {
+                        handleDragLeave();
+                        handleColumnBlockDragLeaveMain();
+                      }}
+                      onDrop={(e) => {
+                        // Check if it's a column block being dropped to main
+                        if (draggedColumnBlock && columnBlockToMainTarget) {
+                          handleColumnBlockDropToMain(e, block.id);
+                        } else {
+                          handleDrop(e, block.id);
+                        }
+                      }}
                       onDragEnd={handleDragEnd}
                       onMouseEnter={() => setHoveredBlockId(block.id)}
                       onMouseLeave={() => setHoveredBlockId(null)}
@@ -4927,8 +5140,9 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         </div>
                       )}
                       
-                      {/* Drop zone indicator - ABOVE */}
-                      {dragOverBlockId === block.id && dropPosition === 'above' && (
+                      {/* Drop zone indicator - ABOVE (for both main blocks and column blocks) */}
+                      {((dragOverBlockId === block.id && dropPosition === 'above') ||
+                        (columnBlockToMainTarget?.targetBlockId === block.id && columnBlockToMainTarget?.position === 'above')) && (
                         <div className="absolute -top-1 left-0 right-0 z-30 flex items-center pointer-events-none">
                           <div className="w-3 h-3 rounded-full bg-primary border-2 border-background shadow-md -ml-1.5" />
                           <div className="flex-1 h-0.5 bg-primary shadow-[0_0_8px_2px_hsl(var(--primary)/0.4)]" />
@@ -4936,8 +5150,9 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         </div>
                       )}
                       
-                      {/* Drop zone indicator - BELOW */}
-                      {dragOverBlockId === block.id && dropPosition === 'below' && (
+                      {/* Drop zone indicator - BELOW (for both main blocks and column blocks) */}
+                      {((dragOverBlockId === block.id && dropPosition === 'below') ||
+                        (columnBlockToMainTarget?.targetBlockId === block.id && columnBlockToMainTarget?.position === 'below')) && (
                         <div className="absolute -bottom-1 left-0 right-0 z-30 flex items-center pointer-events-none">
                           <div className="w-3 h-3 rounded-full bg-primary border-2 border-background shadow-md -ml-1.5" />
                           <div className="flex-1 h-0.5 bg-primary shadow-[0_0_8px_2px_hsl(var(--primary)/0.4)]" />
@@ -5279,41 +5494,75 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           
                           return (
                             <div className="flex w-full" style={{ gap: `${gap}px` }}>
-                              {columnBlocks.slice(0, columnCount).map((colBlocks, colIndex) => (
+                              {columnBlocks.slice(0, columnCount).map((colBlocks, colIndex) => {
+                                // Check if this column is a drop target for main block or column block
+                                const isColumnBlockTarget = dropTargetColumnBlock?.parentBlockId === block.id &&
+                                  dropTargetColumnBlock?.colIndex === colIndex;
+                                const isMainBlockTarget = mainBlockDragTarget?.parentBlockId === block.id &&
+                                  mainBlockDragTarget?.colIndex === colIndex;
+                                const isDropTarget = isColumnBlockTarget || isMainBlockTarget;
+                                
+                                return (
                                 <div 
                                   key={colIndex}
                                   className={cn(
                                     "flex-1 min-h-[60px] rounded border border-dashed p-2 transition-colors",
-                                    dropTargetColumnBlock?.parentBlockId === block.id &&
-                                    dropTargetColumnBlock?.colIndex === colIndex
+                                    isDropTarget
                                       ? "border-primary bg-primary/5"
                                       : "border-muted-foreground/30"
                                   )}
                                   data-column-block-drop-zone
-                                  onDragOver={(e) => handleColumnBlockDragOver(e, block.id, colIndex, null)}
-                                  onDragLeave={handleColumnBlockDragLeave}
-                                  onDrop={(e) => handleColumnBlockDrop(e, block.id, colIndex, null)}
+                                  onDragOver={(e) => {
+                                    // Handle column block drag
+                                    handleColumnBlockDragOver(e, block.id, colIndex, null);
+                                    // Handle main block drag into column
+                                    handleMainBlockDragOverColumn(e, block.id, colIndex, null);
+                                  }}
+                                  onDragLeave={(e) => {
+                                    handleColumnBlockDragLeave(e);
+                                    handleMainBlockDragLeaveColumn(e);
+                                  }}
+                                  onDrop={(e) => {
+                                    // Check if it's a main block being dropped
+                                    if (draggedBlockId && !draggedColumnBlock) {
+                                      handleMainBlockDropInColumn(e, block.id, colIndex, null);
+                                    } else {
+                                      handleColumnBlockDrop(e, block.id, colIndex, null);
+                                    }
+                                  }}
                                 >
                                   {colBlocks.length === 0 ? (
                                     <div className="h-full flex items-center justify-center text-[10px] text-muted-foreground italic">
-                                      {draggedColumnBlock ? "Drop here" : `Column ${colIndex + 1}`}
+                                      {(draggedColumnBlock || draggedBlockId) ? "Drop here" : `Column ${colIndex + 1}`}
                                     </div>
                                   ) : (
                                     <div className="space-y-1">
                                       {colBlocks.map((colBlock, blockIndex) => (
                                         <div key={colBlock.id}>
-                                          {/* Drop zone above each block */}
+                                          {/* Drop zone above each block - accepts both column blocks and main blocks */}
                                           <div 
                                             className={cn(
                                               "h-0.5 -my-0.5 transition-all rounded",
-                                              dropTargetColumnBlock?.parentBlockId === block.id &&
+                                              ((dropTargetColumnBlock?.parentBlockId === block.id &&
                                               dropTargetColumnBlock?.colIndex === colIndex &&
-                                              dropTargetColumnBlock?.blockIndex === blockIndex
+                                              dropTargetColumnBlock?.blockIndex === blockIndex) ||
+                                              (mainBlockDragTarget?.parentBlockId === block.id &&
+                                              mainBlockDragTarget?.colIndex === colIndex &&
+                                              mainBlockDragTarget?.blockIndex === blockIndex))
                                                 ? "bg-primary h-1"
                                                 : "bg-transparent"
                                             )}
-                                            onDragOver={(e) => handleColumnBlockDragOver(e, block.id, colIndex, blockIndex)}
-                                            onDrop={(e) => handleColumnBlockDrop(e, block.id, colIndex, blockIndex)}
+                                            onDragOver={(e) => {
+                                              handleColumnBlockDragOver(e, block.id, colIndex, blockIndex);
+                                              handleMainBlockDragOverColumn(e, block.id, colIndex, blockIndex);
+                                            }}
+                                            onDrop={(e) => {
+                                              if (draggedBlockId && !draggedColumnBlock) {
+                                                handleMainBlockDropInColumn(e, block.id, colIndex, blockIndex);
+                                              } else {
+                                                handleColumnBlockDrop(e, block.id, colIndex, blockIndex);
+                                              }
+                                            }}
                                           />
                                           <div 
                                             draggable
@@ -5418,7 +5667,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                     </div>
                                   )}
                                 </div>
-                              ))}
+                              )})}
                             </div>
                           );
                         })()}
