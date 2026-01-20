@@ -754,7 +754,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
   } = useUndoRedo<EmailBlock[]>(getInitialBlocks());
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'visual' | 'code' | 'preview'>('visual');
-  const [toolbarPanel, setToolbarPanel] = useState<'themes' | 'blocks' | 'logos' | null>(null);
+  const [toolbarPanel, setToolbarPanel] = useState<'themes' | 'blocks' | 'logos' | 'variables' | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [rawHtml, setRawHtml] = useState(initialHtml);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
@@ -1559,28 +1559,16 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
               <Image className="w-4 h-4" />
               Brand Logos
             </Button>
-            
-            {/* Variables section */}
             {variables.length > 0 && (
-              <>
-                <div className="w-px h-6 bg-border/60 mx-1" />
-                <div className="flex items-center gap-2">
-                  <Variable className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Variables:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {variables.map((variable) => (
-                      <Badge
-                        key={variable}
-                        variant="secondary"
-                        className="text-xs font-mono cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                        onClick={() => insertVariable(variable)}
-                      >
-                        {`{{${variable}}}`}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </>
+              <Button
+                variant={toolbarPanel === 'variables' ? 'default' : 'outline'}
+                size="sm"
+                className="gap-2 px-4 shadow-sm bg-background border-border/80"
+                onClick={() => setToolbarPanel(toolbarPanel === 'variables' ? null : 'variables')}
+              >
+                <Variable className="w-4 h-4" />
+                Variables
+              </Button>
             )}
             
             <div className="flex-1" />
@@ -1927,6 +1915,27 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                       </div>
                     );
                   })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Variables Panel */}
+          {toolbarPanel === 'variables' && variables.length > 0 && (
+            <Card className="border-border/50">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground mb-3">Click a variable to insert it at cursor position:</p>
+                <div className="flex flex-wrap gap-2">
+                  {variables.map((variable) => (
+                    <Badge
+                      key={variable}
+                      variant="secondary"
+                      className="text-sm font-mono cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-3 py-1.5"
+                      onClick={() => { insertVariable(variable); setToolbarPanel(null); }}
+                    >
+                      {`{{${variable}}}`}
+                    </Badge>
+                  ))}
                 </div>
               </CardContent>
             </Card>
