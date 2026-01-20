@@ -1155,6 +1155,9 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
 
   // Combined themes (built-in + custom)
   const allThemes = [...emailThemes, ...customThemes];
+  
+  // Current theme for passing to color pickers
+  const currentTheme = allThemes.find(t => t.id === selectedTheme) || emailThemes[0];
 
   const updateBlocksAndHtml = useCallback((newBlocks: EmailBlock[]) => {
     setBlocks(newBlocks);
@@ -2378,6 +2381,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               value={selectedBlock.styles.buttonColor || '#3b82f6'}
                               colorType="primary"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
+                              themeColors={currentTheme.colors}
                             />
                           </div>
                           {selectedBlock.styles.buttonVariant !== 'secondary' && (
@@ -2387,6 +2391,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 value={selectedBlock.styles.buttonTextColor || '#ffffff'}
                                 colorType="white"
                                 onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonTextColor: v })}
+                                themeColors={currentTheme.colors}
                               />
                             </div>
                           )}
@@ -2419,6 +2424,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             value={selectedBlock.styles.buttonColor || '#3b82f6'}
                             colorType="primary"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
+                            themeColors={currentTheme.colors}
                           />
                         </div>
                       </>
@@ -2610,6 +2616,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             value={selectedBlock.styles.buttonColor || '#1a1a1a'}
                             colorType="dark"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
+                            themeColors={currentTheme.colors}
                           />
                         </div>
                       </>
@@ -2803,6 +2810,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 value={selectedBlock.styles.buttonColor || '#f5f0e8'}
                                 colorType="light"
                                 onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
+                                themeColors={currentTheme.colors}
                               />
                             </div>
                           </div>
@@ -3186,6 +3194,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               value={selectedBlock.styles.backgroundColor || 'transparent'}
                               colorType="light"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { backgroundColor: v })}
+                              themeColors={currentTheme.colors}
                             />
                           </div>
                           <div className="flex items-center gap-2">
@@ -3194,6 +3203,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               value={selectedBlock.styles.textColor || '#000000'}
                               colorType="text"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { textColor: v })}
+                              themeColors={currentTheme.colors}
                             />
                           </div>
                         </div>
