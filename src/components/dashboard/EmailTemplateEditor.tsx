@@ -1800,45 +1800,46 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
 
               {/* Block properties panel */}
               {selectedBlock && (
-                <Card className="mt-4">
-                  <CardContent className="p-4 space-y-4">
-                    <div className="font-medium text-sm capitalize">{selectedBlock.type} Settings</div>
+                <Card className="mt-4 border-border/50 shadow-sm">
+                  <CardContent className="p-3 space-y-3">
+                    <div className="font-medium text-xs uppercase tracking-wide text-muted-foreground">{selectedBlock.type} Settings</div>
                     
                     {(selectedBlock.type === 'heading' || selectedBlock.type === 'text') && (
                       <>
-                        <div className="space-y-2">
-                          <Label className="text-xs">Content</Label>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Content</Label>
                           <Textarea
                             value={selectedBlock.content}
                             onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
-                            className="min-h-[80px] text-sm"
+                            className="min-h-[60px] text-sm resize-none"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs">Font Size</Label>
-                          <Select
-                            value={selectedBlock.styles.fontSize || '16px'}
-                            onValueChange={(v) => updateBlockStyles(selectedBlock.id, { fontSize: v })}
-                          >
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {fontSizes.map(size => (
-                                <SelectItem key={size} value={size}>{size}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-end gap-2">
+                          <div className="flex-1 space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Font Size</Label>
+                            <Select
+                              value={selectedBlock.styles.fontSize || '16px'}
+                              onValueChange={(v) => updateBlockStyles(selectedBlock.id, { fontSize: v })}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {fontSizes.map(size => (
+                                  <SelectItem key={size} value={size}>{size}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                           <Button
                             variant={selectedBlock.styles.fontWeight === 'bold' ? 'default' : 'outline'}
                             size="sm"
+                            className="h-8 w-8 p-0"
                             onClick={() => updateBlockStyles(selectedBlock.id, { 
                               fontWeight: selectedBlock.styles.fontWeight === 'bold' ? 'normal' : 'bold' 
                             })}
                           >
-                            <Bold className="w-4 h-4" />
+                            <Bold className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </>
@@ -2401,34 +2402,35 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                     {/* Common settings */}
                     {selectedBlock.type !== 'divider' && selectedBlock.type !== 'spacer' && (
                       <>
-                        <div className="space-y-2">
-                          <Label className="text-xs">Alignment</Label>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Alignment</Label>
                           <div className="flex gap-1">
                             {(['left', 'center', 'right'] as const).map(align => (
                               <Button
                                 key={align}
                                 variant={selectedBlock.styles.textAlign === align ? 'default' : 'outline'}
                                 size="sm"
+                                className="h-8 w-8 p-0"
                                 onClick={() => updateBlockStyles(selectedBlock.id, { textAlign: align })}
                               >
-                                {align === 'left' && <AlignLeft className="w-4 h-4" />}
-                                {align === 'center' && <AlignCenter className="w-4 h-4" />}
-                                {align === 'right' && <AlignRight className="w-4 h-4" />}
+                                {align === 'left' && <AlignLeft className="w-3.5 h-3.5" />}
+                                {align === 'center' && <AlignCenter className="w-3.5 h-3.5" />}
+                                {align === 'right' && <AlignRight className="w-3.5 h-3.5" />}
                               </Button>
                             ))}
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-2">
-                            <Label className="text-xs">Background</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Background</Label>
                             <ColorWheelPicker
                               value={selectedBlock.styles.backgroundColor || 'transparent'}
                               colorType="light"
                               onChange={(v) => updateBlockStyles(selectedBlock.id, { backgroundColor: v })}
                             />
                           </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs">Text Color</Label>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Text Color</Label>
                             <ColorWheelPicker
                               value={selectedBlock.styles.textColor || '#000000'}
                               colorType="text"
