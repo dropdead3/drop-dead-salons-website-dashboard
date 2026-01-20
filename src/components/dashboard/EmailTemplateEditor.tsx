@@ -68,6 +68,7 @@ import {
   ArrowRight,
   AlertTriangle,
   CheckCircle2,
+  Layers,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -3978,6 +3979,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     )}
                   </div>
                 )}
+                <div className="relative">
                 <ScrollArea className="h-[calc(100vh-280px)] max-h-[620px] border rounded-lg bg-muted/50 p-4">
                 <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
                   {blocks.map((block, index) => (
@@ -4437,6 +4439,58 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                   )}
                 </div>
               </ScrollArea>
+              
+              {/* Block Mini-Map Panel */}
+              <div className="hidden lg:block absolute right-2 top-2 w-32 max-h-[calc(100%-16px)] overflow-hidden">
+                <div className="bg-background/95 backdrop-blur-sm border rounded-lg shadow-sm p-2">
+                  <div className="text-[10px] font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                    <Layers className="w-3 h-3" />
+                    <span>Block Map</span>
+                    <span className="ml-auto text-[9px] bg-muted px-1 rounded">{blocks.length}</span>
+                  </div>
+                  <div className="space-y-0.5 max-h-[400px] overflow-y-auto scrollbar-minimal">
+                    {blocks.map((block, index) => {
+                      const section = getSectionType(block.type);
+                      const isSelected = selectedBlockId === block.id;
+                      const isHovered = hoveredBlockId === block.id;
+                      
+                      return (
+                        <button
+                          key={block.id}
+                          onClick={() => setSelectedBlockId(block.id)}
+                          onMouseEnter={() => setHoveredBlockId(block.id)}
+                          onMouseLeave={() => setHoveredBlockId(null)}
+                          className={cn(
+                            'w-full flex items-center gap-1.5 px-1.5 py-1 rounded text-left transition-all duration-150',
+                            isSelected 
+                              ? 'bg-primary text-primary-foreground' 
+                              : isHovered 
+                                ? 'bg-muted' 
+                                : 'hover:bg-muted/50'
+                          )}
+                        >
+                          <div 
+                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: isSelected ? 'currentColor' : section.color }}
+                          />
+                          <span className={cn(
+                            'text-[9px] truncate flex-1',
+                            !isSelected && 'text-muted-foreground'
+                          )}>
+                            {block.type === 'social' ? 'Social' : block.type === 'heading' ? 'Title' : block.type.charAt(0).toUpperCase() + block.type.slice(1)}
+                          </span>
+                          <span className={cn(
+                            'text-[8px] opacity-50',
+                            isSelected && 'opacity-70'
+                          )}>
+                            {index + 1}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
               </div>
             </div>
           </div>
