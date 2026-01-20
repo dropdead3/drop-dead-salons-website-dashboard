@@ -19,7 +19,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useBellSound } from '@/hooks/use-bell-sound';
 import { useBellHighFives } from '@/hooks/useBellHighFives';
-import { Bell, DollarSign, Loader2, Sparkles, Users, User } from 'lucide-react';
+import { Bell, DollarSign, Loader2, Sparkles, Users, User, MapPin, X } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,14 +77,23 @@ export default function RingTheBell() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<BellEntry | null>(null);
 
+  // Location filter state
+  const [locationFilter, setLocationFilter] = useState<string | null>(null);
+
+  // Filter entries by location
+  const filteredEntries = useMemo(() => {
+    if (!locationFilter) return entries;
+    return entries.filter(e => e.stylist_locations?.includes(locationFilter));
+  }, [entries, locationFilter]);
+
   // Separate entries into my rings and all team rings (including mine)
   const myRings = useMemo(() => 
-    entries.filter(e => e.user_id === user?.id), 
-    [entries, user?.id]
+    filteredEntries.filter(e => e.user_id === user?.id), 
+    [filteredEntries, user?.id]
   );
   
   // Team rings shows ALL entries (everyone's rings including yours)
-  const teamRings = useMemo(() => entries, [entries]);
+  const teamRings = useMemo(() => filteredEntries, [filteredEntries]);
 
   // High fives hook
   const entryIds = useMemo(() => entries.map(e => e.id), [entries]);
@@ -457,11 +466,13 @@ export default function RingTheBell() {
             highFiveCount={getHighFiveCount(entry.id)}
             hasUserHighFived={hasUserHighFived(entry.id)}
             highFiveUsers={getHighFiveUsers(entry.id)}
+            activeLocationFilter={locationFilter}
             onTogglePin={handleTogglePin}
             onSaveNote={handleSaveNote}
             onSaveEdit={handleSaveEdit}
             onDelete={handleDelete}
             onToggleHighFive={toggleHighFive}
+            onLocationClick={(loc) => setLocationFilter(locationFilter === loc ? null : loc)}
           />
         ))}
       </div>
@@ -489,6 +500,23 @@ export default function RingTheBell() {
             {showForm ? 'CANCEL' : 'RING IT'}
           </Button>
         </div>
+
+        {/* Location Filter Indicator */}
+        {locationFilter && (
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-sm text-muted-foreground font-sans">Filtering by:</span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setLocationFilter(null)}
+              className="h-7 px-2 gap-1.5 text-xs font-sans"
+            >
+              <MapPin className="w-3 h-3" />
+              {locationFilter}
+              <X className="w-3 h-3" />
+            </Button>
+          </div>
+        )}
 
         {/* Info Notice */}
         <Alert className="mb-6 bg-accent/50 border-accent">

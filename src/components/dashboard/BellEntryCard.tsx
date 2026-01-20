@@ -63,11 +63,13 @@ interface BellEntryCardProps {
   highFiveCount: number;
   hasUserHighFived: boolean;
   highFiveUsers: HighFiveUser[];
+  activeLocationFilter?: string | null;
   onTogglePin: (entryId: string, currentlyPinned: boolean) => void;
   onSaveNote: (entryId: string, noteText: string) => Promise<void>;
   onSaveEdit: (entryId: string, data: { service: string; ticketValue: string; leadSource: string; closingScript: string }) => Promise<void>;
   onDelete: (entry: BellEntry) => void;
   onToggleHighFive: (entryId: string) => void;
+  onLocationClick?: (location: string) => void;
 }
 
 export function BellEntryCard({
@@ -78,11 +80,13 @@ export function BellEntryCard({
   highFiveCount,
   hasUserHighFived,
   highFiveUsers,
+  activeLocationFilter,
   onTogglePin,
   onSaveNote,
   onSaveEdit,
   onDelete,
   onToggleHighFive,
+  onLocationClick,
 }: BellEntryCardProps) {
   // Edit entry state
   const [isEditing, setIsEditing] = useState(false);
@@ -242,7 +246,17 @@ export function BellEntryCard({
                 {entry.stylist_locations && entry.stylist_locations.length > 0 && (
                   <span className="flex items-center gap-1 text-xs text-muted-foreground font-sans">
                     <MapPin className="w-3 h-3" />
-                    {entry.stylist_locations.slice(0, 2).join(', ')}
+                    {entry.stylist_locations.slice(0, 2).map((loc, idx) => (
+                      <button
+                        key={loc}
+                        onClick={() => onLocationClick?.(loc)}
+                        className={`hover:text-primary hover:underline transition-colors ${
+                          activeLocationFilter === loc ? 'text-primary font-medium' : ''
+                        }`}
+                      >
+                        {loc}{idx < Math.min(entry.stylist_locations!.length, 2) - 1 ? ',' : ''}
+                      </button>
+                    ))}
                     {entry.stylist_locations.length > 2 && (
                       <span className="text-muted-foreground">+{entry.stylist_locations.length - 2}</span>
                     )}
