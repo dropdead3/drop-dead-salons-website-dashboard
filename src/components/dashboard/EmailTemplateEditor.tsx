@@ -61,6 +61,8 @@ import {
   LayoutTemplate,
   Pencil,
   Crown,
+  Search,
+  X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -765,6 +767,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
   const [editingThemeId, setEditingThemeId] = useState<string | null>(null);
   const [isSavingTheme, setIsSavingTheme] = useState(false);
   const [emailVariables, setEmailVariables] = useState<Array<{ variable_key: string; category: string; description: string; example: string | null }>>([]);
+  const [variableSearchTerm, setVariableSearchTerm] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
@@ -1904,8 +1907,29 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                   </div>
                 </div>
 
+                {/* Search Input */}
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search variables by name or description..."
+                    value={variableSearchTerm}
+                    onChange={(e) => setVariableSearchTerm(e.target.value)}
+                    className="pl-9 h-9 text-sm"
+                  />
+                  {variableSearchTerm && (
+                    <button
+                      onClick={() => setVariableSearchTerm('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
                 {/* Recommended Variables Section */}
                 {(() => {
+                  const searchLower = variableSearchTerm.toLowerCase();
                   const recommendedKeys = [
                     'recipient_name',
                     'recipient_first_name',
@@ -1913,7 +1937,14 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                     'dashboard_link',
                     'company_name',
                   ];
-                  const recommendedVars = emailVariables.filter(v => recommendedKeys.includes(v.variable_key));
+                  const recommendedVars = emailVariables.filter(v => 
+                    recommendedKeys.includes(v.variable_key) &&
+                    (!variableSearchTerm || 
+                      v.variable_key.toLowerCase().includes(searchLower) ||
+                      v.description.toLowerCase().includes(searchLower) ||
+                      (v.example && v.example.toLowerCase().includes(searchLower))
+                    )
+                  );
                   
                   if (recommendedVars.length === 0) return null;
 
@@ -1962,8 +1993,16 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                 {/* Categorized Variables */}
                 <div className="space-y-4">
                   {(() => {
-                    // Group database variables by category
-                    const groupedVariables = emailVariables.reduce((acc, v) => {
+                    // Filter and group database variables by category
+                    const searchLower = variableSearchTerm.toLowerCase();
+                    const filteredVariables = emailVariables.filter(v => 
+                      !variableSearchTerm || 
+                      v.variable_key.toLowerCase().includes(searchLower) ||
+                      v.description.toLowerCase().includes(searchLower) ||
+                      (v.example && v.example.toLowerCase().includes(searchLower))
+                    );
+                    
+                    const groupedVariables = filteredVariables.reduce((acc, v) => {
                       if (!acc[v.category]) acc[v.category] = [];
                       acc[v.category].push({ 
                         name: v.variable_key, 
