@@ -2648,18 +2648,16 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           const enabledLinks = (block.navLinks || []).filter(l => l.enabled);
                           
                           return (
-                            <div className="flex flex-col gap-3">
-                              {headerConfig.showLogo && logo && (
-                                <div className="flex justify-center">
-                                  <img 
-                                    src={logo.src} 
-                                    alt={logo.name} 
-                                    style={{ maxWidth: '120px', height: 'auto', display: 'block' }}
-                                  />
-                                </div>
-                              )}
-                              {headerConfig.showNavLinks && enabledLinks.length > 0 && (
-                                <div className="flex items-center justify-center gap-4">
+                            <div className="flex items-center justify-between w-full">
+                              {headerConfig.showLogo && logo ? (
+                                <img 
+                                  src={logo.src} 
+                                  alt={logo.name} 
+                                  style={{ maxWidth: '120px', height: 'auto', display: 'block' }}
+                                />
+                              ) : <div />}
+                              {headerConfig.showNavLinks && enabledLinks.length > 0 ? (
+                                <div className="flex items-center gap-4">
                                   {enabledLinks.map((link, index) => (
                                     <span 
                                       key={index}
@@ -2670,7 +2668,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                                     </span>
                                   ))}
                                 </div>
-                              )}
+                              ) : <div />}
                             </div>
                           );
                         })()}
