@@ -284,6 +284,16 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
             </div>
           )}
 
+          {/* Warning for large file size */}
+          {imageFile && imageFile.size > 5 * 1024 * 1024 && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Large file ({(imageFile.size / (1024 * 1024)).toFixed(1)}MB). For better performance, consider using an image under 5MB.
+              </p>
+            </div>
+          )}
+
           {/* Canvas preview */}
           <div 
             ref={containerRef}
