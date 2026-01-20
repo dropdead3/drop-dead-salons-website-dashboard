@@ -2485,8 +2485,8 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             className="h-8 text-sm font-mono"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs">Link Color</Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs text-muted-foreground">Link Color</Label>
                           <ColorWheelPicker
                             value={selectedBlock.styles.buttonColor || '#3b82f6'}
                             colorType="primary"
@@ -2677,8 +2677,8 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             );
                           })}
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs">Icon Color</Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs text-muted-foreground">Icon Color</Label>
                           <ColorWheelPicker
                             value={selectedBlock.styles.buttonColor || '#1a1a1a'}
                             colorType="dark"
