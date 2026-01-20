@@ -16,7 +16,18 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useBellSound } from '@/hooks/use-bell-sound';
-import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X, Sparkles } from 'lucide-react';
+import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X, Sparkles, Pencil, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import confetti from 'canvas-confetti';
@@ -63,6 +74,15 @@ export default function RingTheBell() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
   const [savingNote, setSavingNote] = useState(false);
+
+  // Edit entry state
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [editService, setEditService] = useState('');
+  const [editTicketValue, setEditTicketValue] = useState('');
+  const [editLeadSource, setEditLeadSource] = useState('');
+  const [editClosingScript, setEditClosingScript] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEntries();
@@ -296,6 +316,90 @@ export default function RingTheBell() {
     setSavingNote(false);
   };
 
+  const startEditingEntry = (entry: BellEntry) => {
+    setEditingEntryId(entry.id);
+    setEditService(entry.service_booked);
+    setEditTicketValue(entry.ticket_value.toString());
+    setEditLeadSource(entry.lead_source);
+    setEditClosingScript(entry.closing_script || '');
+  };
+
+  const cancelEditingEntry = () => {
+    setEditingEntryId(null);
+    setEditService('');
+    setEditTicketValue('');
+    setEditLeadSource('');
+    setEditClosingScript('');
+  };
+
+  const saveEntryEdit = async (entryId: string) => {
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from('ring_the_bell_entries')
+      .update({
+        service_booked: editService,
+        ticket_value: parseFloat(editTicketValue),
+        lead_source: editLeadSource as any,
+        closing_script: editClosingScript || null,
+      })
+      .eq('id', entryId);
+
+    if (!error) {
+      setEntries(prev =>
+        prev.map(e =>
+          e.id === entryId
+            ? {
+                ...e,
+                service_booked: editService,
+                ticket_value: parseFloat(editTicketValue),
+                lead_source: editLeadSource,
+                closing_script: editClosingScript || null,
+              }
+            : e
+        )
+      );
+      toast({
+        title: '✅ Entry Updated',
+        description: 'Your bell entry has been updated.',
+      });
+      cancelEditingEntry();
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update entry.',
+      });
+    }
+    setSavingEdit(false);
+  };
+
+  const deleteEntry = async (entryId: string) => {
+    setDeletingId(entryId);
+    const { error } = await supabase
+      .from('ring_the_bell_entries')
+      .delete()
+      .eq('id', entryId);
+
+    if (!error) {
+      setEntries(prev => prev.filter(e => e.id !== entryId));
+      toast({
+        title: '🗑️ Entry Deleted',
+        description: 'The bell entry has been removed.',
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete entry.',
+      });
+    }
+    setDeletingId(null);
+  };
+
+  const canEditOrDelete = (entry: BellEntry) => {
+    return user?.id === entry.user_id || isCoach;
+  };
+
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
@@ -425,106 +529,239 @@ export default function RingTheBell() {
                 key={entry.id} 
                 className={`p-6 ${entry.is_pinned ? 'border-primary bg-primary/5' : ''}`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="font-display text-xl">
-                        ${entry.ticket_value.toLocaleString()}
-                      </span>
-                      {entry.is_pinned && (
-                        <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs font-display tracking-wide rounded">
-                          PINNED
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-sans text-sm mb-1">{entry.service_booked}</p>
-                    <p className="text-xs text-muted-foreground font-sans">
-                      {entry.stylist_name && <span className="font-medium">{entry.stylist_name} · </span>}
-                      {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
-                      {format(new Date(entry.created_at), 'MMM d, yyyy')}
-                    </p>
-                    {entry.closing_script && (
-                      <p className="mt-3 text-sm text-muted-foreground font-sans italic">
-                        "{entry.closing_script}"
-                      </p>
-                    )}
-
-                    {/* Coach Note Display */}
-                    {entry.coach_note && editingNoteId !== entry.id && (
-                      <div className="mt-4 p-3 bg-accent/50 rounded-lg border border-accent">
-                        <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
-                          <MessageSquare className="w-3 h-3" /> Coach Note
-                        </p>
-                        <p className="text-sm font-sans">{entry.coach_note}</p>
-                      </div>
-                    )}
-
-                    {/* Coach Note Editor */}
-                    {isCoach && editingNoteId === entry.id && (
-                      <div className="mt-4 space-y-2">
-                        <Textarea
-                          value={noteText}
-                          onChange={(e) => setNoteText(e.target.value)}
-                          placeholder="Add a celebratory note for this win..."
-                          rows={2}
-                          className="text-sm"
+                {/* Edit Mode */}
+                {editingEntryId === entry.id ? (
+                  <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label className="text-xs uppercase tracking-wider">Service Booked</Label>
+                        <Input
+                          value={editService}
+                          onChange={(e) => setEditService(e.target.value)}
+                          placeholder="e.g., Full Extensions Install"
                         />
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => saveCoachNote(entry.id)}
-                            disabled={savingNote}
-                            className="font-display text-xs"
-                          >
-                            {savingNote ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <>
-                                <Send className="w-3 h-3 mr-1" />
-                                Save Note
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={cancelEditingNote}
-                            className="font-display text-xs"
-                          >
-                            <X className="w-3 h-3 mr-1" />
-                            Cancel
-                          </Button>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs uppercase tracking-wider">Ticket Value</Label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            value={editTicketValue}
+                            onChange={(e) => setEditTicketValue(e.target.value)}
+                            className="pl-9"
+                            min="0"
+                            step="0.01"
+                          />
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Coach Actions */}
-                  {isCoach && (
-                    <div className="flex flex-col gap-1 ml-4">
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase tracking-wider">Lead Source</Label>
+                      <Select value={editLeadSource} onValueChange={setEditLeadSource}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="How did they find you?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {leadSources.map((source) => (
+                            <SelectItem key={source.value} value={source.value}>
+                              {source.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase tracking-wider">What Closed the Deal? (Optional)</Label>
+                      <Textarea
+                        value={editClosingScript}
+                        onChange={(e) => setEditClosingScript(e.target.value)}
+                        placeholder="Share the script, phrase, or action that sealed it..."
+                        rows={2}
+                      />
+                    </div>
+                    <div className="flex gap-2">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => togglePin(entry.id, entry.is_pinned)}
-                        className={entry.is_pinned ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}
-                        title={entry.is_pinned ? 'Unpin' : 'Pin to top'}
+                        size="sm"
+                        onClick={() => saveEntryEdit(entry.id)}
+                        disabled={savingEdit}
+                        className="font-display text-xs"
                       >
-                        <Pin className="w-4 h-4" />
+                        {savingEdit ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <>
+                            <Send className="w-3 h-3 mr-1" />
+                            Save Changes
+                          </>
+                        )}
                       </Button>
-                      {editingNoteId !== entry.id && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => startEditingNote(entry)}
-                          className="text-muted-foreground hover:text-foreground"
-                          title="Add/edit note"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                        </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={cancelEditingEntry}
+                        className="font-display text-xs"
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* View Mode */
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-display text-xl">
+                          ${entry.ticket_value.toLocaleString()}
+                        </span>
+                        {entry.is_pinned && (
+                          <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs font-display tracking-wide rounded">
+                            PINNED
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-sans text-sm mb-1">{entry.service_booked}</p>
+                      <p className="text-xs text-muted-foreground font-sans">
+                        {entry.stylist_name && <span className="font-medium">{entry.stylist_name} · </span>}
+                        {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
+                        {format(new Date(entry.created_at), 'MMM d, yyyy')}
+                      </p>
+                      {entry.closing_script && (
+                        <p className="mt-3 text-sm text-muted-foreground font-sans italic">
+                          "{entry.closing_script}"
+                        </p>
+                      )}
+
+                      {/* Coach Note Display */}
+                      {entry.coach_note && editingNoteId !== entry.id && (
+                        <div className="mt-4 p-3 bg-accent/50 rounded-lg border border-accent">
+                          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3" /> Coach Note
+                          </p>
+                          <p className="text-sm font-sans">{entry.coach_note}</p>
+                        </div>
+                      )}
+
+                      {/* Coach Note Editor */}
+                      {isCoach && editingNoteId === entry.id && (
+                        <div className="mt-4 space-y-2">
+                          <Textarea
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            placeholder="Add a celebratory note for this win..."
+                            rows={2}
+                            className="text-sm"
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => saveCoachNote(entry.id)}
+                              disabled={savingNote}
+                              className="font-display text-xs"
+                            >
+                              {savingNote ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <Send className="w-3 h-3 mr-1" />
+                                  Save Note
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={cancelEditingNote}
+                              className="font-display text-xs"
+                            >
+                              <X className="w-3 h-3 mr-1" />
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col gap-1 ml-4">
+                      {/* Coach-only actions */}
+                      {isCoach && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => togglePin(entry.id, entry.is_pinned)}
+                            className={entry.is_pinned ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}
+                            title={entry.is_pinned ? 'Unpin' : 'Pin to top'}
+                          >
+                            <Pin className="w-4 h-4" />
+                          </Button>
+                          {editingNoteId !== entry.id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => startEditingNote(entry)}
+                              className="text-muted-foreground hover:text-foreground"
+                              title="Add/edit note"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* Edit/Delete for owner or coach */}
+                      {canEditOrDelete(entry) && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => startEditingEntry(entry)}
+                            className="text-muted-foreground hover:text-foreground"
+                            title="Edit entry"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-destructive"
+                                title="Delete entry"
+                                disabled={deletingId === entry.id}
+                              >
+                                {deletingId === entry.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Bell Entry?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently remove this ${entry.ticket_value.toLocaleString()} booking from the bell feed. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteEntry(entry.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
               </Card>
             ))}
           </div>
