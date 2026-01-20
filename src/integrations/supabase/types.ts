@@ -839,6 +839,36 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_weights: {
+        Row: {
+          extensions_weight: number
+          id: string
+          new_clients_weight: number
+          retail_weight: number
+          retention_weight: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          extensions_weight?: number
+          id?: string
+          new_clients_weight?: number
+          retail_weight?: number
+          retention_weight?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          extensions_weight?: number
+          id?: string
+          new_clients_weight?: number
+          retail_weight?: number
+          retention_weight?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           address: string
