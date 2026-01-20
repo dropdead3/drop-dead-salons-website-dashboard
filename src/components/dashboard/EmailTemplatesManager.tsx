@@ -659,7 +659,7 @@ export function EmailTemplatesManager() {
       >
         <DialogContent 
           className={cn(
-            "max-h-[95vh] overflow-hidden p-0 gap-0 transition-all duration-300",
+            "max-h-[95vh] overflow-hidden p-0 gap-0 transition-all duration-500 ease-out",
             previewMode === 'desktop' ? 'max-w-4xl' : 'max-w-md'
           )}
           style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif' }}
@@ -755,18 +755,25 @@ export function EmailTemplatesManager() {
           </div>
           
           {/* Email Body */}
-          <div className="overflow-y-auto max-h-[calc(95vh-200px)]" style={{ backgroundColor: '#f2f2f7' }}>
+          <div className="overflow-y-auto max-h-[calc(95vh-200px)] transition-all duration-500" style={{ backgroundColor: '#f2f2f7' }}>
             <div className={cn(
-              "transition-all duration-300 pb-8",
+              "transition-all duration-500 ease-out pb-8",
               previewMode === 'desktop' ? 'p-6 pb-12' : 'p-3 pb-8'
             )}>
               {/* Outer email wrapper to simulate email client viewport */}
               <div 
-                className="mx-auto bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-300" 
-                style={{ maxWidth: previewMode === 'desktop' ? '600px' : '100%' }}
+                className={cn(
+                  "mx-auto bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-500 ease-out origin-top",
+                  previewMode === 'mobile' && 'animate-scale-in'
+                )}
+                style={{ 
+                  maxWidth: previewMode === 'desktop' ? '600px' : '100%',
+                  transform: `scale(${previewMode === 'desktop' ? 1 : 1})`,
+                }}
               >
                 {previewTemplate && (
                   <div
+                    className="transition-opacity duration-300"
                     dangerouslySetInnerHTML={{
                       __html: renderPreviewHtml(
                         previewTemplate.html_body,
