@@ -17,30 +17,29 @@ export function CustomCursor() {
       setPosition({ x: e.clientX, y: e.clientY });
     };
 
-    const handleMouseEnter = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (
+    const isInteractiveElement = (target: HTMLElement) => {
+      return (
         target.tagName === "A" ||
         target.tagName === "BUTTON" ||
         target.closest("a") ||
         target.closest("button") ||
         target.closest("[role='button']") ||
-        target.classList.contains("cursor-pointer")
-      ) {
+        target.classList.contains("cursor-pointer") ||
+        target.classList.contains("cursor-grab") ||
+        target.closest(".cursor-grab")
+      );
+    };
+
+    const handleMouseEnter = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (isInteractiveElement(target)) {
         setIsHovering(true);
       }
     };
 
     const handleMouseLeave = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (
-        target.tagName === "A" ||
-        target.tagName === "BUTTON" ||
-        target.closest("a") ||
-        target.closest("button") ||
-        target.closest("[role='button']") ||
-        target.classList.contains("cursor-pointer")
-      ) {
+      if (isInteractiveElement(target)) {
         setIsHovering(false);
       }
     };
