@@ -10,8 +10,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info } from 'lucide-react';
+import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info, History } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { useLeaderboardHistory } from '@/hooks/useLeaderboardHistory';
+import { LeaderboardTrendIndicator } from '@/components/dashboard/LeaderboardTrendIndicator';
+import { LeaderboardHistoryPanel } from '@/components/dashboard/LeaderboardHistoryPanel';
 
 interface LeaderboardEntry {
   user_id: string;
@@ -152,6 +155,9 @@ export default function Leaderboard() {
   const [phorestData] = useState<PhorestPerformer[]>(mockPhorestData);
   const [phorestCategory, setPhorestCategory] = useState<PhorestCategory>('overall');
   const [weights, setWeights] = useState<ScoreWeights>(DEFAULT_WEIGHTS);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const { getTrendForUser, saveWeeklySnapshot } = useLeaderboardHistory();
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
@@ -351,11 +357,22 @@ export default function Leaderboard() {
                     {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-display mb-1">
-                    Category
-                  </p>
-                  <p className="font-display text-lg">{currentConfig.label}</p>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant={showHistory ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="font-display text-xs tracking-wide"
+                  >
+                    <History className="w-4 h-4 mr-2" />
+                    History
+                  </Button>
+                  <div className="text-right">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-display mb-1">
+                      Category
+                    </p>
+                    <p className="font-display text-lg">{currentConfig.label}</p>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -418,54 +435,85 @@ export default function Leaderboard() {
               })}
             </div>
 
-            {/* Full Leaderboard */}
-            <div className="space-y-3">
-              {sortedPhorestData.map((performer, index) => (
-                <Card 
-                  key={performer.id}
-                  className={`p-4 ${index < 3 ? 'border-primary/30' : ''}`}
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Rank */}
-                    <div className={`
-                      w-10 h-10 flex items-center justify-center font-display text-lg rounded
-                      ${index === 0 ? 'bg-primary text-primary-foreground' : 
-                        index === 1 ? 'bg-muted' : 
-                        index === 2 ? 'bg-muted' : 'bg-muted/50'}
-                    `}>
-                      {index + 1}
-                    </div>
+            {/* Main content grid */}
+            <div className={`grid gap-6 ${showHistory ? 'lg:grid-cols-[1fr,300px]' : ''}`}>
+              {/* Full Leaderboard */}
+              <div className="space-y-3">
+                {sortedPhorestData.map((performer, index) => {
+                  const trend = getTrendForUser(performer.id);
+                  
+                  return (
+                    <Card 
+                      key={performer.id}
+                      className={`p-4 ${index < 3 ? 'border-primary/30' : ''}`}
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Rank */}
+                        <div className={`
+                          w-10 h-10 flex items-center justify-center font-display text-lg rounded
+                          ${index === 0 ? 'bg-primary text-primary-foreground' : 
+                            index === 1 ? 'bg-muted' : 
+                            index === 2 ? 'bg-muted' : 'bg-muted/50'}
+                        `}>
+                          {index + 1}
+                        </div>
 
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-display text-sm">
-                      {performer.name.split(' ').map(n => n[0]).join('')}
-                    </div>
+                        {/* Avatar */}
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-display text-sm">
+                          {performer.name.split(' ').map(n => n[0]).join('')}
+                        </div>
 
-                    {/* Name */}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-sans font-medium truncate">{performer.name}</p>
-                      {index === 0 && (
-                        <p className="text-xs text-primary font-display tracking-wide">
-                          THIS WEEK'S LEADER
-                        </p>
-                      )}
-                    </div>
+                        {/* Name + Trend */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-sans font-medium truncate">{performer.name}</p>
+                            {phorestCategory === 'overall' && (
+                              <LeaderboardTrendIndicator trend={trend} />
+                            )}
+                          </div>
+                          {index === 0 && (
+                            <p className="text-xs text-primary font-display tracking-wide">
+                              THIS WEEK'S LEADER
+                            </p>
+                          )}
+                        </div>
 
-                    <div className="text-right flex items-center gap-2">
-                      {phorestCategory === 'overall' && (
-                        <ScoreBreakdownTooltip breakdown={getScoreBreakdown(performer)}>
-                          <button className="p-1 hover:bg-muted rounded transition-colors">
-                            <Info className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                        </ScoreBreakdownTooltip>
-                      )}
-                      <p className="font-display text-lg">
-                        {currentConfig.formatValue(currentConfig.getValue(performer))}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                        <div className="text-right flex items-center gap-2">
+                          {phorestCategory === 'overall' && (
+                            <ScoreBreakdownTooltip breakdown={getScoreBreakdown(performer)}>
+                              <button className="p-1 hover:bg-muted rounded transition-colors">
+                                <Info className="w-4 h-4 text-muted-foreground" />
+                              </button>
+                            </ScoreBreakdownTooltip>
+                          )}
+                          <p className="font-display text-lg">
+                            {currentConfig.formatValue(currentConfig.getValue(performer))}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* History Panel */}
+              {showHistory && (
+                <div className="hidden lg:block">
+                  <LeaderboardHistoryPanel
+                    currentRankings={sortedPhorestData.map((p, idx) => ({
+                      userId: p.id,
+                      name: p.name,
+                      rank: idx + 1,
+                      score: getScoreBreakdown(p).total,
+                      newClients: { rank: [...phorestData].sort((a, b) => b.newClients - a.newClients).findIndex(x => x.id === p.id) + 1, value: p.newClients },
+                      retention: { rank: [...phorestData].sort((a, b) => b.retentionRate - a.retentionRate).findIndex(x => x.id === p.id) + 1, value: p.retentionRate },
+                      retail: { rank: [...phorestData].sort((a, b) => b.retailSales - a.retailSales).findIndex(x => x.id === p.id) + 1, value: p.retailSales },
+                      extensions: { rank: [...phorestData].sort((a, b) => b.extensionClients - a.extensionClients).findIndex(x => x.id === p.id) + 1, value: p.extensionClients },
+                    }))}
+                    canSaveSnapshot={true}
+                  />
+                </div>
+              )}
             </div>
           </TabsContent>
 
