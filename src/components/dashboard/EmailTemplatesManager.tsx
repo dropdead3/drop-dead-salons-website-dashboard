@@ -530,6 +530,17 @@ export function EmailTemplatesManager() {
               <Button 
                 variant="outline" 
                 onClick={() => {
+                  if (editingTemplate) {
+                    setPreviewTemplate(editingTemplate);
+                  }
+                }}
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Preview
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
                   setEditingTemplate(null);
                   setHasUnsavedChanges(false);
                 }}
