@@ -1586,38 +1586,14 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                     </TabsList>
                   </div>
                   <TabsContent value="standard" className="mt-0">
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {themeCategories.map((category) => (
-                        <button key={category.id} onClick={() => setThemeCategoryFilter(category.id)} className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium transition-all", themeCategoryFilter === category.id ? "bg-foreground text-background" : "bg-muted hover:bg-muted/80 text-muted-foreground")}>{category.label}</button>
-                      ))}
-                    </div>
-                    <ScrollArea className="h-[220px]">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
-                        {emailThemes.filter(theme => themeCategoryFilter === 'all' || theme.category.includes(themeCategoryFilter)).map((theme) => (
-                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
-                            <div className="flex gap-0.5 mb-1.5">
-                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.headerBg }} />
-                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.bodyBg }} />
-                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.buttonBg }} />
-                            </div>
-                            <div className="text-[10px] font-medium truncate flex items-center gap-1">
-                              {theme.id === 'drop-dead-premium' && <Crown className="w-3 h-3 text-amber-500" />}
-                              {theme.name}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </TabsContent>
-                  <TabsContent value="custom" className="mt-0">
-                    {/* New Theme Button */}
-                    <div className="flex justify-end mb-3">
+                    <div className="flex items-center gap-3 mb-3">
+                      {/* New Theme Button - Top Left */}
                       <Dialog open={isCreateThemeOpen} onOpenChange={(open) => {
                         if (!open) handleCloseThemeDialog();
                         else setIsCreateThemeOpen(true);
                       }}>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-1.5 px-3 shadow-sm">
+                          <Button variant="outline" size="sm" className="gap-1.5 px-3 shadow-sm flex-shrink-0">
                             <Plus className="w-3.5 h-3.5" />
                             New Theme
                           </Button>
@@ -1716,8 +1692,34 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
+                      
+                      {/* Category Filters */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {themeCategories.map((category) => (
+                          <button key={category.id} onClick={() => setThemeCategoryFilter(category.id)} className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium transition-all", themeCategoryFilter === category.id ? "bg-foreground text-background" : "bg-muted hover:bg-muted/80 text-muted-foreground")}>{category.label}</button>
+                        ))}
+                      </div>
                     </div>
-                    <ScrollArea className="h-[180px]">
+                    <ScrollArea className="h-[220px]">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
+                        {emailThemes.filter(theme => themeCategoryFilter === 'all' || theme.category.includes(themeCategoryFilter)).map((theme) => (
+                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
+                            <div className="flex gap-0.5 mb-1.5">
+                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.headerBg }} />
+                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.bodyBg }} />
+                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.buttonBg }} />
+                            </div>
+                            <div className="text-[10px] font-medium truncate flex items-center gap-1">
+                              {theme.id === 'drop-dead-premium' && <Crown className="w-3 h-3 text-amber-500" />}
+                              {theme.name}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                  <TabsContent value="custom" className="mt-0">
+                    <ScrollArea className="h-[220px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
                         {customThemes.map((theme) => (
                           <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
@@ -1733,7 +1735,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             <div className="text-[10px] font-medium truncate flex items-center gap-1"><Sparkles className="w-2.5 h-2.5 text-primary" />{theme.name}</div>
                           </div>
                         ))}
-                        {customThemes.length === 0 && <div className="col-span-full text-center py-6 text-muted-foreground"><Sparkles className="w-6 h-6 mx-auto mb-2 opacity-30" /><p className="text-xs">No custom themes yet</p><p className="text-[10px] mt-1">Click "+ New Theme" to create one</p></div>}
+                        {customThemes.length === 0 && <div className="col-span-full text-center py-6 text-muted-foreground"><Sparkles className="w-6 h-6 mx-auto mb-2 opacity-30" /><p className="text-xs">No custom themes yet</p><p className="text-[10px] mt-1">Click "+ New Theme" in Standard Themes to create one</p></div>}
                       </div>
                     </ScrollArea>
                   </TabsContent>
