@@ -31,10 +31,12 @@ import {
   Trash2,
   Mail,
   Variable,
+  PenTool,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
 import { EmailVariablesManager } from '@/components/dashboard/EmailVariablesManager';
+import { SignaturePresetsManager } from '@/components/dashboard/SignaturePresetsManager';
 
 interface UserWithRole {
   user_id: string;
@@ -286,6 +288,21 @@ export default function Settings() {
                   Manage available template variables. New variables will automatically appear in the email editor.
                 </p>
                 <EmailVariablesManager />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Signature Presets */}
+          <AccordionItem value="signature-presets" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <PenTool className="w-5 h-5" />
+                <span className="font-display text-sm tracking-wide">SIGNATURE PRESETS</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="py-4">
+                <SignaturePresetsManager />
               </div>
             </AccordionContent>
           </AccordionItem>

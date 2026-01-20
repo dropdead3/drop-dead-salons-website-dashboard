@@ -72,6 +72,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { ColorWheelPicker } from '@/components/ui/color-wheel-picker';
 import { ImageCropModal } from './ImageCropModal';
+import { useSignaturePresets, SignatureConfig } from '@/hooks/useSignaturePresets';
+import { SignaturePresetActions } from './SignaturePresetActions';
 
 // Import brand logos - black versions
 import dropDeadLogo from '@/assets/drop-dead-logo.svg';
@@ -3130,6 +3132,16 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       
                       return (
                         <>
+                          {/* Preset Actions */}
+                          <SignaturePresetActions 
+                            config={config as SignatureConfig}
+                            onLoadPreset={(presetConfig) => {
+                              updateBlock(selectedBlock.id, {
+                                signatureConfig: { ...config, ...presetConfig }
+                              });
+                            }}
+                          />
+                          
                           <div className="space-y-3">
                             <Label className="text-xs font-medium">Signature Details</Label>
                             <div className="space-y-2">
