@@ -14,9 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { useBellSound } from '@/hooks/use-bell-sound';
-import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X, Sparkles, Pencil, Trash2 } from 'lucide-react';
+import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X, Sparkles, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +33,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { format } from 'date-fns';
@@ -83,6 +89,8 @@ export default function RingTheBell() {
   const [editClosingScript, setEditClosingScript] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<BellEntry | null>(null);
 
   useEffect(() => {
     fetchEntries();
@@ -683,89 +691,90 @@ export default function RingTheBell() {
                       )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-col gap-1 ml-4">
-                      {/* Coach-only actions */}
-                      {isCoach && (
-                        <>
+                    {/* Actions Menu */}
+                    {(isCoach || canEditOrDelete(entry)) && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => togglePin(entry.id, entry.is_pinned)}
-                            className={entry.is_pinned ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}
-                            title={entry.is_pinned ? 'Unpin' : 'Pin to top'}
+                            className="text-muted-foreground hover:text-foreground ml-4"
                           >
-                            <Pin className="w-4 h-4" />
+                            <MoreVertical className="w-4 h-4" />
                           </Button>
-                          {editingNoteId !== entry.id && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => startEditingNote(entry)}
-                              className="text-muted-foreground hover:text-foreground"
-                              title="Add/edit note"
-                            >
-                              <MessageSquare className="w-4 h-4" />
-                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          {/* Coach-only actions */}
+                          {isCoach && (
+                            <>
+                              <DropdownMenuItem onClick={() => togglePin(entry.id, entry.is_pinned)}>
+                                <Pin className={`w-4 h-4 mr-2 ${entry.is_pinned ? 'text-primary' : ''}`} />
+                                {entry.is_pinned ? 'Unpin' : 'Pin to Top'}
+                              </DropdownMenuItem>
+                              {editingNoteId !== entry.id && (
+                                <DropdownMenuItem onClick={() => startEditingNote(entry)}>
+                                  <MessageSquare className="w-4 h-4 mr-2" />
+                                  {entry.coach_note ? 'Edit Note' : 'Add Note'}
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                            </>
                           )}
-                        </>
-                      )}
-                      
-                      {/* Edit/Delete for owner or coach */}
-                      {canEditOrDelete(entry) && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => startEditingEntry(entry)}
-                            className="text-muted-foreground hover:text-foreground"
-                            title="Edit entry"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:text-destructive"
-                                title="Delete entry"
-                                disabled={deletingId === entry.id}
+                          
+                          {/* Edit/Delete for owner or coach */}
+                          {canEditOrDelete(entry) && (
+                            <>
+                              <DropdownMenuItem onClick={() => startEditingEntry(entry)}>
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Edit Entry
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setEntryToDelete(entry);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive focus:text-destructive"
                               >
-                                {deletingId === entry.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="w-4 h-4" />
-                                )}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Bell Entry?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will permanently remove this ${entry.ticket_value.toLocaleString()} booking from the bell feed. This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteEntry(entry.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
-                      )}
-                    </div>
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete Entry
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 )}
               </Card>
             ))}
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Bell Entry?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove this ${entryToDelete?.ticket_value.toLocaleString()} booking from the bell feed. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (entryToDelete) {
+                    deleteEntry(entryToDelete.id);
+                  }
+                  setDeleteDialogOpen(false);
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
