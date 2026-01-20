@@ -3229,7 +3229,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                     <img 
                                       src={config.imageUrl} 
                                       alt="Signature"
-                                      className="rounded-full object-cover border-2 border-background shadow-md"
+                                      className="rounded-full object-cover shadow-sm"
                                       style={{ 
                                         width: `${Math.min(config.imageSize || 80, 80)}px`, 
                                         height: `${Math.min(config.imageSize || 80, 80)}px` 
