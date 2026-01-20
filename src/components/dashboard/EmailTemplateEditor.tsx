@@ -1019,6 +1019,16 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
   }, [handleUndo, handleRedo]);
 
   const addBlock = (type: BlockType, buttonVariant?: 'primary' | 'secondary') => {
+    // Prevent duplicate header or footer blocks
+    if (type === 'header' && blocks.some(b => b.type === 'header')) {
+      toast.error('Only one header block allowed per template');
+      return;
+    }
+    if (type === 'footer' && blocks.some(b => b.type === 'footer')) {
+      toast.error('Only one footer block allowed per template');
+      return;
+    }
+    
     // Get the current theme colors for new blocks
     const currentTheme = allThemes.find(t => t.id === selectedTheme) || emailThemes[0];
     
