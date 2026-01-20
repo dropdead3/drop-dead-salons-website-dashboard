@@ -2643,8 +2643,8 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           );
                         })()}
                         {block.type === 'header' && (() => {
-                          const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main', showNavLinks: true };
-                          const logo = brandLogos.find(l => l.id === headerConfig.logoId) || brandLogos[0];
+                          const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main-white', showNavLinks: true };
+                          const logo = getLogoById(headerConfig.logoId) || brandLogos[0];
                           const enabledLinks = (block.navLinks || []).filter(l => l.enabled);
                           
                           return (
