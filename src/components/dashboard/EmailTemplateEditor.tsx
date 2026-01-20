@@ -3458,7 +3458,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                 <div className="font-medium text-sm mb-2">Email Canvas</div>
                 {/* Sticky hint overlays at top of canvas */}
                 {(hintsVisible.edit || hintsVisible.preview) && (
-                  <div className="space-y-2 mb-3 max-w-[600px]">
+                  <div className="space-y-2 mb-3">
                     {hintsVisible.edit && (
                       <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2.5 flex items-center gap-2">
                         <MousePointerClick className="w-4 h-4 text-primary flex-shrink-0" />
