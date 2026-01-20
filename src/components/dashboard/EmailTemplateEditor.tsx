@@ -1587,7 +1587,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" className="gap-1.5 px-3 shadow-sm">
                         <Plus className="w-3.5 h-3.5" />
-                        New Theme
+                        New Custom Theme
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
