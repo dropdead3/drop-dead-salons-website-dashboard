@@ -509,8 +509,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
       case 'text':
         return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">${formatContent(block.content)}</p>`;
       case 'image': {
+        const imgUrl = block.imageUrl || 'https://via.placeholder.com/400x200';
+        const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
-          <img src="${block.imageUrl || 'https://via.placeholder.com/400x200'}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}" />
+          <img src="${absoluteImgUrl}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}" />
         </div>`;
       }
       case 'button': {
@@ -569,10 +571,13 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
         const logoMaxWidth = logoSizeMap[footerConfig.logoSize || 'large'];
         
+        // Convert logo src to absolute URL for preview compatibility
+        const absoluteLogoSrc = logo.src.startsWith('/') ? `${window.location.origin}${logo.src}` : logo.src;
+        
         let logoHtml = '';
         if (footerConfig.showLogo) {
           logoHtml = `<div style="margin-bottom: 16px;">
-            <img src="${logo.src}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto;" />
+            <img src="${absoluteLogoSrc}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto;" />
           </div>`;
         }
         
@@ -618,19 +623,24 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const logoMaxWidth = logoSizeMap[headerConfig.logoSize || 'medium'];
         const logoPosition = headerConfig.logoPosition || 'left';
         const navLinksPosition = headerConfig.navLinksPosition || 'right';
+        const padding = block.styles.padding || '20px 24px';
+        
+        // Convert logo src to absolute URL for preview compatibility
+        const absoluteLogoSrc = logo.src.startsWith('/') ? `${window.location.origin}${logo.src}` : logo.src;
         
         let logoHtml = '';
         if (headerConfig.showLogo) {
-          logoHtml = `<img src="${logo.src}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto; display: block;" />`;
+          logoHtml = `<img src="${absoluteLogoSrc}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto; display: block;" />`;
         }
         
         let navHtml = '';
         if (headerConfig.showNavLinks) {
           const enabledLinks = (block.navLinks || []).filter(link => link.enabled);
           if (enabledLinks.length > 0) {
-            navHtml = enabledLinks.map(link => 
-              `<a href="${link.url}" style="color: ${textColor}; text-decoration: none; font-size: 14px; font-weight: 500; margin-left: 16px;">${link.label}</a>`
-            ).join('');
+            navHtml = `<div style="display: inline-flex; align-items: center; gap: 16px;">` +
+              enabledLinks.map(link => 
+                `<a href="${link.url}" style="color: ${textColor}; text-decoration: none; font-size: 14px; font-weight: 500;">${link.label}</a>`
+              ).join('') + `</div>`;
           }
         }
         
@@ -639,11 +649,11 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const centerContent = (logoPosition === 'center' ? logoHtml : '') + (navLinksPosition === 'center' ? navHtml : '');
         const rightContent = (logoPosition === 'right' ? logoHtml : '') + (navLinksPosition === 'right' ? navHtml : '');
         
-        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; color: ${textColor}; padding: ${block.styles.padding || '20px 24px'}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'};">
+        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'};">
           <tr>
-            <td width="33%" style="text-align: left; vertical-align: middle;">${leftContent}</td>
-            <td width="34%" style="text-align: center; vertical-align: middle;">${centerContent}</td>
-            <td width="33%" style="text-align: right; vertical-align: middle;">${rightContent}</td>
+            <td width="33%" style="text-align: left; vertical-align: middle; padding: ${padding}; color: ${textColor};">${leftContent}</td>
+            <td width="34%" style="text-align: center; vertical-align: middle; padding: ${padding}; color: ${textColor};">${centerContent}</td>
+            <td width="33%" style="text-align: right; vertical-align: middle; padding: ${padding}; color: ${textColor};">${rightContent}</td>
           </tr>
         </table>`;
       }
