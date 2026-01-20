@@ -2836,7 +2836,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           
                           return (
                             <div className={`flex flex-col ${alignClass}`}>
-                              {showLogo && logo && logo.src && (
+                              {showLogo && logo && (
                                 <div className="mb-3">
                                   <img 
                                     src={logo.src} 
