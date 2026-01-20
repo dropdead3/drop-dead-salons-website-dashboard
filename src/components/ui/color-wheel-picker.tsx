@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Copy, Check } from 'lucide-react';
 
 interface ColorWheelPickerProps {
   value: string;
@@ -215,6 +216,17 @@ export function ColorWheelPicker({ value, onChange, colorType = 'primary', label
   const [isDragging, setIsDragging] = useState(false);
   const [hsl, setHsl] = useState(() => hexToHsl(value || '#3b82f6'));
   const [hexInput, setHexInput] = useState(value || '#3b82f6');
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(hexInput);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }, [hexInput]);
 
   // Update internal state when value prop changes
   useEffect(() => {
@@ -445,9 +457,9 @@ export function ColorWheelPicker({ value, onChange, colorType = 'primary', label
           </div>
 
           {/* Hex input */}
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <div 
-              className="w-10 h-8 rounded border border-border flex-shrink-0"
+              className="w-8 h-8 rounded border border-border flex-shrink-0"
               style={{ backgroundColor: value === 'transparent' ? '#fff' : value }}
             />
             <Input
@@ -457,6 +469,20 @@ export function ColorWheelPicker({ value, onChange, colorType = 'primary', label
               placeholder="#000000"
               className="h-8 text-xs font-mono flex-1"
             />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 flex-shrink-0"
+              onClick={copyToClipboard}
+              title="Copy color code"
+            >
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-green-600" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </Button>
           </div>
 
           {/* Transparent option */}
