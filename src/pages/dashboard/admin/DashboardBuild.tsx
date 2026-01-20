@@ -67,6 +67,21 @@ const buildTasks: BuildTask[] = [
     ]
   },
   
+  // Pending Content Tasks
+  {
+    id: 'location-gallery',
+    title: 'Location Gallery Photos',
+    description: 'Replace placeholder Unsplash images with actual salon photos for location cards',
+    status: 'pending',
+    category: 'setup',
+    priority: 'medium',
+    notes: [
+      'LocationsSection.tsx uses placeholder images',
+      'Need photos for North Mesa, South Mesa, Gilbert, and Chandler',
+      'Recommended: 3-4 high-quality photos per location'
+    ]
+  },
+  
   // Completed Features
   {
     id: 'response-tracking',
@@ -124,7 +139,8 @@ const buildTasks: BuildTask[] = [
     description: 'Stylists receive email when their request is accepted or declined',
     status: 'complete',
     category: 'enhancement',
-    priority: 'high'
+    priority: 'high',
+    notes: ['Uses Resend API - RESEND_API_KEY configured ✓']
   },
   {
     id: 'push-infrastructure',
@@ -135,6 +151,41 @@ const buildTasks: BuildTask[] = [
     priority: 'high',
     notes: ['Waiting on VAPID keys to activate']
   },
+  {
+    id: 'round-robin',
+    title: 'Round-Robin Auto-Assignment',
+    description: 'Automated fair distribution of requests across available assistants',
+    status: 'complete',
+    category: 'integration',
+    priority: 'high',
+    notes: ['assign-assistant edge function handles location-based filtering']
+  },
+  {
+    id: 'reassignment',
+    title: 'Decline & Reassignment Flow',
+    description: 'Automatic reassignment when assistant declines, excluding them from that request',
+    status: 'complete',
+    category: 'integration',
+    priority: 'high',
+    notes: ['reassign-assistant edge function with declined_by tracking']
+  },
+  {
+    id: 'expiry-cron',
+    title: 'Response Deadline Enforcement',
+    description: 'Cron job to auto-reassign requests that exceed response deadline',
+    status: 'complete',
+    category: 'integration',
+    priority: 'high',
+    notes: ['check-expired-assignments runs periodically']
+  },
+  {
+    id: 'recurring-requests',
+    title: 'Recurring Request Patterns',
+    description: 'Support for daily, weekly, bi-weekly, and monthly recurring requests',
+    status: 'complete',
+    category: 'enhancement',
+    priority: 'medium'
+  },
   
   // Pending Enhancements
   {
@@ -144,7 +195,7 @@ const buildTasks: BuildTask[] = [
     status: 'pending',
     category: 'enhancement',
     priority: 'medium',
-    notes: ['Requires Twilio API keys']
+    notes: ['Requires Twilio API keys (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)']
   },
   {
     id: 'ai-suggestions',
@@ -152,7 +203,8 @@ const buildTasks: BuildTask[] = [
     description: 'Smart recommendations based on workload, history, and availability',
     status: 'pending',
     category: 'enhancement',
-    priority: 'low'
+    priority: 'low',
+    notes: ['Can use Lovable AI gateway (no external API needed)']
   },
   {
     id: 'stylist-preferences',
@@ -160,7 +212,8 @@ const buildTasks: BuildTask[] = [
     description: 'Allow stylists to set and rank preferred assistants',
     status: 'pending',
     category: 'enhancement',
-    priority: 'medium'
+    priority: 'medium',
+    notes: ['Would add preferred_assistants column to employee_profiles']
   },
   {
     id: 'weekly-reports',
@@ -168,7 +221,17 @@ const buildTasks: BuildTask[] = [
     description: 'Automated email summaries of assistant metrics to managers',
     status: 'pending',
     category: 'enhancement',
-    priority: 'low'
+    priority: 'low',
+    notes: ['Schedule via cron, use existing Resend integration']
+  },
+  {
+    id: 'availability-blocking',
+    title: 'Assistant Availability Blocking',
+    description: 'Allow assistants to mark time slots as unavailable',
+    status: 'pending',
+    category: 'enhancement',
+    priority: 'medium',
+    notes: ['Would prevent assignments during blocked periods']
   }
 ];
 
