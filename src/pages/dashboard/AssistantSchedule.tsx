@@ -10,7 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RequestAssistantDialog } from '@/components/dashboard/RequestAssistantDialog';
 import { ScheduleCalendar } from '@/components/dashboard/ScheduleCalendar';
-import { useAssistantRequests, useUpdateRequestStatus, type AssistantRequest } from '@/hooks/useAssistantRequests';
+import { useAssistantRequests, useUpdateRequestStatus, useAcceptAssignment, useDeclineAssignment, type AssistantRequest } from '@/hooks/useAssistantRequests';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -32,11 +32,16 @@ function formatDateLabel(dateStr: string) {
 
 function RequestCard({ request, isStylistView }: { request: AssistantRequest; isStylistView: boolean }) {
   const updateStatus = useUpdateRequestStatus();
+  const acceptAssignment = useAcceptAssignment();
+  const declineAssignment = useDeclineAssignment();
   const isPastRequest = isPast(parseISO(request.request_date + 'T' + request.end_time));
+
+  const isAccepted = !!request.accepted_at;
+  const needsResponse = request.status === 'assigned' && !isAccepted && !isStylistView && !isPastRequest;
 
   const statusColors = {
     pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    assigned: 'bg-green-100 text-green-800 border-green-200',
+    assigned: isAccepted ? 'bg-green-100 text-green-800 border-green-200' : 'bg-amber-100 text-amber-800 border-amber-200',
     completed: 'bg-blue-100 text-blue-800 border-blue-200',
     cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
   };
@@ -47,6 +52,14 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
 
   const handleCancel = () => {
     updateStatus.mutate({ id: request.id, status: 'cancelled' });
+  };
+
+  const handleAccept = () => {
+    acceptAssignment.mutate(request.id);
+  };
+
+  const handleDecline = () => {
+    declineAssignment.mutate(request.id);
   };
 
   return (
@@ -63,8 +76,14 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
                 {formatTime(request.start_time)} - {formatTime(request.end_time)}
               </span>
               <Badge className={cn('border', statusColors[request.status])}>
-                {request.status}
+                {request.status === 'assigned' && !isAccepted ? 'Awaiting Response' : request.status}
               </Badge>
+              {isAccepted && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Accepted
+                </Badge>
+              )}
             </div>
 
             <div className="grid gap-1 text-sm">
@@ -111,7 +130,33 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
             </div>
           </div>
 
-          {request.status === 'assigned' && !isPastRequest && (
+          {/* Accept/Decline buttons for assistants who haven't responded yet */}
+          {needsResponse && (
+            <div className="flex flex-col gap-2">
+              <Button
+                size="sm"
+                onClick={handleAccept}
+                disabled={acceptAssignment.isPending || declineAssignment.isPending}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-1" />
+                Accept
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDecline}
+                disabled={acceptAssignment.isPending || declineAssignment.isPending}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                <XCircle className="h-4 w-4 mr-1" />
+                Decline
+              </Button>
+            </div>
+          )}
+
+          {/* Done/Cancel buttons for assigned & accepted requests */}
+          {request.status === 'assigned' && isAccepted && !isPastRequest && (
             <div className="flex gap-2">
               <Button
                 size="sm"
@@ -132,6 +177,23 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
                   <XCircle className="h-4 w-4" />
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Stylist view for assigned but not yet accepted */}
+          {request.status === 'assigned' && !isAccepted && isStylistView && !isPastRequest && (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-amber-50 text-amber-700">
+                Awaiting assistant response
+              </Badge>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleCancel}
+                disabled={updateStatus.isPending}
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
             </div>
           )}
 

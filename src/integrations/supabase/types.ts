@@ -143,9 +143,11 @@ export type Database = {
       }
       assistant_requests: {
         Row: {
+          accepted_at: string | null
           assistant_id: string | null
           client_name: string
           created_at: string
+          declined_by: string[] | null
           end_time: string
           id: string
           location_id: string | null
@@ -161,9 +163,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accepted_at?: string | null
           assistant_id?: string | null
           client_name: string
           created_at?: string
+          declined_by?: string[] | null
           end_time: string
           id?: string
           location_id?: string | null
@@ -179,9 +183,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accepted_at?: string | null
           assistant_id?: string | null
           client_name?: string
           created_at?: string
+          declined_by?: string[] | null
           end_time?: string
           id?: string
           location_id?: string | null
