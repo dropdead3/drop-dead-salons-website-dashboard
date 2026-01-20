@@ -37,20 +37,20 @@ export function HighFiveButton({
   disabled = false,
 }: HighFiveButtonProps) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={onToggle}
               disabled={disabled}
               className={cn(
-                'h-8 px-2 gap-1.5 font-sans text-xs transition-colors',
+                'h-8 px-3 gap-2 font-sans text-xs rounded-full border-2 transition-all',
                 hasHighFived
-                  ? 'text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500 hover:border-amber-600'
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-300 hover:border-amber-400'
               )}
             >
               <Hand
@@ -62,11 +62,23 @@ export function HighFiveButton({
                   transform: hasHighFived ? 'rotate(-15deg)' : 'none',
                 }}
               />
-              {count > 0 && <span>{count}</span>}
+              <span className="font-medium">
+                {hasHighFived ? 'High-fived!' : 'Give a high-five!'}
+              </span>
+              {count > 0 && (
+                <span className={cn(
+                  'ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold',
+                  hasHighFived 
+                    ? 'bg-white/20 text-white' 
+                    : 'bg-amber-200 text-amber-800'
+                )}>
+                  {count}
+                </span>
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{hasHighFived ? 'Remove high five' : 'Give a high five!'}</p>
+            <p>{hasHighFived ? 'Click to remove your high five' : 'Celebrate this win!'}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -76,16 +88,16 @@ export function HighFiveButton({
           <PopoverTrigger asChild>
             <button className="flex -space-x-1.5 hover:opacity-80 transition-opacity">
               {users.slice(0, 3).map((user) => (
-                <Avatar key={user.id} className="h-5 w-5 border-2 border-background">
+                <Avatar key={user.id} className="h-6 w-6 border-2 border-background">
                   <AvatarImage src={user.user_photo || undefined} alt={user.user_name} />
-                  <AvatarFallback className="text-[8px] bg-amber-100 text-amber-700">
+                  <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700 font-medium">
                     {user.user_name?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
               ))}
               {count > 3 && (
-                <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                  <span className="text-[8px] font-medium">+{count - 3}</span>
+                <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                  <span className="text-[9px] font-medium">+{count - 3}</span>
                 </div>
               )}
             </button>
