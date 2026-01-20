@@ -48,7 +48,17 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       const img = document.createElement('img');
       img.onload = () => {
         setImageElement(img);
-        setZoom(1);
+        
+        // Calculate initial zoom to fit the short side into the crop area
+        const canvasSize = 280;
+        const cropSize = canvasSize * 0.75; // 210px crop area
+        
+        // Find the smaller dimension and scale to fit crop area
+        const shortSide = Math.min(img.width, img.height);
+        const initialZoom = cropSize / shortSide;
+        
+        // Clamp zoom between 0.1 and 3
+        setZoom(Math.max(0.1, Math.min(3, initialZoom)));
         setRotation(0);
         setPosition({ x: 0, y: 0 });
       };
