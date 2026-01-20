@@ -2168,7 +2168,19 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                       </>
                     )}
 
-                    {selectedBlock.type === 'footer' && (
+                    {selectedBlock.type === 'footer' && (() => {
+                      // Ensure footerConfig always has proper defaults
+                      const defaultConfig = { 
+                        showLogo: true, 
+                        logoId: 'drop-dead-main-white', 
+                        logoSize: 'medium' as const, 
+                        logoPosition: 'center' as const, 
+                        showSocialIcons: true, 
+                        copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' 
+                      };
+                      const footerConfig = { ...defaultConfig, ...selectedBlock.footerConfig };
+                      
+                      return (
                       <>
                         <div className="space-y-3">
                           <Label className="text-xs font-medium">Footer Options</Label>
@@ -2176,11 +2188,11 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             <div className="flex items-center gap-2">
                               <input
                                 type="checkbox"
-                                checked={selectedBlock.footerConfig?.showLogo ?? true}
+                                checked={footerConfig.showLogo}
                                 onChange={(e) => {
                                   updateBlock(selectedBlock.id, {
                                     footerConfig: {
-                                      ...selectedBlock.footerConfig!,
+                                      ...footerConfig,
                                       showLogo: e.target.checked,
                                     }
                                   });
@@ -2189,14 +2201,14 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                               />
                               <span className="text-xs">Show Logo</span>
                             </div>
-                            {selectedBlock.footerConfig?.showLogo && (
+                            {footerConfig.showLogo && (
                               <div className="space-y-2">
                                 <Select
-                                  value={selectedBlock.footerConfig?.logoId || 'drop-dead-main-black'}
+                                  value={footerConfig.logoId}
                                   onValueChange={(v) => {
                                     updateBlock(selectedBlock.id, {
                                       footerConfig: {
-                                        ...selectedBlock.footerConfig!,
+                                        ...footerConfig,
                                         logoId: v,
                                       }
                                     });
@@ -2216,11 +2228,11 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs text-muted-foreground">Size</span>
                                   <Select
-                                    value={selectedBlock.footerConfig?.logoSize || 'medium'}
+                                    value={footerConfig.logoSize}
                                     onValueChange={(v) => {
                                       updateBlock(selectedBlock.id, {
                                         footerConfig: {
-                                          ...selectedBlock.footerConfig!,
+                                          ...footerConfig,
                                           logoSize: v as 'small' | 'medium' | 'large',
                                         }
                                       });
@@ -2243,13 +2255,13 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                                       <Button
                                         key={pos}
                                         type="button"
-                                        variant={selectedBlock.footerConfig?.logoPosition === pos || (!selectedBlock.footerConfig?.logoPosition && pos === 'center') ? 'default' : 'outline'}
+                                        variant={footerConfig.logoPosition === pos ? 'default' : 'outline'}
                                         size="sm"
                                         className="flex-1 h-7 text-xs capitalize"
                                         onClick={() => {
                                           updateBlock(selectedBlock.id, {
                                             footerConfig: {
-                                              ...selectedBlock.footerConfig!,
+                                              ...footerConfig,
                                               logoPosition: pos,
                                             }
                                           });
@@ -2266,11 +2278,11 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           <div className="flex items-center gap-2">
                             <input
                               type="checkbox"
-                              checked={selectedBlock.footerConfig?.showSocialIcons ?? true}
+                              checked={footerConfig.showSocialIcons}
                               onChange={(e) => {
                                 updateBlock(selectedBlock.id, {
                                   footerConfig: {
-                                    ...selectedBlock.footerConfig!,
+                                    ...footerConfig,
                                     showSocialIcons: e.target.checked,
                                   }
                                 });
@@ -2281,7 +2293,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           </div>
                         </div>
 
-                        {selectedBlock.footerConfig?.showSocialIcons && (
+                        {footerConfig.showSocialIcons && (
                           <div className="space-y-3">
                             <Label className="text-xs font-medium">Social Platforms</Label>
                             {(['instagram', 'tiktok', 'email'] as const).map((platform) => {
@@ -2352,11 +2364,11 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                         <div className="space-y-2">
                           <Label className="text-xs">Copyright Text</Label>
                           <Input
-                            value={selectedBlock.footerConfig?.copyrightText || ''}
+                            value={footerConfig.copyrightText}
                             onChange={(e) => {
                               updateBlock(selectedBlock.id, {
                                 footerConfig: {
-                                  ...selectedBlock.footerConfig!,
+                                  ...footerConfig,
                                   copyrightText: e.target.value,
                                 }
                               });
@@ -2366,7 +2378,8 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           />
                         </div>
                       </>
-                    )}
+                    );
+                    })()}
 
                     {selectedBlock.type === 'header' && (
                       <>
