@@ -262,6 +262,11 @@ export function BellEntryCard({
                     )}
                   </span>
                 )}
+                {entry.lead_source === 'salon_lead' && (
+                  <span className="px-2 py-0.5 bg-accent text-accent-foreground text-xs font-display tracking-wide rounded border border-border">
+                    SALON LEAD
+                  </span>
+                )}
                 {entry.is_pinned && (
                   <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs font-display tracking-wide rounded">
                     PINNED
