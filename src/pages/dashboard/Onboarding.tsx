@@ -21,11 +21,16 @@ import {
   CheckCircle2, 
   ArrowRight,
   PartyPopper,
-  Sparkles
+  Sparkles,
+  CreditCard,
+  ClipboardCheck,
+  Check,
+  Circle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 interface Handbook {
   id: string;
@@ -42,17 +47,65 @@ interface Acknowledgment {
   acknowledged_at: string;
 }
 
+interface BusinessCardRequest {
+  id: string;
+  design_style: string;
+  status: string;
+  requested_at: string;
+}
+
+interface TaskCompletion {
+  task_key: string;
+  completed_at: string;
+}
+
+const ONBOARDING_TASKS = [
+  { key: 'complete_profile', label: 'Complete your profile information' },
+  { key: 'upload_photo', label: 'Upload a professional photo' },
+  { key: 'set_schedule', label: 'Set your work schedule' },
+  { key: 'review_policies', label: 'Review company policies' },
+  { key: 'setup_direct_deposit', label: 'Set up direct deposit' },
+  { key: 'complete_training', label: 'Complete initial training videos' },
+];
+
+const BUSINESS_CARD_STYLES = [
+  { 
+    id: 'classic', 
+    name: 'Classic', 
+    description: 'Clean and professional with traditional layout',
+    preview: 'bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900'
+  },
+  { 
+    id: 'modern', 
+    name: 'Modern', 
+    description: 'Bold and contemporary with striking design',
+    preview: 'bg-gradient-to-br from-primary/20 to-primary/40'
+  },
+];
+
 export default function Onboarding() {
   const { roles, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Handbook state
   const [handbooks, setHandbooks] = useState<Handbook[]>([]);
   const [acknowledgments, setAcknowledgments] = useState<Acknowledgment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedHandbook, setSelectedHandbook] = useState<Handbook | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasReadContent, setHasReadContent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Business card state
+  const [businessCardRequest, setBusinessCardRequest] = useState<BusinessCardRequest | null>(null);
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [requestingCard, setRequestingCard] = useState(false);
+  
+  // Task state
+  const [taskCompletions, setTaskCompletions] = useState<TaskCompletion[]>([]);
+  
+  // Loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (roles.length > 0 && user) {
@@ -63,7 +116,7 @@ export default function Onboarding() {
   }, [roles, user]);
 
   const fetchData = async () => {
-    const [handbooksResult, acknowledgementsResult] = await Promise.all([
+    const [handbooksResult, acknowledgementsResult, businessCardResult, tasksResult] = await Promise.all([
       supabase
         .from('handbooks')
         .select('id, title, category, content, file_url, version, updated_at, visible_to_roles')
@@ -72,7 +125,16 @@ export default function Onboarding() {
         .order('title'),
       supabase
         .from('handbook_acknowledgments')
-        .select('handbook_id, acknowledged_at')
+        .select('handbook_id, acknowledged_at'),
+      supabase
+        .from('business_card_requests')
+        .select('id, design_style, status, requested_at')
+        .order('requested_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('onboarding_task_completions')
+        .select('task_key, completed_at')
     ]);
 
     if (handbooksResult.error) {
@@ -84,7 +146,6 @@ export default function Onboarding() {
       });
       setHandbooks(filteredHandbooks);
       
-      // Find first unacknowledged handbook
       if (acknowledgementsResult.data) {
         const ackIds = acknowledgementsResult.data.map(a => a.handbook_id);
         const firstUnack = filteredHandbooks.findIndex(h => !ackIds.includes(h.id));
@@ -98,11 +159,23 @@ export default function Onboarding() {
       setAcknowledgments(acknowledgementsResult.data || []);
     }
 
+    if (!businessCardResult.error && businessCardResult.data) {
+      setBusinessCardRequest(businessCardResult.data);
+    }
+
+    if (!tasksResult.error) {
+      setTaskCompletions(tasksResult.data || []);
+    }
+
     setLoading(false);
   };
 
   const isAcknowledged = (handbookId: string) => {
     return acknowledgments.some(ack => ack.handbook_id === handbookId);
+  };
+
+  const isTaskCompleted = (taskKey: string) => {
+    return taskCompletions.some(tc => tc.task_key === taskKey);
   };
 
   const handleAcknowledge = async () => {
@@ -130,28 +203,83 @@ export default function Onboarding() {
       }]);
       toast({
         title: 'Acknowledged!',
-        description: 'Moving to the next document...'
+        description: 'Document has been acknowledged.'
       });
       setSelectedHandbook(null);
+      setHasReadContent(false);
       
-      // Move to next unacknowledged
       const nextUnack = handbooks.findIndex((h, i) => 
         i > currentIndex && !isAcknowledged(h.id) && h.id !== selectedHandbook.id
       );
       if (nextUnack !== -1) {
         setCurrentIndex(nextUnack);
-      } else {
-        // Check if all are done
-        const allAcknowledged = handbooks.every(h => 
-          h.id === selectedHandbook.id || isAcknowledged(h.id)
-        );
-        if (allAcknowledged) {
-          setCurrentIndex(handbooks.length); // Show completion
-        }
       }
     }
     
     setSubmitting(false);
+  };
+
+  const handleRequestBusinessCard = async () => {
+    if (!selectedStyle || !user) return;
+    
+    setRequestingCard(true);
+    
+    const { data, error } = await supabase
+      .from('business_card_requests')
+      .insert({
+        user_id: user.id,
+        design_style: selectedStyle
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message
+      });
+    } else {
+      setBusinessCardRequest(data);
+      toast({
+        title: 'Request Submitted!',
+        description: 'Your business card request has been submitted.'
+      });
+    }
+    
+    setRequestingCard(false);
+  };
+
+  const handleToggleTask = async (taskKey: string) => {
+    if (!user) return;
+    
+    const isCompleted = isTaskCompleted(taskKey);
+    
+    if (isCompleted) {
+      const { error } = await supabase
+        .from('onboarding_task_completions')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('task_key', taskKey);
+
+      if (!error) {
+        setTaskCompletions(prev => prev.filter(tc => tc.task_key !== taskKey));
+      }
+    } else {
+      const { error } = await supabase
+        .from('onboarding_task_completions')
+        .insert({
+          user_id: user.id,
+          task_key: taskKey
+        });
+
+      if (!error) {
+        setTaskCompletions(prev => [...prev, {
+          task_key: taskKey,
+          completed_at: new Date().toISOString()
+        }]);
+      }
+    }
   };
 
   const openHandbook = (handbook: Handbook, index: number) => {
@@ -161,9 +289,14 @@ export default function Onboarding() {
   };
 
   const acknowledgedCount = handbooks.filter(h => isAcknowledged(h.id)).length;
-  const totalCount = handbooks.length;
-  const progress = totalCount > 0 ? (acknowledgedCount / totalCount) * 100 : 0;
-  const isComplete = acknowledgedCount === totalCount && totalCount > 0;
+  const totalHandbooks = handbooks.length;
+  const handbooksProgress = totalHandbooks > 0 ? (acknowledgedCount / totalHandbooks) * 100 : 100;
+  
+  const completedTasksCount = taskCompletions.length;
+  const totalTasks = ONBOARDING_TASKS.length;
+  const tasksProgress = totalTasks > 0 ? (completedTasksCount / totalTasks) * 100 : 0;
+  
+  const overallProgress = ((handbooksProgress + tasksProgress + (businessCardRequest ? 100 : 0)) / 3);
 
   if (loading) {
     return (
@@ -175,122 +308,250 @@ export default function Onboarding() {
     );
   }
 
-  if (handbooks.length === 0) {
-    return (
-      <DashboardLayout>
-        <div className="p-6 lg:p-8">
-          <Card className="p-12 text-center max-w-lg mx-auto">
-            <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-primary" />
-            <h2 className="font-display text-2xl mb-2">ALL SET!</h2>
-            <p className="text-muted-foreground font-sans mb-6">
-              No onboarding documents are assigned to your role.
-            </p>
-            <Button onClick={() => navigate('/dashboard')} className="font-display">
-              GO TO DASHBOARD
-            </Button>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-4xl mx-auto">
+      <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="font-display text-3xl lg:text-4xl mb-2">
-            {isComplete ? '🎉 ONBOARDING COMPLETE!' : 'WELCOME ABOARD'}
-          </h1>
+        <div className="text-center">
+          <h1 className="font-display text-3xl lg:text-4xl mb-2">WELCOME ABOARD</h1>
           <p className="text-muted-foreground font-sans max-w-md mx-auto">
-            {isComplete 
-              ? "You've completed all required onboarding documents. You're ready to go!"
-              : "Please review and acknowledge each of the following documents to complete your onboarding."
-            }
+            Complete the following sections to finish your onboarding process.
           </p>
         </div>
 
-        {/* Progress */}
-        <Card className="p-6 mb-8">
+        {/* Overall Progress */}
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-3">
-            <span className="font-display text-sm tracking-wider">ONBOARDING PROGRESS</span>
+            <span className="font-display text-sm tracking-wider">OVERALL PROGRESS</span>
             <span className="font-sans text-sm text-muted-foreground">
-              {acknowledgedCount} of {totalCount} complete
+              {Math.round(overallProgress)}% complete
             </span>
           </div>
-          <Progress value={progress} className="h-3" />
+          <Progress value={overallProgress} className="h-3" />
         </Card>
 
-        {/* Completion State */}
-        {isComplete ? (
-          <Card className="p-12 text-center">
-            <PartyPopper className="w-16 h-16 mx-auto mb-4 text-primary" />
-            <h2 className="font-display text-2xl mb-2">YOU'RE ALL SET!</h2>
-            <p className="text-muted-foreground font-sans mb-6 max-w-md mx-auto">
-              You've reviewed and acknowledged all required onboarding documents. 
-              You're ready to start your journey!
-            </p>
-            <Button onClick={() => navigate('/dashboard')} size="lg" className="font-display">
-              <Sparkles className="w-4 h-4 mr-2" />
-              START YOUR JOURNEY
-            </Button>
-          </Card>
-        ) : (
-          /* Document List */
-          <div className="space-y-3">
-            {handbooks.map((handbook, index) => {
-              const acknowledged = isAcknowledged(handbook.id);
-              const isCurrent = index === currentIndex && !acknowledged;
-              
-              return (
-                <Card 
-                  key={handbook.id} 
-                  className={`p-5 transition-all ${
-                    acknowledged 
-                      ? 'border-primary/30 bg-primary/5' 
-                      : isCurrent 
-                        ? 'border-primary ring-2 ring-primary/20' 
-                        : 'opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Step number or check */}
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-display text-sm ${
+        {/* Section 1: Handbooks */}
+        <Card className="overflow-hidden">
+          <div className="p-6 border-b bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-display text-lg">READ & ACKNOWLEDGE HANDBOOKS</h2>
+                <p className="text-sm text-muted-foreground font-sans">
+                  Review and acknowledge receipt of required documents
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="font-display text-lg">{acknowledgedCount}/{totalHandbooks}</span>
+                <p className="text-xs text-muted-foreground">completed</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-6 space-y-3">
+            {handbooks.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-primary" />
+                <p className="font-sans text-sm">No handbooks assigned to your role</p>
+              </div>
+            ) : (
+              handbooks.map((handbook, index) => {
+                const acknowledged = isAcknowledged(handbook.id);
+                const isCurrent = index === currentIndex && !acknowledged;
+                
+                return (
+                  <div 
+                    key={handbook.id} 
+                    className={cn(
+                      "flex items-center gap-4 p-4 rounded-lg border transition-all",
+                      acknowledged 
+                        ? 'border-primary/30 bg-primary/5' 
+                        : isCurrent 
+                          ? 'border-primary ring-1 ring-primary/20' 
+                          : 'border-border opacity-60'
+                    )}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center font-display text-xs",
                       acknowledged 
                         ? 'bg-primary text-primary-foreground' 
-                        : isCurrent 
-                          ? 'bg-foreground text-background' 
-                          : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {acknowledged ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
+                        : 'bg-muted text-muted-foreground'
+                    )}>
+                      {acknowledged ? <Check className="w-4 h-4" /> : index + 1}
                     </div>
 
-                    {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-sans font-medium">{handbook.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        v{handbook.version}
-                      </p>
+                      <h3 className="font-sans font-medium text-sm">{handbook.title}</h3>
+                      <p className="text-xs text-muted-foreground">v{handbook.version}</p>
                     </div>
 
-                    {/* Action */}
                     {acknowledged ? (
-                      <span className="text-xs text-primary font-sans">Completed</span>
-                    ) : isCurrent ? (
+                      <span className="text-xs text-primary font-sans font-medium">Completed</span>
+                    ) : (
                       <Button 
                         onClick={() => openHandbook(handbook, index)}
+                        size="sm"
+                        variant={isCurrent ? 'default' : 'outline'}
                         className="font-display text-xs"
                       >
-                        REVIEW <ArrowRight className="w-4 h-4 ml-1" />
+                        REVIEW
                       </Button>
-                    ) : (
-                      <span className="text-xs text-muted-foreground font-sans">Pending</span>
                     )}
                   </div>
-                </Card>
+                );
+              })
+            )}
+          </div>
+        </Card>
+
+        {/* Section 2: Business Cards */}
+        <Card className="overflow-hidden">
+          <div className="p-6 border-b bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-display text-lg">REQUEST YOUR BUSINESS CARDS</h2>
+                <p className="text-sm text-muted-foreground font-sans">
+                  Choose your preferred design style
+                </p>
+              </div>
+              {businessCardRequest && (
+                <div className="text-right">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Requested
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="p-6">
+            {businessCardRequest ? (
+              <div className="text-center py-4">
+                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-primary" />
+                <h3 className="font-display text-lg mb-1">REQUEST SUBMITTED</h3>
+                <p className="text-sm text-muted-foreground font-sans">
+                  You selected the <span className="font-medium text-foreground capitalize">{businessCardRequest.design_style}</span> design.
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Status: <span className="capitalize">{businessCardRequest.status}</span>
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {BUSINESS_CARD_STYLES.map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => setSelectedStyle(style.id)}
+                      className={cn(
+                        "relative p-4 rounded-lg border-2 text-left transition-all",
+                        selectedStyle === style.id
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-border hover:border-primary/50'
+                      )}
+                    >
+                      <div className={cn("h-24 rounded-md mb-3", style.preview)} />
+                      <h3 className="font-display text-sm mb-1">{style.name}</h3>
+                      <p className="text-xs text-muted-foreground font-sans">{style.description}</p>
+                      {selectedStyle === style.id && (
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-4 h-4 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
+                <Button 
+                  onClick={handleRequestBusinessCard}
+                  disabled={!selectedStyle || requestingCard}
+                  className="w-full font-display"
+                >
+                  {requestingCard ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'REQUEST BUSINESS CARDS'
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Section 3: Onboarding Tasks Checklist */}
+        <Card className="overflow-hidden">
+          <div className="p-6 border-b bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <ClipboardCheck className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-display text-lg">ONBOARDING CHECKLIST</h2>
+                <p className="text-sm text-muted-foreground font-sans">
+                  Complete these tasks to finish your setup
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="font-display text-lg">{completedTasksCount}/{totalTasks}</span>
+                <p className="text-xs text-muted-foreground">completed</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-6 space-y-2">
+            {ONBOARDING_TASKS.map((task) => {
+              const completed = isTaskCompleted(task.key);
+              
+              return (
+                <button
+                  key={task.key}
+                  onClick={() => handleToggleTask(task.key)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
+                    completed
+                      ? 'border-primary/30 bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  <div className={cn(
+                    "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all",
+                    completed
+                      ? 'bg-primary border-primary'
+                      : 'border-muted-foreground/30'
+                  )}>
+                    {completed && <Check className="w-4 h-4 text-primary-foreground" />}
+                  </div>
+                  <span className={cn(
+                    "font-sans text-sm flex-1",
+                    completed && 'text-muted-foreground line-through'
+                  )}>
+                    {task.label}
+                  </span>
+                </button>
               );
             })}
           </div>
+        </Card>
+
+        {/* Completion CTA */}
+        {overallProgress >= 100 && (
+          <Card className="p-8 text-center bg-primary/5 border-primary/30">
+            <PartyPopper className="w-12 h-12 mx-auto mb-4 text-primary" />
+            <h2 className="font-display text-2xl mb-2">ONBOARDING COMPLETE!</h2>
+            <p className="text-muted-foreground font-sans mb-6">
+              You've completed all onboarding steps. You're ready to start!
+            </p>
+            <Button onClick={() => navigate('/dashboard')} size="lg" className="font-display">
+              <Sparkles className="w-4 h-4 mr-2" />
+              GO TO DASHBOARD
+            </Button>
+          </Card>
         )}
 
         {/* Handbook Detail Dialog */}
@@ -301,7 +562,7 @@ export default function Onboarding() {
                 <DialogHeader>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                     <span className="px-2 py-0.5 bg-muted rounded">
-                      Step {currentIndex + 1} of {totalCount}
+                      Step {currentIndex + 1} of {totalHandbooks}
                     </span>
                   </div>
                   <DialogTitle className="font-display text-xl">
