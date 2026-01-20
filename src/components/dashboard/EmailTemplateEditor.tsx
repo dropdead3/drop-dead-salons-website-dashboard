@@ -59,6 +59,7 @@ import {
   Instagram,
   Mail,
   LayoutTemplate,
+  Pencil,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -538,6 +539,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
   const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead');
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
+  const [editingThemeId, setEditingThemeId] = useState<string | null>(null);
   const [isSavingTheme, setIsSavingTheme] = useState(false);
 const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
     name: '',
@@ -688,6 +690,95 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
       console.error('Error deleting theme:', error);
       toast.error('Failed to delete theme');
     }
+  };
+
+  const handleEditTheme = (theme: EmailTheme) => {
+    setEditingThemeId(theme.id);
+    setNewTheme({
+      name: theme.name,
+      description: theme.description,
+      colors: { ...theme.colors },
+    });
+    setIsCreateThemeOpen(true);
+  };
+
+  const handleUpdateCustomTheme = async () => {
+    if (!editingThemeId) return;
+    if (!newTheme.name.trim()) {
+      toast.error('Please enter a theme name');
+      return;
+    }
+
+    const dbId = editingThemeId.replace('custom-', '');
+    setIsSavingTheme(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('email_themes')
+        .update({
+          name: newTheme.name,
+          description: newTheme.description,
+          header_bg: newTheme.colors.headerBg,
+          header_text: newTheme.colors.headerText,
+          body_bg: newTheme.colors.bodyBg,
+          body_text: newTheme.colors.bodyText,
+          button_bg: newTheme.colors.buttonBg,
+          button_text: newTheme.colors.buttonText,
+          accent_color: newTheme.colors.accentColor,
+          divider_color: newTheme.colors.dividerColor,
+        })
+        .eq('id', dbId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedTheme: EmailTheme = {
+        id: editingThemeId,
+        name: data.name,
+        description: data.description || 'Custom theme',
+        colors: {
+          headerBg: data.header_bg,
+          headerText: data.header_text,
+          bodyBg: data.body_bg,
+          bodyText: data.body_text,
+          buttonBg: data.button_bg,
+          buttonText: data.button_text || '#ffffff',
+          accentColor: data.accent_color,
+          dividerColor: data.divider_color,
+          white: newTheme.colors.white || '#ffffff',
+        },
+      };
+
+      setCustomThemes(prev => prev.map(t => t.id === editingThemeId ? updatedTheme : t));
+      handleCloseThemeDialog();
+      toast.success('Theme updated!');
+    } catch (error: any) {
+      console.error('Error updating theme:', error);
+      toast.error('Failed to update theme');
+    } finally {
+      setIsSavingTheme(false);
+    }
+  };
+
+  const handleCloseThemeDialog = () => {
+    setIsCreateThemeOpen(false);
+    setEditingThemeId(null);
+    setNewTheme({
+      name: '',
+      description: '',
+      colors: {
+        headerBg: '#1a1a1a',
+        headerText: '#f5f0e8',
+        bodyBg: '#f5f0e8',
+        bodyText: '#1a1a1a',
+        buttonBg: '#1a1a1a',
+        buttonText: '#ffffff',
+        accentColor: '#d4c5b0',
+        dividerColor: '#d4c5b0',
+        white: '#ffffff',
+      },
+    });
   };
 
   // Combined themes (built-in + custom)
@@ -1126,7 +1217,10 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                     <Palette className="w-4 h-4" />
                     Color Theme
                   </div>
-                  <Dialog open={isCreateThemeOpen} onOpenChange={setIsCreateThemeOpen}>
+                  <Dialog open={isCreateThemeOpen} onOpenChange={(open) => {
+                    if (!open) handleCloseThemeDialog();
+                    else setIsCreateThemeOpen(true);
+                  }}>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-6 text-xs gap-1">
                         <Plus className="w-3 h-3" />
@@ -1137,7 +1231,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                           <Sparkles className="w-5 h-5" />
-                          Create Custom Theme
+                          {editingThemeId ? 'Edit Custom Theme' : 'Create Custom Theme'}
                         </DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
@@ -1279,16 +1373,19 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                         </details>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsCreateThemeOpen(false)}>
+                        <Button variant="outline" onClick={handleCloseThemeDialog}>
                           Cancel
                         </Button>
-                        <Button onClick={handleSaveCustomTheme} disabled={isSavingTheme}>
+                        <Button 
+                          onClick={editingThemeId ? handleUpdateCustomTheme : handleSaveCustomTheme} 
+                          disabled={isSavingTheme}
+                        >
                           {isSavingTheme ? (
                             <Loader2 className="w-4 h-4 animate-spin mr-2" />
                           ) : (
                             <Save className="w-4 h-4 mr-2" />
                           )}
-                          Save Theme
+                          {editingThemeId ? 'Update Theme' : 'Save Theme'}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -1437,17 +1534,32 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                                   </div>
                                 </div>
                               </button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteCustomTheme(theme.id);
-                                }}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
+                              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditTheme(theme);
+                                  }}
+                                  title="Edit theme"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-destructive hover:text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteCustomTheme(theme.id);
+                                  }}
+                                  title="Delete theme"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
                             </div>
                           ))
                         ) : (
