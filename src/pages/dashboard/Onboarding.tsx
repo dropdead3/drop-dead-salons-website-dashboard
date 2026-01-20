@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -28,6 +33,7 @@ import {
   CalendarDays,
   MapPin,
   ExternalLink,
+  ChevronDown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -432,347 +438,413 @@ export default function Onboarding() {
         </Card>
 
         {/* Section 1: Onboarding Tasks Checklist */}
-        <Card className="overflow-hidden">
-          <div className="p-6 border-b bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <ClipboardCheck className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="font-display text-lg">ONBOARDING CHECKLIST</h2>
-                <p className="text-sm text-muted-foreground font-sans">
-                  Complete these tasks to finish your setup
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="font-display text-lg">{completedTasksCount}/{totalTasks}</span>
-                <p className="text-xs text-muted-foreground">completed</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-6 space-y-2">
-            {onboardingTasks.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <p className="font-sans text-sm">No tasks assigned to your role</p>
-              </div>
-            ) : (
-              onboardingTasks.map((task) => {
-                const completed = isTaskCompleted(task.id);
-                
-                return (
-                  <div
-                    key={task.id}
-                    className={cn(
-                      "w-full flex items-start gap-3 p-3 rounded-lg border transition-all",
-                      completed
-                        ? 'border-primary/30 bg-primary/5'
-                        : 'border-border'
+        <Collapsible defaultOpen={tasksProgress < 100}>
+          <Card className="overflow-hidden">
+            <CollapsibleTrigger className="w-full">
+              <div className="p-6 border-b bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500",
+                    tasksProgress >= 100 
+                      ? "bg-green-500 animate-[pulse_0.5s_ease-in-out]" 
+                      : "bg-primary/10"
+                  )}>
+                    {tasksProgress >= 100 ? (
+                      <CheckCircle2 className="w-5 h-5 text-white animate-[scale-in_0.3s_ease-out]" />
+                    ) : (
+                      <ClipboardCheck className="w-5 h-5 text-primary" />
                     )}
-                  >
-                    <button
-                      onClick={() => handleToggleTask(task.id)}
-                      className="flex-1 flex items-start gap-3 text-left hover:opacity-80 transition-opacity"
-                    >
-                      <div className={cn(
-                        "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all mt-0.5 shrink-0",
-                        completed
-                          ? 'bg-primary border-primary'
-                          : 'border-muted-foreground/30'
-                      )}>
-                        {completed && <Check className="w-4 h-4 text-primary-foreground" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className={cn(
-                          "font-sans text-sm block",
-                          completed && 'text-muted-foreground line-through'
-                        )}>
-                          {task.title}
-                        </span>
-                        {task.description && (
-                          <span className="text-xs text-muted-foreground block mt-0.5">
-                            {task.description}
-                          </span>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h2 className="font-display text-lg">ONBOARDING CHECKLIST</h2>
+                    <p className="text-sm text-muted-foreground font-sans">
+                      {tasksProgress >= 100 ? 'All tasks completed!' : 'Complete these tasks to finish your setup'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <span className="font-display text-lg">{completedTasksCount}/{totalTasks}</span>
+                      <p className="text-xs text-muted-foreground">completed</p>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+              <div className="p-6 space-y-2">
+                {onboardingTasks.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-primary" />
+                    <p className="font-sans text-sm">No tasks assigned to your role</p>
+                  </div>
+                ) : (
+                  onboardingTasks.map((task) => {
+                    const completed = isTaskCompleted(task.id);
+                    
+                    return (
+                      <div
+                        key={task.id}
+                        className={cn(
+                          "w-full flex items-start gap-3 p-3 rounded-lg border transition-all",
+                          completed
+                            ? 'border-primary/30 bg-primary/5'
+                            : 'border-border'
+                        )}
+                      >
+                        <button
+                          onClick={() => handleToggleTask(task.id)}
+                          className="flex-1 flex items-start gap-3 text-left hover:opacity-80 transition-opacity"
+                        >
+                          <div className={cn(
+                            "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all mt-0.5 shrink-0",
+                            completed
+                              ? 'bg-primary border-primary'
+                              : 'border-muted-foreground/30'
+                          )}>
+                            {completed && <Check className="w-4 h-4 text-primary-foreground" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className={cn(
+                              "font-sans text-sm block",
+                              completed && 'text-muted-foreground line-through'
+                            )}>
+                              {task.title}
+                            </span>
+                            {task.description && (
+                              <span className="text-xs text-muted-foreground block mt-0.5">
+                                {task.description}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                        {task.link_url && (
+                          <a
+                            href={task.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="shrink-0 p-2 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                            title="Open link"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
                         )}
                       </div>
-                    </button>
-                    {task.link_url && (
-                      <a
-                        href={task.link_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="shrink-0 p-2 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
-                        title="Open link"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </Card>
+                    );
+                  })
+                )}
+              </div>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Section 2: Handbooks */}
-        <Card className="overflow-hidden">
-          <div className="p-6 border-b bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="font-display text-lg">READ & ACKNOWLEDGE HANDBOOKS</h2>
-                <p className="text-sm text-muted-foreground font-sans">
-                  Review and acknowledge receipt of required documents
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="font-display text-lg">{acknowledgedCount}/{totalHandbooks}</span>
-                <p className="text-xs text-muted-foreground">completed</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-6 space-y-3">
-            {handbooks.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <p className="font-sans text-sm">No handbooks assigned to your role</p>
-              </div>
-            ) : (
-              handbooks.map((handbook, index) => {
-                const acknowledged = isAcknowledged(handbook.id);
-                const isCurrent = index === currentIndex && !acknowledged;
-                
-                return (
-                  <div 
-                    key={handbook.id} 
-                    className={cn(
-                      "flex items-center gap-4 p-4 rounded-lg border transition-all",
-                      acknowledged 
-                        ? 'border-primary/30 bg-primary/5' 
-                        : isCurrent 
-                          ? 'border-primary ring-1 ring-primary/20' 
-                          : 'border-border opacity-60'
-                    )}
-                  >
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center font-display text-xs",
-                      acknowledged 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-muted text-muted-foreground'
-                    )}>
-                      {acknowledged ? <Check className="w-4 h-4" /> : index + 1}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-sans font-medium text-sm">{handbook.title}</h3>
-                      <p className="text-xs text-muted-foreground">v{handbook.version}</p>
-                    </div>
-
-                    {acknowledged ? (
-                      <span className="text-xs text-primary font-sans font-medium">Completed</span>
+        <Collapsible defaultOpen={handbooksProgress < 100}>
+          <Card className="overflow-hidden">
+            <CollapsibleTrigger className="w-full">
+              <div className="p-6 border-b bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500",
+                    handbooksProgress >= 100 
+                      ? "bg-green-500 animate-[pulse_0.5s_ease-in-out]" 
+                      : "bg-primary/10"
+                  )}>
+                    {handbooksProgress >= 100 ? (
+                      <CheckCircle2 className="w-5 h-5 text-white animate-[scale-in_0.3s_ease-out]" />
                     ) : (
-                      <Button 
-                        onClick={() => openHandbook(handbook, index)}
-                        size="sm"
-                        variant={isCurrent ? 'default' : 'outline'}
-                        className="font-display text-xs"
-                      >
-                        REVIEW
-                      </Button>
+                      <BookOpen className="w-5 h-5 text-primary" />
                     )}
                   </div>
-                );
-              })
-            )}
-          </div>
-        </Card>
+                  <div className="flex-1 text-left">
+                    <h2 className="font-display text-lg">READ & ACKNOWLEDGE HANDBOOKS</h2>
+                    <p className="text-sm text-muted-foreground font-sans">
+                      {handbooksProgress >= 100 ? 'All handbooks acknowledged!' : 'Review and acknowledge receipt of required documents'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <span className="font-display text-lg">{acknowledgedCount}/{totalHandbooks}</span>
+                      <p className="text-xs text-muted-foreground">completed</p>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+              <div className="p-6 space-y-3">
+                {handbooks.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-primary" />
+                    <p className="font-sans text-sm">No handbooks assigned to your role</p>
+                  </div>
+                ) : (
+                  handbooks.map((handbook, index) => {
+                    const acknowledged = isAcknowledged(handbook.id);
+                    const isCurrent = index === currentIndex && !acknowledged;
+                    
+                    return (
+                      <div 
+                        key={handbook.id} 
+                        className={cn(
+                          "flex items-center gap-4 p-4 rounded-lg border transition-all",
+                          acknowledged 
+                            ? 'border-primary/30 bg-primary/5' 
+                            : isCurrent 
+                              ? 'border-primary ring-1 ring-primary/20' 
+                              : 'border-border opacity-60'
+                        )}
+                      >
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center font-display text-xs",
+                          acknowledged 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-muted text-muted-foreground'
+                        )}>
+                          {acknowledged ? <Check className="w-4 h-4" /> : index + 1}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-sans font-medium text-sm">{handbook.title}</h3>
+                          <p className="text-xs text-muted-foreground">v{handbook.version}</p>
+                        </div>
+
+                        {acknowledged ? (
+                          <span className="text-xs text-primary font-sans font-medium">Completed</span>
+                        ) : (
+                          <Button 
+                            onClick={() => openHandbook(handbook, index)}
+                            size="sm"
+                            variant={isCurrent ? 'default' : 'outline'}
+                            className="font-display text-xs"
+                          >
+                            REVIEW
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Section 3: Request Headshots */}
-        <Card className="overflow-hidden">
-          <div className="p-6 border-b bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Camera className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="font-display text-lg">REQUEST YOUR HEADSHOTS</h2>
-                <p className="text-sm text-muted-foreground font-sans">
-                  Request a professional headshot session
-                </p>
-              </div>
-              {headshotRequest && (
-                <div className="text-right">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Requested
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="p-6">
-            {headshotRequest ? (
-              <div className="text-center py-4">
-                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-primary" />
-                <h3 className="font-display text-lg mb-1">REQUEST SUBMITTED</h3>
-                <p className="text-sm text-muted-foreground font-sans mb-4">
-                  An admin will schedule your headshot session.
-                </p>
-                
-                {headshotRequest.scheduled_date ? (
-                  <div className="p-4 bg-muted/50 rounded-lg text-left max-w-xs mx-auto">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CalendarDays className="w-4 h-4 text-primary" />
-                      <span className="font-sans font-medium text-sm">
-                        {new Date(headshotRequest.scheduled_date).toLocaleDateString('en-US', { 
-                          weekday: 'long', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </span>
-                    </div>
-                    {headshotRequest.scheduled_time && (
-                      <p className="text-xs text-muted-foreground ml-6">{headshotRequest.scheduled_time}</p>
+        <Collapsible defaultOpen={!headshotRequest}>
+          <Card className="overflow-hidden">
+            <CollapsibleTrigger className="w-full">
+              <div className="p-6 border-b bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500",
+                    headshotRequest 
+                      ? "bg-green-500 animate-[pulse_0.5s_ease-in-out]" 
+                      : "bg-primary/10"
+                  )}>
+                    {headshotRequest ? (
+                      <CheckCircle2 className="w-5 h-5 text-white animate-[scale-in_0.3s_ease-out]" />
+                    ) : (
+                      <Camera className="w-5 h-5 text-primary" />
                     )}
-                    {headshotRequest.scheduled_location && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{headshotRequest.scheduled_location}</span>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h2 className="font-display text-lg">REQUEST YOUR HEADSHOTS</h2>
+                    <p className="text-sm text-muted-foreground font-sans">
+                      {headshotRequest ? 'Headshot session requested!' : 'Request a professional headshot session'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {headshotRequest && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-600">
+                        Requested
+                      </span>
+                    )}
+                    <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </div>
+                </div>
+              </div>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+              <div className="p-6">
+                {headshotRequest ? (
+                  <div className="text-center py-4">
+                    <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                    <h3 className="font-display text-lg mb-1">REQUEST SUBMITTED</h3>
+                    <p className="text-sm text-muted-foreground font-sans mb-4">
+                      An admin will schedule your headshot session.
+                    </p>
+                    
+                    {headshotRequest.scheduled_date ? (
+                      <div className="p-4 bg-muted/50 rounded-lg text-left max-w-xs mx-auto">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CalendarDays className="w-4 h-4 text-primary" />
+                          <span className="font-sans font-medium text-sm">
+                            {new Date(headshotRequest.scheduled_date).toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </span>
+                        </div>
+                        {headshotRequest.scheduled_time && (
+                          <p className="text-xs text-muted-foreground ml-6">{headshotRequest.scheduled_time}</p>
+                        )}
+                        {headshotRequest.scheduled_location && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <MapPin className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">{headshotRequest.scheduled_location}</span>
+                          </div>
+                        )}
                       </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Status: <span className="capitalize">{headshotRequest.status}</span>
+                      </p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Status: <span className="capitalize">{headshotRequest.status}</span>
-                  </p>
+                  <div className="space-y-4">
+                    <div className="rounded-lg overflow-hidden">
+                      <img 
+                        src={headshotSessionPreview} 
+                        alt="Professional headshot session"
+                        className="w-full h-40 object-cover"
+                      />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground font-sans mb-2">
+                        Professional headshots are essential for your business cards and team profile.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Once requested, an admin will coordinate with you to schedule your session.
+                      </p>
+                    </div>
+                    
+                    <Button 
+                      onClick={handleRequestHeadshot}
+                      disabled={requestingHeadshot}
+                      className="w-full font-display"
+                    >
+                      {requestingHeadshot ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Camera className="w-4 h-4 mr-2" />
+                          REQUEST HEADSHOT SESSION
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 )}
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="rounded-lg overflow-hidden">
-                  <img 
-                    src={headshotSessionPreview} 
-                    alt="Professional headshot session"
-                    className="w-full h-40 object-cover"
-                  />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground font-sans mb-2">
-                    Professional headshots are essential for your business cards and team profile.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Once requested, an admin will coordinate with you to schedule your session.
-                  </p>
-                </div>
-                
-                <Button 
-                  onClick={handleRequestHeadshot}
-                  disabled={requestingHeadshot}
-                  className="w-full font-display"
-                >
-                  {requestingHeadshot ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Camera className="w-4 h-4 mr-2" />
-                      REQUEST HEADSHOT SESSION
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </div>
-        </Card>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Section 4: Business Cards */}
-        <Card className="overflow-hidden">
-          <div className="p-6 border-b bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="font-display text-lg">REQUEST YOUR BUSINESS CARDS</h2>
-                <p className="text-sm text-muted-foreground font-sans">
-                  Choose your preferred design style
-                </p>
-              </div>
-              {businessCardRequest && (
-                <div className="text-right">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Requested
-                  </span>
+        <Collapsible defaultOpen={!businessCardRequest}>
+          <Card className="overflow-hidden">
+            <CollapsibleTrigger className="w-full">
+              <div className="p-6 border-b bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500",
+                    businessCardRequest 
+                      ? "bg-green-500 animate-[pulse_0.5s_ease-in-out]" 
+                      : "bg-primary/10"
+                  )}>
+                    {businessCardRequest ? (
+                      <CheckCircle2 className="w-5 h-5 text-white animate-[scale-in_0.3s_ease-out]" />
+                    ) : (
+                      <CreditCard className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h2 className="font-display text-lg">REQUEST YOUR BUSINESS CARDS</h2>
+                    <p className="text-sm text-muted-foreground font-sans">
+                      {businessCardRequest ? 'Business cards requested!' : 'Choose your preferred design style'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {businessCardRequest && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-600">
+                        Requested
+                      </span>
+                    )}
+                    <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="p-6">
-            {businessCardRequest ? (
-              <div className="text-center py-4">
-                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-primary" />
-                <h3 className="font-display text-lg mb-1">REQUEST SUBMITTED</h3>
-                <p className="text-sm text-muted-foreground font-sans">
-                  You selected the <span className="font-medium text-foreground capitalize">{businessCardRequest.design_style}</span> design.
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Status: <span className="capitalize">{businessCardRequest.status}</span>
-                </p>
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {BUSINESS_CARD_STYLES.map((style) => (
-                    <button
-                      key={style.id}
-                      onClick={() => setSelectedStyle(style.id)}
-                      className={cn(
-                        "relative p-3 rounded-lg border-2 text-left transition-all overflow-hidden",
-                        selectedStyle === style.id
-                          ? 'border-primary ring-2 ring-primary/20'
-                          : 'border-border hover:border-primary/50'
-                      )}
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+              <div className="p-6">
+                {businessCardRequest ? (
+                  <div className="text-center py-4">
+                    <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                    <h3 className="font-display text-lg mb-1">REQUEST SUBMITTED</h3>
+                    <p className="text-sm text-muted-foreground font-sans">
+                      You selected the <span className="font-medium text-foreground capitalize">{businessCardRequest.design_style}</span> design.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Status: <span className="capitalize">{businessCardRequest.status}</span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {BUSINESS_CARD_STYLES.map((style) => (
+                        <button
+                          key={style.id}
+                          onClick={() => setSelectedStyle(style.id)}
+                          className={cn(
+                            "relative p-3 rounded-lg border-2 text-left transition-all overflow-hidden",
+                            selectedStyle === style.id
+                              ? 'border-primary ring-2 ring-primary/20'
+                              : 'border-border hover:border-primary/50'
+                          )}
+                        >
+                          <div className="aspect-[5/3] rounded-md mb-3 overflow-hidden bg-muted">
+                            <img 
+                              src={style.image} 
+                              alt={`${style.name} design preview`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <h3 className="font-display text-sm mb-1">{style.name}</h3>
+                          <p className="text-xs text-muted-foreground font-sans">{style.description}</p>
+                          {selectedStyle === style.id && (
+                            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                              <Check className="w-4 h-4 text-primary-foreground" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <Button 
+                      onClick={handleRequestBusinessCard}
+                      disabled={!selectedStyle || requestingCard}
+                      className="w-full font-display"
                     >
-                      <div className="aspect-[5/3] rounded-md mb-3 overflow-hidden bg-muted">
-                        <img 
-                          src={style.image} 
-                          alt={`${style.name} design preview`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <h3 className="font-display text-sm mb-1">{style.name}</h3>
-                      <p className="text-xs text-muted-foreground font-sans">{style.description}</p>
-                      {selectedStyle === style.id && (
-                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="w-4 h-4 text-primary-foreground" />
-                        </div>
+                      {requestingCard ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        'REQUEST BUSINESS CARDS'
                       )}
-                    </button>
-                  ))}
-                </div>
-                
-                <Button 
-                  onClick={handleRequestBusinessCard}
-                  disabled={!selectedStyle || requestingCard}
-                  className="w-full font-display"
-                >
-                  {requestingCard ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    'REQUEST BUSINESS CARDS'
-                  )}
-                </Button>
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </Card>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Completion CTA */}
         {overallProgress >= 100 && (
