@@ -1572,181 +1572,6 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
             )}
             
             <div className="flex-1" />
-            
-            {/* Create Theme Dialog Trigger */}
-            <Dialog open={isCreateThemeOpen} onOpenChange={(open) => {
-              if (!open) handleCloseThemeDialog();
-              else setIsCreateThemeOpen(true);
-            }}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1.5">
-                  <Plus className="w-3.5 h-3.5" />
-                  New Theme
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5" />
-                    {editingThemeId ? 'Edit Custom Theme' : 'Create Custom Theme'}
-                  </DialogTitle>
-                </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Theme Name</Label>
-                          <Input
-                            value={newTheme.name}
-                            onChange={(e) => setNewTheme(prev => ({ ...prev, name: e.target.value }))}
-                            placeholder="My Brand Theme"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Description</Label>
-                          <Input
-                            value={newTheme.description}
-                            onChange={(e) => setNewTheme(prev => ({ ...prev, description: e.target.value }))}
-                            placeholder="Brief description..."
-                          />
-                        </div>
-                        
-                        {/* 5 Color Swatches */}
-                        <div className="space-y-2">
-                          <div className="text-xs font-medium">Theme Colors (5)</div>
-                          <div className="flex gap-2 justify-center p-3 rounded-lg border bg-muted/20">
-                            {[
-                              { key: 'headerBg', label: 'Dark', color: newTheme.colors.headerBg, colorType: 'dark' as const },
-                              { key: 'bodyBg', label: 'Light', color: newTheme.colors.bodyBg, colorType: 'light' as const },
-                              { key: 'buttonBg', label: 'Primary', color: newTheme.colors.buttonBg, colorType: 'primary' as const },
-                              { key: 'accentColor', label: 'Accent', color: newTheme.colors.accentColor, colorType: 'accent' as const },
-                              { key: 'white', label: 'White', color: newTheme.colors.white, colorType: 'white' as const },
-                            ].map((swatch) => (
-                              <div key={swatch.key} className="flex flex-col items-center gap-1">
-                                <ColorWheelPicker
-                                  value={swatch.color}
-                                  colorType={swatch.colorType}
-                                  onChange={(v) => setNewTheme(prev => ({ 
-                                    ...prev, 
-                                    colors: { ...prev.colors, [swatch.key]: v } 
-                                  }))}
-                                />
-                                <span className="text-[10px] text-muted-foreground">{swatch.label}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Color preview */}
-                        <div className="p-3 rounded-lg border">
-                          <div className="text-xs font-medium mb-2">Preview</div>
-                          <div className="rounded-lg overflow-hidden shadow-sm">
-                            <div 
-                              className="p-3 text-center text-sm font-medium"
-                              style={{ backgroundColor: newTheme.colors.headerBg, color: newTheme.colors.white }}
-                            >
-                              Header Preview
-                            </div>
-                            <div 
-                              className="p-3 text-sm"
-                              style={{ backgroundColor: newTheme.colors.bodyBg, color: newTheme.colors.headerBg }}
-                            >
-                              Body content preview text
-                              <div className="mt-2 flex justify-center gap-2">
-                                <span
-                                  className="px-4 py-1 rounded text-xs font-medium"
-                                  style={{ backgroundColor: newTheme.colors.buttonBg, color: newTheme.colors.white }}
-                                >
-                                  Primary
-                                </span>
-                                <span
-                                  className="px-4 py-1 rounded text-xs font-medium border-2"
-                                  style={{ 
-                                    backgroundColor: newTheme.colors.bodyBg, 
-                                    color: newTheme.colors.buttonBg,
-                                    borderColor: newTheme.colors.buttonBg 
-                                  }}
-                                >
-                                  Secondary
-                                </span>
-                              </div>
-                              <div 
-                                className="mt-2 h-1 rounded"
-                                style={{ backgroundColor: newTheme.colors.accentColor }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Advanced color options */}
-                        <details className="group">
-                          <summary className="text-xs font-medium cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                            Advanced Colors
-                          </summary>
-                          <div className="mt-3 grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <Label className="text-xs">Header Text</Label>
-                              <ColorWheelPicker
-                                value={newTheme.colors.headerText}
-                                colorType="text"
-                                onChange={(v) => setNewTheme(prev => ({ 
-                                  ...prev, 
-                                  colors: { ...prev.colors, headerText: v } 
-                                }))}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Body Text</Label>
-                              <ColorWheelPicker
-                                value={newTheme.colors.bodyText}
-                                colorType="text"
-                                onChange={(v) => setNewTheme(prev => ({ 
-                                  ...prev, 
-                                  colors: { ...prev.colors, bodyText: v } 
-                                }))}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Button Text</Label>
-                              <ColorWheelPicker
-                                value={newTheme.colors.buttonText}
-                                colorType="white"
-                                onChange={(v) => setNewTheme(prev => ({ 
-                                  ...prev, 
-                                  colors: { ...prev.colors, buttonText: v } 
-                                }))}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs">Divider</Label>
-                              <ColorWheelPicker
-                                value={newTheme.colors.dividerColor}
-                                colorType="divider"
-                                onChange={(v) => setNewTheme(prev => ({ 
-                                  ...prev, 
-                                  colors: { ...prev.colors, dividerColor: v } 
-                                }))}
-                              />
-                            </div>
-                          </div>
-                        </details>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={handleCloseThemeDialog}>
-                          Cancel
-                        </Button>
-                        <Button 
-                          onClick={editingThemeId ? handleUpdateCustomTheme : handleSaveCustomTheme} 
-                          disabled={isSavingTheme}
-                        >
-                          {isSavingTheme ? (
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          ) : (
-                            <Save className="w-4 h-4 mr-2" />
-                          )}
-                          {editingThemeId ? 'Update Theme' : 'Save Theme'}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
           </div>
 
           {/* Themes Panel */}
@@ -1785,7 +1610,114 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                     </ScrollArea>
                   </TabsContent>
                   <TabsContent value="custom" className="mt-0">
-                    <ScrollArea className="h-[220px]">
+                    {/* New Theme Button */}
+                    <div className="flex justify-end mb-3">
+                      <Dialog open={isCreateThemeOpen} onOpenChange={(open) => {
+                        if (!open) handleCloseThemeDialog();
+                        else setIsCreateThemeOpen(true);
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="gap-1.5 px-3 shadow-sm">
+                            <Plus className="w-3.5 h-3.5" />
+                            New Theme
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                              <Sparkles className="w-5 h-5" />
+                              {editingThemeId ? 'Edit Custom Theme' : 'Create Custom Theme'}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label>Theme Name</Label>
+                              <Input
+                                value={newTheme.name}
+                                onChange={(e) => setNewTheme(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder="My Brand Theme"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Description</Label>
+                              <Input
+                                value={newTheme.description}
+                                onChange={(e) => setNewTheme(prev => ({ ...prev, description: e.target.value }))}
+                                placeholder="Brief description..."
+                              />
+                            </div>
+                            
+                            {/* 5 Color Swatches */}
+                            <div className="space-y-2">
+                              <div className="text-xs font-medium">Theme Colors (5)</div>
+                              <div className="flex gap-2 justify-center p-3 rounded-lg border bg-muted/20">
+                                {[
+                                  { key: 'headerBg', label: 'Dark', color: newTheme.colors.headerBg, colorType: 'dark' as const },
+                                  { key: 'bodyBg', label: 'Light', color: newTheme.colors.bodyBg, colorType: 'light' as const },
+                                  { key: 'buttonBg', label: 'Primary', color: newTheme.colors.buttonBg, colorType: 'primary' as const },
+                                  { key: 'accentColor', label: 'Accent', color: newTheme.colors.accentColor, colorType: 'accent' as const },
+                                  { key: 'dividerColor', label: 'Divider', color: newTheme.colors.dividerColor, colorType: 'divider' as const },
+                                ].map((item) => (
+                                  <Popover key={item.key}>
+                                    <PopoverTrigger asChild>
+                                      <button
+                                        className="flex flex-col items-center gap-1 group"
+                                      >
+                                        <div
+                                          className="w-8 h-8 rounded-full border border-foreground/20 shadow-sm transition-transform group-hover:scale-110"
+                                          style={{ backgroundColor: item.color }}
+                                        />
+                                        <span className="text-[9px] text-muted-foreground">{item.label}</span>
+                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-3" align="center">
+                                      <ColorWheelPicker
+                                        value={item.color}
+                                        onChange={(color) => setNewTheme(prev => ({
+                                          ...prev,
+                                          colors: { ...prev.colors, [item.key]: color }
+                                        }))}
+                                        colorType={item.colorType}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            {/* Theme Preview */}
+                            <div className="space-y-2">
+                              <div className="text-xs font-medium">Preview</div>
+                              <div className="rounded-lg overflow-hidden border shadow-sm" style={{ backgroundColor: newTheme.colors.bodyBg }}>
+                                <div className="p-2 text-center" style={{ backgroundColor: newTheme.colors.headerBg, color: newTheme.colors.headerText }}>
+                                  <div className="text-[10px] font-medium">Header</div>
+                                </div>
+                                <div className="p-3" style={{ color: newTheme.colors.bodyText }}>
+                                  <div className="text-[10px]">Body text preview</div>
+                                  <button className="mt-2 px-3 py-1 rounded text-[9px] font-medium" style={{ backgroundColor: newTheme.colors.buttonBg, color: newTheme.colors.buttonText }}>
+                                    Button
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={handleCloseThemeDialog}>
+                              Cancel
+                            </Button>
+                            <Button onClick={editingThemeId ? handleUpdateCustomTheme : handleSaveCustomTheme} disabled={isSavingTheme || !newTheme.name.trim()}>
+                              {isSavingTheme ? (
+                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                              ) : (
+                                <Save className="w-4 h-4 mr-2" />
+                              )}
+                              {editingThemeId ? 'Update Theme' : 'Save Theme'}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    <ScrollArea className="h-[180px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1 pb-2">
                         {customThemes.map((theme) => (
                           <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
@@ -1801,7 +1733,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             <div className="text-[10px] font-medium truncate flex items-center gap-1"><Sparkles className="w-2.5 h-2.5 text-primary" />{theme.name}</div>
                           </div>
                         ))}
-                        {customThemes.length === 0 && <div className="col-span-full text-center py-6 text-muted-foreground"><Sparkles className="w-6 h-6 mx-auto mb-2 opacity-30" /><p className="text-xs">No custom themes yet</p></div>}
+                        {customThemes.length === 0 && <div className="col-span-full text-center py-6 text-muted-foreground"><Sparkles className="w-6 h-6 mx-auto mb-2 opacity-30" /><p className="text-xs">No custom themes yet</p><p className="text-[10px] mt-1">Click "+ New Theme" to create one</p></div>}
                       </div>
                     </ScrollArea>
                   </TabsContent>
