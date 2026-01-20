@@ -1403,7 +1403,13 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           buttonColor: currentTheme.colors.buttonBg
         }),
         ...(type === 'image' && { 
-          backgroundColor: currentTheme.colors.bodyBg 
+          backgroundColor: currentTheme.colors.bodyBg,
+          textAlign: 'center',
+          paddingTop: 0,
+          paddingBottom: 0,
+          paddingHorizontal: 0,
+          padding: '0px',
+          width: '100%',
         }),
         ...(type === 'divider' && { 
           textColor: currentTheme.colors.dividerColor 
