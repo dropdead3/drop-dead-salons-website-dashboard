@@ -222,6 +222,16 @@ interface EmailBlock {
     buttonTextColor?: string;
     buttonVariant?: 'primary' | 'secondary';
     buttonSize?: number; // 80-140 percentage scale
+    // Border controls
+    borderWidth?: number; // 0-8px
+    borderColor?: string;
+    borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none';
+    // Opacity control
+    backgroundOpacity?: number; // 0-100%
+    // Divider specific
+    dividerThickness?: number; // 1-8px
+    dividerStyle?: 'solid' | 'dashed' | 'dotted' | 'double';
+    dividerWidth?: number; // 20-100%
     buttonShape?: 'pill' | 'rounded' | 'rectangle';
     linkSize?: number; // 80-140 percentage scale for link font size
     iconSize?: number; // 16-48 pixel size for social icons
@@ -550,14 +560,38 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     // Compute padding from individual values or legacy string
     const padding = computePadding(block.styles);
     
+    // Compute border styles
+    const borderWidth = block.styles.borderWidth || 0;
+    const borderStyle = block.styles.borderStyle || 'solid';
+    const borderColor = block.styles.borderColor || '#e5e7eb';
+    const borderStyles = borderWidth > 0 ? `border: ${borderWidth}px ${borderStyle} ${borderColor};` : '';
+    
+    // Compute background with opacity
+    const bgOpacity = (block.styles.backgroundOpacity ?? 100) / 100;
+    let bgStyle = '';
+    if (block.styles.backgroundColor) {
+      const bg = block.styles.backgroundColor;
+      if (bgOpacity < 1 && bg.startsWith('#')) {
+        // Convert hex to rgba
+        const hex = bg.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        bgStyle = `background-color: rgba(${r}, ${g}, ${b}, ${bgOpacity});`;
+      } else {
+        bgStyle = `background-color: ${bg};`;
+      }
+    }
+    
     // Base styles WITHOUT borderRadius - only apply borderRadius to elements that use it in canvas
     const baseStyles = `
-      ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''}
+      ${bgStyle}
       ${block.styles.textColor ? `color: ${block.styles.textColor};` : ''}
       ${block.styles.fontSize ? `font-size: ${block.styles.fontSize};` : ''}
       ${block.styles.fontWeight ? `font-weight: ${block.styles.fontWeight};` : ''}
       ${block.styles.textAlign ? `text-align: ${block.styles.textAlign};` : ''}
       padding: ${padding};
+      ${borderStyles}
     `.trim();
 
     // Convert newlines to <br/> for proper email rendering
@@ -597,10 +631,19 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           <a href="${block.linkUrl || '#'}" style="color: ${block.styles.buttonColor || '#3b82f6'}; text-decoration: underline; font-size: ${linkFontSize}px;">${block.content}</a>
         </p>`;
       }
-      case 'divider':
-        return `<hr style="border: none; border-top: 1px solid ${block.styles.textColor || '#e5e7eb'}; margin: ${block.styles.padding || '16px 0'};" />`;
-      case 'spacer':
-        return `<div style="height: ${block.styles.height || '24px'};"></div>`;
+      case 'divider': {
+        const thickness = block.styles.dividerThickness || 1;
+        const style = block.styles.dividerStyle || 'solid';
+        const width = block.styles.dividerWidth || 100;
+        const color = block.styles.textColor || '#e5e7eb';
+        return `<div style="text-align: center; padding: ${block.styles.padding || '16px 0'};">
+          <hr style="border: none; border-top: ${thickness}px ${style} ${color}; margin: 0 auto; width: ${width}%;" />
+        </div>`;
+      }
+      case 'spacer': {
+        const height = parseInt(block.styles.height || '24') || 24;
+        return `<div style="height: ${height}px;"></div>`;
+      }
       case 'social': {
         const enabledLinks = (block.socialLinks || []).filter(link => link.enabled);
         if (enabledLinks.length === 0) return '';
@@ -3493,6 +3536,88 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       );
                     })()}
 
+
+                    {/* Divider Controls */}
+                    {selectedBlock.type === 'divider' && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-medium">Divider Settings</Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Thickness</Label>
+                            <span className="text-xs text-muted-foreground">{selectedBlock.styles.dividerThickness || 1}px</span>
+                          </div>
+                          <Slider
+                            variant="filled"
+                            min={1}
+                            max={8}
+                            step={1}
+                            value={[selectedBlock.styles.dividerThickness || 1]}
+                            onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { dividerThickness: value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Width</Label>
+                            <span className="text-xs text-muted-foreground">{selectedBlock.styles.dividerWidth || 100}%</span>
+                          </div>
+                          <Slider
+                            variant="filled"
+                            min={20}
+                            max={100}
+                            step={5}
+                            value={[selectedBlock.styles.dividerWidth || 100]}
+                            onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { dividerWidth: value })}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Style</Label>
+                          <div className="flex gap-1">
+                            {(['solid', 'dashed', 'dotted', 'double'] as const).map(style => (
+                              <Button
+                                key={style}
+                                variant={(selectedBlock.styles.dividerStyle || 'solid') === style ? 'default' : 'outline'}
+                                size="sm"
+                                className="h-7 flex-1 text-xs capitalize"
+                                onClick={() => updateBlockStyles(selectedBlock.id, { dividerStyle: style })}
+                              >
+                                {style}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs text-muted-foreground">Color</Label>
+                          <ColorWheelPicker
+                            value={selectedBlock.styles.textColor || '#e5e7eb'}
+                            colorType="accent"
+                            onChange={(v) => updateBlockStyles(selectedBlock.id, { textColor: v })}
+                            themeColors={currentTheme.colors}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Spacer Controls */}
+                    {selectedBlock.type === 'spacer' && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-medium">Spacer Settings</Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Height</Label>
+                            <span className="text-xs text-muted-foreground">{parseInt(selectedBlock.styles.height || '24') || 24}px</span>
+                          </div>
+                          <Slider
+                            variant="filled"
+                            min={8}
+                            max={120}
+                            step={4}
+                            value={[parseInt(selectedBlock.styles.height || '24') || 24]}
+                            onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { height: `${value}px` })}
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Common settings */}
                     {selectedBlock.type !== 'divider' && selectedBlock.type !== 'spacer' && (
                       <>
@@ -3594,6 +3719,70 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               themeColors={currentTheme.colors}
                             />
                           </div>
+                        </div>
+
+                        {/* Background Opacity */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Background Opacity</Label>
+                            <span className="text-xs text-muted-foreground">{selectedBlock.styles.backgroundOpacity ?? 100}%</span>
+                          </div>
+                          <Slider
+                            variant="filled"
+                            min={0}
+                            max={100}
+                            step={5}
+                            value={[selectedBlock.styles.backgroundOpacity ?? 100]}
+                            onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { backgroundOpacity: value })}
+                          />
+                        </div>
+
+                        {/* Border Controls */}
+                        <div className="space-y-3 pt-2 border-t">
+                          <Label className="text-xs text-muted-foreground font-medium">Border</Label>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs">Border Width</Label>
+                              <span className="text-xs text-muted-foreground">{selectedBlock.styles.borderWidth || 0}px</span>
+                            </div>
+                            <Slider
+                              variant="filled"
+                              min={0}
+                              max={8}
+                              step={1}
+                              value={[selectedBlock.styles.borderWidth || 0]}
+                              onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { borderWidth: value })}
+                            />
+                          </div>
+                          {(selectedBlock.styles.borderWidth || 0) > 0 && (
+                            <>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs">Border Style</Label>
+                                <div className="flex gap-1">
+                                  {(['solid', 'dashed', 'dotted'] as const).map(style => (
+                                    <Button
+                                      key={style}
+                                      variant={(selectedBlock.styles.borderStyle || 'solid') === style ? 'default' : 'outline'}
+                                      size="sm"
+                                      className="h-7 flex-1 text-xs capitalize"
+                                      onClick={() => updateBlockStyles(selectedBlock.id, { borderStyle: style })}
+                                    >
+                                      {style}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Label className="text-xs text-muted-foreground">Border Color</Label>
+                                <ColorWheelPicker
+                                  value={selectedBlock.styles.borderColor || '#e5e7eb'}
+                                  colorType="accent"
+                                  onChange={(v) => updateBlockStyles(selectedBlock.id, { borderColor: v })}
+                                  themeColors={currentTheme.colors}
+                                />
+                              </div>
+                            </>
+                          )}
                         </div>
                       </>
                     )}
@@ -3716,12 +3905,17 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       {/* Block content preview */}
                       <div 
                         style={{
-                          backgroundColor: block.styles.backgroundColor,
+                          backgroundColor: block.styles.backgroundColor 
+                            ? `rgba(${parseInt(block.styles.backgroundColor.slice(1, 3), 16)}, ${parseInt(block.styles.backgroundColor.slice(3, 5), 16)}, ${parseInt(block.styles.backgroundColor.slice(5, 7), 16)}, ${(block.styles.backgroundOpacity ?? 100) / 100})`
+                            : undefined,
                           color: block.styles.textColor,
                           fontSize: block.styles.fontSize,
                           fontWeight: block.styles.fontWeight,
                           textAlign: block.styles.textAlign,
                           padding: computePadding(block.styles),
+                          border: (block.styles.borderWidth || 0) > 0 
+                            ? `${block.styles.borderWidth}px ${block.styles.borderStyle || 'solid'} ${block.styles.borderColor || '#e5e7eb'}`
+                            : undefined,
                         }}
                       >
                         {block.type === 'heading' && (
@@ -3811,12 +4005,32 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             </p>
                           );
                         })()}
-                        {block.type === 'divider' && (
-                          <hr style={{ border: 'none', borderTop: `1px solid ${block.styles.textColor || '#e5e7eb'}` }} />
-                        )}
-                        {block.type === 'spacer' && (
-                          <div style={{ height: block.styles.height || '24px' }} className="border-dashed border opacity-50 bg-muted/30" />
-                        )}
+                        {block.type === 'divider' && (() => {
+                          const thickness = block.styles.dividerThickness || 1;
+                          const style = block.styles.dividerStyle || 'solid';
+                          const width = block.styles.dividerWidth || 100;
+                          return (
+                            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                              <hr style={{ 
+                                border: 'none', 
+                                borderTop: `${thickness}px ${style} ${block.styles.textColor || '#e5e7eb'}`,
+                                margin: '0 auto',
+                                width: `${width}%`
+                              }} />
+                            </div>
+                          );
+                        })()}
+                        {block.type === 'spacer' && (() => {
+                          const height = parseInt(block.styles.height || '24') || 24;
+                          return (
+                            <div 
+                              style={{ height: `${height}px` }} 
+                              className="border-dashed border opacity-50 bg-muted/30 flex items-center justify-center"
+                            >
+                              <span className="text-[10px] text-muted-foreground">{height}px</span>
+                            </div>
+                          );
+                        })()}
                         {block.type === 'social' && (() => {
                           const iconSize = block.styles.iconSize || 24;
                           return (
