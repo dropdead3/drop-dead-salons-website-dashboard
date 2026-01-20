@@ -757,8 +757,8 @@ export function EmailTemplatesManager() {
           {/* Email Body */}
           <div className="overflow-y-auto max-h-[calc(95vh-200px)] transition-all duration-500" style={{ backgroundColor: '#f2f2f7' }}>
             <div className={cn(
-              "transition-all duration-500 ease-out pb-8",
-              previewMode === 'desktop' ? 'p-6 pb-12' : 'p-3 pb-8'
+              "transition-all duration-500 ease-out",
+              previewMode === 'desktop' ? 'p-6 pb-24' : 'p-3 pb-16'
             )}>
               {/* Outer email wrapper to simulate email client viewport */}
               <div 
