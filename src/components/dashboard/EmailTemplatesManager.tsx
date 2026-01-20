@@ -164,7 +164,8 @@ export function EmailTemplatesManager() {
       id: editingTemplate.id,
       updates: editForm,
     });
-    setEditingTemplate(null);
+    setHasUnsavedChanges(false);
+    toast.success('Changes have been successfully saved');
   };
 
   const handleDelete = async (id: string) => {
