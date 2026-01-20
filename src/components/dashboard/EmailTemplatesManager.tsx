@@ -671,13 +671,20 @@ export function EmailTemplatesManager() {
                 <Eye className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">Now viewing in</span>
               </div>
-              <div className="flex items-center rounded-full p-1 bg-background border border-border shadow-sm">
+              <div className="relative flex items-center rounded-full p-1 bg-background border border-border shadow-sm">
+                {/* Sliding indicator */}
+                <div 
+                  className={cn(
+                    "absolute top-1 bottom-1 rounded-full bg-foreground transition-all duration-300 ease-out",
+                    previewMode === 'desktop' ? "left-1 w-[104px]" : "left-[108px] w-[92px]"
+                  )}
+                />
                 <button
                   onClick={() => setPreviewMode('desktop')}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+                    "relative z-10 flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200",
                     previewMode === 'desktop' 
-                      ? "bg-foreground text-background" 
+                      ? "text-background" 
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -687,9 +694,9 @@ export function EmailTemplatesManager() {
                 <button
                   onClick={() => setPreviewMode('mobile')}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+                    "relative z-10 flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200",
                     previewMode === 'mobile' 
-                      ? "bg-foreground text-background" 
+                      ? "text-background" 
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
