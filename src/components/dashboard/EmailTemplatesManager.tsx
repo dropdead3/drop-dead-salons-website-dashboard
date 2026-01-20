@@ -27,6 +27,13 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Mail,
   Pencil,
   Trash2,
@@ -36,6 +43,7 @@ import {
   Send,
   Copy,
   Plus,
+  MoreHorizontal,
 } from 'lucide-react';
 import {
   useEmailTemplates,
@@ -329,83 +337,84 @@ export function EmailTemplatesManager() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {templates?.map((template) => (
-            <Card
+            <div
               key={template.id}
-              className={cn(!template.is_active && 'opacity-60')}
+              className={cn(
+                "group flex items-center justify-between gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors",
+                !template.is_active && 'opacity-50'
+              )}
             >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium">{template.name}</h3>
-                      <Badge variant="outline" className="text-xs">
-                        {template.template_key}
-                      </Badge>
-                      {!template.is_active && (
-                        <Badge variant="secondary" className="text-xs">
-                          Inactive
-                        </Badge>
-                      )}
-                    </div>
-                    {template.description && (
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {template.description}
-                      </p>
-                    )}
-                    <p className="text-sm font-sans bg-muted px-2 py-1 rounded truncate">
-                      Subject: {template.subject}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openTestEmailDialog(template)}
-                      title="Send Test Email"
-                    >
-                      <Send className="w-4 h-4" />
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-sm">{template.name}</h3>
+                  {!template.is_active && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      Inactive
+                    </Badge>
+                  )}
+                </div>
+                {template.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-1">
+                    {template.description}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground/70 truncate">
+                  {template.subject}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => openEditDialog(template)}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPreviewTemplate(template)}
-                      title="Preview"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem onClick={() => openEditDialog(template)}>
+                      <Pencil className="w-3.5 h-3.5 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setPreviewTemplate(template)}>
+                      <Eye className="w-3.5 h-3.5 mr-2" />
+                      Preview
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openTestEmailDialog(template)}>
+                      <Send className="w-3.5 h-3.5 mr-2" />
+                      Send Test
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
                       onClick={() => handleDuplicate(template)}
                       disabled={isDuplicating === template.id}
-                      title="Duplicate"
                     >
                       {isDuplicating === template.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
                       ) : (
-                        <Copy className="w-4 h-4" />
+                        <Copy className="w-3.5 h-3.5 mr-2" />
                       )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditDialog(template)}
-                      title="Edit"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
+                      Duplicate
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          title="Delete"
+                        <DropdownMenuItem 
+                          className="text-destructive focus:text-destructive"
+                          onSelect={(e) => e.preventDefault()}
                         >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                          <Trash2 className="w-3.5 h-3.5 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
@@ -426,10 +435,10 @@ export function EmailTemplatesManager() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           ))}
         </div>
       )}
