@@ -30,9 +30,11 @@ import {
   UserCog,
   Trash2,
   Mail,
+  Variable,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
+import { EmailVariablesManager } from '@/components/dashboard/EmailVariablesManager';
 
 interface UserWithRole {
   user_id: string;
@@ -266,6 +268,24 @@ export default function Settings() {
             <AccordionContent>
               <div className="py-4">
                 <EmailTemplatesManager />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Email Variables */}
+          <AccordionItem value="email-variables" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Variable className="w-5 h-5" />
+                <span className="font-display text-sm tracking-wide">EMAIL VARIABLES</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="py-4">
+                <p className="text-sm text-muted-foreground font-sans mb-4">
+                  Manage available template variables. New variables will automatically appear in the email editor.
+                </p>
+                <EmailVariablesManager />
               </div>
             </AccordionContent>
           </AccordionItem>

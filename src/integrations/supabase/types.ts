@@ -483,6 +483,39 @@ export type Database = {
         }
         Relationships: []
       }
+      email_variables: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          example: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+          variable_key: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          example?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          variable_key: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          example?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          variable_key?: string
+        }
+        Relationships: []
+      }
       employee_location_schedules: {
         Row: {
           created_at: string | null
