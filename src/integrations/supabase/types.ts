@@ -1758,6 +1758,7 @@ export type Database = {
         | "google"
         | "walkin"
         | "other"
+        | "salon_lead"
       program_status: "active" | "paused" | "completed" | "restarted"
       stylist_type: "independent" | "commission" | "salon_owner"
       touchpoint_type: "call" | "text" | "email" | "social" | "in_person"
@@ -1898,7 +1899,15 @@ export const Constants = {
         "admin_assistant",
         "operations_assistant",
       ],
-      lead_source: ["content", "ads", "referral", "google", "walkin", "other"],
+      lead_source: [
+        "content",
+        "ads",
+        "referral",
+        "google",
+        "walkin",
+        "other",
+        "salon_lead",
+      ],
       program_status: ["active", "paused", "completed", "restarted"],
       stylist_type: ["independent", "commission", "salon_owner"],
       touchpoint_type: ["call", "text", "email", "social", "in_person"],
