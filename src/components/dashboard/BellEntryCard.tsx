@@ -223,20 +223,20 @@ export function BellEntryCard({
       ) : (
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4 flex-1 min-w-0">
-            {/* Avatar */}
-            {showStylistName && (
-              <Avatar className="h-12 w-12 shrink-0">
-                <AvatarImage src={entry.stylist_photo || undefined} alt={entry.stylist_name} />
-                <AvatarFallback className="bg-primary/10 text-primary font-display text-sm">
-                  {entry.stylist_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                </AvatarFallback>
-              </Avatar>
-            )}
+            {/* Avatar - always show */}
+            <Avatar className="h-12 w-12 shrink-0">
+              <AvatarImage src={entry.stylist_photo || undefined} alt={entry.stylist_name} />
+              <AvatarFallback className="bg-primary/10 text-primary font-display text-sm">
+                {entry.stylist_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+              </AvatarFallback>
+            </Avatar>
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-1">
-                {showStylistName && entry.stylist_name && (
-                  <span className="font-medium font-sans text-sm">{entry.stylist_name}</span>
+                {entry.stylist_name && (
+                  <span className="font-medium font-sans text-sm">
+                    {showStylistName ? entry.stylist_name : 'You'}
+                  </span>
                 )}
                 {entry.is_pinned && (
                   <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs font-display tracking-wide rounded">
