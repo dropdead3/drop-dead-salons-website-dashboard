@@ -1487,28 +1487,6 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
 
   return (
     <div className="space-y-4">
-      {/* Variables toolbar */}
-      {variables.length > 0 && (
-        <div className="p-3 bg-muted rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <Variable className="w-4 h-4" />
-            <span className="text-sm font-medium">Click to insert variable:</span>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {variables.map((variable) => (
-              <Badge
-                key={variable}
-                variant="secondary"
-                className="text-xs font-mono cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                onClick={() => insertVariable(variable)}
-              >
-                {`{{${variable}}}`}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
         <div className="flex items-center justify-between gap-4 mb-2">
           <TabsList className="flex-1">
@@ -1581,6 +1559,29 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
               <Image className="w-4 h-4" />
               Brand Logos
             </Button>
+            
+            {/* Variables section */}
+            {variables.length > 0 && (
+              <>
+                <div className="w-px h-6 bg-border/60 mx-1" />
+                <div className="flex items-center gap-2">
+                  <Variable className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Variables:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {variables.map((variable) => (
+                      <Badge
+                        key={variable}
+                        variant="secondary"
+                        className="text-xs font-mono cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                        onClick={() => insertVariable(variable)}
+                      >
+                        {`{{${variable}}}`}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
             
             <div className="flex-1" />
             
