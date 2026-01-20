@@ -410,7 +410,92 @@ export default function Onboarding() {
           <Progress value={overallProgress} className="h-3" />
         </Card>
 
-        {/* Section 1: Handbooks */}
+        {/* Section 1: Onboarding Tasks Checklist */}
+        <Card className="overflow-hidden">
+          <div className="p-6 border-b bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <ClipboardCheck className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-display text-lg">ONBOARDING CHECKLIST</h2>
+                <p className="text-sm text-muted-foreground font-sans">
+                  Complete these tasks to finish your setup
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="font-display text-lg">{completedTasksCount}/{totalTasks}</span>
+                <p className="text-xs text-muted-foreground">completed</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-6 space-y-2">
+            {onboardingTasks.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-primary" />
+                <p className="font-sans text-sm">No tasks assigned to your role</p>
+              </div>
+            ) : (
+              onboardingTasks.map((task) => {
+                const completed = isTaskCompleted(task.id);
+                
+                return (
+                  <div
+                    key={task.id}
+                    className={cn(
+                      "w-full flex items-start gap-3 p-3 rounded-lg border transition-all",
+                      completed
+                        ? 'border-primary/30 bg-primary/5'
+                        : 'border-border'
+                    )}
+                  >
+                    <button
+                      onClick={() => handleToggleTask(task.id)}
+                      className="flex-1 flex items-start gap-3 text-left hover:opacity-80 transition-opacity"
+                    >
+                      <div className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all mt-0.5 shrink-0",
+                        completed
+                          ? 'bg-primary border-primary'
+                          : 'border-muted-foreground/30'
+                      )}>
+                        {completed && <Check className="w-4 h-4 text-primary-foreground" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className={cn(
+                          "font-sans text-sm block",
+                          completed && 'text-muted-foreground line-through'
+                        )}>
+                          {task.title}
+                        </span>
+                        {task.description && (
+                          <span className="text-xs text-muted-foreground block mt-0.5">
+                            {task.description}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                    {task.link_url && (
+                      <a
+                        href={task.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="shrink-0 p-2 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                        title="Open link"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </Card>
+
+        {/* Section 2: Handbooks */}
         <Card className="overflow-hidden">
           <div className="p-6 border-b bg-muted/30">
             <div className="flex items-center gap-3">
@@ -486,7 +571,7 @@ export default function Onboarding() {
           </div>
         </Card>
 
-        {/* Section 2: Business Cards */}
+        {/* Section 3: Business Cards */}
         <Card className="overflow-hidden">
           <div className="p-6 border-b bg-muted/30">
             <div className="flex items-center gap-3">
@@ -570,7 +655,7 @@ export default function Onboarding() {
           </div>
         </Card>
 
-        {/* Section 3: Request Headshots */}
+        {/* Section 4: Request Headshots */}
         <Card className="overflow-hidden">
           <div className="p-6 border-b bg-muted/30">
             <div className="flex items-center gap-3">
@@ -664,91 +749,6 @@ export default function Onboarding() {
                   )}
                 </Button>
               </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Section 4: Onboarding Tasks Checklist */}
-        <Card className="overflow-hidden">
-          <div className="p-6 border-b bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <ClipboardCheck className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="font-display text-lg">ONBOARDING CHECKLIST</h2>
-                <p className="text-sm text-muted-foreground font-sans">
-                  Complete these tasks to finish your setup
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="font-display text-lg">{completedTasksCount}/{totalTasks}</span>
-                <p className="text-xs text-muted-foreground">completed</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-6 space-y-2">
-            {onboardingTasks.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <p className="font-sans text-sm">No tasks assigned to your role</p>
-              </div>
-            ) : (
-              onboardingTasks.map((task) => {
-                const completed = isTaskCompleted(task.id);
-                
-                return (
-                  <div
-                    key={task.id}
-                    className={cn(
-                      "w-full flex items-start gap-3 p-3 rounded-lg border transition-all",
-                      completed
-                        ? 'border-primary/30 bg-primary/5'
-                        : 'border-border'
-                    )}
-                  >
-                    <button
-                      onClick={() => handleToggleTask(task.id)}
-                      className="flex-1 flex items-start gap-3 text-left hover:opacity-80 transition-opacity"
-                    >
-                      <div className={cn(
-                        "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all mt-0.5 shrink-0",
-                        completed
-                          ? 'bg-primary border-primary'
-                          : 'border-muted-foreground/30'
-                      )}>
-                        {completed && <Check className="w-4 h-4 text-primary-foreground" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className={cn(
-                          "font-sans text-sm block",
-                          completed && 'text-muted-foreground line-through'
-                        )}>
-                          {task.title}
-                        </span>
-                        {task.description && (
-                          <span className="text-xs text-muted-foreground block mt-0.5">
-                            {task.description}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                    {task.link_url && (
-                      <a
-                        href={task.link_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="shrink-0 p-2 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
-                        title="Open link"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-                );
-              })
             )}
           </div>
         </Card>
