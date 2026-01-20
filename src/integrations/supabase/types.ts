@@ -839,6 +839,48 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_achievements: {
+        Row: {
+          badge_color: string
+          category: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+        }
+        Insert: {
+          badge_color?: string
+          category?: string
+          created_at?: string
+          description: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          requirement_type: string
+          requirement_value?: number
+        }
+        Update: {
+          badge_color?: string
+          category?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          requirement_type?: string
+          requirement_value?: number
+        }
+        Relationships: []
+      }
       leaderboard_history: {
         Row: {
           created_at: string
@@ -1540,6 +1582,38 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_achievements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
