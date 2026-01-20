@@ -1869,7 +1869,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           <Textarea
                             value={selectedBlock.content}
                             onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
-                            className="min-h-[60px] text-sm resize-none"
+                            className="min-h-[180px] text-sm resize-y"
                           />
                         </div>
                         <div className="flex items-end gap-2">
