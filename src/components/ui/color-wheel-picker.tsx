@@ -10,11 +10,24 @@ import {
 import { cn } from '@/lib/utils';
 import { Copy, Check } from 'lucide-react';
 
+interface ThemeColors {
+  headerBg: string;
+  headerText: string;
+  bodyBg: string;
+  bodyText: string;
+  buttonBg: string;
+  buttonText: string;
+  accentColor: string;
+  dividerColor: string;
+  white: string;
+}
+
 interface ColorWheelPickerProps {
   value: string;
   onChange: (value: string) => void;
   colorType?: 'dark' | 'light' | 'primary' | 'accent' | 'white' | 'text' | 'divider';
   label?: string;
+  themeColors?: ThemeColors;
 }
 
 // Helper functions for color conversion
@@ -211,7 +224,7 @@ function getColorHarmonies(h: number, s: number, l: number): HarmonyColors[] {
   ];
 }
 
-export function ColorWheelPicker({ value, onChange, colorType = 'primary', label }: ColorWheelPickerProps) {
+export function ColorWheelPicker({ value, onChange, colorType = 'primary', label, themeColors }: ColorWheelPickerProps) {
   const wheelRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hsl, setHsl] = useState(() => hexToHsl(value || '#3b82f6'));
@@ -329,7 +342,21 @@ export function ColorWheelPicker({ value, onChange, colorType = 'primary', label
     }
   };
 
-  const recommendedColors = getRecommendedColors(colorType, hsl.h);
+  // Use theme colors if provided, otherwise fall back to generated recommendations
+  const themeColorArray = themeColors ? [
+    themeColors.headerBg,
+    themeColors.headerText,
+    themeColors.bodyBg,
+    themeColors.bodyText,
+    themeColors.buttonBg,
+    themeColors.buttonText,
+    themeColors.accentColor,
+    themeColors.dividerColor,
+  ].filter((c, i, arr) => arr.indexOf(c) === i) : []; // Remove duplicates
+  
+  const recommendedColors = themeColorArray.length > 0 
+    ? themeColorArray.slice(0, 8) 
+    : getRecommendedColors(colorType, hsl.h);
   const harmonies = getColorHarmonies(hsl.h, hsl.s, hsl.l);
 
   return (
@@ -345,12 +372,12 @@ export function ColorWheelPicker({ value, onChange, colorType = 'primary', label
         <div className="space-y-3">
           {label && <Label className="text-xs font-medium">{label}</Label>}
           
-          {/* Recommended colors */}
+          {/* Recommended colors - show theme colors if available */}
           <div className="space-y-1.5">
             <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">
-              Recommended for {colorType}
+              {themeColors ? 'Theme Colors' : `Recommended for ${colorType}`}
             </Label>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 flex-wrap">
               {recommendedColors.map((color, i) => (
                 <button
                   key={i}
