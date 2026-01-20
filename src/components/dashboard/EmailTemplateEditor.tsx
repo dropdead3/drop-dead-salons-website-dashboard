@@ -2921,10 +2921,16 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
               <div className="sticky top-4">
                 <div className="font-medium text-sm mb-2">Email Canvas</div>
                 <ScrollArea className="h-[calc(100vh-200px)] max-h-[700px] border rounded-lg bg-muted/50 p-4">
-                {/* Hint overlay at top of canvas */}
-                <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2.5 mb-4 max-w-[600px] mx-auto flex items-center gap-2">
-                  <MousePointerClick className="w-4 h-4 text-primary flex-shrink-0" />
-                  <span className="text-xs text-primary font-medium">Click any block below to edit its content and styling</span>
+                {/* Hint overlays at top of canvas */}
+                <div className="space-y-2 mb-4 max-w-[600px] mx-auto">
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2.5 flex items-center gap-2">
+                    <MousePointerClick className="w-4 h-4 text-primary flex-shrink-0" />
+                    <span className="text-xs text-primary font-medium">Click any block below to edit its content and styling</span>
+                  </div>
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-2.5 flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <span className="text-xs text-amber-700 font-medium">Remember to click Preview before finalizing your template to ensure no code errors</span>
+                  </div>
                 </div>
                 <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
                   {blocks.map((block, index) => (
