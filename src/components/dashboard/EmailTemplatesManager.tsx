@@ -116,6 +116,7 @@ export function EmailTemplatesManager() {
   });
   const [newVariable, setNewVariable] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [compareMode, setCompareMode] = useState(false);
   const initialEditFormRef = useRef<typeof editForm | null>(null);
@@ -459,7 +460,7 @@ export function EmailTemplatesManager() {
         open={!!editingTemplate}
         onOpenChange={(open) => {
           if (!open && hasUnsavedChanges) {
-            toast.warning('You have unsaved changes. Click Cancel to discard or Save to keep them.');
+            setShowDiscardConfirm(true);
             return;
           }
           if (!open) setEditingTemplate(null);
@@ -484,16 +485,50 @@ export function EmailTemplatesManager() {
                     setEditForm({ ...editForm, is_active: checked })
                   }
                 />
-                <DialogClose className="rounded-full p-1.5 opacity-70 hover:opacity-100 hover:bg-muted transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                <button 
+                  onClick={() => {
+                    if (hasUnsavedChanges) {
+                      setShowDiscardConfirm(true);
+                    } else {
+                      setEditingTemplate(null);
+                    }
+                  }}
+                  className="rounded-full p-1.5 opacity-70 hover:opacity-100 hover:bg-muted transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
                   <X className="h-4 w-4" />
                   <span className="sr-only">Close</span>
-                </DialogClose>
+                </button>
               </div>
             </div>
             <DialogDescription>
               Use the visual editor to design your email template, or switch to HTML code for full control.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Discard Changes Confirmation Dialog */}
+          <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You have unsaved changes to this email template. Are you sure you want to close without saving? Your changes will be lost.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => {
+                    setShowDiscardConfirm(false);
+                    setEditingTemplate(null);
+                    setHasUnsavedChanges(false);
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Discard Changes
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <div className="flex-1 overflow-y-auto space-y-4 px-6">
             <div className="space-y-2">
