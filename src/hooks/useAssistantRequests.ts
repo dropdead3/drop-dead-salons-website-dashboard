@@ -27,6 +27,8 @@ export interface AssistantRequest {
   recurrence_type: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
   recurrence_end_date: string | null;
   parent_request_id: string | null;
+  accepted_at: string | null;
+  declined_by: string[] | null;
   salon_services?: SalonService;
   stylist_profile?: { full_name: string; display_name: string | null } | null;
   assistant_profile?: { full_name: string; display_name: string | null } | null;
@@ -264,6 +266,58 @@ export function useUpdateRequestStatus() {
     },
     onError: () => {
       toast.error('Failed to update request');
+    },
+  });
+}
+
+export function useAcceptAssignment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('assistant_requests')
+        .update({ accepted_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assistant-requests'] });
+      toast.success('Assignment accepted!');
+    },
+    onError: () => {
+      toast.error('Failed to accept assignment');
+    },
+  });
+}
+
+export function useDeclineAssignment() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      // Call edge function to decline and reassign
+      const { data, error } = await supabase.functions.invoke('reassign-assistant', {
+        body: { request_id: id, declined_by: user.id }
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['assistant-requests'] });
+      if (data?.reassigned) {
+        toast.success('Assignment declined and reassigned');
+      } else {
+        toast.success('Assignment declined');
+      }
+    },
+    onError: () => {
+      toast.error('Failed to decline assignment');
     },
   });
 }
