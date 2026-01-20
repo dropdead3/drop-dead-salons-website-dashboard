@@ -526,7 +526,8 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const buttonStyles = isSecondary
           ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a'}; padding: 16px 32px; text-decoration: none; font-weight: bold; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : 'border-radius: 8px;'}`
           : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: 16px 32px; text-decoration: none; font-weight: bold; ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : 'border-radius: 8px;'}`;
-        return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
+        // Include background-color on wrapper div to match body background
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''} ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''}">
           <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}</a>
         </div>`;
       }
@@ -589,8 +590,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         
         let logoHtml = '';
         if (showLogo && logo) {
+          // Use display:block and margin:auto for centering, text-align for left/right alignment
+          const imgMargin = textAlign === 'center' ? 'margin: 0 auto;' : textAlign === 'right' ? 'margin-left: auto;' : '';
           logoHtml = `<div style="margin-bottom: 12px; text-align: ${textAlign};">
-            <img src="${absoluteLogoSrc}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto;" />
+            <img src="${absoluteLogoSrc}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto; display: block; ${imgMargin}" />
           </div>`;
         }
         
