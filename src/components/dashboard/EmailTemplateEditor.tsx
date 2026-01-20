@@ -1272,6 +1272,40 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
     }, 0);
   }, [blocks, updateBlock]);
 
+  const applyLinkFormat = useCallback((blockId: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const block = blocks.find(b => b.id === blockId);
+    if (!block) return;
+    
+    const content = block.content;
+    
+    // If no selection, do nothing
+    if (start === end) {
+      toast.error('Please select text to create a link');
+      return;
+    }
+    
+    const selectedText = content.substring(start, end);
+    
+    // Prompt for URL
+    const url = window.prompt('Enter the URL for the link:', 'https://');
+    if (!url || url === 'https://') return;
+    
+    // Wrap with anchor tag
+    const linkTag = `<a href="${url}" style="color: inherit; text-decoration: underline;">${selectedText}</a>`;
+    const newContent = content.substring(0, start) + linkTag + content.substring(end);
+    updateBlock(blockId, { content: newContent });
+    
+    // Restore focus to textarea
+    setTimeout(() => {
+      textarea.focus();
+    }, 0);
+  }, [blocks, updateBlock]);
+
   const deleteBlock = (id: string) => {
     updateBlocksAndHtml(blocks.filter(block => block.id !== id));
     if (selectedBlockId === id) setSelectedBlockId(null);
@@ -1952,6 +1986,15 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             title="Italic selected text"
                           >
                             <Italic className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => applyLinkFormat(selectedBlock.id)}
+                            title="Add link to selected text"
+                          >
+                            <Link className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </>
