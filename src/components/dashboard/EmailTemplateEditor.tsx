@@ -564,20 +564,27 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'footer': {
-        const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main-black', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.', logoSize: 'large' };
-        const logo = getLogoById(footerConfig.logoId) || brandLogos[0];
+        const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.', logoSize: 'large' as const, logoPosition: 'center' as const };
+        const footerConfig = block.footerConfig ? { ...defaultFooterConfig, ...block.footerConfig } : defaultFooterConfig;
+        const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'drop-dead-main-white';
+        const logo = getLogoById(logoId) || brandLogos.find(l => l.variant === 'white') || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
         const iconColor = block.styles.buttonColor || '#f5f0e8';
         const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
         const logoMaxWidth = logoSizeMap[footerConfig.logoSize || 'large'];
+        const logoPosition = footerConfig.logoPosition || 'center';
+        const showLogo = footerConfig.showLogo !== false;
+        
+        // Map logoPosition to text-align for HTML
+        const textAlign = logoPosition === 'left' ? 'left' : logoPosition === 'right' ? 'right' : 'center';
         
         // Convert logo src to absolute URL for preview compatibility
         const absoluteLogoSrc = logo.src.startsWith('/') ? `${window.location.origin}${logo.src}` : logo.src;
         
         let logoHtml = '';
-        if (footerConfig.showLogo) {
-          logoHtml = `<div style="margin-bottom: 16px;">
+        if (showLogo && logo) {
+          logoHtml = `<div style="margin-bottom: 12px;">
             <img src="${absoluteLogoSrc}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto;" />
           </div>`;
         }
@@ -587,7 +594,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           const enabledLinks = (block.socialLinks || []).filter(link => link.enabled);
           if (enabledLinks.length > 0) {
             const iconStyle = `display: inline-block; width: 24px; height: 24px; margin: 0 8px; text-decoration: none;`;
-            socialHtml = `<div style="margin-bottom: 16px;">` + enabledLinks.map(link => {
+            socialHtml = `<div style="margin-bottom: 12px;">` + enabledLinks.map(link => {
               let svg = '';
               let href = link.url;
               
@@ -609,10 +616,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           }
         }
         
-        return `<div style="text-align: center; background-color: ${bgColor}; color: ${textColor}; padding: ${block.styles.padding || '32px 24px'}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px'};">
+        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${block.styles.padding || '32px 24px'}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px'};">
           ${logoHtml}
           ${socialHtml}
-          <p style="margin: 0; font-size: 12px; opacity: 0.8;">${footerConfig.copyrightText}</p>
+          <p style="margin: 0; font-size: 11px; opacity: 0.8;">${footerConfig.copyrightText}</p>
         </div>`;
       }
       case 'header': {
