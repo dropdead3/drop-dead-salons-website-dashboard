@@ -50,6 +50,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format, differenceInDays } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
+import { CoachNotesSection } from '@/components/dashboard/CoachNotesSection';
 
 type ProgramStatus = Database['public']['Enums']['program_status'];
 
@@ -536,6 +537,12 @@ export default function ClientEngineTracker() {
                           </span>
                         </div>
                       )}
+
+                      {/* Coach Notes */}
+                      <CoachNotesSection 
+                        enrollmentId={participant.enrollment.id}
+                        participantName={participant.profile.display_name || participant.profile.full_name || 'Participant'}
+                      />
                     </div>
                   </CollapsibleContent>
                 </Card>
