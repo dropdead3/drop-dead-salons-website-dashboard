@@ -594,38 +594,45 @@ export function EmailTemplatesManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Preview Dialog - Email Client Style */}
+      {/* Preview Dialog - Email Client Style (iOS Mail inspired) */}
       <Dialog
         open={!!previewTemplate}
         onOpenChange={(open) => !open && setPreviewTemplate(null)}
       >
-        <DialogContent className={cn(
-          "max-h-[95vh] overflow-hidden p-0 gap-0 transition-all duration-300",
-          previewMode === 'desktop' ? 'max-w-4xl' : 'max-w-md'
-        )}>
-          {/* Email Client Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b">
+        <DialogContent 
+          className={cn(
+            "max-h-[95vh] overflow-hidden p-0 gap-0 transition-all duration-300",
+            previewMode === 'desktop' ? 'max-w-4xl' : 'max-w-md'
+          )}
+          style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif' }}
+        >
+          {/* Email Client Header - iOS style */}
+          <div className="flex items-center justify-between px-5 py-4 border-b" style={{ backgroundColor: '#f6f6f6' }}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Mail className="w-5 h-5 text-primary" />
+              <div 
+                className="w-11 h-11 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: '#e8e8e8' }}
+              >
+                <Mail className="w-5 h-5" style={{ color: '#8e8e93' }} />
               </div>
               <div>
-                <div className="font-medium text-sm">Drop Dead Salons</div>
-                <div className="text-xs text-muted-foreground">noreply@dropdeadsalon.com</div>
+                <div className="font-semibold text-[15px] tracking-[-0.01em]" style={{ color: '#000000' }}>Drop Dead Salons</div>
+                <div className="text-[13px]" style={{ color: '#8e8e93' }}>noreply@dropdeadsalon.com</div>
               </div>
             </div>
             
             {/* Device Toggle */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-muted rounded-lg p-1">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center rounded-lg p-0.5" style={{ backgroundColor: '#e8e8e8' }}>
                 <button
                   onClick={() => setPreviewMode('desktop')}
                   className={cn(
-                    "p-1.5 rounded-md transition-all",
+                    "p-2 rounded-md transition-all",
                     previewMode === 'desktop' 
-                      ? "bg-background shadow-sm text-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-white shadow-sm" 
+                      : "hover:bg-white/50"
                   )}
+                  style={{ color: previewMode === 'desktop' ? '#007aff' : '#8e8e93' }}
                   title="Desktop preview"
                 >
                   <Monitor className="w-4 h-4" />
@@ -633,17 +640,18 @@ export function EmailTemplatesManager() {
                 <button
                   onClick={() => setPreviewMode('mobile')}
                   className={cn(
-                    "p-1.5 rounded-md transition-all",
+                    "p-2 rounded-md transition-all",
                     previewMode === 'mobile' 
-                      ? "bg-background shadow-sm text-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-white shadow-sm" 
+                      : "hover:bg-white/50"
                   )}
+                  style={{ color: previewMode === 'mobile' ? '#007aff' : '#8e8e93' }}
                   title="Mobile preview"
                 >
                   <Smartphone className="w-4 h-4" />
                 </button>
               </div>
-              <div className="text-xs text-muted-foreground hidden sm:block">
+              <div className="text-[13px] hidden sm:block" style={{ color: '#8e8e93' }}>
                 {new Date().toLocaleDateString('en-US', { 
                   weekday: 'short', 
                   month: 'short', 
@@ -655,29 +663,36 @@ export function EmailTemplatesManager() {
             </div>
           </div>
           
-          {/* Email Subject & Recipients */}
-          <div className="px-4 py-3 border-b bg-background">
-            <h2 className={cn(
-              "font-semibold mb-2",
-              previewMode === 'desktop' ? 'text-lg' : 'text-base'
-            )}>
+          {/* Email Subject & Recipients - iOS Mail style */}
+          <div className="px-5 py-4 border-b bg-white">
+            <h2 
+              className={cn(
+                "font-bold tracking-[-0.02em] leading-tight mb-3",
+                previewMode === 'desktop' ? 'text-[22px]' : 'text-[20px]'
+              )}
+              style={{ 
+                color: '#000000',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
+                fontWeight: 700
+              }}
+            >
               {previewTemplate?.subject ? renderPreviewHtml(previewTemplate.subject, previewTemplate?.variables || []).replace(/<[^>]*>/g, '') : 'No Subject'}
             </h2>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">To:</span>
-              <span className={previewMode === 'mobile' ? 'text-xs' : ''}>team@dropdeadsalon.com</span>
+            <div className="flex items-center gap-2 text-[15px]">
+              <span className="font-medium" style={{ color: '#8e8e93' }}>To:</span>
+              <span style={{ color: '#007aff' }}>team@dropdeadsalon.com</span>
             </div>
           </div>
           
           {/* Email Body */}
-          <div className="overflow-y-auto max-h-[calc(95vh-180px)] bg-neutral-100">
+          <div className="overflow-y-auto max-h-[calc(95vh-200px)]" style={{ backgroundColor: '#f2f2f7' }}>
             <div className={cn(
               "transition-all duration-300",
-              previewMode === 'desktop' ? 'p-6' : 'p-2'
+              previewMode === 'desktop' ? 'p-6' : 'p-3'
             )}>
               {/* Outer email wrapper to simulate email client viewport */}
               <div 
-                className="mx-auto bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-300" 
+                className="mx-auto bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-300" 
                 style={{ maxWidth: previewMode === 'desktop' ? '600px' : '100%' }}
               >
                 {previewTemplate && (
