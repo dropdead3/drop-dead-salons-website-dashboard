@@ -664,6 +664,40 @@ export function EmailTemplatesManager() {
           )}
           style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif' }}
         >
+          {/* Viewer Mode Bar - Top */}
+          <div className="flex items-center justify-center gap-4 px-4 py-2.5 border-b bg-muted/40">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Now viewing in</span>
+              <div className="flex items-center rounded-lg p-0.5 bg-background border border-border/60 shadow-sm">
+                <button
+                  onClick={() => setPreviewMode('desktop')}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                    previewMode === 'desktop' 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Monitor className="w-3.5 h-3.5" />
+                  Desktop
+                </button>
+                <button
+                  onClick={() => setPreviewMode('mobile')}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                    previewMode === 'mobile' 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  Mobile
+                </button>
+              </div>
+              <span className="text-xs text-muted-foreground">mode</span>
+            </div>
+          </div>
+
           {/* Email Client Header - iOS style */}
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ backgroundColor: '#f6f6f6' }}>
             <div className="flex items-center gap-3">
@@ -679,45 +713,14 @@ export function EmailTemplatesManager() {
               </div>
             </div>
             
-            {/* Device Toggle */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center rounded-lg p-0.5" style={{ backgroundColor: '#e8e8e8' }}>
-                <button
-                  onClick={() => setPreviewMode('desktop')}
-                  className={cn(
-                    "p-2 rounded-md transition-all",
-                    previewMode === 'desktop' 
-                      ? "bg-white shadow-sm" 
-                      : "hover:bg-white/50"
-                  )}
-                  style={{ color: previewMode === 'desktop' ? '#007aff' : '#8e8e93' }}
-                  title="Desktop preview"
-                >
-                  <Monitor className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setPreviewMode('mobile')}
-                  className={cn(
-                    "p-2 rounded-md transition-all",
-                    previewMode === 'mobile' 
-                      ? "bg-white shadow-sm" 
-                      : "hover:bg-white/50"
-                  )}
-                  style={{ color: previewMode === 'mobile' ? '#007aff' : '#8e8e93' }}
-                  title="Mobile preview"
-                >
-                  <Smartphone className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="text-[13px] hidden sm:block" style={{ color: '#8e8e93' }}>
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'short', 
-                  month: 'short', 
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit'
-                })}
-              </div>
+            <div className="text-[13px] hidden sm:block" style={{ color: '#8e8e93' }}>
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+              })}
             </div>
           </div>
           
