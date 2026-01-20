@@ -132,7 +132,8 @@ serve(async (req: Request) => {
       .from("assistant_requests")
       .update({
         assistant_id: selectedAssistant.assistant_id,
-        status: "assigned"
+        status: "assigned",
+        assigned_at: new Date().toISOString(),
       })
       .eq("id", request_id);
 
