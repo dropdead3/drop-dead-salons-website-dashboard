@@ -1607,19 +1607,71 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     }
   };
 
+  const compressImage = (file: File, maxWidth: number = 400, quality: number = 0.8): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to compress image'));
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleSignatureImageUpload = async (blockId: string, file: File) => {
     setIsUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `signature-images/${crypto.randomUUID()}.${fileExt}`;
+      // Compress image if larger than 500KB
+      let uploadFile: File | Blob = file;
+      if (file.size > 512000) {
+        toast.info('Compressing image...');
+        uploadFile = await compressImage(file, 400, 0.85);
+      }
+      
+      const fileName = `signature-images/${crypto.randomUUID()}.jpg`;
       
       const { data, error } = await supabase.storage
         .from('email-assets')
-        .upload(fileName, file);
+        .upload(fileName, uploadFile, {
+          contentType: 'image/jpeg'
+        });
 
       if (error) {
         if (error.message.includes('Bucket not found')) {
           toast.error('Storage bucket not configured. Please contact an administrator.');
+          return;
+        }
+        if (error.message.includes('maximum allowed size')) {
+          toast.error('Image is too large. Please use a smaller image.');
           return;
         }
         throw error;
