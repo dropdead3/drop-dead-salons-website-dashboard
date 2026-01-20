@@ -10,6 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RequestAssistantDialog } from '@/components/dashboard/RequestAssistantDialog';
 import { ScheduleCalendar } from '@/components/dashboard/ScheduleCalendar';
+import { ResponseCountdown } from '@/components/dashboard/ResponseCountdown';
 import { useAssistantRequests, useUpdateRequestStatus, useAcceptAssignment, useDeclineAssignment, type AssistantRequest } from '@/hooks/useAssistantRequests';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useAuth } from '@/contexts/AuthContext';
@@ -132,26 +133,34 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
 
           {/* Accept/Decline buttons for assistants who haven't responded yet */}
           {needsResponse && (
-            <div className="flex flex-col gap-2">
-              <Button
-                size="sm"
-                onClick={handleAccept}
-                disabled={acceptAssignment.isPending || declineAssignment.isPending}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-                Accept
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleDecline}
-                disabled={acceptAssignment.isPending || declineAssignment.isPending}
-                className="text-red-600 border-red-200 hover:bg-red-50"
-              >
-                <XCircle className="h-4 w-4 mr-1" />
-                Decline
-              </Button>
+            <div className="flex flex-col gap-2 items-end">
+              {request.assigned_at && (
+                <ResponseCountdown 
+                  assignedAt={request.assigned_at} 
+                  deadlineHours={request.response_deadline_hours || 2} 
+                />
+              )}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleAccept}
+                  disabled={acceptAssignment.isPending || declineAssignment.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-1" />
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDecline}
+                  disabled={acceptAssignment.isPending || declineAssignment.isPending}
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <XCircle className="h-4 w-4 mr-1" />
+                  Decline
+                </Button>
+              </div>
             </div>
           )}
 
@@ -182,18 +191,26 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
 
           {/* Stylist view for assigned but not yet accepted */}
           {request.status === 'assigned' && !isAccepted && isStylistView && !isPastRequest && (
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-amber-50 text-amber-700">
-                Awaiting assistant response
-              </Badge>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleCancel}
-                disabled={updateStatus.isPending}
-              >
-                <XCircle className="h-4 w-4" />
-              </Button>
+            <div className="flex flex-col items-end gap-2">
+              {request.assigned_at && (
+                <ResponseCountdown 
+                  assignedAt={request.assigned_at} 
+                  deadlineHours={request.response_deadline_hours || 2} 
+                />
+              )}
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-amber-50 text-amber-700">
+                  Awaiting assistant response
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleCancel}
+                  disabled={updateStatus.isPending}
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
 
