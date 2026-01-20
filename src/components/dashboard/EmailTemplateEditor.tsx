@@ -1532,9 +1532,9 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
             <Card className="border-border/50">
               <CardContent className="p-4">
                 <Tabs defaultValue="standard" className="w-full">
-                  <TabsList className="w-full h-8 mb-3">
-                    <TabsTrigger value="standard" className="flex-1 text-xs h-7">Standard</TabsTrigger>
-                    <TabsTrigger value="custom" className="flex-1 text-xs h-7">Custom {customThemes.length > 0 && `(${customThemes.length})`}</TabsTrigger>
+                  <TabsList className="w-fit h-8 mb-3">
+                    <TabsTrigger value="standard" className="text-xs h-7 px-4">Standard Themes</TabsTrigger>
+                    <TabsTrigger value="custom" className="text-xs h-7 px-4">Custom Themes {customThemes.length > 0 && `(${customThemes.length})`}</TabsTrigger>
                   </TabsList>
                   <TabsContent value="standard" className="mt-0">
                     <div className="flex flex-wrap gap-1.5 mb-3">
