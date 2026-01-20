@@ -19,7 +19,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useBellSound } from '@/hooks/use-bell-sound';
 import { useBellHighFives } from '@/hooks/useBellHighFives';
-import { Bell, DollarSign, Loader2, Sparkles, Users, User, MapPin, X } from 'lucide-react';
+import { Bell, DollarSign, Loader2, Sparkles, Users, User, MapPin, X, Target } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,14 +77,21 @@ export default function RingTheBell() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<BellEntry | null>(null);
 
-  // Location filter state
+  // Filter states
   const [locationFilter, setLocationFilter] = useState<string | null>(null);
+  const [leadSourceFilter, setLeadSourceFilter] = useState<string | null>(null);
 
-  // Filter entries by location
+  // Filter entries by location and lead source
   const filteredEntries = useMemo(() => {
-    if (!locationFilter) return entries;
-    return entries.filter(e => e.stylist_locations?.includes(locationFilter));
-  }, [entries, locationFilter]);
+    let result = entries;
+    if (locationFilter) {
+      result = result.filter(e => e.stylist_locations?.includes(locationFilter));
+    }
+    if (leadSourceFilter) {
+      result = result.filter(e => e.lead_source === leadSourceFilter);
+    }
+    return result;
+  }, [entries, locationFilter, leadSourceFilter]);
 
   // Separate entries into my rings and all team rings (including mine)
   const myRings = useMemo(() => 
@@ -628,38 +635,68 @@ export default function RingTheBell() {
               </TabsTrigger>
               </TabsList>
 
-              {/* Location Filter */}
-              {allLocations.length > 0 && (
+              {/* Filters */}
+              <div className="flex items-center gap-4 flex-wrap">
+                {/* Location Filter */}
+                {allLocations.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <Select 
+                      value={locationFilter || "all"} 
+                      onValueChange={(val) => setLocationFilter(val === "all" ? null : val)}
+                    >
+                      <SelectTrigger className="w-[160px] h-8 text-sm">
+                        <SelectValue placeholder="All Locations" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {allLocations.map((loc) => (
+                          <SelectItem key={loc} value={loc}>
+                            {loc}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Lead Source Filter */}
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <Target className="w-4 h-4 text-muted-foreground" />
                   <Select 
-                    value={locationFilter || "all"} 
-                    onValueChange={(val) => setLocationFilter(val === "all" ? null : val)}
+                    value={leadSourceFilter || "all"} 
+                    onValueChange={(val) => setLeadSourceFilter(val === "all" ? null : val)}
                   >
-                    <SelectTrigger className="w-[180px] h-8 text-sm">
-                      <SelectValue placeholder="All Locations" />
+                    <SelectTrigger className="w-[160px] h-8 text-sm">
+                      <SelectValue placeholder="All Sources" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Locations</SelectItem>
-                      {allLocations.map((loc) => (
-                        <SelectItem key={loc} value={loc}>
-                          {loc}
+                      <SelectItem value="all">All Sources</SelectItem>
+                      {leadSources.map((source) => (
+                        <SelectItem key={source.value} value={source.value}>
+                          {source.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {locationFilter && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setLocationFilter(null)}
-                      className="h-7 px-2 text-xs font-sans text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  )}
                 </div>
-              )}
+
+                {/* Clear Filters */}
+                {(locationFilter || leadSourceFilter) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setLocationFilter(null);
+                      setLeadSourceFilter(null);
+                    }}
+                    className="h-7 px-2 text-xs font-sans text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-3 h-3 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
 
             <TabsContent value="team">
