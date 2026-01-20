@@ -194,7 +194,7 @@ export default function DashboardBuild() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 px-4 md:px-8 py-6">
         {/* Page Header */}
         <div>
           <h1 className="text-2xl font-bold">Dashboard Build Status</h1>
