@@ -120,6 +120,7 @@ const growthNavItems: NavItem[] = [
 ];
 
 // Base get help items - the assistant schedule label is computed dynamically in the component
+// Note: Assistant schedule is excluded for admins (they see it in manager section instead)
 const baseGetHelpNavItems: NavItem[] = [
   { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
   { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1 Meeting', icon: CalendarClock, permission: 'schedule_meetings' },
@@ -136,6 +137,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/birthdays', label: 'Team Birthdays', icon: Cake, permission: 'view_team_overview' },
   { href: '/dashboard/admin/onboarding-tracker', label: 'Onboarding Tracker', icon: ClipboardList, permission: 'view_team_overview' },
   { href: '/dashboard/admin/client-engine-tracker', label: 'Client Engine Tracker', icon: Target, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/assistant-requests', label: 'Assistant Requests', icon: HandHelping, permission: 'view_team_overview' },
   { href: '/dashboard/admin/strikes', label: 'Staff Strikes', icon: AlertTriangle, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/business-cards', label: 'Business Cards', icon: CreditCard, permission: 'manage_settings' },
   { href: '/dashboard/admin/headshots', label: 'Headshots', icon: Camera, permission: 'manage_settings' },
@@ -248,18 +250,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Compute dynamic nav items based on effective role
   const isStylistRole = roles.includes('stylist');
   const isStylistAssistantRole = roles.includes('stylist_assistant') || roles.includes('assistant');
+  const isAdminOrManager = roles.includes('admin') || roles.includes('manager');
   
-  const getHelpNavItems: NavItem[] = baseGetHelpNavItems.map(item => {
-    if (item.href === '/dashboard/assistant-schedule') {
-      const label = isStylistRole 
-        ? 'Request An Assistant' 
-        : isStylistAssistantRole 
-          ? 'Assisting Requests' 
-          : 'Assistant Schedule';
-      return { ...item, label };
-    }
-    return item;
-  });
+  // Filter and transform Get Help nav items - exclude assistant schedule for admins/managers
+  const getHelpNavItems: NavItem[] = baseGetHelpNavItems
+    .filter(item => {
+      // Admins/managers see assistant requests in their admin section instead
+      if (item.href === '/dashboard/assistant-schedule' && isAdminOrManager) {
+        return false;
+      }
+      return true;
+    })
+    .map(item => {
+      if (item.href === '/dashboard/assistant-schedule') {
+        const label = isStylistRole 
+          ? 'Request An Assistant' 
+          : isStylistAssistantRole 
+            ? 'Assisting Requests' 
+            : 'Assistant Schedule';
+        return { ...item, label };
+      }
+      return item;
+    });
 
   // Get the user's primary access level for display
   const getAccessLabel = () => {

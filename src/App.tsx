@@ -58,6 +58,7 @@ import TeamDirectory from "./pages/dashboard/TeamDirectory";
 import NotificationPreferences from "./pages/dashboard/NotificationPreferences";
 import OnboardingTracker from "./pages/dashboard/admin/OnboardingTracker";
 import ClientEngineTracker from "./pages/dashboard/admin/ClientEngineTracker";
+import AssistantRequestsOverview from "./pages/dashboard/admin/AssistantRequestsOverview";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,7 @@ const App = () => (
               <Route path="/dashboard/admin/birthdays" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamBirthdays /></ProtectedRoute>} />
               <Route path="/dashboard/admin/onboarding-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><OnboardingTracker /></ProtectedRoute>} />
               <Route path="/dashboard/admin/client-engine-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientEngineTracker /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/assistant-requests" element={<ProtectedRoute requiredPermission="view_team_overview"><AssistantRequestsOverview /></ProtectedRoute>} />
               <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
               <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
               <Route path="/dashboard/admin/homepage-stylists" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><HomepageStylists /></ProtectedRoute>} />
