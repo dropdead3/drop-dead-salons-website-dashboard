@@ -1860,6 +1860,42 @@ export type Database = {
         }
         Relationships: []
       }
+      stylist_levels: {
+        Row: {
+          client_label: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          label: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          client_label: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          client_label?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stylist_program_enrollment: {
         Row: {
           completed_at: string | null
