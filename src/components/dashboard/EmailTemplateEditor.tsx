@@ -220,6 +220,8 @@ interface EmailBlock {
     buttonVariant?: 'primary' | 'secondary';
     buttonSize?: number; // 80-140 percentage scale
     buttonShape?: 'pill' | 'rounded' | 'rectangle';
+    linkSize?: number; // 80-140 percentage scale for link font size
+    iconSize?: number; // 16-48 pixel size for social icons
   };
   imageUrl?: string;
   linkUrl?: string;
@@ -555,10 +557,12 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}</a>
         </div>`;
       }
-      case 'link':
-        return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">
-          <a href="${block.linkUrl || '#'}" style="color: ${block.styles.buttonColor || '#3b82f6'}; text-decoration: underline;">${block.content}</a>
+      case 'link': {
+        const linkFontSize = Math.round(16 * ((block.styles.linkSize || 100) / 100));
+        return `<p style="${baseStyles}; margin: 0; line-height: 1.6; font-size: ${linkFontSize}px;">
+          <a href="${block.linkUrl || '#'}" style="color: ${block.styles.buttonColor || '#3b82f6'}; text-decoration: underline; font-size: ${linkFontSize}px;">${block.content}</a>
         </p>`;
+      }
       case 'divider':
         return `<hr style="border: none; border-top: 1px solid ${block.styles.textColor || '#e5e7eb'}; margin: ${block.styles.padding || '16px 0'};" />`;
       case 'spacer':
@@ -567,7 +571,8 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const enabledLinks = (block.socialLinks || []).filter(link => link.enabled);
         if (enabledLinks.length === 0) return '';
         
-        const iconStyle = `display: inline-block; width: 24px; height: 24px; margin: 0 8px; text-decoration: none;`;
+        const iconSize = block.styles.iconSize || 24;
+        const iconStyle = `display: inline-block; width: ${iconSize}px; height: ${iconSize}px; margin: 0 8px; text-decoration: none;`;
         const socialIcons = enabledLinks.map(link => {
           const iconColor = block.styles.buttonColor || '#1a1a1a';
           let svg = '';
@@ -575,13 +580,13 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           
           switch (link.platform) {
             case 'instagram':
-              svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>`;
+              svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>`;
               break;
             case 'tiktok':
-              svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>`;
+              svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>`;
               break;
             case 'email':
-              svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`;
+              svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`;
               if (!href.startsWith('mailto:')) href = `mailto:${href}`;
               break;
           }
@@ -2553,6 +2558,20 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             themeColors={currentTheme.colors}
                           />
                         </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Link Size</Label>
+                            <span className="text-xs text-muted-foreground">{selectedBlock.styles.linkSize || 100}%</span>
+                          </div>
+                          <Slider
+                            variant="filled"
+                            min={80}
+                            max={140}
+                            step={5}
+                            value={[selectedBlock.styles.linkSize || 100]}
+                            onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { linkSize: value })}
+                          />
+                        </div>
                       </>
                     )}
 
@@ -2743,6 +2762,20 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             colorType="dark"
                             onChange={(v) => updateBlockStyles(selectedBlock.id, { buttonColor: v })}
                             themeColors={currentTheme.colors}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Icon Size</Label>
+                            <span className="text-xs text-muted-foreground">{selectedBlock.styles.iconSize || 24}px</span>
+                          </div>
+                          <Slider
+                            variant="filled"
+                            min={16}
+                            max={48}
+                            step={2}
+                            value={[selectedBlock.styles.iconSize || 24]}
+                            onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { iconSize: value })}
                           />
                         </div>
                       </>
@@ -3662,49 +3695,60 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             </div>
                           );
                         })()}
-                        {block.type === 'link' && (
-                          <p style={{ margin: 0, lineHeight: 1.6 }}>
-                            <a 
-                              href="#" 
-                              onClick={(e) => e.preventDefault()}
-                              style={{ 
-                                color: block.styles.buttonColor || '#3b82f6', 
-                                textDecoration: 'underline',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              {block.content}
-                            </a>
-                          </p>
-                        )}
+                        {block.type === 'link' && (() => {
+                          const linkFontSize = Math.round(16 * ((block.styles.linkSize || 100) / 100));
+                          return (
+                            <p style={{ margin: 0, lineHeight: 1.6, fontSize: `${linkFontSize}px` }}>
+                              <a 
+                                href="#" 
+                                onClick={(e) => e.preventDefault()}
+                                style={{ 
+                                  color: block.styles.buttonColor || '#3b82f6', 
+                                  textDecoration: 'underline',
+                                  cursor: 'pointer',
+                                  fontSize: `${linkFontSize}px`
+                                }}
+                              >
+                                {block.content}
+                              </a>
+                            </p>
+                          );
+                        })()}
                         {block.type === 'divider' && (
                           <hr style={{ border: 'none', borderTop: `1px solid ${block.styles.textColor || '#e5e7eb'}` }} />
                         )}
                         {block.type === 'spacer' && (
                           <div style={{ height: block.styles.height || '24px' }} className="border-dashed border opacity-50 bg-muted/30" />
                         )}
-                        {block.type === 'social' && (
-                          <div style={{ textAlign: block.styles.textAlign || 'center' }} className="flex items-center justify-center gap-4">
-                            {(block.socialLinks || []).filter(link => link.enabled).map((link) => (
-                              <div 
-                                key={link.platform}
-                                className="w-8 h-8 flex items-center justify-center"
-                                style={{ color: block.styles.buttonColor || '#1a1a1a' }}
-                              >
-                                {link.platform === 'instagram' && <Instagram className="w-6 h-6" />}
-                                {link.platform === 'tiktok' && (
-                                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
-                                  </svg>
-                                )}
-                                {link.platform === 'email' && <Mail className="w-6 h-6" />}
-                              </div>
-                            ))}
-                            {(block.socialLinks || []).filter(link => link.enabled).length === 0 && (
-                              <span className="text-xs text-muted-foreground">No icons enabled</span>
-                            )}
-                          </div>
-                        )}
+                        {block.type === 'social' && (() => {
+                          const iconSize = block.styles.iconSize || 24;
+                          return (
+                            <div style={{ textAlign: block.styles.textAlign || 'center' }} className="flex items-center justify-center gap-4">
+                              {(block.socialLinks || []).filter(link => link.enabled).map((link) => (
+                                <div 
+                                  key={link.platform}
+                                  className="flex items-center justify-center"
+                                  style={{ 
+                                    color: block.styles.buttonColor || '#1a1a1a',
+                                    width: `${iconSize + 8}px`,
+                                    height: `${iconSize + 8}px`
+                                  }}
+                                >
+                                  {link.platform === 'instagram' && <Instagram style={{ width: iconSize, height: iconSize }} />}
+                                  {link.platform === 'tiktok' && (
+                                    <svg style={{ width: iconSize, height: iconSize }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
+                                    </svg>
+                                  )}
+                                  {link.platform === 'email' && <Mail style={{ width: iconSize, height: iconSize }} />}
+                                </div>
+                              ))}
+                              {(block.socialLinks || []).filter(link => link.enabled).length === 0 && (
+                                <span className="text-xs text-muted-foreground">No icons enabled</span>
+                              )}
+                            </div>
+                          );
+                        })()}
                         {block.type === 'footer' && (() => {
                           const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', logoSize: 'large' as const, logoPosition: 'center' as const, showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
                           const footerConfig = block.footerConfig ? { ...defaultFooterConfig, ...block.footerConfig } : defaultFooterConfig;
