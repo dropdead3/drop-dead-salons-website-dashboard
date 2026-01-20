@@ -1622,6 +1622,31 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     setDraggedBlockId(blockId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', blockId);
+    
+    // Create custom drag ghost
+    const block = blocks.find(b => b.id === blockId);
+    if (block) {
+      const ghost = document.createElement('div');
+      ghost.className = 'bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2';
+      ghost.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/>
+          <circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>
+        </svg>
+        <span style="text-transform: capitalize;">${block.type === 'social' ? 'Social Icons' : block.type}</span>
+      `;
+      ghost.style.position = 'absolute';
+      ghost.style.top = '-1000px';
+      ghost.style.left = '-1000px';
+      document.body.appendChild(ghost);
+      
+      e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, ghost.offsetHeight / 2);
+      
+      // Clean up the ghost element after drag starts
+      requestAnimationFrame(() => {
+        document.body.removeChild(ghost);
+      });
+    }
   };
 
   const handleDragOver = (e: React.DragEvent, blockId: string) => {
