@@ -209,6 +209,26 @@ serve(async (req: Request) => {
       }
     }
 
+    // Send push notification to assigned assistant
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          user_id: selectedAssistant.assistant_id,
+          title: "New Assistant Assignment 🔔",
+          body: `${stylistName} needs help with ${request.client_name}`,
+          url: "/dashboard/assistant-schedule",
+          tag: "assistant-assignment",
+        }),
+      });
+    } catch (pushError) {
+      console.error("Failed to send push notification:", pushError);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

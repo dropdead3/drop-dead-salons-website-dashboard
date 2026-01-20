@@ -5,8 +5,10 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Hand, Megaphone, Cake, Calendar, CheckSquare, Mail, Loader2, Save } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Bell, Hand, Megaphone, Cake, Calendar, CheckSquare, Mail, Loader2, Save, Smartphone, BellRing, Send, AlertTriangle } from 'lucide-react';
 import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface PreferenceItem {
@@ -52,6 +54,16 @@ const inAppPreferences: PreferenceItem[] = [
 export default function NotificationPreferences() {
   const { data: preferences, isLoading } = useNotificationPreferences();
   const updatePreferences = useUpdateNotificationPreferences();
+  const {
+    isSupported: isPushSupported,
+    permission: pushPermission,
+    isSubscribed: isPushSubscribed,
+    subscribe: subscribePush,
+    unsubscribe: unsubscribePush,
+    isSubscribing,
+    isUnsubscribing,
+    sendTestNotification,
+  } = usePushNotifications();
   
   const [localPrefs, setLocalPrefs] = useState<Record<string, boolean>>({});
   const [hasChanges, setHasChanges] = useState(false);
@@ -150,6 +162,92 @@ export default function NotificationPreferences() {
                 {index < inAppPreferences.length - 1 && <Separator className="my-2" />}
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        {/* Push Notifications */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Smartphone className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-display tracking-wide">Push Notifications</CardTitle>
+                <CardDescription>Get real-time alerts on your device</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!isPushSupported ? (
+              <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                <div>
+                  <p className="text-sm font-medium">Not Supported</p>
+                  <p className="text-xs text-muted-foreground">
+                    Push notifications are not supported in this browser
+                  </p>
+                </div>
+              </div>
+            ) : pushPermission === 'denied' ? (
+              <div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+                <div>
+                  <p className="text-sm font-medium">Notifications Blocked</p>
+                  <p className="text-xs text-muted-foreground">
+                    Enable notifications in your browser settings to receive alerts
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <BellRing className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        Enable Push Notifications
+                        {isPushSubscribed && (
+                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                            Active
+                          </Badge>
+                        )}
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Receive instant alerts even when the app is closed
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={isPushSubscribed}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        subscribePush();
+                      } else {
+                        unsubscribePush();
+                      }
+                    }}
+                    disabled={isSubscribing || isUnsubscribing}
+                  />
+                </div>
+                
+                {isPushSubscribed && (
+                  <div className="pt-2 border-t">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={sendTestNotification}
+                      className="w-full"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Send Test Notification
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
