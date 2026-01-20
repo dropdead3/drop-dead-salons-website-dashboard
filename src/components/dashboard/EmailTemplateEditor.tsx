@@ -2919,7 +2919,10 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
             {/* Canvas */}
             <div className="lg:col-span-2">
               <div className="sticky top-4">
-                <div className="font-medium text-sm mb-2">Email Canvas</div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-sm">Email Canvas</span>
+                  <span className="text-xs text-muted-foreground">Click any block to edit</span>
+                </div>
                 <ScrollArea className="h-[calc(100vh-200px)] max-h-[700px] border rounded-lg bg-muted/50 p-4">
                 <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
                   {blocks.map((block, index) => (
