@@ -29,6 +29,8 @@ export interface AssistantRequest {
   parent_request_id: string | null;
   accepted_at: string | null;
   declined_by: string[] | null;
+  assigned_at: string | null;
+  response_deadline_hours: number | null;
   salon_services?: SalonService;
   stylist_profile?: { full_name: string; display_name: string | null } | null;
   assistant_profile?: { full_name: string; display_name: string | null } | null;
