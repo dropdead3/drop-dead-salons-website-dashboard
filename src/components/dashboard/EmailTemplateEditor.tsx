@@ -797,6 +797,13 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
     setIsCreateThemeOpen(true);
   };
 
+  const handleEditCustomTheme = (themeId: string) => {
+    const theme = customThemes.find(t => t.id === themeId);
+    if (theme) {
+      handleEditTheme(theme);
+    }
+  };
+
   const handleUpdateCustomTheme = async () => {
     if (!editingThemeId) return;
     if (!newTheme.name.trim()) {
@@ -1610,104 +1617,9 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
 
           {/* Main Editor Grid */}
           <div className={cn("grid gap-4", selectedBlock ? "grid-cols-1 lg:grid-cols-3" : "grid-cols-1")}>
-            {/* Properties Panel */}
+            {/* Properties Panel - Only shown when a block is selected */}
             {selectedBlock && (
               <div className="lg:col-span-1">
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" size="sm" onClick={() => addBlock('heading')} className="justify-start gap-2">
-                    <Type className="w-4 h-4" />
-                    Heading
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('text')} className="justify-start gap-2">
-                    <AlignLeft className="w-4 h-4" />
-                    Text
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('image')} className="justify-start gap-2">
-                    <Image className="w-4 h-4" />
-                    Image
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => addBlock('button', 'primary')} 
-                    className="justify-start gap-2 h-auto py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="px-2 py-1 text-[8px] font-bold rounded"
-                        style={{ backgroundColor: '#1a1a1a', color: '#f5f0e8' }}
-                      >
-                        Aa
-                      </div>
-                      <span className="text-xs">Primary Button</span>
-                    </div>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => addBlock('button', 'secondary')} 
-                    className="justify-start gap-2 h-auto py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="px-2 py-1 text-[8px] font-bold rounded border-2"
-                        style={{ backgroundColor: '#f5f0e8', color: '#1a1a1a', borderColor: '#1a1a1a' }}
-                      >
-                        Aa
-                      </div>
-                      <span className="text-xs">Secondary Button</span>
-                    </div>
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('link')} className="justify-start gap-2">
-                    <Link className="w-4 h-4" />
-                    Link
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('divider')} className="justify-start gap-2">
-                    <Minus className="w-4 h-4" />
-                    Divider
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('spacer')} className="justify-start gap-2">
-                    <Square className="w-4 h-4" />
-                    Spacer
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('social')} className="justify-start gap-2">
-                    <Share2 className="w-4 h-4" />
-                    Social Icons
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('footer')} className="justify-start gap-2">
-                    <LayoutTemplate className="w-4 h-4" />
-                    Footer
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => addBlock('header')} className="justify-start gap-2 col-span-2">
-                    <LayoutTemplate className="w-4 h-4" />
-                    Header
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Brand Logo Shortcuts */}
-              <div className="border-t pt-4">
-                <div className="font-medium text-sm mb-2">Brand Logos</div>
-                <div className="grid grid-cols-2 gap-2">
-                  {brandLogos.map((logo) => (
-                    <Button
-                      key={logo.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addLogoBlock(logo)}
-                      className="justify-start gap-2 h-auto py-2"
-                    >
-                      <div className="w-6 h-6 flex items-center justify-center bg-muted rounded">
-                        <img src={logo.src} alt={logo.name} className="w-5 h-5 object-contain" />
-                      </div>
-                      <span className="text-xs truncate">{logo.name}</span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Block properties panel */}
-              {selectedBlock && (
                 <Card className="mt-4 border-border/50 shadow-sm">
                   <CardContent className="p-3 space-y-3">
                     <div className="font-medium text-xs uppercase tracking-wide text-muted-foreground">{selectedBlock.type} Settings</div>
@@ -2350,8 +2262,8 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                     )}
                   </CardContent>
                 </Card>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Canvas */}
             <div className="lg:col-span-2">
