@@ -675,16 +675,14 @@ export function EmailTemplatesManager() {
                 {/* Sliding indicator */}
                 <div 
                   className={cn(
-                    "absolute top-1 bottom-1 rounded-full bg-foreground transition-all duration-300 ease-out",
-                    previewMode === 'desktop' 
-                      ? "left-1 right-auto w-[calc(50%+4px)]" 
-                      : "left-auto right-1 w-[calc(50%-4px)]"
+                    "absolute top-1 bottom-1 w-[100px] rounded-full bg-foreground transition-all duration-300 ease-out",
+                    previewMode === 'desktop' ? "left-1" : "left-[104px]"
                   )}
                 />
                 <button
                   onClick={() => setPreviewMode('desktop')}
                   className={cn(
-                    "relative z-10 flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200",
+                    "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-medium transition-colors duration-200",
                     previewMode === 'desktop' 
                       ? "text-background" 
                       : "text-muted-foreground hover:text-foreground"
@@ -696,7 +694,7 @@ export function EmailTemplatesManager() {
                 <button
                   onClick={() => setPreviewMode('mobile')}
                   className={cn(
-                    "relative z-10 flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200",
+                    "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-medium transition-colors duration-200",
                     previewMode === 'mobile' 
                       ? "text-background" 
                       : "text-muted-foreground hover:text-foreground"
