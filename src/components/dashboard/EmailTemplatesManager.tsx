@@ -676,7 +676,9 @@ export function EmailTemplatesManager() {
                 <div 
                   className={cn(
                     "absolute top-1 bottom-1 rounded-full bg-foreground transition-all duration-300 ease-out",
-                    previewMode === 'desktop' ? "left-1 w-[104px]" : "left-[108px] w-[92px]"
+                    previewMode === 'desktop' 
+                      ? "left-1 right-auto w-[calc(50%+4px)]" 
+                      : "left-auto right-1 w-[calc(50%-4px)]"
                   )}
                 />
                 <button
