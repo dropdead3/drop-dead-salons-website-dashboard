@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import type { Json } from '@/integrations/supabase/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,6 +87,7 @@ export function EmailTemplatesManager() {
     name: '',
     subject: '',
     html_body: '',
+    blocks_json: null as Json | null,
     description: '',
     is_active: true,
   });
@@ -108,6 +110,7 @@ export function EmailTemplatesManager() {
       name: template.name,
       subject: template.subject,
       html_body: template.html_body,
+      blocks_json: template.blocks_json,
       description: template.description || '',
       is_active: template.is_active,
     };
@@ -512,8 +515,10 @@ export function EmailTemplatesManager() {
             {/* Advanced Visual Editor */}
             <EmailTemplateEditor
               initialHtml={editForm.html_body}
+              initialBlocks={editForm.blocks_json as any}
               variables={editingTemplate?.variables || []}
-              onHtmlChange={(html) => setEditForm({ ...editForm, html_body: html })}
+              onHtmlChange={(html) => setEditForm(prev => ({ ...prev, html_body: html }))}
+              onBlocksChange={(blocks) => setEditForm(prev => ({ ...prev, blocks_json: blocks as unknown as Json }))}
             />
           </div>
 

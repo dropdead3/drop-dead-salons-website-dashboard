@@ -162,8 +162,10 @@ interface EmailBlock {
 
 interface EmailTemplateEditorProps {
   initialHtml: string;
+  initialBlocks?: EmailBlock[] | null;
   variables: string[];
   onHtmlChange: (html: string) => void;
+  onBlocksChange?: (blocks: EmailBlock[]) => void;
 }
 
 const colorPresets = [
@@ -561,12 +563,17 @@ ${blockHtml}
 </div>`;
 }
 
-export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: EmailTemplateEditorProps) {
+export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onHtmlChange, onBlocksChange }: EmailTemplateEditorProps) {
   const defaultTheme = emailThemes[0]; // Drop Dead Standard
   
   const getInitialBlocks = (): EmailBlock[] => {
-    const parsed = parseHtmlToBlocks(initialHtml);
-    return parsed.length > 0 ? parsed : [
+    // If we have saved blocks, use them directly
+    if (initialBlocks && Array.isArray(initialBlocks) && initialBlocks.length > 0) {
+      return initialBlocks;
+    }
+    
+    // Otherwise fall back to default blocks
+    return [
       {
         id: crypto.randomUUID(),
         type: 'heading',
@@ -893,7 +900,8 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
     const html = blocksToHtml(newBlocks);
     setRawHtml(html);
     onHtmlChange(html);
-  }, [onHtmlChange, setBlocks]);
+    onBlocksChange?.(newBlocks);
+  }, [onHtmlChange, onBlocksChange, setBlocks]);
 
   const handleUndo = useCallback(() => {
     const previousBlocks = undo();
