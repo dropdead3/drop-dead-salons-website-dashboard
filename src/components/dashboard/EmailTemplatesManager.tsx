@@ -47,6 +47,8 @@ import {
   RefreshCw,
   Monitor,
   Smartphone,
+  Columns2,
+  Instagram,
 } from 'lucide-react';
 import {
   useEmailTemplates,
@@ -113,6 +115,7 @@ export function EmailTemplatesManager() {
   const [newVariable, setNewVariable] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [compareMode, setCompareMode] = useState(false);
   const initialEditFormRef = useRef<typeof editForm | null>(null);
   const hasShownUnsavedToastRef = useRef(false);
   const editorRef = useRef<EmailTemplateEditorRef>(null);
@@ -597,12 +600,17 @@ export function EmailTemplatesManager() {
       {/* Preview Dialog - Email Client Style (iOS Mail inspired) */}
       <Dialog
         open={!!previewTemplate}
-        onOpenChange={(open) => !open && setPreviewTemplate(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewTemplate(null);
+            setCompareMode(false);
+          }
+        }}
       >
         <DialogContent 
           className={cn(
             "max-h-[95vh] overflow-hidden p-0 gap-0 transition-all duration-300",
-            previewMode === 'desktop' ? 'max-w-4xl' : 'max-w-md'
+            compareMode ? 'max-w-7xl' : (previewMode === 'desktop' ? 'max-w-4xl' : 'max-w-md')
           )}
           style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif' }}
         >
@@ -621,36 +629,53 @@ export function EmailTemplatesManager() {
               </div>
             </div>
             
-            {/* Device Toggle */}
+            {/* Device & Compare Toggle */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center rounded-lg p-0.5" style={{ backgroundColor: '#e8e8e8' }}>
-                <button
-                  onClick={() => setPreviewMode('desktop')}
-                  className={cn(
-                    "p-2 rounded-md transition-all",
-                    previewMode === 'desktop' 
-                      ? "bg-white shadow-sm" 
-                      : "hover:bg-white/50"
-                  )}
-                  style={{ color: previewMode === 'desktop' ? '#007aff' : '#8e8e93' }}
-                  title="Desktop preview"
-                >
-                  <Monitor className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setPreviewMode('mobile')}
-                  className={cn(
-                    "p-2 rounded-md transition-all",
-                    previewMode === 'mobile' 
-                      ? "bg-white shadow-sm" 
-                      : "hover:bg-white/50"
-                  )}
-                  style={{ color: previewMode === 'mobile' ? '#007aff' : '#8e8e93' }}
-                  title="Mobile preview"
-                >
-                  <Smartphone className="w-4 h-4" />
-                </button>
-              </div>
+              {/* Compare Mode Toggle */}
+              <button
+                onClick={() => setCompareMode(!compareMode)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all",
+                  compareMode 
+                    ? "bg-primary text-primary-foreground" 
+                    : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                )}
+                title="Compare canvas vs. rendered HTML"
+              >
+                <Columns2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Compare</span>
+              </button>
+              
+              {!compareMode && (
+                <div className="flex items-center rounded-lg p-0.5" style={{ backgroundColor: '#e8e8e8' }}>
+                  <button
+                    onClick={() => setPreviewMode('desktop')}
+                    className={cn(
+                      "p-2 rounded-md transition-all",
+                      previewMode === 'desktop' 
+                        ? "bg-white shadow-sm" 
+                        : "hover:bg-white/50"
+                    )}
+                    style={{ color: previewMode === 'desktop' ? '#007aff' : '#8e8e93' }}
+                    title="Desktop preview"
+                  >
+                    <Monitor className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setPreviewMode('mobile')}
+                    className={cn(
+                      "p-2 rounded-md transition-all",
+                      previewMode === 'mobile' 
+                        ? "bg-white shadow-sm" 
+                        : "hover:bg-white/50"
+                    )}
+                    style={{ color: previewMode === 'mobile' ? '#007aff' : '#8e8e93' }}
+                    title="Mobile preview"
+                  >
+                    <Smartphone className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
               <div className="text-[13px] hidden sm:block" style={{ color: '#8e8e93' }}>
                 {new Date().toLocaleDateString('en-US', { 
                   weekday: 'short', 
@@ -693,32 +718,160 @@ export function EmailTemplatesManager() {
             </div>
           </div>
           
-          {/* Email Body */}
+          {/* Email Body - Normal or Compare Mode */}
           <div className="overflow-y-auto max-h-[calc(95vh-200px)]" style={{ backgroundColor: '#f2f2f7' }}>
-            <div className={cn(
-              "transition-all duration-300",
-              previewMode === 'desktop' ? 'p-6' : 'p-3'
-            )}>
-              {/* Outer email wrapper to simulate email client viewport */}
-              <div 
-                className="mx-auto bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-300" 
-                style={{ maxWidth: previewMode === 'desktop' ? '600px' : '100%' }}
-              >
-                {previewTemplate && (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: renderPreviewHtml(
-                        previewTemplate.html_body,
-                        previewTemplate.variables
-                      ),
-                    }}
-                  />
-                )}
+            {compareMode ? (
+              /* Side-by-side comparison view */
+              <div className="grid grid-cols-2 gap-4 p-4">
+                {/* Left side: Canvas blocks simulation */}
+                <div>
+                  <div className="text-center mb-3">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                      <Eye className="w-3 h-3" />
+                      Canvas View (Expected)
+                    </span>
+                  </div>
+                  <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    {previewTemplate?.blocks_json && Array.isArray(previewTemplate.blocks_json) ? (
+                      <div>
+                        {(previewTemplate.blocks_json as any[]).map((block: any, idx: number) => (
+                          <div
+                            key={block.id || idx}
+                            style={{
+                              backgroundColor: block.styles?.backgroundColor,
+                              color: block.styles?.textColor,
+                              padding: block.styles?.padding,
+                              textAlign: block.styles?.textAlign || 'left',
+                            }}
+                          >
+                            {block.type === 'heading' && (
+                              <h1 
+                                style={{ margin: 0, fontSize: block.styles?.fontSize || '24px', fontWeight: block.styles?.fontWeight }}
+                                dangerouslySetInnerHTML={{ __html: (block.content || '').replace(/\n/g, '<br/>') }}
+                              />
+                            )}
+                            {block.type === 'text' && (
+                              <p 
+                                style={{ margin: 0, lineHeight: 1.6, fontSize: block.styles?.fontSize || '16px' }}
+                                dangerouslySetInnerHTML={{ __html: (block.content || '').replace(/\n/g, '<br/>') }}
+                              />
+                            )}
+                            {block.type === 'button' && (
+                              <div style={{ textAlign: block.styles?.textAlign || 'center' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    backgroundColor: block.styles?.buttonVariant === 'secondary' 
+                                      ? (block.styles?.backgroundColor || '#f5f0e8')
+                                      : (block.styles?.buttonColor || '#3b82f6'),
+                                    color: block.styles?.buttonVariant === 'secondary'
+                                      ? (block.styles?.buttonColor || '#1a1a1a')
+                                      : (block.styles?.buttonTextColor || '#ffffff'),
+                                    padding: '16px 32px',
+                                    fontWeight: 'bold',
+                                    borderRadius: block.styles?.borderRadius || '8px',
+                                    border: block.styles?.buttonVariant === 'secondary' 
+                                      ? `2px solid ${block.styles?.buttonColor || '#1a1a1a'}` 
+                                      : 'none',
+                                  }}
+                                >
+                                  {block.content}
+                                </span>
+                              </div>
+                            )}
+                            {block.type === 'divider' && (
+                              <hr style={{ border: 'none', borderTop: `1px solid ${block.styles?.textColor || '#e5e7eb'}` }} />
+                            )}
+                            {block.type === 'spacer' && (
+                              <div style={{ height: block.styles?.height || '24px' }} />
+                            )}
+                            {block.type === 'social' && (
+                              <div style={{ textAlign: block.styles?.textAlign || 'center' }} className="flex items-center justify-center gap-4">
+                                {(block.socialLinks || []).filter((link: any) => link.enabled).map((link: any) => (
+                                  <div 
+                                    key={link.platform}
+                                    className="w-6 h-6 flex items-center justify-center"
+                                    style={{ color: block.styles?.buttonColor || '#1a1a1a' }}
+                                  >
+                                    {link.platform === 'instagram' && <Instagram className="w-6 h-6" />}
+                                    {link.platform === 'email' && <Mail className="w-6 h-6" />}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {block.type === 'header' && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs opacity-60">[Header Block]</span>
+                              </div>
+                            )}
+                            {block.type === 'footer' && (
+                              <div className="text-center">
+                                <p className="text-xs opacity-80">{block.footerConfig?.copyrightText || '© 2026 Drop Dead Salons. All rights reserved.'}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center text-muted-foreground text-sm">
+                        No canvas blocks saved for this template.
+                        <br />
+                        <span className="text-xs">Edit the template to generate block data.</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right side: Rendered HTML */}
+                <div>
+                  <div className="text-center mb-3">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium">
+                      <Mail className="w-3 h-3" />
+                      Rendered HTML (Actual)
+                    </span>
+                  </div>
+                  <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    {previewTemplate && (
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: renderPreviewHtml(
+                            previewTemplate.html_body,
+                            previewTemplate.variables
+                          ),
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Normal preview mode */
+              <div className={cn(
+                "transition-all duration-300",
+                previewMode === 'desktop' ? 'p-6' : 'p-3'
+              )}>
+                {/* Outer email wrapper to simulate email client viewport */}
+                <div 
+                  className="mx-auto bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-300" 
+                  style={{ maxWidth: previewMode === 'desktop' ? '600px' : '100%' }}
+                >
+                  {previewTemplate && (
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: renderPreviewHtml(
+                          previewTemplate.html_body,
+                          previewTemplate.variables
+                        ),
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
+
 
       {/* Send Test Email Dialog */}
       <Dialog
