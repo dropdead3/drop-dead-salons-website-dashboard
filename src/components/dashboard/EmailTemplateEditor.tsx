@@ -490,6 +490,7 @@ function parseHtmlToBlocks(html: string): EmailBlock[] {
 // Generate HTML from blocks
 function blocksToHtml(blocks: EmailBlock[]): string {
   const blockHtml = blocks.map(block => {
+    // Base styles WITHOUT borderRadius - only apply borderRadius to elements that use it in canvas
     const baseStyles = `
       ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''}
       ${block.styles.textColor ? `color: ${block.styles.textColor};` : ''}
@@ -497,7 +498,6 @@ function blocksToHtml(blocks: EmailBlock[]): string {
       ${block.styles.fontWeight ? `font-weight: ${block.styles.fontWeight};` : ''}
       ${block.styles.textAlign ? `text-align: ${block.styles.textAlign};` : ''}
       ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}
-      ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}
     `.trim();
 
     // Convert newlines to <br/> for proper email rendering
@@ -505,6 +505,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     
     switch (block.type) {
       case 'heading':
+        // Heading does NOT use borderRadius in canvas, so don't apply it here
         return `<h1 style="${baseStyles}; margin: 0;">${formatContent(block.content)}</h1>`;
       case 'text':
         return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">${formatContent(block.content)}</p>`;
