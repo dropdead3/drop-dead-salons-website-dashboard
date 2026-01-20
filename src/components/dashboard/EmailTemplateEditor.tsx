@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -3300,30 +3301,18 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 <Label className="text-xs text-muted-foreground">Image Size</Label>
                                 <span className="text-xs text-muted-foreground font-mono">{config.imageSize || 80}px</span>
                               </div>
-                              <div className="relative h-6">
-                                <div 
-                                  className="absolute inset-0 rounded-full bg-gradient-to-r from-muted to-muted-foreground/30"
-                                />
-                                <input
-                                  type="range"
-                                  min="40"
-                                  max="120"
-                                  step="4"
-                                  value={config.imageSize || 80}
-                                  onChange={(e) => {
-                                    updateBlock(selectedBlock.id, {
-                                      signatureConfig: { ...config, imageSize: Number(e.target.value) }
-                                    });
-                                  }}
-                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                />
-                                <div 
-                                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-foreground border-2 border-background shadow-md pointer-events-none transition-all"
-                                  style={{ 
-                                    left: `calc(${((config.imageSize || 80) - 40) / 80 * 100}% - 8px)` 
-                                  }}
-                                />
-                              </div>
+                              <Slider
+                                variant="filled"
+                                min={40}
+                                max={120}
+                                step={4}
+                                value={[config.imageSize || 80]}
+                                onValueChange={([value]) => {
+                                  updateBlock(selectedBlock.id, {
+                                    signatureConfig: { ...config, imageSize: value }
+                                  });
+                                }}
+                              />
                             </div>
                           </div>
                           
@@ -3359,30 +3348,18 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               <Label className="text-xs font-medium">Indent</Label>
                               <span className="text-xs text-muted-foreground font-mono">{config.indent || 0}px</span>
                             </div>
-                            <div className="relative h-6">
-                              <div 
-                                className="absolute inset-0 rounded-full bg-gradient-to-r from-muted to-muted-foreground/30"
-                              />
-                              <input
-                                type="range"
-                                min="0"
-                                max="60"
-                                step="4"
-                                value={config.indent || 0}
-                                onChange={(e) => {
-                                  updateBlock(selectedBlock.id, {
-                                    signatureConfig: { ...config, indent: Number(e.target.value) }
-                                  });
-                                }}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              />
-                              <div 
-                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-foreground border-2 border-background shadow-md pointer-events-none transition-all"
-                                style={{ 
-                                  left: `calc(${(config.indent || 0) / 60 * 100}% - 8px)` 
-                                }}
-                              />
-                            </div>
+                            <Slider
+                              variant="filled"
+                              min={0}
+                              max={60}
+                              step={4}
+                              value={[config.indent || 0]}
+                              onValueChange={([value]) => {
+                                updateBlock(selectedBlock.id, {
+                                  signatureConfig: { ...config, indent: value }
+                                });
+                              }}
+                            />
                           </div>
                         </>
                       );
