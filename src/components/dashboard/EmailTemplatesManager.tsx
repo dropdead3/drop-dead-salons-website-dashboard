@@ -529,6 +529,7 @@ export function EmailTemplatesManager() {
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
+                className="bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300"
                 onClick={() => {
                   if (editingTemplate) {
                     setPreviewTemplate(editingTemplate);
