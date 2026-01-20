@@ -181,10 +181,22 @@ const colorPresets = [
 const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '40px'];
 
 // Email color themes
+type ThemeCategory = 'all' | 'luxury' | 'dark' | 'light' | 'pastel' | 'warm';
+
+const themeCategories: { id: ThemeCategory; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'luxury', label: 'Luxury' },
+  { id: 'dark', label: 'Dark' },
+  { id: 'light', label: 'Light' },
+  { id: 'pastel', label: 'Pastel' },
+  { id: 'warm', label: 'Warm' },
+];
+
 interface EmailTheme {
   id: string;
   name: string;
   description: string;
+  category: ThemeCategory[];
   colors: {
     headerBg: string;
     headerText: string;
@@ -203,6 +215,7 @@ const emailThemes: EmailTheme[] = [
     id: 'drop-dead-premium',
     name: 'Drop Dead Premium',
     description: 'Signature black, cream & oat luxury palette',
+    category: ['luxury', 'dark', 'warm'],
     colors: {
       headerBg: '#000000',
       headerText: '#f5f0e8',
@@ -219,6 +232,7 @@ const emailThemes: EmailTheme[] = [
     id: 'noir-gold',
     name: 'Noir & Gold',
     description: 'Luxurious black with gold accents',
+    category: ['luxury', 'dark'],
     colors: {
       headerBg: '#0a0a0a',
       headerText: '#d4af37',
@@ -235,6 +249,7 @@ const emailThemes: EmailTheme[] = [
     id: 'black-gold-elegance',
     name: 'Black Gold Elegance',
     description: 'Classic black with champagne gold',
+    category: ['luxury', 'dark', 'light'],
     colors: {
       headerBg: '#000000',
       headerText: '#e8d5a3',
@@ -251,6 +266,7 @@ const emailThemes: EmailTheme[] = [
     id: 'blush-tan',
     name: 'Blush & Tan',
     description: 'Soft pink with warm tan accents',
+    category: ['warm', 'light'],
     colors: {
       headerBg: '#d4a59a',
       headerText: '#ffffff',
@@ -267,6 +283,7 @@ const emailThemes: EmailTheme[] = [
     id: 'rose-sand',
     name: 'Rose & Sand',
     description: 'Dusty rose with sandy neutrals',
+    category: ['warm', 'light'],
     colors: {
       headerBg: '#b8838c',
       headerText: '#fff9f5',
@@ -283,6 +300,7 @@ const emailThemes: EmailTheme[] = [
     id: 'pastel-dream',
     name: 'Pastel Dream',
     description: 'Soft lavender & mint pastels',
+    category: ['pastel', 'light'],
     colors: {
       headerBg: '#c7b8ea',
       headerText: '#2d2a3e',
@@ -299,6 +317,7 @@ const emailThemes: EmailTheme[] = [
     id: 'pastel-peach',
     name: 'Pastel Peach',
     description: 'Soft peach & cream tones',
+    category: ['pastel', 'light', 'warm'],
     colors: {
       headerBg: '#f5c6aa',
       headerText: '#3d2c24',
@@ -315,6 +334,7 @@ const emailThemes: EmailTheme[] = [
     id: 'pastel-sky',
     name: 'Pastel Sky',
     description: 'Soft blue & coral pastels',
+    category: ['pastel', 'light'],
     colors: {
       headerBg: '#a8c8dc',
       headerText: '#2a3a45',
@@ -331,6 +351,7 @@ const emailThemes: EmailTheme[] = [
     id: 'modern-minimal',
     name: 'Modern Minimal',
     description: 'Clean black & white',
+    category: ['dark', 'light'],
     colors: {
       headerBg: '#000000',
       headerText: '#ffffff',
@@ -347,6 +368,7 @@ const emailThemes: EmailTheme[] = [
     id: 'warm-neutral',
     name: 'Warm Neutral',
     description: 'Soft beige & warm tones',
+    category: ['warm', 'light'],
     colors: {
       headerBg: '#292524',
       headerText: '#faf7f5',
@@ -608,6 +630,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
 const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
     name: '',
     description: '',
+    category: [],
     colors: {
       headerBg: '#1a1a1a',
       headerText: '#f5f0e8',
@@ -620,6 +643,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
       white: '#ffffff',
     },
   });
+  const [themeCategoryFilter, setThemeCategoryFilter] = useState<ThemeCategory>('all');
 
   const { user } = useAuth();
   const selectedBlock = blocks.find(b => b.id === selectedBlockId);
@@ -641,6 +665,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
         id: `custom-${t.id}`,
         name: t.name,
         description: t.description || 'Custom theme',
+        category: [] as ThemeCategory[],
         colors: {
           headerBg: t.header_bg,
           headerText: t.header_text,
@@ -695,6 +720,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
         id: `custom-${data.id}`,
         name: data.name,
         description: data.description || 'Custom theme',
+        category: [],
         colors: {
           headerBg: data.header_bg,
           headerText: data.header_text,
@@ -713,6 +739,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
       setNewTheme({
         name: '',
         description: '',
+        category: [],
         colors: {
           headerBg: '#1a1a1a',
           headerText: '#f5f0e8',
@@ -761,6 +788,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
     setNewTheme({
       name: theme.name,
       description: theme.description,
+      category: theme.category,
       colors: { ...theme.colors },
     });
     setIsCreateThemeOpen(true);
@@ -801,6 +829,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
         id: editingThemeId,
         name: data.name,
         description: data.description || 'Custom theme',
+        category: newTheme.category || [],
         colors: {
           headerBg: data.header_bg,
           headerText: data.header_text,
@@ -831,6 +860,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
     setNewTheme({
       name: '',
       description: '',
+      category: [],
       colors: {
         headerBg: '#1a1a1a',
         headerText: '#f5f0e8',
@@ -1501,9 +1531,31 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                   </TabsList>
                   
                   <TabsContent value="standard" className="mt-0">
-                    <ScrollArea className="h-[180px]">
+                    {/* Category Filter Pills */}
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {themeCategories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => setThemeCategoryFilter(cat.id)}
+                          className={cn(
+                            "px-2 py-0.5 rounded-full text-[10px] font-medium transition-all",
+                            themeCategoryFilter === cat.id
+                              ? "bg-foreground text-background"
+                              : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                          )}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
+                    <ScrollArea className="h-[150px]">
                       <div className="grid grid-cols-1 gap-2 pr-2">
-                        {emailThemes.map((theme) => (
+                        {emailThemes
+                          .filter(theme => 
+                            themeCategoryFilter === 'all' || 
+                            theme.category.includes(themeCategoryFilter)
+                          )
+                          .map((theme) => (
                           <button
                             key={theme.id}
                             onClick={() => applyTheme(theme.id)}
@@ -1544,6 +1596,14 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                             </div>
                           </button>
                         ))}
+                        {emailThemes.filter(theme => 
+                          themeCategoryFilter === 'all' || 
+                          theme.category.includes(themeCategoryFilter)
+                        ).length === 0 && (
+                          <div className="text-center text-xs text-muted-foreground py-4">
+                            No themes in this category
+                          </div>
+                        )}
                       </div>
                     </ScrollArea>
                   </TabsContent>
