@@ -54,11 +54,11 @@ serve(async (req: Request) => {
 
     const stylistName = stylistProfile?.display_name || stylistProfile?.full_name || "A stylist";
 
-    // Get all assistants with the 'assistant' role
+    // Get all assistants with the 'stylist_assistant' or legacy 'assistant' role
     const { data: assistantRoles, error: rolesError } = await supabase
       .from("user_roles")
       .select("user_id")
-      .eq("role", "assistant");
+      .in("role", ["stylist_assistant", "assistant"]);
 
     if (rolesError || !assistantRoles?.length) {
       console.error("No assistants found:", rolesError);
