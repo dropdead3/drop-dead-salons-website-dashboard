@@ -1489,7 +1489,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
     <div className="space-y-4">
       {/* Variables toolbar */}
       {variables.length > 0 && (
-        <div className="p-3 bg-muted rounded-lg">
+        <div className="p-4 bg-muted rounded-2xl">
           <div className="flex items-center gap-2 mb-2">
             <Variable className="w-4 h-4" />
             <span className="text-sm font-medium">Click to insert variable:</span>
@@ -1527,7 +1527,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
           </TabsList>
           
           {/* Undo/Redo buttons */}
-          <div className="flex items-center gap-1 border rounded-md p-1 bg-muted/50">
+          <div className="flex items-center gap-1 border rounded-full p-1.5 bg-muted/50">
             <Button
               variant="ghost"
               size="sm"
@@ -1553,7 +1553,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
 
         <TabsContent value="visual" className="mt-4 space-y-4">
           {/* Horizontal Toolbar */}
-          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border shadow-sm">
+          <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-2xl border shadow-sm">
             <Button
               variant={toolbarPanel === 'themes' ? 'default' : 'outline'}
               size="sm"
