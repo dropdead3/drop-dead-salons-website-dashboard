@@ -200,6 +200,7 @@ interface NavLink {
   label: string;
   url: string;
   enabled: boolean;
+  showArrow?: boolean;
 }
 
 interface EmailBlock {
@@ -768,9 +769,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           const enabledLinks = (block.navLinks || []).filter(link => link.enabled);
           if (enabledLinks.length > 0) {
             navHtml = `<div style="display: inline-flex; align-items: center; gap: 16px;">` +
-              enabledLinks.map(link => 
-                `<a href="${link.url}" style="color: ${textColor}; text-decoration: none; font-size: 14px; font-weight: 500;">${link.label}</a>`
-              ).join('') + `</div>`;
+              enabledLinks.map(link => {
+                const arrowSvg = link.showArrow ? `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px; vertical-align: middle;"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>` : '';
+                return `<a href="${link.url}" style="color: ${textColor}; text-decoration: none; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center;">${link.label}${arrowSvg}</a>`;
+              }).join('') + `</div>`;
           }
         }
         
@@ -3275,16 +3277,33 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   </Button>
                                 </div>
                                 {link.enabled && (
-                                  <Input
-                                    value={link.url}
-                                    onChange={(e) => {
-                                      const newLinks = [...(selectedBlock.navLinks || [])];
-                                      newLinks[index] = { ...newLinks[index], url: e.target.value };
-                                      updateBlock(selectedBlock.id, { navLinks: newLinks });
-                                    }}
-                                    placeholder="https://..."
-                                    className="h-7 text-xs"
-                                  />
+                                  <>
+                                    <Input
+                                      value={link.url}
+                                      onChange={(e) => {
+                                        const newLinks = [...(selectedBlock.navLinks || [])];
+                                        newLinks[index] = { ...newLinks[index], url: e.target.value };
+                                        updateBlock(selectedBlock.id, { navLinks: newLinks });
+                                      }}
+                                      placeholder="https://..."
+                                      className="h-7 text-xs"
+                                    />
+                                    <div className="flex items-center gap-2 pt-1">
+                                      <input
+                                        type="checkbox"
+                                        checked={link.showArrow ?? false}
+                                        onChange={(e) => {
+                                          const newLinks = [...(selectedBlock.navLinks || [])];
+                                          newLinks[index] = { ...newLinks[index], showArrow: e.target.checked };
+                                          updateBlock(selectedBlock.id, { navLinks: newLinks });
+                                        }}
+                                        className="h-3.5 w-3.5 rounded border-border"
+                                      />
+                                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                        Show Arrow <ArrowRight className="w-3 h-3" />
+                                      </span>
+                                    </div>
+                                  </>
                                 )}
                               </div>
                             ))}
@@ -4158,10 +4177,11 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               {enabledLinks.map((link, index) => (
                                 <span 
                                   key={index}
-                                  className="text-xs font-medium"
+                                  className="text-xs font-medium inline-flex items-center gap-1"
                                   style={{ color: block.styles.textColor || '#f5f0e8' }}
                                 >
                                   {link.label}
+                                  {link.showArrow && <ArrowRight className="w-3 h-3" />}
                                 </span>
                               ))}
                             </div>
