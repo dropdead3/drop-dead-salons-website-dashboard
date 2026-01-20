@@ -2840,12 +2840,13 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           return (
                             <div className={`flex flex-col ${alignClass}`}>
                               {showLogo && logo && (
-                                <div className="mb-3">
+                                <div className="mb-3" style={{ minHeight: '40px', border: '1px dashed red' }}>
                                   <img 
                                     src={logo.src} 
                                     alt={logo.name} 
-                                    style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block' }}
-                                    onError={(e) => console.error('[Footer Logo Error]', e)}
+                                    style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block', minHeight: '30px' }}
+                                    onError={(e) => console.error('[Footer Logo Error] Failed to load:', logo.src, e)}
+                                    onLoad={() => console.log('[Footer Logo Loaded]', logo.src)}
                                   />
                                 </div>
                               )}
