@@ -891,6 +891,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   const [cropTargetBlockId, setCropTargetBlockId] = useState<string | null>(null);
   const [hintsVisible, setHintsVisible] = useState({ edit: true, preview: true });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const contentEditableRef = useRef<HTMLDivElement>(null);
   
   const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
     name: '',
@@ -1422,79 +1423,53 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     updateBlock(id, { styles: { ...block.styles, ...styleUpdates } });
   };
 
-  // Apply inline formatting to selected text
+  // Apply inline formatting to selected text using document.execCommand for contenteditable
   const applyInlineFormat = useCallback((blockId: string, tag: 'strong' | 'em') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+    const editableDiv = contentEditableRef.current;
+    if (!editableDiv) return;
     
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const block = blocks.find(b => b.id === blockId);
-    if (!block) return;
-    
-    const content = block.content;
-    
-    // If no selection, do nothing
-    if (start === end) return;
-    
-    const selectedText = content.substring(start, end);
-    const openTag = `<${tag}>`;
-    const closeTag = `</${tag}>`;
-    
-    // Check if already wrapped - if so, unwrap
-    const beforeSelection = content.substring(0, start);
-    const afterSelection = content.substring(end);
-    
-    // Check if selection is already wrapped
-    if (beforeSelection.endsWith(openTag) && afterSelection.startsWith(closeTag)) {
-      // Unwrap
-      const newContent = beforeSelection.slice(0, -openTag.length) + selectedText + afterSelection.slice(closeTag.length);
-      updateBlock(blockId, { content: newContent });
-    } else {
-      // Wrap the selected text
-      const newContent = content.substring(0, start) + openTag + selectedText + closeTag + content.substring(end);
-      updateBlock(blockId, { content: newContent });
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      toast.error('Please select text to format');
+      return;
     }
     
-    // Restore focus to textarea
-    setTimeout(() => {
-      textarea.focus();
-    }, 0);
-  }, [blocks, updateBlock]);
+    // Use execCommand for bold/italic
+    const command = tag === 'strong' ? 'bold' : 'italic';
+    document.execCommand(command, false);
+    
+    // Update block content from the contenteditable
+    updateBlock(blockId, { content: editableDiv.innerHTML });
+    
+    // Restore focus
+    editableDiv.focus();
+  }, [updateBlock]);
 
   const applyLinkFormat = useCallback((blockId: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+    const editableDiv = contentEditableRef.current;
+    if (!editableDiv) return;
     
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const block = blocks.find(b => b.id === blockId);
-    if (!block) return;
-    
-    const content = block.content;
-    
-    // If no selection, do nothing
-    if (start === end) {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
       toast.error('Please select text to create a link');
       return;
     }
     
-    const selectedText = content.substring(start, end);
+    const selectedText = selection.toString();
     
     // Prompt for URL
     const url = window.prompt('Enter the URL for the link:', 'https://');
     if (!url || url === 'https://') return;
     
-    // Wrap with anchor tag
-    const linkTag = `<a href="${url}" style="color: inherit; text-decoration: underline;">${selectedText}</a>`;
-    const newContent = content.substring(0, start) + linkTag + content.substring(end);
-    updateBlock(blockId, { content: newContent });
+    // Use execCommand to create link
+    document.execCommand('createLink', false, url);
     
-    // Restore focus to textarea
-    setTimeout(() => {
-      textarea.focus();
-    }, 0);
-  }, [blocks, updateBlock]);
+    // Update block content from the contenteditable
+    updateBlock(blockId, { content: editableDiv.innerHTML });
+    
+    // Restore focus
+    editableDiv.focus();
+  }, [updateBlock]);
 
   const deleteBlock = (id: string) => {
     updateBlocksAndHtml(blocks.filter(block => block.id !== id));
@@ -2352,11 +2327,20 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       <>
                         <div className="space-y-1.5">
                           <Label className="text-xs text-muted-foreground">Content</Label>
-                          <Textarea
-                            ref={textareaRef}
-                            value={selectedBlock.content}
-                            onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
-                            className="min-h-[180px] text-sm resize-y font-mono"
+                          <div
+                            ref={contentEditableRef}
+                            contentEditable
+                            suppressContentEditableWarning
+                            onInput={(e) => {
+                              const target = e.currentTarget;
+                              updateBlock(selectedBlock.id, { content: target.innerHTML });
+                            }}
+                            onBlur={(e) => {
+                              updateBlock(selectedBlock.id, { content: e.currentTarget.innerHTML });
+                            }}
+                            dangerouslySetInnerHTML={{ __html: selectedBlock.content }}
+                            className="min-h-[180px] text-sm resize-y border rounded-md p-3 bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 overflow-y-auto whitespace-pre-wrap"
+                            style={{ maxHeight: '400px' }}
                           />
                           <p className="text-[10px] text-muted-foreground">Tip: Select text and click B for bold or I for italic</p>
                         </div>
