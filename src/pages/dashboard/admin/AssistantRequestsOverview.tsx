@@ -1,17 +1,21 @@
 import { useState, useMemo } from 'react';
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
-import { Users, CheckCircle2, XCircle, Clock, CalendarDays, TrendingUp, AlertCircle, MapPin, UserCheck } from 'lucide-react';
+import { Users, CheckCircle2, XCircle, Clock, CalendarDays, TrendingUp, AlertCircle, MapPin, UserCheck, UserPlus } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAssistantRequests, type AssistantRequest } from '@/hooks/useAssistantRequests';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useActiveAssistants, useAssistantCoverageSummary } from '@/hooks/useAssistantAvailability';
+import { ManualAssignmentDialog } from '@/components/dashboard/ManualAssignmentDialog';
+import { AssistantPerformanceMetrics } from '@/components/dashboard/AssistantPerformanceMetrics';
+import { AssistantWorkloadChart } from '@/components/dashboard/AssistantWorkloadChart';
+import { AssistantRequestsCalendar } from '@/components/dashboard/AssistantRequestsCalendar';
 import { cn } from '@/lib/utils';
-
 function StatCard({ 
   title, 
   value, 
@@ -55,9 +59,10 @@ function StatCard({
   );
 }
 
-function RequestRow({ request }: { request: AssistantRequest }) {
+function RequestRow({ request, onManualAssign }: { request: AssistantRequest; onManualAssign?: (req: AssistantRequest) => void }) {
   const isAccepted = !!request.accepted_at;
   const declinedCount = request.declined_by?.length || 0;
+  const needsAssignment = request.status === 'pending' || (request.status === 'assigned' && !request.accepted_at);
 
   const statusBadge = () => {
     if (request.status === 'completed') {
@@ -82,7 +87,7 @@ function RequestRow({ request }: { request: AssistantRequest }) {
           <span className="font-medium truncate">{request.client_name}</span>
           {statusBadge()}
           {declinedCount > 0 && (
-            <Badge variant="outline" className="text-red-600 border-red-200">
+            <Badge variant="outline" className="text-destructive border-destructive/30">
               {declinedCount} decline{declinedCount > 1 ? 's' : ''}
             </Badge>
           )}
@@ -98,14 +103,21 @@ function RequestRow({ request }: { request: AssistantRequest }) {
           )}
         </div>
       </div>
-      <div className="text-right text-sm">
-        <div className="font-medium">
-          {request.stylist_profile?.display_name || request.stylist_profile?.full_name || 'Unknown'}
-        </div>
-        {request.assistant_profile && (
-          <div className="text-muted-foreground">
-            → {request.assistant_profile.display_name || request.assistant_profile.full_name}
+      <div className="flex items-center gap-3">
+        <div className="text-right text-sm">
+          <div className="font-medium">
+            {request.stylist_profile?.display_name || request.stylist_profile?.full_name || 'Unknown'}
           </div>
+          {request.assistant_profile && (
+            <div className="text-muted-foreground">
+              → {request.assistant_profile.display_name || request.assistant_profile.full_name}
+            </div>
+          )}
+        </div>
+        {needsAssignment && onManualAssign && (
+          <Button size="sm" variant="outline" onClick={() => onManualAssign(request)}>
+            <UserPlus className="h-4 w-4" />
+          </Button>
         )}
       </div>
     </div>
@@ -116,7 +128,9 @@ const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function AssistantRequestsOverview() {
   const [locationFilter, setLocationFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'overview' | 'assistants' | 'pending' | 'all'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'assistants' | 'pending' | 'all'>('overview');
+  const [selectedRequest, setSelectedRequest] = useState<AssistantRequest | null>(null);
+  const [manualAssignOpen, setManualAssignOpen] = useState(false);
   
   const { data: locations = [] } = useActiveLocations();
   const { data: assistants = [], isLoading: assistantsLoading } = useActiveAssistants();

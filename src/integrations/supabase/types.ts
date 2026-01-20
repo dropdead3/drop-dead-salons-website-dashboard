@@ -158,6 +158,7 @@ export type Database = {
           recurrence_type: string | null
           request_date: string
           response_deadline_hours: number | null
+          response_time_seconds: number | null
           service_id: string
           start_time: string
           status: string
@@ -180,6 +181,7 @@ export type Database = {
           recurrence_type?: string | null
           request_date: string
           response_deadline_hours?: number | null
+          response_time_seconds?: number | null
           service_id: string
           start_time: string
           status?: string
@@ -202,6 +204,7 @@ export type Database = {
           recurrence_type?: string | null
           request_date?: string
           response_deadline_hours?: number | null
+          response_time_seconds?: number | null
           service_id?: string
           start_time?: string
           status?: string
