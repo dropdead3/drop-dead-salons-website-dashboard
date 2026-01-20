@@ -511,9 +511,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     switch (block.type) {
       case 'heading':
         // Heading does NOT use borderRadius in canvas, so don't apply it here
-        return `<h1 style="${baseStyles}; margin: 0;">${formatContent(block.content)}</h1>`;
+        // Add border:none and line-height:1.3 to prevent any subtle lines between blocks
+        return `<h1 style="${baseStyles}; margin: 0; border: none; line-height: 1.3; font-size: ${block.styles.fontSize || '24px'};">${formatContent(block.content)}</h1>`;
       case 'text':
-        return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">${formatContent(block.content)}</p>`;
+        return `<p style="${baseStyles}; margin: 0; line-height: 1.6; font-size: ${block.styles.fontSize || '16px'};">${formatContent(block.content)}</p>`;
       case 'image': {
         const imgUrl = block.imageUrl || 'https://via.placeholder.com/400x200';
         const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
@@ -665,11 +666,11 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const centerContent = (logoPosition === 'center' ? logoHtml : '') + (navLinksPosition === 'center' ? navHtml : '');
         const rightContent = (logoPosition === 'right' ? logoHtml : '') + (navLinksPosition === 'right' ? navHtml : '');
         
-        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'};">
+        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'}; border-collapse: collapse; border: none;">
           <tr>
-            <td width="33%" style="text-align: left; vertical-align: middle; padding: ${padding}; color: ${textColor};">${leftContent}</td>
-            <td width="34%" style="text-align: center; vertical-align: middle; padding: ${padding}; color: ${textColor};">${centerContent}</td>
-            <td width="33%" style="text-align: right; vertical-align: middle; padding: ${padding}; color: ${textColor};">${rightContent}</td>
+            <td width="33%" style="text-align: left; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: none;">${leftContent}</td>
+            <td width="34%" style="text-align: center; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: none;">${centerContent}</td>
+            <td width="33%" style="text-align: right; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: none;">${rightContent}</td>
           </tr>
         </table>`;
       }
@@ -678,7 +679,8 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     }
   }).join('\n');
 
-  return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
+  // Use line-height: 0 on container to prevent whitespace gaps, then reset on children
+  return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; font-size: 0; line-height: 0;">
 ${blockHtml}
 </div>`;
 }
