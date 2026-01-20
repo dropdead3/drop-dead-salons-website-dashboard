@@ -88,59 +88,58 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     canvas.width = size;
     canvas.height = size;
 
-    // Clear canvas
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, size, size);
-
-    // Save context
-    ctx.save();
-
-    // Move to center
-    ctx.translate(size / 2, size / 2);
-
-    // Apply rotation
-    ctx.rotate((rotation * Math.PI) / 180);
-
-    // Calculate scaled dimensions
-    const scale = zoom;
-    const imgWidth = imageElement.width * scale;
-    const imgHeight = imageElement.height * scale;
-
-    // Draw image centered with position offset
-    ctx.drawImage(
-      imageElement,
-      -imgWidth / 2 + position.x,
-      -imgHeight / 2 + position.y,
-      imgWidth,
-      imgHeight
-    );
-
-    ctx.restore();
-
-    // Draw crop overlay
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(0, 0, size, size);
-
-    // Clear the crop area
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    
     const cropSize = size * 0.75;
     const cropX = (size - cropSize) / 2;
     const cropY = (size - cropSize) / 2;
 
-    if (cropShape === 'circle') {
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, cropSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.fillRect(cropX, cropY, cropSize, cropSize);
-    }
+    // Clear canvas with dark background
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, size, size);
 
+    // Helper function to draw the image with current transforms
+    const drawImage = () => {
+      ctx.save();
+      ctx.translate(size / 2, size / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      const imgWidth = imageElement.width * zoom;
+      const imgHeight = imageElement.height * zoom;
+      ctx.drawImage(
+        imageElement,
+        -imgWidth / 2 + position.x,
+        -imgHeight / 2 + position.y,
+        imgWidth,
+        imgHeight
+      );
+      ctx.restore();
+    };
+
+    // First, draw the image with a dark overlay for the outer area
+    drawImage();
+    
+    // Apply semi-transparent overlay to the entire canvas
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(0, 0, size, size);
+
+    // Now clip to the crop shape and redraw the image clearly
+    ctx.save();
+    ctx.beginPath();
+    if (cropShape === 'circle') {
+      ctx.arc(size / 2, size / 2, cropSize / 2, 0, Math.PI * 2);
+    } else {
+      ctx.rect(cropX, cropY, cropSize, cropSize);
+    }
+    ctx.clip();
+    
+    // Clear the clipped area
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, size, size);
+    
+    // Redraw the image inside the crop area (clear, no overlay)
+    drawImage();
     ctx.restore();
 
     // Draw crop border
-    ctx.strokeStyle = 'hsl(var(--primary))';
+    ctx.strokeStyle = 'hsl(32, 30%, 20%)';
     ctx.lineWidth = 2;
     
     if (cropShape === 'circle') {
