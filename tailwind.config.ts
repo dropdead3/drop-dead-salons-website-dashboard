@@ -126,6 +126,10 @@ export default {
           "15%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },
+        "bounce-once": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.15)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -139,6 +143,7 @@ export default {
         "float": "float 3s ease-in-out infinite",
         "marquee": "marquee 25s linear infinite",
         "shine": "shine 8s ease-in-out infinite",
+        "bounce-once": "bounce-once 0.3s ease-out",
       },
     },
   },
