@@ -3455,9 +3455,8 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
             <div className="lg:col-span-2">
               <div className="sticky top-4">
                 <div className="font-medium text-sm mb-2">Email Canvas</div>
-                <ScrollArea className="h-[calc(100vh-200px)] max-h-[700px] border rounded-lg bg-muted/50 p-4">
-                {/* Hint overlays at top of canvas */}
-                <div className="space-y-2 mb-4 max-w-[600px] mx-auto">
+                {/* Sticky hint overlays at top of canvas */}
+                <div className="space-y-2 mb-3 max-w-[600px]">
                   <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2.5 flex items-center gap-2">
                     <MousePointerClick className="w-4 h-4 text-primary flex-shrink-0" />
                     <span className="text-xs text-primary font-medium">Click any block below to edit its content and styling</span>
@@ -3467,6 +3466,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <span className="text-xs text-amber-700 font-medium">Remember to click Preview before finalizing your template to ensure no code errors</span>
                   </div>
                 </div>
+                <ScrollArea className="h-[calc(100vh-280px)] max-h-[620px] border rounded-lg bg-muted/50 p-4">
                 <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
                   {blocks.map((block, index) => (
                     <div
