@@ -144,6 +144,7 @@ export type Database = {
       assistant_requests: {
         Row: {
           accepted_at: string | null
+          assigned_at: string | null
           assistant_id: string | null
           client_name: string
           created_at: string
@@ -156,6 +157,7 @@ export type Database = {
           recurrence_end_date: string | null
           recurrence_type: string | null
           request_date: string
+          response_deadline_hours: number | null
           service_id: string
           start_time: string
           status: string
@@ -164,6 +166,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          assigned_at?: string | null
           assistant_id?: string | null
           client_name: string
           created_at?: string
@@ -176,6 +179,7 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_type?: string | null
           request_date: string
+          response_deadline_hours?: number | null
           service_id: string
           start_time: string
           status?: string
@@ -184,6 +188,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          assigned_at?: string | null
           assistant_id?: string | null
           client_name?: string
           created_at?: string
@@ -196,6 +201,7 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_type?: string | null
           request_date?: string
+          response_deadline_hours?: number | null
           service_id?: string
           start_time?: string
           status?: string

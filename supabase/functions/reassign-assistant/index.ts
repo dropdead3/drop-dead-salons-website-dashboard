@@ -51,11 +51,20 @@ serve(async (req: Request) => {
     // Get stylist info
     const { data: stylistProfile } = await supabase
       .from("employee_profiles")
-      .select("full_name, display_name")
+      .select("full_name, display_name, email")
       .eq("user_id", request.stylist_id)
       .single();
 
     const stylistName = stylistProfile?.display_name || stylistProfile?.full_name || "A stylist";
+
+    // Get declining assistant's info
+    const { data: decliningAssistantProfile } = await supabase
+      .from("employee_profiles")
+      .select("full_name, display_name")
+      .eq("user_id", declined_by)
+      .single();
+
+    const decliningAssistantName = decliningAssistantProfile?.display_name || decliningAssistantProfile?.full_name || "An assistant";
 
     // Get all assistants with the 'stylist_assistant' or legacy 'assistant' role
     const { data: assistantRoles, error: rolesError } = await supabase
@@ -177,6 +186,7 @@ serve(async (req: Request) => {
         status: "assigned",
         accepted_at: null,
         declined_by: declinedByArray,
+        assigned_at: new Date().toISOString(),
       })
       .eq("id", request_id);
 
@@ -250,6 +260,66 @@ serve(async (req: Request) => {
         console.error("Failed to send email:", emailError);
       }
     }
+
+    // Notify stylist about the decline and reassignment
+    if (resendApiKey && stylistProfile?.email) {
+      try {
+        const resend = new Resend(resendApiKey);
+        
+        const formattedDate = new Date(request.request_date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric'
+        });
+
+        const formatTime = (time: string) => {
+          const [hours, minutes] = time.split(':');
+          const hour = parseInt(hours);
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const hour12 = hour % 12 || 12;
+          return `${hour12}:${minutes} ${ampm}`;
+        };
+
+        const newAssistantName = assistantProfile?.display_name || assistantProfile?.full_name;
+
+        await resend.emails.send({
+          from: "Drop Dead 75 <onboarding@resend.dev>",
+          to: [stylistProfile.email],
+          subject: `Assistant Request Reassigned`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #333;">Assignment Update</h2>
+              <p>Hi ${stylistName},</p>
+              <p><strong>${decliningAssistantName}</strong> has declined your assistant request.</p>
+              <p>Your request has been automatically reassigned to <strong>${newAssistantName}</strong>.</p>
+              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p><strong>Client:</strong> ${request.client_name}</p>
+                <p><strong>Service:</strong> ${request.salon_services?.name}</p>
+                <p><strong>Date:</strong> ${formattedDate}</p>
+                <p><strong>Time:</strong> ${formatTime(request.start_time)} - ${formatTime(request.end_time)}</p>
+                <p><strong>New Assistant:</strong> ${newAssistantName}</p>
+              </div>
+              <p>You can check the status in your dashboard.</p>
+              <p>Best,<br>Drop Dead 75 Team</p>
+            </div>
+          `,
+        });
+        console.log("Stylist notification sent to:", stylistProfile.email);
+      } catch (emailError) {
+        console.error("Failed to send stylist notification:", emailError);
+      }
+    }
+
+    // Create in-app notification for stylist
+    await supabase
+      .from("notifications")
+      .insert({
+        user_id: request.stylist_id,
+        type: "assistant_declined",
+        title: "Assistant Request Reassigned",
+        message: `${decliningAssistantName} declined. Your request was reassigned to ${assistantProfile?.display_name || assistantProfile?.full_name || 'another assistant'}.`,
+        link: "/dashboard/assistant-schedule",
+      });
 
     return new Response(
       JSON.stringify({
