@@ -680,9 +680,16 @@ export function EmailTemplatesManager() {
             >
               {previewTemplate?.subject ? renderPreviewHtml(previewTemplate.subject, previewTemplate?.variables || []).replace(/<[^>]*>/g, '') : 'No Subject'}
             </h2>
-            <div className="flex items-center gap-2 text-[15px]">
-              <span className="font-medium" style={{ color: '#8e8e93' }}>To:</span>
-              <span style={{ color: '#007aff' }}>team@dropdeadsalon.com</span>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[15px]">
+                <span className="font-medium w-12" style={{ color: '#8e8e93' }}>From:</span>
+                <span style={{ color: '#000000' }}>Drop Dead Salons</span>
+                <span style={{ color: '#8e8e93' }}>&lt;noreply@dropdeadsalon.com&gt;</span>
+              </div>
+              <div className="flex items-center gap-2 text-[15px]">
+                <span className="font-medium w-12" style={{ color: '#8e8e93' }}>To:</span>
+                <span style={{ color: '#007aff' }}>team@dropdeadsalon.com</span>
+              </div>
             </div>
           </div>
           
