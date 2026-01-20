@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { BellEntryCard } from '@/components/dashboard/BellEntryCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Select,
   SelectContent,
@@ -14,16 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { useBellSound } from '@/hooks/use-bell-sound';
-import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X, Sparkles, Pencil, Trash2, MoreVertical } from 'lucide-react';
+import { Bell, DollarSign, Loader2, Sparkles, Users, User } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +30,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { format } from 'date-fns';
 import confetti from 'canvas-confetti';
 
 interface BellEntry {
@@ -76,21 +70,20 @@ export default function RingTheBell() {
   const [leadSource, setLeadSource] = useState('');
   const [closingScript, setClosingScript] = useState('');
 
-  // Coach note state
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [noteText, setNoteText] = useState('');
-  const [savingNote, setSavingNote] = useState(false);
-
-  // Edit entry state
-  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
-  const [editService, setEditService] = useState('');
-  const [editTicketValue, setEditTicketValue] = useState('');
-  const [editLeadSource, setEditLeadSource] = useState('');
-  const [editClosingScript, setEditClosingScript] = useState('');
-  const [savingEdit, setSavingEdit] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<BellEntry | null>(null);
+
+  // Separate entries into my rings and team rings
+  const myRings = useMemo(() => 
+    entries.filter(e => e.user_id === user?.id), 
+    [entries, user?.id]
+  );
+  
+  const teamRings = useMemo(() => 
+    entries.filter(e => e.user_id !== user?.id),
+    [entries, user?.id]
+  );
 
   useEffect(() => {
     fetchEntries();
@@ -138,6 +131,13 @@ export default function RingTheBell() {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'ring_the_bell_entries' },
+        () => {
+          fetchEntries();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'ring_the_bell_entries' },
         () => {
           fetchEntries();
         }
@@ -265,7 +265,7 @@ export default function RingTheBell() {
     setSubmitting(false);
   };
 
-  const togglePin = async (entryId: string, currentlyPinned: boolean) => {
+  const handleTogglePin = async (entryId: string, currentlyPinned: boolean) => {
     if (!isCoach) return;
 
     const { error } = await supabase
@@ -285,20 +285,9 @@ export default function RingTheBell() {
     }
   };
 
-  const startEditingNote = (entry: BellEntry) => {
-    setEditingNoteId(entry.id);
-    setNoteText(entry.coach_note || '');
-  };
-
-  const cancelEditingNote = () => {
-    setEditingNoteId(null);
-    setNoteText('');
-  };
-
-  const saveCoachNote = async (entryId: string) => {
+  const handleSaveNote = async (entryId: string, noteText: string) => {
     if (!isCoach) return;
     
-    setSavingNote(true);
     const { error } = await supabase
       .from('ring_the_bell_entries')
       .update({ coach_note: noteText || null })
@@ -312,8 +301,6 @@ export default function RingTheBell() {
         title: '✨ Note Saved',
         description: 'Your celebratory note has been added!',
       });
-      setEditingNoteId(null);
-      setNoteText('');
     } else {
       toast({
         variant: 'destructive',
@@ -321,34 +308,19 @@ export default function RingTheBell() {
         description: 'Failed to save note.',
       });
     }
-    setSavingNote(false);
   };
 
-  const startEditingEntry = (entry: BellEntry) => {
-    setEditingEntryId(entry.id);
-    setEditService(entry.service_booked);
-    setEditTicketValue(entry.ticket_value.toString());
-    setEditLeadSource(entry.lead_source);
-    setEditClosingScript(entry.closing_script || '');
-  };
-
-  const cancelEditingEntry = () => {
-    setEditingEntryId(null);
-    setEditService('');
-    setEditTicketValue('');
-    setEditLeadSource('');
-    setEditClosingScript('');
-  };
-
-  const saveEntryEdit = async (entryId: string) => {
-    setSavingEdit(true);
+  const handleSaveEdit = async (
+    entryId: string, 
+    data: { service: string; ticketValue: string; leadSource: string; closingScript: string }
+  ) => {
     const { error } = await supabase
       .from('ring_the_bell_entries')
       .update({
-        service_booked: editService,
-        ticket_value: parseFloat(editTicketValue),
-        lead_source: editLeadSource as any,
-        closing_script: editClosingScript || null,
+        service_booked: data.service,
+        ticket_value: parseFloat(data.ticketValue),
+        lead_source: data.leadSource as any,
+        closing_script: data.closingScript || null,
       })
       .eq('id', entryId);
 
@@ -358,10 +330,10 @@ export default function RingTheBell() {
           e.id === entryId
             ? {
                 ...e,
-                service_booked: editService,
-                ticket_value: parseFloat(editTicketValue),
-                lead_source: editLeadSource,
-                closing_script: editClosingScript || null,
+                service_booked: data.service,
+                ticket_value: parseFloat(data.ticketValue),
+                lead_source: data.leadSource,
+                closing_script: data.closingScript || null,
               }
             : e
         )
@@ -370,7 +342,6 @@ export default function RingTheBell() {
         title: '✅ Entry Updated',
         description: 'Your bell entry has been updated.',
       });
-      cancelEditingEntry();
     } else {
       toast({
         variant: 'destructive',
@@ -378,18 +349,23 @@ export default function RingTheBell() {
         description: 'Failed to update entry.',
       });
     }
-    setSavingEdit(false);
   };
 
-  const deleteEntry = async (entryId: string) => {
-    setDeletingId(entryId);
+  const handleDelete = (entry: BellEntry) => {
+    setEntryToDelete(entry);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!entryToDelete) return;
+    
     const { error } = await supabase
       .from('ring_the_bell_entries')
       .delete()
-      .eq('id', entryId);
+      .eq('id', entryToDelete.id);
 
     if (!error) {
-      setEntries(prev => prev.filter(e => e.id !== entryId));
+      setEntries(prev => prev.filter(e => e.id !== entryToDelete.id));
       toast({
         title: '🗑️ Entry Deleted',
         description: 'The bell entry has been removed.',
@@ -401,11 +377,43 @@ export default function RingTheBell() {
         description: 'Failed to delete entry.',
       });
     }
-    setDeletingId(null);
+    setDeleteDialogOpen(false);
+    setEntryToDelete(null);
   };
 
   const canEditOrDelete = (entry: BellEntry) => {
     return user?.id === entry.user_id || isCoach;
+  };
+
+  const renderEntryList = (entryList: BellEntry[], showStylistName: boolean) => {
+    if (entryList.length === 0) {
+      return (
+        <Card className="p-12 text-center">
+          <Bell className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground font-sans">
+            No bells rung yet.
+          </p>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {entryList.map((entry) => (
+          <BellEntryCard
+            key={entry.id}
+            entry={entry}
+            isCoach={isCoach}
+            canEditOrDelete={canEditOrDelete(entry)}
+            showStylistName={showStylistName}
+            onTogglePin={handleTogglePin}
+            onSaveNote={handleSaveNote}
+            onSaveEdit={handleSaveEdit}
+            onDelete={handleDelete}
+          />
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -518,236 +526,42 @@ export default function RingTheBell() {
           </Card>
         )}
 
-        {/* Feed */}
+        {/* Feed with Tabs */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
-        ) : entries.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Bell className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground font-sans">
-              No bells rung yet. Be the first to celebrate a win!
-            </p>
-          </Card>
         ) : (
-          <div className="space-y-4">
-            {entries.map((entry) => (
-              <Card 
-                key={entry.id} 
-                className={`p-6 ${entry.is_pinned ? 'border-primary bg-primary/5' : ''}`}
-              >
-                {/* Edit Mode */}
-                {editingEntryId === entry.id ? (
-                  <div className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label className="text-xs uppercase tracking-wider">Service Booked</Label>
-                        <Input
-                          value={editService}
-                          onChange={(e) => setEditService(e.target.value)}
-                          placeholder="e.g., Full Extensions Install"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs uppercase tracking-wider">Ticket Value</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            value={editTicketValue}
-                            onChange={(e) => setEditTicketValue(e.target.value)}
-                            className="pl-9"
-                            min="0"
-                            step="0.01"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs uppercase tracking-wider">Lead Source</Label>
-                      <Select value={editLeadSource} onValueChange={setEditLeadSource}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="How did they find you?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {leadSources.map((source) => (
-                            <SelectItem key={source.value} value={source.value}>
-                              {source.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs uppercase tracking-wider">What Closed the Deal? (Optional)</Label>
-                      <Textarea
-                        value={editClosingScript}
-                        onChange={(e) => setEditClosingScript(e.target.value)}
-                        placeholder="Share the script, phrase, or action that sealed it..."
-                        rows={2}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => saveEntryEdit(entry.id)}
-                        disabled={savingEdit}
-                        className="font-display text-xs"
-                      >
-                        {savingEdit ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <>
-                            <Send className="w-3 h-3 mr-1" />
-                            Save Changes
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={cancelEditingEntry}
-                        className="font-display text-xs"
-                      >
-                        <X className="w-3 h-3 mr-1" />
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  /* View Mode */
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="font-display text-xl">
-                          ${entry.ticket_value.toLocaleString()}
-                        </span>
-                        {entry.is_pinned && (
-                          <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs font-display tracking-wide rounded">
-                            PINNED
-                          </span>
-                        )}
-                      </div>
-                      <p className="font-sans text-sm mb-1">{entry.service_booked}</p>
-                      <p className="text-xs text-muted-foreground font-sans">
-                        {entry.stylist_name && <span className="font-medium">{entry.stylist_name} · </span>}
-                        {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
-                        {format(new Date(entry.created_at), 'MMM d, yyyy')}
-                      </p>
-                      {entry.closing_script && (
-                        <p className="mt-3 text-sm text-muted-foreground font-sans italic">
-                          "{entry.closing_script}"
-                        </p>
-                      )}
-
-                      {/* Coach Note Display */}
-                      {entry.coach_note && editingNoteId !== entry.id && (
-                        <div className="mt-4 p-3 bg-accent/50 rounded-lg border border-accent">
-                          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
-                            <MessageSquare className="w-3 h-3" /> Coach Note
-                          </p>
-                          <p className="text-sm font-sans">{entry.coach_note}</p>
-                        </div>
-                      )}
-
-                      {/* Coach Note Editor */}
-                      {isCoach && editingNoteId === entry.id && (
-                        <div className="mt-4 space-y-2">
-                          <Textarea
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            placeholder="Add a celebratory note for this win..."
-                            rows={2}
-                            className="text-sm"
-                          />
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => saveCoachNote(entry.id)}
-                              disabled={savingNote}
-                              className="font-display text-xs"
-                            >
-                              {savingNote ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <>
-                                  <Send className="w-3 h-3 mr-1" />
-                                  Save Note
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={cancelEditingNote}
-                              className="font-display text-xs"
-                            >
-                              <X className="w-3 h-3 mr-1" />
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actions Menu */}
-                    {(isCoach || canEditOrDelete(entry)) && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground hover:text-foreground ml-4"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          {/* Coach-only actions */}
-                          {isCoach && (
-                            <>
-                              <DropdownMenuItem onClick={() => togglePin(entry.id, entry.is_pinned)}>
-                                <Pin className={`w-4 h-4 mr-2 ${entry.is_pinned ? 'text-primary' : ''}`} />
-                                {entry.is_pinned ? 'Unpin' : 'Pin to Top'}
-                              </DropdownMenuItem>
-                              {editingNoteId !== entry.id && (
-                                <DropdownMenuItem onClick={() => startEditingNote(entry)}>
-                                  <MessageSquare className="w-4 h-4 mr-2" />
-                                  {entry.coach_note ? 'Edit Note' : 'Add Note'}
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                            </>
-                          )}
-                          
-                          {/* Edit/Delete for owner or coach */}
-                          {canEditOrDelete(entry) && (
-                            <>
-                              <DropdownMenuItem onClick={() => startEditingEntry(entry)}>
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Edit Entry
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => {
-                                  setEntryToDelete(entry);
-                                  setDeleteDialogOpen(true);
-                                }}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete Entry
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
+          <Tabs defaultValue="team" className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="team" className="gap-2">
+                <Users className="w-4 h-4" />
+                Team Rings
+                {teamRings.length > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-muted rounded-full">
+                    {teamRings.length}
+                  </span>
                 )}
-              </Card>
-            ))}
-          </div>
+              </TabsTrigger>
+              <TabsTrigger value="mine" className="gap-2">
+                <User className="w-4 h-4" />
+                My Rings
+                {myRings.length > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-muted rounded-full">
+                    {myRings.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="team">
+              {renderEntryList(teamRings, true)}
+            </TabsContent>
+
+            <TabsContent value="mine">
+              {renderEntryList(myRings, false)}
+            </TabsContent>
+          </Tabs>
         )}
 
         {/* Delete Confirmation Dialog */}
@@ -762,12 +576,7 @@ export default function RingTheBell() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => {
-                  if (entryToDelete) {
-                    deleteEntry(entryToDelete.id);
-                  }
-                  setDeleteDialogOpen(false);
-                }}
+                onClick={confirmDelete}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete
