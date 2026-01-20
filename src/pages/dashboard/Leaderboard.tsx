@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles } from 'lucide-react';
+import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 
 interface LeaderboardEntry {
@@ -30,7 +30,39 @@ interface PhorestPerformer {
 }
 
 type MetricType = 'day' | 'streak' | 'revenue' | 'bells';
-type PhorestCategory = 'newClients' | 'retention' | 'retail' | 'extensions';
+type PhorestCategory = 'overall' | 'newClients' | 'retention' | 'retail' | 'extensions';
+
+// Weight configuration for overall score algorithm
+const SCORE_WEIGHTS = {
+  newClients: 0.30,    // 30% - New client acquisition is key growth
+  retention: 0.25,     // 25% - Client loyalty is critical
+  retail: 0.20,        // 20% - Product sales add revenue
+  extensions: 0.25,    // 25% - Specialty service focus
+};
+
+// Calculate normalized score (0-100) for each metric
+const calculateOverallScore = (performer: PhorestPerformer, allPerformers: PhorestPerformer[]): number => {
+  // Get max values for normalization
+  const maxNewClients = Math.max(...allPerformers.map(p => p.newClients), 1);
+  const maxRetention = 100; // Retention is already a percentage
+  const maxRetail = Math.max(...allPerformers.map(p => p.retailSales), 1);
+  const maxExtensions = Math.max(...allPerformers.map(p => p.extensionClients), 1);
+
+  // Normalize each metric to 0-100 scale
+  const normalizedNewClients = (performer.newClients / maxNewClients) * 100;
+  const normalizedRetention = performer.retentionRate; // Already 0-100
+  const normalizedRetail = (performer.retailSales / maxRetail) * 100;
+  const normalizedExtensions = (performer.extensionClients / maxExtensions) * 100;
+
+  // Calculate weighted score
+  const weightedScore = 
+    (normalizedNewClients * SCORE_WEIGHTS.newClients) +
+    (normalizedRetention * SCORE_WEIGHTS.retention) +
+    (normalizedRetail * SCORE_WEIGHTS.retail) +
+    (normalizedExtensions * SCORE_WEIGHTS.extensions);
+
+  return Math.round(weightedScore * 10) / 10; // Round to 1 decimal
+};
 
 // Mock data - will be replaced with Phorest API data
 const mockPhorestData: PhorestPerformer[] = [
@@ -45,10 +77,17 @@ const mockPhorestData: PhorestPerformer[] = [
 const categoryConfig: Record<PhorestCategory, { 
   label: string; 
   icon: React.ComponentType<{ className?: string }>; 
-  getValue: (p: PhorestPerformer) => number;
+  getValue: (p: PhorestPerformer, allPerformers?: PhorestPerformer[]) => number;
   formatValue: (v: number) => string;
   description: string;
 }> = {
+  overall: {
+    label: 'Overall Score',
+    icon: Star,
+    getValue: (p, allPerformers) => allPerformers ? calculateOverallScore(p, allPerformers) : 0,
+    formatValue: (v) => `${v} pts`,
+    description: 'Weighted composite score across all performance metrics',
+  },
   newClients: {
     label: 'New Clients',
     icon: Users,
@@ -84,7 +123,7 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [metric, setMetric] = useState<MetricType>('day');
   const [phorestData] = useState<PhorestPerformer[]>(mockPhorestData);
-  const [phorestCategory, setPhorestCategory] = useState<PhorestCategory>('newClients');
+  const [phorestCategory, setPhorestCategory] = useState<PhorestCategory>('overall');
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
@@ -176,7 +215,7 @@ export default function Leaderboard() {
 
   const currentConfig = categoryConfig[phorestCategory];
   const sortedPhorestData = [...phorestData].sort(
-    (a, b) => currentConfig.getValue(b) - currentConfig.getValue(a)
+    (a, b) => currentConfig.getValue(b, phorestData) - currentConfig.getValue(a, phorestData)
   );
 
   return (
@@ -276,7 +315,7 @@ export default function Leaderboard() {
                         {performer.name.split(' ')[0]}
                       </p>
                       <p className="font-display text-lg">
-                        {currentConfig.formatValue(currentConfig.getValue(performer))}
+                        {currentConfig.formatValue(currentConfig.getValue(performer, phorestData))}
                       </p>
                     </Card>
                   </div>
@@ -317,10 +356,9 @@ export default function Leaderboard() {
                       )}
                     </div>
 
-                    {/* Value */}
                     <div className="text-right">
                       <p className="font-display text-lg">
-                        {currentConfig.formatValue(currentConfig.getValue(performer))}
+                        {currentConfig.formatValue(currentConfig.getValue(performer, phorestData))}
                       </p>
                     </div>
                   </div>
