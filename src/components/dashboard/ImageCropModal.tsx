@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { ZoomIn, ZoomOut, RotateCw, Move, Crop, Info, AlertTriangle } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCw, Move, Crop, Info, AlertTriangle, Maximize2 } from 'lucide-react';
 
 interface ImageCropModalProps {
   open: boolean;
@@ -237,6 +237,16 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const handleZoomIn = () => setZoom(prev => Math.min(prev * 1.2, 3));
   const handleZoomOut = () => setZoom(prev => Math.max(prev / 1.2, minZoom));
   const handleRotate = () => setRotation(prev => (prev + 90) % 360);
+  
+  const handleFitToView = () => {
+    if (!imageElement) return;
+    const canvasSize = 280;
+    // Fit the long side into the canvas so the entire image is visible
+    const longSide = Math.max(imageElement.width, imageElement.height);
+    const fitZoom = canvasSize / longSide;
+    setZoom(Math.max(minZoom, Math.min(3, fitZoom)));
+    setPosition({ x: 0, y: 0 });
+  };
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
@@ -318,7 +328,19 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm">Zoom</Label>
-              <span className="text-xs text-muted-foreground">{Math.round(zoom * 100)}%</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleFitToView}
+                  className="h-6 text-xs gap-1 px-2"
+                >
+                  <Maximize2 className="h-3 w-3" />
+                  Fit to View
+                </Button>
+                <span className="text-xs text-muted-foreground">{Math.round(zoom * 100)}%</span>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Button
