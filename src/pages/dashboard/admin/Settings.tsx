@@ -35,11 +35,13 @@ import {
   PenTool,
   FileText,
   Cog,
+  ClipboardCheck,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
 import { EmailVariablesManager } from '@/components/dashboard/EmailVariablesManager';
 import { SignaturePresetsManager } from '@/components/dashboard/SignaturePresetsManager';
+import { OnboardingTasksManager } from '@/components/dashboard/OnboardingTasksManager';
 
 interface UserWithRole {
   user_id: string;
@@ -272,70 +274,101 @@ export default function Settings() {
               <h2 className="font-display text-xl tracking-wide">USER MANAGEMENT</h2>
             </div>
 
-            <Card className="p-6">
-              <p className="text-sm text-muted-foreground font-sans mb-6">
-                Manage team members and their access levels.
-              </p>
+            <Accordion type="single" collapsible defaultValue="team-members" className="space-y-4">
+              {/* Team Members */}
+              <AccordionItem value="team-members" className="border rounded-lg px-4">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5" />
+                    <span className="font-display text-sm tracking-wide">TEAM MEMBERS</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="py-4">
+                    <p className="text-sm text-muted-foreground font-sans mb-6">
+                      Manage team members and their access levels.
+                    </p>
 
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : users.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  No active users found.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {users.map(u => (
-                    <Card key={u.user_id} className="p-4 bg-muted/30">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center font-display text-sm">
-                            {u.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </div>
-                          <div>
-                            <p className="font-sans font-medium">{u.full_name}</p>
-                            <p className="text-xs text-muted-foreground">{u.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={u.role}
-                            onValueChange={(value) => updateUserRole(u.user_id, value)}
-                            disabled={updatingUser === u.user_id}
-                          >
-                            <SelectTrigger className="w-32">
-                              {updatingUser === u.user_id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <SelectValue />
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              {roleOptions.map(role => (
-                                <SelectItem key={role.value} value={role.value}>
-                                  {role.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeUser(u.user_id)}
-                            disabled={u.user_id === user?.id}
-                            className="text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                    {loading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </Card>
+                    ) : users.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        No active users found.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {users.map(u => (
+                          <Card key={u.user_id} className="p-4 bg-muted/30">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center font-display text-sm">
+                                  {u.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                </div>
+                                <div>
+                                  <p className="font-sans font-medium">{u.full_name}</p>
+                                  <p className="text-xs text-muted-foreground">{u.email}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Select
+                                  value={u.role}
+                                  onValueChange={(value) => updateUserRole(u.user_id, value)}
+                                  disabled={updatingUser === u.user_id}
+                                >
+                                  <SelectTrigger className="w-32">
+                                    {updatingUser === u.user_id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <SelectValue />
+                                    )}
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {roleOptions.map(role => (
+                                      <SelectItem key={role.value} value={role.value}>
+                                        {role.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeUser(u.user_id)}
+                                  disabled={u.user_id === user?.id}
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Onboarding Tasks */}
+              <AccordionItem value="onboarding-tasks" className="border rounded-lg px-4">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <ClipboardCheck className="w-5 h-5" />
+                    <span className="font-display text-sm tracking-wide">ONBOARDING TASKS</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="py-4">
+                    <p className="text-sm text-muted-foreground font-sans mb-4">
+                      Configure onboarding checklist items. Tasks are shown based on user roles.
+                    </p>
+                    <OnboardingTasksManager />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </TabsContent>
 
           {/* Program Category */}
