@@ -350,7 +350,7 @@ export function BellEntryCard({
           <div className="flex items-center gap-2 shrink-0">
             {/* Salon Lead Badge */}
             {entry.lead_source === 'salon_lead' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-display tracking-wide rounded bg-gold text-gold-foreground animate-shimmer bg-[length:200%_100%] shadow-sm">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-display tracking-wide rounded bg-primary text-primary-foreground animate-shimmer bg-[length:200%_100%] shadow-sm">
                 <Star className="w-3 h-3 fill-current" />
                 SALON LEAD
               </span>
