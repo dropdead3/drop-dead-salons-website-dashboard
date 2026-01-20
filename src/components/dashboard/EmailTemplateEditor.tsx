@@ -647,8 +647,32 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
       return initialBlocks;
     }
     
-    // Otherwise fall back to default blocks
+    // Otherwise fall back to default blocks with header pre-added
     return [
+      {
+        id: crypto.randomUUID(),
+        type: 'header',
+        content: '',
+        styles: { 
+          textAlign: 'center', 
+          fontSize: '16px', 
+          padding: '20px 24px', 
+          backgroundColor: defaultTheme.colors.headerBg,
+          textColor: defaultTheme.colors.headerText,
+          borderRadius: '12px 12px 0 0'
+        },
+        navLinks: [
+          { label: 'Dashboard Login', url: 'https://www.dropdeadsalon.com/staff-login', enabled: true },
+        ],
+        headerConfig: {
+          showLogo: true,
+          logoId: 'dd-secondary-white',
+          logoSize: 'small' as const,
+          logoPosition: 'left' as const,
+          showNavLinks: true,
+          navLinksPosition: 'right' as const,
+        }
+      },
       {
         id: crypto.randomUUID(),
         type: 'heading',
@@ -659,7 +683,6 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
           textColor: defaultTheme.colors.headerText, 
           backgroundColor: defaultTheme.colors.headerBg, 
           padding: '24px', 
-          borderRadius: '12px 12px 0 0' 
         },
       },
       {
@@ -1110,15 +1133,15 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
       }),
       ...(type === 'header' && {
         navLinks: [
-          { label: 'Home', url: 'https://www.dropdeadsalon.com', enabled: true },
-          { label: 'Services', url: 'https://www.dropdeadsalon.com/services', enabled: true },
-          { label: 'Book Now', url: 'https://www.dropdeadsalon.com/booking', enabled: true },
-          { label: 'Staff Login', url: 'https://www.dropdeadsalon.com/staff-login', enabled: false },
+          { label: 'Dashboard Login', url: 'https://www.dropdeadsalon.com/staff-login', enabled: true },
         ],
         headerConfig: {
           showLogo: true,
-          logoId: 'drop-dead-main-black',
+          logoId: 'dd-secondary-white',
+          logoSize: 'small' as const,
+          logoPosition: 'left' as const,
           showNavLinks: true,
+          navLinksPosition: 'right' as const,
         }
       }),
     };
