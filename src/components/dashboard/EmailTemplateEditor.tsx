@@ -70,6 +70,7 @@ import {
   CheckCircle2,
   Columns2,
   Columns3,
+  Rows2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1920,6 +1921,45 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     updateBlocksAndHtml(newBlocks);
     setSelectedBlockId(columnsBlock.id);
     toast.success(`Converted to ${columnCount}-column layout`);
+  };
+
+  // Unwrap a columns block back into individual blocks
+  const unwrapColumns = (id: string) => {
+    const columnsBlock = blocks.find(b => b.id === id);
+    if (!columnsBlock || columnsBlock.type !== 'columns') {
+      toast.error('This block cannot be unwrapped');
+      return;
+    }
+    
+    // Extract all blocks from all columns
+    const extractedBlocks: EmailBlock[] = [];
+    const columnBlocks = columnsBlock.columnsConfig?.columnBlocks || [];
+    
+    for (const column of columnBlocks) {
+      for (const block of column) {
+        // Create a new copy with fresh ID to avoid conflicts
+        extractedBlocks.push({
+          ...block,
+          id: crypto.randomUUID(),
+          styles: { ...block.styles },
+        });
+      }
+    }
+    
+    if (extractedBlocks.length === 0) {
+      toast.error('No blocks to unwrap');
+      return;
+    }
+    
+    // Find the index of the columns block and replace it with extracted blocks
+    const index = blocks.findIndex(b => b.id === id);
+    const newBlocks = [...blocks];
+    newBlocks.splice(index, 1, ...extractedBlocks);
+    updateBlocksAndHtml(newBlocks);
+    
+    // Select the first extracted block
+    setSelectedBlockId(extractedBlocks[0].id);
+    toast.success(`Unwrapped ${extractedBlocks.length} block${extractedBlocks.length > 1 ? 's' : ''} from columns`);
   };
 
   // Helper to get section type for visual grouping
@@ -5291,6 +5331,21 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               title="Convert to 3 columns"
                             >
                               <Columns3 className="w-3 h-3" />
+                            </Button>
+                            <div className="w-px h-4 bg-border" />
+                          </>
+                        )}
+                        {/* Unwrap columns button - only show for columns blocks */}
+                        {block.type === 'columns' && (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6" 
+                              onClick={(e) => { e.stopPropagation(); unwrapColumns(block.id); }}
+                              title="Unwrap columns to individual blocks"
+                            >
+                              <Rows2 className="w-3 h-3" />
                             </Button>
                             <div className="w-px h-4 bg-border" />
                           </>
