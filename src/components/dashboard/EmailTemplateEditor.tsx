@@ -1126,7 +1126,9 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
         ],
         footerConfig: {
           showLogo: true,
-          logoId: 'drop-dead-main-black',
+          logoId: 'drop-dead-main-white',
+          logoSize: 'medium' as const,
+          logoPosition: 'center' as const,
           showSocialIcons: true,
           copyrightText: '© 2026 Drop Dead Salons. All rights reserved.',
         }
@@ -2803,7 +2805,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           </div>
                         )}
                         {block.type === 'footer' && (() => {
-                          const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
+                          const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main-white', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
                           const logo = getLogoById(footerConfig.logoId) || brandLogos[0];
                           const enabledLinks = (block.socialLinks || []).filter(l => l.enabled);
                           const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
