@@ -218,6 +218,8 @@ interface EmailBlock {
     buttonColor?: string;
     buttonTextColor?: string;
     buttonVariant?: 'primary' | 'secondary';
+    buttonSize?: number; // 80-140 percentage scale
+    buttonShape?: 'pill' | 'rounded' | 'rectangle';
   };
   imageUrl?: string;
   linkUrl?: string;
@@ -540,9 +542,14 @@ function blocksToHtml(blocks: EmailBlock[]): string {
       }
       case 'button': {
         const isSecondary = block.styles.buttonVariant === 'secondary';
+        const sizeScale = (block.styles.buttonSize || 100) / 100;
+        const basePaddingV = Math.round(16 * sizeScale);
+        const basePaddingH = Math.round(32 * sizeScale);
+        const baseFontSize = Math.round(16 * sizeScale);
+        const shapeRadius = block.styles.buttonShape === 'pill' ? '9999px' : block.styles.buttonShape === 'rectangle' ? '0px' : '8px';
         const buttonStyles = isSecondary
-          ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a'}; padding: 16px 32px; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : 'border-radius: 8px;'}`
-          : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: 16px 32px; text-decoration: none; font-weight: bold; font-size: 16px; ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : 'border-radius: 8px;'}`;
+          ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
+          : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
         // Include background-color on wrapper div to match body background
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''} ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
           <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}</a>
@@ -2462,6 +2469,58 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               />
                             </div>
                           )}
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">Button Size</Label>
+                            <span className="text-xs text-muted-foreground">{selectedBlock.styles.buttonSize || 100}%</span>
+                          </div>
+                          <Slider
+                            variant="filled"
+                            min={80}
+                            max={140}
+                            step={5}
+                            value={[selectedBlock.styles.buttonSize || 100]}
+                            onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { buttonSize: value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Button Shape</Label>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => updateBlockStyles(selectedBlock.id, { buttonShape: 'pill' })}
+                              className={cn(
+                                "flex-1 py-2 px-3 rounded-full border-2 text-xs font-medium transition-all",
+                                selectedBlock.styles.buttonShape === 'pill'
+                                  ? "border-foreground bg-foreground text-background"
+                                  : "border-border bg-transparent hover:bg-muted/50"
+                              )}
+                            >
+                              Pill
+                            </button>
+                            <button
+                              onClick={() => updateBlockStyles(selectedBlock.id, { buttonShape: 'rounded' })}
+                              className={cn(
+                                "flex-1 py-2 px-3 rounded-lg border-2 text-xs font-medium transition-all",
+                                (!selectedBlock.styles.buttonShape || selectedBlock.styles.buttonShape === 'rounded')
+                                  ? "border-foreground bg-foreground text-background"
+                                  : "border-border bg-transparent hover:bg-muted/50"
+                              )}
+                            >
+                              Rounded
+                            </button>
+                            <button
+                              onClick={() => updateBlockStyles(selectedBlock.id, { buttonShape: 'rectangle' })}
+                              className={cn(
+                                "flex-1 py-2 px-3 rounded-none border-2 text-xs font-medium transition-all",
+                                selectedBlock.styles.buttonShape === 'rectangle'
+                                  ? "border-foreground bg-foreground text-background"
+                                  : "border-border bg-transparent hover:bg-muted/50"
+                              )}
+                            >
+                              Rectangle
+                            </button>
+                          </div>
                         </div>
                       </>
                     )}
