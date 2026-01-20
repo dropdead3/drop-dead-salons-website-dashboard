@@ -33,6 +33,11 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Database } from '@/integrations/supabase/types';
 
+// Import preview images
+import businessCardClassic from '@/assets/onboarding/business-card-classic.jpg';
+import businessCardModern from '@/assets/onboarding/business-card-modern.jpg';
+import headshotSessionPreview from '@/assets/onboarding/headshot-session.jpg';
+
 type AppRole = Database['public']['Enums']['app_role'];
 
 interface Handbook {
@@ -84,13 +89,13 @@ const BUSINESS_CARD_STYLES = [
     id: 'classic', 
     name: 'Classic', 
     description: 'Clean and professional with traditional layout',
-    preview: 'bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900'
+    image: businessCardClassic
   },
   { 
     id: 'modern', 
     name: 'Modern', 
     description: 'Bold and contemporary with striking design',
-    preview: 'bg-gradient-to-br from-primary/20 to-primary/40'
+    image: businessCardModern
   },
 ];
 
@@ -523,13 +528,19 @@ export default function Onboarding() {
                       key={style.id}
                       onClick={() => setSelectedStyle(style.id)}
                       className={cn(
-                        "relative p-4 rounded-lg border-2 text-left transition-all",
+                        "relative p-3 rounded-lg border-2 text-left transition-all overflow-hidden",
                         selectedStyle === style.id
                           ? 'border-primary ring-2 ring-primary/20'
                           : 'border-border hover:border-primary/50'
                       )}
                     >
-                      <div className={cn("h-24 rounded-md mb-3", style.preview)} />
+                      <div className="aspect-[5/3] rounded-md mb-3 overflow-hidden bg-muted">
+                        <img 
+                          src={style.image} 
+                          alt={`${style.name} design preview`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       <h3 className="font-display text-sm mb-1">{style.name}</h3>
                       <p className="text-xs text-muted-foreground font-sans">{style.description}</p>
                       {selectedStyle === style.id && (
@@ -620,8 +631,14 @@ export default function Onboarding() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="p-4 bg-muted/30 rounded-lg text-center">
-                  <Camera className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                <div className="rounded-lg overflow-hidden">
+                  <img 
+                    src={headshotSessionPreview} 
+                    alt="Professional headshot session"
+                    className="w-full h-40 object-cover"
+                  />
+                </div>
+                <div className="text-center">
                   <p className="text-sm text-muted-foreground font-sans mb-2">
                     Professional headshots are essential for your business cards and team profile.
                   </p>
