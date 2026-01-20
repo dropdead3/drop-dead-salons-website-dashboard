@@ -45,6 +45,7 @@ interface BellEntry {
   user_id: string;
   stylist_name?: string;
   stylist_photo?: string | null;
+  stylist_locations?: string[];
 }
 
 const leadSources = [
@@ -184,12 +185,31 @@ export default function RingTheBell() {
     const userIds = [...new Set(entriesData.map(e => e.user_id))];
     const { data: profilesData } = await supabase
       .from('employee_profiles')
-      .select('user_id, display_name, full_name, photo_url')
+      .select('user_id, display_name, full_name, photo_url, location_ids')
       .in('user_id', userIds);
+
+    // Get all location IDs to fetch location names
+    const allLocationIds = (profilesData || [])
+      .flatMap(p => p.location_ids || [])
+      .filter((id, index, arr) => arr.indexOf(id) === index);
+
+    // Fetch location names
+    const { data: locationsData } = await supabase
+      .from('locations')
+      .select('id, name')
+      .in('id', allLocationIds);
+
+    // Create location map
+    const locationsMap = new Map(
+      (locationsData || []).map(l => [l.id, l.name])
+    );
 
     // Create a map of user_id -> profile for quick lookup
     const profilesMap = new Map(
-      (profilesData || []).map(p => [p.user_id, p])
+      (profilesData || []).map(p => [p.user_id, {
+        ...p,
+        locationNames: (p.location_ids || []).map((id: string) => locationsMap.get(id)).filter(Boolean),
+      }])
     );
 
     // Merge entries with profile data
@@ -199,6 +219,7 @@ export default function RingTheBell() {
         ...entry,
         stylist_name: profile?.display_name || profile?.full_name || 'Stylist',
         stylist_photo: profile?.photo_url || null,
+        stylist_locations: profile?.locationNames || [],
       };
     });
 
