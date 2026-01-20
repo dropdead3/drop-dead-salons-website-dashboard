@@ -354,7 +354,7 @@ export function EmailTemplatesManager() {
                         {template.description}
                       </p>
                     )}
-                    <p className="text-sm font-mono bg-muted px-2 py-1 rounded truncate">
+                    <p className="text-sm font-sans bg-muted px-2 py-1 rounded truncate">
                       Subject: {template.subject}
                     </p>
                   </div>
