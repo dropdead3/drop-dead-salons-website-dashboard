@@ -2445,8 +2445,9 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
 
             {/* Canvas */}
             <div className="lg:col-span-2">
-              <div className="font-medium text-sm mb-2">Email Canvas</div>
-              <ScrollArea className="h-[500px] border rounded-lg bg-muted/50 p-4">
+              <div className="sticky top-4">
+                <div className="font-medium text-sm mb-2">Email Canvas</div>
+                <ScrollArea className="h-[calc(100vh-200px)] max-h-[700px] border rounded-lg bg-muted/50 p-4">
                 <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
                   {blocks.map((block, index) => (
                     <div
@@ -2705,6 +2706,7 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                   )}
                 </div>
               </ScrollArea>
+              </div>
             </div>
           </div>
         </TabsContent>
