@@ -2074,13 +2074,16 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                       win_amount: { category: 'Wins', description: 'Revenue from the win', example: '$350' },
                     };
 
-                    // Group variables by category
-                    const groupedVariables = variables.reduce((acc, variable) => {
-                      const meta = variableMetadata[variable] || { category: 'Custom', description: 'Custom template variable' };
+                    // Group ALL available variables by category (not just template's stored variables)
+                    const groupedVariables = Object.entries(variableMetadata).reduce((acc, [varName, meta]) => {
                       if (!acc[meta.category]) acc[meta.category] = [];
-                      acc[meta.category].push({ name: variable, ...meta });
+                      acc[meta.category].push({ 
+                        name: varName, 
+                        ...meta,
+                        inUse: variables.includes(varName) // Track if variable is used in current template
+                      });
                       return acc;
-                    }, {} as Record<string, Array<{ name: string; category: string; description: string; example?: string }>>);
+                    }, {} as Record<string, Array<{ name: string; category: string; description: string; example?: string; inUse: boolean }>>);
 
                     // Category icons and colors
                     const categoryStyles: Record<string, { icon: string; color: string }> = {
@@ -2116,8 +2119,16 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             <button
                               key={v.name}
                               onClick={() => { insertVariable(v.name); setToolbarPanel(null); }}
-                              className="group flex flex-col items-start p-3 rounded-lg bg-muted/30 hover:bg-primary/10 border border-transparent hover:border-primary/20 transition-all text-left"
+                              className={cn(
+                                "group flex flex-col items-start p-3 rounded-lg hover:bg-primary/10 border transition-all text-left relative",
+                                v.inUse 
+                                  ? "bg-primary/5 border-primary/30" 
+                                  : "bg-muted/30 border-transparent hover:border-primary/20"
+                              )}
                             >
+                              {v.inUse && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" title="Used in this template" />
+                              )}
                               <code className="text-xs font-mono font-semibold text-foreground group-hover:text-primary transition-colors">
                                 {`{{${v.name}}}`}
                               </code>
