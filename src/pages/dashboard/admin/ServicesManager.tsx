@@ -53,12 +53,13 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { services as initialServices, stylistLevels as initialStylistLevels, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
-import { StylistLevelsEditor, type StylistLevel } from '@/components/dashboard/StylistLevelsEditor';
+import { services as initialServices, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
+import { StylistLevelsEditor } from '@/components/dashboard/StylistLevelsEditor';
+import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
 
 export default function ServicesManager() {
+  const { data: stylistLevels } = useStylistLevelsSimple();
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(initialServices);
-  const [stylistLevels, setStylistLevels] = useState<StylistLevel[]>([...initialStylistLevels]);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingService, setEditingService] = useState<{ categoryIndex: number; itemIndex: number; item: ServiceItem } | null>(null);
   const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
@@ -208,8 +209,6 @@ export default function ServicesManager() {
           
           <div className="flex items-center gap-2">
             <StylistLevelsEditor
-              levels={stylistLevels}
-              onLevelsChange={setStylistLevels}
               trigger={
                 <Button variant="outline" className="gap-2">
                   <Settings2 className="w-4 h-4" />
