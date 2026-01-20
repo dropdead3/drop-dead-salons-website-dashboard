@@ -1103,6 +1103,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
           { label: 'Home', url: 'https://dropdeadhair.com', enabled: true },
           { label: 'Services', url: 'https://dropdeadhair.com/services', enabled: true },
           { label: 'Book Now', url: 'https://dropdeadhair.com/booking', enabled: true },
+          { label: 'Staff Login', url: 'https://dropdeadhair.com/staff-login', enabled: false },
         ],
         headerConfig: {
           showLogo: true,
