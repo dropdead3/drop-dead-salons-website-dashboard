@@ -10,11 +10,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info, History } from 'lucide-react';
+import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info, History, BadgeCheck } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { useLeaderboardHistory } from '@/hooks/useLeaderboardHistory';
+import { useLeaderboardAchievements } from '@/hooks/useLeaderboardAchievements';
 import { LeaderboardTrendIndicator } from '@/components/dashboard/LeaderboardTrendIndicator';
 import { LeaderboardHistoryPanel } from '@/components/dashboard/LeaderboardHistoryPanel';
+import { AchievementBadgeStack } from '@/components/dashboard/AchievementBadge';
+import { AchievementsShowcase } from '@/components/dashboard/AchievementsShowcase';
 
 interface LeaderboardEntry {
   user_id: string;
@@ -157,7 +160,8 @@ export default function Leaderboard() {
   const [weights, setWeights] = useState<ScoreWeights>(DEFAULT_WEIGHTS);
   const [showHistory, setShowHistory] = useState(false);
 
-  const { getTrendForUser, saveWeeklySnapshot } = useLeaderboardHistory();
+  const { getTrendForUser } = useLeaderboardHistory();
+  const { getUserAchievements, userAchievements } = useLeaderboardAchievements();
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
@@ -338,6 +342,10 @@ export default function Leaderboard() {
               <Trophy className="w-4 h-4 mr-2" />
               Weekly Rankings
             </TabsTrigger>
+            <TabsTrigger value="achievements" className="font-display text-xs tracking-wide">
+              <BadgeCheck className="w-4 h-4 mr-2" />
+              Achievements
+            </TabsTrigger>
             <TabsTrigger value="program" className="font-display text-xs tracking-wide">
               <Target className="w-4 h-4 mr-2" />
               Program Progress
@@ -463,12 +471,25 @@ export default function Leaderboard() {
                           {performer.name.split(' ').map(n => n[0]).join('')}
                         </div>
 
-                        {/* Name + Trend */}
+                        {/* Name + Trend + Badges */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-sans font-medium truncate">{performer.name}</p>
                             {phorestCategory === 'overall' && (
                               <LeaderboardTrendIndicator trend={trend} />
+                            )}
+                            {/* Achievement badges */}
+                            {getUserAchievements(performer.id).length > 0 && (
+                              <AchievementBadgeStack
+                                achievements={getUserAchievements(performer.id)
+                                  .filter(ua => ua.achievement)
+                                  .map(ua => ({
+                                    achievement: ua.achievement!,
+                                    earnedAt: ua.earned_at,
+                                  }))}
+                                maxVisible={3}
+                                size="sm"
+                              />
                             )}
                           </div>
                           {index === 0 && (
@@ -515,6 +536,11 @@ export default function Leaderboard() {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          {/* Achievements Tab */}
+          <TabsContent value="achievements" className="space-y-6">
+            <AchievementsShowcase />
           </TabsContent>
 
           {/* Program Progress Tab */}
