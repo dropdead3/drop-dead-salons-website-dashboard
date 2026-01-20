@@ -1091,6 +1091,17 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
     onBlocksChange?.(newBlocks);
   }, [onHtmlChange, onBlocksChange, setBlocks]);
 
+  // Regenerate HTML on initial mount to ensure latest blocksToHtml logic is used (e.g., absolute URLs)
+  useEffect(() => {
+    if (blocks.length > 0) {
+      const html = blocksToHtml(blocks);
+      setRawHtml(html);
+      onHtmlChange(html);
+    }
+    // Only run on mount - we intentionally exclude blocks and onHtmlChange from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleUndo = useCallback(() => {
     const previousBlocks = undo();
     if (previousBlocks) {
