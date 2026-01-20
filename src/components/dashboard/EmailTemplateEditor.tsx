@@ -1294,6 +1294,41 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                     </DialogContent>
                   </Dialog>
                 </div>
+                
+                {/* Selected Theme Alert */}
+                {(() => {
+                  const currentTheme = allThemes.find(t => t.id === selectedTheme);
+                  if (!currentTheme) return null;
+                  const isCustom = customThemes.some(t => t.id === selectedTheme);
+                  return (
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 border border-primary/20 mb-2">
+                      <div className="flex gap-0.5 flex-shrink-0">
+                        <div 
+                          className="w-2.5 h-2.5 rounded-full border border-primary/30" 
+                          style={{ backgroundColor: currentTheme.colors.headerBg }}
+                        />
+                        <div 
+                          className="w-2.5 h-2.5 rounded-full border border-primary/30" 
+                          style={{ backgroundColor: currentTheme.colors.bodyBg }}
+                        />
+                        <div 
+                          className="w-2.5 h-2.5 rounded-full border border-primary/30" 
+                          style={{ backgroundColor: currentTheme.colors.buttonBg }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-medium truncate flex items-center gap-1">
+                          {isCustom && <Sparkles className="w-2.5 h-2.5 text-primary" />}
+                          {currentTheme.name}
+                        </span>
+                      </div>
+                      <Badge variant="secondary" className="text-[9px] h-4 px-1.5">
+                        Active
+                      </Badge>
+                    </div>
+                  );
+                })()}
+                
                 <Tabs defaultValue="standard" className="w-full">
                   <TabsList className="w-full h-8 mb-2">
                     <TabsTrigger value="standard" className="flex-1 text-xs h-7">
