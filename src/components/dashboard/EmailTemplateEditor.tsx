@@ -2350,8 +2350,8 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                                 </div>
                               );
                             })}
-                            <div className="space-y-2">
-                              <Label className="text-xs">Icon Color</Label>
+                            <div className="flex items-center gap-3 pt-2">
+                              <Label className="text-xs whitespace-nowrap">Icon Color</Label>
                               <ColorWheelPicker
                                 value={selectedBlock.styles.buttonColor || '#f5f0e8'}
                                 colorType="light"
