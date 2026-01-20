@@ -584,7 +584,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         
         let logoHtml = '';
         if (showLogo && logo) {
-          logoHtml = `<div style="margin-bottom: 12px;">
+          logoHtml = `<div style="margin-bottom: 12px; text-align: ${textAlign};">
             <img src="${absoluteLogoSrc}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto;" />
           </div>`;
         }
