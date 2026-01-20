@@ -4,7 +4,13 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 
 interface LeaderboardEntry {
@@ -25,43 +31,69 @@ interface PhorestPerformer {
   retentionRate: number;
   retailSales: number;
   extensionClients: number;
-  // Hidden revenue used only for ranking
   _revenue: number;
+}
+
+interface ScoreWeights {
+  newClients: number;
+  retention: number;
+  retail: number;
+  extensions: number;
+}
+
+interface ScoreBreakdown {
+  total: number;
+  components: {
+    newClients: { normalized: number; weighted: number; weight: number };
+    retention: { normalized: number; weighted: number; weight: number };
+    retail: { normalized: number; weighted: number; weight: number };
+    extensions: { normalized: number; weighted: number; weight: number };
+  };
 }
 
 type MetricType = 'day' | 'streak' | 'revenue' | 'bells';
 type PhorestCategory = 'overall' | 'newClients' | 'retention' | 'retail' | 'extensions';
 
-// Weight configuration for overall score algorithm
-const SCORE_WEIGHTS = {
-  newClients: 0.30,    // 30% - New client acquisition is key growth
-  retention: 0.25,     // 25% - Client loyalty is critical
-  retail: 0.20,        // 20% - Product sales add revenue
-  extensions: 0.25,    // 25% - Specialty service focus
+// Default weights (fallback)
+const DEFAULT_WEIGHTS: ScoreWeights = {
+  newClients: 0.30,
+  retention: 0.25,
+  retail: 0.20,
+  extensions: 0.25,
 };
 
-// Calculate normalized score (0-100) for each metric
-const calculateOverallScore = (performer: PhorestPerformer, allPerformers: PhorestPerformer[]): number => {
-  // Get max values for normalization
+// Calculate score with breakdown
+const calculateScoreBreakdown = (
+  performer: PhorestPerformer, 
+  allPerformers: PhorestPerformer[],
+  weights: ScoreWeights
+): ScoreBreakdown => {
   const maxNewClients = Math.max(...allPerformers.map(p => p.newClients), 1);
-  const maxRetention = 100; // Retention is already a percentage
+  const maxRetention = 100;
   const maxRetail = Math.max(...allPerformers.map(p => p.retailSales), 1);
   const maxExtensions = Math.max(...allPerformers.map(p => p.extensionClients), 1);
 
-  // Normalize each metric to 0-100 scale
   const normalizedNewClients = (performer.newClients / maxNewClients) * 100;
-  const normalizedRetention = performer.retentionRate; // Already 0-100
+  const normalizedRetention = performer.retentionRate;
   const normalizedRetail = (performer.retailSales / maxRetail) * 100;
   const normalizedExtensions = (performer.extensionClients / maxExtensions) * 100;
 
-  // Calculate weighted score
-  const weightedScore = 
-    (normalizedNewClients * SCORE_WEIGHTS.newClients) +
-    (normalizedRetention * SCORE_WEIGHTS.retention) +
-    (normalizedRetail * SCORE_WEIGHTS.retail) +
-    (normalizedExtensions * SCORE_WEIGHTS.extensions);
+  const weightedNewClients = normalizedNewClients * weights.newClients;
+  const weightedRetention = normalizedRetention * weights.retention;
+  const weightedRetail = normalizedRetail * weights.retail;
+  const weightedExtensions = normalizedExtensions * weights.extensions;
 
-  return Math.round(weightedScore * 10) / 10; // Round to 1 decimal
+  const total = Math.round((weightedNewClients + weightedRetention + weightedRetail + weightedExtensions) * 10) / 10;
+
+  return {
+    total,
+    components: {
+      newClients: { normalized: Math.round(normalizedNewClients), weighted: Math.round(weightedNewClients * 10) / 10, weight: weights.newClients },
+      retention: { normalized: Math.round(normalizedRetention), weighted: Math.round(weightedRetention * 10) / 10, weight: weights.retention },
+      retail: { normalized: Math.round(normalizedRetail), weighted: Math.round(weightedRetail * 10) / 10, weight: weights.retail },
+      extensions: { normalized: Math.round(normalizedExtensions), weighted: Math.round(weightedExtensions * 10) / 10, weight: weights.extensions },
+    },
+  };
 };
 
 // Mock data - will be replaced with Phorest API data
@@ -74,49 +106,44 @@ const mockPhorestData: PhorestPerformer[] = [
   { id: '6', name: 'Ashley Brown', newClients: 7, retentionRate: 92, retailSales: 510, extensionClients: 6, _revenue: 2890 },
 ];
 
-const categoryConfig: Record<PhorestCategory, { 
-  label: string; 
-  icon: React.ComponentType<{ className?: string }>; 
-  getValue: (p: PhorestPerformer, allPerformers?: PhorestPerformer[]) => number;
-  formatValue: (v: number) => string;
-  description: string;
-}> = {
-  overall: {
-    label: 'Overall Score',
-    icon: Star,
-    getValue: (p, allPerformers) => allPerformers ? calculateOverallScore(p, allPerformers) : 0,
-    formatValue: (v) => `${v} pts`,
-    description: 'Weighted composite score across all performance metrics',
-  },
-  newClients: {
-    label: 'New Clients',
-    icon: Users,
-    getValue: (p) => p.newClients,
-    formatValue: (v) => `${v} new`,
-    description: 'Most new clients booked this week',
-  },
-  retention: {
-    label: 'Retention',
-    icon: Repeat,
-    getValue: (p) => p.retentionRate,
-    formatValue: (v) => `${v}%`,
-    description: 'Highest client return rate',
-  },
-  retail: {
-    label: 'Retail Sales',
-    icon: ShoppingBag,
-    getValue: (p) => p.retailSales,
-    formatValue: (v) => `$${v}`,
-    description: 'Top retail product sales',
-  },
-  extensions: {
-    label: 'Extensions',
-    icon: Sparkles,
-    getValue: (p) => p.extensionClients,
-    formatValue: (v) => `${v} clients`,
-    description: 'Most extension clients served',
-  },
-};
+// Score Breakdown Tooltip Component
+function ScoreBreakdownTooltip({ breakdown, children }: { breakdown: ScoreBreakdown; children: React.ReactNode }) {
+  return (
+    <TooltipProvider>
+      <Tooltip delayDuration={200}>
+        <TooltipTrigger asChild>
+          {children}
+        </TooltipTrigger>
+        <TooltipContent side="left" className="w-64 p-0">
+          <div className="p-3 space-y-2">
+            <div className="flex items-center justify-between border-b pb-2 mb-2">
+              <span className="font-display text-xs tracking-wide">SCORE BREAKDOWN</span>
+              <span className="font-display text-lg">{breakdown.total} pts</span>
+            </div>
+            <div className="space-y-1.5 text-xs font-sans">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">New Clients ({Math.round(breakdown.components.newClients.weight * 100)}%)</span>
+                <span>{breakdown.components.newClients.weighted} pts</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Retention ({Math.round(breakdown.components.retention.weight * 100)}%)</span>
+                <span>{breakdown.components.retention.weighted} pts</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Retail ({Math.round(breakdown.components.retail.weight * 100)}%)</span>
+                <span>{breakdown.components.retail.weighted} pts</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Extensions ({Math.round(breakdown.components.extensions.weight * 100)}%)</span>
+                <span>{breakdown.components.extensions.weighted} pts</span>
+              </div>
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -124,13 +151,85 @@ export default function Leaderboard() {
   const [metric, setMetric] = useState<MetricType>('day');
   const [phorestData] = useState<PhorestPerformer[]>(mockPhorestData);
   const [phorestCategory, setPhorestCategory] = useState<PhorestCategory>('overall');
+  const [weights, setWeights] = useState<ScoreWeights>(DEFAULT_WEIGHTS);
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
 
   useEffect(() => {
+    fetchWeights();
     fetchLeaderboard();
   }, []);
+
+  const fetchWeights = async () => {
+    const { data, error } = await supabase
+      .from('leaderboard_weights')
+      .select('*')
+      .limit(1)
+      .single();
+
+    if (!error && data) {
+      setWeights({
+        newClients: Number(data.new_clients_weight),
+        retention: Number(data.retention_weight),
+        retail: Number(data.retail_weight),
+        extensions: Number(data.extensions_weight),
+      });
+    }
+  };
+
+  const getScoreBreakdown = (performer: PhorestPerformer): ScoreBreakdown => {
+    return calculateScoreBreakdown(performer, phorestData, weights);
+  };
+
+  const categoryConfig: Record<PhorestCategory, { 
+    label: string; 
+    icon: React.ComponentType<{ className?: string }>; 
+    getValue: (p: PhorestPerformer) => number;
+    formatValue: (v: number) => string;
+    description: string;
+  }> = {
+    overall: {
+      label: 'Overall Score',
+      icon: Star,
+      getValue: (p) => getScoreBreakdown(p).total,
+      formatValue: (v) => `${v} pts`,
+      description: 'Weighted composite score across all performance metrics',
+    },
+    newClients: {
+      label: 'New Clients',
+      icon: Users,
+      getValue: (p) => p.newClients,
+      formatValue: (v) => `${v} new`,
+      description: 'Most new clients booked this week',
+    },
+    retention: {
+      label: 'Retention',
+      icon: Repeat,
+      getValue: (p) => p.retentionRate,
+      formatValue: (v) => `${v}%`,
+      description: 'Highest client return rate',
+    },
+    retail: {
+      label: 'Retail Sales',
+      icon: ShoppingBag,
+      getValue: (p) => p.retailSales,
+      formatValue: (v) => `$${v}`,
+      description: 'Top retail product sales',
+    },
+    extensions: {
+      label: 'Extensions',
+      icon: Sparkles,
+      getValue: (p) => p.extensionClients,
+      formatValue: (v) => `${v} clients`,
+      description: 'Most extension clients served',
+    },
+  };
+
+  const currentConfig = categoryConfig[phorestCategory];
+  const sortedPhorestData = [...phorestData].sort(
+    (a, b) => currentConfig.getValue(b) - currentConfig.getValue(a)
+  );
 
   const fetchLeaderboard = async () => {
     const { data: enrollments, error } = await supabase
@@ -213,10 +312,6 @@ export default function Leaderboard() {
     return null;
   };
 
-  const currentConfig = categoryConfig[phorestCategory];
-  const sortedPhorestData = [...phorestData].sort(
-    (a, b) => currentConfig.getValue(b, phorestData) - currentConfig.getValue(a, phorestData)
-  );
 
   return (
     <DashboardLayout>
@@ -315,7 +410,7 @@ export default function Leaderboard() {
                         {performer.name.split(' ')[0]}
                       </p>
                       <p className="font-display text-lg">
-                        {currentConfig.formatValue(currentConfig.getValue(performer, phorestData))}
+                        {currentConfig.formatValue(currentConfig.getValue(performer))}
                       </p>
                     </Card>
                   </div>
@@ -356,9 +451,16 @@ export default function Leaderboard() {
                       )}
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right flex items-center gap-2">
+                      {phorestCategory === 'overall' && (
+                        <ScoreBreakdownTooltip breakdown={getScoreBreakdown(performer)}>
+                          <button className="p-1 hover:bg-muted rounded transition-colors">
+                            <Info className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </ScoreBreakdownTooltip>
+                      )}
                       <p className="font-display text-lg">
-                        {currentConfig.formatValue(currentConfig.getValue(performer, phorestData))}
+                        {currentConfig.formatValue(currentConfig.getValue(performer))}
                       </p>
                     </div>
                   </div>

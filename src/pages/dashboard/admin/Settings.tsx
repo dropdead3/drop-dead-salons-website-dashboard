@@ -36,6 +36,7 @@ import {
   FileText,
   Cog,
   ClipboardCheck,
+  Trophy,
   Rocket,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +44,7 @@ import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesMana
 import { EmailVariablesManager } from '@/components/dashboard/EmailVariablesManager';
 import { SignaturePresetsManager } from '@/components/dashboard/SignaturePresetsManager';
 import { OnboardingTasksManager } from '@/components/dashboard/OnboardingTasksManager';
+import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
 
 interface UserWithRole {
   user_id: string;
@@ -381,6 +383,21 @@ export default function Settings() {
                       Configure onboarding checklist items. Tasks are shown based on user roles.
                     </p>
                     <OnboardingTasksManager />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Leaderboard Weights */}
+              <AccordionItem value="leaderboard-weights" className="border rounded-lg px-4">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <Trophy className="w-5 h-5" />
+                    <span className="font-display text-sm tracking-wide">LEADERBOARD SCORING</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="py-4">
+                    <LeaderboardWeightsManager />
                   </div>
                 </AccordionContent>
               </AccordionItem>
