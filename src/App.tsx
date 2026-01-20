@@ -46,6 +46,7 @@ import LocationsManager from "./pages/dashboard/admin/LocationsManager";
 import CommandCenterConsole from "./pages/dashboard/admin/CommandCenterConsole";
 import TeamBirthdays from "./pages/dashboard/admin/TeamBirthdays";
 import StaffStrikes from "./pages/dashboard/admin/StaffStrikes";
+import BusinessCardRequests from "./pages/dashboard/admin/BusinessCardRequests";
 import MyHandbooks from "./pages/dashboard/MyHandbooks";
 import Onboarding from "./pages/dashboard/Onboarding";
 import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
@@ -112,6 +113,7 @@ const App = () => (
               <Route path="/dashboard/admin/locations" element={<ProtectedRoute requiredPermission="manage_settings"><LocationsManager /></ProtectedRoute>} />
               <Route path="/dashboard/admin/command-center-console" element={<ProtectedRoute requireSuperAdmin><CommandCenterConsole /></ProtectedRoute>} />
               <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
