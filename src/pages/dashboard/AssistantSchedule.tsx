@@ -316,9 +316,11 @@ export default function AssistantSchedule() {
       <div className="p-6 max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-display font-bold">Assistant Schedule</h1>
+            <h1 className="text-2xl font-display font-bold">
+              {isStylist ? 'Request An Assistant' : isStylistAssistant ? 'Assisting Requests' : 'Assistant Schedule'}
+            </h1>
             <p className="text-muted-foreground">
-              {isStylist ? 'Request help from salon assistants' : 'View your assignments'}
+              {isStylist ? 'Request help from salon assistants' : isStylistAssistant ? 'View and manage your assignments' : 'Overview of all assistant requests'}
             </p>
           </div>
           

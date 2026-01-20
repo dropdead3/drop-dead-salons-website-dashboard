@@ -119,7 +119,8 @@ const growthNavItems: NavItem[] = [
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell' },
 ];
 
-const getHelpNavItems: NavItem[] = [
+// Base get help items - the assistant schedule label is computed dynamically in the component
+const baseGetHelpNavItems: NavItem[] = [
   { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
   { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1 Meeting', icon: CalendarClock, permission: 'schedule_meetings' },
 ];
@@ -243,6 +244,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const hasPermission = (permissionName: string): boolean => {
     return effectivePermissions.includes(permissionName);
   };
+
+  // Compute dynamic nav items based on effective role
+  const isStylistRole = roles.includes('stylist');
+  const isStylistAssistantRole = roles.includes('stylist_assistant') || roles.includes('assistant');
+  
+  const getHelpNavItems: NavItem[] = baseGetHelpNavItems.map(item => {
+    if (item.href === '/dashboard/assistant-schedule') {
+      const label = isStylistRole 
+        ? 'Request An Assistant' 
+        : isStylistAssistantRole 
+          ? 'Assisting Requests' 
+          : 'Assistant Schedule';
+      return { ...item, label };
+    }
+    return item;
+  });
 
   // Get the user's primary access level for display
   const getAccessLabel = () => {
