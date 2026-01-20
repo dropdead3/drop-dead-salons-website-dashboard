@@ -511,9 +511,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     switch (block.type) {
       case 'heading':
         // Heading does NOT use borderRadius in canvas, so don't apply it here
-        return `<h1 style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '24px'}; line-height: 1.3;">${formatContent(block.content)}</h1>`;
+        // Use display:block to ensure no inline gaps
+        return `<h1 style="${baseStyles}; margin: 0; padding: 0; font-size: ${block.styles.fontSize || '24px'}; line-height: 1.3; display: block;">${formatContent(block.content)}</h1>`;
       case 'text':
-        return `<p style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '16px'}; line-height: 1.6;">${formatContent(block.content)}</p>`;
+        return `<p style="${baseStyles}; margin: 0; padding: 0; font-size: ${block.styles.fontSize || '16px'}; line-height: 1.6; display: block;">${formatContent(block.content)}</p>`;
       case 'image': {
         const imgUrl = block.imageUrl || 'https://via.placeholder.com/400x200';
         const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
@@ -661,24 +662,26 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         }
         
         // Build 3-column table for email client compatibility (matches canvas grid layout)
+        // Use border-spacing:0 and cellspacing=0 to ensure no gaps
         const leftContent = (logoPosition === 'left' ? logoHtml : '') + (navLinksPosition === 'left' ? navHtml : '');
         const centerContent = (logoPosition === 'center' ? logoHtml : '') + (navLinksPosition === 'center' ? navHtml : '');
         const rightContent = (logoPosition === 'right' ? logoHtml : '') + (navLinksPosition === 'right' ? navHtml : '');
         
-        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'}; border-collapse: collapse; border: none;">
+        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'}; border-collapse: collapse; border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
           <tr>
-            <td width="33%" style="text-align: left; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: none;">${leftContent}</td>
-            <td width="34%" style="text-align: center; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: none;">${centerContent}</td>
-            <td width="33%" style="text-align: right; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: none;">${rightContent}</td>
+            <td width="33%" style="text-align: left; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: 0; border-spacing: 0;">${leftContent}</td>
+            <td width="34%" style="text-align: center; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: 0; border-spacing: 0;">${centerContent}</td>
+            <td width="33%" style="text-align: right; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: 0; border-spacing: 0;">${rightContent}</td>
           </tr>
         </table>`;
       }
       default:
         return '';
     }
-  }).join('\n');
+  }).join('');
 
-  return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
+  // Use mso-line-height-rule to ensure consistent rendering across email clients
+  return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; mso-line-height-rule: exactly;">
 ${blockHtml}
 </div>`;
 }
