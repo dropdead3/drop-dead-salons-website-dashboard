@@ -68,6 +68,8 @@ import {
   ArrowRight,
   AlertTriangle,
   CheckCircle2,
+  Columns2,
+  Columns3,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -190,7 +192,28 @@ const getLogoById = (id: string): BrandLogo | undefined => {
 };
 
 // Block types for the email editor
-type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social' | 'footer' | 'header' | 'signature';
+type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social' | 'footer' | 'header' | 'signature' | 'columns';
+
+// Column content item - simplified content for column cells
+interface ColumnContent {
+  id: string;
+  type: 'text' | 'button' | 'image' | 'spacer';
+  content: string;
+  linkUrl?: string;
+  imageUrl?: string;
+  styles: {
+    textAlign?: 'left' | 'center' | 'right';
+    fontSize?: string;
+    fontWeight?: string;
+    textColor?: string;
+    buttonColor?: string;
+    buttonTextColor?: string;
+    buttonVariant?: 'primary' | 'secondary';
+    buttonShape?: 'pill' | 'rounded' | 'rectangle';
+    buttonSize?: number;
+    height?: string;
+  };
+}
 
 interface SocialLink {
   platform: 'instagram' | 'tiktok' | 'email';
@@ -272,6 +295,12 @@ interface EmailBlock {
     phone?: string;
     showEmail?: boolean;
     email?: string;
+  };
+  // Columns configuration
+  columnsConfig?: {
+    columnCount: 2 | 3;
+    columns: ColumnContent[][];
+    gap?: number; // 0-24px gap between columns
   };
 }
 
@@ -851,6 +880,57 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         
         return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding}; ${indent > 0 ? `padding-left: ${horizontalPadding + indent}px;` : ''}">
           ${contentHtml}
+        </div>`;
+      }
+      case 'columns': {
+        const config = block.columnsConfig || { columnCount: 2, columns: [[], []], gap: 16 };
+        const columnCount = config.columnCount;
+        const gap = config.gap || 16;
+        const columnWidth = columnCount === 2 ? '50%' : '33.33%';
+        const bgColor = block.styles.backgroundColor || '#f5f0e8';
+        const textColor = block.styles.textColor || '#1a1a1a';
+        const padding = computePadding(block.styles);
+        
+        // Generate content for each column
+        const columnCells = config.columns.map((columnItems, colIndex) => {
+          const cellContent = columnItems.map(item => {
+            if (item.type === 'text') {
+              return `<p style="margin: 0; font-size: ${item.styles.fontSize || '14px'}; color: ${item.styles.textColor || textColor}; text-align: ${item.styles.textAlign || 'center'}; line-height: 1.5;">${item.content}</p>`;
+            } else if (item.type === 'button') {
+              const isSecondary = item.styles.buttonVariant === 'secondary';
+              const sizeScale = (item.styles.buttonSize || 100) / 100;
+              const basePaddingV = Math.round(12 * sizeScale);
+              const basePaddingH = Math.round(24 * sizeScale);
+              const baseFontSize = Math.round(14 * sizeScale);
+              const shapeRadius = item.styles.buttonShape === 'pill' ? '9999px' : item.styles.buttonShape === 'rectangle' ? '0px' : '6px';
+              const buttonStyles = isSecondary
+                ? `display: inline-block; background-color: transparent; color: ${item.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${item.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
+                : `display: inline-block; background-color: ${item.styles.buttonColor || '#000000'}; color: ${item.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
+              return `<div style="text-align: ${item.styles.textAlign || 'center'}; padding: 8px 0;">
+                <a href="${item.linkUrl || '#'}" style="${buttonStyles}">${item.content}</a>
+              </div>`;
+            } else if (item.type === 'image') {
+              const imgUrl = item.imageUrl || '';
+              if (!imgUrl) return '';
+              const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
+              return `<div style="text-align: ${item.styles.textAlign || 'center'}; padding: 8px 0;">
+                <img src="${absoluteImgUrl}" alt="${item.content || 'Image'}" style="max-width: 100%; height: auto;" />
+              </div>`;
+            } else if (item.type === 'spacer') {
+              return `<div style="height: ${item.styles.height || '16px'};"></div>`;
+            }
+            return '';
+          }).join('');
+          
+          return `<td width="${columnWidth}" style="vertical-align: top; padding: ${colIndex < columnCount - 1 ? `0 ${gap / 2}px 0 0` : `0 0 0 ${gap / 2}px`}; text-align: center;">
+            ${cellContent || '<p style="margin: 0; color: #999; font-size: 12px; font-style: italic;">Add content</p>'}
+          </td>`;
+        }).join('');
+        
+        return `<div style="background-color: ${bgColor}; padding: ${padding};">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+            <tr>${columnCells}</tr>
+          </table>
         </div>`;
       }
       default:
@@ -1481,6 +1561,22 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           layout: 'horizontal-left' as const,
         }
       }),
+      ...(type === 'columns' && {
+        columnsConfig: {
+          columnCount: (buttonVariant === 'secondary' ? 3 : 2) as 2 | 3,
+          columns: buttonVariant === 'secondary' 
+            ? [
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 1', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 2', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 3', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
+              ]
+            : [
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 1', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
+                [{ id: crypto.randomUUID(), type: 'text' as const, content: 'Column 2', styles: { textAlign: 'center' as const, fontSize: '14px' } }],
+              ],
+          gap: 16,
+        }
+      }),
     };
     
     // Insert header at the beginning, footer at the end, others at the end
@@ -1639,6 +1735,8 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
       case 'divider':
       case 'spacer':
         return { label: 'Layout Section', color: 'hsl(var(--muted-foreground))' };
+      case 'columns':
+        return { label: 'Columns Section', color: 'hsl(280 70% 55%)' }; // violet
       default:
         return { label: 'Block', color: 'hsl(var(--muted-foreground))' };
     }
@@ -2321,6 +2419,14 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                   <button onClick={() => { addBlock('signature'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
                     <PenTool className="w-5 h-5 text-foreground/70" />
                     <span className="text-[11px] font-medium text-foreground/80">Signature</span>
+                  </button>
+                  <button onClick={() => { addBlock('columns', 'primary'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <Columns2 className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">2 Columns</span>
+                  </button>
+                  <button onClick={() => { addBlock('columns', 'secondary'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <Columns3 className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">3 Columns</span>
                   </button>
                 </div>
               </CardContent>
@@ -3645,6 +3751,232 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     })()}
 
 
+                    {/* Columns Controls */}
+                    {selectedBlock.type === 'columns' && (() => {
+                      const config = selectedBlock.columnsConfig || { columnCount: 2, columns: [[], []], gap: 16 };
+                      
+                      const updateColumnContent = (colIndex: number, itemIndex: number, updates: Partial<ColumnContent>) => {
+                        const newColumns = [...config.columns];
+                        if (newColumns[colIndex] && newColumns[colIndex][itemIndex]) {
+                          newColumns[colIndex][itemIndex] = { ...newColumns[colIndex][itemIndex], ...updates };
+                          updateBlock(selectedBlock.id, { columnsConfig: { ...config, columns: newColumns } });
+                        }
+                      };
+                      
+                      const addColumnItem = (colIndex: number, type: ColumnContent['type']) => {
+                        const newColumns = [...config.columns];
+                        if (!newColumns[colIndex]) newColumns[colIndex] = [];
+                        const newItem: ColumnContent = {
+                          id: crypto.randomUUID(),
+                          type,
+                          content: type === 'text' ? 'New text' : type === 'button' ? 'Button' : '',
+                          styles: { textAlign: 'center', fontSize: '14px' },
+                          ...(type === 'button' && { linkUrl: '#' }),
+                          ...(type === 'spacer' && { styles: { height: '16px' } }),
+                        };
+                        newColumns[colIndex].push(newItem);
+                        updateBlock(selectedBlock.id, { columnsConfig: { ...config, columns: newColumns } });
+                      };
+                      
+                      const removeColumnItem = (colIndex: number, itemIndex: number) => {
+                        const newColumns = [...config.columns];
+                        if (newColumns[colIndex]) {
+                          newColumns[colIndex].splice(itemIndex, 1);
+                          updateBlock(selectedBlock.id, { columnsConfig: { ...config, columns: newColumns } });
+                        }
+                      };
+                      
+                      return (
+                        <>
+                          <div className="space-y-3">
+                            <Label className="text-xs font-medium">Column Layout</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant={config.columnCount === 2 ? 'default' : 'outline'}
+                                size="sm"
+                                className="flex-1 h-8"
+                                onClick={() => {
+                                  const newColumns = config.columns.slice(0, 2);
+                                  while (newColumns.length < 2) newColumns.push([]);
+                                  updateBlock(selectedBlock.id, { 
+                                    columnsConfig: { ...config, columnCount: 2, columns: newColumns } 
+                                  });
+                                }}
+                              >
+                                <Columns2 className="w-4 h-4 mr-1" />
+                                2 Columns
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={config.columnCount === 3 ? 'default' : 'outline'}
+                                size="sm"
+                                className="flex-1 h-8"
+                                onClick={() => {
+                                  const newColumns = [...config.columns];
+                                  while (newColumns.length < 3) newColumns.push([]);
+                                  updateBlock(selectedBlock.id, { 
+                                    columnsConfig: { ...config, columnCount: 3, columns: newColumns } 
+                                  });
+                                }}
+                              >
+                                <Columns3 className="w-4 h-4 mr-1" />
+                                3 Columns
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs">Column Gap</Label>
+                              <span className="text-xs text-muted-foreground">{config.gap || 16}px</span>
+                            </div>
+                            <Slider
+                              variant="filled"
+                              min={0}
+                              max={32}
+                              step={4}
+                              value={[config.gap || 16]}
+                              onValueChange={([value]) => {
+                                updateBlock(selectedBlock.id, { columnsConfig: { ...config, gap: value } });
+                              }}
+                            />
+                          </div>
+                          
+                          <div className="space-y-3 pt-2 border-t">
+                            <Label className="text-xs font-medium">Column Content</Label>
+                            {config.columns.slice(0, config.columnCount).map((columnItems, colIndex) => (
+                              <div key={colIndex} className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-medium text-muted-foreground">Column {colIndex + 1}</span>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="outline" size="sm" className="h-6 text-[10px] px-2">
+                                        <Plus className="w-3 h-3 mr-1" />
+                                        Add
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-40 p-2" align="end">
+                                      <div className="space-y-1">
+                                        <button 
+                                          onClick={() => addColumnItem(colIndex, 'text')}
+                                          className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                        >
+                                          Text
+                                        </button>
+                                        <button 
+                                          onClick={() => addColumnItem(colIndex, 'button')}
+                                          className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                        >
+                                          Button
+                                        </button>
+                                        <button 
+                                          onClick={() => addColumnItem(colIndex, 'spacer')}
+                                          className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted"
+                                        >
+                                          Spacer
+                                        </button>
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+                                
+                                {columnItems.map((item, itemIndex) => (
+                                  <div key={item.id} className="bg-muted/40 rounded-lg p-2 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-medium capitalize text-muted-foreground">{item.type}</span>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-5 w-5 text-destructive hover:text-destructive"
+                                        onClick={() => removeColumnItem(colIndex, itemIndex)}
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                    
+                                    {item.type === 'text' && (
+                                      <Input
+                                        value={item.content}
+                                        onChange={(e) => updateColumnContent(colIndex, itemIndex, { content: e.target.value })}
+                                        placeholder="Enter text..."
+                                        className="h-7 text-xs"
+                                      />
+                                    )}
+                                    
+                                    {item.type === 'button' && (
+                                      <>
+                                        <Input
+                                          value={item.content}
+                                          onChange={(e) => updateColumnContent(colIndex, itemIndex, { content: e.target.value })}
+                                          placeholder="Button text..."
+                                          className="h-7 text-xs"
+                                        />
+                                        <Input
+                                          value={item.linkUrl || ''}
+                                          onChange={(e) => updateColumnContent(colIndex, itemIndex, { linkUrl: e.target.value })}
+                                          placeholder="Button URL..."
+                                          className="h-7 text-xs"
+                                        />
+                                        <div className="flex gap-1">
+                                          <Button
+                                            type="button"
+                                            variant={item.styles.buttonVariant !== 'secondary' ? 'default' : 'outline'}
+                                            size="sm"
+                                            className="flex-1 h-6 text-[10px]"
+                                            onClick={() => updateColumnContent(colIndex, itemIndex, { 
+                                              styles: { ...item.styles, buttonVariant: 'primary' } 
+                                            })}
+                                          >
+                                            Primary
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            variant={item.styles.buttonVariant === 'secondary' ? 'default' : 'outline'}
+                                            size="sm"
+                                            className="flex-1 h-6 text-[10px]"
+                                            onClick={() => updateColumnContent(colIndex, itemIndex, { 
+                                              styles: { ...item.styles, buttonVariant: 'secondary' } 
+                                            })}
+                                          >
+                                            Secondary
+                                          </Button>
+                                        </div>
+                                      </>
+                                    )}
+                                    
+                                    {item.type === 'spacer' && (
+                                      <Select
+                                        value={item.styles.height || '16px'}
+                                        onValueChange={(v) => updateColumnContent(colIndex, itemIndex, { 
+                                          styles: { ...item.styles, height: v } 
+                                        })}
+                                      >
+                                        <SelectTrigger className="h-7 text-xs">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {['8px', '12px', '16px', '24px', '32px'].map(size => (
+                                            <SelectItem key={size} value={size}>{size}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    )}
+                                  </div>
+                                ))}
+                                
+                                {columnItems.length === 0 && (
+                                  <div className="text-[10px] text-muted-foreground italic py-2 text-center border border-dashed rounded">
+                                    No content yet
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      );
+                    })()}
+
                     {/* Divider Controls */}
                     {selectedBlock.type === 'divider' && (
                       <div className="space-y-3">
@@ -4315,6 +4647,84 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 {logoPosition === 'right' && logoElement}
                                 {navLinksPosition === 'right' && navElement}
                               </div>
+                            </div>
+                          );
+                        })()}
+                        {block.type === 'columns' && (() => {
+                          const config = block.columnsConfig || { columnCount: 2, columns: [[], []], gap: 16 };
+                          const columnCount = config.columnCount;
+                          const gap = config.gap || 16;
+                          
+                          return (
+                            <div className="flex w-full" style={{ gap: `${gap}px` }}>
+                              {config.columns.slice(0, columnCount).map((columnItems, colIndex) => (
+                                <div 
+                                  key={colIndex}
+                                  className="flex-1 min-h-[60px] rounded border border-dashed border-muted-foreground/30 p-2"
+                                >
+                                  {columnItems.length === 0 ? (
+                                    <div className="h-full flex items-center justify-center text-[10px] text-muted-foreground italic">
+                                      Column {colIndex + 1}
+                                    </div>
+                                  ) : (
+                                    columnItems.map((item) => (
+                                      <div key={item.id} className="mb-2 last:mb-0">
+                                        {item.type === 'text' && (
+                                          <p 
+                                            style={{ 
+                                              margin: 0, 
+                                              fontSize: item.styles.fontSize || '14px',
+                                              textAlign: item.styles.textAlign || 'center',
+                                              color: item.styles.textColor,
+                                              fontWeight: item.styles.fontWeight
+                                            }}
+                                          >
+                                            {item.content}
+                                          </p>
+                                        )}
+                                        {item.type === 'button' && (() => {
+                                          const isSecondary = item.styles.buttonVariant === 'secondary';
+                                          const sizeScale = (item.styles.buttonSize || 100) / 100;
+                                          const paddingV = Math.round(10 * sizeScale);
+                                          const paddingH = Math.round(20 * sizeScale);
+                                          const fontSize = Math.round(13 * sizeScale);
+                                          const shapeRadius = item.styles.buttonShape === 'pill' ? '9999px' : item.styles.buttonShape === 'rectangle' ? '0px' : '6px';
+                                          return (
+                                            <div style={{ textAlign: item.styles.textAlign || 'center' }}>
+                                              <span
+                                                style={{
+                                                  display: 'inline-block',
+                                                  backgroundColor: isSecondary ? 'transparent' : (item.styles.buttonColor || '#000000'),
+                                                  color: isSecondary ? (item.styles.buttonColor || '#000000') : (item.styles.buttonTextColor || '#ffffff'),
+                                                  padding: `${paddingV}px ${paddingH}px`,
+                                                  fontWeight: 'bold',
+                                                  fontSize: `${fontSize}px`,
+                                                  borderRadius: shapeRadius,
+                                                  border: isSecondary ? `2px solid ${item.styles.buttonColor || '#000000'}` : 'none',
+                                                }}
+                                              >
+                                                {item.content}
+                                              </span>
+                                            </div>
+                                          );
+                                        })()}
+                                        {item.type === 'image' && item.imageUrl && (
+                                          <div style={{ textAlign: item.styles.textAlign || 'center' }}>
+                                            <img 
+                                              src={item.imageUrl} 
+                                              alt={item.content || 'Image'} 
+                                              className="max-w-full h-auto"
+                                            />
+                                          </div>
+                                        )}
+                                        {item.type === 'spacer' && (
+                                          <div style={{ height: item.styles.height || '16px' }} />
+                                        )}
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              ))}
                             </div>
                           );
                         })()}
