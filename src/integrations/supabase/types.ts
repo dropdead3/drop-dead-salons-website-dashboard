@@ -112,6 +112,7 @@ export type Database = {
           created_at: string
           id: string
           last_assigned_at: string | null
+          location_id: string | null
           total_assignments: number | null
         }
         Insert: {
@@ -119,6 +120,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_assigned_at?: string | null
+          location_id?: string | null
           total_assignments?: number | null
         }
         Update: {
@@ -126,9 +128,18 @@ export type Database = {
           created_at?: string
           id?: string
           last_assigned_at?: string | null
+          location_id?: string | null
           total_assignments?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "assistant_assignments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       assistant_requests: {
         Row: {
@@ -137,7 +148,11 @@ export type Database = {
           created_at: string
           end_time: string
           id: string
+          location_id: string | null
           notes: string | null
+          parent_request_id: string | null
+          recurrence_end_date: string | null
+          recurrence_type: string | null
           request_date: string
           service_id: string
           start_time: string
@@ -151,7 +166,11 @@ export type Database = {
           created_at?: string
           end_time: string
           id?: string
+          location_id?: string | null
           notes?: string | null
+          parent_request_id?: string | null
+          recurrence_end_date?: string | null
+          recurrence_type?: string | null
           request_date: string
           service_id: string
           start_time: string
@@ -165,7 +184,11 @@ export type Database = {
           created_at?: string
           end_time?: string
           id?: string
+          location_id?: string | null
           notes?: string | null
+          parent_request_id?: string | null
+          recurrence_end_date?: string | null
+          recurrence_type?: string | null
           request_date?: string
           service_id?: string
           start_time?: string
@@ -174,6 +197,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "assistant_requests_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assistant_requests_parent_request_id_fkey"
+            columns: ["parent_request_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_requests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assistant_requests_service_id_fkey"
             columns: ["service_id"]

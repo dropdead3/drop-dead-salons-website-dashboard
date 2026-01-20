@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
-import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid } from 'lucide-react';
+import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RequestAssistantDialog } from '@/components/dashboard/RequestAssistantDialog';
 import { ScheduleCalendar } from '@/components/dashboard/ScheduleCalendar';
 import { useAssistantRequests, useUpdateRequestStatus, type AssistantRequest } from '@/hooks/useAssistantRequests';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +77,13 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
                 Service: {request.salon_services?.name}
               </div>
 
+              {request.locations?.name && (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  {request.locations.name}
+                </div>
+              )}
+
               {isStylistView && request.assistant_profile && (
                 <div className="text-muted-foreground">
                   Assistant: {request.assistant_profile.display_name || request.assistant_profile.full_name}
@@ -90,6 +99,13 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
               {request.notes && (
                 <div className="text-muted-foreground italic">
                   Notes: {request.notes}
+                </div>
+              )}
+
+              {request.parent_request_id && (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Repeat className="h-3 w-3" />
+                  <span className="text-xs">Recurring</span>
                 </div>
               )}
             </div>
@@ -183,10 +199,15 @@ export default function AssistantSchedule() {
     isStylist ? 'my-requests' : isAssistant ? 'my-assignments' : 'all'
   );
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [locationFilter, setLocationFilter] = useState<string>('all');
 
-  const { data: myRequests = [], isLoading: loadingMyRequests } = useAssistantRequests('stylist');
-  const { data: myAssignments = [], isLoading: loadingMyAssignments } = useAssistantRequests('assistant');
-  const { data: allRequests = [], isLoading: loadingAll } = useAssistantRequests('all');
+  const { data: locations = [] } = useActiveLocations();
+
+  const effectiveLocationFilter = locationFilter === 'all' ? undefined : locationFilter;
+
+  const { data: myRequests = [], isLoading: loadingMyRequests } = useAssistantRequests('stylist', effectiveLocationFilter);
+  const { data: myAssignments = [], isLoading: loadingMyAssignments } = useAssistantRequests('assistant', effectiveLocationFilter);
+  const { data: allRequests = [], isLoading: loadingAll } = useAssistantRequests('all', effectiveLocationFilter);
 
   // Filter to show upcoming/active requests
   const filterActive = (requests: AssistantRequest[]) => 
@@ -216,6 +237,24 @@ export default function AssistantSchedule() {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Location Filter */}
+            {locations.length > 1 && (
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="All Locations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             {isStylist && (
               <RequestAssistantDialog>
                 <Button>
