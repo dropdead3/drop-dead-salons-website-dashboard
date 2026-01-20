@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DollarSign, Pin, Loader2, MessageSquare, Send, X, Pencil, Trash2, MoreVertical, MapPin } from 'lucide-react';
+import { DollarSign, Pin, Loader2, MessageSquare, Send, X, Pencil, Trash2, MoreVertical, MapPin, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { HighFiveButton } from './HighFiveButton';
 
@@ -350,7 +350,8 @@ export function BellEntryCard({
           <div className="flex items-center gap-2 shrink-0">
             {/* Salon Lead Badge */}
             {entry.lead_source === 'salon_lead' && (
-              <span className="px-2.5 py-1 text-xs font-display tracking-wide rounded bg-gold text-gold-foreground animate-shimmer bg-[length:200%_100%] shadow-sm">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-display tracking-wide rounded bg-gold text-gold-foreground animate-shimmer bg-[length:200%_100%] shadow-sm">
+                <Star className="w-3 h-3 fill-current" />
                 SALON LEAD
               </span>
             )}
