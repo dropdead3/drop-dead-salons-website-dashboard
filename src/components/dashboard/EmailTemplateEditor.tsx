@@ -229,6 +229,7 @@ interface EmailBlock {
     logoSize?: 'small' | 'medium' | 'large';
     logoPosition?: 'left' | 'center' | 'right';
     showNavLinks: boolean;
+    navLinksPosition?: 'left' | 'center' | 'right';
   };
   navLinks?: NavLink[];
 }
@@ -2392,21 +2393,49 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                               </div>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={selectedBlock.headerConfig?.showNavLinks ?? true}
-                              onChange={(e) => {
-                                updateBlock(selectedBlock.id, {
-                                  headerConfig: {
-                                    ...selectedBlock.headerConfig!,
-                                    showNavLinks: e.target.checked,
-                                  }
-                                });
-                              }}
-                              className="h-4 w-4 rounded border-border"
-                            />
-                            <span className="text-xs">Show Navigation Links</span>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedBlock.headerConfig?.showNavLinks ?? true}
+                                onChange={(e) => {
+                                  updateBlock(selectedBlock.id, {
+                                    headerConfig: {
+                                      ...selectedBlock.headerConfig!,
+                                      showNavLinks: e.target.checked,
+                                    }
+                                  });
+                                }}
+                                className="h-4 w-4 rounded border-border"
+                              />
+                              <span className="text-xs">Show Navigation Links</span>
+                            </div>
+                            {selectedBlock.headerConfig?.showNavLinks && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">Alignment</span>
+                                <div className="flex gap-1 flex-1">
+                                  {(['left', 'center', 'right'] as const).map((pos) => (
+                                    <Button
+                                      key={pos}
+                                      type="button"
+                                      variant={selectedBlock.headerConfig?.navLinksPosition === pos || (!selectedBlock.headerConfig?.navLinksPosition && pos === 'right') ? 'default' : 'outline'}
+                                      size="sm"
+                                      className="flex-1 h-7 text-xs capitalize"
+                                      onClick={() => {
+                                        updateBlock(selectedBlock.id, {
+                                          headerConfig: {
+                                            ...selectedBlock.headerConfig!,
+                                            navLinksPosition: pos,
+                                          }
+                                        });
+                                      }}
+                                    >
+                                      {pos}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -2758,6 +2787,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
                           const logoMaxWidth = logoSizeMap[headerConfig.logoSize || 'medium'];
                           const logoPosition = headerConfig.logoPosition || 'left';
+                          const navLinksPosition = headerConfig.navLinksPosition || 'right';
                           
                           const logoElement = headerConfig.showLogo && logo ? (
                             <img 
@@ -2781,28 +2811,48 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             </div>
                           ) : null;
                           
-                          // Adjust layout based on logo position
-                          const justifyClass = logoPosition === 'center' 
-                            ? 'justify-center' 
-                            : logoPosition === 'right' 
-                              ? 'justify-end' 
-                              : 'justify-between';
+                          // Determine flex justify based on positions
+                          const getJustifyClass = () => {
+                            if (logoPosition === 'left' && navLinksPosition === 'right') return 'justify-between';
+                            if (logoPosition === 'right' && navLinksPosition === 'left') return 'justify-between';
+                            if (logoPosition === 'center' && navLinksPosition === 'center') return 'justify-center';
+                            if (logoPosition === 'left' && navLinksPosition === 'left') return 'justify-start gap-6';
+                            if (logoPosition === 'right' && navLinksPosition === 'right') return 'justify-end gap-6';
+                            if (logoPosition === 'left' && navLinksPosition === 'center') return 'justify-start';
+                            if (logoPosition === 'right' && navLinksPosition === 'center') return 'justify-end';
+                            if (logoPosition === 'center' && navLinksPosition === 'left') return 'justify-center';
+                            if (logoPosition === 'center' && navLinksPosition === 'right') return 'justify-center';
+                            return 'justify-between';
+                          };
+                          
+                          // For center logo with non-center nav, use column layout
+                          const useCenterLayout = logoPosition === 'center';
+                          
+                          if (useCenterLayout) {
+                            const navJustify = navLinksPosition === 'left' ? 'justify-start' : navLinksPosition === 'right' ? 'justify-end' : 'justify-center';
+                            return (
+                              <div className="flex flex-col items-center w-full px-4 gap-2">
+                                {logoElement}
+                                {navElement && (
+                                  <div className={`flex w-full ${navJustify}`}>
+                                    {navElement}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          
+                          // For left/right logo positions
+                          const isLogoFirst = logoPosition === 'left' || (logoPosition !== 'right' && navLinksPosition === 'right');
                           
                           return (
-                            <div className={`flex items-center w-full px-4 ${justifyClass}`}>
-                              {logoPosition === 'left' && (
+                            <div className={`flex items-center w-full px-4 ${getJustifyClass()}`}>
+                              {isLogoFirst ? (
                                 <>
                                   {logoElement || <div />}
                                   {navElement || <div />}
                                 </>
-                              )}
-                              {logoPosition === 'center' && (
-                                <div className="flex flex-col items-center gap-2">
-                                  {logoElement}
-                                  {navElement}
-                                </div>
-                              )}
-                              {logoPosition === 'right' && (
+                              ) : (
                                 <>
                                   {navElement || <div />}
                                   {logoElement || <div />}
