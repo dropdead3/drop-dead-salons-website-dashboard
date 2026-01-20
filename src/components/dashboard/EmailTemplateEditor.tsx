@@ -218,6 +218,8 @@ interface EmailBlock {
   footerConfig?: {
     showLogo: boolean;
     logoId: string;
+    logoSize?: 'small' | 'medium' | 'large';
+    logoPosition?: 'left' | 'center' | 'right';
     showSocialIcons: boolean;
     copyrightText: string;
   };
@@ -2117,28 +2119,77 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                               <span className="text-xs">Show Logo</span>
                             </div>
                             {selectedBlock.footerConfig?.showLogo && (
-                              <Select
-                                value={selectedBlock.footerConfig?.logoId || 'drop-dead-main-black'}
-                                onValueChange={(v) => {
-                                  updateBlock(selectedBlock.id, {
-                                    footerConfig: {
-                                      ...selectedBlock.footerConfig!,
-                                      logoId: v,
-                                    }
-                                  });
-                                }}
-                              >
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {brandLogos.map((logo) => (
-                                    <SelectItem key={logo.id} value={logo.id}>
-                                      {logo.name} ({logo.variant === 'black' ? 'Black' : 'White'})
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <div className="space-y-2">
+                                <Select
+                                  value={selectedBlock.footerConfig?.logoId || 'drop-dead-main-black'}
+                                  onValueChange={(v) => {
+                                    updateBlock(selectedBlock.id, {
+                                      footerConfig: {
+                                        ...selectedBlock.footerConfig!,
+                                        logoId: v,
+                                      }
+                                    });
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {brandLogos.map((logo) => (
+                                      <SelectItem key={logo.id} value={logo.id}>
+                                        {logo.name} ({logo.variant === 'black' ? 'Black' : 'White'})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">Size</span>
+                                  <Select
+                                    value={selectedBlock.footerConfig?.logoSize || 'medium'}
+                                    onValueChange={(v) => {
+                                      updateBlock(selectedBlock.id, {
+                                        footerConfig: {
+                                          ...selectedBlock.footerConfig!,
+                                          logoSize: v as 'small' | 'medium' | 'large',
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-7 text-xs flex-1">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="small">Small (80px)</SelectItem>
+                                      <SelectItem value="medium">Medium (120px)</SelectItem>
+                                      <SelectItem value="large">Large (160px)</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">Position</span>
+                                  <div className="flex gap-1 flex-1">
+                                    {(['left', 'center', 'right'] as const).map((pos) => (
+                                      <Button
+                                        key={pos}
+                                        type="button"
+                                        variant={selectedBlock.footerConfig?.logoPosition === pos || (!selectedBlock.footerConfig?.logoPosition && pos === 'center') ? 'default' : 'outline'}
+                                        size="sm"
+                                        className="flex-1 h-7 text-xs capitalize"
+                                        onClick={() => {
+                                          updateBlock(selectedBlock.id, {
+                                            footerConfig: {
+                                              ...selectedBlock.footerConfig!,
+                                              logoPosition: pos,
+                                            }
+                                          });
+                                        }}
+                                      >
+                                        {pos}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
@@ -2656,22 +2707,29 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                         )}
                         {block.type === 'footer' && (() => {
                           const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
-                          const logo = brandLogos.find(l => l.id === footerConfig.logoId) || brandLogos[0];
+                          const logo = getLogoById(footerConfig.logoId) || brandLogos[0];
                           const enabledLinks = (block.socialLinks || []).filter(l => l.enabled);
+                          const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
+                          const logoMaxWidth = logoSizeMap[footerConfig.logoSize || 'medium'];
+                          const logoPosition = footerConfig.logoPosition || 'center';
+                          
+                          const alignClass = logoPosition === 'left' ? 'items-start text-left' 
+                            : logoPosition === 'right' ? 'items-end text-right' 
+                            : 'items-center text-center';
                           
                           return (
-                            <div className="text-center">
+                            <div className={`flex flex-col ${alignClass}`}>
                               {footerConfig.showLogo && (
                                 <div className="mb-3">
                                   <img 
                                     src={logo.src} 
                                     alt={logo.name} 
-                                    style={{ maxWidth: '120px', height: 'auto', margin: '0 auto', filter: block.styles.textColor === '#f5f0e8' || block.styles.textColor === '#ffffff' ? 'invert(1)' : 'none' }}
+                                    style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block' }}
                                   />
                                 </div>
                               )}
                               {footerConfig.showSocialIcons && enabledLinks.length > 0 && (
-                                <div className="flex items-center justify-center gap-3 mb-3">
+                                <div className={`flex items-center gap-3 mb-3 ${logoPosition === 'center' ? 'justify-center' : logoPosition === 'right' ? 'justify-end' : 'justify-start'}`}>
                                   {enabledLinks.map((link) => (
                                     <div 
                                       key={link.platform}
