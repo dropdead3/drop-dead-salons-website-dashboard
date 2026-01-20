@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { DollarSign, Pin, Loader2, MessageSquare, Send, X, Pencil, Trash2, MoreVertical } from 'lucide-react';
+import { DollarSign, Pin, Loader2, MessageSquare, Send, X, Pencil, Trash2, MoreVertical, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { HighFiveButton } from './HighFiveButton';
 
@@ -42,6 +42,7 @@ interface BellEntry {
   user_id: string;
   stylist_name?: string;
   stylist_photo?: string | null;
+  stylist_locations?: string[];
 }
 
 const leadSources = [
@@ -236,6 +237,15 @@ export function BellEntryCard({
                 {entry.stylist_name && (
                   <span className="font-medium font-sans text-sm">
                     {showStylistName ? entry.stylist_name : 'You'}
+                  </span>
+                )}
+                {entry.stylist_locations && entry.stylist_locations.length > 0 && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground font-sans">
+                    <MapPin className="w-3 h-3" />
+                    {entry.stylist_locations.slice(0, 2).join(', ')}
+                    {entry.stylist_locations.length > 2 && (
+                      <span className="text-muted-foreground">+{entry.stylist_locations.length - 2}</span>
+                    )}
                   </span>
                 )}
                 {entry.is_pinned && (
