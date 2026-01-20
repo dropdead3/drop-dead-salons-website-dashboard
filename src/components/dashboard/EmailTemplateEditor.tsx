@@ -2847,11 +2847,13 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           return (
                             <div className={`flex flex-col ${alignClass}`}>
                               {showLogo && logo && (
-                                <div className="mb-3">
+                                <div className="mb-3" style={{ border: '2px solid red', padding: '4px', minHeight: '50px' }}>
                                   <img 
                                     src={logo.src} 
                                     alt={logo.name} 
-                                    style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block' }}
+                                    style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block', minWidth: '50px', minHeight: '30px' }}
+                                    onError={(e) => console.error('[IMG ERROR]', logo.src, e)}
+                                    onLoad={() => console.log('[IMG LOADED]', logo.src)}
                                   />
                                 </div>
                               )}
