@@ -889,6 +889,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [cropImageFile, setCropImageFile] = useState<File | null>(null);
   const [cropTargetBlockId, setCropTargetBlockId] = useState<string | null>(null);
+  const [hintsVisible, setHintsVisible] = useState({ edit: true, preview: true });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
@@ -3456,16 +3457,34 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
               <div className="sticky top-4">
                 <div className="font-medium text-sm mb-2">Email Canvas</div>
                 {/* Sticky hint overlays at top of canvas */}
-                <div className="space-y-2 mb-3 max-w-[600px]">
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2.5 flex items-center gap-2">
-                    <MousePointerClick className="w-4 h-4 text-primary flex-shrink-0" />
-                    <span className="text-xs text-primary font-medium">Click any block below to edit its content and styling</span>
+                {(hintsVisible.edit || hintsVisible.preview) && (
+                  <div className="space-y-2 mb-3 max-w-[600px]">
+                    {hintsVisible.edit && (
+                      <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2.5 flex items-center gap-2">
+                        <MousePointerClick className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="text-xs text-primary font-medium flex-1">Click any block below to edit its content and styling</span>
+                        <button 
+                          onClick={() => setHintsVisible(prev => ({ ...prev, edit: false }))}
+                          className="text-primary/60 hover:text-primary transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                    {hintsVisible.preview && (
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-2.5 flex items-center gap-2">
+                        <Eye className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                        <span className="text-xs text-amber-700 font-medium flex-1">Remember to click Preview before finalizing your template to ensure no code errors</span>
+                        <button 
+                          onClick={() => setHintsVisible(prev => ({ ...prev, preview: false }))}
+                          className="text-amber-600/60 hover:text-amber-600 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-2.5 flex items-center gap-2">
-                    <Eye className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <span className="text-xs text-amber-700 font-medium">Remember to click Preview before finalizing your template to ensure no code errors</span>
-                  </div>
-                </div>
+                )}
                 <ScrollArea className="h-[calc(100vh-280px)] max-h-[620px] border rounded-lg bg-muted/50 p-4">
                 <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto overflow-hidden">
                   {blocks.map((block, index) => (
