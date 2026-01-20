@@ -275,15 +275,23 @@ export function useUpdateRequestStatus() {
 
 export function useAcceptAssignment() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('assistant_requests')
         .update({ accepted_at: new Date().toISOString() })
         .eq('id', id);
 
       if (error) throw error;
+
+      // Send notification email to stylist
+      await supabase.functions.invoke('notify-assignment-response', {
+        body: { request_id: id, action: 'accepted', assistant_id: user.id }
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assistant-requests'] });
@@ -302,6 +310,11 @@ export function useDeclineAssignment() {
   return useMutation({
     mutationFn: async (id: string) => {
       if (!user) throw new Error('Not authenticated');
+
+      // Send notification email to stylist about decline
+      await supabase.functions.invoke('notify-assignment-response', {
+        body: { request_id: id, action: 'declined', assistant_id: user.id }
+      });
 
       // Call edge function to decline and reassign
       const { data, error } = await supabase.functions.invoke('reassign-assistant', {
