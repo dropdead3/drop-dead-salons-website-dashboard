@@ -183,6 +183,39 @@ export type Database = {
           },
         ]
       }
+      business_card_requests: {
+        Row: {
+          design_style: string
+          id: string
+          notes: string | null
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          design_style: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          design_style?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       coach_notes: {
         Row: {
           coach_user_id: string
@@ -809,6 +842,27 @@ export type Database = {
           name?: string
           phone?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      onboarding_task_completions: {
+        Row: {
+          completed_at: string
+          id: string
+          task_key: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          task_key: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          task_key?: string
+          user_id?: string
         }
         Relationships: []
       }
