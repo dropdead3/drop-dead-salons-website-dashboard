@@ -594,7 +594,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           const enabledLinks = (block.socialLinks || []).filter(link => link.enabled);
           if (enabledLinks.length > 0) {
             const iconStyle = `display: inline-block; width: 24px; height: 24px; margin: 0 8px; text-decoration: none;`;
-            socialHtml = `<div style="margin-bottom: 12px;">` + enabledLinks.map(link => {
+            socialHtml = `<div style="margin-bottom: 12px; text-align: ${textAlign};">` + enabledLinks.map(link => {
               let svg = '';
               let href = link.url;
               
@@ -619,7 +619,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${block.styles.padding || '32px 24px'}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px'};">
           ${logoHtml}
           ${socialHtml}
-          <p style="margin: 0; font-size: 11px; opacity: 0.8;">${footerConfig.copyrightText}</p>
+          <p style="margin: 0; font-size: 11px; opacity: 0.8; text-align: ${textAlign};">${footerConfig.copyrightText}</p>
         </div>`;
       }
       case 'header': {
