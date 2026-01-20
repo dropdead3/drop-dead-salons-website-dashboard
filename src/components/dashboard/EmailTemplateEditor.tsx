@@ -2752,51 +2752,6 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
 
                     {selectedBlock.type === 'image' && (
                       <>
-                        {/* Brand Logos Quick Select */}
-                        <div className="space-y-2">
-                          <Label className="text-xs">Brand Logos</Label>
-                          <div className="grid grid-cols-1 gap-2">
-                            {uniqueLogos.map((baseLogo) => {
-                              const blackVariant = brandLogos.find(l => l.baseId === baseLogo.baseId && l.variant === 'black')!;
-                              const whiteVariant = brandLogos.find(l => l.baseId === baseLogo.baseId && l.variant === 'white')!;
-                              const isBlackSelected = selectedBlock.imageUrl === blackVariant.src && selectedBlock.content?.includes('Black');
-                              const isWhiteSelected = selectedBlock.imageUrl === whiteVariant.src && selectedBlock.content?.includes('White');
-                              return (
-                                <div key={baseLogo.baseId} className="flex items-center gap-2 p-2 rounded border">
-                                  <div className="w-8 h-8 flex items-center justify-center bg-muted rounded shrink-0">
-                                    <img src={baseLogo.src} alt={baseLogo.name} className="w-6 h-6 object-contain" />
-                                  </div>
-                                  <span className="text-[10px] truncate flex-1">{baseLogo.name}</span>
-                                  <div className="flex gap-1">
-                                    <button
-                                      onClick={() => updateBlock(selectedBlock.id, { imageUrl: blackVariant.src, content: `${baseLogo.name} (Black)` })}
-                                      className={cn(
-                                        "px-2 py-1 rounded text-[9px] font-medium transition-all",
-                                        isBlackSelected 
-                                          ? "bg-foreground text-background" 
-                                          : "bg-foreground/10 text-foreground hover:bg-foreground/20"
-                                      )}
-                                    >
-                                      Black
-                                    </button>
-                                    <button
-                                      onClick={() => updateBlock(selectedBlock.id, { imageUrl: whiteVariant.src, content: `${baseLogo.name} (White)` })}
-                                      className={cn(
-                                        "px-2 py-1 rounded text-[9px] font-medium border transition-all",
-                                        isWhiteSelected 
-                                          ? "bg-background text-foreground border-foreground" 
-                                          : "bg-background text-foreground/60 border-border hover:border-foreground/40"
-                                      )}
-                                    >
-                                      White
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        
                         <div className="space-y-2">
                           <Label className="text-xs">Custom Image</Label>
                           <div className="flex gap-2">
