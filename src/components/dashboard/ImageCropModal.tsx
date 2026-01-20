@@ -33,6 +33,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const [imageSrc, setImageSrc] = useState<string>('');
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [minZoom, setMinZoom] = useState(0.1);
   const [rotation, setRotation] = useState(0);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -49,20 +50,23 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       img.onload = () => {
         setImageElement(img);
         
-        // Calculate initial zoom to fit the entire image visible in the crop area
-        // We want the SHORT side of the image to fill the crop area
         const canvasSize = 280;
         const cropSize = canvasSize * 0.75; // 210px crop area
         
-        // Scale so the short side fits the crop area exactly
+        // Calculate zoom needed to fit the LONG side into the canvas
+        // This ensures the entire image is visible initially
+        const longSide = Math.max(img.width, img.height);
+        const fitZoom = canvasSize / longSide;
+        
+        // Calculate minimum zoom (show full image in canvas)
+        const calculatedMinZoom = Math.max(0.01, fitZoom * 0.5);
+        setMinZoom(calculatedMinZoom);
+        
+        // Set initial zoom to fit the short side into crop area, but not below minimum
         const shortSide = Math.min(img.width, img.height);
+        const initialZoom = Math.max(calculatedMinZoom, cropSize / shortSide);
         
-        // The image is drawn at center with dimensions: img.width * zoom, img.height * zoom
-        // We want shortSide * zoom = cropSize, so zoom = cropSize / shortSide
-        const fitZoom = cropSize / shortSide;
-        
-        // Clamp between reasonable bounds
-        setZoom(Math.max(0.1, Math.min(3, fitZoom)));
+        setZoom(Math.min(3, initialZoom));
         setRotation(0);
         setPosition({ x: 0, y: 0 });
       };
@@ -230,8 +234,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     );
   }, [imageElement, zoom, rotation, position, cropShape, maxOutputSize, onCropComplete, onClose]);
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 3));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.1));
+  const handleZoomIn = () => setZoom(prev => Math.min(prev * 1.2, 3));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev / 1.2, minZoom));
   const handleRotate = () => setRotation(prev => (prev + 90) % 360);
 
   return (
@@ -328,9 +332,9 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
               </Button>
               <Slider
                 value={[zoom]}
-                min={0.1}
+                min={minZoom}
                 max={3}
-                step={0.05}
+                step={0.01}
                 onValueChange={([v]) => setZoom(v)}
                 className="flex-1"
               />
