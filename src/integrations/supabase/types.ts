@@ -758,6 +758,51 @@ export type Database = {
         }
         Relationships: []
       }
+      headshot_requests: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string
+          scheduled_date: string | null
+          scheduled_location: string | null
+          scheduled_time: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          scheduled_date?: string | null
+          scheduled_location?: string | null
+          scheduled_time?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          scheduled_date?: string | null
+          scheduled_location?: string | null
+          scheduled_time?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       impersonation_logs: {
         Row: {
           action: string

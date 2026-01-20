@@ -24,6 +24,9 @@ import {
   CreditCard,
   ClipboardCheck,
   Check,
+  Camera,
+  CalendarDays,
+  MapPin,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -52,6 +55,15 @@ interface BusinessCardRequest {
   design_style: string;
   status: string;
   requested_at: string;
+}
+
+interface HeadshotRequest {
+  id: string;
+  status: string;
+  requested_at: string;
+  scheduled_date: string | null;
+  scheduled_time: string | null;
+  scheduled_location: string | null;
 }
 
 interface TaskCompletion {
@@ -100,6 +112,10 @@ export default function Onboarding() {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [requestingCard, setRequestingCard] = useState(false);
   
+  // Headshot state
+  const [headshotRequest, setHeadshotRequest] = useState<HeadshotRequest | null>(null);
+  const [requestingHeadshot, setRequestingHeadshot] = useState(false);
+  
   // Task state
   const [onboardingTasks, setOnboardingTasks] = useState<OnboardingTask[]>([]);
   const [taskCompletions, setTaskCompletions] = useState<TaskCompletion[]>([]);
@@ -116,7 +132,7 @@ export default function Onboarding() {
   }, [roles, user]);
 
   const fetchData = async () => {
-    const [handbooksResult, acknowledgementsResult, businessCardResult, tasksResult, completionsResult] = await Promise.all([
+    const [handbooksResult, acknowledgementsResult, businessCardResult, headshotResult, tasksResult, completionsResult] = await Promise.all([
       supabase
         .from('handbooks')
         .select('id, title, category, content, file_url, version, updated_at, visible_to_roles')
@@ -129,6 +145,12 @@ export default function Onboarding() {
       supabase
         .from('business_card_requests')
         .select('id, design_style, status, requested_at')
+        .order('requested_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('headshot_requests')
+        .select('id, status, requested_at, scheduled_date, scheduled_time, scheduled_location')
         .order('requested_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -166,6 +188,10 @@ export default function Onboarding() {
 
     if (!businessCardResult.error && businessCardResult.data) {
       setBusinessCardRequest(businessCardResult.data);
+    }
+
+    if (!headshotResult.error && headshotResult.data) {
+      setHeadshotRequest(headshotResult.data);
     }
 
     // Filter tasks by user roles
@@ -264,6 +290,36 @@ export default function Onboarding() {
     setRequestingCard(false);
   };
 
+  const handleRequestHeadshot = async () => {
+    if (!user) return;
+    
+    setRequestingHeadshot(true);
+    
+    const { data, error } = await supabase
+      .from('headshot_requests')
+      .insert({
+        user_id: user.id
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message
+      });
+    } else {
+      setHeadshotRequest(data);
+      toast({
+        title: 'Request Submitted!',
+        description: 'Your headshot session request has been submitted. An admin will schedule your session.'
+      });
+    }
+    
+    setRequestingHeadshot(false);
+  };
+
   const handleToggleTask = async (taskId: string) => {
     if (!user) return;
     
@@ -310,7 +366,10 @@ export default function Onboarding() {
   const totalTasks = onboardingTasks.length;
   const tasksProgress = totalTasks > 0 ? (completedTasksCount / totalTasks) * 100 : 100;
   
-  const overallProgress = ((handbooksProgress + tasksProgress + (businessCardRequest ? 100 : 0)) / 3);
+  // Calculate overall progress (4 sections now: handbooks, business cards, headshots, tasks)
+  const businessCardProgress = businessCardRequest ? 100 : 0;
+  const headshotProgress = headshotRequest ? 100 : 0;
+  const overallProgress = ((handbooksProgress + businessCardProgress + headshotProgress + tasksProgress) / 4);
 
   if (loading) {
     return (
@@ -498,7 +557,99 @@ export default function Onboarding() {
           </div>
         </Card>
 
-        {/* Section 3: Onboarding Tasks Checklist */}
+        {/* Section 3: Request Headshots */}
+        <Card className="overflow-hidden">
+          <div className="p-6 border-b bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Camera className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-display text-lg">REQUEST YOUR HEADSHOTS</h2>
+                <p className="text-sm text-muted-foreground font-sans">
+                  Request a professional headshot session
+                </p>
+              </div>
+              {headshotRequest && (
+                <div className="text-right">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Requested
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="p-6">
+            {headshotRequest ? (
+              <div className="text-center py-4">
+                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-primary" />
+                <h3 className="font-display text-lg mb-1">REQUEST SUBMITTED</h3>
+                <p className="text-sm text-muted-foreground font-sans mb-4">
+                  An admin will schedule your headshot session.
+                </p>
+                
+                {headshotRequest.scheduled_date ? (
+                  <div className="p-4 bg-muted/50 rounded-lg text-left max-w-xs mx-auto">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CalendarDays className="w-4 h-4 text-primary" />
+                      <span className="font-sans font-medium text-sm">
+                        {new Date(headshotRequest.scheduled_date).toLocaleDateString('en-US', { 
+                          weekday: 'long', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </span>
+                    </div>
+                    {headshotRequest.scheduled_time && (
+                      <p className="text-xs text-muted-foreground ml-6">{headshotRequest.scheduled_time}</p>
+                    )}
+                    {headshotRequest.scheduled_location && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{headshotRequest.scheduled_location}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Status: <span className="capitalize">{headshotRequest.status}</span>
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-muted/30 rounded-lg text-center">
+                  <Camera className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground font-sans mb-2">
+                    Professional headshots are essential for your business cards and team profile.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Once requested, an admin will coordinate with you to schedule your session.
+                  </p>
+                </div>
+                
+                <Button 
+                  onClick={handleRequestHeadshot}
+                  disabled={requestingHeadshot}
+                  className="w-full font-display"
+                >
+                  {requestingHeadshot ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Camera className="w-4 h-4 mr-2" />
+                      REQUEST HEADSHOT SESSION
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Section 4: Onboarding Tasks Checklist */}
         <Card className="overflow-hidden">
           <div className="p-6 border-b bg-muted/30">
             <div className="flex items-center gap-3">
