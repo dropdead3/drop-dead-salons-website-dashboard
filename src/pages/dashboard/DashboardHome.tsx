@@ -36,6 +36,7 @@ import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
 import { WorkScheduleWidget } from '@/components/dashboard/WorkScheduleWidget';
 import { ScheduleRequestsCard } from '@/components/dashboard/ScheduleRequestsCard';
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
+import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -312,6 +313,13 @@ export default function DashboardHome() {
 
         {/* Widgets Section */}
         <WidgetsSection />
+
+        {/* Leadership-only: Website Analytics */}
+        {isLeadership && isVisible('website_analytics') && (
+          <div className="grid gap-6 lg:grid-cols-3">
+            <WebsiteAnalyticsWidget />
+          </div>
+        )}
 
         {/* Leadership-only: Team & Stylists Overview + Schedule Requests */}
         {isLeadership && (isVisible('team_overview') || isVisible('stylists_overview')) && (
