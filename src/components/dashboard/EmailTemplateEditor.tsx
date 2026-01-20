@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -242,6 +242,11 @@ interface EmailTemplateEditorProps {
   variables: string[];
   onHtmlChange: (html: string) => void;
   onBlocksChange?: (blocks: EmailBlock[]) => void;
+}
+
+// Expose regenerateHtml via ref
+export interface EmailTemplateEditorRef {
+  regenerateHtml: () => void;
 }
 
 const colorPresets = [
@@ -675,7 +680,8 @@ ${blockHtml}
 </div>`;
 }
 
-export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onHtmlChange, onBlocksChange }: EmailTemplateEditorProps) {
+export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTemplateEditorProps>(
+  function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onHtmlChange, onBlocksChange }, ref) {
   const defaultTheme = emailThemes[0]; // Drop Dead Standard
   
   const getInitialBlocks = (): EmailBlock[] => {
@@ -1109,6 +1115,17 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
     // Only run on mount - we intentionally exclude blocks and onHtmlChange from deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Expose regenerateHtml method via ref for parent to force refresh HTML from blocks
+  useImperativeHandle(ref, () => ({
+    regenerateHtml: () => {
+      if (blocks.length > 0) {
+        const html = blocksToHtml(blocks);
+        setRawHtml(html);
+        onHtmlChange(html);
+      }
+    }
+  }), [blocks, onHtmlChange]);
 
   const handleUndo = useCallback(() => {
     const previousBlocks = undo();
@@ -3299,4 +3316,4 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
       </Tabs>
     </div>
   );
-}
+});

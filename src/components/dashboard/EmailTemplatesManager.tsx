@@ -44,6 +44,7 @@ import {
   Copy,
   Plus,
   MoreHorizontal,
+  RefreshCw,
 } from 'lucide-react';
 import {
   useEmailTemplates,
@@ -56,7 +57,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { EmailTemplateEditor } from './EmailTemplateEditor';
+import { EmailTemplateEditor, type EmailTemplateEditorRef } from './EmailTemplateEditor';
 
 // Default HTML for new templates
 function getDefaultEmailHtml() {
@@ -111,6 +112,7 @@ export function EmailTemplatesManager() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const initialEditFormRef = useRef<typeof editForm | null>(null);
   const hasShownUnsavedToastRef = useRef(false);
+  const editorRef = useRef<EmailTemplateEditorRef>(null);
 
   const openEditDialog = (template: EmailTemplate) => {
     setEditingTemplate(template);
@@ -512,6 +514,7 @@ export function EmailTemplatesManager() {
 
             {/* Advanced Visual Editor - key forces remount when template changes */}
             <EmailTemplateEditor
+              ref={editorRef}
               key={editingTemplate?.id}
               initialHtml={editForm.html_body}
               initialBlocks={editForm.blocks_json as any}
@@ -529,16 +532,33 @@ export function EmailTemplatesManager() {
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
+                size="sm"
+                className="text-muted-foreground"
+                onClick={() => {
+                  editorRef.current?.regenerateHtml();
+                  toast.success('HTML regenerated from blocks');
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Regenerate
+              </Button>
+              <Button 
+                variant="outline" 
                 className="bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300"
                 onClick={() => {
+                  // First regenerate HTML to ensure it's up to date
+                  editorRef.current?.regenerateHtml();
                   if (editingTemplate) {
                     // Use current editForm state (with latest html_body from editor) instead of saved template
-                    setPreviewTemplate({
-                      ...editingTemplate,
-                      html_body: editForm.html_body,
-                      subject: editForm.subject,
-                      variables: editingTemplate.variables,
-                    });
+                    // Use setTimeout to allow state to update after regenerate
+                    setTimeout(() => {
+                      setPreviewTemplate({
+                        ...editingTemplate,
+                        html_body: editForm.html_body,
+                        subject: editForm.subject,
+                        variables: editingTemplate.variables,
+                      });
+                    }, 50);
                   }
                 }}
               >
