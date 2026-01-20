@@ -161,33 +161,50 @@ export default function RingTheBell() {
   }, [user?.id]);
 
   const fetchEntries = async () => {
-    const { data, error } = await supabase
+    // Fetch bell entries
+    const { data: entriesData, error: entriesError } = await supabase
       .from('ring_the_bell_entries')
-      .select(`
-        *,
-        employee_profiles!ring_the_bell_entries_user_id_fkey(display_name, full_name, photo_url)
-      `)
+      .select('*')
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(50);
 
-    if (error) {
-      console.error('Error fetching entries:', error);
-      // Fallback without join
-      const { data: fallbackData } = await supabase
-        .from('ring_the_bell_entries')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      setEntries((fallbackData || []) as BellEntry[]);
-    } else {
-      const formattedEntries = (data || []).map((entry: any) => ({
-        ...entry,
-        stylist_name: entry.employee_profiles?.display_name || entry.employee_profiles?.full_name || 'Stylist',
-        stylist_photo: entry.employee_profiles?.photo_url || null,
-      }));
-      setEntries(formattedEntries as BellEntry[]);
+    if (entriesError) {
+      console.error('Error fetching entries:', entriesError);
+      setEntries([]);
+      setLoading(false);
+      return;
     }
+
+    if (!entriesData || entriesData.length === 0) {
+      setEntries([]);
+      setLoading(false);
+      return;
+    }
+
+    // Get unique user IDs and fetch their profiles
+    const userIds = [...new Set(entriesData.map(e => e.user_id))];
+    const { data: profilesData } = await supabase
+      .from('employee_profiles')
+      .select('user_id, display_name, full_name, photo_url')
+      .in('user_id', userIds);
+
+    // Create a map of user_id -> profile for quick lookup
+    const profilesMap = new Map(
+      (profilesData || []).map(p => [p.user_id, p])
+    );
+
+    // Merge entries with profile data
+    const formattedEntries = entriesData.map((entry) => {
+      const profile = profilesMap.get(entry.user_id);
+      return {
+        ...entry,
+        stylist_name: profile?.display_name || profile?.full_name || 'Stylist',
+        stylist_photo: profile?.photo_url || null,
+      };
+    });
+
+    setEntries(formattedEntries as BellEntry[]);
     setLoading(false);
   };
 
