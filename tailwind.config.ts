@@ -49,6 +49,10 @@ export default {
           DEFAULT: "hsl(var(--oat))",
           foreground: "hsl(var(--oat-foreground))",
         },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          foreground: "hsl(var(--gold-foreground))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -130,6 +134,10 @@ export default {
           "0%, 100%": { transform: "scale(1)" },
           "50%": { transform: "scale(1.15)" },
         },
+        "shimmer": {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -144,6 +152,7 @@ export default {
         "marquee": "marquee 25s linear infinite",
         "shine": "shine 8s ease-in-out infinite",
         "bounce-once": "bounce-once 0.3s ease-out",
+        "shimmer": "shimmer 3s ease-in-out infinite",
       },
     },
   },
