@@ -301,7 +301,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
           >
             <canvas
               ref={canvasRef}
-              className="rounded-lg cursor-move border border-border"
+              className={`rounded-lg border border-border ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
