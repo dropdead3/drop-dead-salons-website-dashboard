@@ -479,7 +479,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'footer': {
-        const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main', showSocialIcons: true, copyrightText: '© 2025 Drop Dead Gorgeous. All rights reserved.' };
+        const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
         const logo = brandLogos.find(l => l.id === footerConfig.logoId) || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
@@ -1004,15 +1004,15 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
       }),
       ...(type === 'footer' && {
         socialLinks: [
-          { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadhair', enabled: true },
-          { platform: 'tiktok' as const, url: 'https://tiktok.com/@dropdeadhair', enabled: true },
-          { platform: 'email' as const, url: 'hello@dropdeadhair.com', enabled: true },
+          { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadsalon', enabled: true },
+          { platform: 'tiktok' as const, url: '', enabled: false },
+          { platform: 'email' as const, url: 'contact@dropdeadsalon.com', enabled: true },
         ],
         footerConfig: {
           showLogo: true,
           logoId: 'drop-dead-main',
           showSocialIcons: true,
-          copyrightText: '© 2025 Drop Dead Gorgeous. All rights reserved.',
+          copyrightText: '© 2026 Drop Dead Salons. All rights reserved.',
         }
       }),
       ...(type === 'header' && {
@@ -2446,7 +2446,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
                           </div>
                         )}
                         {block.type === 'footer' && (() => {
-                          const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main', showSocialIcons: true, copyrightText: '© 2025 Drop Dead Gorgeous. All rights reserved.' };
+                          const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
                           const logo = brandLogos.find(l => l.id === footerConfig.logoId) || brandLogos[0];
                           const enabledLinks = (block.socialLinks || []).filter(l => l.enabled);
                           
