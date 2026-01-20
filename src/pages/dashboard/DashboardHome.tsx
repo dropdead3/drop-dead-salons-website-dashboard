@@ -317,16 +317,14 @@ export default function DashboardHome() {
         <WidgetsSection />
 
         {/* Leadership-only: Analytics & Overviews */}
-        {isLeadership && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            {isVisible('website_analytics') && <WebsiteAnalyticsWidget />}
-            {isVisible('client_engine_overview') && <ClientEngineOverview />}
-          </div>
+        {isLeadership && isVisible('website_analytics') && (
+          <WebsiteAnalyticsWidget />
         )}
         
-        {isLeadership && isVisible('onboarding_overview') && (
+        {isLeadership && (isVisible('client_engine_overview') || isVisible('onboarding_overview')) && (
           <div className="grid gap-6 lg:grid-cols-2">
-            <OnboardingTrackerOverview />
+            {isVisible('client_engine_overview') && <ClientEngineOverview />}
+            {isVisible('onboarding_overview') && <OnboardingTrackerOverview />}
           </div>
         )}
 
