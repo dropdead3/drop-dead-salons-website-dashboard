@@ -68,7 +68,7 @@ interface BellEntryCardProps {
   onSaveNote: (entryId: string, noteText: string) => Promise<void>;
   onSaveEdit: (entryId: string, data: { service: string; ticketValue: string; leadSource: string; closingScript: string }) => Promise<void>;
   onDelete: (entry: BellEntry) => void;
-  onToggleHighFive: (entryId: string) => void;
+  onToggleHighFive: (entryId: string, entryOwnerId: string) => void;
   onLocationClick?: (location: string) => void;
 }
 
@@ -340,7 +340,7 @@ export function BellEntryCard({
                   count={highFiveCount}
                   hasHighFived={hasUserHighFived}
                   users={highFiveUsers}
-                  onToggle={() => onToggleHighFive(entry.id)}
+                  onToggle={() => onToggleHighFive(entry.id, entry.user_id)}
                 />
               </div>
             </div>

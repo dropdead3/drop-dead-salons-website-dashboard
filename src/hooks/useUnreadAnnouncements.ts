@@ -19,8 +19,6 @@ export function useUnreadAnnouncements() {
 
       if (announcementsError) throw announcementsError;
 
-      if (!announcements || announcements.length === 0) return 0;
-
       // Get read announcements for this user
       const { data: reads, error: readsError } = await supabase
         .from('announcement_reads')
@@ -30,11 +28,20 @@ export function useUnreadAnnouncements() {
       if (readsError) throw readsError;
 
       const readIds = new Set(reads?.map(r => r.announcement_id) || []);
-      const unreadCount = announcements.filter(a => !readIds.has(a.id)).length;
+      const unreadAnnouncementCount = (announcements || []).filter(a => !readIds.has(a.id)).length;
 
-      return unreadCount;
+      // Get unread user notifications
+      const { count: unreadNotificationCount, error: notifError } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+
+      if (notifError) throw notifError;
+
+      return unreadAnnouncementCount + (unreadNotificationCount || 0);
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 }

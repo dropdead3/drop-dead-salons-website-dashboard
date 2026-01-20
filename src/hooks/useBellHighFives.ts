@@ -97,7 +97,7 @@ export function useBellHighFives(entryIds: string[]) {
     };
   }, [entryIds.join(',')]);
 
-  const toggleHighFive = async (entryId: string) => {
+  const toggleHighFive = async (entryId: string, entryOwnerId?: string) => {
     if (!user) return;
 
     const currentHighFives = highFives[entryId] || [];
@@ -132,9 +132,11 @@ export function useBellHighFives(entryIds: string[]) {
           .eq('user_id', user.id)
           .maybeSingle();
 
+        const highFiverName = profile?.display_name || profile?.full_name || 'Someone';
+
         const newHighFive: HighFive = {
           ...data,
-          user_name: profile?.display_name || profile?.full_name || 'You',
+          user_name: highFiverName,
           user_photo: profile?.photo_url || null,
         };
 
@@ -142,6 +144,18 @@ export function useBellHighFives(entryIds: string[]) {
           ...prev,
           [entryId]: [...(prev[entryId] || []), newHighFive],
         }));
+
+        // Send notification to the entry owner (if not self)
+        if (entryOwnerId && entryOwnerId !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: entryOwnerId,
+            type: 'high_five',
+            title: '🙌 High Five!',
+            message: `${highFiverName} gave you a high five on your bell ring!`,
+            link: '/dashboard/ring-the-bell',
+            metadata: { entry_id: entryId, from_user_id: user.id },
+          });
+        }
       }
     }
   };
