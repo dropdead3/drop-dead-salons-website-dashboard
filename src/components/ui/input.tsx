@@ -2,8 +2,27 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// Capitalize first letter of text
+const capitalizeFirst = (value: string): string => {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
+
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, onChange, ...props }, ref) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Only apply capitalization to text inputs (not email, password, number, etc.)
+      if (type === 'text' || type === undefined) {
+        const cursorPosition = e.target.selectionStart;
+        e.target.value = capitalizeFirst(e.target.value);
+        // Restore cursor position
+        if (cursorPosition !== null) {
+          e.target.setSelectionRange(cursorPosition, cursorPosition);
+        }
+      }
+      onChange?.(e);
+    };
+
     return (
       <input
         type={type}
@@ -12,6 +31,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className,
         )}
         ref={ref}
+        onChange={handleChange}
         {...props}
       />
     );
