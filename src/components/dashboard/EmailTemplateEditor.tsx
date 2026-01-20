@@ -1732,11 +1732,29 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                     <Share2 className="w-5 h-5 text-foreground/70" />
                     <span className="text-[11px] font-medium text-foreground/80">Social</span>
                   </button>
-                  <button onClick={() => { addBlock('header'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                  <button 
+                    onClick={() => { addBlock('header'); setToolbarPanel(null); }} 
+                    disabled={blocks.some(b => b.type === 'header')}
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
+                      blocks.some(b => b.type === 'header') 
+                        ? "bg-muted/20 opacity-40 cursor-not-allowed" 
+                        : "bg-muted/40 hover:bg-muted/70 hover:shadow-sm"
+                    )}
+                  >
                     <LayoutTemplate className="w-5 h-5 text-foreground/70" />
                     <span className="text-[11px] font-medium text-foreground/80">Header</span>
                   </button>
-                  <button onClick={() => { addBlock('footer'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                  <button 
+                    onClick={() => { addBlock('footer'); setToolbarPanel(null); }} 
+                    disabled={blocks.some(b => b.type === 'footer')}
+                    className={cn(
+                      "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
+                      blocks.some(b => b.type === 'footer') 
+                        ? "bg-muted/20 opacity-40 cursor-not-allowed" 
+                        : "bg-muted/40 hover:bg-muted/70 hover:shadow-sm"
+                    )}
+                  >
                     <LayoutTemplate className="w-5 h-5 text-foreground/70" />
                     <span className="text-[11px] font-medium text-foreground/80">Footer</span>
                   </button>
