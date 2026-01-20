@@ -1127,7 +1127,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
         footerConfig: {
           showLogo: true,
           logoId: 'drop-dead-main-white',
-          logoSize: 'medium' as const,
+          logoSize: 'large' as const,
           logoPosition: 'center' as const,
           showSocialIcons: true,
           copyrightText: '© 2026 Drop Dead Salons. All rights reserved.',
@@ -2173,7 +2173,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                       const defaultConfig = { 
                         showLogo: true, 
                         logoId: 'drop-dead-main-white', 
-                        logoSize: 'medium' as const, 
+                        logoSize: 'large' as const, 
                         logoPosition: 'center' as const, 
                         showSocialIcons: true, 
                         copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' 
@@ -2818,14 +2818,14 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           </div>
                         )}
                         {block.type === 'footer' && (() => {
-                          const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', logoSize: 'medium' as const, logoPosition: 'center' as const, showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
+                          const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', logoSize: 'large' as const, logoPosition: 'center' as const, showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
                           const footerConfig = block.footerConfig ? { ...defaultFooterConfig, ...block.footerConfig } : defaultFooterConfig;
                           // Ensure logoId is never empty/undefined
                           const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'drop-dead-main-white';
                           const logo = getLogoById(logoId) || brandLogos.find(l => l.variant === 'white') || brandLogos[0];
                           const enabledLinks = (block.socialLinks || []).filter(l => l.enabled);
                           const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
-                          const logoMaxWidth = logoSizeMap[footerConfig.logoSize || 'medium'];
+                          const logoMaxWidth = logoSizeMap[footerConfig.logoSize || 'large'];
                           const logoPosition = footerConfig.logoPosition || 'center';
                           // Ensure showLogo defaults to true if undefined
                           const showLogo = footerConfig.showLogo !== false;
