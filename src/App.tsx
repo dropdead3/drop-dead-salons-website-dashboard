@@ -59,6 +59,7 @@ import NotificationPreferences from "./pages/dashboard/NotificationPreferences";
 import OnboardingTracker from "./pages/dashboard/admin/OnboardingTracker";
 import ClientEngineTracker from "./pages/dashboard/admin/ClientEngineTracker";
 import AssistantRequestsOverview from "./pages/dashboard/admin/AssistantRequestsOverview";
+import DashboardBuild from "./pages/dashboard/admin/DashboardBuild";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +125,7 @@ const App = () => (
               <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
               <Route path="/dashboard/admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
               <Route path="/dashboard/admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/build" element={<ProtectedRoute requireSuperAdmin><DashboardBuild /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
