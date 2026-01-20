@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -32,6 +33,7 @@ interface BellEntry {
   created_at: string;
   user_id: string;
   stylist_name?: string;
+  stylist_photo?: string | null;
 }
 
 const leadSources = [
@@ -204,77 +206,94 @@ export function BellEntryCard({
         </div>
       ) : (
         <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="font-display text-xl">
-                ${entry.ticket_value.toLocaleString()}
-              </span>
-              {entry.is_pinned && (
-                <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs font-display tracking-wide rounded">
-                  PINNED
+          <div className="flex items-start gap-4 flex-1 min-w-0">
+            {/* Avatar */}
+            {showStylistName && (
+              <Avatar className="h-12 w-12 shrink-0">
+                <AvatarImage src={entry.stylist_photo || undefined} alt={entry.stylist_name} />
+                <AvatarFallback className="bg-primary/10 text-primary font-display text-sm">
+                  {entry.stylist_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                </AvatarFallback>
+              </Avatar>
+            )}
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-1">
+                {showStylistName && entry.stylist_name && (
+                  <span className="font-medium font-sans text-sm">{entry.stylist_name}</span>
+                )}
+                {entry.is_pinned && (
+                  <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs font-display tracking-wide rounded">
+                    PINNED
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-display text-xl">
+                  ${entry.ticket_value.toLocaleString()}
                 </span>
+                <span className="text-muted-foreground">·</span>
+                <span className="font-sans text-sm text-foreground">{entry.service_booked}</span>
+              </div>
+              <p className="text-xs text-muted-foreground font-sans">
+                {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
+                {format(new Date(entry.created_at), 'MMM d, yyyy')}
+              </p>
+              {entry.closing_script && (
+                <p className="mt-3 text-sm text-muted-foreground font-sans italic">
+                  "{entry.closing_script}"
+                </p>
+              )}
+
+              {/* Coach Note Display */}
+              {entry.coach_note && !isEditingNote && (
+                <div className="mt-4 p-3 bg-accent/50 rounded-lg border border-accent">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3" /> Coach Note
+                  </p>
+                  <p className="text-sm font-sans">{entry.coach_note}</p>
+                </div>
+              )}
+
+              {/* Coach Note Editor */}
+              {isCoach && isEditingNote && (
+                <div className="mt-4 space-y-2">
+                  <Textarea
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Add a celebratory note for this win..."
+                    rows={2}
+                    className="text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveNote}
+                      disabled={savingNote}
+                      className="font-display text-xs"
+                    >
+                      {savingNote ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <>
+                          <Send className="w-3 h-3 mr-1" />
+                          Save Note
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={cancelEditingNote}
+                      className="font-display text-xs"
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
-            <p className="font-sans text-sm mb-1">{entry.service_booked}</p>
-            <p className="text-xs text-muted-foreground font-sans">
-              {showStylistName && entry.stylist_name && <span className="font-medium">{entry.stylist_name} · </span>}
-              {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
-              {format(new Date(entry.created_at), 'MMM d, yyyy')}
-            </p>
-            {entry.closing_script && (
-              <p className="mt-3 text-sm text-muted-foreground font-sans italic">
-                "{entry.closing_script}"
-              </p>
-            )}
-
-            {/* Coach Note Display */}
-            {entry.coach_note && !isEditingNote && (
-              <div className="mt-4 p-3 bg-accent/50 rounded-lg border border-accent">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
-                  <MessageSquare className="w-3 h-3" /> Coach Note
-                </p>
-                <p className="text-sm font-sans">{entry.coach_note}</p>
-              </div>
-            )}
-
-            {/* Coach Note Editor */}
-            {isCoach && isEditingNote && (
-              <div className="mt-4 space-y-2">
-                <Textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Add a celebratory note for this win..."
-                  rows={2}
-                  className="text-sm"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={handleSaveNote}
-                    disabled={savingNote}
-                    className="font-display text-xs"
-                  >
-                    {savingNote ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <>
-                        <Send className="w-3 h-3 mr-1" />
-                        Save Note
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={cancelEditingNote}
-                    className="font-display text-xs"
-                  >
-                    <X className="w-3 h-3 mr-1" />
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Actions Menu */}
@@ -284,7 +303,7 @@ export function BellEntryCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-foreground ml-4"
+                  className="text-muted-foreground hover:text-foreground ml-2 shrink-0"
                 >
                   <MoreVertical className="w-4 h-4" />
                 </Button>

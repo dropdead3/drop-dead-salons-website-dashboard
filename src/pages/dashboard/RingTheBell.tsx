@@ -43,6 +43,7 @@ interface BellEntry {
   created_at: string;
   user_id: string;
   stylist_name?: string;
+  stylist_photo?: string | null;
 }
 
 const leadSources = [
@@ -154,7 +155,7 @@ export default function RingTheBell() {
       .from('ring_the_bell_entries')
       .select(`
         *,
-        employee_profiles!ring_the_bell_entries_user_id_fkey(display_name, full_name)
+        employee_profiles!ring_the_bell_entries_user_id_fkey(display_name, full_name, photo_url)
       `)
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
@@ -173,6 +174,7 @@ export default function RingTheBell() {
       const formattedEntries = (data || []).map((entry: any) => ({
         ...entry,
         stylist_name: entry.employee_profiles?.display_name || entry.employee_profiles?.full_name || 'Stylist',
+        stylist_photo: entry.employee_profiles?.photo_url || null,
       }));
       setEntries(formattedEntries as BellEntry[]);
     }
