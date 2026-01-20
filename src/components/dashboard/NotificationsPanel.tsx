@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Check, ExternalLink, Megaphone } from 'lucide-react';
+import { Bell, Check, ExternalLink, Megaphone, Hand } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -24,6 +24,16 @@ interface Announcement {
   created_at: string;
 }
 
+interface UserNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  link: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
 interface NotificationsPanelProps {
   unreadCount: number;
 }
@@ -31,33 +41,42 @@ interface NotificationsPanelProps {
 export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  // Subscribe to realtime announcements changes
+  // Subscribe to realtime announcements and notifications changes
   useEffect(() => {
-    const channel = supabase
+    const announcementsChannel = supabase
       .channel('announcements-realtime')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'announcements',
-        },
+        { event: '*', schema: 'public', table: 'announcements' },
         () => {
-          // Invalidate queries to refetch data when announcements change
           queryClient.invalidateQueries({ queryKey: ['notifications-announcements'] });
           queryClient.invalidateQueries({ queryKey: ['unread-announcements-count'] });
         }
       )
       .subscribe();
 
+    const notificationsChannel = supabase
+      .channel('user-notifications-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user?.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+          queryClient.invalidateQueries({ queryKey: ['unread-announcements-count'] });
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(announcementsChannel);
+      supabase.removeChannel(notificationsChannel);
     };
-  }, [queryClient]);
+  }, [queryClient, user?.id]);
 
   // Fetch recent announcements
-  const { data: announcements, isLoading } = useQuery({
+  const { data: announcements, isLoading: loadingAnnouncements } = useQuery({
     queryKey: ['notifications-announcements', user?.id],
     queryFn: async () => {
       const { data: announcementsData, error: announcementsError } = await supabase
@@ -89,8 +108,27 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
     enabled: !!user?.id,
   });
 
+  // Fetch user notifications (high-fives, etc.)
+  const { data: userNotifications, isLoading: loadingNotifications } = useQuery({
+    queryKey: ['user-notifications', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user?.id || '')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return data as UserNotification[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const isLoading = loadingAnnouncements || loadingNotifications;
+
   // Mark announcement as read
-  const markAsReadMutation = useMutation({
+  const markAnnouncementAsReadMutation = useMutation({
     mutationFn: async (announcementId: string) => {
       const { error } = await supabase
         .from('announcement_reads')
@@ -109,27 +147,53 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
     },
   });
 
-  // Mark all as read
-  const markAllAsReadMutation = useMutation({
-    mutationFn: async () => {
-      const unreadAnnouncements = announcements?.filter(a => !a.isRead) || [];
-      
-      if (unreadAnnouncements.length === 0) return;
-
+  // Mark user notification as read
+  const markNotificationAsReadMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
       const { error } = await supabase
-        .from('announcement_reads')
-        .upsert(
-          unreadAnnouncements.map(a => ({
-            announcement_id: a.id,
-            user_id: user?.id || '',
-          })),
-          { onConflict: 'announcement_id,user_id' }
-        );
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
 
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-announcements-count'] });
+    },
+  });
+
+  // Mark all as read
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      const unreadAnnouncements = announcements?.filter(a => !a.isRead) || [];
+      const unreadNotifications = userNotifications?.filter(n => !n.is_read) || [];
+      
+      // Mark announcements as read
+      if (unreadAnnouncements.length > 0) {
+        await supabase
+          .from('announcement_reads')
+          .upsert(
+            unreadAnnouncements.map(a => ({
+              announcement_id: a.id,
+              user_id: user?.id || '',
+            })),
+            { onConflict: 'announcement_id,user_id' }
+          );
+      }
+
+      // Mark user notifications as read
+      if (unreadNotifications.length > 0) {
+        await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('user_id', user?.id || '')
+          .eq('is_read', false);
+      }
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications-announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
       queryClient.invalidateQueries({ queryKey: ['unread-announcements-count'] });
     },
   });
@@ -185,9 +249,52 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                 </div>
               ))}
             </div>
-          ) : announcements && announcements.length > 0 ? (
+          ) : (announcements && announcements.length > 0) || (userNotifications && userNotifications.length > 0) ? (
             <div className="divide-y divide-border">
-              {announcements.map((announcement) => (
+              {/* User Notifications (high-fives, etc.) */}
+              {userNotifications?.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={cn(
+                    "p-3 transition-colors hover:bg-muted/50 cursor-pointer",
+                    !notification.is_read && "bg-primary/5"
+                  )}
+                  onClick={() => {
+                    if (!notification.is_read) {
+                      markNotificationAsReadMutation.mutate(notification.id);
+                    }
+                    if (notification.link) {
+                      navigate(notification.link);
+                    }
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="p-1.5 rounded-full border shrink-0 mt-0.5 bg-amber-500/10 border-amber-500/30 text-amber-600">
+                      <Hand className="w-3 h-3" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-sm",
+                        !notification.is_read && "font-semibold"
+                      )}>
+                        {notification.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                        {notification.message}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
+                    {!notification.is_read && (
+                      <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Announcements */}
+              {announcements?.map((announcement) => (
                 <div
                   key={announcement.id}
                   className={cn(
@@ -196,7 +303,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                   )}
                   onClick={() => {
                     if (!announcement.isRead) {
-                      markAsReadMutation.mutate(announcement.id);
+                      markAnnouncementAsReadMutation.mutate(announcement.id);
                     }
                   }}
                 >
@@ -216,7 +323,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                           {announcement.title}
                         </p>
                         {announcement.is_pinned && (
-                          <span className="text-[10px] bg-amber-500/20 text-amber-600 px-1.5 py-0.5 rounded shrink-0">
+                          <span className="text-[10px] bg-accent text-accent-foreground px-1.5 py-0.5 rounded shrink-0">
                             Pinned
                           </span>
                         )}
