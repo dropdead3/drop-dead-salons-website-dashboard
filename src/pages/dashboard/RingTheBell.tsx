@@ -95,6 +95,15 @@ export default function RingTheBell() {
   // Team rings shows ALL entries (everyone's rings including yours)
   const teamRings = useMemo(() => filteredEntries, [filteredEntries]);
 
+  // Get all unique locations for the filter dropdown
+  const allLocations = useMemo(() => {
+    const locations = new Set<string>();
+    entries.forEach(e => {
+      e.stylist_locations?.forEach(loc => locations.add(loc));
+    });
+    return Array.from(locations).sort();
+  }, [entries]);
+
   // High fives hook
   const entryIds = useMemo(() => entries.map(e => e.id), [entries]);
   const { 
@@ -501,20 +510,40 @@ export default function RingTheBell() {
           </Button>
         </div>
 
-        {/* Location Filter Indicator */}
-        {locationFilter && (
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-sm text-muted-foreground font-sans">Filtering by:</span>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setLocationFilter(null)}
-              className="h-7 px-2 gap-1.5 text-xs font-sans"
+        {/* Location Filter */}
+        {allLocations.length > 0 && (
+          <div className="mb-4 flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground font-sans">Filter by location:</span>
+            </div>
+            <Select 
+              value={locationFilter || "all"} 
+              onValueChange={(val) => setLocationFilter(val === "all" ? null : val)}
             >
-              <MapPin className="w-3 h-3" />
-              {locationFilter}
-              <X className="w-3 h-3" />
-            </Button>
+              <SelectTrigger className="w-[180px] h-8 text-sm">
+                <SelectValue placeholder="All Locations" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {allLocations.map((loc) => (
+                  <SelectItem key={loc} value={loc}>
+                    {loc}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {locationFilter && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocationFilter(null)}
+                className="h-7 px-2 text-xs font-sans text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Clear
+              </Button>
+            )}
           </div>
         )}
 
