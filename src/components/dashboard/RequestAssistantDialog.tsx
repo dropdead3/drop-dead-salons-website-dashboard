@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, User, FileText } from 'lucide-react';
+import { format, addWeeks } from 'date-fns';
+import { Calendar as CalendarIcon, Clock, User, MapPin, Repeat } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,8 +22,11 @@ import {
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { useSalonServices, useCreateAssistantRequest } from '@/hooks/useAssistantRequests';
+import { useSalonServices, useCreateAssistantRequest, RecurrenceType } from '@/hooks/useAssistantRequests';
+import { useActiveLocations } from '@/hooks/useLocations';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 
 interface RequestAssistantDialogProps {
   children: React.ReactNode;
@@ -36,11 +39,24 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
   const [clientName, setClientName] = useState('');
   const [startTime, setStartTime] = useState('');
   const [notes, setNotes] = useState('');
+  const [locationId, setLocationId] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>('weekly');
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date>();
 
   const { data: services = [], isLoading: servicesLoading } = useSalonServices();
+  const { data: locations = [] } = useActiveLocations();
+  const { data: profile } = useEmployeeProfile();
   const createRequest = useCreateAssistantRequest();
 
   const selectedService = services.find(s => s.id === serviceId);
+
+  // Get user's assigned locations
+  const userLocationIds = profile?.location_ids || [];
+  const userLocations = locations.filter(loc => userLocationIds.includes(loc.id));
+
+  // Auto-select location if user only has one
+  const effectiveLocations = userLocations.length > 0 ? userLocations : locations;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +68,9 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
       request_date: format(date, 'yyyy-MM-dd'),
       start_time: startTime,
       notes: notes || undefined,
+      location_id: locationId || undefined,
+      recurrence_type: isRecurring ? recurrenceType : 'none',
+      recurrence_end_date: isRecurring && recurrenceEndDate ? format(recurrenceEndDate, 'yyyy-MM-dd') : undefined,
     });
 
     // Reset form
@@ -60,6 +79,10 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
     setClientName('');
     setStartTime('');
     setNotes('');
+    setLocationId('');
+    setIsRecurring(false);
+    setRecurrenceType('weekly');
+    setRecurrenceEndDate(undefined);
     setOpen(false);
   };
 
@@ -81,10 +104,18 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
     return acc;
   }, {} as Record<string, typeof services>);
 
+  // Set default recurrence end date when enabling recurring
+  const handleRecurringToggle = (checked: boolean) => {
+    setIsRecurring(checked);
+    if (checked && date && !recurrenceEndDate) {
+      setRecurrenceEndDate(addWeeks(date, 4)); // Default to 4 weeks
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Request Assistant</DialogTitle>
           <DialogDescription>
@@ -93,6 +124,26 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          {/* Location Selection */}
+          {effectiveLocations.length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Select value={locationId} onValueChange={setLocationId}>
+                <SelectTrigger>
+                  <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {effectiveLocations.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Service Selection */}
           <div className="space-y-2">
             <Label htmlFor="service">Service Type</Label>
@@ -184,6 +235,66 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
             </Select>
           </div>
 
+          {/* Recurring Toggle */}
+          <div className="flex items-center justify-between py-2 border rounded-lg px-3">
+            <div className="flex items-center gap-2">
+              <Repeat className="h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="recurring" className="cursor-pointer">Make this recurring</Label>
+            </div>
+            <Switch
+              id="recurring"
+              checked={isRecurring}
+              onCheckedChange={handleRecurringToggle}
+            />
+          </div>
+
+          {/* Recurrence Options */}
+          {isRecurring && (
+            <div className="space-y-3 pl-4 border-l-2 border-primary/20">
+              <div className="space-y-2">
+                <Label>Repeat</Label>
+                <Select value={recurrenceType} onValueChange={(v) => setRecurrenceType(v as RecurrenceType)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="biweekly">Every 2 weeks</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Until</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !recurrenceEndDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {recurrenceEndDate ? format(recurrenceEndDate, 'PPP') : 'Pick end date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={recurrenceEndDate}
+                      onSelect={setRecurrenceEndDate}
+                      initialFocus
+                      disabled={(d) => !date || d <= date}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          )}
+
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">Notes (optional)</Label>
@@ -199,9 +310,9 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
           <Button
             type="submit"
             className="w-full"
-            disabled={!date || !serviceId || !clientName || !startTime || createRequest.isPending}
+            disabled={!date || !serviceId || !clientName || !startTime || createRequest.isPending || (isRecurring && !recurrenceEndDate)}
           >
-            {createRequest.isPending ? 'Submitting...' : 'Submit Request'}
+            {createRequest.isPending ? 'Submitting...' : isRecurring ? 'Submit Recurring Request' : 'Submit Request'}
           </Button>
         </form>
       </DialogContent>

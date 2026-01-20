@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { addDays, addWeeks, addMonths, format, parseISO, isBefore } from 'date-fns';
 
 export interface SalonService {
   id: string;
@@ -22,10 +23,17 @@ export interface AssistantRequest {
   notes: string | null;
   status: 'pending' | 'assigned' | 'completed' | 'cancelled';
   created_at: string;
+  location_id: string | null;
+  recurrence_type: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  recurrence_end_date: string | null;
+  parent_request_id: string | null;
   salon_services?: SalonService;
   stylist_profile?: { full_name: string; display_name: string | null } | null;
   assistant_profile?: { full_name: string; display_name: string | null } | null;
+  locations?: { name: string } | null;
 }
+
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
 
 export function useSalonServices() {
   return useQuery({
@@ -44,17 +52,18 @@ export function useSalonServices() {
   });
 }
 
-export function useAssistantRequests(filter: 'stylist' | 'assistant' | 'all' = 'all') {
-  const { user, roles } = useAuth();
+export function useAssistantRequests(filter: 'stylist' | 'assistant' | 'all' = 'all', locationId?: string) {
+  const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['assistant-requests', filter, user?.id],
+    queryKey: ['assistant-requests', filter, user?.id, locationId],
     queryFn: async () => {
       let query = supabase
         .from('assistant_requests')
         .select(`
           *,
-          salon_services (id, name, duration_minutes, category)
+          salon_services (id, name, duration_minutes, category),
+          locations (name)
         `)
         .order('request_date', { ascending: true })
         .order('start_time', { ascending: true });
@@ -66,6 +75,11 @@ export function useAssistantRequests(filter: 'stylist' | 'assistant' | 'all' = '
         query = query.eq('assistant_id', user.id);
       }
 
+      // Filter by location
+      if (locationId) {
+        query = query.eq('location_id', locationId);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
 
@@ -74,6 +88,39 @@ export function useAssistantRequests(filter: 'stylist' | 'assistant' | 'all' = '
     },
     enabled: !!user,
   });
+}
+
+// Helper function to generate recurring dates
+function generateRecurringDates(
+  startDate: Date,
+  recurrenceType: RecurrenceType,
+  endDate: Date
+): Date[] {
+  const dates: Date[] = [];
+  let currentDate = startDate;
+
+  while (isBefore(currentDate, endDate) || format(currentDate, 'yyyy-MM-dd') === format(endDate, 'yyyy-MM-dd')) {
+    dates.push(currentDate);
+    
+    switch (recurrenceType) {
+      case 'daily':
+        currentDate = addDays(currentDate, 1);
+        break;
+      case 'weekly':
+        currentDate = addWeeks(currentDate, 1);
+        break;
+      case 'biweekly':
+        currentDate = addWeeks(currentDate, 2);
+        break;
+      case 'monthly':
+        currentDate = addMonths(currentDate, 1);
+        break;
+      default:
+        return dates;
+    }
+  }
+
+  return dates;
 }
 
 export function useCreateAssistantRequest() {
@@ -87,6 +134,9 @@ export function useCreateAssistantRequest() {
       request_date: string;
       start_time: string;
       notes?: string;
+      location_id?: string;
+      recurrence_type?: RecurrenceType;
+      recurrence_end_date?: string;
     }) => {
       if (!user) throw new Error('Not authenticated');
 
@@ -107,7 +157,10 @@ export function useCreateAssistantRequest() {
       const endMins = endMinutes % 60;
       const end_time = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`;
 
-      // Create the request
+      const recurrenceType = data.recurrence_type || 'none';
+      const hasRecurrence = recurrenceType !== 'none' && data.recurrence_end_date;
+
+      // Create the first/main request
       const { data: request, error: insertError } = await supabase
         .from('assistant_requests')
         .insert({
@@ -118,27 +171,69 @@ export function useCreateAssistantRequest() {
           start_time: `${data.start_time}:00`,
           end_time,
           notes: data.notes || null,
+          location_id: data.location_id || null,
+          recurrence_type: recurrenceType,
+          recurrence_end_date: data.recurrence_end_date || null,
         })
         .select()
         .single();
 
       if (insertError) throw insertError;
 
-      // Call edge function to auto-assign
+      // Call edge function to auto-assign first request
       const { data: assignResult, error: assignError } = await supabase.functions.invoke('assign-assistant', {
         body: { request_id: request.id }
       });
 
       if (assignError) {
         console.error('Assignment error:', assignError);
-        // Don't throw - request was created, assignment just failed
       }
 
-      return { request, assignResult };
+      // If recurring, create additional requests
+      let recurringCount = 0;
+      if (hasRecurrence) {
+        const startDate = parseISO(data.request_date);
+        const endDate = parseISO(data.recurrence_end_date!);
+        const dates = generateRecurringDates(startDate, recurrenceType, endDate);
+
+        // Skip the first date (already created) and create the rest
+        const recurringDates = dates.slice(1);
+        recurringCount = recurringDates.length;
+
+        for (const date of recurringDates) {
+          const { data: recurringRequest, error: recurringError } = await supabase
+            .from('assistant_requests')
+            .insert({
+              stylist_id: user.id,
+              service_id: data.service_id,
+              client_name: data.client_name,
+              request_date: format(date, 'yyyy-MM-dd'),
+              start_time: `${data.start_time}:00`,
+              end_time,
+              notes: data.notes || null,
+              location_id: data.location_id || null,
+              recurrence_type: 'none',
+              parent_request_id: request.id,
+            })
+            .select()
+            .single();
+
+          if (!recurringError && recurringRequest) {
+            // Auto-assign each recurring request
+            await supabase.functions.invoke('assign-assistant', {
+              body: { request_id: recurringRequest.id }
+            });
+          }
+        }
+      }
+
+      return { request, assignResult, recurringCount };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['assistant-requests'] });
-      if (result.assignResult?.assigned) {
+      if (result.recurringCount > 0) {
+        toast.success(`Request submitted with ${result.recurringCount} recurring appointments!`);
+      } else if (result.assignResult?.assigned) {
         toast.success(`Request submitted and assigned to ${result.assignResult.assistant_name || 'an assistant'}!`);
       } else {
         toast.success('Request submitted! Awaiting assistant assignment.');
