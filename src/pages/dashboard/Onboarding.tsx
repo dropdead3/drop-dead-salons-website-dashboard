@@ -302,6 +302,13 @@ export default function Onboarding() {
     
     setRequestingHeadshot(true);
     
+    // First fetch the current user's profile for name/email
+    const { data: profile } = await supabase
+      .from('employee_profiles')
+      .select('full_name, display_name, email')
+      .eq('user_id', user.id)
+      .single();
+    
     const { data, error } = await supabase
       .from('headshot_requests')
       .insert({
@@ -322,6 +329,20 @@ export default function Onboarding() {
         title: 'Request Submitted!',
         description: 'Your headshot session request has been submitted. An admin will schedule your session.'
       });
+      
+      // Notify admins via edge function
+      try {
+        await supabase.functions.invoke('notify-headshot-request', {
+          body: {
+            requester_name: profile?.display_name || profile?.full_name || 'Team Member',
+            requester_email: profile?.email || user.email || '',
+            requested_at: data.requested_at,
+          },
+        });
+      } catch (notifyError) {
+        console.error('Failed to send admin notification:', notifyError);
+        // Don't show error to user - the request was still successful
+      }
     }
     
     setRequestingHeadshot(false);
