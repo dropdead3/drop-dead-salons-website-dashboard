@@ -240,6 +240,12 @@ interface EmailBlock {
     title: string;
     imageUrl: string;
     layout: 'horizontal-left' | 'horizontal-right' | 'stacked';
+    imageSize?: number; // 40-120px
+    indent?: number; // 0-60px left padding
+    showPhone?: boolean;
+    phone?: string;
+    showEmail?: boolean;
+    email?: string;
   };
 }
 
@@ -682,11 +688,13 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </table>`;
       }
       case 'signature': {
-        const config = block.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left' };
+        const config = block.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left', imageSize: 80, indent: 0 };
         const bgColor = block.styles.backgroundColor || '#f5f0e8';
         const textColor = block.styles.textColor || '#1a1a1a';
         const textAlign = block.styles.textAlign || 'left';
         const padding = block.styles.padding || '24px';
+        const imageSize = config.imageSize || 80;
+        const indent = config.indent || 0;
         
         // Convert image URL to absolute if needed
         const absoluteImgUrl = config.imageUrl 
@@ -694,12 +702,22 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           : '';
         
         const imageHtml = absoluteImgUrl 
-          ? `<img src="${absoluteImgUrl}" alt="Signature" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; display: block;" />`
+          ? `<img src="${absoluteImgUrl}" alt="Signature" style="width: ${imageSize}px; height: ${imageSize}px; border-radius: 50%; object-fit: cover; display: block;" />`
           : '';
+        
+        // Build contact info lines
+        const contactLines: string[] = [];
+        if (config.showPhone && config.phone) {
+          contactLines.push(`<div style="font-size: 12px; opacity: 0.7; line-height: 1.4;">📞 ${config.phone}</div>`);
+        }
+        if (config.showEmail && config.email) {
+          contactLines.push(`<div style="font-size: 12px; opacity: 0.7; line-height: 1.4;">✉️ ${config.email}</div>`);
+        }
         
         const textHtml = `<div style="display: inline-block; vertical-align: middle;">
           <div style="font-weight: bold; font-size: 16px; line-height: 1.3;">${config.name}</div>
           <div style="font-size: 14px; opacity: 0.8; line-height: 1.3;">${config.title}</div>
+          ${contactLines.length > 0 ? `<div style="margin-top: 4px;">${contactLines.join('')}</div>` : ''}
         </div>`;
         
         let contentHtml = '';
@@ -724,7 +742,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           </table>`;
         }
         
-        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding};">
+        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding}; padding-left: ${indent > 0 ? `${parseInt(padding) + indent}px` : padding};">
           ${contentHtml}
         </div>`;
       }
@@ -3047,7 +3065,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     )}
 
                     {selectedBlock.type === 'signature' && (() => {
-                      const config = selectedBlock.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left' };
+                      const config = selectedBlock.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left', imageSize: 80, indent: 0, showPhone: false, phone: '', showEmail: false, email: '' };
                       
                       return (
                         <>
@@ -3083,56 +3101,169 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             </div>
                           </div>
                           
+                          {/* Contact Info Options */}
+                          <div className="space-y-3">
+                            <Label className="text-xs font-medium">Contact Information</Label>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={config.showPhone || false}
+                                  onChange={(e) => {
+                                    updateBlock(selectedBlock.id, {
+                                      signatureConfig: { ...config, showPhone: e.target.checked }
+                                    });
+                                  }}
+                                  className="h-4 w-4 rounded border-border"
+                                />
+                                <span className="text-xs">Show Phone Number</span>
+                              </div>
+                              {config.showPhone && (
+                                <Input
+                                  value={config.phone || ''}
+                                  onChange={(e) => {
+                                    updateBlock(selectedBlock.id, {
+                                      signatureConfig: { ...config, phone: e.target.value }
+                                    });
+                                  }}
+                                  placeholder="(555) 123-4567"
+                                  className="h-8 text-sm"
+                                />
+                              )}
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={config.showEmail || false}
+                                  onChange={(e) => {
+                                    updateBlock(selectedBlock.id, {
+                                      signatureConfig: { ...config, showEmail: e.target.checked }
+                                    });
+                                  }}
+                                  className="h-4 w-4 rounded border-border"
+                                />
+                                <span className="text-xs">Show Email</span>
+                              </div>
+                              {config.showEmail && (
+                                <Input
+                                  value={config.email || ''}
+                                  onChange={(e) => {
+                                    updateBlock(selectedBlock.id, {
+                                      signatureConfig: { ...config, email: e.target.value }
+                                    });
+                                  }}
+                                  placeholder="email@example.com"
+                                  className="h-8 text-sm"
+                                />
+                              )}
+                            </div>
+                          </div>
+                          
                           <div className="space-y-3">
                             <Label className="text-xs font-medium">Signature Image</Label>
-                            <div className="flex items-center gap-3">
-                              {config.imageUrl ? (
-                                <img 
-                                  src={config.imageUrl} 
-                                  alt="Signature"
-                                  className="w-14 h-14 rounded-full object-cover border"
-                                />
-                              ) : (
-                                <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center border">
-                                  <PenTool className="w-5 h-5 text-muted-foreground" />
-                                </div>
-                              )}
-                              <div className="flex-1 space-y-1">
-                                <label className="cursor-pointer">
-                                  <Button variant="outline" size="sm" className="w-full text-xs" asChild>
-                                    <span>
-                                      <Upload className="w-3 h-3 mr-1" />
-                                      {isUploading ? 'Uploading...' : 'Upload Photo'}
-                                    </span>
-                                  </Button>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) {
-                                        // Use the same upload logic as image blocks
-                                        handleSignatureImageUpload(selectedBlock.id, file);
-                                      }
-                                    }}
-                                    disabled={isUploading}
-                                  />
-                                </label>
-                                {config.imageUrl && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="w-full text-xs text-destructive hover:text-destructive"
-                                    onClick={() => {
-                                      updateBlock(selectedBlock.id, {
-                                        signatureConfig: { ...config, imageUrl: '' }
-                                      });
+                            {/* Image Preview - improved UI */}
+                            <div className="bg-muted/50 rounded-lg p-4 border border-border/50">
+                              <div className="flex items-center gap-4">
+                                {config.imageUrl ? (
+                                  <div className="relative group">
+                                    <img 
+                                      src={config.imageUrl} 
+                                      alt="Signature"
+                                      className="rounded-full object-cover border-2 border-background shadow-md"
+                                      style={{ 
+                                        width: `${Math.min(config.imageSize || 80, 80)}px`, 
+                                        height: `${Math.min(config.imageSize || 80, 80)}px` 
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 bg-foreground/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <Trash2 
+                                        className="w-5 h-5 text-background cursor-pointer"
+                                        onClick={() => {
+                                          updateBlock(selectedBlock.id, {
+                                            signatureConfig: { ...config, imageUrl: '' }
+                                          });
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div 
+                                    className="rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-border"
+                                    style={{ 
+                                      width: `${Math.min(config.imageSize || 80, 80)}px`, 
+                                      height: `${Math.min(config.imageSize || 80, 80)}px` 
                                     }}
                                   >
-                                    Remove Image
-                                  </Button>
+                                    <PenTool className="w-6 h-6 text-muted-foreground" />
+                                  </div>
                                 )}
+                                <div className="flex-1">
+                                  <label className="cursor-pointer">
+                                    <Button variant="outline" size="sm" className="w-full text-xs h-9" asChild>
+                                      <span>
+                                        <Upload className="w-3.5 h-3.5 mr-1.5" />
+                                        {isUploading ? 'Uploading...' : 'Upload Photo'}
+                                      </span>
+                                    </Button>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          handleSignatureImageUpload(selectedBlock.id, file);
+                                        }
+                                      }}
+                                      disabled={isUploading}
+                                    />
+                                  </label>
+                                  {config.imageUrl && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="w-full text-xs text-destructive hover:text-destructive mt-1"
+                                      onClick={() => {
+                                        updateBlock(selectedBlock.id, {
+                                          signatureConfig: { ...config, imageUrl: '' }
+                                        });
+                                      }}
+                                    >
+                                      Remove Image
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Image Size Slider */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs text-muted-foreground">Image Size</Label>
+                                <span className="text-xs text-muted-foreground font-mono">{config.imageSize || 80}px</span>
+                              </div>
+                              <div className="relative h-6">
+                                <div 
+                                  className="absolute inset-0 rounded-full bg-gradient-to-r from-muted to-muted-foreground/30"
+                                />
+                                <input
+                                  type="range"
+                                  min="40"
+                                  max="120"
+                                  step="4"
+                                  value={config.imageSize || 80}
+                                  onChange={(e) => {
+                                    updateBlock(selectedBlock.id, {
+                                      signatureConfig: { ...config, imageSize: Number(e.target.value) }
+                                    });
+                                  }}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <div 
+                                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-foreground border-2 border-background shadow-md pointer-events-none transition-all"
+                                  style={{ 
+                                    left: `calc(${((config.imageSize || 80) - 40) / 80 * 100}% - 8px)` 
+                                  }}
+                                />
                               </div>
                             </div>
                           </div>
@@ -3160,6 +3291,38 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   {option.label}
                                 </Button>
                               ))}
+                            </div>
+                          </div>
+                          
+                          {/* Indent Slider */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs font-medium">Indent</Label>
+                              <span className="text-xs text-muted-foreground font-mono">{config.indent || 0}px</span>
+                            </div>
+                            <div className="relative h-6">
+                              <div 
+                                className="absolute inset-0 rounded-full bg-gradient-to-r from-muted to-muted-foreground/30"
+                              />
+                              <input
+                                type="range"
+                                min="0"
+                                max="60"
+                                step="4"
+                                value={config.indent || 0}
+                                onChange={(e) => {
+                                  updateBlock(selectedBlock.id, {
+                                    signatureConfig: { ...config, indent: Number(e.target.value) }
+                                  });
+                                }}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              />
+                              <div 
+                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-foreground border-2 border-background shadow-md pointer-events-none transition-all"
+                                style={{ 
+                                  left: `calc(${(config.indent || 0) / 60 * 100}% - 8px)` 
+                                }}
+                              />
                             </div>
                           </div>
                         </>
@@ -3524,17 +3687,23 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           );
                         })()}
                         {block.type === 'signature' && (() => {
-                          const config = block.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left' };
+                          const config = block.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left', imageSize: 80, indent: 0 };
                           const layout = config.layout || 'horizontal-left';
+                          const imageSize = config.imageSize || 80;
+                          const indent = config.indent || 0;
                           
                           const imageElement = config.imageUrl ? (
                             <img 
                               src={config.imageUrl} 
                               alt="Signature"
-                              className="w-16 h-16 rounded-full object-cover"
+                              className="rounded-full object-cover"
+                              style={{ width: `${imageSize}px`, height: `${imageSize}px` }}
                             />
                           ) : (
-                            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                            <div 
+                              className="rounded-full bg-muted flex items-center justify-center"
+                              style={{ width: `${imageSize}px`, height: `${imageSize}px` }}
+                            >
                               <PenTool className="w-6 h-6 text-muted-foreground" />
                             </div>
                           );
@@ -3543,19 +3712,27 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             <div>
                               <div className="font-bold text-base">{config.name}</div>
                               <div className="text-sm opacity-80">{config.title}</div>
+                              {(config.showPhone && config.phone) && (
+                                <div className="text-xs opacity-70 mt-1">📞 {config.phone}</div>
+                              )}
+                              {(config.showEmail && config.email) && (
+                                <div className="text-xs opacity-70">✉️ {config.email}</div>
+                              )}
                             </div>
                           );
                           
+                          const wrapperStyle = { paddingLeft: indent > 0 ? `${indent}px` : undefined };
+                          
                           if (layout === 'stacked') {
                             return (
-                              <div className="flex flex-col items-center gap-3">
+                              <div className="flex flex-col items-center gap-3" style={wrapperStyle}>
                                 {imageElement}
                                 {textElement}
                               </div>
                             );
                           } else if (layout === 'horizontal-right') {
                             return (
-                              <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-4" style={wrapperStyle}>
                                 {textElement}
                                 {imageElement}
                               </div>
@@ -3563,7 +3740,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           } else {
                             // horizontal-left (default)
                             return (
-                              <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-4" style={wrapperStyle}>
                                 {imageElement}
                                 {textElement}
                               </div>
