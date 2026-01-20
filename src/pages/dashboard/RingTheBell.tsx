@@ -40,6 +40,7 @@ const leadSources = [
   { value: 'referral', label: 'Referral' },
   { value: 'google', label: 'Google Search' },
   { value: 'walkin', label: 'Walk-in' },
+  { value: 'salon_lead', label: 'Salon Lead Passed to Me' },
   { value: 'other', label: 'Other' },
 ];
 
