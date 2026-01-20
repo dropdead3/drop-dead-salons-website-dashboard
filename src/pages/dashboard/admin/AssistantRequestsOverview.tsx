@@ -1,13 +1,15 @@
 import { useState, useMemo } from 'react';
 import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
-import { Users, CheckCircle2, XCircle, Clock, CalendarDays, TrendingUp, AlertCircle, MapPin } from 'lucide-react';
+import { Users, CheckCircle2, XCircle, Clock, CalendarDays, TrendingUp, AlertCircle, MapPin, UserCheck } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAssistantRequests, type AssistantRequest } from '@/hooks/useAssistantRequests';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { useActiveAssistants, useAssistantCoverageSummary } from '@/hooks/useAssistantAvailability';
 import { cn } from '@/lib/utils';
 
 function StatCard({ 
@@ -110,13 +112,25 @@ function RequestRow({ request }: { request: AssistantRequest }) {
   );
 }
 
+const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
 export default function AssistantRequestsOverview() {
   const [locationFilter, setLocationFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'overview' | 'pending' | 'all'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'assistants' | 'pending' | 'all'>('overview');
   
   const { data: locations = [] } = useActiveLocations();
+  const { data: assistants = [], isLoading: assistantsLoading } = useActiveAssistants();
+  const { data: coverageSummary } = useAssistantCoverageSummary();
   const effectiveLocationFilter = locationFilter === 'all' ? undefined : locationFilter;
   const { data: allRequests = [], isLoading } = useAssistantRequests('all', effectiveLocationFilter);
+
+  // Filter assistants by location if filter is applied
+  const filteredAssistants = useMemo(() => {
+    if (locationFilter === 'all') return assistants;
+    return assistants.filter(assistant =>
+      assistant.schedules.some(s => s.location_id === locationFilter)
+    );
+  }, [assistants, locationFilter]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -205,6 +219,10 @@ export default function AssistantRequestsOverview() {
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
             <TabsList className="mb-6">
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="assistants">
+                <UserCheck className="h-4 w-4 mr-1" />
+                Assistants ({filteredAssistants.length})
+              </TabsTrigger>
               <TabsTrigger value="pending">
                 Needs Attention
                 {pendingRequests.length > 0 && (
@@ -213,6 +231,65 @@ export default function AssistantRequestsOverview() {
               </TabsTrigger>
               <TabsTrigger value="all">All Requests</TabsTrigger>
             </TabsList>
+
+            {/* Assistants Tab */}
+            <TabsContent value="assistants">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Active Assistants</CardTitle>
+                  <CardDescription>Assistants and their location schedules</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {filteredAssistants.length === 0 ? (
+                    <p className="text-center py-8 text-muted-foreground">No active assistants found</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {filteredAssistants.map((assistant) => (
+                        <div key={assistant.user_id} className="flex items-start gap-4 p-4 border rounded-lg">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={assistant.photo_url || undefined} />
+                            <AvatarFallback>{(assistant.display_name || assistant.full_name).charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <h4 className="font-medium">{assistant.display_name || assistant.full_name}</h4>
+                            {assistant.schedules.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">No schedule set</p>
+                            ) : (
+                              <div className="mt-2 space-y-2">
+                                {assistant.schedules.map((schedule) => {
+                                  const location = locations.find(l => l.id === schedule.location_id);
+                                  return (
+                                    <div key={schedule.location_id} className="flex items-center gap-2 text-sm">
+                                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                                      <span className="font-medium">{location?.name || schedule.location_id}:</span>
+                                      <div className="flex gap-1">
+                                        {DAYS_OF_WEEK.map(day => (
+                                          <span
+                                            key={day}
+                                            className={cn(
+                                              "px-1.5 py-0.5 rounded text-xs",
+                                              schedule.work_days?.includes(day)
+                                                ? "bg-primary/10 text-primary font-medium"
+                                                : "text-muted-foreground/50"
+                                            )}
+                                          >
+                                            {day}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="overview" className="space-y-6">
               {/* Stats Grid */}
