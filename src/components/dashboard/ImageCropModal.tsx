@@ -49,16 +49,20 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       img.onload = () => {
         setImageElement(img);
         
-        // Calculate initial zoom to fit the short side into the crop area
+        // Calculate initial zoom to fit the entire image visible in the crop area
+        // We want the SHORT side of the image to fill the crop area
         const canvasSize = 280;
         const cropSize = canvasSize * 0.75; // 210px crop area
         
-        // Find the smaller dimension and scale to fit crop area
+        // Scale so the short side fits the crop area exactly
         const shortSide = Math.min(img.width, img.height);
-        const initialZoom = cropSize / shortSide;
         
-        // Clamp zoom between 0.1 and 3
-        setZoom(Math.max(0.1, Math.min(3, initialZoom)));
+        // The image is drawn at center with dimensions: img.width * zoom, img.height * zoom
+        // We want shortSide * zoom = cropSize, so zoom = cropSize / shortSide
+        const fitZoom = cropSize / shortSide;
+        
+        // Clamp between reasonable bounds
+        setZoom(Math.max(0.1, Math.min(3, fitZoom)));
         setRotation(0);
         setPosition({ x: 0, y: 0 });
       };
@@ -227,7 +231,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   }, [imageElement, zoom, rotation, position, cropShape, maxOutputSize, onCropComplete, onClose]);
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 3));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.1));
   const handleRotate = () => setRotation(prev => (prev + 90) % 360);
 
   return (
@@ -324,7 +328,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
               </Button>
               <Slider
                 value={[zoom]}
-                min={0.5}
+                min={0.1}
                 max={3}
                 step={0.05}
                 onValueChange={([v]) => setZoom(v)}
