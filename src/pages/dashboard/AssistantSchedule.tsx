@@ -14,6 +14,7 @@ import { ResponseCountdown } from '@/components/dashboard/ResponseCountdown';
 import { useAssistantRequests, useUpdateRequestStatus, useAcceptAssignment, useDeclineAssignment, type AssistantRequest } from '@/hooks/useAssistantRequests';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
 
 function formatTime(time: string) {
@@ -270,10 +271,15 @@ function RequestsList({ requests, isStylistView }: { requests: AssistantRequest[
 
 export default function AssistantSchedule() {
   const { roles } = useAuth();
-  const isStylist = roles.includes('stylist');
+  const { viewAsRole, isViewingAs } = useViewAs();
+  
+  // When viewing as a role, use that role; otherwise use actual roles
+  const effectiveRoles = isViewingAs && viewAsRole ? [viewAsRole] : roles;
+  
+  const isStylist = effectiveRoles.includes('stylist');
   // Check for both legacy 'assistant' role and new 'stylist_assistant' role
-  const isStylistAssistant = roles.includes('stylist_assistant') || roles.includes('assistant');
-  const isAdmin = roles.includes('admin') || roles.includes('manager');
+  const isStylistAssistant = effectiveRoles.includes('stylist_assistant') || effectiveRoles.includes('assistant');
+  const isAdmin = effectiveRoles.includes('admin') || effectiveRoles.includes('manager');
 
   const [activeTab, setActiveTab] = useState<'my-requests' | 'my-assignments' | 'all'>(
     isStylist ? 'my-requests' : isStylistAssistant ? 'my-assignments' : 'all'
