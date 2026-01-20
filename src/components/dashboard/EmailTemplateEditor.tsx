@@ -1840,8 +1840,16 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   const renderPreviewHtml = (html: string) => {
     let preview = html;
     variables.forEach((variable) => {
+      const regex = new RegExp(`{{${variable}}}`, 'g');
+      // Replace variables differently based on context
+      // First, handle variables inside href/src attributes by just showing [variable] as text
+      preview = preview.replace(
+        new RegExp(`(href|src)="([^"]*?){{${variable}}}([^"]*?)"`, 'g'),
+        `$1="$2[${variable}]$3"`
+      );
+      // Then handle remaining variables (in text content) with highlighted spans
       const placeholder = `<span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px;">[${variable}]</span>`;
-      preview = preview.replace(new RegExp(`{{${variable}}}`, 'g'), placeholder);
+      preview = preview.replace(regex, placeholder);
     });
     return preview;
   };
