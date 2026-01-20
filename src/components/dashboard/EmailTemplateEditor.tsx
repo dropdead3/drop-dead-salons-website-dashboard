@@ -2439,9 +2439,9 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             className="h-8 text-sm font-mono"
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-2">
-                            <Label className="text-xs">
+                        <div className="flex gap-4">
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs text-muted-foreground">
                               {selectedBlock.styles.buttonVariant === 'secondary' ? 'Border/Text Color' : 'Button Color'}
                             </Label>
                             <ColorWheelPicker
@@ -2452,8 +2452,8 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             />
                           </div>
                           {selectedBlock.styles.buttonVariant !== 'secondary' && (
-                            <div className="space-y-2">
-                              <Label className="text-xs">Text Color</Label>
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs text-muted-foreground">Text Color</Label>
                               <ColorWheelPicker
                                 value={selectedBlock.styles.buttonTextColor || '#ffffff'}
                                 colorType="white"
