@@ -571,91 +571,7 @@ export default function Onboarding() {
           </div>
         </Card>
 
-        {/* Section 3: Business Cards */}
-        <Card className="overflow-hidden">
-          <div className="p-6 border-b bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="font-display text-lg">REQUEST YOUR BUSINESS CARDS</h2>
-                <p className="text-sm text-muted-foreground font-sans">
-                  Choose your preferred design style
-                </p>
-              </div>
-              {businessCardRequest && (
-                <div className="text-right">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Requested
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="p-6">
-            {businessCardRequest ? (
-              <div className="text-center py-4">
-                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-primary" />
-                <h3 className="font-display text-lg mb-1">REQUEST SUBMITTED</h3>
-                <p className="text-sm text-muted-foreground font-sans">
-                  You selected the <span className="font-medium text-foreground capitalize">{businessCardRequest.design_style}</span> design.
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Status: <span className="capitalize">{businessCardRequest.status}</span>
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {BUSINESS_CARD_STYLES.map((style) => (
-                    <button
-                      key={style.id}
-                      onClick={() => setSelectedStyle(style.id)}
-                      className={cn(
-                        "relative p-3 rounded-lg border-2 text-left transition-all overflow-hidden",
-                        selectedStyle === style.id
-                          ? 'border-primary ring-2 ring-primary/20'
-                          : 'border-border hover:border-primary/50'
-                      )}
-                    >
-                      <div className="aspect-[5/3] rounded-md mb-3 overflow-hidden bg-muted">
-                        <img 
-                          src={style.image} 
-                          alt={`${style.name} design preview`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <h3 className="font-display text-sm mb-1">{style.name}</h3>
-                      <p className="text-xs text-muted-foreground font-sans">{style.description}</p>
-                      {selectedStyle === style.id && (
-                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                          <Check className="w-4 h-4 text-primary-foreground" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-                
-                <Button 
-                  onClick={handleRequestBusinessCard}
-                  disabled={!selectedStyle || requestingCard}
-                  className="w-full font-display"
-                >
-                  {requestingCard ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    'REQUEST BUSINESS CARDS'
-                  )}
-                </Button>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Section 4: Request Headshots */}
+        {/* Section 3: Request Headshots */}
         <Card className="overflow-hidden">
           <div className="p-6 border-b bg-muted/30">
             <div className="flex items-center gap-3">
@@ -746,6 +662,90 @@ export default function Onboarding() {
                       <Camera className="w-4 h-4 mr-2" />
                       REQUEST HEADSHOT SESSION
                     </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Section 4: Business Cards */}
+        <Card className="overflow-hidden">
+          <div className="p-6 border-b bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-display text-lg">REQUEST YOUR BUSINESS CARDS</h2>
+                <p className="text-sm text-muted-foreground font-sans">
+                  Choose your preferred design style
+                </p>
+              </div>
+              {businessCardRequest && (
+                <div className="text-right">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Requested
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="p-6">
+            {businessCardRequest ? (
+              <div className="text-center py-4">
+                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-primary" />
+                <h3 className="font-display text-lg mb-1">REQUEST SUBMITTED</h3>
+                <p className="text-sm text-muted-foreground font-sans">
+                  You selected the <span className="font-medium text-foreground capitalize">{businessCardRequest.design_style}</span> design.
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Status: <span className="capitalize">{businessCardRequest.status}</span>
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {BUSINESS_CARD_STYLES.map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => setSelectedStyle(style.id)}
+                      className={cn(
+                        "relative p-3 rounded-lg border-2 text-left transition-all overflow-hidden",
+                        selectedStyle === style.id
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-border hover:border-primary/50'
+                      )}
+                    >
+                      <div className="aspect-[5/3] rounded-md mb-3 overflow-hidden bg-muted">
+                        <img 
+                          src={style.image} 
+                          alt={`${style.name} design preview`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <h3 className="font-display text-sm mb-1">{style.name}</h3>
+                      <p className="text-xs text-muted-foreground font-sans">{style.description}</p>
+                      {selectedStyle === style.id && (
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-4 h-4 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
+                <Button 
+                  onClick={handleRequestBusinessCard}
+                  disabled={!selectedStyle || requestingCard}
+                  className="w-full font-display"
+                >
+                  {requestingCard ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'REQUEST BUSINESS CARDS'
                   )}
                 </Button>
               </div>
