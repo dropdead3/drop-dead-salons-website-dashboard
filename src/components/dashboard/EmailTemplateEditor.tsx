@@ -1545,7 +1545,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                     <ScrollArea className="h-[180px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {emailThemes.filter(theme => themeCategoryFilter === 'all' || theme.category.includes(themeCategoryFilter)).map((theme) => (
-                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-2 ring-primary border-primary' : 'border-border hover:border-primary/50')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
+                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-2 ring-foreground/80 border-foreground/80' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="flex gap-0.5 mb-1.5">
                               <div className="w-4 h-4 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]" style={{ backgroundColor: theme.colors.headerBg }} />
                               <div className="w-4 h-4 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]" style={{ backgroundColor: theme.colors.bodyBg }} />
@@ -1564,7 +1564,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                     <ScrollArea className="h-[180px]">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {customThemes.map((theme) => (
-                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-2 ring-primary border-primary' : 'border-border')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
+                          <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-2 ring-foreground/80 border-foreground/80' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
                               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={(e) => { e.stopPropagation(); handleEditCustomTheme(theme.id); }}><Pencil className="w-2.5 h-2.5" /></Button>
                               <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteCustomTheme(theme.id); }}><Trash2 className="w-2.5 h-2.5" /></Button>
