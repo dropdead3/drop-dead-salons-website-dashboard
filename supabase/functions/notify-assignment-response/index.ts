@@ -157,6 +157,26 @@ serve(async (req: Request) => {
       metadata: { request_id, assistant_id, action }
     });
 
+    // Send push notification to stylist
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          user_id: request.stylist_id,
+          title: action === 'accepted' ? "Assistant Confirmed ✅" : "Assignment Update ⚠️",
+          body: notificationMessage,
+          url: "/dashboard/assistant-schedule",
+          tag: "assignment-response",
+        }),
+      });
+    } catch (pushError) {
+      console.error("Failed to send push notification:", pushError);
+    }
+
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
