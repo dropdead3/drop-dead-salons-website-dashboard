@@ -2654,7 +2654,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                                   <img 
                                     src={logo.src} 
                                     alt={logo.name} 
-                                    style={{ maxWidth: '100px', height: 'auto', filter: block.styles.textColor === '#f5f0e8' || block.styles.textColor === '#ffffff' ? 'invert(1)' : 'none' }}
+                                    style={{ maxWidth: '100px', height: 'auto' }}
                                   />
                                 </div>
                               )}
