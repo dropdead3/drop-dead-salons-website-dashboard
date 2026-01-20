@@ -1553,11 +1553,11 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
 
         <TabsContent value="visual" className="mt-4 space-y-4">
           {/* Horizontal Toolbar */}
-          <div className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg border">
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border shadow-sm">
             <Button
               variant={toolbarPanel === 'themes' ? 'default' : 'outline'}
               size="sm"
-              className="gap-2"
+              className="gap-2 px-4 shadow-sm bg-background border-border/80"
               onClick={() => setToolbarPanel(toolbarPanel === 'themes' ? null : 'themes')}
             >
               <Palette className="w-4 h-4" />
@@ -1566,7 +1566,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
             <Button
               variant={toolbarPanel === 'blocks' ? 'default' : 'outline'}
               size="sm"
-              className="gap-2"
+              className="gap-2 px-4 shadow-sm bg-background border-border/80"
               onClick={() => setToolbarPanel(toolbarPanel === 'blocks' ? null : 'blocks')}
             >
               <Plus className="w-4 h-4" />
@@ -1575,7 +1575,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
             <Button
               variant={toolbarPanel === 'logos' ? 'default' : 'outline'}
               size="sm"
-              className="gap-2"
+              className="gap-2 px-4 shadow-sm bg-background border-border/80"
               onClick={() => setToolbarPanel(toolbarPanel === 'logos' ? null : 'logos')}
             >
               <Image className="w-4 h-4" />
