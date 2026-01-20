@@ -985,6 +985,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
   const [dropPosition, setDropPosition] = useState<'above' | 'below' | null>(null);
   const [recentlyMovedBlockId, setRecentlyMovedBlockId] = useState<string | null>(null);
+  const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead-premium');
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
@@ -1616,6 +1617,31 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     updateBlocksAndHtml(newBlocks);
     setSelectedBlockId(duplicatedBlock.id);
     toast.success('Block duplicated');
+  };
+
+  // Helper to get section type for visual grouping
+  const getSectionType = (blockType: string): { label: string; color: string } => {
+    switch (blockType) {
+      case 'header':
+        return { label: 'Header Section', color: 'hsl(var(--primary))' };
+      case 'footer':
+        return { label: 'Footer Section', color: 'hsl(var(--primary))' };
+      case 'heading':
+      case 'text':
+        return { label: 'Content Section', color: 'hsl(var(--accent-foreground))' };
+      case 'button':
+      case 'link':
+        return { label: 'Action Section', color: 'hsl(142 76% 36%)' }; // green
+      case 'image':
+        return { label: 'Media Section', color: 'hsl(271 91% 65%)' }; // purple
+      case 'social':
+        return { label: 'Social Section', color: 'hsl(221 83% 53%)' }; // blue
+      case 'divider':
+      case 'spacer':
+        return { label: 'Layout Section', color: 'hsl(var(--muted-foreground))' };
+      default:
+        return { label: 'Block', color: 'hsl(var(--muted-foreground))' };
+    }
   };
 
   // Drag and drop handlers
@@ -3963,14 +3989,37 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, block.id)}
                       onDragEnd={handleDragEnd}
+                      onMouseEnter={() => setHoveredBlockId(block.id)}
+                      onMouseLeave={() => setHoveredBlockId(null)}
                       className={cn(
-                        'relative group cursor-pointer transition-all duration-200',
+                        'relative cursor-pointer transition-all duration-200',
                         selectedBlockId === block.id && 'ring-2 ring-primary ring-offset-2',
                         draggedBlockId === block.id && 'opacity-50 scale-[0.98]',
                         recentlyMovedBlockId === block.id && 'animate-scale-in ring-2 ring-primary/50'
                       )}
+                      style={{
+                        outline: hoveredBlockId === block.id && selectedBlockId !== block.id 
+                          ? `2px dashed ${getSectionType(block.type).color}` 
+                          : undefined,
+                        outlineOffset: hoveredBlockId === block.id && selectedBlockId !== block.id ? '2px' : undefined,
+                      }}
                       onClick={() => setSelectedBlockId(block.id)}
                     >
+                      {/* Section type indicator on hover */}
+                      {hoveredBlockId === block.id && selectedBlockId !== block.id && (
+                        <div 
+                          className="absolute -top-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none animate-fade-in"
+                        >
+                          <span 
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white shadow-lg backdrop-blur-sm"
+                            style={{ backgroundColor: getSectionType(block.type).color }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                            {getSectionType(block.type).label}
+                          </span>
+                        </div>
+                      )}
+                      
                       {/* Drop zone indicator - ABOVE */}
                       {dragOverBlockId === block.id && dropPosition === 'above' && (
                         <div className="absolute -top-1 left-0 right-0 z-30 flex items-center pointer-events-none">
@@ -3990,9 +4039,10 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       )}
                       
                       {/* Section name badge - fades to 10% on hover */}
+                      {/* Section name badge - fades on hover */}
                       <div className={cn(
                         'absolute left-2 top-2 z-20 transition-opacity duration-200',
-                        'group-hover:opacity-10'
+                        hoveredBlockId === block.id && 'opacity-10'
                       )}>
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-foreground/80 text-background capitalize tracking-wide">
                           {block.type === 'social' ? 'Social Icons' : block.type}
@@ -4000,15 +4050,15 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       </div>
                       {/* Drag handle indicator */}
                       <div className={cn(
-                        'absolute left-2 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing',
-                        selectedBlockId === block.id && 'opacity-100'
+                        'absolute left-2 top-1/2 -translate-y-1/2 z-10 opacity-0 transition-opacity cursor-grab active:cursor-grabbing',
+                        (hoveredBlockId === block.id || selectedBlockId === block.id) && 'opacity-100'
                       )}>
                         <GripVertical className="w-4 h-4 text-muted-foreground" />
                       </div>
                       {/* Block toolbar - top right corner */}
                       <div className={cn(
-                        'absolute right-2 top-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm rounded-md shadow-sm border p-0.5',
-                        selectedBlockId === block.id && 'opacity-100'
+                        'absolute right-2 top-2 z-10 flex items-center gap-1 opacity-0 transition-opacity bg-background/90 backdrop-blur-sm rounded-md shadow-sm border p-0.5',
+                        (hoveredBlockId === block.id || selectedBlockId === block.id) && 'opacity-100'
                       )}>
                         <Button 
                           variant="ghost" 
