@@ -2648,7 +2648,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           const enabledLinks = (block.navLinks || []).filter(l => l.enabled);
                           
                           return (
-                            <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center justify-between w-full px-4">
                               {headerConfig.showLogo && logo ? (
                                 <img 
                                   src={logo.src} 
