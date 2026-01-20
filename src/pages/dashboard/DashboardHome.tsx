@@ -38,6 +38,7 @@ import { ScheduleRequestsCard } from '@/components/dashboard/ScheduleRequestsCar
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
 import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
 import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
+import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -315,11 +316,17 @@ export default function DashboardHome() {
         {/* Widgets Section */}
         <WidgetsSection />
 
-        {/* Leadership-only: Website Analytics & Onboarding Overview */}
+        {/* Leadership-only: Analytics & Overviews */}
         {isLeadership && (
           <div className="grid gap-6 lg:grid-cols-2">
             {isVisible('website_analytics') && <WebsiteAnalyticsWidget />}
-            {isVisible('onboarding_overview') && <OnboardingTrackerOverview />}
+            {isVisible('client_engine_overview') && <ClientEngineOverview />}
+          </div>
+        )}
+        
+        {isLeadership && isVisible('onboarding_overview') && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <OnboardingTrackerOverview />
           </div>
         )}
 
