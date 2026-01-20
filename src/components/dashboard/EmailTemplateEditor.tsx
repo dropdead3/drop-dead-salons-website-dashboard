@@ -2066,15 +2066,6 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
               <Plus className="w-4 h-4" />
               Add Block
             </Button>
-            <Button
-              variant={toolbarPanel === 'logos' ? 'default' : 'outline'}
-              size="sm"
-              className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'logos' && "bg-background border-border/80")}
-              onClick={() => setToolbarPanel(toolbarPanel === 'logos' ? null : 'logos')}
-            >
-              <Image className="w-4 h-4" />
-              Brand Logos
-            </Button>
             {variables.length > 0 && (
               <Button
                 variant={toolbarPanel === 'variables' ? 'default' : 'outline'}
@@ -2336,43 +2327,6 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
             </Card>
           )}
 
-{/* Logos Panel */}
-          {toolbarPanel === 'logos' && (
-            <Card className="border-border/50">
-              <CardContent className="p-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {uniqueLogos.map((baseLogo) => {
-                    const blackVariant = brandLogos.find(l => l.baseId === baseLogo.baseId && l.variant === 'black')!;
-                    const whiteVariant = brandLogos.find(l => l.baseId === baseLogo.baseId && l.variant === 'white')!;
-                    return (
-                      <div key={baseLogo.baseId} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40">
-                        <div className="w-12 h-12 flex items-center justify-center bg-background rounded-lg shadow-sm">
-                          <img src={baseLogo.src} alt={baseLogo.name} className="w-8 h-8 object-contain" />
-                        </div>
-                        <span className="text-[11px] font-medium text-foreground/80 truncate max-w-full">{baseLogo.name}</span>
-                        <div className="flex gap-1 mt-1">
-                          <button
-                            onClick={() => { addLogoBlock(blackVariant); setToolbarPanel(null); }}
-                            className="flex items-center justify-center w-8 h-6 rounded bg-foreground text-background text-[9px] font-medium hover:opacity-80 transition-opacity"
-                            title="Black version"
-                          >
-                            Black
-                          </button>
-                          <button
-                            onClick={() => { addLogoBlock(whiteVariant); setToolbarPanel(null); }}
-                            className="flex items-center justify-center w-8 h-6 rounded bg-background text-foreground text-[9px] font-medium border border-border hover:bg-muted transition-colors"
-                            title="White version"
-                          >
-                            White
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Variables Panel */}
           {toolbarPanel === 'variables' && variables.length > 0 && (
