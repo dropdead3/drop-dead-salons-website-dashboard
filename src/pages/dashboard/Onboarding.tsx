@@ -27,6 +27,7 @@ import {
   Camera,
   CalendarDays,
   MapPin,
+  ExternalLink,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -80,6 +81,7 @@ interface OnboardingTask {
   id: string;
   title: string;
   description: string | null;
+  link_url: string | null;
   visible_to_roles: AppRole[];
   display_order: number;
 }
@@ -201,10 +203,10 @@ export default function Onboarding() {
 
     // Filter tasks by user roles
     if (!tasksResult.error) {
-      const filteredTasks = (tasksResult.data || []).filter((task: OnboardingTask) => {
+      const filteredTasks = (tasksResult.data || []).filter((task: { visible_to_roles: AppRole[] | null }) => {
         const visibleRoles = task.visible_to_roles || [];
         return roles.some(role => visibleRoles.includes(role));
-      });
+      }) as OnboardingTask[];
       setOnboardingTasks(filteredTasks);
     }
 
@@ -697,38 +699,54 @@ export default function Onboarding() {
                 const completed = isTaskCompleted(task.id);
                 
                 return (
-                  <button
+                  <div
                     key={task.id}
-                    onClick={() => handleToggleTask(task.id)}
                     className={cn(
-                      "w-full flex items-start gap-3 p-3 rounded-lg border transition-all text-left",
+                      "w-full flex items-start gap-3 p-3 rounded-lg border transition-all",
                       completed
                         ? 'border-primary/30 bg-primary/5'
-                        : 'border-border hover:border-primary/50'
+                        : 'border-border'
                     )}
                   >
-                    <div className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all mt-0.5",
-                      completed
-                        ? 'bg-primary border-primary'
-                        : 'border-muted-foreground/30'
-                    )}>
-                      {completed && <Check className="w-4 h-4 text-primary-foreground" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className={cn(
-                        "font-sans text-sm block",
-                        completed && 'text-muted-foreground line-through'
+                    <button
+                      onClick={() => handleToggleTask(task.id)}
+                      className="flex-1 flex items-start gap-3 text-left hover:opacity-80 transition-opacity"
+                    >
+                      <div className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all mt-0.5 shrink-0",
+                        completed
+                          ? 'bg-primary border-primary'
+                          : 'border-muted-foreground/30'
                       )}>
-                        {task.title}
-                      </span>
-                      {task.description && (
-                        <span className="text-xs text-muted-foreground block mt-0.5">
-                          {task.description}
+                        {completed && <Check className="w-4 h-4 text-primary-foreground" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className={cn(
+                          "font-sans text-sm block",
+                          completed && 'text-muted-foreground line-through'
+                        )}>
+                          {task.title}
                         </span>
-                      )}
-                    </div>
-                  </button>
+                        {task.description && (
+                          <span className="text-xs text-muted-foreground block mt-0.5">
+                            {task.description}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                    {task.link_url && (
+                      <a
+                        href={task.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="shrink-0 p-2 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                        title="Open link"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
                 );
               })
             )}
