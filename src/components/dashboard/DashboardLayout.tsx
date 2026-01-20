@@ -75,6 +75,7 @@ import {
   AlertTriangle,
   CreditCard,
   Camera,
+  Briefcase,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -137,6 +138,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/birthdays', label: 'Team Birthdays', icon: Cake, permission: 'view_team_overview' },
   { href: '/dashboard/admin/onboarding-tracker', label: 'Onboarding Tracker', icon: ClipboardList, permission: 'view_team_overview' },
   { href: '/dashboard/admin/client-engine-tracker', label: 'Client Engine Tracker', icon: Target, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/recruiting', label: 'Recruiting Pipeline', icon: Briefcase, permission: 'view_team_overview' },
   { href: '/dashboard/admin/assistant-requests', label: 'Assistant Requests', icon: HandHelping, permission: 'view_team_overview' },
   { href: '/dashboard/admin/strikes', label: 'Staff Strikes', icon: AlertTriangle, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/business-cards', label: 'Business Cards', icon: CreditCard, permission: 'manage_settings' },
