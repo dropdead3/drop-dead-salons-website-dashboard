@@ -2708,7 +2708,32 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      {/* Sticky Undo/Redo floating controls */}
+      <div className="fixed bottom-24 right-6 z-50 flex items-center gap-1 border rounded-lg p-1.5 bg-background/95 backdrop-blur-sm shadow-lg">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleUndo}
+          disabled={!canUndo}
+          className="h-8 w-8 p-0"
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo2 className="w-4 h-4" />
+        </Button>
+        <div className="w-px h-5 bg-border" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleRedo}
+          disabled={!canRedo}
+          className="h-8 w-8 p-0"
+          title="Redo (Ctrl+Shift+Z)"
+        >
+          <Redo2 className="w-4 h-4" />
+        </Button>
+      </div>
+
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
         <div className="flex items-center justify-between gap-4 mb-2">
           <TabsList className="flex-1">
@@ -2725,30 +2750,6 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
               Preview
             </TabsTrigger>
           </TabsList>
-          
-          {/* Undo/Redo buttons */}
-          <div className="flex items-center gap-1 border rounded-md p-1 bg-muted/50">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleUndo}
-              disabled={!canUndo}
-              className="h-7 w-7 p-0"
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRedo}
-              disabled={!canRedo}
-              className="h-7 w-7 p-0"
-              title="Redo (Ctrl+Shift+Z)"
-            >
-              <Redo2 className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
 
         <TabsContent value="visual" className="mt-4 space-y-4">
