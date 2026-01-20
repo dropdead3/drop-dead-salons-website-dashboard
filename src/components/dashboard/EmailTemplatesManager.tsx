@@ -957,8 +957,8 @@ export function EmailTemplatesManager() {
             ) : (
               /* Normal preview mode */
               <div className={cn(
-                "transition-all duration-300",
-                previewMode === 'desktop' ? 'p-6' : 'p-3'
+                "transition-all duration-300 pb-8",
+                previewMode === 'desktop' ? 'p-6 pb-12' : 'p-3 pb-8'
               )}>
                 {/* Outer email wrapper to simulate email client viewport */}
                 <div 
