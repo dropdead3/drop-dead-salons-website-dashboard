@@ -69,11 +69,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { ColorWheelPicker } from '@/components/ui/color-wheel-picker';
 
-// Import brand logos
+// Import brand logos - black versions
 import dropDeadLogo from '@/assets/drop-dead-logo.svg';
 import ddSecondaryLogo from '@/assets/dd-secondary-logo.svg';
 import dd75Icon from '@/assets/dd75-icon.svg';
 import dd75Logo from '@/assets/dd75-logo.svg';
+// Import brand logos - white versions
+import dropDeadLogoWhite from '@/assets/drop-dead-logo-white.svg';
+import ddSecondaryLogoWhite from '@/assets/dd-secondary-logo-white.svg';
+import dd75IconWhite from '@/assets/dd75-icon-white.svg';
+import dd75LogoWhite from '@/assets/dd75-logo-white.svg';
 
 // Brand logo presets
 type LogoVariant = 'black' | 'white';
@@ -101,7 +106,7 @@ const brandLogos: BrandLogo[] = [
     id: 'drop-dead-main-white',
     baseId: 'drop-dead-main',
     name: 'Drop Dead Logo',
-    src: dropDeadLogo,
+    src: dropDeadLogoWhite,
     description: 'Primary wordmark logo',
     variant: 'white',
   },
@@ -118,7 +123,7 @@ const brandLogos: BrandLogo[] = [
     id: 'dd-secondary-white',
     baseId: 'dd-secondary',
     name: 'DD Secondary',
-    src: ddSecondaryLogo,
+    src: ddSecondaryLogoWhite,
     description: 'Secondary icon logo',
     variant: 'white',
   },
@@ -135,7 +140,7 @@ const brandLogos: BrandLogo[] = [
     id: 'dd75-icon-white',
     baseId: 'dd75-icon',
     name: 'DD75 Icon',
-    src: dd75Icon,
+    src: dd75IconWhite,
     description: 'Circular icon mark',
     variant: 'white',
   },
@@ -152,7 +157,7 @@ const brandLogos: BrandLogo[] = [
     id: 'dd75-logo-white',
     baseId: 'dd75-logo',
     name: 'DD75 Logo',
-    src: dd75Logo,
+    src: dd75LogoWhite,
     description: 'DD75 wordmark',
     variant: 'white',
   },
@@ -494,11 +499,8 @@ function blocksToHtml(blocks: EmailBlock[]): string {
       case 'text':
         return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">${block.content}</p>`;
       case 'image': {
-        // Check if this is a white variant logo based on content name
-        const isWhiteLogo = block.content?.includes('(White)');
-        const logoFilter = isWhiteLogo ? 'filter: invert(1) brightness(2);' : '';
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
-          <img src="${block.imageUrl || 'https://via.placeholder.com/400x200'}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''} ${logoFilter}" />
+          <img src="${block.imageUrl || 'https://via.placeholder.com/400x200'}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}" />
         </div>`;
       }
       case 'button': {
@@ -554,12 +556,11 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
         const iconColor = block.styles.buttonColor || '#f5f0e8';
-        const logoFilter = logo.variant === 'white' ? 'filter: invert(1) brightness(2);' : '';
         
         let logoHtml = '';
         if (footerConfig.showLogo) {
           logoHtml = `<div style="margin-bottom: 16px;">
-            <img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto; ${logoFilter}" />
+            <img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto;" />
           </div>`;
         }
         
@@ -601,11 +602,10 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const logo = getLogoById(headerConfig.logoId) || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
-        const logoFilter = logo.variant === 'white' ? 'filter: invert(1) brightness(2);' : '';
         
         let logoHtml = '';
         if (headerConfig.showLogo) {
-          logoHtml = `<img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto; ${logoFilter}" />`;
+          logoHtml = `<img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto;" />`;
         }
         
         let navHtml = '';
