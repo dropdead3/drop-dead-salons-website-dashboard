@@ -1112,7 +1112,23 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
         }
       }),
     };
-    updateBlocksAndHtml([...blocks, newBlock]);
+    
+    // Insert header at the beginning, footer at the end, others at the end
+    if (type === 'header') {
+      updateBlocksAndHtml([newBlock, ...blocks]);
+    } else if (type === 'footer') {
+      updateBlocksAndHtml([...blocks, newBlock]);
+    } else {
+      // Insert other blocks before any existing footer, or at the end
+      const footerIndex = blocks.findIndex(b => b.type === 'footer');
+      if (footerIndex !== -1) {
+        const newBlocks = [...blocks];
+        newBlocks.splice(footerIndex, 0, newBlock);
+        updateBlocksAndHtml(newBlocks);
+      } else {
+        updateBlocksAndHtml([...blocks, newBlock]);
+      }
+    }
     setSelectedBlockId(newBlock.id);
   };
 
