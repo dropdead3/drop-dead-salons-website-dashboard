@@ -66,6 +66,8 @@ import {
   X,
   PenTool,
   ArrowRight,
+  AlertTriangle,
+  CheckCircle2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1836,6 +1838,67 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     updateBlocksAndHtml(newBlocks);
     toast.success(`Applied "${theme.name}" theme`);
   };
+
+  // URL validation helper
+  const isValidUrl = (url: string): boolean => {
+    // Allow variables and placeholders
+    if (url.includes('[') || url.includes('{{') || url === '#') return true;
+    // Check for valid URL format
+    try {
+      // Allow relative URLs starting with /
+      if (url.startsWith('/')) return true;
+      // Allow mailto and tel links
+      if (url.startsWith('mailto:') || url.startsWith('tel:')) return true;
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Extract and validate all links from blocks
+  const getLinkValidation = useCallback(() => {
+    const issues: { blockType: string; url: string; label: string }[] = [];
+    
+    blocks.forEach((block) => {
+      // Check button/link URLs
+      if ((block.type === 'button' || block.type === 'link') && block.linkUrl) {
+        if (!isValidUrl(block.linkUrl)) {
+          issues.push({
+            blockType: block.type,
+            url: block.linkUrl,
+            label: block.content || block.type,
+          });
+        }
+      }
+      // Check nav links in header
+      if (block.type === 'header' && block.navLinks) {
+        block.navLinks.forEach((link) => {
+          if (link.enabled && link.url && !isValidUrl(link.url)) {
+            issues.push({
+              blockType: 'nav link',
+              url: link.url,
+              label: link.label,
+            });
+          }
+        });
+      }
+      // Check social links
+      if (block.socialLinks) {
+        block.socialLinks.forEach((link) => {
+          if (link.enabled && link.url && !isValidUrl(link.url)) {
+            issues.push({
+              blockType: 'social link',
+              url: link.url,
+              label: link.platform,
+            });
+          }
+        });
+      }
+    });
+    
+    return issues;
+  }, [blocks]);
 
   const renderPreviewHtml = (html: string) => {
     let preview = html;
@@ -4311,10 +4374,40 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
 
         <TabsContent value="preview" className="mt-4">
           <div className="border rounded-lg bg-gray-100 p-4">
-            <p className="text-xs text-muted-foreground text-center mb-3 flex items-center justify-center gap-1.5">
-              <MousePointerClick className="w-3.5 h-3.5" />
-              Links are clickable — click any button or link to test
-            </p>
+            {/* Link validation status */}
+            {(() => {
+              const linkIssues = getLinkValidation();
+              return (
+                <div className="mb-3 space-y-2">
+                  {linkIssues.length === 0 ? (
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-green-600 bg-green-50 rounded-md py-1.5 px-3">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      All links are valid
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 mb-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        {linkIssues.length} invalid {linkIssues.length === 1 ? 'link' : 'links'} detected
+                      </div>
+                      <ul className="space-y-1">
+                        {linkIssues.map((issue, i) => (
+                          <li key={i} className="text-[10px] text-amber-600 flex items-start gap-1.5 pl-5">
+                            <span className="font-medium capitalize">{issue.blockType}:</span>
+                            <span className="truncate max-w-[200px]" title={issue.url}>"{issue.url}"</span>
+                            <span className="text-amber-500">({issue.label})</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
+                    <MousePointerClick className="w-3.5 h-3.5" />
+                    Links are clickable — click any button or link to test
+                  </p>
+                </div>
+              );
+            })()}
             <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto p-0 overflow-hidden">
               <div
                 className="[&_a]:cursor-pointer [&_a:hover]:opacity-80 [&_a]:transition-opacity"
