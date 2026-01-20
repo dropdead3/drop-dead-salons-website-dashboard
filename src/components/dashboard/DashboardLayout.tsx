@@ -74,6 +74,7 @@ import {
   History,
   AlertTriangle,
   CreditCard,
+  Camera,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -134,6 +135,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/birthdays', label: 'Team Birthdays', icon: Cake, permission: 'view_team_overview' },
   { href: '/dashboard/admin/strikes', label: 'Staff Strikes', icon: AlertTriangle, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/business-cards', label: 'Business Cards', icon: CreditCard, permission: 'manage_settings' },
+  { href: '/dashboard/admin/headshots', label: 'Headshots', icon: Camera, permission: 'manage_settings' },
   { href: '/dashboard/admin/announcements', label: 'Announcements', icon: Bell, permission: 'manage_announcements' },
 ];
 
