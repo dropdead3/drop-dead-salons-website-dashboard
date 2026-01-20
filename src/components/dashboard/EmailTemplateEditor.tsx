@@ -212,6 +212,9 @@ interface EmailBlock {
     fontWeight?: string;
     textAlign?: 'left' | 'center' | 'right';
     padding?: string;
+    paddingTop?: number; // 0-80px
+    paddingBottom?: number; // 0-80px
+    paddingHorizontal?: number; // 0-80px (left + right)
     borderRadius?: string;
     width?: string;
     height?: string;
@@ -513,9 +516,40 @@ function parseHtmlToBlocks(html: string): EmailBlock[] {
   return [];
 }
 
+// Helper to compute padding string from individual values or fallback to legacy string
+function computePadding(styles: EmailBlock['styles']): string {
+  // If individual values exist, use them
+  if (styles.paddingTop !== undefined || styles.paddingBottom !== undefined || styles.paddingHorizontal !== undefined) {
+    const top = styles.paddingTop ?? 24;
+    const bottom = styles.paddingBottom ?? 24;
+    const horizontal = styles.paddingHorizontal ?? 24;
+    return `${top}px ${horizontal}px ${bottom}px ${horizontal}px`;
+  }
+  // Fall back to legacy padding string
+  return styles.padding || '24px';
+}
+
+// Helper to parse legacy padding string into individual values
+function parsePaddingToValues(padding: string): { top: number; bottom: number; horizontal: number } {
+  const values = padding.replace(/px/g, '').trim().split(/\s+/).map(Number);
+  if (values.length === 1) {
+    return { top: values[0], bottom: values[0], horizontal: values[0] };
+  } else if (values.length === 2) {
+    return { top: values[0], bottom: values[0], horizontal: values[1] };
+  } else if (values.length === 3) {
+    return { top: values[0], bottom: values[2], horizontal: values[1] };
+  } else if (values.length >= 4) {
+    return { top: values[0], bottom: values[2], horizontal: Math.round((values[1] + values[3]) / 2) };
+  }
+  return { top: 24, bottom: 24, horizontal: 24 };
+}
+
 // Generate HTML from blocks
 function blocksToHtml(blocks: EmailBlock[]): string {
   const blockHtml = blocks.map(block => {
+    // Compute padding from individual values or legacy string
+    const padding = computePadding(block.styles);
+    
     // Base styles WITHOUT borderRadius - only apply borderRadius to elements that use it in canvas
     const baseStyles = `
       ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''}
@@ -523,7 +557,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
       ${block.styles.fontSize ? `font-size: ${block.styles.fontSize};` : ''}
       ${block.styles.fontWeight ? `font-weight: ${block.styles.fontWeight};` : ''}
       ${block.styles.textAlign ? `text-align: ${block.styles.textAlign};` : ''}
-      ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}
+      padding: ${padding};
     `.trim();
 
     // Convert newlines to <br/> for proper email rendering
@@ -538,7 +572,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
       case 'image': {
         const imgUrl = block.imageUrl || 'https://via.placeholder.com/400x200';
         const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
-        return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)};">
           <img src="${absoluteImgUrl}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}" />
         </div>`;
       }
@@ -553,7 +587,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
           : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
         // Include background-color on wrapper div to match body background
-        return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''} ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
           <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}</a>
         </div>`;
       }
@@ -594,7 +628,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           return `<a href="${href}" style="${iconStyle}" target="_blank" rel="noopener">${svg}</a>`;
         }).join('');
         
-        return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''} ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''} font-size: 14px; line-height: 1;">
+        return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''} font-size: 14px; line-height: 1;">
           ${socialIcons}
         </div>`;
       }
@@ -653,7 +687,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           }
         }
         
-        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${block.styles.padding || '32px 24px'}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px'}; font-size: 14px; line-height: 1.4;">
+        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${computePadding(block.styles)}; border-radius: ${block.styles.borderRadius || '0 0 12px 12px'}; font-size: 14px; line-height: 1.4;">
           ${logoHtml}
           ${socialHtml}
           <p style="margin: 0; font-size: 11px; opacity: 0.8; text-align: ${textAlign};">${footerConfig.copyrightText}</p>
@@ -668,7 +702,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const logoMaxWidth = logoSizeMap[headerConfig.logoSize || 'medium'];
         const logoPosition = headerConfig.logoPosition || 'left';
         const navLinksPosition = headerConfig.navLinksPosition || 'right';
-        const padding = block.styles.padding || '20px 24px';
+        const padding = computePadding(block.styles);
         
         // Convert logo src to absolute URL for preview compatibility
         const absoluteLogoSrc = logo.src.startsWith('/') ? `${window.location.origin}${logo.src}` : logo.src;
@@ -708,7 +742,9 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const bgColor = block.styles.backgroundColor || '#f5f0e8';
         const textColor = block.styles.textColor || '#1a1a1a';
         const textAlign = block.styles.textAlign || 'left';
-        const padding = block.styles.padding || '24px';
+        const padding = computePadding(block.styles);
+        // Extract horizontal padding for indent calculation
+        const horizontalPadding = block.styles.paddingHorizontal ?? 24;
         const imageSize = config.imageSize || 80;
         const indent = config.indent || 0;
         
@@ -758,7 +794,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           </table>`;
         }
         
-        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding}; padding-left: ${indent > 0 ? `${parseInt(padding) + indent}px` : padding};">
+        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding}; ${indent > 0 ? `padding-left: ${horizontalPadding + indent}px;` : ''}">
           ${contentHtml}
         </div>`;
       }
@@ -3478,6 +3514,67 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             ))}
                           </div>
                         </div>
+                        
+                        {/* Padding/Spacing Controls */}
+                        <div className="space-y-3 pt-2 border-t">
+                          <Label className="text-xs text-muted-foreground font-medium">Spacing</Label>
+                          {(() => {
+                            // Get current padding values from individual props or parse from legacy string
+                            const legacyPadding = selectedBlock.styles.padding || '24px';
+                            const parsed = parsePaddingToValues(legacyPadding);
+                            const currentTop = selectedBlock.styles.paddingTop ?? parsed.top;
+                            const currentBottom = selectedBlock.styles.paddingBottom ?? parsed.bottom;
+                            const currentHorizontal = selectedBlock.styles.paddingHorizontal ?? parsed.horizontal;
+                            
+                            return (
+                              <>
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <Label className="text-xs">Top Padding</Label>
+                                    <span className="text-xs text-muted-foreground">{currentTop}px</span>
+                                  </div>
+                                  <Slider
+                                    variant="filled"
+                                    min={0}
+                                    max={80}
+                                    step={4}
+                                    value={[currentTop]}
+                                    onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { paddingTop: value })}
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <Label className="text-xs">Bottom Padding</Label>
+                                    <span className="text-xs text-muted-foreground">{currentBottom}px</span>
+                                  </div>
+                                  <Slider
+                                    variant="filled"
+                                    min={0}
+                                    max={80}
+                                    step={4}
+                                    value={[currentBottom]}
+                                    onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { paddingBottom: value })}
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <Label className="text-xs">Horizontal Padding</Label>
+                                    <span className="text-xs text-muted-foreground">{currentHorizontal}px</span>
+                                  </div>
+                                  <Slider
+                                    variant="filled"
+                                    min={0}
+                                    max={80}
+                                    step={4}
+                                    value={[currentHorizontal]}
+                                    onValueChange={([value]) => updateBlockStyles(selectedBlock.id, { paddingHorizontal: value })}
+                                  />
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                        
                         <div className="flex gap-4">
                           <div className="flex items-center gap-2">
                             <Label className="text-xs text-muted-foreground">Background</Label>
@@ -3624,7 +3721,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           fontSize: block.styles.fontSize,
                           fontWeight: block.styles.fontWeight,
                           textAlign: block.styles.textAlign,
-                          padding: block.styles.padding,
+                          padding: computePadding(block.styles),
                         }}
                       >
                         {block.type === 'heading' && (
