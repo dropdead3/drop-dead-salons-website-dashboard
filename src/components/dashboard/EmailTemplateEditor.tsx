@@ -1592,18 +1592,51 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
           {toolbarPanel === 'blocks' && (
             <Card className="border-border/50">
               <CardContent className="p-4">
-                <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('heading'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><Type className="w-4 h-4" /><span className="text-[10px]">Heading</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('text'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><AlignLeft className="w-4 h-4" /><span className="text-[10px]">Text</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('image'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><Image className="w-4 h-4" /><span className="text-[10px]">Image</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('button', 'primary'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><div className="px-2 py-0.5 text-[6px] font-bold rounded bg-foreground text-background">Aa</div><span className="text-[10px]">Primary</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('button', 'secondary'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><div className="px-2 py-0.5 text-[6px] font-bold rounded border border-foreground">Aa</div><span className="text-[10px]">Secondary</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('link'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><Link className="w-4 h-4" /><span className="text-[10px]">Link</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('divider'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><Minus className="w-4 h-4" /><span className="text-[10px]">Divider</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('spacer'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><Square className="w-4 h-4" /><span className="text-[10px]">Spacer</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('social'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><Share2 className="w-4 h-4" /><span className="text-[10px]">Social</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('header'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><LayoutTemplate className="w-4 h-4" /><span className="text-[10px]">Header</span></Button>
-                  <Button variant="outline" size="sm" onClick={() => { addBlock('footer'); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3"><LayoutTemplate className="w-4 h-4" /><span className="text-[10px]">Footer</span></Button>
+                <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+                  <button onClick={() => { addBlock('heading'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <Type className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Heading</span>
+                  </button>
+                  <button onClick={() => { addBlock('text'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <AlignLeft className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Text</span>
+                  </button>
+                  <button onClick={() => { addBlock('image'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <Image className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Image</span>
+                  </button>
+                  <button onClick={() => { addBlock('button', 'primary'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <div className="px-2.5 py-1 text-[8px] font-bold rounded-md bg-foreground text-background">Aa</div>
+                    <span className="text-[11px] font-medium text-foreground/80">Primary</span>
+                  </button>
+                  <button onClick={() => { addBlock('button', 'secondary'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <div className="px-2.5 py-1 text-[8px] font-bold rounded-md border-2 border-foreground/60">Aa</div>
+                    <span className="text-[11px] font-medium text-foreground/80">Secondary</span>
+                  </button>
+                  <button onClick={() => { addBlock('link'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <Link className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Link</span>
+                  </button>
+                  <button onClick={() => { addBlock('divider'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <Minus className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Divider</span>
+                  </button>
+                  <button onClick={() => { addBlock('spacer'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <Square className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Spacer</span>
+                  </button>
+                  <button onClick={() => { addBlock('social'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <Share2 className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Social</span>
+                  </button>
+                  <button onClick={() => { addBlock('header'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <LayoutTemplate className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Header</span>
+                  </button>
+                  <button onClick={() => { addBlock('footer'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <LayoutTemplate className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Footer</span>
+                  </button>
                 </div>
               </CardContent>
             </Card>
