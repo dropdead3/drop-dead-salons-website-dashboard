@@ -2840,14 +2840,22 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           return (
                             <div className={`flex flex-col ${alignClass}`}>
                               {showLogo && logo && (
-                                <div className="mb-3" style={{ minHeight: '40px', border: '1px dashed red' }}>
-                                  <img 
-                                    src={logo.src} 
-                                    alt={logo.name} 
-                                    style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block', minHeight: '30px' }}
-                                    onError={(e) => console.error('[Footer Logo Error] Failed to load:', logo.src, e)}
-                                    onLoad={() => console.log('[Footer Logo Loaded]', logo.src)}
-                                  />
+                                <div className="mb-3" style={{ minHeight: '40px' }}>
+                                  {logo.src ? (
+                                    <img 
+                                      src={logo.src} 
+                                      alt={logo.name} 
+                                      style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block', minHeight: '30px' }}
+                                      onError={(e) => {
+                                        console.error('[Footer Logo Error] Failed to load:', logo.src, e);
+                                        // Try to show a placeholder text
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                      onLoad={() => console.log('[Footer Logo Loaded]', logo.src)}
+                                    />
+                                  ) : (
+                                    <span className="text-xs text-red-500">No logo src</span>
+                                  )}
                                 </div>
                               )}
                               {footerConfig.showSocialIcons && enabledLinks.length > 0 && (
