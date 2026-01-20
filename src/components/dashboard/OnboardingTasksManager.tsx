@@ -30,7 +30,8 @@ import {
   Trash2, 
   Loader2, 
   GripVertical,
-  ClipboardCheck
+  ClipboardCheck,
+  ExternalLink
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
@@ -44,6 +45,7 @@ interface OnboardingTask {
   visible_to_roles: AppRole[];
   display_order: number;
   is_active: boolean;
+  link_url: string | null;
 }
 
 const ALL_ROLES: { value: AppRole; label: string }[] = [
@@ -70,6 +72,7 @@ export function OnboardingTasksManager() {
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
   const [isActive, setIsActive] = useState(true);
 
@@ -95,6 +98,7 @@ export function OnboardingTasksManager() {
     setEditingTask(null);
     setTitle('');
     setDescription('');
+    setLinkUrl('');
     setSelectedRoles([]);
     setIsActive(true);
     setDialogOpen(true);
@@ -104,6 +108,7 @@ export function OnboardingTasksManager() {
     setEditingTask(task);
     setTitle(task.title);
     setDescription(task.description || '');
+    setLinkUrl(task.link_url || '');
     setSelectedRoles(task.visible_to_roles || []);
     setIsActive(task.is_active);
     setDialogOpen(true);
@@ -128,6 +133,7 @@ export function OnboardingTasksManager() {
         .update({
           title: title.trim(),
           description: description.trim() || null,
+          link_url: linkUrl.trim() || null,
           visible_to_roles: selectedRoles,
           is_active: isActive
         })
@@ -148,6 +154,7 @@ export function OnboardingTasksManager() {
         .insert({
           title: title.trim(),
           description: description.trim() || null,
+          link_url: linkUrl.trim() || null,
           visible_to_roles: selectedRoles,
           is_active: isActive,
           display_order: maxOrder + 1
@@ -282,12 +289,18 @@ export function OnboardingTasksManager() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-sans font-medium text-sm">{task.title}</span>
+                    {task.link_url && (
+                      <ExternalLink className="w-3 h-3 text-primary" />
+                    )}
                     {!task.is_active && (
                       <Badge variant="secondary" className="text-xs">Inactive</Badge>
                     )}
                   </div>
                   {task.description && (
                     <p className="text-xs text-muted-foreground mb-2">{task.description}</p>
+                  )}
+                  {task.link_url && (
+                    <p className="text-xs text-primary truncate mb-2">{task.link_url}</p>
                   )}
                   <div className="flex flex-wrap gap-1">
                     {task.visible_to_roles.map(role => (
@@ -351,6 +364,20 @@ export function OnboardingTasksManager() {
                 placeholder="Optional details about this task..."
                 rows={2}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="link-url">Task Link URL (optional)</Label>
+              <Input
+                id="link-url"
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://example.com/register"
+              />
+              <p className="text-xs text-muted-foreground">
+                Users will see a clickable link button to open this URL
+              </p>
             </div>
 
             <div className="space-y-2">
