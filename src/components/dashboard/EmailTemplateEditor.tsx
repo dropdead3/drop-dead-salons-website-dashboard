@@ -2834,6 +2834,16 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             : logoPosition === 'right' ? 'items-end text-right' 
                             : 'items-center text-center';
                           
+                          // Debug logging
+                          console.log('[FOOTER DEBUG]', {
+                            blockFooterConfig: block.footerConfig,
+                            mergedFooterConfig: footerConfig,
+                            showLogo,
+                            logoId,
+                            logo: logo ? { id: logo.id, name: logo.name, src: logo.src } : null,
+                            brandLogosCount: brandLogos.length
+                          });
+                          
                           return (
                             <div className={`flex flex-col ${alignClass}`}>
                               {showLogo && logo && (
