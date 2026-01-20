@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface EmailTemplate {
   id: string;
@@ -8,6 +9,7 @@ export interface EmailTemplate {
   name: string;
   subject: string;
   html_body: string;
+  blocks_json: Json | null;
   description: string | null;
   variables: string[];
   is_active: boolean;
@@ -56,7 +58,7 @@ export function useUpdateEmailTemplate() {
       updates,
     }: {
       id: string;
-      updates: Partial<Pick<EmailTemplate, 'name' | 'subject' | 'html_body' | 'description' | 'is_active'>>;
+      updates: Partial<Pick<EmailTemplate, 'name' | 'subject' | 'html_body' | 'blocks_json' | 'description' | 'is_active'>>;
     }) => {
       const { data, error } = await supabase
         .from('email_templates')
