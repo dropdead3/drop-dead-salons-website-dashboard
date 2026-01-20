@@ -711,6 +711,33 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
         },
         linkUrl: '{{dashboard_url}}',
       },
+      {
+        id: crypto.randomUUID(),
+        type: 'footer',
+        content: '',
+        styles: { 
+          textAlign: 'center', 
+          fontSize: '12px', 
+          padding: '32px 24px', 
+          backgroundColor: defaultTheme.colors.headerBg,
+          textColor: defaultTheme.colors.headerText,
+          buttonColor: defaultTheme.colors.headerText,
+          borderRadius: '0 0 12px 12px'
+        },
+        socialLinks: [
+          { platform: 'instagram' as const, url: 'https://instagram.com/dropdeadsalon', enabled: true },
+          { platform: 'tiktok' as const, url: '', enabled: false },
+          { platform: 'email' as const, url: 'contact@dropdeadsalon.com', enabled: true },
+        ],
+        footerConfig: {
+          showLogo: true,
+          logoId: 'drop-dead-main-white',
+          logoSize: 'large' as const,
+          logoPosition: 'center' as const,
+          showSocialIcons: true,
+          copyrightText: '© 2026 Drop Dead Salons. All rights reserved.',
+        }
+      },
     ];
   };
 
