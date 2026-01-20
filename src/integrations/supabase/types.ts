@@ -839,6 +839,57 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_history: {
+        Row: {
+          created_at: string
+          extensions_rank: number | null
+          extensions_value: number | null
+          id: string
+          new_clients_rank: number | null
+          new_clients_value: number | null
+          overall_rank: number
+          overall_score: number
+          retail_rank: number | null
+          retail_value: number | null
+          retention_rank: number | null
+          retention_value: number | null
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          extensions_rank?: number | null
+          extensions_value?: number | null
+          id?: string
+          new_clients_rank?: number | null
+          new_clients_value?: number | null
+          overall_rank: number
+          overall_score: number
+          retail_rank?: number | null
+          retail_value?: number | null
+          retention_rank?: number | null
+          retention_value?: number | null
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          extensions_rank?: number | null
+          extensions_value?: number | null
+          id?: string
+          new_clients_rank?: number | null
+          new_clients_value?: number | null
+          overall_rank?: number
+          overall_score?: number
+          retail_rank?: number | null
+          retail_value?: number | null
+          retention_rank?: number | null
+          retention_value?: number | null
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       leaderboard_weights: {
         Row: {
           extensions_weight: number
