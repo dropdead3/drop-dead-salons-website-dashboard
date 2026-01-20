@@ -1851,6 +1851,8 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
       const placeholder = `<span style="background: #fef3c7; padding: 2px 6px; border-radius: 4px;">[${variable}]</span>`;
       preview = preview.replace(regex, placeholder);
     });
+    // Make all links open in new tab for testing
+    preview = preview.replace(/<a\s+href="/g, '<a target="_blank" rel="noopener noreferrer" href="');
     return preview;
   };
 
@@ -4309,8 +4311,13 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
 
         <TabsContent value="preview" className="mt-4">
           <div className="border rounded-lg bg-gray-100 p-4">
+            <p className="text-xs text-muted-foreground text-center mb-3 flex items-center justify-center gap-1.5">
+              <MousePointerClick className="w-3.5 h-3.5" />
+              Links are clickable — click any button or link to test
+            </p>
             <div className="bg-white rounded-lg shadow-lg max-w-[600px] mx-auto p-0 overflow-hidden">
               <div
+                className="[&_a]:cursor-pointer [&_a:hover]:opacity-80 [&_a]:transition-opacity"
                 dangerouslySetInnerHTML={{
                   __html: renderPreviewHtml(blocksToHtml(blocks)),
                 }}
