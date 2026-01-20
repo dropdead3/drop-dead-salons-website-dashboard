@@ -76,6 +76,7 @@ import {
   CreditCard,
   Camera,
   Briefcase,
+  GraduationCap,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -118,6 +119,7 @@ const growthNavItems: NavItem[] = [
   { href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training' },
   { href: '/dashboard/program', label: 'Client Engine', icon: Target, permission: 'access_client_engine' },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell' },
+  { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, roles: ['stylist_assistant'] },
 ];
 
 // Base get help items - the assistant schedule label is computed dynamically in the component
@@ -139,6 +141,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/onboarding-tracker', label: 'Onboarding Tracker', icon: ClipboardList, permission: 'view_team_overview' },
   { href: '/dashboard/admin/client-engine-tracker', label: 'Client Engine Tracker', icon: Target, permission: 'view_team_overview' },
   { href: '/dashboard/admin/recruiting', label: 'Recruiting Pipeline', icon: Briefcase, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/graduation-tracker', label: 'Graduation Tracker', icon: GraduationCap, permission: 'view_team_overview' },
   { href: '/dashboard/admin/assistant-requests', label: 'Assistant Requests', icon: HandHelping, permission: 'view_team_overview' },
   { href: '/dashboard/admin/strikes', label: 'Staff Strikes', icon: AlertTriangle, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/business-cards', label: 'Business Cards', icon: CreditCard, permission: 'manage_settings' },

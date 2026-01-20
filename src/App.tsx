@@ -61,6 +61,8 @@ import ClientEngineTracker from "./pages/dashboard/admin/ClientEngineTracker";
 import AssistantRequestsOverview from "./pages/dashboard/admin/AssistantRequestsOverview";
 import DashboardBuild from "./pages/dashboard/admin/DashboardBuild";
 import RecruitingPipeline from "./pages/dashboard/admin/RecruitingPipeline";
+import GraduationTracker from "./pages/dashboard/admin/GraduationTracker";
+import MyGraduation from "./pages/dashboard/MyGraduation";
 
 const queryClient = new QueryClient();
 
@@ -103,6 +105,7 @@ const App = () => (
               <Route path="/dashboard/onboarding" element={<ProtectedRoute requiredPermission="view_onboarding"><Onboarding /></ProtectedRoute>} />
               <Route path="/dashboard/assistant-schedule" element={<ProtectedRoute requiredPermission="view_assistant_schedule"><AssistantSchedule /></ProtectedRoute>} />
               <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
+              <Route path="/dashboard/my-graduation" element={<ProtectedRoute><MyGraduation /></ProtectedRoute>} />
               
               {/* Admin routes */}
               <Route path="/dashboard/admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />
@@ -128,6 +131,7 @@ const App = () => (
               <Route path="/dashboard/admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
               <Route path="/dashboard/admin/build" element={<ProtectedRoute requireSuperAdmin><DashboardBuild /></ProtectedRoute>} />
               <Route path="/dashboard/admin/recruiting" element={<ProtectedRoute requiredPermission="manage_user_roles"><RecruitingPipeline /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/graduation-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><GraduationTracker /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
