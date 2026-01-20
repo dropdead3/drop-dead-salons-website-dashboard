@@ -229,6 +229,9 @@ export default function RingTheBell() {
       setTicketValue('');
       setLeadSource('');
       setClosingScript('');
+      
+      // Manually refresh to show the new entry immediately
+      fetchEntries();
     }
 
     setSubmitting(false);
