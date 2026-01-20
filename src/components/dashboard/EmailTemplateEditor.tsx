@@ -561,16 +561,18 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'footer': {
-        const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main-black', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
+        const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main-black', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.', logoSize: 'large' };
         const logo = getLogoById(footerConfig.logoId) || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
         const iconColor = block.styles.buttonColor || '#f5f0e8';
+        const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
+        const logoMaxWidth = logoSizeMap[footerConfig.logoSize || 'large'];
         
         let logoHtml = '';
         if (footerConfig.showLogo) {
           logoHtml = `<div style="margin-bottom: 16px;">
-            <img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto;" />
+            <img src="${logo.src}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto;" />
           </div>`;
         }
         
@@ -608,14 +610,18 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'header': {
-        const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main-black', showNavLinks: true };
+        const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main-black', showNavLinks: true, logoPosition: 'left', navLinksPosition: 'right', logoSize: 'medium' };
         const logo = getLogoById(headerConfig.logoId) || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
+        const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
+        const logoMaxWidth = logoSizeMap[headerConfig.logoSize || 'medium'];
+        const logoPosition = headerConfig.logoPosition || 'left';
+        const navLinksPosition = headerConfig.navLinksPosition || 'right';
         
         let logoHtml = '';
         if (headerConfig.showLogo) {
-          logoHtml = `<img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto;" />`;
+          logoHtml = `<img src="${logo.src}" alt="${logo.name}" style="max-width: ${logoMaxWidth}; height: auto; display: block;" />`;
         }
         
         let navHtml = '';
@@ -623,15 +629,23 @@ function blocksToHtml(blocks: EmailBlock[]): string {
           const enabledLinks = (block.navLinks || []).filter(link => link.enabled);
           if (enabledLinks.length > 0) {
             navHtml = enabledLinks.map(link => 
-              `<a href="${link.url}" style="color: ${textColor}; text-decoration: none; font-size: 14px; font-weight: 500; margin: 0 12px;">${link.label}</a>`
+              `<a href="${link.url}" style="color: ${textColor}; text-decoration: none; font-size: 14px; font-weight: 500; margin-left: 16px;">${link.label}</a>`
             ).join('');
           }
         }
         
-        return `<div style="display: flex; align-items: center; justify-content: space-between; background-color: ${bgColor}; color: ${textColor}; padding: ${block.styles.padding || '20px 24px'}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'};">
-          <div>${logoHtml}</div>
-          <div>${navHtml}</div>
-        </div>`;
+        // Build 3-column table for email client compatibility (matches canvas grid layout)
+        const leftContent = (logoPosition === 'left' ? logoHtml : '') + (navLinksPosition === 'left' ? navHtml : '');
+        const centerContent = (logoPosition === 'center' ? logoHtml : '') + (navLinksPosition === 'center' ? navHtml : '');
+        const rightContent = (logoPosition === 'right' ? logoHtml : '') + (navLinksPosition === 'right' ? navHtml : '');
+        
+        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${bgColor}; color: ${textColor}; padding: ${block.styles.padding || '20px 24px'}; border-radius: ${block.styles.borderRadius || '12px 12px 0 0'};">
+          <tr>
+            <td width="33%" style="text-align: left; vertical-align: middle;">${leftContent}</td>
+            <td width="34%" style="text-align: center; vertical-align: middle;">${centerContent}</td>
+            <td width="33%" style="text-align: right; vertical-align: middle;">${rightContent}</td>
+          </tr>
+        </table>`;
       }
       default:
         return '';
