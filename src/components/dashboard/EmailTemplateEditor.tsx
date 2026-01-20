@@ -225,6 +225,7 @@ interface EmailBlock {
     showLogo: boolean;
     logoId: string;
     logoSize?: 'small' | 'medium' | 'large';
+    logoPosition?: 'left' | 'center' | 'right';
     showNavLinks: boolean;
   };
   navLinks?: NavLink[];
@@ -2313,6 +2314,30 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                                     </SelectContent>
                                   </Select>
                                 </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">Position</span>
+                                  <div className="flex gap-1 flex-1">
+                                    {(['left', 'center', 'right'] as const).map((pos) => (
+                                      <Button
+                                        key={pos}
+                                        type="button"
+                                        variant={selectedBlock.headerConfig?.logoPosition === pos || (!selectedBlock.headerConfig?.logoPosition && pos === 'left') ? 'default' : 'outline'}
+                                        size="sm"
+                                        className="flex-1 h-7 text-xs capitalize"
+                                        onClick={() => {
+                                          updateBlock(selectedBlock.id, {
+                                            headerConfig: {
+                                              ...selectedBlock.headerConfig!,
+                                              logoPosition: pos,
+                                            }
+                                          });
+                                        }}
+                                      >
+                                        {pos}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -2674,29 +2699,57 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           const enabledLinks = (block.navLinks || []).filter(l => l.enabled);
                           const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
                           const logoMaxWidth = logoSizeMap[headerConfig.logoSize || 'medium'];
+                          const logoPosition = headerConfig.logoPosition || 'left';
+                          
+                          const logoElement = headerConfig.showLogo && logo ? (
+                            <img 
+                              src={logo.src} 
+                              alt={logo.name} 
+                              style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block' }}
+                            />
+                          ) : null;
+                          
+                          const navElement = headerConfig.showNavLinks && enabledLinks.length > 0 ? (
+                            <div className="flex items-center gap-4">
+                              {enabledLinks.map((link, index) => (
+                                <span 
+                                  key={index}
+                                  className="text-xs font-medium"
+                                  style={{ color: block.styles.textColor || '#f5f0e8' }}
+                                >
+                                  {link.label}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null;
+                          
+                          // Adjust layout based on logo position
+                          const justifyClass = logoPosition === 'center' 
+                            ? 'justify-center' 
+                            : logoPosition === 'right' 
+                              ? 'justify-end' 
+                              : 'justify-between';
                           
                           return (
-                            <div className="flex items-center justify-between w-full px-4">
-                              {headerConfig.showLogo && logo ? (
-                                <img 
-                                  src={logo.src} 
-                                  alt={logo.name} 
-                                  style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block' }}
-                                />
-                              ) : <div />}
-                              {headerConfig.showNavLinks && enabledLinks.length > 0 ? (
-                                <div className="flex items-center gap-4">
-                                  {enabledLinks.map((link, index) => (
-                                    <span 
-                                      key={index}
-                                      className="text-xs font-medium"
-                                      style={{ color: block.styles.textColor || '#f5f0e8' }}
-                                    >
-                                      {link.label}
-                                    </span>
-                                  ))}
+                            <div className={`flex items-center w-full px-4 ${justifyClass}`}>
+                              {logoPosition === 'left' && (
+                                <>
+                                  {logoElement || <div />}
+                                  {navElement || <div />}
+                                </>
+                              )}
+                              {logoPosition === 'center' && (
+                                <div className="flex flex-col items-center gap-2">
+                                  {logoElement}
+                                  {navElement}
                                 </div>
-                              ) : <div />}
+                              )}
+                              {logoPosition === 'right' && (
+                                <>
+                                  {navElement || <div />}
+                                  {logoElement || <div />}
+                                </>
+                              )}
                             </div>
                           );
                         })()}
