@@ -245,7 +245,7 @@ interface EmailBlock {
   footerConfig?: {
     showLogo: boolean;
     logoId: string;
-    logoSize?: 'small' | 'medium' | 'large';
+    logoSize?: 'xs' | 'small' | 'medium' | 'large' | 'xl';
     logoPosition?: 'left' | 'center' | 'right';
     showSocialIcons: boolean;
     copyrightText: string;
@@ -253,7 +253,7 @@ interface EmailBlock {
   headerConfig?: {
     showLogo: boolean;
     logoId: string;
-    logoSize?: 'small' | 'medium' | 'large';
+    logoSize?: 'xs' | 'small' | 'medium' | 'large' | 'xl';
     logoPosition?: 'left' | 'center' | 'right';
     showNavLinks: boolean;
     navLinksPosition?: 'left' | 'center' | 'right';
@@ -692,7 +692,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
         const iconColor = block.styles.buttonColor || '#f5f0e8';
-        const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
+        const logoSizeMap = { xs: '50px', small: '80px', medium: '120px', large: '160px', xl: '220px' };
         const logoMaxWidth = logoSizeMap[footerConfig.logoSize || 'large'];
         const logoPosition = footerConfig.logoPosition || 'center';
         const showLogo = footerConfig.showLogo !== false;
@@ -750,7 +750,7 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const logo = getLogoById(headerConfig.logoId) || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
-        const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
+        const logoSizeMap = { xs: '50px', small: '80px', medium: '120px', large: '160px', xl: '220px' };
         const logoMaxWidth = logoSizeMap[headerConfig.logoSize || 'medium'];
         const logoPosition = headerConfig.logoPosition || 'left';
         const navLinksPosition = headerConfig.navLinksPosition || 'right';
@@ -2948,7 +2948,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       updateBlock(selectedBlock.id, {
                                         footerConfig: {
                                           ...footerConfig,
-                                          logoSize: v as 'small' | 'medium' | 'large',
+                                          logoSize: v as 'xs' | 'small' | 'medium' | 'large' | 'xl',
                                         }
                                       });
                                     }}
@@ -2957,9 +2957,11 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
+                                      <SelectItem value="xs">Extra Small (50px)</SelectItem>
                                       <SelectItem value="small">Small (80px)</SelectItem>
                                       <SelectItem value="medium">Medium (120px)</SelectItem>
                                       <SelectItem value="large">Large (160px)</SelectItem>
+                                      <SelectItem value="xl">Extra Large (220px)</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
@@ -3150,7 +3152,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       updateBlock(selectedBlock.id, {
                                         headerConfig: {
                                           ...selectedBlock.headerConfig!,
-                                          logoSize: v as 'small' | 'medium' | 'large',
+                                          logoSize: v as 'xs' | 'small' | 'medium' | 'large' | 'xl',
                                         }
                                       });
                                     }}
@@ -3159,9 +3161,11 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
+                                      <SelectItem value="xs">Extra Small (50px)</SelectItem>
                                       <SelectItem value="small">Small (80px)</SelectItem>
                                       <SelectItem value="medium">Medium (120px)</SelectItem>
                                       <SelectItem value="large">Large (160px)</SelectItem>
+                                      <SelectItem value="xl">Extra Large (220px)</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
@@ -4111,7 +4115,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'drop-dead-main-white';
                           const logo = getLogoById(logoId) || brandLogos.find(l => l.variant === 'white') || brandLogos[0];
                           const enabledLinks = (block.socialLinks || []).filter(l => l.enabled);
-                          const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
+                          const logoSizeMap = { xs: '50px', small: '80px', medium: '120px', large: '160px', xl: '220px' };
                           const logoMaxWidth = logoSizeMap[footerConfig.logoSize || 'large'];
                           const logoPosition = footerConfig.logoPosition || 'center';
                           // Ensure showLogo defaults to true if undefined
@@ -4159,7 +4163,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main-white', showNavLinks: true };
                           const logo = getLogoById(headerConfig.logoId) || brandLogos[0];
                           const enabledLinks = (block.navLinks || []).filter(l => l.enabled);
-                          const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
+                          const logoSizeMap = { xs: '50px', small: '80px', medium: '120px', large: '160px', xl: '220px' };
                           const logoMaxWidth = logoSizeMap[headerConfig.logoSize || 'medium'];
                           const logoPosition = headerConfig.logoPosition || 'left';
                           const navLinksPosition = headerConfig.navLinksPosition || 'right';
