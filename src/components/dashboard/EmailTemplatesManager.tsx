@@ -550,22 +550,22 @@ export function EmailTemplatesManager() {
             </div>
 
             <div className="space-y-2">
-              <Label>Subject Line</Label>
-              <Input
-                value={editForm.subject}
-                onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
-                className="font-mono"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>Template Description</Label>
               <Input
                 value={editForm.description}
                 onChange={(e) =>
                   setEditForm({ ...editForm, description: e.target.value })
                 }
                 placeholder="Brief description of when this email is sent..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Subject Line</Label>
+              <Input
+                value={editForm.subject}
+                onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
+                className="font-mono"
               />
             </div>
 
