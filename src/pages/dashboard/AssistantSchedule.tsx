@@ -192,11 +192,12 @@ function RequestsList({ requests, isStylistView }: { requests: AssistantRequest[
 export default function AssistantSchedule() {
   const { roles } = useAuth();
   const isStylist = roles.includes('stylist');
-  const isAssistant = roles.includes('assistant');
+  // Check for both legacy 'assistant' role and new 'stylist_assistant' role
+  const isStylistAssistant = roles.includes('stylist_assistant') || roles.includes('assistant');
   const isAdmin = roles.includes('admin') || roles.includes('manager');
 
   const [activeTab, setActiveTab] = useState<'my-requests' | 'my-assignments' | 'all'>(
-    isStylist ? 'my-requests' : isAssistant ? 'my-assignments' : 'all'
+    isStylist ? 'my-requests' : isStylistAssistant ? 'my-assignments' : 'all'
   );
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [locationFilter, setLocationFilter] = useState<string>('all');
@@ -297,7 +298,7 @@ export default function AssistantSchedule() {
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
             <TabsList className="mb-6">
               {isStylist && <TabsTrigger value="my-requests">My Requests</TabsTrigger>}
-              {isAssistant && <TabsTrigger value="my-assignments">My Assignments</TabsTrigger>}
+              {isStylistAssistant && <TabsTrigger value="my-assignments">My Assignments</TabsTrigger>}
               {isAdmin && <TabsTrigger value="all">All Requests</TabsTrigger>}
             </TabsList>
 
@@ -330,7 +331,7 @@ export default function AssistantSchedule() {
               </TabsContent>
             )}
 
-            {isAssistant && (
+            {isStylistAssistant && (
               <TabsContent value="my-assignments">
                 <Card>
                   <CardHeader>
