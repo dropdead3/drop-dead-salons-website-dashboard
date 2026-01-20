@@ -591,29 +591,62 @@ export function EmailTemplatesManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Preview Dialog */}
+      {/* Preview Dialog - Email Client Style */}
       <Dialog
         open={!!previewTemplate}
         onOpenChange={(open) => !open && setPreviewTemplate(null)}
       >
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{previewTemplate?.name} Preview</DialogTitle>
-            <DialogDescription>
-              Subject: {previewTemplate?.subject}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="border rounded-lg p-4 bg-white">
-            {previewTemplate && (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: renderPreviewHtml(
-                    previewTemplate.html_body,
-                    previewTemplate.variables
-                  ),
-                }}
-              />
-            )}
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 gap-0">
+          {/* Email Client Header */}
+          <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Mail className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <div className="font-medium text-sm">Drop Dead Salons</div>
+                <div className="text-xs text-muted-foreground">noreply@dropdeadsalon.com</div>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+              })}
+            </div>
+          </div>
+          
+          {/* Email Subject & Recipients */}
+          <div className="px-4 py-3 border-b bg-background">
+            <h2 className="font-semibold text-lg mb-2">
+              {previewTemplate?.subject ? renderPreviewHtml(previewTemplate.subject, previewTemplate?.variables || []).replace(/<[^>]*>/g, '') : 'No Subject'}
+            </h2>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">To:</span>
+              <span>team@dropdeadsalon.com</span>
+            </div>
+          </div>
+          
+          {/* Email Body */}
+          <div className="overflow-y-auto max-h-[calc(95vh-180px)] bg-neutral-100">
+            <div className="p-6">
+              {/* Outer email wrapper to simulate email client viewport */}
+              <div className="mx-auto bg-white rounded-lg shadow-sm overflow-hidden" style={{ maxWidth: '600px' }}>
+                {previewTemplate && (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: renderPreviewHtml(
+                        previewTemplate.html_body,
+                        previewTemplate.variables
+                      ),
+                    }}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
