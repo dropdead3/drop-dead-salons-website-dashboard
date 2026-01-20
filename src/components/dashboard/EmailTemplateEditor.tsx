@@ -511,10 +511,9 @@ function blocksToHtml(blocks: EmailBlock[]): string {
     switch (block.type) {
       case 'heading':
         // Heading does NOT use borderRadius in canvas, so don't apply it here
-        // Use display:block to ensure no inline gaps
-        return `<h1 style="${baseStyles}; margin: 0; padding: 0; font-size: ${block.styles.fontSize || '24px'}; line-height: 1.3; display: block;">${formatContent(block.content)}</h1>`;
+        return `<h1 style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '24px'}; line-height: 1.3;">${formatContent(block.content)}</h1>`;
       case 'text':
-        return `<p style="${baseStyles}; margin: 0; padding: 0; font-size: ${block.styles.fontSize || '16px'}; line-height: 1.6; display: block;">${formatContent(block.content)}</p>`;
+        return `<p style="${baseStyles}; margin: 0; font-size: ${block.styles.fontSize || '16px'}; line-height: 1.6;">${formatContent(block.content)}</p>`;
       case 'image': {
         const imgUrl = block.imageUrl || 'https://via.placeholder.com/400x200';
         const absoluteImgUrl = imgUrl.startsWith('/') ? `${window.location.origin}${imgUrl}` : imgUrl;
