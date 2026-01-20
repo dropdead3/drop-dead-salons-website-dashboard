@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -498,11 +498,14 @@ function blocksToHtml(blocks: EmailBlock[]): string {
       ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}
     `.trim();
 
+    // Convert newlines to <br/> for proper email rendering
+    const formatContent = (content: string) => content.replace(/\n/g, '<br/>');
+    
     switch (block.type) {
       case 'heading':
-        return `<h1 style="${baseStyles}; margin: 0;">${block.content}</h1>`;
+        return `<h1 style="${baseStyles}; margin: 0;">${formatContent(block.content)}</h1>`;
       case 'text':
-        return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">${block.content}</p>`;
+        return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">${formatContent(block.content)}</p>`;
       case 'image': {
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
           <img src="${block.imageUrl || 'https://via.placeholder.com/400x200'}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}" />
@@ -761,6 +764,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
   const [editingThemeId, setEditingThemeId] = useState<string | null>(null);
   const [isSavingTheme, setIsSavingTheme] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
     name: '',
@@ -1227,6 +1231,46 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
     if (!block) return;
     updateBlock(id, { styles: { ...block.styles, ...styleUpdates } });
   };
+
+  // Apply inline formatting to selected text
+  const applyInlineFormat = useCallback((blockId: string, tag: 'strong' | 'em') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const block = blocks.find(b => b.id === blockId);
+    if (!block) return;
+    
+    const content = block.content;
+    
+    // If no selection, do nothing
+    if (start === end) return;
+    
+    const selectedText = content.substring(start, end);
+    const openTag = `<${tag}>`;
+    const closeTag = `</${tag}>`;
+    
+    // Check if already wrapped - if so, unwrap
+    const beforeSelection = content.substring(0, start);
+    const afterSelection = content.substring(end);
+    
+    // Check if selection is already wrapped
+    if (beforeSelection.endsWith(openTag) && afterSelection.startsWith(closeTag)) {
+      // Unwrap
+      const newContent = beforeSelection.slice(0, -openTag.length) + selectedText + afterSelection.slice(closeTag.length);
+      updateBlock(blockId, { content: newContent });
+    } else {
+      // Wrap the selected text
+      const newContent = content.substring(0, start) + openTag + selectedText + closeTag + content.substring(end);
+      updateBlock(blockId, { content: newContent });
+    }
+    
+    // Restore focus to textarea
+    setTimeout(() => {
+      textarea.focus();
+    }, 0);
+  }, [blocks, updateBlock]);
 
   const deleteBlock = (id: string) => {
     updateBlocksAndHtml(blocks.filter(block => block.id !== id));
@@ -1867,10 +1911,12 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                         <div className="space-y-1.5">
                           <Label className="text-xs text-muted-foreground">Content</Label>
                           <Textarea
+                            ref={textareaRef}
                             value={selectedBlock.content}
                             onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
-                            className="min-h-[180px] text-sm resize-y"
+                            className="min-h-[180px] text-sm resize-y font-mono"
                           />
+                          <p className="text-[10px] text-muted-foreground">Tip: Select text and click B to bold only that portion</p>
                         </div>
                         <div className="flex items-end gap-2">
                           <div className="flex-1 space-y-1.5">
@@ -1890,12 +1936,11 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             </Select>
                           </div>
                           <Button
-                            variant={selectedBlock.styles.fontWeight === 'bold' ? 'default' : 'outline'}
+                            variant="outline"
                             size="sm"
                             className="h-8 w-8 p-0"
-                            onClick={() => updateBlockStyles(selectedBlock.id, { 
-                              fontWeight: selectedBlock.styles.fontWeight === 'bold' ? 'normal' : 'bold' 
-                            })}
+                            onClick={() => applyInlineFormat(selectedBlock.id, 'strong')}
+                            title="Bold selected text"
                           >
                             <Bold className="w-3.5 h-3.5" />
                           </Button>
@@ -2749,10 +2794,16 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                         }}
                       >
                         {block.type === 'heading' && (
-                          <h1 style={{ margin: 0, fontSize: block.styles.fontSize }}>{block.content}</h1>
+                          <h1 
+                            style={{ margin: 0, fontSize: block.styles.fontSize }}
+                            dangerouslySetInnerHTML={{ __html: block.content.replace(/\n/g, '<br/>') }}
+                          />
                         )}
                         {block.type === 'text' && (
-                          <p style={{ margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{block.content}</p>
+                          <p 
+                            style={{ margin: 0, lineHeight: 1.6 }}
+                            dangerouslySetInnerHTML={{ __html: block.content.replace(/\n/g, '<br/>') }}
+                          />
                         )}
                         {block.type === 'image' && (
                           <div style={{ textAlign: block.styles.textAlign }}>
