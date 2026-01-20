@@ -1904,6 +1904,61 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                   </div>
                 </div>
 
+                {/* Recommended Variables Section */}
+                {(() => {
+                  const recommendedKeys = [
+                    'recipient_name',
+                    'recipient_first_name',
+                    'current_date',
+                    'dashboard_link',
+                    'company_name',
+                  ];
+                  const recommendedVars = emailVariables.filter(v => recommendedKeys.includes(v.variable_key));
+                  
+                  if (recommendedVars.length === 0) return null;
+
+                  return (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Sparkles className="w-4 h-4 text-amber-500" />
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recommended</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {recommendedVars.map((v) => {
+                          const inUse = variables.includes(v.variable_key);
+                          return (
+                            <button
+                              key={v.variable_key}
+                              onClick={() => { insertVariable(v.variable_key); setToolbarPanel(null); }}
+                              className={cn(
+                                "group flex flex-col items-start p-3 rounded-lg hover:bg-amber-500/15 border transition-all text-left relative",
+                                inUse 
+                                  ? "bg-amber-500/10 border-amber-500/40" 
+                                  : "bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40"
+                              )}
+                            >
+                              {inUse && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500" title="Used in this template" />
+                              )}
+                              <code className="text-xs font-mono font-semibold text-foreground group-hover:text-amber-600 transition-colors">
+                                {`{{${v.variable_key}}}`}
+                              </code>
+                              <span className="text-[11px] text-muted-foreground mt-1 leading-snug">
+                                {v.description}
+                              </span>
+                              {v.example && (
+                                <span className="text-[10px] text-muted-foreground/60 mt-1 italic">
+                                  e.g., "{v.example}"
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Categorized Variables */}
                 <div className="space-y-4">
                   {(() => {
