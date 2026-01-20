@@ -665,20 +665,20 @@ export function EmailTemplatesManager() {
           style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif' }}
         >
           {/* Viewer Mode Bar - Top */}
-          <div className="flex items-center justify-center gap-4 px-4 py-3 border-b-2 border-primary/20 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
+          <div className="flex items-center justify-center gap-4 px-4 py-3 border-b bg-muted/30">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <Eye className="w-4 h-4 text-primary" />
+                <Eye className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">Now viewing in</span>
               </div>
-              <div className="flex items-center rounded-xl p-1 bg-background border-2 border-primary/30 shadow-md">
+              <div className="flex items-center rounded-full p-1 bg-background border border-border shadow-sm">
                 <button
                   onClick={() => setPreviewMode('desktop')}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200",
+                    "flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
                     previewMode === 'desktop' 
-                      ? "bg-primary text-primary-foreground shadow-lg scale-[1.02]" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                      ? "bg-foreground text-background" 
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <Monitor className="w-4 h-4" />
@@ -687,10 +687,10 @@ export function EmailTemplatesManager() {
                 <button
                   onClick={() => setPreviewMode('mobile')}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200",
+                    "flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
                     previewMode === 'mobile' 
-                      ? "bg-primary text-primary-foreground shadow-lg scale-[1.02]" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                      ? "bg-foreground text-background" 
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <Smartphone className="w-4 h-4" />
