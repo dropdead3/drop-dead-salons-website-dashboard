@@ -76,16 +76,14 @@ export default function RingTheBell() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<BellEntry | null>(null);
 
-  // Separate entries into my rings and team rings
+  // Separate entries into my rings and all team rings (including mine)
   const myRings = useMemo(() => 
     entries.filter(e => e.user_id === user?.id), 
     [entries, user?.id]
   );
   
-  const teamRings = useMemo(() => 
-    entries.filter(e => e.user_id !== user?.id),
-    [entries, user?.id]
-  );
+  // Team rings shows ALL entries (everyone's rings including yours)
+  const teamRings = useMemo(() => entries, [entries]);
 
   // High fives hook
   const entryIds = useMemo(() => entries.map(e => e.id), [entries]);
