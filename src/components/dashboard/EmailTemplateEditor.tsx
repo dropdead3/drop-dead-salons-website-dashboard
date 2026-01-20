@@ -1924,18 +1924,116 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
           {toolbarPanel === 'variables' && variables.length > 0 && (
             <Card className="border-border/50">
               <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-3">Click a variable to insert it at cursor position:</p>
-                <div className="flex flex-wrap gap-2">
-                  {variables.map((variable) => (
-                    <Badge
-                      key={variable}
-                      variant="secondary"
-                      className="text-sm font-mono cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-3 py-1.5"
-                      onClick={() => { insertVariable(variable); setToolbarPanel(null); }}
-                    >
-                      {`{{${variable}}}`}
-                    </Badge>
-                  ))}
+                {/* Variables Guide Header */}
+                <div className="flex items-start gap-3 p-3 bg-muted/40 rounded-lg mb-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Variable className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium mb-1">Dynamic Variables Guide</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Variables are placeholders that get replaced with real data when the email is sent. 
+                      Click any variable below to insert it at your cursor position in the editor.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Categorized Variables */}
+                <div className="space-y-4">
+                  {(() => {
+                    // Variable metadata with categories and descriptions
+                    const variableMetadata: Record<string, { category: string; description: string; example?: string }> = {
+                      // Recipient Info
+                      employee_name: { category: 'Recipient', description: 'Full name of the employee receiving the email', example: 'Jane Smith' },
+                      stylist_name: { category: 'Recipient', description: 'Name of the stylist', example: 'Jane Smith' },
+                      user_name: { category: 'Recipient', description: 'Username or display name', example: 'jsmith' },
+                      first_name: { category: 'Recipient', description: 'First name only', example: 'Jane' },
+                      
+                      // Birthday Related
+                      birthday_date: { category: 'Birthday', description: 'Formatted date of the birthday', example: 'January 25th' },
+                      birthday_count: { category: 'Birthday', description: 'Number of upcoming birthdays', example: '3' },
+                      birthday_list: { category: 'Birthday', description: 'HTML formatted list of birthdays', example: '<li>Jane - Jan 25</li>' },
+                      birthday_names: { category: 'Birthday', description: 'Comma-separated names', example: 'Jane, John, Mary' },
+                      days_until: { category: 'Birthday', description: 'Days until the birthday', example: '3' },
+                      
+                      // Handbook Related
+                      handbook_count: { category: 'Handbook', description: 'Number of pending handbooks', example: '2' },
+                      handbook_list: { category: 'Handbook', description: 'HTML formatted list of handbooks', example: '<li>Employee Guide</li>' },
+                      handbook_names: { category: 'Handbook', description: 'Comma-separated handbook names', example: 'Safety Manual, HR Policy' },
+                      
+                      // Program Related
+                      current_day: { category: 'Program', description: 'Current day number in the program', example: '15' },
+                      is_urgent: { category: 'Program', description: 'Whether the reminder is urgent', example: 'true' },
+                      streak_count: { category: 'Program', description: 'Current completion streak', example: '7' },
+                      
+                      // Links & URLs
+                      dashboard_url: { category: 'Links', description: 'Link to the staff dashboard', example: 'https://...' },
+                      action_url: { category: 'Links', description: 'Primary call-to-action URL', example: 'https://...' },
+                      unsubscribe_url: { category: 'Links', description: 'Email unsubscribe link', example: 'https://...' },
+                      
+                      // Date & Time
+                      date: { category: 'Date & Time', description: 'Current date formatted', example: 'January 20, 2026' },
+                      time: { category: 'Date & Time', description: 'Current time', example: '2:30 PM' },
+                      year: { category: 'Date & Time', description: 'Current year', example: '2026' },
+                      
+                      // Counts & Numbers
+                      count: { category: 'Numbers', description: 'Generic count value', example: '5' },
+                      plural: { category: 'Numbers', description: 'Pluralization suffix (s or empty)', example: 's' },
+                      hasHave: { category: 'Numbers', description: 'Grammar helper (has/have)', example: 'have' },
+                      total: { category: 'Numbers', description: 'Total count or amount', example: '10' },
+                    };
+
+                    // Group variables by category
+                    const groupedVariables = variables.reduce((acc, variable) => {
+                      const meta = variableMetadata[variable] || { category: 'Custom', description: 'Custom template variable' };
+                      if (!acc[meta.category]) acc[meta.category] = [];
+                      acc[meta.category].push({ name: variable, ...meta });
+                      return acc;
+                    }, {} as Record<string, Array<{ name: string; category: string; description: string; example?: string }>>);
+
+                    // Category icons and colors
+                    const categoryStyles: Record<string, { icon: string; color: string }> = {
+                      'Recipient': { icon: '👤', color: 'bg-blue-500/10 text-blue-600' },
+                      'Birthday': { icon: '🎂', color: 'bg-pink-500/10 text-pink-600' },
+                      'Handbook': { icon: '📚', color: 'bg-amber-500/10 text-amber-600' },
+                      'Program': { icon: '📈', color: 'bg-green-500/10 text-green-600' },
+                      'Links': { icon: '🔗', color: 'bg-purple-500/10 text-purple-600' },
+                      'Date & Time': { icon: '📅', color: 'bg-cyan-500/10 text-cyan-600' },
+                      'Numbers': { icon: '🔢', color: 'bg-orange-500/10 text-orange-600' },
+                      'Custom': { icon: '⚡', color: 'bg-gray-500/10 text-gray-600' },
+                    };
+
+                    return Object.entries(groupedVariables).map(([category, vars]) => (
+                      <div key={category}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm">{categoryStyles[category]?.icon || '📦'}</span>
+                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</span>
+                          <span className="text-[10px] text-muted-foreground/60">({vars.length})</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {vars.map((v) => (
+                            <button
+                              key={v.name}
+                              onClick={() => { insertVariable(v.name); setToolbarPanel(null); }}
+                              className="group flex flex-col items-start p-3 rounded-lg bg-muted/30 hover:bg-primary/10 border border-transparent hover:border-primary/20 transition-all text-left"
+                            >
+                              <code className="text-xs font-mono font-semibold text-foreground group-hover:text-primary transition-colors">
+                                {`{{${v.name}}}`}
+                              </code>
+                              <span className="text-[11px] text-muted-foreground mt-1 leading-snug">
+                                {v.description}
+                              </span>
+                              {v.example && (
+                                <span className="text-[10px] text-muted-foreground/60 mt-1 italic">
+                                  e.g., "{v.example}"
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ));
+                  })()}
                 </div>
               </CardContent>
             </Card>
