@@ -15,7 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X } from 'lucide-react';
+import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X, Info, Sparkles } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import confetti from 'canvas-confetti';
 
@@ -308,6 +309,16 @@ export default function RingTheBell() {
             {showForm ? 'CANCEL' : 'RING IT'}
           </Button>
         </div>
+
+        {/* Info Notice */}
+        <Alert className="mb-6 bg-accent/50 border-accent">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-sm font-sans">
+            <span className="font-medium">Ring the Bell</span> is for celebrating high-ticket bookings with your team! 
+            Ring it when you book a service <span className="font-semibold">$500 or more</span> — whether it's extensions, 
+            color transformations, or any premium service. Share what closed the deal to inspire others! 🎉
+          </AlertDescription>
+        </Alert>
 
         {/* Form */}
         {showForm && (
