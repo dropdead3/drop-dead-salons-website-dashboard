@@ -76,39 +76,103 @@ import dd75Icon from '@/assets/dd75-icon.svg';
 import dd75Logo from '@/assets/dd75-logo.svg';
 
 // Brand logo presets
+type LogoVariant = 'black' | 'white';
+
 interface BrandLogo {
   id: string;
   name: string;
   src: string;
   description: string;
+  variant: LogoVariant;
+  baseId: string; // Used to group variants together
 }
 
 const brandLogos: BrandLogo[] = [
+  // Drop Dead Logo variants
   {
-    id: 'drop-dead-main',
+    id: 'drop-dead-main-black',
+    baseId: 'drop-dead-main',
     name: 'Drop Dead Logo',
     src: dropDeadLogo,
     description: 'Primary wordmark logo',
+    variant: 'black',
   },
   {
-    id: 'dd-secondary',
+    id: 'drop-dead-main-white',
+    baseId: 'drop-dead-main',
+    name: 'Drop Dead Logo',
+    src: dropDeadLogo,
+    description: 'Primary wordmark logo',
+    variant: 'white',
+  },
+  // DD Secondary variants
+  {
+    id: 'dd-secondary-black',
+    baseId: 'dd-secondary',
     name: 'DD Secondary',
     src: ddSecondaryLogo,
     description: 'Secondary icon logo',
+    variant: 'black',
   },
   {
-    id: 'dd75-icon',
+    id: 'dd-secondary-white',
+    baseId: 'dd-secondary',
+    name: 'DD Secondary',
+    src: ddSecondaryLogo,
+    description: 'Secondary icon logo',
+    variant: 'white',
+  },
+  // DD75 Icon variants
+  {
+    id: 'dd75-icon-black',
+    baseId: 'dd75-icon',
     name: 'DD75 Icon',
     src: dd75Icon,
     description: 'Circular icon mark',
+    variant: 'black',
   },
   {
-    id: 'dd75-logo',
+    id: 'dd75-icon-white',
+    baseId: 'dd75-icon',
+    name: 'DD75 Icon',
+    src: dd75Icon,
+    description: 'Circular icon mark',
+    variant: 'white',
+  },
+  // DD75 Logo variants
+  {
+    id: 'dd75-logo-black',
+    baseId: 'dd75-logo',
     name: 'DD75 Logo',
     src: dd75Logo,
     description: 'DD75 wordmark',
+    variant: 'black',
+  },
+  {
+    id: 'dd75-logo-white',
+    baseId: 'dd75-logo',
+    name: 'DD75 Logo',
+    src: dd75Logo,
+    description: 'DD75 wordmark',
+    variant: 'white',
   },
 ];
+
+// Get unique logos (by baseId) for display
+const uniqueLogos = brandLogos.filter((logo, index, self) =>
+  index === self.findIndex((l) => l.baseId === logo.baseId)
+);
+
+// Helper to get logo by id (with fallback for legacy ids without variant)
+const getLogoById = (id: string): BrandLogo | undefined => {
+  // First try exact match
+  let logo = brandLogos.find(l => l.id === id);
+  if (logo) return logo;
+  
+  // Fallback for legacy ids (without -black/-white suffix)
+  logo = brandLogos.find(l => l.baseId === id && l.variant === 'black');
+  return logo;
+};
 
 // Block types for the email editor
 type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social' | 'footer' | 'header';
@@ -429,10 +493,14 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         return `<h1 style="${baseStyles}; margin: 0;">${block.content}</h1>`;
       case 'text':
         return `<p style="${baseStyles}; margin: 0; line-height: 1.6;">${block.content}</p>`;
-      case 'image':
+      case 'image': {
+        // Check if this is a white variant logo based on content name
+        const isWhiteLogo = block.content?.includes('(White)');
+        const logoFilter = isWhiteLogo ? 'filter: invert(1) brightness(2);' : '';
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; ${block.styles.padding ? `padding: ${block.styles.padding};` : ''}">
-          <img src="${block.imageUrl || 'https://via.placeholder.com/400x200'}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''}" />
+          <img src="${block.imageUrl || 'https://via.placeholder.com/400x200'}" alt="${block.content || 'Email image'}" style="max-width: 100%; ${block.styles.width ? `width: ${block.styles.width};` : ''} ${block.styles.borderRadius ? `border-radius: ${block.styles.borderRadius};` : ''} ${logoFilter}" />
         </div>`;
+      }
       case 'button': {
         const isSecondary = block.styles.buttonVariant === 'secondary';
         const buttonStyles = isSecondary
@@ -481,16 +549,17 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'footer': {
-        const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
-        const logo = brandLogos.find(l => l.id === footerConfig.logoId) || brandLogos[0];
+        const footerConfig = block.footerConfig || { showLogo: true, logoId: 'drop-dead-main-black', showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
+        const logo = getLogoById(footerConfig.logoId) || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
         const iconColor = block.styles.buttonColor || '#f5f0e8';
+        const logoFilter = logo.variant === 'white' ? 'filter: invert(1) brightness(2);' : '';
         
         let logoHtml = '';
         if (footerConfig.showLogo) {
           logoHtml = `<div style="margin-bottom: 16px;">
-            <img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto;" />
+            <img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto; ${logoFilter}" />
           </div>`;
         }
         
@@ -528,14 +597,15 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         </div>`;
       }
       case 'header': {
-        const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main', showNavLinks: true };
-        const logo = brandLogos.find(l => l.id === headerConfig.logoId) || brandLogos[0];
+        const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main-black', showNavLinks: true };
+        const logo = getLogoById(headerConfig.logoId) || brandLogos[0];
         const bgColor = block.styles.backgroundColor || '#1a1a1a';
         const textColor = block.styles.textColor || '#f5f0e8';
+        const logoFilter = logo.variant === 'white' ? 'filter: invert(1) brightness(2);' : '';
         
         let logoHtml = '';
         if (headerConfig.showLogo) {
-          logoHtml = `<img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto;" />`;
+          logoHtml = `<img src="${logo.src}" alt="${logo.name}" style="max-width: 150px; height: auto; ${logoFilter}" />`;
         }
         
         let navHtml = '';
@@ -1018,7 +1088,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
         ],
         footerConfig: {
           showLogo: true,
-          logoId: 'drop-dead-main',
+          logoId: 'drop-dead-main-black',
           showSocialIcons: true,
           copyrightText: '© 2026 Drop Dead Salons. All rights reserved.',
         }
@@ -1031,7 +1101,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
         ],
         headerConfig: {
           showLogo: true,
-          logoId: 'drop-dead-main',
+          logoId: 'drop-dead-main-black',
           showNavLinks: true,
         }
       }),
@@ -1042,11 +1112,12 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
 
   const addLogoBlock = (logo: BrandLogo) => {
     const currentTheme = allThemes.find(t => t.id === selectedTheme) || emailThemes[0];
+    const variantLabel = logo.variant === 'white' ? '(White)' : '(Black)';
     
     const newBlock: EmailBlock = {
       id: crypto.randomUUID(),
       type: 'image',
-      content: logo.name,
+      content: `${logo.name} ${variantLabel}`,
       styles: {
         backgroundColor: currentTheme.colors.headerBg,
         textAlign: 'center',
@@ -1057,7 +1128,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
     };
     updateBlocksAndHtml([...blocks, newBlock]);
     setSelectedBlockId(newBlock.id);
-    toast.success(`Added ${logo.name}`);
+    toast.success(`Added ${logo.name} ${variantLabel}`);
   };
 
   const updateBlock = (id: string, updates: Partial<EmailBlock>) => {
@@ -1642,19 +1713,39 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
             </Card>
           )}
 
-          {/* Logos Panel */}
+{/* Logos Panel */}
           {toolbarPanel === 'logos' && (
             <Card className="border-border/50">
               <CardContent className="p-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {brandLogos.map((logo) => (
-                    <button key={logo.id} onClick={() => { addLogoBlock(logo); setToolbarPanel(null); }} className="flex flex-col items-center gap-3 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
-                      <div className="w-12 h-12 flex items-center justify-center bg-background rounded-lg shadow-sm">
-                        <img src={logo.src} alt={logo.name} className="w-8 h-8 object-contain" />
+                  {uniqueLogos.map((baseLogo) => {
+                    const blackVariant = brandLogos.find(l => l.baseId === baseLogo.baseId && l.variant === 'black')!;
+                    const whiteVariant = brandLogos.find(l => l.baseId === baseLogo.baseId && l.variant === 'white')!;
+                    return (
+                      <div key={baseLogo.baseId} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40">
+                        <div className="w-12 h-12 flex items-center justify-center bg-background rounded-lg shadow-sm">
+                          <img src={baseLogo.src} alt={baseLogo.name} className="w-8 h-8 object-contain" />
+                        </div>
+                        <span className="text-[11px] font-medium text-foreground/80 truncate max-w-full">{baseLogo.name}</span>
+                        <div className="flex gap-1 mt-1">
+                          <button
+                            onClick={() => { addLogoBlock(blackVariant); setToolbarPanel(null); }}
+                            className="flex items-center justify-center w-8 h-6 rounded bg-foreground text-background text-[9px] font-medium hover:opacity-80 transition-opacity"
+                            title="Black version"
+                          >
+                            Black
+                          </button>
+                          <button
+                            onClick={() => { addLogoBlock(whiteVariant); setToolbarPanel(null); }}
+                            className="flex items-center justify-center w-8 h-6 rounded bg-background text-foreground text-[9px] font-medium border border-border hover:bg-muted transition-colors"
+                            title="White version"
+                          >
+                            White
+                          </button>
+                        </div>
                       </div>
-                      <span className="text-[11px] font-medium text-foreground/80 truncate max-w-full">{logo.name}</span>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -1816,27 +1907,45 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                         {/* Brand Logos Quick Select */}
                         <div className="space-y-2">
                           <Label className="text-xs">Brand Logos</Label>
-                          <div className="grid grid-cols-2 gap-1">
-                            {brandLogos.map((logo) => (
-                              <button
-                                key={logo.id}
-                                onClick={() => {
-                                  updateBlock(selectedBlock.id, { 
-                                    imageUrl: logo.src,
-                                    content: logo.name
-                                  });
-                                }}
-                                className={cn(
-                                  "flex items-center gap-2 p-2 rounded border text-left transition-all hover:border-primary",
-                                  selectedBlock.imageUrl === logo.src && "border-primary bg-primary/5"
-                                )}
-                              >
-                                <div className="w-8 h-8 flex items-center justify-center bg-muted rounded">
-                                  <img src={logo.src} alt={logo.name} className="w-6 h-6 object-contain" />
+                          <div className="grid grid-cols-1 gap-2">
+                            {uniqueLogos.map((baseLogo) => {
+                              const blackVariant = brandLogos.find(l => l.baseId === baseLogo.baseId && l.variant === 'black')!;
+                              const whiteVariant = brandLogos.find(l => l.baseId === baseLogo.baseId && l.variant === 'white')!;
+                              const isBlackSelected = selectedBlock.imageUrl === blackVariant.src && selectedBlock.content?.includes('Black');
+                              const isWhiteSelected = selectedBlock.imageUrl === whiteVariant.src && selectedBlock.content?.includes('White');
+                              return (
+                                <div key={baseLogo.baseId} className="flex items-center gap-2 p-2 rounded border">
+                                  <div className="w-8 h-8 flex items-center justify-center bg-muted rounded shrink-0">
+                                    <img src={baseLogo.src} alt={baseLogo.name} className="w-6 h-6 object-contain" />
+                                  </div>
+                                  <span className="text-[10px] truncate flex-1">{baseLogo.name}</span>
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() => updateBlock(selectedBlock.id, { imageUrl: blackVariant.src, content: `${baseLogo.name} (Black)` })}
+                                      className={cn(
+                                        "px-2 py-1 rounded text-[9px] font-medium transition-all",
+                                        isBlackSelected 
+                                          ? "bg-foreground text-background" 
+                                          : "bg-foreground/10 text-foreground hover:bg-foreground/20"
+                                      )}
+                                    >
+                                      Black
+                                    </button>
+                                    <button
+                                      onClick={() => updateBlock(selectedBlock.id, { imageUrl: whiteVariant.src, content: `${baseLogo.name} (White)` })}
+                                      className={cn(
+                                        "px-2 py-1 rounded text-[9px] font-medium border transition-all",
+                                        isWhiteSelected 
+                                          ? "bg-background text-foreground border-foreground" 
+                                          : "bg-background text-foreground/60 border-border hover:border-foreground/40"
+                                      )}
+                                    >
+                                      White
+                                    </button>
+                                  </div>
                                 </div>
-                                <span className="text-[10px] truncate flex-1">{logo.name}</span>
-                              </button>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                         
@@ -2007,7 +2116,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             </div>
                             {selectedBlock.footerConfig?.showLogo && (
                               <Select
-                                value={selectedBlock.footerConfig?.logoId || 'drop-dead-main'}
+                                value={selectedBlock.footerConfig?.logoId || 'drop-dead-main-black'}
                                 onValueChange={(v) => {
                                   updateBlock(selectedBlock.id, {
                                     footerConfig: {
@@ -2022,7 +2131,9 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                                 </SelectTrigger>
                                 <SelectContent>
                                   {brandLogos.map((logo) => (
-                                    <SelectItem key={logo.id} value={logo.id}>{logo.name}</SelectItem>
+                                    <SelectItem key={logo.id} value={logo.id}>
+                                      {logo.name} ({logo.variant === 'black' ? 'Black' : 'White'})
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -2156,7 +2267,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             </div>
                             {selectedBlock.headerConfig?.showLogo && (
                               <Select
-                                value={selectedBlock.headerConfig?.logoId || 'drop-dead-main'}
+                                value={selectedBlock.headerConfig?.logoId || 'drop-dead-main-black'}
                                 onValueChange={(v) => {
                                   updateBlock(selectedBlock.id, {
                                     headerConfig: {
@@ -2171,7 +2282,9 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                                 </SelectTrigger>
                                 <SelectContent>
                                   {brandLogos.map((logo) => (
-                                    <SelectItem key={logo.id} value={logo.id}>{logo.name}</SelectItem>
+                                    <SelectItem key={logo.id} value={logo.id}>
+                                      {logo.name} ({logo.variant === 'black' ? 'Black' : 'White'})
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
