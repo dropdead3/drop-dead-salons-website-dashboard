@@ -83,6 +83,10 @@
     --oat: 35 35% 82%;
     --oat-foreground: 30 20% 25%;
 
+    /* Gold accent - for premium badges */
+    --gold: 38 70% 38%;
+    --gold-foreground: 45 100% 97%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
@@ -128,6 +132,10 @@
     /* Oat/Tan accent - dark mode */
     --oat: 35 25% 30%;
     --oat-foreground: 35 30% 85%;
+
+    /* Gold accent - dark mode */
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 20% 92%;

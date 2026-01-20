@@ -262,11 +262,6 @@ export function BellEntryCard({
                     )}
                   </span>
                 )}
-                {entry.lead_source === 'salon_lead' && (
-                  <span className="px-2 py-0.5 bg-accent text-accent-foreground text-xs font-display tracking-wide rounded border border-border">
-                    SALON LEAD
-                  </span>
-                )}
                 {entry.is_pinned && (
                   <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs font-display tracking-wide rounded">
                     PINNED
@@ -351,18 +346,27 @@ export function BellEntryCard({
             </div>
           </div>
 
-          {/* Actions Menu */}
-          {(isCoach || canEditOrDelete) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground ml-2 shrink-0"
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
+          {/* Top Right Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Salon Lead Badge */}
+            {entry.lead_source === 'salon_lead' && (
+              <span className="px-2.5 py-1 text-xs font-display tracking-wide rounded bg-gold text-gold-foreground animate-shimmer bg-[length:200%_100%] shadow-sm">
+                SALON LEAD
+              </span>
+            )}
+
+            {/* Actions Menu */}
+            {(isCoach || canEditOrDelete) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 {/* Coach-only actions */}
                 {isCoach && (
@@ -399,7 +403,8 @@ export function BellEntryCard({
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+            )}
+          </div>
         </div>
       )}
     </Card>
