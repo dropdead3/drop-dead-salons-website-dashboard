@@ -465,30 +465,17 @@ export function EmailTemplatesManager() {
       >
         <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col overflow-hidden p-0">
           <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle className="flex items-center gap-2">
-              Edit Email Template
-              {hasUnsavedChanges && (
-                <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800">
-                  Unsaved Changes
-                </Badge>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              Use the visual editor to design your email template, or switch to HTML code for full control.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto space-y-4 px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Template Name</Label>
-                <Input
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                />
-              </div>
-              <div className="flex items-center justify-end gap-2">
-                <Label>Active</Label>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                Edit Email Template
+                {hasUnsavedChanges && (
+                  <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800">
+                    Unsaved Changes
+                  </Badge>
+                )}
+              </DialogTitle>
+              <div className="flex items-center gap-2 mr-6">
+                <Label className="text-sm">Active</Label>
                 <Switch
                   checked={editForm.is_active}
                   onCheckedChange={(checked) =>
@@ -496,6 +483,19 @@ export function EmailTemplatesManager() {
                   }
                 />
               </div>
+            </div>
+            <DialogDescription>
+              Use the visual editor to design your email template, or switch to HTML code for full control.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4 px-6">
+            <div className="space-y-2">
+              <Label>Template Name</Label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
             </div>
 
             <div className="space-y-2">
