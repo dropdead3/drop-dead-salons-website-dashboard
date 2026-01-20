@@ -673,7 +673,9 @@ export function EmailTemplatesManager() {
               style={{ 
                 color: '#000000',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
-                fontWeight: 700
+                fontWeight: 700,
+                textTransform: 'none',
+                letterSpacing: '-0.02em'
               }}
             >
               {previewTemplate?.subject ? renderPreviewHtml(previewTemplate.subject, previewTemplate?.variables || []).replace(/<[^>]*>/g, '') : 'No Subject'}
