@@ -771,6 +771,121 @@ export type Database = {
         }
         Relationships: []
       }
+      graduation_feedback: {
+        Row: {
+          coach_id: string
+          created_at: string
+          feedback: string
+          id: string
+          submission_id: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string
+          feedback: string
+          id?: string
+          submission_id: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string
+          feedback?: string
+          id?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graduation_feedback_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "graduation_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      graduation_requirements: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      graduation_submissions: {
+        Row: {
+          assistant_id: string
+          assistant_notes: string | null
+          created_at: string
+          id: string
+          proof_url: string | null
+          requirement_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          assistant_id: string
+          assistant_notes?: string | null
+          created_at?: string
+          id?: string
+          proof_url?: string | null
+          requirement_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          assistant_id?: string
+          assistant_notes?: string | null
+          created_at?: string
+          id?: string
+          proof_url?: string | null
+          requirement_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graduation_submissions_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "graduation_requirements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       handbook_acknowledgments: {
         Row: {
           acknowledged_at: string
