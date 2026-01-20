@@ -828,6 +828,13 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
       toast.error('Please enter a theme name');
       return;
     }
+    // Validate all 5 colors are defined
+    const requiredColors = ['headerBg', 'bodyBg', 'buttonBg', 'accentColor', 'dividerColor'] as const;
+    const missingColors = requiredColors.filter(key => !newTheme.colors[key] || newTheme.colors[key] === '');
+    if (missingColors.length > 0) {
+      toast.error('All 5 theme colors are required');
+      return;
+    }
     if (!user?.id) {
       toast.error('You must be logged in to save themes');
       return;
@@ -944,6 +951,13 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
     if (!editingThemeId) return;
     if (!newTheme.name.trim()) {
       toast.error('Please enter a theme name');
+      return;
+    }
+    // Validate all 5 colors are defined
+    const requiredColors = ['headerBg', 'bodyBg', 'buttonBg', 'accentColor', 'dividerColor'] as const;
+    const missingColors = requiredColors.filter(key => !newTheme.colors[key] || newTheme.colors[key] === '');
+    if (missingColors.length > 0) {
+      toast.error('All 5 theme colors are required');
       return;
     }
 
@@ -1704,6 +1718,8 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.headerBg }} />
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.bodyBg }} />
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.buttonBg }} />
+                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.accentColor }} />
+                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.dividerColor }} />
                             </div>
                             <div className="text-[10px] font-medium truncate flex items-center gap-1">
                               {theme.id === 'drop-dead-premium' && <Crown className="w-3 h-3 text-amber-500" />}
@@ -1727,6 +1743,8 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.headerBg }} />
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.bodyBg }} />
                               <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.buttonBg }} />
+                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.accentColor }} />
+                              <div className="w-4 h-4 rounded-full border border-foreground/20" style={{ backgroundColor: theme.colors.dividerColor }} />
                             </div>
                             <div className="text-[10px] font-medium truncate flex items-center gap-1"><Sparkles className="w-2.5 h-2.5 text-primary" />{theme.name}</div>
                           </div>
