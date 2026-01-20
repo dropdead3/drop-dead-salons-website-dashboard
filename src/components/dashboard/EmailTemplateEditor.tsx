@@ -65,6 +65,7 @@ import {
   Search,
   X,
   PenTool,
+  ArrowRight,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -233,6 +234,7 @@ interface EmailBlock {
     dividerStyle?: 'solid' | 'dashed' | 'dotted' | 'double';
     dividerWidth?: number; // 20-100%
     buttonShape?: 'pill' | 'rounded' | 'rectangle';
+    buttonArrow?: boolean; // Show right arrow in button
     linkSize?: number; // 80-140 percentage scale for link font size
     iconSize?: number; // 16-48 pixel size for social icons
   };
@@ -617,12 +619,18 @@ function blocksToHtml(blocks: EmailBlock[]): string {
         const basePaddingH = Math.round(32 * sizeScale);
         const baseFontSize = Math.round(16 * sizeScale);
         const shapeRadius = block.styles.buttonShape === 'pill' ? '9999px' : block.styles.buttonShape === 'rectangle' ? '0px' : '8px';
+        const showArrow = block.styles.buttonArrow === true;
+        const arrowSvg = showArrow 
+          ? `<span style="display: inline-block; margin-left: 8px; vertical-align: middle;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(16 * sizeScale)}" height="${Math.round(16 * sizeScale)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </span>`
+          : '';
         const buttonStyles = isSecondary
           ? `display: inline-block; background-color: ${block.styles.backgroundColor || '#f5f0e8'}; color: ${block.styles.buttonColor || '#1a1a1a'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border: 2px solid ${block.styles.buttonColor || '#1a1a1a'}; border-radius: ${shapeRadius};`
           : `display: inline-block; background-color: ${block.styles.buttonColor || '#3b82f6'}; color: ${block.styles.buttonTextColor || '#ffffff'}; padding: ${basePaddingV}px ${basePaddingH}px; text-decoration: none; font-weight: bold; font-size: ${baseFontSize}px; border-radius: ${shapeRadius};`;
         // Include background-color on wrapper div to match body background
         return `<div style="text-align: ${block.styles.textAlign || 'center'}; padding: ${computePadding(block.styles)}; ${block.styles.backgroundColor ? `background-color: ${block.styles.backgroundColor};` : ''} font-size: 16px; line-height: 1.4;">
-          <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}</a>
+          <a href="${block.linkUrl || '{{dashboard_url}}'}" style="${buttonStyles}">${block.content}${arrowSvg}</a>
         </div>`;
       }
       case 'link': {
@@ -2606,6 +2614,19 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             </button>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2 pt-2">
+                          <input
+                            type="checkbox"
+                            id="button-arrow"
+                            checked={selectedBlock.styles.buttonArrow === true}
+                            onChange={(e) => updateBlockStyles(selectedBlock.id, { buttonArrow: e.target.checked })}
+                            className="h-4 w-4 rounded border-border"
+                          />
+                          <Label htmlFor="button-arrow" className="text-xs cursor-pointer flex items-center gap-1.5">
+                            Show Right Arrow
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Label>
+                        </div>
                       </>
                     )}
 
@@ -3956,7 +3977,8 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               {block.styles.buttonVariant === 'secondary' ? (
                                 <span
                                   style={{
-                                    display: 'inline-block',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
                                     backgroundColor: block.styles.backgroundColor || '#f5f0e8',
                                     color: block.styles.buttonColor || '#1a1a1a',
                                     padding: `${paddingV}px ${paddingH}px`,
@@ -3967,11 +3989,13 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   }}
                                 >
                                   {block.content}
+                                  {block.styles.buttonArrow && <ArrowRight className="inline-block ml-2" style={{ width: fontSize, height: fontSize }} />}
                                 </span>
                               ) : (
                                 <span
                                   style={{
-                                    display: 'inline-block',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
                                     backgroundColor: block.styles.buttonColor || '#3b82f6',
                                     color: block.styles.buttonTextColor || '#ffffff',
                                     padding: `${paddingV}px ${paddingH}px`,
@@ -3981,6 +4005,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   }}
                                 >
                                   {block.content}
+                                  {block.styles.buttonArrow && <ArrowRight className="inline-block ml-2" style={{ width: fontSize, height: fontSize }} />}
                                 </span>
                               )}
                             </div>
