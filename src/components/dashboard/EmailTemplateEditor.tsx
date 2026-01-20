@@ -1543,7 +1543,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                       ))}
                     </div>
                     <ScrollArea className="h-[180px]">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1">
                         {emailThemes.filter(theme => themeCategoryFilter === 'all' || theme.category.includes(themeCategoryFilter)).map((theme) => (
                           <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="flex gap-0.5 mb-1.5">
@@ -1562,7 +1562,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                   </TabsContent>
                   <TabsContent value="custom" className="mt-0">
                     <ScrollArea className="h-[180px]">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1">
                         {customThemes.map((theme) => (
                           <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md group relative', selectedTheme === theme.id ? 'ring-1 ring-foreground border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5">
