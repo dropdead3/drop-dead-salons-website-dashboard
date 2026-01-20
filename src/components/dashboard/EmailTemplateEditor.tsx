@@ -3621,38 +3621,47 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             )}
                           </div>
                         )}
-                        {block.type === 'button' && (
-                          <div style={{ textAlign: block.styles.textAlign }}>
-                            {block.styles.buttonVariant === 'secondary' ? (
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  backgroundColor: block.styles.backgroundColor || '#f5f0e8',
-                                  color: block.styles.buttonColor || '#1a1a1a',
-                                  padding: '16px 32px',
-                                  fontWeight: 'bold',
-                                  borderRadius: block.styles.borderRadius || '8px',
-                                  border: `2px solid ${block.styles.buttonColor || '#1a1a1a'}`,
-                                }}
-                              >
-                                {block.content}
-                              </span>
-                            ) : (
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  backgroundColor: block.styles.buttonColor || '#3b82f6',
-                                  color: block.styles.buttonTextColor || '#ffffff',
-                                  padding: '16px 32px',
-                                  fontWeight: 'bold',
-                                  borderRadius: block.styles.borderRadius || '8px',
-                                }}
-                              >
-                                {block.content}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        {block.type === 'button' && (() => {
+                          const sizeScale = (block.styles.buttonSize || 100) / 100;
+                          const paddingV = Math.round(16 * sizeScale);
+                          const paddingH = Math.round(32 * sizeScale);
+                          const fontSize = Math.round(16 * sizeScale);
+                          const shapeRadius = block.styles.buttonShape === 'pill' ? '9999px' : block.styles.buttonShape === 'rectangle' ? '0px' : '8px';
+                          return (
+                            <div style={{ textAlign: block.styles.textAlign }}>
+                              {block.styles.buttonVariant === 'secondary' ? (
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    backgroundColor: block.styles.backgroundColor || '#f5f0e8',
+                                    color: block.styles.buttonColor || '#1a1a1a',
+                                    padding: `${paddingV}px ${paddingH}px`,
+                                    fontWeight: 'bold',
+                                    fontSize: `${fontSize}px`,
+                                    borderRadius: shapeRadius,
+                                    border: `2px solid ${block.styles.buttonColor || '#1a1a1a'}`,
+                                  }}
+                                >
+                                  {block.content}
+                                </span>
+                              ) : (
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    backgroundColor: block.styles.buttonColor || '#3b82f6',
+                                    color: block.styles.buttonTextColor || '#ffffff',
+                                    padding: `${paddingV}px ${paddingH}px`,
+                                    fontWeight: 'bold',
+                                    fontSize: `${fontSize}px`,
+                                    borderRadius: shapeRadius,
+                                  }}
+                                >
+                                  {block.content}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                         {block.type === 'link' && (
                           <p style={{ margin: 0, lineHeight: 1.6 }}>
                             <a 
