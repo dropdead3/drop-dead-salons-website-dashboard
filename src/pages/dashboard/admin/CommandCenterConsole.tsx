@@ -25,6 +25,7 @@ import {
   groupByCategory,
 } from '@/hooks/useDashboardVisibility';
 import { Button } from '@/components/ui/button';
+import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -116,6 +117,9 @@ export default function CommandCenterConsole() {
             </p>
           </div>
         </div>
+
+        {/* Onboarding Overview */}
+        <OnboardingTrackerOverview />
 
         {/* Bulk Controls - Clean Grid */}
         <Card className="p-5">
