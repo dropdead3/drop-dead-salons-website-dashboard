@@ -129,7 +129,8 @@ export function EmailTemplatesManager() {
       editForm.subject !== initialEditFormRef.current.subject ||
       editForm.html_body !== initialEditFormRef.current.html_body ||
       editForm.description !== initialEditFormRef.current.description ||
-      editForm.is_active !== initialEditFormRef.current.is_active;
+      editForm.is_active !== initialEditFormRef.current.is_active ||
+      JSON.stringify(editForm.blocks_json) !== JSON.stringify(initialEditFormRef.current.blocks_json);
     
     setHasUnsavedChanges(hasChanges);
     
@@ -512,8 +513,9 @@ export function EmailTemplatesManager() {
               />
             </div>
 
-            {/* Advanced Visual Editor */}
+            {/* Advanced Visual Editor - key forces remount when template changes */}
             <EmailTemplateEditor
+              key={editingTemplate?.id}
               initialHtml={editForm.html_body}
               initialBlocks={editForm.blocks_json as any}
               variables={editingTemplate?.variables || []}
