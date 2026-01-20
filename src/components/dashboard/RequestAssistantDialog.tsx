@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { format, addWeeks } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, User, MapPin, Repeat } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { format, addWeeks, getDay } from 'date-fns';
+import { Calendar as CalendarIcon, Clock, User, MapPin, Repeat, AlertCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,14 +23,18 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useSalonServices, useCreateAssistantRequest, RecurrenceType } from '@/hooks/useAssistantRequests';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useActiveAssistants, useLocationsWithAssistants, useAssistantsAtLocation } from '@/hooks/useAssistantAvailability';
 
 interface RequestAssistantDialogProps {
   children: React.ReactNode;
 }
+
+const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function RequestAssistantDialog({ children }: RequestAssistantDialogProps) {
   const [open, setOpen] = useState(false);
@@ -45,18 +49,37 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date>();
 
   const { data: services = [], isLoading: servicesLoading } = useSalonServices();
-  const { data: locations = [] } = useActiveLocations();
+  const { data: allLocations = [] } = useActiveLocations();
   const { data: profile } = useEmployeeProfile();
+  const { data: assistants = [] } = useActiveAssistants();
   const createRequest = useCreateAssistantRequest();
 
   const selectedService = services.find(s => s.id === serviceId);
 
   // Get user's assigned locations
   const userLocationIds = profile?.location_ids || [];
-  const userLocations = locations.filter(loc => userLocationIds.includes(loc.id));
+  const userLocations = allLocations.filter(loc => userLocationIds.includes(loc.id));
 
-  // Auto-select location if user only has one
-  const effectiveLocations = userLocations.length > 0 ? userLocations : locations;
+  // Get locations with assistant availability for the selected date
+  const locationsWithAssistants = useLocationsWithAssistants(date);
+  const availableAssistantsAtLocation = useAssistantsAtLocation(locationId, date);
+
+  // Filter locations: user's locations + has assistant availability
+  const availableLocations = useMemo(() => {
+    const baseLocations = userLocations.length > 0 ? userLocations : allLocations;
+    
+    if (!date) return baseLocations;
+    
+    // Only show locations that have assistants available on the selected day
+    return baseLocations.filter(loc => locationsWithAssistants.includes(loc.id));
+  }, [userLocations, allLocations, date, locationsWithAssistants]);
+
+  // Reset location if it becomes unavailable
+  useMemo(() => {
+    if (locationId && date && !locationsWithAssistants.includes(locationId)) {
+      setLocationId('');
+    }
+  }, [date, locationsWithAssistants, locationId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,8 +147,46 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          {/* Location Selection */}
-          {effectiveLocations.length > 1 && (
+          {/* Date Selection - moved up so location filtering works */}
+          <div className="space-y-2">
+            <Label>Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'w-full justify-start text-left font-normal',
+                    !date && 'text-muted-foreground'
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, 'PPP') : 'Pick a date first'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* No assistants available warning */}
+          {date && availableLocations.length === 0 && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                No assistants are scheduled to work on {format(date, 'EEEE')}. Please select a different date.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Location Selection - only show if date selected and locations available */}
+          {date && availableLocations.length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               <Select value={locationId} onValueChange={setLocationId}>
@@ -134,13 +195,18 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
-                  {effectiveLocations.map((location) => (
+                  {availableLocations.map((location) => (
                     <SelectItem key={location.id} value={location.id}>
                       {location.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {locationId && availableAssistantsAtLocation.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {availableAssistantsAtLocation.length} assistant{availableAssistantsAtLocation.length !== 1 ? 's' : ''} available
+                </p>
+              )}
             </div>
           )}
 
@@ -189,34 +255,6 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
             </div>
           </div>
 
-          {/* Date Selection */}
-          <div className="space-y-2">
-            <Label>Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    'w-full justify-start text-left font-normal',
-                    !date && 'text-muted-foreground'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP') : 'Pick a date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
           {/* Time Selection */}
           <div className="space-y-2">
             <Label>Start Time</Label>
@@ -234,6 +272,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
               </SelectContent>
             </Select>
           </div>
+
 
           {/* Recurring Toggle */}
           <div className="flex items-center justify-between py-2 border rounded-lg px-3">
