@@ -2820,25 +2820,32 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                         {block.type === 'footer' && (() => {
                           const defaultFooterConfig = { showLogo: true, logoId: 'drop-dead-main-white', logoSize: 'medium' as const, logoPosition: 'center' as const, showSocialIcons: true, copyrightText: '© 2026 Drop Dead Salons. All rights reserved.' };
                           const footerConfig = block.footerConfig ? { ...defaultFooterConfig, ...block.footerConfig } : defaultFooterConfig;
-                          const logoId = footerConfig.logoId || 'drop-dead-main-white';
+                          // Ensure logoId is never empty/undefined
+                          const logoId = (footerConfig.logoId && footerConfig.logoId.length > 0) ? footerConfig.logoId : 'drop-dead-main-white';
                           const logo = getLogoById(logoId) || brandLogos.find(l => l.variant === 'white') || brandLogos[0];
                           const enabledLinks = (block.socialLinks || []).filter(l => l.enabled);
                           const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
                           const logoMaxWidth = logoSizeMap[footerConfig.logoSize || 'medium'];
                           const logoPosition = footerConfig.logoPosition || 'center';
+                          // Ensure showLogo defaults to true if undefined
+                          const showLogo = footerConfig.showLogo !== false;
                           
                           const alignClass = logoPosition === 'left' ? 'items-start text-left' 
                             : logoPosition === 'right' ? 'items-end text-right' 
                             : 'items-center text-center';
                           
+                          // Debug: Log the logo info
+                          console.log('[Footer Debug]', { showLogo, logoId, logoSrc: logo?.src, footerConfig: block.footerConfig });
+                          
                           return (
                             <div className={`flex flex-col ${alignClass}`}>
-                              {footerConfig.showLogo && (
+                              {showLogo && logo && (
                                 <div className="mb-3">
                                   <img 
                                     src={logo.src} 
                                     alt={logo.name} 
                                     style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block' }}
+                                    onError={(e) => console.error('[Footer Logo Error]', e)}
                                   />
                                 </div>
                               )}
