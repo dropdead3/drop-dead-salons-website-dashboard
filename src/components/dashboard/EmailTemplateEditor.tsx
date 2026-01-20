@@ -1066,6 +1066,18 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   const [dropPosition, setDropPosition] = useState<'above' | 'below' | null>(null);
   const [recentlyMovedBlockId, setRecentlyMovedBlockId] = useState<string | null>(null);
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
+  // Column item drag and drop state
+  const [draggedColumnItem, setDraggedColumnItem] = useState<{
+    blockId: string;
+    colIndex: number;
+    itemIndex: number;
+    item: ColumnContent;
+  } | null>(null);
+  const [dropTargetColumn, setDropTargetColumn] = useState<{
+    blockId: string;
+    colIndex: number;
+    itemIndex: number | null; // null means drop at end
+  } | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead-premium');
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
@@ -1838,6 +1850,149 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     setDraggedBlockId(null);
     setDragOverBlockId(null);
     setDropPosition(null);
+  };
+
+  // Column item drag and drop handlers
+  const handleColumnItemDragStart = (
+    e: React.DragEvent,
+    blockId: string,
+    colIndex: number,
+    itemIndex: number,
+    item: ColumnContent
+  ) => {
+    e.stopPropagation();
+    setDraggedColumnItem({ blockId, colIndex, itemIndex, item });
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', `column-item-${item.id}`);
+    
+    // Create custom drag ghost
+    const ghost = document.createElement('div');
+    ghost.className = 'bg-primary text-primary-foreground px-3 py-1.5 rounded shadow-lg text-xs font-medium flex items-center gap-1.5';
+    ghost.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/>
+        <circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>
+      </svg>
+      <span style="text-transform: capitalize;">${item.type}</span>
+    `;
+    ghost.style.position = 'absolute';
+    ghost.style.top = '-1000px';
+    ghost.style.left = '-1000px';
+    document.body.appendChild(ghost);
+    
+    e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, ghost.offsetHeight / 2);
+    
+    requestAnimationFrame(() => {
+      document.body.removeChild(ghost);
+    });
+  };
+
+  const handleColumnItemDragOver = (
+    e: React.DragEvent,
+    blockId: string,
+    colIndex: number,
+    itemIndex: number | null
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedColumnItem) return;
+    
+    e.dataTransfer.dropEffect = 'move';
+    setDropTargetColumn({ blockId, colIndex, itemIndex });
+  };
+
+  const handleColumnItemDragLeave = (e: React.DragEvent) => {
+    e.stopPropagation();
+    // Only clear if we're leaving the columns area entirely
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget?.closest('[data-column-drop-zone]')) {
+      setDropTargetColumn(null);
+    }
+  };
+
+  const handleColumnItemDrop = (
+    e: React.DragEvent,
+    targetBlockId: string,
+    targetColIndex: number,
+    targetItemIndex: number | null
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!draggedColumnItem) {
+      setDropTargetColumn(null);
+      return;
+    }
+    
+    const { blockId: sourceBlockId, colIndex: sourceColIndex, itemIndex: sourceItemIndex, item } = draggedColumnItem;
+    
+    // Find the source block
+    const sourceBlock = blocks.find(b => b.id === sourceBlockId);
+    const targetBlock = blocks.find(b => b.id === targetBlockId);
+    
+    if (!sourceBlock?.columnsConfig || !targetBlock?.columnsConfig) {
+      setDraggedColumnItem(null);
+      setDropTargetColumn(null);
+      return;
+    }
+    
+    // Clone the blocks array
+    const newBlocks = blocks.map(b => ({ ...b }));
+    const sourceBlockIndex = newBlocks.findIndex(b => b.id === sourceBlockId);
+    const targetBlockIndex = newBlocks.findIndex(b => b.id === targetBlockId);
+    
+    if (sourceBlockIndex === -1 || targetBlockIndex === -1) {
+      setDraggedColumnItem(null);
+      setDropTargetColumn(null);
+      return;
+    }
+    
+    // Deep clone columns configs
+    const newSourceConfig = {
+      ...newBlocks[sourceBlockIndex].columnsConfig!,
+      columns: newBlocks[sourceBlockIndex].columnsConfig!.columns.map(col => [...col])
+    };
+    const newTargetConfig = sourceBlockId === targetBlockId ? newSourceConfig : {
+      ...newBlocks[targetBlockIndex].columnsConfig!,
+      columns: newBlocks[targetBlockIndex].columnsConfig!.columns.map(col => [...col])
+    };
+    
+    // Remove from source
+    newSourceConfig.columns[sourceColIndex].splice(sourceItemIndex, 1);
+    
+    // Calculate insertion index
+    let insertIndex: number;
+    if (targetItemIndex === null) {
+      // Dropping at end of column
+      insertIndex = newTargetConfig.columns[targetColIndex].length;
+    } else {
+      // Dropping at specific position
+      // If same column and dragging down, adjust index
+      if (sourceBlockId === targetBlockId && sourceColIndex === targetColIndex && sourceItemIndex < targetItemIndex) {
+        insertIndex = targetItemIndex - 1;
+      } else {
+        insertIndex = targetItemIndex;
+      }
+    }
+    
+    // Insert at target
+    newTargetConfig.columns[targetColIndex].splice(insertIndex, 0, item);
+    
+    // Update blocks
+    newBlocks[sourceBlockIndex] = { ...newBlocks[sourceBlockIndex], columnsConfig: newSourceConfig };
+    if (sourceBlockId !== targetBlockId) {
+      newBlocks[targetBlockIndex] = { ...newBlocks[targetBlockIndex], columnsConfig: newTargetConfig };
+    }
+    
+    updateBlocksAndHtml(newBlocks);
+    
+    setDraggedColumnItem(null);
+    setDropTargetColumn(null);
+  };
+
+  const handleColumnItemDragEnd = () => {
+    setDraggedColumnItem(null);
+    setDropTargetColumn(null);
   };
 
   const handleImageUpload = async (blockId: string, file: File) => {
@@ -3844,9 +3999,27 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           </div>
                           
                           <div className="space-y-3 pt-2 border-t">
-                            <Label className="text-xs font-medium">Column Content</Label>
+                            <Label className="text-xs font-medium flex items-center gap-2">
+                              Column Content
+                              <span className="text-[10px] font-normal text-muted-foreground">(drag to reorder)</span>
+                            </Label>
                             {config.columns.slice(0, config.columnCount).map((columnItems, colIndex) => (
-                              <div key={colIndex} className="space-y-2">
+                              <div 
+                                key={colIndex} 
+                                className="space-y-1"
+                                data-column-drop-zone
+                                onDragOver={(e) => {
+                                  if (columnItems.length === 0) {
+                                    handleColumnItemDragOver(e, selectedBlock.id, colIndex, null);
+                                  }
+                                }}
+                                onDrop={(e) => {
+                                  if (columnItems.length === 0) {
+                                    handleColumnItemDrop(e, selectedBlock.id, colIndex, null);
+                                  }
+                                }}
+                                onDragLeave={handleColumnItemDragLeave}
+                              >
                                 <div className="flex items-center justify-between">
                                   <span className="text-[11px] font-medium text-muted-foreground">Column {colIndex + 1}</span>
                                   <Popover>
@@ -3881,93 +4054,147 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   </Popover>
                                 </div>
                                 
-                                {columnItems.map((item, itemIndex) => (
-                                  <div key={item.id} className="bg-muted/40 rounded-lg p-2 space-y-2">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-[10px] font-medium capitalize text-muted-foreground">{item.type}</span>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="h-5 w-5 text-destructive hover:text-destructive"
-                                        onClick={() => removeColumnItem(colIndex, itemIndex)}
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    </div>
-                                    
-                                    {item.type === 'text' && (
-                                      <Input
-                                        value={item.content}
-                                        onChange={(e) => updateColumnContent(colIndex, itemIndex, { content: e.target.value })}
-                                        placeholder="Enter text..."
-                                        className="h-7 text-xs"
+                                <div className="space-y-1">
+                                  {columnItems.map((item, itemIndex) => (
+                                    <div key={item.id}>
+                                      {/* Drop zone above item */}
+                                      <div
+                                        data-column-drop-zone
+                                        className={cn(
+                                          "h-1 rounded transition-all duration-200",
+                                          dropTargetColumn?.blockId === selectedBlock.id &&
+                                          dropTargetColumn?.colIndex === colIndex &&
+                                          dropTargetColumn?.itemIndex === itemIndex
+                                            ? "bg-primary h-2"
+                                            : "bg-transparent"
+                                        )}
+                                        onDragOver={(e) => handleColumnItemDragOver(e, selectedBlock.id, colIndex, itemIndex)}
+                                        onDrop={(e) => handleColumnItemDrop(e, selectedBlock.id, colIndex, itemIndex)}
                                       />
-                                    )}
-                                    
-                                    {item.type === 'button' && (
-                                      <>
-                                        <Input
-                                          value={item.content}
-                                          onChange={(e) => updateColumnContent(colIndex, itemIndex, { content: e.target.value })}
-                                          placeholder="Button text..."
-                                          className="h-7 text-xs"
-                                        />
-                                        <Input
-                                          value={item.linkUrl || ''}
-                                          onChange={(e) => updateColumnContent(colIndex, itemIndex, { linkUrl: e.target.value })}
-                                          placeholder="Button URL..."
-                                          className="h-7 text-xs"
-                                        />
-                                        <div className="flex gap-1">
-                                          <Button
-                                            type="button"
-                                            variant={item.styles.buttonVariant !== 'secondary' ? 'default' : 'outline'}
-                                            size="sm"
-                                            className="flex-1 h-6 text-[10px]"
-                                            onClick={() => updateColumnContent(colIndex, itemIndex, { 
-                                              styles: { ...item.styles, buttonVariant: 'primary' } 
-                                            })}
+                                      <div 
+                                        className={cn(
+                                          "bg-muted/40 rounded-lg p-2 space-y-2 cursor-grab active:cursor-grabbing transition-all duration-200",
+                                          draggedColumnItem?.item.id === item.id && "opacity-50 scale-95"
+                                        )}
+                                        draggable
+                                        onDragStart={(e) => handleColumnItemDragStart(e, selectedBlock.id, colIndex, itemIndex, item)}
+                                        onDragEnd={handleColumnItemDragEnd}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-1">
+                                            <GripVertical className="w-3 h-3 text-muted-foreground" />
+                                            <span className="text-[10px] font-medium capitalize text-muted-foreground">{item.type}</span>
+                                          </div>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-5 w-5 text-destructive hover:text-destructive"
+                                            onClick={() => removeColumnItem(colIndex, itemIndex)}
                                           >
-                                            Primary
-                                          </Button>
-                                          <Button
-                                            type="button"
-                                            variant={item.styles.buttonVariant === 'secondary' ? 'default' : 'outline'}
-                                            size="sm"
-                                            className="flex-1 h-6 text-[10px]"
-                                            onClick={() => updateColumnContent(colIndex, itemIndex, { 
-                                              styles: { ...item.styles, buttonVariant: 'secondary' } 
-                                            })}
-                                          >
-                                            Secondary
+                                            <Trash2 className="w-3 h-3" />
                                           </Button>
                                         </div>
-                                      </>
-                                    )}
-                                    
-                                    {item.type === 'spacer' && (
-                                      <Select
-                                        value={item.styles.height || '16px'}
-                                        onValueChange={(v) => updateColumnContent(colIndex, itemIndex, { 
-                                          styles: { ...item.styles, height: v } 
-                                        })}
-                                      >
-                                        <SelectTrigger className="h-7 text-xs">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {['8px', '12px', '16px', '24px', '32px'].map(size => (
-                                            <SelectItem key={size} value={size}>{size}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    )}
-                                  </div>
-                                ))}
+                                        
+                                        {item.type === 'text' && (
+                                          <Input
+                                            value={item.content}
+                                            onChange={(e) => updateColumnContent(colIndex, itemIndex, { content: e.target.value })}
+                                            placeholder="Enter text..."
+                                            className="h-7 text-xs"
+                                          />
+                                        )}
+                                        
+                                        {item.type === 'button' && (
+                                          <>
+                                            <Input
+                                              value={item.content}
+                                              onChange={(e) => updateColumnContent(colIndex, itemIndex, { content: e.target.value })}
+                                              placeholder="Button text..."
+                                              className="h-7 text-xs"
+                                            />
+                                            <Input
+                                              value={item.linkUrl || ''}
+                                              onChange={(e) => updateColumnContent(colIndex, itemIndex, { linkUrl: e.target.value })}
+                                              placeholder="Button URL..."
+                                              className="h-7 text-xs"
+                                            />
+                                            <div className="flex gap-1">
+                                              <Button
+                                                type="button"
+                                                variant={item.styles.buttonVariant !== 'secondary' ? 'default' : 'outline'}
+                                                size="sm"
+                                                className="flex-1 h-6 text-[10px]"
+                                                onClick={() => updateColumnContent(colIndex, itemIndex, { 
+                                                  styles: { ...item.styles, buttonVariant: 'primary' } 
+                                                })}
+                                              >
+                                                Primary
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                variant={item.styles.buttonVariant === 'secondary' ? 'default' : 'outline'}
+                                                size="sm"
+                                                className="flex-1 h-6 text-[10px]"
+                                                onClick={() => updateColumnContent(colIndex, itemIndex, { 
+                                                  styles: { ...item.styles, buttonVariant: 'secondary' } 
+                                                })}
+                                              >
+                                                Secondary
+                                              </Button>
+                                            </div>
+                                          </>
+                                        )}
+                                        
+                                        {item.type === 'spacer' && (
+                                          <Select
+                                            value={item.styles.height || '16px'}
+                                            onValueChange={(v) => updateColumnContent(colIndex, itemIndex, { 
+                                              styles: { ...item.styles, height: v } 
+                                            })}
+                                          >
+                                            <SelectTrigger className="h-7 text-xs">
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {['8px', '12px', '16px', '24px', '32px'].map(size => (
+                                                <SelectItem key={size} value={size}>{size}</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                  
+                                  {/* Drop zone at end of column */}
+                                  {columnItems.length > 0 && (
+                                    <div
+                                      data-column-drop-zone
+                                      className={cn(
+                                        "h-1 rounded transition-all duration-200",
+                                        dropTargetColumn?.blockId === selectedBlock.id &&
+                                        dropTargetColumn?.colIndex === colIndex &&
+                                        dropTargetColumn?.itemIndex === null
+                                          ? "bg-primary h-2"
+                                          : "bg-transparent"
+                                      )}
+                                      onDragOver={(e) => handleColumnItemDragOver(e, selectedBlock.id, colIndex, null)}
+                                      onDrop={(e) => handleColumnItemDrop(e, selectedBlock.id, colIndex, null)}
+                                    />
+                                  )}
+                                </div>
                                 
                                 {columnItems.length === 0 && (
-                                  <div className="text-[10px] text-muted-foreground italic py-2 text-center border border-dashed rounded">
-                                    No content yet
+                                  <div 
+                                    className={cn(
+                                      "text-[10px] text-muted-foreground italic py-3 text-center border border-dashed rounded transition-all duration-200",
+                                      dropTargetColumn?.blockId === selectedBlock.id &&
+                                      dropTargetColumn?.colIndex === colIndex
+                                        ? "border-primary bg-primary/10"
+                                        : ""
+                                    )}
+                                  >
+                                    {draggedColumnItem ? "Drop here" : "No content yet"}
                                   </div>
                                 )}
                               </div>
@@ -4660,68 +4887,134 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               {config.columns.slice(0, columnCount).map((columnItems, colIndex) => (
                                 <div 
                                   key={colIndex}
-                                  className="flex-1 min-h-[60px] rounded border border-dashed border-muted-foreground/30 p-2"
+                                  data-column-drop-zone
+                                  className={cn(
+                                    "flex-1 min-h-[60px] rounded border border-dashed border-muted-foreground/30 p-2 transition-all duration-200",
+                                    dropTargetColumn?.blockId === block.id &&
+                                    dropTargetColumn?.colIndex === colIndex &&
+                                    columnItems.length === 0
+                                      ? "border-primary bg-primary/10"
+                                      : ""
+                                  )}
+                                  onDragOver={(e) => {
+                                    if (columnItems.length === 0) {
+                                      handleColumnItemDragOver(e, block.id, colIndex, null);
+                                    }
+                                  }}
+                                  onDrop={(e) => {
+                                    if (columnItems.length === 0) {
+                                      handleColumnItemDrop(e, block.id, colIndex, null);
+                                    }
+                                  }}
+                                  onDragLeave={handleColumnItemDragLeave}
                                 >
                                   {columnItems.length === 0 ? (
                                     <div className="h-full flex items-center justify-center text-[10px] text-muted-foreground italic">
-                                      Column {colIndex + 1}
+                                      {draggedColumnItem ? "Drop here" : `Column ${colIndex + 1}`}
                                     </div>
                                   ) : (
-                                    columnItems.map((item) => (
-                                      <div key={item.id} className="mb-2 last:mb-0">
-                                        {item.type === 'text' && (
-                                          <p 
-                                            style={{ 
-                                              margin: 0, 
-                                              fontSize: item.styles.fontSize || '14px',
-                                              textAlign: item.styles.textAlign || 'center',
-                                              color: item.styles.textColor,
-                                              fontWeight: item.styles.fontWeight
-                                            }}
+                                    <div className="space-y-0.5">
+                                      {columnItems.map((item, itemIndex) => (
+                                        <div key={item.id}>
+                                          {/* Drop indicator above item */}
+                                          <div
+                                            data-column-drop-zone
+                                            className={cn(
+                                              "h-0.5 rounded transition-all duration-200 -mx-1",
+                                              dropTargetColumn?.blockId === block.id &&
+                                              dropTargetColumn?.colIndex === colIndex &&
+                                              dropTargetColumn?.itemIndex === itemIndex
+                                                ? "bg-primary h-1"
+                                                : "bg-transparent"
+                                            )}
+                                            onDragOver={(e) => handleColumnItemDragOver(e, block.id, colIndex, itemIndex)}
+                                            onDrop={(e) => handleColumnItemDrop(e, block.id, colIndex, itemIndex)}
+                                          />
+                                          <div 
+                                            className={cn(
+                                              "group relative mb-1 last:mb-0 rounded transition-all duration-200",
+                                              draggedColumnItem?.item.id === item.id && "opacity-40 scale-95",
+                                              selectedBlockId === block.id && "hover:bg-muted/30 cursor-grab"
+                                            )}
+                                            draggable={selectedBlockId === block.id}
+                                            onDragStart={(e) => handleColumnItemDragStart(e, block.id, colIndex, itemIndex, item)}
+                                            onDragEnd={handleColumnItemDragEnd}
                                           >
-                                            {item.content}
-                                          </p>
-                                        )}
-                                        {item.type === 'button' && (() => {
-                                          const isSecondary = item.styles.buttonVariant === 'secondary';
-                                          const sizeScale = (item.styles.buttonSize || 100) / 100;
-                                          const paddingV = Math.round(10 * sizeScale);
-                                          const paddingH = Math.round(20 * sizeScale);
-                                          const fontSize = Math.round(13 * sizeScale);
-                                          const shapeRadius = item.styles.buttonShape === 'pill' ? '9999px' : item.styles.buttonShape === 'rectangle' ? '0px' : '6px';
-                                          return (
-                                            <div style={{ textAlign: item.styles.textAlign || 'center' }}>
-                                              <span
-                                                style={{
-                                                  display: 'inline-block',
-                                                  backgroundColor: isSecondary ? 'transparent' : (item.styles.buttonColor || '#000000'),
-                                                  color: isSecondary ? (item.styles.buttonColor || '#000000') : (item.styles.buttonTextColor || '#ffffff'),
-                                                  padding: `${paddingV}px ${paddingH}px`,
-                                                  fontWeight: 'bold',
-                                                  fontSize: `${fontSize}px`,
-                                                  borderRadius: shapeRadius,
-                                                  border: isSecondary ? `2px solid ${item.styles.buttonColor || '#000000'}` : 'none',
+                                            {/* Drag handle overlay - only show when block is selected */}
+                                            {selectedBlockId === block.id && (
+                                              <div className="absolute -left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <GripVertical className="w-3 h-3 text-muted-foreground" />
+                                              </div>
+                                            )}
+                                            {item.type === 'text' && (
+                                              <p 
+                                                style={{ 
+                                                  margin: 0, 
+                                                  fontSize: item.styles.fontSize || '14px',
+                                                  textAlign: item.styles.textAlign || 'center',
+                                                  color: item.styles.textColor,
+                                                  fontWeight: item.styles.fontWeight
                                                 }}
                                               >
                                                 {item.content}
-                                              </span>
-                                            </div>
-                                          );
-                                        })()}
-                                        {item.type === 'image' && item.imageUrl && (
-                                          <div style={{ textAlign: item.styles.textAlign || 'center' }}>
-                                            <img 
-                                              src={item.imageUrl} 
-                                              alt={item.content || 'Image'} 
-                                              className="max-w-full h-auto"
-                                            />
+                                              </p>
+                                            )}
+                                            {item.type === 'button' && (() => {
+                                              const isSecondary = item.styles.buttonVariant === 'secondary';
+                                              const sizeScale = (item.styles.buttonSize || 100) / 100;
+                                              const paddingV = Math.round(10 * sizeScale);
+                                              const paddingH = Math.round(20 * sizeScale);
+                                              const fontSize = Math.round(13 * sizeScale);
+                                              const shapeRadius = item.styles.buttonShape === 'pill' ? '9999px' : item.styles.buttonShape === 'rectangle' ? '0px' : '6px';
+                                              return (
+                                                <div style={{ textAlign: item.styles.textAlign || 'center' }}>
+                                                  <span
+                                                    style={{
+                                                      display: 'inline-block',
+                                                      backgroundColor: isSecondary ? 'transparent' : (item.styles.buttonColor || '#000000'),
+                                                      color: isSecondary ? (item.styles.buttonColor || '#000000') : (item.styles.buttonTextColor || '#ffffff'),
+                                                      padding: `${paddingV}px ${paddingH}px`,
+                                                      fontWeight: 'bold',
+                                                      fontSize: `${fontSize}px`,
+                                                      borderRadius: shapeRadius,
+                                                      border: isSecondary ? `2px solid ${item.styles.buttonColor || '#000000'}` : 'none',
+                                                    }}
+                                                  >
+                                                    {item.content}
+                                                  </span>
+                                                </div>
+                                              );
+                                            })()}
+                                            {item.type === 'image' && item.imageUrl && (
+                                              <div style={{ textAlign: item.styles.textAlign || 'center' }}>
+                                                <img 
+                                                  src={item.imageUrl} 
+                                                  alt={item.content || 'Image'} 
+                                                  className="max-w-full h-auto"
+                                                />
+                                              </div>
+                                            )}
+                                            {item.type === 'spacer' && (
+                                              <div style={{ height: item.styles.height || '16px' }} />
+                                            )}
                                           </div>
+                                        </div>
+                                      ))}
+                                      {/* Drop zone at end of column */}
+                                      <div
+                                        data-column-drop-zone
+                                        className={cn(
+                                          "h-0.5 rounded transition-all duration-200 -mx-1",
+                                          dropTargetColumn?.blockId === block.id &&
+                                          dropTargetColumn?.colIndex === colIndex &&
+                                          dropTargetColumn?.itemIndex === null
+                                            ? "bg-primary h-1"
+                                            : "bg-transparent"
                                         )}
-                                        {item.type === 'spacer' && (
-                                          <div style={{ height: item.styles.height || '16px' }} />
-                                        )}
-                                      </div>
-                                    ))
+                                        onDragOver={(e) => handleColumnItemDragOver(e, block.id, colIndex, null)}
+                                        onDrop={(e) => handleColumnItemDrop(e, block.id, colIndex, null)}
+                                      />
+                                    </div>
                                   )}
                                 </div>
                               ))}
