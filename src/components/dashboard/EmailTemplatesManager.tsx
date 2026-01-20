@@ -809,6 +809,25 @@ export function EmailTemplatesManager() {
                                 <p className="text-xs opacity-80">{block.footerConfig?.copyrightText || '© 2026 Drop Dead Salons. All rights reserved.'}</p>
                               </div>
                             )}
+                            {block.type === 'signature' && (
+                              <div className="flex items-center gap-3">
+                                {block.signatureConfig?.imageUrl ? (
+                                  <img 
+                                    src={block.signatureConfig.imageUrl} 
+                                    alt="Signature"
+                                    className="w-12 h-12 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                    <span className="text-muted-foreground text-xs">📝</span>
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="font-bold text-sm">{block.signatureConfig?.name || 'Your Name'}</div>
+                                  <div className="text-xs opacity-70">{block.signatureConfig?.title || 'Your Title'}</div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

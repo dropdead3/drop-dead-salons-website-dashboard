@@ -63,6 +63,7 @@ import {
   Crown,
   Search,
   X,
+  PenTool,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -182,7 +183,7 @@ const getLogoById = (id: string): BrandLogo | undefined => {
 };
 
 // Block types for the email editor
-type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social' | 'footer' | 'header';
+type BlockType = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer' | 'link' | 'social' | 'footer' | 'header' | 'signature';
 
 interface SocialLink {
   platform: 'instagram' | 'tiktok' | 'email';
@@ -234,6 +235,12 @@ interface EmailBlock {
     navLinksPosition?: 'left' | 'center' | 'right';
   };
   navLinks?: NavLink[];
+  signatureConfig?: {
+    name: string;
+    title: string;
+    imageUrl: string;
+    layout: 'horizontal-left' | 'horizontal-right' | 'stacked';
+  };
 }
 
 interface EmailTemplateEditorProps {
@@ -673,6 +680,53 @@ function blocksToHtml(blocks: EmailBlock[]): string {
             <td width="33%" style="text-align: right; vertical-align: middle; padding: ${padding}; color: ${textColor}; border: 0; border-spacing: 0;">${rightContent}</td>
           </tr>
         </table>`;
+      }
+      case 'signature': {
+        const config = block.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left' };
+        const bgColor = block.styles.backgroundColor || '#f5f0e8';
+        const textColor = block.styles.textColor || '#1a1a1a';
+        const textAlign = block.styles.textAlign || 'left';
+        const padding = block.styles.padding || '24px';
+        
+        // Convert image URL to absolute if needed
+        const absoluteImgUrl = config.imageUrl 
+          ? (config.imageUrl.startsWith('/') ? `${window.location.origin}${config.imageUrl}` : config.imageUrl)
+          : '';
+        
+        const imageHtml = absoluteImgUrl 
+          ? `<img src="${absoluteImgUrl}" alt="Signature" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; display: block;" />`
+          : '';
+        
+        const textHtml = `<div style="display: inline-block; vertical-align: middle;">
+          <div style="font-weight: bold; font-size: 16px; line-height: 1.3;">${config.name}</div>
+          <div style="font-size: 14px; opacity: 0.8; line-height: 1.3;">${config.title}</div>
+        </div>`;
+        
+        let contentHtml = '';
+        if (config.layout === 'stacked') {
+          contentHtml = imageHtml 
+            ? `<div style="text-align: ${textAlign}; margin-bottom: 12px;">${imageHtml.replace('display: block;', `display: inline-block;`)}</div>${textHtml}`
+            : textHtml;
+        } else if (config.layout === 'horizontal-right') {
+          contentHtml = `<table cellpadding="0" cellspacing="0" border="0" style="display: inline-table;">
+            <tr>
+              <td style="vertical-align: middle; padding-right: ${imageHtml ? '16px' : '0'};">${textHtml}</td>
+              ${imageHtml ? `<td style="vertical-align: middle;">${imageHtml}</td>` : ''}
+            </tr>
+          </table>`;
+        } else {
+          // horizontal-left (default)
+          contentHtml = `<table cellpadding="0" cellspacing="0" border="0" style="display: inline-table;">
+            <tr>
+              ${imageHtml ? `<td style="vertical-align: middle; padding-right: 16px;">${imageHtml}</td>` : ''}
+              <td style="vertical-align: middle;">${textHtml}</td>
+            </tr>
+          </table>`;
+        }
+        
+        return `<div style="text-align: ${textAlign}; background-color: ${bgColor}; color: ${textColor}; padding: ${padding};">
+          ${contentHtml}
+        </div>`;
       }
       default:
         return '';
@@ -1277,6 +1331,14 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           navLinksPosition: 'right' as const,
         }
       }),
+      ...(type === 'signature' && {
+        signatureConfig: {
+          name: 'Your Name',
+          title: 'Your Title',
+          imageUrl: '',
+          layout: 'horizontal-left' as const,
+        }
+      }),
     };
     
     // Insert header at the beginning, footer at the end, others at the end
@@ -1518,6 +1580,43 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
       toast.success('Image uploaded successfully');
     } catch (error: any) {
       console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSignatureImageUpload = async (blockId: string, file: File) => {
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `signature-images/${crypto.randomUUID()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('email-assets')
+        .upload(fileName, file);
+
+      if (error) {
+        if (error.message.includes('Bucket not found')) {
+          toast.error('Storage bucket not configured. Please contact an administrator.');
+          return;
+        }
+        throw error;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('email-assets')
+        .getPublicUrl(fileName);
+
+      const block = blocks.find(b => b.id === blockId);
+      if (block && block.signatureConfig) {
+        updateBlock(blockId, { 
+          signatureConfig: { ...block.signatureConfig, imageUrl: urlData.publicUrl }
+        });
+      }
+      toast.success('Signature image uploaded');
+    } catch (error: any) {
+      console.error('Error uploading signature image:', error);
       toast.error('Failed to upload image');
     } finally {
       setIsUploading(false);
@@ -1910,6 +2009,10 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                   >
                     <LayoutTemplate className="w-5 h-5 text-foreground/70" />
                     <span className="text-[11px] font-medium text-foreground/80">Footer</span>
+                  </button>
+                  <button onClick={() => { addBlock('signature'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                    <PenTool className="w-5 h-5 text-foreground/70" />
+                    <span className="text-[11px] font-medium text-foreground/80">Signature</span>
                   </button>
                 </div>
               </CardContent>
@@ -2935,6 +3038,126 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       </>
                     )}
 
+                    {selectedBlock.type === 'signature' && (() => {
+                      const config = selectedBlock.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left' };
+                      
+                      return (
+                        <>
+                          <div className="space-y-3">
+                            <Label className="text-xs font-medium">Signature Details</Label>
+                            <div className="space-y-2">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">Name</Label>
+                                <Input
+                                  value={config.name}
+                                  onChange={(e) => {
+                                    updateBlock(selectedBlock.id, {
+                                      signatureConfig: { ...config, name: e.target.value }
+                                    });
+                                  }}
+                                  placeholder="Your Name"
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">Title / Role</Label>
+                                <Input
+                                  value={config.title}
+                                  onChange={(e) => {
+                                    updateBlock(selectedBlock.id, {
+                                      signatureConfig: { ...config, title: e.target.value }
+                                    });
+                                  }}
+                                  placeholder="Your Title"
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <Label className="text-xs font-medium">Signature Image</Label>
+                            <div className="flex items-center gap-3">
+                              {config.imageUrl ? (
+                                <img 
+                                  src={config.imageUrl} 
+                                  alt="Signature"
+                                  className="w-14 h-14 rounded-full object-cover border"
+                                />
+                              ) : (
+                                <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center border">
+                                  <PenTool className="w-5 h-5 text-muted-foreground" />
+                                </div>
+                              )}
+                              <div className="flex-1 space-y-1">
+                                <label className="cursor-pointer">
+                                  <Button variant="outline" size="sm" className="w-full text-xs" asChild>
+                                    <span>
+                                      <Upload className="w-3 h-3 mr-1" />
+                                      {isUploading ? 'Uploading...' : 'Upload Photo'}
+                                    </span>
+                                  </Button>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        // Use the same upload logic as image blocks
+                                        handleSignatureImageUpload(selectedBlock.id, file);
+                                      }
+                                    }}
+                                    disabled={isUploading}
+                                  />
+                                </label>
+                                {config.imageUrl && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="w-full text-xs text-destructive hover:text-destructive"
+                                    onClick={() => {
+                                      updateBlock(selectedBlock.id, {
+                                        signatureConfig: { ...config, imageUrl: '' }
+                                      });
+                                    }}
+                                  >
+                                    Remove Image
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium">Layout</Label>
+                            <div className="grid grid-cols-3 gap-2">
+                              {([
+                                { value: 'horizontal-left', label: 'Image Left' },
+                                { value: 'horizontal-right', label: 'Image Right' },
+                                { value: 'stacked', label: 'Stacked' },
+                              ] as const).map((option) => (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={config.layout === option.value ? 'default' : 'outline'}
+                                  size="sm"
+                                  className="h-8 text-[10px]"
+                                  onClick={() => {
+                                    updateBlock(selectedBlock.id, {
+                                      signatureConfig: { ...config, layout: option.value }
+                                    });
+                                  }}
+                                >
+                                  {option.label}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+
                     {/* Common settings */}
                     {selectedBlock.type !== 'divider' && selectedBlock.type !== 'spacer' && (
                       <>
@@ -3289,6 +3512,53 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               </div>
                             </div>
                           );
+                        })()}
+                        {block.type === 'signature' && (() => {
+                          const config = block.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left' };
+                          const layout = config.layout || 'horizontal-left';
+                          
+                          const imageElement = config.imageUrl ? (
+                            <img 
+                              src={config.imageUrl} 
+                              alt="Signature"
+                              className="w-16 h-16 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                              <PenTool className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          );
+                          
+                          const textElement = (
+                            <div>
+                              <div className="font-bold text-base">{config.name}</div>
+                              <div className="text-sm opacity-80">{config.title}</div>
+                            </div>
+                          );
+                          
+                          if (layout === 'stacked') {
+                            return (
+                              <div className="flex flex-col items-center gap-3">
+                                {imageElement}
+                                {textElement}
+                              </div>
+                            );
+                          } else if (layout === 'horizontal-right') {
+                            return (
+                              <div className="flex items-center gap-4">
+                                {textElement}
+                                {imageElement}
+                              </div>
+                            );
+                          } else {
+                            // horizontal-left (default)
+                            return (
+                              <div className="flex items-center gap-4">
+                                {imageElement}
+                                {textElement}
+                              </div>
+                            );
+                          }
                         })()}
                       </div>
                     </div>
