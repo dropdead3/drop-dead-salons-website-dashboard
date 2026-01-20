@@ -1646,12 +1646,14 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
           {toolbarPanel === 'logos' && (
             <Card className="border-border/50">
               <CardContent className="p-4">
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {brandLogos.map((logo) => (
-                    <Button key={logo.id} variant="outline" size="sm" onClick={() => { addLogoBlock(logo); setToolbarPanel(null); }} className="flex-col gap-1 h-auto py-3">
-                      <div className="w-8 h-8 flex items-center justify-center bg-muted rounded"><img src={logo.src} alt={logo.name} className="w-6 h-6 object-contain" /></div>
-                      <span className="text-[10px] truncate max-w-full">{logo.name}</span>
-                    </Button>
+                    <button key={logo.id} onClick={() => { addLogoBlock(logo); setToolbarPanel(null); }} className="flex flex-col items-center gap-3 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
+                      <div className="w-12 h-12 flex items-center justify-center bg-background rounded-lg shadow-sm">
+                        <img src={logo.src} alt={logo.name} className="w-8 h-8 object-contain" />
+                      </div>
+                      <span className="text-[11px] font-medium text-foreground/80 truncate max-w-full">{logo.name}</span>
+                    </button>
                   ))}
                 </div>
               </CardContent>
