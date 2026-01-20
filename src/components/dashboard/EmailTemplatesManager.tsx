@@ -809,25 +809,65 @@ export function EmailTemplatesManager() {
                                 <p className="text-xs opacity-80">{block.footerConfig?.copyrightText || '© 2026 Drop Dead Salons. All rights reserved.'}</p>
                               </div>
                             )}
-                            {block.type === 'signature' && (
-                              <div className="flex items-center gap-3">
-                                {block.signatureConfig?.imageUrl ? (
-                                  <img 
-                                    src={block.signatureConfig.imageUrl} 
-                                    alt="Signature"
-                                    className="w-12 h-12 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                                    <span className="text-muted-foreground text-xs">📝</span>
-                                  </div>
-                                )}
-                                <div>
-                                  <div className="font-bold text-sm">{block.signatureConfig?.name || 'Your Name'}</div>
-                                  <div className="text-xs opacity-70">{block.signatureConfig?.title || 'Your Title'}</div>
+                            {block.type === 'signature' && (() => {
+                              const config = block.signatureConfig || { name: 'Your Name', title: 'Your Title', imageUrl: '', layout: 'horizontal-left', imageSize: 48, indent: 0 };
+                              const imageSize = Math.min(config.imageSize || 48, 60); // Cap for preview
+                              const indent = config.indent || 0;
+                              
+                              const imageElement = config.imageUrl ? (
+                                <img 
+                                  src={config.imageUrl} 
+                                  alt="Signature"
+                                  className="rounded-full object-cover"
+                                  style={{ width: `${imageSize}px`, height: `${imageSize}px` }}
+                                />
+                              ) : (
+                                <div 
+                                  className="rounded-full bg-muted flex items-center justify-center"
+                                  style={{ width: `${imageSize}px`, height: `${imageSize}px` }}
+                                >
+                                  <span className="text-muted-foreground text-xs">📝</span>
                                 </div>
-                              </div>
-                            )}
+                              );
+                              
+                              const textElement = (
+                                <div>
+                                  <div className="font-bold text-sm">{config.name || 'Your Name'}</div>
+                                  <div className="text-xs opacity-70">{config.title || 'Your Title'}</div>
+                                  {(config.showPhone && config.phone) && (
+                                    <div className="text-[10px] opacity-60 mt-0.5">📞 {config.phone}</div>
+                                  )}
+                                  {(config.showEmail && config.email) && (
+                                    <div className="text-[10px] opacity-60">✉️ {config.email}</div>
+                                  )}
+                                </div>
+                              );
+                              
+                              const wrapperStyle = { paddingLeft: indent > 0 ? `${indent}px` : undefined };
+                              
+                              if (config.layout === 'stacked') {
+                                return (
+                                  <div className="flex flex-col items-center gap-2" style={wrapperStyle}>
+                                    {imageElement}
+                                    {textElement}
+                                  </div>
+                                );
+                              } else if (config.layout === 'horizontal-right') {
+                                return (
+                                  <div className="flex items-center gap-3" style={wrapperStyle}>
+                                    {textElement}
+                                    {imageElement}
+                                  </div>
+                                );
+                              } else {
+                                return (
+                                  <div className="flex items-center gap-3" style={wrapperStyle}>
+                                    {imageElement}
+                                    {textElement}
+                                  </div>
+                                );
+                              }
+                            })()}
                           </div>
                         ))}
                       </div>
