@@ -60,6 +60,7 @@ import {
   Mail,
   LayoutTemplate,
   Pencil,
+  Crown,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -622,7 +623,7 @@ export function EmailTemplateEditor({ initialHtml, variables, onHtmlChange }: Em
   const [rawHtml, setRawHtml] = useState(initialHtml);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
-  const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead');
+  const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead-premium');
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
   const [editingThemeId, setEditingThemeId] = useState<string | null>(null);
@@ -1590,7 +1591,10 @@ const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium truncate">{theme.name}</div>
+                                <div className="text-xs font-medium truncate flex items-center gap-1">
+                                  {theme.id === 'drop-dead-premium' && <Crown className="w-3 h-3 text-amber-500" />}
+                                  {theme.name}
+                                </div>
                                 <div className="text-[10px] text-muted-foreground truncate">{theme.description}</div>
                               </div>
                             </div>
