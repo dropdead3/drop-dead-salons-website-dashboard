@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -13,6 +14,7 @@ import {
 } from '@/components/ui/popover';
 import { Hand } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import confetti from 'canvas-confetti';
 
 interface HighFiveUser {
   id: string;
@@ -36,31 +38,60 @@ export function HighFiveButton({
   onToggle,
   disabled = false,
 }: HighFiveButtonProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleClick = () => {
+    // If user hasn't high-fived yet, trigger confetti
+    if (!hasHighFived && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const x = (rect.left + rect.width / 2) / window.innerWidth;
+      const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+      // Small, targeted confetti burst
+      confetti({
+        particleCount: 30,
+        spread: 60,
+        origin: { x, y },
+        colors: ['#f59e0b', '#fbbf24', '#fcd34d', '#fef3c7'],
+        scalar: 0.8,
+        gravity: 1.2,
+        ticks: 100,
+      });
+
+      // Add bounce animation
+      buttonRef.current.classList.add('animate-bounce-once');
+      setTimeout(() => {
+        buttonRef.current?.classList.remove('animate-bounce-once');
+      }, 300);
+    }
+
+    onToggle();
+  };
+
   return (
     <div className="flex items-center gap-2">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              ref={buttonRef}
               variant="outline"
               size="sm"
-              onClick={onToggle}
+              onClick={handleClick}
               disabled={disabled}
               className={cn(
                 'h-8 px-3 gap-2 font-sans text-xs rounded-full border-2 transition-all',
                 hasHighFived
                   ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500 hover:border-amber-600'
-                  : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-300 hover:border-amber-400'
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-300 hover:border-amber-400',
+                '[&.animate-bounce-once]:animate-[bounce-once_0.3s_ease-out]'
               )}
             >
               <Hand
                 className={cn(
                   'w-4 h-4 transition-transform',
-                  hasHighFived && 'scale-110'
+                  hasHighFived && 'scale-110 -rotate-12'
                 )}
-                style={{
-                  transform: hasHighFived ? 'rotate(-15deg)' : 'none',
-                }}
               />
               <span className="font-medium">
                 {hasHighFived ? 'High-fived!' : 'Give a high-five!'}
