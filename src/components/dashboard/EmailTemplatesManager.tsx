@@ -532,7 +532,13 @@ export function EmailTemplatesManager() {
                 className="bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300"
                 onClick={() => {
                   if (editingTemplate) {
-                    setPreviewTemplate(editingTemplate);
+                    // Use current editForm state (with latest html_body from editor) instead of saved template
+                    setPreviewTemplate({
+                      ...editingTemplate,
+                      html_body: editForm.html_body,
+                      subject: editForm.subject,
+                      variables: editingTemplate.variables,
+                    });
                   }
                 }}
               >
