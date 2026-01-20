@@ -1549,7 +1549,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
             <Button
               variant={toolbarPanel === 'themes' ? 'default' : 'outline'}
               size="sm"
-              className="gap-2 px-4 shadow-sm bg-background border-border/80"
+              className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'themes' && "bg-background border-border/80")}
               onClick={() => setToolbarPanel(toolbarPanel === 'themes' ? null : 'themes')}
             >
               <Palette className="w-4 h-4" />
@@ -1558,7 +1558,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
             <Button
               variant={toolbarPanel === 'blocks' ? 'default' : 'outline'}
               size="sm"
-              className="gap-2 px-4 shadow-sm bg-background border-border/80"
+              className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'blocks' && "bg-background border-border/80")}
               onClick={() => setToolbarPanel(toolbarPanel === 'blocks' ? null : 'blocks')}
             >
               <Plus className="w-4 h-4" />
@@ -1567,7 +1567,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
             <Button
               variant={toolbarPanel === 'logos' ? 'default' : 'outline'}
               size="sm"
-              className="gap-2 px-4 shadow-sm bg-background border-border/80"
+              className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'logos' && "bg-background border-border/80")}
               onClick={() => setToolbarPanel(toolbarPanel === 'logos' ? null : 'logos')}
             >
               <Image className="w-4 h-4" />
@@ -1577,7 +1577,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
               <Button
                 variant={toolbarPanel === 'variables' ? 'default' : 'outline'}
                 size="sm"
-                className="gap-2 px-4 shadow-sm bg-background border-border/80"
+                className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'variables' && "bg-background border-border/80")}
                 onClick={() => setToolbarPanel(toolbarPanel === 'variables' ? null : 'variables')}
               >
                 <Variable className="w-4 h-4" />
