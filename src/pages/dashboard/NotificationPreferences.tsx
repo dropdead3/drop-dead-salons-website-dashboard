@@ -1,0 +1,221 @@
+import { useState, useEffect } from 'react';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Bell, Hand, Megaphone, Cake, Calendar, CheckSquare, Mail, Loader2, Save } from 'lucide-react';
+import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface PreferenceItem {
+  key: string;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+const inAppPreferences: PreferenceItem[] = [
+  {
+    key: 'high_five_enabled',
+    label: 'High Fives',
+    description: 'Get notified when someone gives you a high five on your bell ring',
+    icon: <Hand className="w-5 h-5" />,
+  },
+  {
+    key: 'announcement_enabled',
+    label: 'Announcements',
+    description: 'Receive notifications for new team announcements',
+    icon: <Megaphone className="w-5 h-5" />,
+  },
+  {
+    key: 'birthday_reminder_enabled',
+    label: 'Birthday Reminders',
+    description: 'Get reminded about upcoming team birthdays',
+    icon: <Cake className="w-5 h-5" />,
+  },
+  {
+    key: 'meeting_reminder_enabled',
+    label: 'Meeting Reminders',
+    description: 'Receive reminders for scheduled 1-on-1 meetings',
+    icon: <Calendar className="w-5 h-5" />,
+  },
+  {
+    key: 'task_reminder_enabled',
+    label: 'Task Reminders',
+    description: 'Get notified about upcoming and overdue tasks',
+    icon: <CheckSquare className="w-5 h-5" />,
+  },
+];
+
+export default function NotificationPreferences() {
+  const { data: preferences, isLoading } = useNotificationPreferences();
+  const updatePreferences = useUpdateNotificationPreferences();
+  
+  const [localPrefs, setLocalPrefs] = useState<Record<string, boolean>>({});
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Initialize local state from fetched preferences
+  useEffect(() => {
+    if (preferences) {
+      const prefs: Record<string, boolean> = {};
+      inAppPreferences.forEach(pref => {
+        prefs[pref.key] = (preferences as any)[pref.key] ?? true;
+      });
+      prefs['email_notifications_enabled'] = (preferences as any).email_notifications_enabled ?? false;
+      setLocalPrefs(prefs);
+    }
+  }, [preferences]);
+
+  const handleToggle = (key: string, value: boolean) => {
+    setLocalPrefs(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    await updatePreferences.mutateAsync(localPrefs);
+    setHasChanges(false);
+  };
+
+  const handleDiscard = () => {
+    if (preferences) {
+      const prefs: Record<string, boolean> = {};
+      inAppPreferences.forEach(pref => {
+        prefs[pref.key] = (preferences as any)[pref.key] ?? true;
+      });
+      prefs['email_notifications_enabled'] = (preferences as any).email_notifications_enabled ?? false;
+      setLocalPrefs(prefs);
+    }
+    setHasChanges(false);
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6 max-w-2xl mx-auto">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-display tracking-wide">Notification Preferences</h1>
+          <p className="text-muted-foreground mt-1">
+            Choose which notifications you'd like to receive
+          </p>
+        </div>
+
+        {/* In-App Notifications */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Bell className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-display tracking-wide">In-App Notifications</CardTitle>
+                <CardDescription>Notifications that appear in your dashboard</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {inAppPreferences.map((pref, index) => (
+              <div key={pref.key}>
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      {pref.icon}
+                    </div>
+                    <div>
+                      <Label htmlFor={pref.key} className="text-sm font-medium cursor-pointer">
+                        {pref.label}
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {pref.description}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id={pref.key}
+                    checked={localPrefs[pref.key] ?? true}
+                    onCheckedChange={(checked) => handleToggle(pref.key, checked)}
+                  />
+                </div>
+                {index < inAppPreferences.length - 1 && <Separator className="my-2" />}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Email Notifications */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Mail className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-display tracking-wide">Email Notifications</CardTitle>
+                <CardDescription>Receive notifications via email</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <Label htmlFor="email_notifications" className="text-sm font-medium cursor-pointer">
+                  Enable Email Notifications
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Get important notifications sent to your email
+                </p>
+              </div>
+              <Switch
+                id="email_notifications"
+                checked={localPrefs['email_notifications_enabled'] ?? false}
+                onCheckedChange={(checked) => handleToggle('email_notifications_enabled', checked)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Sticky Save Bar */}
+        <AnimatePresence>
+          {hasChanges && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-background/95 backdrop-blur border-t shadow-lg lg:left-64"
+            >
+              <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  You have unsaved changes
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={handleDiscard}>
+                    Discard
+                  </Button>
+                  <Button onClick={handleSave} disabled={updatePreferences.isPending}>
+                    {updatePreferences.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    Save Preferences
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </DashboardLayout>
+  );
+}

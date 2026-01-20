@@ -55,6 +55,7 @@ import ScheduleMeeting from "./pages/dashboard/ScheduleMeeting";
 import MyProfile from "./pages/dashboard/MyProfile";
 import ViewProfile from "./pages/dashboard/ViewProfile";
 import TeamDirectory from "./pages/dashboard/TeamDirectory";
+import NotificationPreferences from "./pages/dashboard/NotificationPreferences";
 import OnboardingTracker from "./pages/dashboard/admin/OnboardingTracker";
 import ClientEngineTracker from "./pages/dashboard/admin/ClientEngineTracker";
 
@@ -85,6 +86,7 @@ const App = () => (
               {/* Protected dashboard routes */}
               <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
               <Route path="/dashboard/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
+              <Route path="/dashboard/notifications" element={<ProtectedRoute><NotificationPreferences /></ProtectedRoute>} />
               <Route path="/dashboard/profile/:userId" element={<ProtectedRoute requireSuperAdmin><ViewProfile /></ProtectedRoute>} />
               <Route path="/dashboard/directory" element={<ProtectedRoute requiredPermission="view_team_directory"><TeamDirectory /></ProtectedRoute>} />
               <Route path="/dashboard/program" element={<ProtectedRoute requiredPermission="access_client_engine"><Program /></ProtectedRoute>} />

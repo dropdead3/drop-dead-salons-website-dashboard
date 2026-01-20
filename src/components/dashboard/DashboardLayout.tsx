@@ -774,6 +774,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   View/Edit Profile
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard/notifications" className="flex items-center gap-2 cursor-pointer">
+                  <Bell className="w-4 h-4" />
+                  Notification Preferences
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
                 <LogOut className="w-4 h-4" />

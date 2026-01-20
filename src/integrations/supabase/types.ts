@@ -1042,6 +1042,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          announcement_enabled: boolean
+          birthday_reminder_enabled: boolean
+          created_at: string
+          email_notifications_enabled: boolean
+          high_five_enabled: boolean
+          id: string
+          meeting_reminder_enabled: boolean
+          task_reminder_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          announcement_enabled?: boolean
+          birthday_reminder_enabled?: boolean
+          created_at?: string
+          email_notifications_enabled?: boolean
+          high_five_enabled?: boolean
+          id?: string
+          meeting_reminder_enabled?: boolean
+          task_reminder_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          announcement_enabled?: boolean
+          birthday_reminder_enabled?: boolean
+          created_at?: string
+          email_notifications_enabled?: boolean
+          high_five_enabled?: boolean
+          id?: string
+          meeting_reminder_enabled?: boolean
+          task_reminder_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
