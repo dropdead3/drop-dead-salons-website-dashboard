@@ -60,6 +60,7 @@ import OnboardingTracker from "./pages/dashboard/admin/OnboardingTracker";
 import ClientEngineTracker from "./pages/dashboard/admin/ClientEngineTracker";
 import AssistantRequestsOverview from "./pages/dashboard/admin/AssistantRequestsOverview";
 import DashboardBuild from "./pages/dashboard/admin/DashboardBuild";
+import RecruitingPipeline from "./pages/dashboard/admin/RecruitingPipeline";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +127,7 @@ const App = () => (
               <Route path="/dashboard/admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
               <Route path="/dashboard/admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
               <Route path="/dashboard/admin/build" element={<ProtectedRoute requireSuperAdmin><DashboardBuild /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/recruiting" element={<ProtectedRoute requiredPermission="manage_user_roles"><RecruitingPipeline /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

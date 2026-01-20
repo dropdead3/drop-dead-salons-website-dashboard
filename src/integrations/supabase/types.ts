@@ -920,6 +920,113 @@ export type Database = {
         }
         Relationships: []
       }
+      job_application_notes: {
+        Row: {
+          application_id: string
+          author_id: string
+          created_at: string
+          id: string
+          note: string
+          note_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          author_id: string
+          created_at?: string
+          id?: string
+          note: string
+          note_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          author_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+          note_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_application_notes_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "job_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_applications: {
+        Row: {
+          assigned_to: string | null
+          client_book: string
+          created_at: string
+          email: string
+          experience: string
+          id: string
+          instagram: string | null
+          is_archived: boolean | null
+          is_starred: boolean | null
+          last_contacted_at: string | null
+          message: string | null
+          name: string
+          phone: string
+          pipeline_stage: string
+          rating: number | null
+          source: string | null
+          source_detail: string | null
+          specialties: string
+          updated_at: string
+          why_drop_dead: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_book: string
+          created_at?: string
+          email: string
+          experience: string
+          id?: string
+          instagram?: string | null
+          is_archived?: boolean | null
+          is_starred?: boolean | null
+          last_contacted_at?: string | null
+          message?: string | null
+          name: string
+          phone: string
+          pipeline_stage?: string
+          rating?: number | null
+          source?: string | null
+          source_detail?: string | null
+          specialties: string
+          updated_at?: string
+          why_drop_dead: string
+        }
+        Update: {
+          assigned_to?: string | null
+          client_book?: string
+          created_at?: string
+          email?: string
+          experience?: string
+          id?: string
+          instagram?: string | null
+          is_archived?: boolean | null
+          is_starred?: boolean | null
+          last_contacted_at?: string | null
+          message?: string | null
+          name?: string
+          phone?: string
+          pipeline_stage?: string
+          rating?: number | null
+          source?: string | null
+          source_detail?: string | null
+          specialties?: string
+          updated_at?: string
+          why_drop_dead?: string
+        }
+        Relationships: []
+      }
       leaderboard_achievements: {
         Row: {
           badge_color: string
@@ -1328,6 +1435,36 @@ export type Database = {
           updated_at?: string
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      recruiting_pipeline_stages: {
+        Row: {
+          color: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
         }
         Relationships: []
       }
