@@ -1873,46 +1873,189 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                 {/* Categorized Variables */}
                 <div className="space-y-4">
                   {(() => {
-                    // Variable metadata with categories and descriptions
+                    // Comprehensive variable metadata with categories and descriptions based on database schema
                     const variableMetadata: Record<string, { category: string; description: string; example?: string }> = {
-                      // Recipient Info
-                      employee_name: { category: 'Recipient', description: 'Full name of the employee receiving the email', example: 'Jane Smith' },
+                      // ═══════════════════════════════════════════════════════════════
+                      // RECIPIENT / EMPLOYEE INFO
+                      // ═══════════════════════════════════════════════════════════════
+                      employee_name: { category: 'Recipient', description: 'Full name of the employee', example: 'Jane Smith' },
                       stylist_name: { category: 'Recipient', description: 'Name of the stylist', example: 'Jane Smith' },
-                      user_name: { category: 'Recipient', description: 'Username or display name', example: 'jsmith' },
+                      full_name: { category: 'Recipient', description: 'Complete legal name', example: 'Jane Marie Smith' },
+                      display_name: { category: 'Recipient', description: 'Preferred display name', example: 'Jane S.' },
                       first_name: { category: 'Recipient', description: 'First name only', example: 'Jane' },
+                      last_name: { category: 'Recipient', description: 'Last name only', example: 'Smith' },
+                      user_name: { category: 'Recipient', description: 'Username or handle', example: 'jsmith' },
+                      recipient_email: { category: 'Recipient', description: 'Email address of recipient', example: 'jane@example.com' },
+                      employee_email: { category: 'Recipient', description: 'Employee email address', example: 'jane@salon.com' },
+                      phone: { category: 'Recipient', description: 'Phone number (XXX-XXX-XXXX)', example: '555-123-4567' },
+                      bio: { category: 'Recipient', description: 'Employee bio/description', example: 'Colorist specializing in...' },
+                      photo_url: { category: 'Recipient', description: 'Profile photo URL', example: 'https://...' },
                       
-                      // Birthday Related
-                      birthday_date: { category: 'Birthday', description: 'Formatted date of the birthday', example: 'January 25th' },
+                      // ═══════════════════════════════════════════════════════════════
+                      // EMPLOYEE DETAILS & STATUS
+                      // ═══════════════════════════════════════════════════════════════
+                      stylist_level: { category: 'Employee Details', description: 'Stylist experience level', example: 'Senior Stylist' },
+                      stylist_type: { category: 'Employee Details', description: 'Employment type', example: 'commission' },
+                      role: { category: 'Employee Details', description: 'Staff role/position', example: 'stylist' },
+                      specialties: { category: 'Employee Details', description: 'List of specialties', example: 'Balayage, Extensions' },
+                      highlighted_services: { category: 'Employee Details', description: 'Featured services', example: 'Color, Cuts' },
+                      dd_certified: { category: 'Employee Details', description: 'DD certification status', example: 'Yes' },
+                      is_booking: { category: 'Employee Details', description: 'Currently accepting bookings', example: 'true' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // DATES & ANNIVERSARIES
+                      // ═══════════════════════════════════════════════════════════════
+                      hire_date: { category: 'Dates', description: 'Employee hire date', example: 'March 15, 2023' },
+                      hire_date_formatted: { category: 'Dates', description: 'Formatted hire date', example: 'Mar 15, 2023' },
+                      years_employed: { category: 'Dates', description: 'Years at company', example: '3' },
+                      tenure: { category: 'Dates', description: 'Employment duration', example: '2 years, 5 months' },
+                      anniversary_date: { category: 'Dates', description: 'Work anniversary date', example: 'March 15th' },
+                      days_until_anniversary: { category: 'Dates', description: 'Days until work anniversary', example: '12' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // BIRTHDAY RELATED
+                      // ═══════════════════════════════════════════════════════════════
+                      birthday: { category: 'Birthday', description: 'Employee birthday', example: 'January 25th' },
+                      birthday_date: { category: 'Birthday', description: 'Formatted birthday date', example: 'January 25th' },
                       birthday_count: { category: 'Birthday', description: 'Number of upcoming birthdays', example: '3' },
-                      birthday_list: { category: 'Birthday', description: 'HTML formatted list of birthdays', example: '<li>Jane - Jan 25</li>' },
+                      birthday_list: { category: 'Birthday', description: 'HTML list of birthdays', example: '<li>Jane - Jan 25</li>' },
                       birthday_names: { category: 'Birthday', description: 'Comma-separated names', example: 'Jane, John, Mary' },
-                      days_until: { category: 'Birthday', description: 'Days until the birthday', example: '3' },
+                      days_until: { category: 'Birthday', description: 'Days until birthday', example: '3' },
+                      days_until_birthday: { category: 'Birthday', description: 'Days remaining to birthday', example: '5' },
+                      age: { category: 'Birthday', description: 'Age (if calculated)', example: '28' },
                       
-                      // Handbook Related
+                      // ═══════════════════════════════════════════════════════════════
+                      // LOCATION & SCHEDULE
+                      // ═══════════════════════════════════════════════════════════════
+                      location_name: { category: 'Location', description: 'Salon location name', example: 'Downtown Studio' },
+                      location_address: { category: 'Location', description: 'Full street address', example: '123 Main St, Suite 100' },
+                      location_city: { category: 'Location', description: 'City name', example: 'Los Angeles' },
+                      location_phone: { category: 'Location', description: 'Location phone number', example: '555-987-6543' },
+                      location_hours: { category: 'Location', description: 'Business hours', example: 'Mon-Sat 9am-7pm' },
+                      booking_url: { category: 'Location', description: 'Online booking link', example: 'https://book...' },
+                      google_maps_url: { category: 'Location', description: 'Google Maps link', example: 'https://maps...' },
+                      work_days: { category: 'Location', description: 'Scheduled work days', example: 'Mon, Wed, Fri' },
+                      next_shift: { category: 'Location', description: 'Next scheduled shift', example: 'Monday 9am' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // SOCIAL MEDIA
+                      // ═══════════════════════════════════════════════════════════════
+                      instagram: { category: 'Social', description: 'Instagram handle', example: '@janestyle' },
+                      instagram_url: { category: 'Social', description: 'Instagram profile URL', example: 'https://instagram.com/...' },
+                      tiktok: { category: 'Social', description: 'TikTok handle', example: '@janestyle' },
+                      tiktok_url: { category: 'Social', description: 'TikTok profile URL', example: 'https://tiktok.com/...' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // HANDBOOK & TRAINING
+                      // ═══════════════════════════════════════════════════════════════
+                      handbook_title: { category: 'Handbook', description: 'Handbook document title', example: 'Employee Safety Guide' },
                       handbook_count: { category: 'Handbook', description: 'Number of pending handbooks', example: '2' },
-                      handbook_list: { category: 'Handbook', description: 'HTML formatted list of handbooks', example: '<li>Employee Guide</li>' },
-                      handbook_names: { category: 'Handbook', description: 'Comma-separated handbook names', example: 'Safety Manual, HR Policy' },
+                      handbook_list: { category: 'Handbook', description: 'HTML list of handbooks', example: '<li>Employee Guide</li>' },
+                      handbook_names: { category: 'Handbook', description: 'Comma-separated names', example: 'Safety, HR Policy' },
+                      training_title: { category: 'Handbook', description: 'Training video title', example: 'Color Techniques 101' },
+                      training_count: { category: 'Handbook', description: 'Pending training videos', example: '3' },
+                      training_progress: { category: 'Handbook', description: 'Training completion %', example: '75%' },
                       
-                      // Program Related
-                      current_day: { category: 'Program', description: 'Current day number in the program', example: '15' },
-                      is_urgent: { category: 'Program', description: 'Whether the reminder is urgent', example: 'true' },
+                      // ═══════════════════════════════════════════════════════════════
+                      // 75-DAY PROGRAM
+                      // ═══════════════════════════════════════════════════════════════
+                      current_day: { category: 'Program', description: 'Current program day', example: '15' },
+                      program_day: { category: 'Program', description: 'Day number in program', example: '42' },
+                      days_remaining: { category: 'Program', description: 'Days left in program', example: '33' },
+                      program_status: { category: 'Program', description: 'Enrollment status', example: 'active' },
                       streak_count: { category: 'Program', description: 'Current completion streak', example: '7' },
+                      restart_count: { category: 'Program', description: 'Number of restarts', example: '1' },
+                      start_date: { category: 'Program', description: 'Program start date', example: 'Jan 1, 2026' },
+                      completion_date: { category: 'Program', description: 'Expected completion', example: 'Mar 17, 2026' },
+                      is_urgent: { category: 'Program', description: 'Urgent reminder flag', example: 'true' },
+                      weekly_wins_due: { category: 'Program', description: 'Weekly wins due day', example: 'Friday' },
                       
-                      // Links & URLs
-                      dashboard_url: { category: 'Links', description: 'Link to the staff dashboard', example: 'https://...' },
-                      action_url: { category: 'Links', description: 'Primary call-to-action URL', example: 'https://...' },
+                      // ═══════════════════════════════════════════════════════════════
+                      // METRICS & STATS
+                      // ═══════════════════════════════════════════════════════════════
+                      total_leads: { category: 'Metrics', description: 'Total leads generated', example: '24' },
+                      new_clients: { category: 'Metrics', description: 'New clients count', example: '8' },
+                      revenue_booked: { category: 'Metrics', description: 'Revenue amount', example: '$2,450' },
+                      services_booked: { category: 'Metrics', description: 'Services booked count', example: '12' },
+                      consults_booked: { category: 'Metrics', description: 'Consultations booked', example: '5' },
+                      consults_completed: { category: 'Metrics', description: 'Consultations done', example: '4' },
+                      ticket_value: { category: 'Metrics', description: 'Average ticket value', example: '$185' },
+                      reach: { category: 'Metrics', description: 'Social media reach', example: '1,250' },
+                      profile_visits: { category: 'Metrics', description: 'Profile views', example: '340' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // MEETINGS & SCHEDULING
+                      // ═══════════════════════════════════════════════════════════════
+                      meeting_date: { category: 'Meetings', description: 'Scheduled meeting date', example: 'January 22, 2026' },
+                      meeting_time: { category: 'Meetings', description: 'Meeting start time', example: '2:00 PM' },
+                      meeting_type: { category: 'Meetings', description: 'Type of meeting', example: '1-on-1 Check-in' },
+                      coach_name: { category: 'Meetings', description: 'Coach/manager name', example: 'Sarah Johnson' },
+                      meeting_notes: { category: 'Meetings', description: 'Meeting notes/agenda', example: 'Discuss Q1 goals...' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // ANNOUNCEMENTS & NOTIFICATIONS
+                      // ═══════════════════════════════════════════════════════════════
+                      announcement_title: { category: 'Announcements', description: 'Announcement headline', example: 'New Policy Update' },
+                      announcement_content: { category: 'Announcements', description: 'Announcement body text', example: 'Starting next week...' },
+                      announcement_priority: { category: 'Announcements', description: 'Priority level', example: 'high' },
+                      unread_count: { category: 'Announcements', description: 'Unread notifications', example: '3' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // STRIKES & HR
+                      // ═══════════════════════════════════════════════════════════════
+                      strike_count: { category: 'HR', description: 'Total strike count', example: '1' },
+                      strike_type: { category: 'HR', description: 'Type of violation', example: 'Tardiness' },
+                      strike_date: { category: 'HR', description: 'Date of incident', example: 'Jan 15, 2026' },
+                      strike_title: { category: 'HR', description: 'Strike description', example: 'Late arrival' },
+                      resolution_notes: { category: 'HR', description: 'Resolution details', example: 'Discussed with manager' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // LINKS & URLS
+                      // ═══════════════════════════════════════════════════════════════
+                      dashboard_url: { category: 'Links', description: 'Staff dashboard link', example: 'https://...' },
+                      action_url: { category: 'Links', description: 'Primary CTA link', example: 'https://...' },
+                      profile_url: { category: 'Links', description: 'View profile link', example: 'https://...' },
+                      onboarding_url: { category: 'Links', description: 'Onboarding page link', example: 'https://...' },
+                      training_url: { category: 'Links', description: 'Training page link', example: 'https://...' },
+                      handbook_url: { category: 'Links', description: 'Handbook viewer link', example: 'https://...' },
                       unsubscribe_url: { category: 'Links', description: 'Email unsubscribe link', example: 'https://...' },
+                      support_email: { category: 'Links', description: 'Support email address', example: 'help@salon.com' },
                       
-                      // Date & Time
-                      date: { category: 'Date & Time', description: 'Current date formatted', example: 'January 20, 2026' },
+                      // ═══════════════════════════════════════════════════════════════
+                      // DATE & TIME
+                      // ═══════════════════════════════════════════════════════════════
+                      date: { category: 'Date & Time', description: 'Current date', example: 'January 20, 2026' },
+                      date_short: { category: 'Date & Time', description: 'Short date format', example: '1/20/26' },
                       time: { category: 'Date & Time', description: 'Current time', example: '2:30 PM' },
+                      day_of_week: { category: 'Date & Time', description: 'Day name', example: 'Monday' },
+                      month: { category: 'Date & Time', description: 'Current month', example: 'January' },
                       year: { category: 'Date & Time', description: 'Current year', example: '2026' },
+                      today: { category: 'Date & Time', description: 'Today\'s date', example: 'Monday, Jan 20' },
+                      tomorrow: { category: 'Date & Time', description: 'Tomorrow\'s date', example: 'Tuesday, Jan 21' },
                       
-                      // Counts & Numbers
+                      // ═══════════════════════════════════════════════════════════════
+                      // NUMBERS & GRAMMAR HELPERS
+                      // ═══════════════════════════════════════════════════════════════
                       count: { category: 'Numbers', description: 'Generic count value', example: '5' },
-                      plural: { category: 'Numbers', description: 'Pluralization suffix (s or empty)', example: 's' },
-                      hasHave: { category: 'Numbers', description: 'Grammar helper (has/have)', example: 'have' },
-                      total: { category: 'Numbers', description: 'Total count or amount', example: '10' },
+                      total: { category: 'Numbers', description: 'Total amount', example: '10' },
+                      plural: { category: 'Numbers', description: 'Pluralization (s or empty)', example: 's' },
+                      hasHave: { category: 'Numbers', description: 'Grammar: has/have', example: 'have' },
+                      isAre: { category: 'Numbers', description: 'Grammar: is/are', example: 'are' },
+                      thisThese: { category: 'Numbers', description: 'Grammar: this/these', example: 'these' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // EMERGENCY CONTACTS
+                      // ═══════════════════════════════════════════════════════════════
+                      emergency_contact: { category: 'Emergency', description: 'Emergency contact name', example: 'John Smith' },
+                      emergency_phone: { category: 'Emergency', description: 'Emergency contact phone', example: '555-999-8888' },
+                      
+                      // ═══════════════════════════════════════════════════════════════
+                      // RING THE BELL / WINS
+                      // ═══════════════════════════════════════════════════════════════
+                      service_booked: { category: 'Wins', description: 'Service that was booked', example: 'Full Balayage' },
+                      lead_source: { category: 'Wins', description: 'Where the lead came from', example: 'Instagram' },
+                      closing_script: { category: 'Wins', description: 'Script used to close', example: 'Consultation close' },
+                      win_amount: { category: 'Wins', description: 'Revenue from the win', example: '$350' },
                     };
 
                     // Group variables by category
@@ -1926,12 +2069,22 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                     // Category icons and colors
                     const categoryStyles: Record<string, { icon: string; color: string }> = {
                       'Recipient': { icon: '👤', color: 'bg-blue-500/10 text-blue-600' },
+                      'Employee Details': { icon: '💼', color: 'bg-indigo-500/10 text-indigo-600' },
+                      'Dates': { icon: '🗓️', color: 'bg-teal-500/10 text-teal-600' },
                       'Birthday': { icon: '🎂', color: 'bg-pink-500/10 text-pink-600' },
+                      'Location': { icon: '📍', color: 'bg-red-500/10 text-red-600' },
+                      'Social': { icon: '📱', color: 'bg-violet-500/10 text-violet-600' },
                       'Handbook': { icon: '📚', color: 'bg-amber-500/10 text-amber-600' },
                       'Program': { icon: '📈', color: 'bg-green-500/10 text-green-600' },
+                      'Metrics': { icon: '📊', color: 'bg-emerald-500/10 text-emerald-600' },
+                      'Meetings': { icon: '🤝', color: 'bg-sky-500/10 text-sky-600' },
+                      'Announcements': { icon: '📢', color: 'bg-yellow-500/10 text-yellow-600' },
+                      'HR': { icon: '⚠️', color: 'bg-rose-500/10 text-rose-600' },
                       'Links': { icon: '🔗', color: 'bg-purple-500/10 text-purple-600' },
-                      'Date & Time': { icon: '📅', color: 'bg-cyan-500/10 text-cyan-600' },
+                      'Date & Time': { icon: '🕐', color: 'bg-cyan-500/10 text-cyan-600' },
                       'Numbers': { icon: '🔢', color: 'bg-orange-500/10 text-orange-600' },
+                      'Emergency': { icon: '🚨', color: 'bg-red-500/10 text-red-600' },
+                      'Wins': { icon: '🔔', color: 'bg-lime-500/10 text-lime-600' },
                       'Custom': { icon: '⚡', color: 'bg-gray-500/10 text-gray-600' },
                     };
 
