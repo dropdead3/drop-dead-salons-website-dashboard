@@ -183,6 +183,35 @@ export type Database = {
           },
         ]
       }
+      bell_entry_high_fives: {
+        Row: {
+          created_at: string
+          entry_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entry_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entry_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bell_entry_high_fives_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "ring_the_bell_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_card_requests: {
         Row: {
           design_style: string

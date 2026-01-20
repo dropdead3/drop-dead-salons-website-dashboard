@@ -21,6 +21,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DollarSign, Pin, Loader2, MessageSquare, Send, X, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
+import { HighFiveButton } from './HighFiveButton';
+
+interface HighFiveUser {
+  id: string;
+  user_id: string;
+  user_name?: string;
+  user_photo?: string | null;
+}
 
 interface BellEntry {
   id: string;
@@ -51,10 +59,14 @@ interface BellEntryCardProps {
   isCoach: boolean;
   canEditOrDelete: boolean;
   showStylistName?: boolean;
+  highFiveCount: number;
+  hasUserHighFived: boolean;
+  highFiveUsers: HighFiveUser[];
   onTogglePin: (entryId: string, currentlyPinned: boolean) => void;
   onSaveNote: (entryId: string, noteText: string) => Promise<void>;
   onSaveEdit: (entryId: string, data: { service: string; ticketValue: string; leadSource: string; closingScript: string }) => Promise<void>;
   onDelete: (entry: BellEntry) => void;
+  onToggleHighFive: (entryId: string) => void;
 }
 
 export function BellEntryCard({
@@ -62,10 +74,14 @@ export function BellEntryCard({
   isCoach,
   canEditOrDelete,
   showStylistName = true,
+  highFiveCount,
+  hasUserHighFived,
+  highFiveUsers,
   onTogglePin,
   onSaveNote,
   onSaveEdit,
   onDelete,
+  onToggleHighFive,
 }: BellEntryCardProps) {
   // Edit entry state
   const [isEditing, setIsEditing] = useState(false);
@@ -293,6 +309,16 @@ export function BellEntryCard({
                   </div>
                 </div>
               )}
+
+              {/* High Five Button */}
+              <div className="mt-4">
+                <HighFiveButton
+                  count={highFiveCount}
+                  hasHighFived={hasUserHighFived}
+                  users={highFiveUsers}
+                  onToggle={() => onToggleHighFive(entry.id)}
+                />
+              </div>
             </div>
           </div>
 

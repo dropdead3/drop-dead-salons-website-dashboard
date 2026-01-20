@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useBellSound } from '@/hooks/use-bell-sound';
+import { useBellHighFives } from '@/hooks/useBellHighFives';
 import { Bell, DollarSign, Loader2, Sparkles, Users, User } from 'lucide-react';
 import {
   AlertDialog,
@@ -85,6 +86,15 @@ export default function RingTheBell() {
     entries.filter(e => e.user_id !== user?.id),
     [entries, user?.id]
   );
+
+  // High fives hook
+  const entryIds = useMemo(() => entries.map(e => e.id), [entries]);
+  const { 
+    toggleHighFive, 
+    hasUserHighFived, 
+    getHighFiveCount, 
+    getHighFiveUsers 
+  } = useBellHighFives(entryIds);
 
   useEffect(() => {
     fetchEntries();
@@ -408,10 +418,14 @@ export default function RingTheBell() {
             isCoach={isCoach}
             canEditOrDelete={canEditOrDelete(entry)}
             showStylistName={showStylistName}
+            highFiveCount={getHighFiveCount(entry.id)}
+            hasUserHighFived={hasUserHighFived(entry.id)}
+            highFiveUsers={getHighFiveUsers(entry.id)}
             onTogglePin={handleTogglePin}
             onSaveNote={handleSaveNote}
             onSaveEdit={handleSaveEdit}
             onDelete={handleDelete}
+            onToggleHighFive={toggleHighFive}
           />
         ))}
       </div>
