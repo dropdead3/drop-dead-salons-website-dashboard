@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -49,6 +50,7 @@ import {
   Smartphone,
   Columns2,
   Instagram,
+  X,
 } from 'lucide-react';
 import {
   useEmailTemplates,
@@ -463,7 +465,7 @@ export function EmailTemplatesManager() {
           if (!open) setEditingTemplate(null);
         }}
       >
-        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col overflow-hidden p-0">
+        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col overflow-hidden p-0 [&>button]:hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
@@ -474,7 +476,7 @@ export function EmailTemplatesManager() {
                   </Badge>
                 )}
               </DialogTitle>
-              <div className="flex items-center gap-2 mr-6">
+              <div className="flex items-center gap-3">
                 <Label className="text-sm">Active</Label>
                 <Switch
                   checked={editForm.is_active}
@@ -482,6 +484,10 @@ export function EmailTemplatesManager() {
                     setEditForm({ ...editForm, is_active: checked })
                   }
                 />
+                <DialogClose className="rounded-full p-1.5 opacity-70 hover:opacity-100 hover:bg-muted transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </DialogClose>
               </div>
             </div>
             <DialogDescription>
