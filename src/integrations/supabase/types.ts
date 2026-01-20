@@ -866,6 +866,39 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          visible_to_roles: Database["public"]["Enums"]["app_role"][]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          visible_to_roles?: Database["public"]["Enums"]["app_role"][]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          visible_to_roles?: Database["public"]["Enums"]["app_role"][]
+        }
+        Relationships: []
+      }
       one_on_one_meetings: {
         Row: {
           coach_id: string

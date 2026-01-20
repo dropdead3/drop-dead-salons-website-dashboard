@@ -14,7 +14,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { 
-  FileText, 
   Loader2, 
   Download, 
   BookOpen, 
@@ -25,12 +24,13 @@ import {
   CreditCard,
   ClipboardCheck,
   Check,
-  Circle
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface Handbook {
   id: string;
@@ -59,14 +59,13 @@ interface TaskCompletion {
   completed_at: string;
 }
 
-const ONBOARDING_TASKS = [
-  { key: 'complete_profile', label: 'Complete your profile information' },
-  { key: 'upload_photo', label: 'Upload a professional photo' },
-  { key: 'set_schedule', label: 'Set your work schedule' },
-  { key: 'review_policies', label: 'Review company policies' },
-  { key: 'setup_direct_deposit', label: 'Set up direct deposit' },
-  { key: 'complete_training', label: 'Complete initial training videos' },
-];
+interface OnboardingTask {
+  id: string;
+  title: string;
+  description: string | null;
+  visible_to_roles: AppRole[];
+  display_order: number;
+}
 
 const BUSINESS_CARD_STYLES = [
   { 
@@ -102,6 +101,7 @@ export default function Onboarding() {
   const [requestingCard, setRequestingCard] = useState(false);
   
   // Task state
+  const [onboardingTasks, setOnboardingTasks] = useState<OnboardingTask[]>([]);
   const [taskCompletions, setTaskCompletions] = useState<TaskCompletion[]>([]);
   
   // Loading state
@@ -116,7 +116,7 @@ export default function Onboarding() {
   }, [roles, user]);
 
   const fetchData = async () => {
-    const [handbooksResult, acknowledgementsResult, businessCardResult, tasksResult] = await Promise.all([
+    const [handbooksResult, acknowledgementsResult, businessCardResult, tasksResult, completionsResult] = await Promise.all([
       supabase
         .from('handbooks')
         .select('id, title, category, content, file_url, version, updated_at, visible_to_roles')
@@ -132,6 +132,11 @@ export default function Onboarding() {
         .order('requested_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
+      supabase
+        .from('onboarding_tasks')
+        .select('id, title, description, visible_to_roles, display_order')
+        .eq('is_active', true)
+        .order('display_order'),
       supabase
         .from('onboarding_task_completions')
         .select('task_key, completed_at')
@@ -163,8 +168,17 @@ export default function Onboarding() {
       setBusinessCardRequest(businessCardResult.data);
     }
 
+    // Filter tasks by user roles
     if (!tasksResult.error) {
-      setTaskCompletions(tasksResult.data || []);
+      const filteredTasks = (tasksResult.data || []).filter((task: OnboardingTask) => {
+        const visibleRoles = task.visible_to_roles || [];
+        return roles.some(role => visibleRoles.includes(role));
+      });
+      setOnboardingTasks(filteredTasks);
+    }
+
+    if (!completionsResult.error) {
+      setTaskCompletions(completionsResult.data || []);
     }
 
     setLoading(false);
@@ -174,8 +188,8 @@ export default function Onboarding() {
     return acknowledgments.some(ack => ack.handbook_id === handbookId);
   };
 
-  const isTaskCompleted = (taskKey: string) => {
-    return taskCompletions.some(tc => tc.task_key === taskKey);
+  const isTaskCompleted = (taskId: string) => {
+    return taskCompletions.some(tc => tc.task_key === taskId);
   };
 
   const handleAcknowledge = async () => {
@@ -250,32 +264,32 @@ export default function Onboarding() {
     setRequestingCard(false);
   };
 
-  const handleToggleTask = async (taskKey: string) => {
+  const handleToggleTask = async (taskId: string) => {
     if (!user) return;
     
-    const isCompleted = isTaskCompleted(taskKey);
+    const isCompleted = isTaskCompleted(taskId);
     
     if (isCompleted) {
       const { error } = await supabase
         .from('onboarding_task_completions')
         .delete()
         .eq('user_id', user.id)
-        .eq('task_key', taskKey);
+        .eq('task_key', taskId);
 
       if (!error) {
-        setTaskCompletions(prev => prev.filter(tc => tc.task_key !== taskKey));
+        setTaskCompletions(prev => prev.filter(tc => tc.task_key !== taskId));
       }
     } else {
       const { error } = await supabase
         .from('onboarding_task_completions')
         .insert({
           user_id: user.id,
-          task_key: taskKey
+          task_key: taskId
         });
 
       if (!error) {
         setTaskCompletions(prev => [...prev, {
-          task_key: taskKey,
+          task_key: taskId,
           completed_at: new Date().toISOString()
         }]);
       }
@@ -292,9 +306,9 @@ export default function Onboarding() {
   const totalHandbooks = handbooks.length;
   const handbooksProgress = totalHandbooks > 0 ? (acknowledgedCount / totalHandbooks) * 100 : 100;
   
-  const completedTasksCount = taskCompletions.length;
-  const totalTasks = ONBOARDING_TASKS.length;
-  const tasksProgress = totalTasks > 0 ? (completedTasksCount / totalTasks) * 100 : 0;
+  const completedTasksCount = onboardingTasks.filter(t => isTaskCompleted(t.id)).length;
+  const totalTasks = onboardingTasks.length;
+  const tasksProgress = totalTasks > 0 ? (completedTasksCount / totalTasks) * 100 : 100;
   
   const overallProgress = ((handbooksProgress + tasksProgress + (businessCardRequest ? 100 : 0)) / 3);
 
@@ -505,37 +519,51 @@ export default function Onboarding() {
           </div>
           
           <div className="p-6 space-y-2">
-            {ONBOARDING_TASKS.map((task) => {
-              const completed = isTaskCompleted(task.key);
-              
-              return (
-                <button
-                  key={task.key}
-                  onClick={() => handleToggleTask(task.key)}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
-                    completed
-                      ? 'border-primary/30 bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  )}
-                >
-                  <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all",
-                    completed
-                      ? 'bg-primary border-primary'
-                      : 'border-muted-foreground/30'
-                  )}>
-                    {completed && <Check className="w-4 h-4 text-primary-foreground" />}
-                  </div>
-                  <span className={cn(
-                    "font-sans text-sm flex-1",
-                    completed && 'text-muted-foreground line-through'
-                  )}>
-                    {task.label}
-                  </span>
-                </button>
-              );
-            })}
+            {onboardingTasks.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-primary" />
+                <p className="font-sans text-sm">No tasks assigned to your role</p>
+              </div>
+            ) : (
+              onboardingTasks.map((task) => {
+                const completed = isTaskCompleted(task.id);
+                
+                return (
+                  <button
+                    key={task.id}
+                    onClick={() => handleToggleTask(task.id)}
+                    className={cn(
+                      "w-full flex items-start gap-3 p-3 rounded-lg border transition-all text-left",
+                      completed
+                        ? 'border-primary/30 bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                    )}
+                  >
+                    <div className={cn(
+                      "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all mt-0.5",
+                      completed
+                        ? 'bg-primary border-primary'
+                        : 'border-muted-foreground/30'
+                    )}>
+                      {completed && <Check className="w-4 h-4 text-primary-foreground" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className={cn(
+                        "font-sans text-sm block",
+                        completed && 'text-muted-foreground line-through'
+                      )}>
+                        {task.title}
+                      </span>
+                      {task.description && (
+                        <span className="text-xs text-muted-foreground block mt-0.5">
+                          {task.description}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </Card>
 
