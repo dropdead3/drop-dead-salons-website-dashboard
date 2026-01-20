@@ -3015,6 +3015,15 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       )}
                       onClick={() => setSelectedBlockId(block.id)}
                     >
+                      {/* Section name badge - fades to 10% on hover */}
+                      <div className={cn(
+                        'absolute left-2 top-2 z-20 transition-opacity duration-200',
+                        'group-hover:opacity-10'
+                      )}>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-foreground/80 text-background capitalize tracking-wide">
+                          {block.type === 'social' ? 'Social Icons' : block.type}
+                        </span>
+                      </div>
                       {/* Drag handle indicator */}
                       <div className={cn(
                         'absolute left-2 top-1/2 -translate-y-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing',
