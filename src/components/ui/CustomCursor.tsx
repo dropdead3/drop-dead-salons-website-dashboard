@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 export function CustomCursor() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
-  const [isGrabbing, setIsGrabbing] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -31,13 +30,6 @@ export function CustomCursor() {
       );
     };
 
-    const isGrabbableElement = (target: HTMLElement) => {
-      return (
-        target.classList.contains("cursor-grab") ||
-        target.closest(".cursor-grab")
-      );
-    };
-
     const handleMouseEnter = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (isInteractiveElement(target)) {
@@ -52,44 +44,25 @@ export function CustomCursor() {
       }
     };
 
-    const handleMouseDown = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (isGrabbableElement(target)) {
-        setIsGrabbing(true);
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsGrabbing(false);
-    };
-
     window.addEventListener("mousemove", updatePosition);
     document.addEventListener("mouseover", handleMouseEnter);
     document.addEventListener("mouseout", handleMouseLeave);
-    document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
       window.removeEventListener("mousemove", updatePosition);
       document.removeEventListener("mouseover", handleMouseEnter);
       document.removeEventListener("mouseout", handleMouseLeave);
-      document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("mouseup", handleMouseUp);
     };
   }, []);
 
   if (!isVisible) return null;
 
-  // Determine cursor size based on state
-  const cursorSize = isGrabbing ? 16 : isHovering ? 24 : 20;
-  const cursorOffset = cursorSize / 2;
-
   return (
     <motion.div
       className="fixed pointer-events-none z-[9999] mix-blend-difference"
       animate={{
-        x: position.x - cursorOffset,
-        y: position.y - cursorOffset,
+        x: position.x - (isHovering ? 12 : 10),
+        y: position.y - (isHovering ? 12 : 10),
       }}
       transition={{
         type: "spring",
@@ -98,23 +71,7 @@ export function CustomCursor() {
         mass: 0.5,
       }}
     >
-      {isGrabbing ? (
-        // Grabbing state - compressed/squeezed indicator
-        <motion.div
-          className="relative"
-          initial={{ scale: 1.2 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.1 }}
-        >
-          {/* Grabbing indicator - 4 dots in a grip pattern */}
-          <svg width="16" height="16" viewBox="0 0 16 16" className="text-white">
-            <circle cx="5" cy="5" r="2" fill="currentColor" />
-            <circle cx="11" cy="5" r="2" fill="currentColor" />
-            <circle cx="5" cy="11" r="2" fill="currentColor" />
-            <circle cx="11" cy="11" r="2" fill="currentColor" />
-          </svg>
-        </motion.div>
-      ) : isHovering ? (
+      {isHovering ? (
         // Pulsating dot on hover
         <motion.div
           className="relative"
