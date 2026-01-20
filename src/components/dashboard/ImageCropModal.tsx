@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { ZoomIn, ZoomOut, RotateCw, Move, Crop } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCw, Move, Crop, Info, AlertTriangle } from 'lucide-react';
 
 interface ImageCropModalProps {
   open: boolean;
@@ -226,11 +226,37 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Crop className="h-5 w-5" />
-            Crop & Resize Image
+            Crop & Resize Signature Image
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Instructions Banner */}
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 space-y-2">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div className="text-xs text-foreground space-y-1">
+                <p className="font-medium">Recommended image guidelines:</p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-0.5 ml-1">
+                  <li>Professional headshot or signature graphic</li>
+                  <li>High-quality image (at least 200×200px)</li>
+                  <li>Well-lit with clear facial features</li>
+                  <li>Output will be {maxOutputSize}×{maxOutputSize}px</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Warning for small images */}
+          {imageElement && (imageElement.width < 200 || imageElement.height < 200) && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Image is small ({imageElement.width}×{imageElement.height}px). For best quality, use an image at least 200×200px.
+              </p>
+            </div>
+          )}
+
           {/* Canvas preview */}
           <div 
             ref={containerRef}
