@@ -1547,9 +1547,9 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                         {emailThemes.filter(theme => themeCategoryFilter === 'all' || theme.category.includes(themeCategoryFilter)).map((theme) => (
                           <div key={theme.id} className={cn('p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md', selectedTheme === theme.id ? 'ring-2 ring-primary border-primary' : 'border-border hover:border-primary/50')} onClick={() => { setSelectedTheme(theme.id); applyTheme(theme.id); }}>
                             <div className="flex gap-0.5 mb-1.5">
-                              <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.colors.headerBg }} />
-                              <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.colors.bodyBg }} />
-                              <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.colors.buttonBg }} />
+                              <div className="w-4 h-4 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]" style={{ backgroundColor: theme.colors.headerBg }} />
+                              <div className="w-4 h-4 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]" style={{ backgroundColor: theme.colors.bodyBg }} />
+                              <div className="w-4 h-4 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]" style={{ backgroundColor: theme.colors.buttonBg }} />
                             </div>
                             <div className="text-[10px] font-medium truncate flex items-center gap-1">
                               {theme.id === 'drop-dead-premium' && <Crown className="w-3 h-3 text-amber-500" />}
@@ -1570,9 +1570,9 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                               <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteCustomTheme(theme.id); }}><Trash2 className="w-2.5 h-2.5" /></Button>
                             </div>
                             <div className="flex gap-0.5 mb-1.5">
-                              <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.colors.headerBg }} />
-                              <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.colors.bodyBg }} />
-                              <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.colors.buttonBg }} />
+                              <div className="w-4 h-4 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]" style={{ backgroundColor: theme.colors.headerBg }} />
+                              <div className="w-4 h-4 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]" style={{ backgroundColor: theme.colors.bodyBg }} />
+                              <div className="w-4 h-4 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]" style={{ backgroundColor: theme.colors.buttonBg }} />
                             </div>
                             <div className="text-[10px] font-medium truncate flex items-center gap-1"><Sparkles className="w-2.5 h-2.5 text-primary" />{theme.name}</div>
                           </div>
