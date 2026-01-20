@@ -71,6 +71,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { ColorWheelPicker } from '@/components/ui/color-wheel-picker';
+import { ImageCropModal } from './ImageCropModal';
 
 // Import brand logos - black versions
 import dropDeadLogo from '@/assets/drop-dead-logo.svg';
@@ -883,6 +884,9 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   const [isSavingTheme, setIsSavingTheme] = useState(false);
   const [emailVariables, setEmailVariables] = useState<Array<{ variable_key: string; category: string; description: string; example: string | null }>>([]);
   const [variableSearchTerm, setVariableSearchTerm] = useState('');
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageFile, setCropImageFile] = useState<File | null>(null);
+  const [cropTargetBlockId, setCropTargetBlockId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const [newTheme, setNewTheme] = useState<Omit<EmailTheme, 'id'>>({
@@ -1647,21 +1651,24 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     });
   };
 
-  const handleSignatureImageUpload = async (blockId: string, file: File) => {
+  // Open crop modal before uploading signature image
+  const handleSignatureFileSelect = (blockId: string, file: File) => {
+    setCropTargetBlockId(blockId);
+    setCropImageFile(file);
+    setCropModalOpen(true);
+  };
+
+  // Handle cropped image upload
+  const handleCroppedImageUpload = async (croppedBlob: Blob) => {
+    if (!cropTargetBlockId) return;
+    
     setIsUploading(true);
     try {
-      // Compress image if larger than 500KB
-      let uploadFile: File | Blob = file;
-      if (file.size > 512000) {
-        toast.info('Compressing image...');
-        uploadFile = await compressImage(file, 400, 0.85);
-      }
-      
       const fileName = `signature-images/${crypto.randomUUID()}.jpg`;
       
       const { data, error } = await supabase.storage
         .from('email-assets')
-        .upload(fileName, uploadFile, {
+        .upload(fileName, croppedBlob, {
           contentType: 'image/jpeg'
         });
 
@@ -1681,9 +1688,9 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
         .from('email-assets')
         .getPublicUrl(fileName);
 
-      const block = blocks.find(b => b.id === blockId);
+      const block = blocks.find(b => b.id === cropTargetBlockId);
       if (block && block.signatureConfig) {
-        updateBlock(blockId, { 
+        updateBlock(cropTargetBlockId, { 
           signatureConfig: { ...block.signatureConfig, imageUrl: urlData.publicUrl }
         });
       }
@@ -1693,6 +1700,8 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
       toast.error('Failed to upload image');
     } finally {
       setIsUploading(false);
+      setCropTargetBlockId(null);
+      setCropImageFile(null);
     }
   };
 
@@ -3263,8 +3272,9 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       onChange={(e) => {
                                         const file = e.target.files?.[0];
                                         if (file) {
-                                          handleSignatureImageUpload(selectedBlock.id, file);
+                                          handleSignatureFileSelect(selectedBlock.id, file);
                                         }
+                                        e.target.value = '';
                                       }}
                                       disabled={isUploading}
                                     />
@@ -3837,6 +3847,19 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Image Crop Modal */}
+      <ImageCropModal
+        open={cropModalOpen}
+        onClose={() => {
+          setCropModalOpen(false);
+          setCropImageFile(null);
+          setCropTargetBlockId(null);
+        }}
+        imageFile={cropImageFile}
+        onCropComplete={handleCroppedImageUpload}
+        maxOutputSize={400}
+      />
     </div>
   );
 });
