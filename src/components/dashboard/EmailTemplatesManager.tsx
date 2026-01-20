@@ -357,19 +357,6 @@ export function EmailTemplatesManager() {
                     <p className="text-sm font-mono bg-muted px-2 py-1 rounded truncate">
                       Subject: {template.subject}
                     </p>
-                    {template.variables.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {template.variables.map((variable) => (
-                          <Badge
-                            key={variable}
-                            variant="secondary"
-                            className="text-xs font-mono"
-                          >
-                            {`{{${variable}}}`}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
