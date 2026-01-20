@@ -1636,6 +1636,39 @@ export type Database = {
         }
         Relationships: []
       }
+      website_analytics_cache: {
+        Row: {
+          avg_session_duration: number | null
+          bounce_rate: number | null
+          created_at: string
+          date: string
+          fetched_at: string
+          id: string
+          pageviews: number
+          visitors: number
+        }
+        Insert: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          created_at?: string
+          date: string
+          fetched_at?: string
+          id?: string
+          pageviews?: number
+          visitors?: number
+        }
+        Update: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          created_at?: string
+          date?: string
+          fetched_at?: string
+          id?: string
+          pageviews?: number
+          visitors?: number
+        }
+        Relationships: []
+      }
       weekly_wins_reports: {
         Row: {
           adjustment_for_next_week: string | null
