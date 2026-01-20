@@ -1916,7 +1916,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             onChange={(e) => updateBlock(selectedBlock.id, { content: e.target.value })}
                             className="min-h-[180px] text-sm resize-y font-mono"
                           />
-                          <p className="text-[10px] text-muted-foreground">Tip: Select text and click B to bold only that portion</p>
+                          <p className="text-[10px] text-muted-foreground">Tip: Select text and click B for bold or I for italic</p>
                         </div>
                         <div className="flex items-end gap-2">
                           <div className="flex-1 space-y-1.5">
@@ -1943,6 +1943,15 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             title="Bold selected text"
                           >
                             <Bold className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => applyInlineFormat(selectedBlock.id, 'em')}
+                            title="Italic selected text"
+                          >
+                            <Italic className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </>
