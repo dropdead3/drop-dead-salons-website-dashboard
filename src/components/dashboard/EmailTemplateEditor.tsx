@@ -1853,6 +1853,75 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     toast.success('Block duplicated');
   };
 
+  // Convert a block to a columns layout
+  const convertToColumns = (id: string, columnCount: 2 | 3) => {
+    const blockToConvert = blocks.find(b => b.id === id);
+    if (!blockToConvert) return;
+    
+    // Don't convert header, footer, or already columns blocks
+    if (blockToConvert.type === 'header' || blockToConvert.type === 'footer' || blockToConvert.type === 'columns') {
+      toast.error(`Cannot convert ${blockToConvert.type} to columns`);
+      return;
+    }
+    
+    // Get current theme for consistent styling
+    const currentTheme = allThemes.find(t => t.id === selectedTheme) || emailThemes[0];
+    
+    // Create a copy of the original block to place in the first column
+    const originalBlockCopy: EmailBlock = {
+      ...blockToConvert,
+      id: crypto.randomUUID(),
+      styles: { ...blockToConvert.styles },
+    };
+    
+    // Create empty placeholder blocks for additional columns
+    const createPlaceholderBlock = (): EmailBlock => ({
+      id: crypto.randomUUID(),
+      type: 'text',
+      content: 'Add content here...',
+      styles: {
+        textAlign: 'center',
+        fontSize: '14px',
+        padding: '8px',
+        textColor: currentTheme.colors.bodyText,
+      },
+    });
+    
+    // Build column blocks array
+    const columnBlocks: EmailBlock[][] = [[originalBlockCopy]];
+    for (let i = 1; i < columnCount; i++) {
+      columnBlocks.push([createPlaceholderBlock()]);
+    }
+    
+    // Create new columns block
+    const columnsBlock: EmailBlock = {
+      id: crypto.randomUUID(),
+      type: 'columns',
+      content: '',
+      styles: {
+        backgroundColor: blockToConvert.styles.backgroundColor || currentTheme.colors.bodyBg,
+        padding: blockToConvert.styles.padding || '16px',
+        paddingTop: blockToConvert.styles.paddingTop,
+        paddingBottom: blockToConvert.styles.paddingBottom,
+        paddingHorizontal: blockToConvert.styles.paddingHorizontal,
+      },
+      columnsConfig: {
+        columnCount,
+        columns: [],
+        columnBlocks,
+        gap: 16,
+      },
+    };
+    
+    // Replace the original block with the columns block
+    const index = blocks.findIndex(b => b.id === id);
+    const newBlocks = [...blocks];
+    newBlocks[index] = columnsBlock;
+    updateBlocksAndHtml(newBlocks);
+    setSelectedBlockId(columnsBlock.id);
+    toast.success(`Converted to ${columnCount}-column layout`);
+  };
+
   // Helper to get section type for visual grouping
   const getSectionType = (blockType: string): { label: string; color: string } => {
     switch (blockType) {
@@ -5202,6 +5271,30 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         <ChevronDown className="w-3 h-3" />
                         </Button>
                         <div className="w-px h-4 bg-border" />
+                        {/* Column conversion buttons - only show for convertible block types */}
+                        {block.type !== 'header' && block.type !== 'footer' && block.type !== 'columns' && (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6" 
+                              onClick={(e) => { e.stopPropagation(); convertToColumns(block.id, 2); }}
+                              title="Convert to 2 columns"
+                            >
+                              <Columns2 className="w-3 h-3" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6" 
+                              onClick={(e) => { e.stopPropagation(); convertToColumns(block.id, 3); }}
+                              title="Convert to 3 columns"
+                            >
+                              <Columns3 className="w-3 h-3" />
+                            </Button>
+                            <div className="w-px h-4 bg-border" />
+                          </>
+                        )}
                         <Button 
                           variant="ghost" 
                           size="icon" 
