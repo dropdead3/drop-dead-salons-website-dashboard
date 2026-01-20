@@ -983,6 +983,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   const [rawHtml, setRawHtml] = useState(initialHtml);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<'above' | 'below' | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead-premium');
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
@@ -1628,11 +1629,16 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     e.dataTransfer.dropEffect = 'move';
     if (draggedBlockId && blockId !== draggedBlockId) {
       setDragOverBlockId(blockId);
+      // Determine if dropping above or below based on mouse position
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      setDropPosition(e.clientY < midpoint ? 'above' : 'below');
     }
   };
 
   const handleDragLeave = () => {
     setDragOverBlockId(null);
+    setDropPosition(null);
   };
 
   const handleDrop = (e: React.DragEvent, targetBlockId: string) => {
@@ -1640,6 +1646,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     if (!draggedBlockId || draggedBlockId === targetBlockId) {
       setDraggedBlockId(null);
       setDragOverBlockId(null);
+      setDropPosition(null);
       return;
     }
 
@@ -1649,21 +1656,33 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     if (draggedIndex === -1 || targetIndex === -1) {
       setDraggedBlockId(null);
       setDragOverBlockId(null);
+      setDropPosition(null);
       return;
     }
 
     const newBlocks = [...blocks];
     const [draggedBlock] = newBlocks.splice(draggedIndex, 1);
-    newBlocks.splice(targetIndex, 0, draggedBlock);
+    
+    // Insert at correct position based on drop position
+    let insertIndex = targetIndex;
+    if (dropPosition === 'below') {
+      insertIndex = draggedIndex < targetIndex ? targetIndex : targetIndex + 1;
+    } else {
+      insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    }
+    
+    newBlocks.splice(insertIndex, 0, draggedBlock);
     
     updateBlocksAndHtml(newBlocks);
     setDraggedBlockId(null);
     setDragOverBlockId(null);
+    setDropPosition(null);
   };
 
   const handleDragEnd = () => {
     setDraggedBlockId(null);
     setDragOverBlockId(null);
+    setDropPosition(null);
   };
 
   const handleImageUpload = async (blockId: string, file: File) => {
@@ -3916,11 +3935,28 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       className={cn(
                         'relative group cursor-pointer transition-all',
                         selectedBlockId === block.id && 'ring-2 ring-primary ring-offset-2',
-                        draggedBlockId === block.id && 'opacity-50 scale-[0.98]',
-                        dragOverBlockId === block.id && 'ring-2 ring-primary ring-dashed'
+                        draggedBlockId === block.id && 'opacity-50 scale-[0.98]'
                       )}
                       onClick={() => setSelectedBlockId(block.id)}
                     >
+                      {/* Drop zone indicator - ABOVE */}
+                      {dragOverBlockId === block.id && dropPosition === 'above' && (
+                        <div className="absolute -top-1 left-0 right-0 z-30 flex items-center pointer-events-none">
+                          <div className="w-3 h-3 rounded-full bg-primary border-2 border-background shadow-md -ml-1.5" />
+                          <div className="flex-1 h-0.5 bg-primary shadow-[0_0_8px_2px_hsl(var(--primary)/0.4)]" />
+                          <div className="w-3 h-3 rounded-full bg-primary border-2 border-background shadow-md -mr-1.5" />
+                        </div>
+                      )}
+                      
+                      {/* Drop zone indicator - BELOW */}
+                      {dragOverBlockId === block.id && dropPosition === 'below' && (
+                        <div className="absolute -bottom-1 left-0 right-0 z-30 flex items-center pointer-events-none">
+                          <div className="w-3 h-3 rounded-full bg-primary border-2 border-background shadow-md -ml-1.5" />
+                          <div className="flex-1 h-0.5 bg-primary shadow-[0_0_8px_2px_hsl(var(--primary)/0.4)]" />
+                          <div className="w-3 h-3 rounded-full bg-primary border-2 border-background shadow-md -mr-1.5" />
+                        </div>
+                      )}
+                      
                       {/* Section name badge - fades to 10% on hover */}
                       <div className={cn(
                         'absolute left-2 top-2 z-20 transition-opacity duration-200',
