@@ -224,6 +224,7 @@ interface EmailBlock {
   headerConfig?: {
     showLogo: boolean;
     logoId: string;
+    logoSize?: 'small' | 'medium' | 'large';
     showNavLinks: boolean;
   };
   navLinks?: NavLink[];
@@ -2266,28 +2267,53 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                               <span className="text-xs">Show Logo</span>
                             </div>
                             {selectedBlock.headerConfig?.showLogo && (
-                              <Select
-                                value={selectedBlock.headerConfig?.logoId || 'drop-dead-main-black'}
-                                onValueChange={(v) => {
-                                  updateBlock(selectedBlock.id, {
-                                    headerConfig: {
-                                      ...selectedBlock.headerConfig!,
-                                      logoId: v,
-                                    }
-                                  });
-                                }}
-                              >
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {brandLogos.map((logo) => (
-                                    <SelectItem key={logo.id} value={logo.id}>
-                                      {logo.name} ({logo.variant === 'black' ? 'Black' : 'White'})
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <div className="space-y-2">
+                                <Select
+                                  value={selectedBlock.headerConfig?.logoId || 'drop-dead-main-black'}
+                                  onValueChange={(v) => {
+                                    updateBlock(selectedBlock.id, {
+                                      headerConfig: {
+                                        ...selectedBlock.headerConfig!,
+                                        logoId: v,
+                                      }
+                                    });
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {brandLogos.map((logo) => (
+                                      <SelectItem key={logo.id} value={logo.id}>
+                                        {logo.name} ({logo.variant === 'black' ? 'Black' : 'White'})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">Size</span>
+                                  <Select
+                                    value={selectedBlock.headerConfig?.logoSize || 'medium'}
+                                    onValueChange={(v) => {
+                                      updateBlock(selectedBlock.id, {
+                                        headerConfig: {
+                                          ...selectedBlock.headerConfig!,
+                                          logoSize: v as 'small' | 'medium' | 'large',
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-7 text-xs flex-1">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="small">Small (80px)</SelectItem>
+                                      <SelectItem value="medium">Medium (120px)</SelectItem>
+                                      <SelectItem value="large">Large (160px)</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
@@ -2646,6 +2672,8 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                           const headerConfig = block.headerConfig || { showLogo: true, logoId: 'drop-dead-main-white', showNavLinks: true };
                           const logo = getLogoById(headerConfig.logoId) || brandLogos[0];
                           const enabledLinks = (block.navLinks || []).filter(l => l.enabled);
+                          const logoSizeMap = { small: '80px', medium: '120px', large: '160px' };
+                          const logoMaxWidth = logoSizeMap[headerConfig.logoSize || 'medium'];
                           
                           return (
                             <div className="flex items-center justify-between w-full px-4">
@@ -2653,7 +2681,7 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                                 <img 
                                   src={logo.src} 
                                   alt={logo.name} 
-                                  style={{ maxWidth: '120px', height: 'auto', display: 'block' }}
+                                  style={{ maxWidth: logoMaxWidth, height: 'auto', display: 'block' }}
                                 />
                               ) : <div />}
                               {headerConfig.showNavLinks && enabledLinks.length > 0 ? (
