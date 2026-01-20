@@ -15,7 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X, Info, Sparkles } from 'lucide-react';
+import { useBellSound } from '@/hooks/use-bell-sound';
+import { Bell, DollarSign, Pin, Loader2, MessageSquare, Send, X, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import confetti from 'canvas-confetti';
@@ -45,6 +46,7 @@ const leadSources = [
 export default function RingTheBell() {
   const { user, isCoach } = useAuth();
   const { toast } = useToast();
+  const { playBellSound } = useBellSound();
   const [entries, setEntries] = useState<BellEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -84,7 +86,8 @@ export default function RingTheBell() {
             
             const stylistName = profile?.display_name || profile?.full_name || 'A stylist';
             
-            // Trigger confetti for team celebration
+            // Trigger confetti and sound for team celebration
+            playBellSound();
             confetti({
               particleCount: 100,
               spread: 70,
@@ -189,7 +192,8 @@ export default function RingTheBell() {
         description: 'Failed to submit. Please try again.',
       });
     } else {
-      // Celebrate with confetti burst
+      // Play bell sound and celebrate with confetti burst
+      playBellSound();
       const duration = 2000;
       const end = Date.now() + duration;
       
