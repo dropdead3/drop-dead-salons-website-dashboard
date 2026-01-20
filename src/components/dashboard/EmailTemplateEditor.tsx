@@ -984,6 +984,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
   const [dropPosition, setDropPosition] = useState<'above' | 'below' | null>(null);
+  const [recentlyMovedBlockId, setRecentlyMovedBlockId] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<string>('drop-dead-premium');
   const [customThemes, setCustomThemes] = useState<EmailTheme[]>([]);
   const [isCreateThemeOpen, setIsCreateThemeOpen] = useState(false);
@@ -1699,6 +1700,11 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
     newBlocks.splice(insertIndex, 0, draggedBlock);
     
     updateBlocksAndHtml(newBlocks);
+    
+    // Trigger animation on the moved block
+    setRecentlyMovedBlockId(draggedBlockId);
+    setTimeout(() => setRecentlyMovedBlockId(null), 400);
+    
     setDraggedBlockId(null);
     setDragOverBlockId(null);
     setDropPosition(null);
@@ -3958,9 +3964,10 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       onDrop={(e) => handleDrop(e, block.id)}
                       onDragEnd={handleDragEnd}
                       className={cn(
-                        'relative group cursor-pointer transition-all',
+                        'relative group cursor-pointer transition-all duration-200',
                         selectedBlockId === block.id && 'ring-2 ring-primary ring-offset-2',
-                        draggedBlockId === block.id && 'opacity-50 scale-[0.98]'
+                        draggedBlockId === block.id && 'opacity-50 scale-[0.98]',
+                        recentlyMovedBlockId === block.id && 'animate-scale-in ring-2 ring-primary/50'
                       )}
                       onClick={() => setSelectedBlockId(block.id)}
                     >
