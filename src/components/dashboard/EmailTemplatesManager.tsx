@@ -455,8 +455,8 @@ export function EmailTemplatesManager() {
           if (!open) setEditingTemplate(null);
         }}
       >
-        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col overflow-hidden p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle className="flex items-center gap-2">
               Edit Email Template
               {hasUnsavedChanges && (
@@ -470,7 +470,7 @@ export function EmailTemplatesManager() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-4 px-1">
+          <div className="flex-1 overflow-y-auto space-y-4 px-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Template Name</Label>
@@ -522,7 +522,7 @@ export function EmailTemplatesManager() {
           </div>
 
           {/* Sticky Footer */}
-          <div className="sticky bottom-0 -mx-6 -mb-6 px-6 py-4 bg-background border-t mt-4 flex items-center justify-between">
+          <div className="sticky bottom-0 px-6 py-4 bg-background border-t mt-4 flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               {hasUnsavedChanges && 'Remember to save your changes'}
             </div>
