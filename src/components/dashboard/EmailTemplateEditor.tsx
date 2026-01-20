@@ -2811,53 +2811,24 @@ export function EmailTemplateEditor({ initialHtml, initialBlocks, variables, onH
                             </div>
                           ) : null;
                           
-                          // Determine flex justify based on positions
-                          const getJustifyClass = () => {
-                            if (logoPosition === 'left' && navLinksPosition === 'right') return 'justify-between';
-                            if (logoPosition === 'right' && navLinksPosition === 'left') return 'justify-between';
-                            if (logoPosition === 'center' && navLinksPosition === 'center') return 'justify-center';
-                            if (logoPosition === 'left' && navLinksPosition === 'left') return 'justify-start gap-6';
-                            if (logoPosition === 'right' && navLinksPosition === 'right') return 'justify-end gap-6';
-                            if (logoPosition === 'left' && navLinksPosition === 'center') return 'justify-start';
-                            if (logoPosition === 'right' && navLinksPosition === 'center') return 'justify-end';
-                            if (logoPosition === 'center' && navLinksPosition === 'left') return 'justify-center';
-                            if (logoPosition === 'center' && navLinksPosition === 'right') return 'justify-center';
-                            return 'justify-between';
-                          };
-                          
-                          // For center logo with non-center nav, use column layout
-                          const useCenterLayout = logoPosition === 'center';
-                          
-                          if (useCenterLayout) {
-                            const navJustify = navLinksPosition === 'left' ? 'justify-start' : navLinksPosition === 'right' ? 'justify-end' : 'justify-center';
-                            return (
-                              <div className="flex flex-col items-center w-full px-4 gap-2">
-                                {logoElement}
-                                {navElement && (
-                                  <div className={`flex w-full ${navJustify}`}>
-                                    {navElement}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          }
-                          
-                          // For left/right logo positions
-                          const isLogoFirst = logoPosition === 'left' || (logoPosition !== 'right' && navLinksPosition === 'right');
-                          
+                          // Use 3-column grid for independent logo and nav positioning
                           return (
-                            <div className={`flex items-center w-full px-4 ${getJustifyClass()}`}>
-                              {isLogoFirst ? (
-                                <>
-                                  {logoElement || <div />}
-                                  {navElement || <div />}
-                                </>
-                              ) : (
-                                <>
-                                  {navElement || <div />}
-                                  {logoElement || <div />}
-                                </>
-                              )}
+                            <div className="grid grid-cols-3 items-center w-full px-4">
+                              {/* Left column */}
+                              <div className="flex justify-start">
+                                {logoPosition === 'left' && logoElement}
+                                {navLinksPosition === 'left' && navElement}
+                              </div>
+                              {/* Center column */}
+                              <div className="flex justify-center">
+                                {logoPosition === 'center' && logoElement}
+                                {navLinksPosition === 'center' && navElement}
+                              </div>
+                              {/* Right column */}
+                              <div className="flex justify-end">
+                                {logoPosition === 'right' && logoElement}
+                                {navLinksPosition === 'right' && navElement}
+                              </div>
                             </div>
                           );
                         })()}
