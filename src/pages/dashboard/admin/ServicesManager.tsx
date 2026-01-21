@@ -296,7 +296,7 @@ export default function ServicesManager() {
                 <Settings2 className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stylistLevels.length}</p>
+                <p className="text-2xl font-bold">{(stylistLevels || []).length}</p>
                 <p className="text-sm text-muted-foreground">Stylist Levels</p>
               </div>
             </CardContent>
