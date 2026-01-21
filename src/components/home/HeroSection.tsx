@@ -5,7 +5,7 @@ import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
-const rotatingWords = ["Salon", "Extensions", "Blonding", "Color", "Results"];
+const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
 
 interface HeroSectionProps {
   videoSrc?: string;
