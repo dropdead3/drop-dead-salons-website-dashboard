@@ -33,6 +33,7 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
   const totalDays = config?.total_days || 75;
   const totalPasses = config?.life_happens_passes_total || 2;
   const programName = config?.program_name || 'Client Engine';
+  const logoUrl = config?.logo_url || DD75Logo;
 
   const highlights = [
     {
@@ -94,7 +95,7 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
             className="mb-8"
           >
             <img 
-              src={DD75Logo} 
+              src={logoUrl} 
               alt={programName}
               className="h-14 lg:h-16 w-auto mx-auto"
             />

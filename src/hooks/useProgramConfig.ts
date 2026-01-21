@@ -13,6 +13,7 @@ export interface ProgramConfig {
   is_active: boolean;
   grace_period_hours: number;
   life_happens_passes_total: number;
+  logo_url: string | null;
 }
 
 export interface DailyTask {
