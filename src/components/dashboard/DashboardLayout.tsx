@@ -188,31 +188,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Fetch team members for user impersonation picker
   const { data: teamMembers = [] } = useTeamDirectory();
 
-  // Track scroll position in sidebar nav
-  useEffect(() => {
-    const handleScroll = () => {
-      const nav = navRef.current;
-      if (nav) {
-        setIsScrolled(nav.scrollTop > 50);
-      }
-    };
+  // Track scroll position in sidebar nav using a callback ref approach
+  const handleNavScroll = (e: Event) => {
+    const target = e.target as HTMLElement;
+    setIsScrolled(target.scrollTop > 50);
+  };
 
-    // Use a small delay to ensure ref is attached after render
-    const timer = setTimeout(() => {
-      const nav = navRef.current;
-      if (nav) {
-        nav.addEventListener('scroll', handleScroll);
-      }
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      const nav = navRef.current;
-      if (nav) {
-        nav.removeEventListener('scroll', handleScroll);
-      }
-    };
-  }, []);
+  // Callback ref to attach scroll listener when nav mounts
+  const setNavRef = (node: HTMLElement | null) => {
+    // Clean up previous listener
+    if (navRef.current) {
+      navRef.current.removeEventListener('scroll', handleNavScroll);
+    }
+    
+    // Set new ref and attach listener
+    navRef.current = node;
+    if (node) {
+      node.addEventListener('scroll', handleNavScroll);
+    }
+  };
 
   // Use simulated role if viewing as a role, or the impersonated user's roles
   const roles = isViewingAsUser && viewAsUser 
@@ -419,7 +413,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav ref={navRef} className="flex-1 py-4 overflow-y-auto">
+      <nav ref={setNavRef} className="flex-1 py-4 overflow-y-auto">
         <div className="space-y-1">
           {filterNavItems(mainNavItems).map((item) => (
             <NavLink 
