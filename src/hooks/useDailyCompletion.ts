@@ -282,26 +282,28 @@ export function useDailyCompletion(userId: string | undefined) {
   };
 
   const useForgiveCredit = async (): Promise<boolean> => {
-    if (!enrollment) return false;
+    if (!enrollment || !userId) return false;
     
     if (enrollment.forgive_credits_remaining <= 0) {
       toast.error('No Life Happens Passes remaining');
       return false;
     }
 
-    // Check if within 24 hours of miss
+    // Check if within 24 hours of miss (default grace period)
     const lastCompletion = enrollment.last_completion_date;
     if (lastCompletion) {
       const lastDate = new Date(lastCompletion);
       const now = new Date();
       const hoursSinceMiss = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60);
       
-      if (hoursSinceMiss > 48) { // 24 hours after the day was missed (so 48 hours after last completion)
+      // Default 48 hours = 24 hours after the day was missed
+      if (hoursSinceMiss > 48) {
         toast.error('Pass expired. You have 24 hours after missing a day to use a Life Happens Pass.');
         return false;
       }
     }
 
+    // Update enrollment
     const { error } = await supabase
       .from('stylist_program_enrollment')
       .update({
@@ -317,6 +319,34 @@ export function useDailyCompletion(userId: string | undefined) {
       console.error('Error using Life Happens Pass:', error);
       toast.error('Failed to use pass');
       return false;
+    }
+
+    // Log pass usage to history
+    await supabase
+      .from('pass_usage_history')
+      .insert({
+        enrollment_id: enrollment.id,
+        user_id: userId,
+        day_missed: enrollment.current_day,
+        current_day_at_use: enrollment.current_day,
+      });
+
+    // Notify leadership (create notification)
+    const { data: admins } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .in('role', ['admin', 'manager']);
+
+    if (admins && admins.length > 0) {
+      const notifications = admins.map(admin => ({
+        user_id: admin.user_id,
+        type: 'pass_used',
+        title: 'Life Happens Pass Used',
+        message: `A team member used a Life Happens Pass on Day ${enrollment.current_day}`,
+        link: '/dashboard/admin/client-engine',
+      }));
+
+      await supabase.from('notifications').insert(notifications);
     }
 
     setHasMissedDay(false);

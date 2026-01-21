@@ -1511,6 +1511,53 @@ export type Database = {
         }
         Relationships: []
       }
+      pass_usage_history: {
+        Row: {
+          created_at: string
+          current_day_at_use: number
+          day_missed: number
+          enrollment_id: string
+          id: string
+          restore_reason: string | null
+          restored_at: string | null
+          restored_by: string | null
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_day_at_use: number
+          day_missed: number
+          enrollment_id: string
+          id?: string
+          restore_reason?: string | null
+          restored_at?: string | null
+          restored_by?: string | null
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_day_at_use?: number
+          day_missed?: number
+          enrollment_id?: string
+          id?: string
+          restore_reason?: string | null
+          restored_at?: string | null
+          restored_by?: string | null
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pass_usage_history_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_program_enrollment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           category: string
@@ -1582,8 +1629,10 @@ export type Database = {
           allow_manual_restart: boolean
           auto_restart_on_miss: boolean
           created_at: string
+          grace_period_hours: number
           id: string
           is_active: boolean
+          life_happens_passes_total: number
           program_name: string
           require_metrics_logging: boolean
           require_proof_upload: boolean
@@ -1595,8 +1644,10 @@ export type Database = {
           allow_manual_restart?: boolean
           auto_restart_on_miss?: boolean
           created_at?: string
+          grace_period_hours?: number
           id?: string
           is_active?: boolean
+          life_happens_passes_total?: number
           program_name?: string
           require_metrics_logging?: boolean
           require_proof_upload?: boolean
@@ -1608,8 +1659,10 @@ export type Database = {
           allow_manual_restart?: boolean
           auto_restart_on_miss?: boolean
           created_at?: string
+          grace_period_hours?: number
           id?: string
           is_active?: boolean
+          life_happens_passes_total?: number
           program_name?: string
           require_metrics_logging?: boolean
           require_proof_upload?: boolean

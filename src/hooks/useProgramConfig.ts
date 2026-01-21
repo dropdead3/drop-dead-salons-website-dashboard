@@ -11,6 +11,8 @@ export interface ProgramConfig {
   allow_manual_restart: boolean;
   auto_restart_on_miss: boolean;
   is_active: boolean;
+  grace_period_hours: number;
+  life_happens_passes_total: number;
 }
 
 export interface DailyTask {
