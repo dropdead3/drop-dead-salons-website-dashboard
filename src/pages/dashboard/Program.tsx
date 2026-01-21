@@ -132,13 +132,15 @@ export default function Program() {
     if (error) {
       console.error('Error restarting program:', error);
       toast.error('Failed to restart program');
+      setRestarting(false);
     } else {
-      toast.success('Program reset! You\'ll start fresh from the welcome page.');
+      toast.success('Program reset! Redirecting to welcome page...');
+      // Set state first, then refetch - this ensures welcome page shows
       setHasEnrollment(false);
-      refetch();
+      setRestarting(false);
+      // Small delay to ensure state updates before any refetch
+      setTimeout(() => refetch(), 100);
     }
-    
-    setRestarting(false);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
