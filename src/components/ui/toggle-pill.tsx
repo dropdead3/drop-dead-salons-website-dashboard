@@ -21,7 +21,6 @@ interface TogglePillProps {
   size?: "sm" | "default" | "lg";
   variant?: "default" | "solid" | "glass";
   className?: string;
-  id?: string;
 }
 
 const sizeClasses = {
@@ -49,12 +48,7 @@ export function TogglePill({
   size = "default",
   variant = "solid",
   className,
-  id,
 }: TogglePillProps) {
-  // Generate a stable unique ID for this instance
-  const instanceId = React.useId();
-  const layoutId = id || instanceId;
-
   return (
     <TooltipProvider delayDuration={300}>
       <div
@@ -68,19 +62,19 @@ export function TogglePill({
         {options.map((option) => {
           const isSelected = option.value === value;
           
-          const buttonContent = (
+          const button = (
             <button
-              key={option.value}
+              type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors duration-200",
+                "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-all duration-200",
                 sizeClasses[size],
                 isSelected
                   ? "text-background bg-foreground"
                   : "text-foreground/60 hover:text-foreground/80"
               )}
             >
-              <span className="relative z-10 flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5">
                 {option.icon}
                 {option.label}
               </span>
@@ -91,7 +85,7 @@ export function TogglePill({
             return (
               <Tooltip key={option.value}>
                 <TooltipTrigger asChild>
-                  {buttonContent}
+                  {button}
                 </TooltipTrigger>
                 <TooltipContent className="text-center">
                   {option.tooltip.split('\n').map((line, i) => (
@@ -102,7 +96,7 @@ export function TogglePill({
             );
           }
 
-          return buttonContent;
+          return <React.Fragment key={option.value}>{button}</React.Fragment>;
         })}
       </div>
     </TooltipProvider>

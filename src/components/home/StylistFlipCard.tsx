@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import { ArrowRight, Star, Info, X, Instagram, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
@@ -75,12 +74,9 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                       return 0;
                     });
                 
-                return displayItems.map((item, idx) => (
-                  <motion.span
+                return displayItems.map((item) => (
+                  <span
                     key={item}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 + index * 0.1 }}
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-full ${
                       item === "EXTENSIONS" || stylist.specialties.includes("EXTENSIONS")
                         ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
@@ -89,7 +85,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                   >
                     {item === "EXTENSIONS" && <Star className="w-3 h-3 fill-current" />}
                     {toTitleCase(item)}
-                  </motion.span>
+                  </span>
                 ));
               })()}
             </div>
