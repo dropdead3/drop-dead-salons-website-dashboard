@@ -15,6 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { ClientEngineWelcome } from './ClientEngineWelcome';
+import { ProgramLogoEditor } from './ProgramLogoEditor';
 import { ProgramConfig } from '@/hooks/useProgramConfig';
 
 interface WelcomePageConfig {
@@ -29,9 +30,12 @@ interface WelcomePageConfig {
 
 interface WelcomePagePreviewProps {
   previewConfig?: ProgramConfig | null;
+  onLogoChange?: (url: string | null) => void;
+  onLogoSizeChange?: (size: number) => void;
+  onLogoColorChange?: (color: string | null) => void;
 }
 
-export function WelcomePagePreview({ previewConfig }: WelcomePagePreviewProps) {
+export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChange, onLogoColorChange }: WelcomePagePreviewProps) {
   const [config, setConfig] = useState<WelcomePageConfig>({
     headline: 'BUILD YOUR CLIENT ENGINE',
     subheadline: '75 days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.',
@@ -85,6 +89,18 @@ export function WelcomePagePreview({ previewConfig }: WelcomePagePreviewProps) {
         </TabsContent>
 
         <TabsContent value="edit" className="mt-6 space-y-6">
+          {/* Program Logo Editor */}
+          {onLogoChange && onLogoSizeChange && onLogoColorChange && (
+            <ProgramLogoEditor
+              currentLogoUrl={previewConfig?.logo_url || null}
+              logoSize={previewConfig?.logo_size || 64}
+              logoColor={previewConfig?.logo_color || null}
+              onLogoChange={onLogoChange}
+              onSizeChange={onLogoSizeChange}
+              onColorChange={onLogoColorChange}
+            />
+          )}
+
           {/* Content Settings */}
           <Card className="p-6">
             <div className="flex items-center gap-2 mb-6">
