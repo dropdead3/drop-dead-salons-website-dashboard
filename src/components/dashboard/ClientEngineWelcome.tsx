@@ -49,18 +49,23 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
     const b = parseInt(logoColor.slice(5, 7), 16);
     const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
     
-    if (luminance > 0.8) {
-      // Very light color (white, cream, etc) - invert the black logo
-      return { ...baseStyle, filter: `invert(1) brightness(${luminance + 0.2})` };
-    } else if (luminance > 0.5) {
-      // Light gray colors
-      return { ...baseStyle, filter: `invert(1) brightness(${luminance * 1.5})` };
-    } else if (luminance > 0.2) {
-      // Mid grays
-      return { ...baseStyle, filter: `brightness(${luminance * 2})` };
+    // For any non-black color, we need to invert the black SVG first
+    // then apply brightness/contrast to achieve the target color
+    if (luminance > 0.9) {
+      // Very light (white/near-white)
+      return { ...baseStyle, filter: 'invert(1)' };
+    } else if (luminance > 0.7) {
+      // Light colors (cream, beige, light gray)
+      return { ...baseStyle, filter: `invert(1) brightness(${luminance})` };
+    } else if (luminance > 0.4) {
+      // Mid-tone colors
+      return { ...baseStyle, filter: `invert(1) brightness(${luminance * 0.8})` };
+    } else if (luminance > 0.15) {
+      // Dark gray colors
+      return { ...baseStyle, filter: `brightness(${luminance * 3})` };
     }
     
-    // Dark colors - minimal change
+    // Very dark / black - no change needed
     return baseStyle;
   };
 
@@ -121,12 +126,12 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="mb-8 inline-block"
+            className="mb-8 flex justify-center"
           >
             <img 
               src={logoUrl} 
               alt={programName}
-              className="w-auto mx-auto"
+              className="w-auto"
               style={getLogoStyle()}
             />
           </motion.div>
