@@ -363,16 +363,8 @@ export default function ServicesManager() {
                         <GripVertical className="w-4 h-4" />
                       </div>
                     )}
-                    <div className={cn(
-                      "p-2 rounded-lg",
-                      category.isAddOn 
-                        ? "bg-green-100 dark:bg-green-900/30" 
-                        : "bg-muted"
-                    )}>
-                      <CategoryIcon className={cn(
-                        "w-4 h-4",
-                        category.isAddOn ? "text-green-600" : "text-foreground"
-                      )} />
+                    <div className="p-2 rounded-lg bg-muted">
+                      <CategoryIcon className="w-4 h-4 text-foreground" />
                     </div>
                     {isEditing ? (
                       <div 
@@ -470,11 +462,6 @@ export default function ServicesManager() {
                           </AlertDialog>
                         </div>
                       </>
-                    )}
-                    {category.isAddOn && !isEditing && (
-                      <Badge variant="outline" className="ml-auto text-green-600 border-green-300">
-                        Add-On
-                      </Badge>
                     )}
                   </div>
                 </AccordionTrigger>
