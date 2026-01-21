@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Check, X, Loader2, User, MapPin, Clock, Eye, EyeOff, Users, Settings } from 'lucide-react';
+import { Globe, Check, X, Loader2, User, MapPin, Clock, Eye, EyeOff, Users, Settings, ExternalLink } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { getLocationName, type Location } from '@/data/stylists';
 import { useHomepageStylistsSettings, useUpdateHomepageStylistsSettings } from '@/hooks/useSiteSettings';
 import { sampleStylists } from '@/data/sampleStylists';
+import { HomepagePreviewModal } from '@/components/dashboard/HomepagePreviewModal';
 
 interface StylistProfile {
   id: string;
@@ -121,6 +122,8 @@ function useDenyRequest() {
 }
 
 export default function HomepageStylists() {
+  const [previewOpen, setPreviewOpen] = useState(false);
+  
   const { data: pendingRequests = [], isLoading: loadingPending } = useHomepagePendingRequests();
   const { data: visibleStylists = [], isLoading: loadingVisible } = useHomepageVisibleStylists();
   const updateVisibility = useUpdateHomepageVisibility();
@@ -293,8 +296,22 @@ export default function HomepageStylists() {
                 Note: Sample cards won't appear because you have {visibleStylists.length} real stylist(s) visible. Sample cards only show when no real stylists are visible.
               </p>
             )}
+            <div className="mt-4 pt-4 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPreviewOpen(true)}
+                className="gap-2"
+              >
+                <Eye className="w-4 h-4" />
+                Preview Homepage Section
+                <ExternalLink className="w-3 h-3" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
+
+        <HomepagePreviewModal open={previewOpen} onOpenChange={setPreviewOpen} />
 
         <Tabs defaultValue="requests" className="space-y-6">
           <TabsList>
