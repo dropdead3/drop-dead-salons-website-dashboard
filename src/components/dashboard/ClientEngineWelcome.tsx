@@ -37,24 +37,32 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
   const logoSize = config?.logo_size || 64;
   const logoColor = config?.logo_color;
 
-  // Generate styles for colorizing SVG using CSS mask technique
-  const getLogoColorStyle = (): React.CSSProperties => {
-    if (!logoColor) return {};
+  // Generate filter style for colorizing SVG
+  const getLogoStyle = (): React.CSSProperties => {
+    const baseStyle: React.CSSProperties = { height: logoSize };
     
-    return {
-      backgroundColor: logoColor,
-      WebkitMaskImage: `url(${logoUrl})`,
-      WebkitMaskRepeat: 'no-repeat',
-      WebkitMaskPosition: 'center',
-      WebkitMaskSize: 'contain',
-      maskImage: `url(${logoUrl})`,
-      maskRepeat: 'no-repeat',
-      maskPosition: 'center',
-      maskSize: 'contain',
-    };
+    if (!logoColor) return baseStyle;
+    
+    // Parse hex to RGB and calculate luminance
+    const r = parseInt(logoColor.slice(1, 3), 16);
+    const g = parseInt(logoColor.slice(3, 5), 16);
+    const b = parseInt(logoColor.slice(5, 7), 16);
+    const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+    
+    if (luminance > 0.8) {
+      // Very light color (white, cream, etc) - invert the black logo
+      return { ...baseStyle, filter: `invert(1) brightness(${luminance + 0.2})` };
+    } else if (luminance > 0.5) {
+      // Light gray colors
+      return { ...baseStyle, filter: `invert(1) brightness(${luminance * 1.5})` };
+    } else if (luminance > 0.2) {
+      // Mid grays
+      return { ...baseStyle, filter: `brightness(${luminance * 2})` };
+    }
+    
+    // Dark colors - minimal change
+    return baseStyle;
   };
-
-  const isUsingMask = !!logoColor;
 
   const highlights = [
     {
@@ -115,23 +123,12 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
             transition={{ duration: 0.6 }}
             className="mb-8 inline-block"
           >
-            {isUsingMask ? (
-              <div 
-                className="mx-auto"
-                style={{ 
-                  height: logoSize,
-                  width: logoSize * 4, // Approximate aspect ratio for DD75 logo
-                  ...getLogoColorStyle()
-                }}
-              />
-            ) : (
-              <img 
-                src={logoUrl} 
-                alt={programName}
-                className="w-auto mx-auto"
-                style={{ height: logoSize }}
-              />
-            )}
+            <img 
+              src={logoUrl} 
+              alt={programName}
+              className="w-auto mx-auto"
+              style={getLogoStyle()}
+            />
           </motion.div>
           
           <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-xs tracking-wider font-display uppercase">
