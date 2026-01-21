@@ -123,24 +123,18 @@ export default function Program() {
     
     setRestarting(true);
     
+    // Delete the enrollment entirely so user sees welcome page again
     const { error } = await supabase
       .from('stylist_program_enrollment')
-      .update({
-        current_day: 1,
-        streak_count: 0,
-        status: 'active',
-        restart_count: (enrollment.restart_count || 0) + 1,
-        start_date: new Date().toISOString().split('T')[0],
-        last_completion_date: null,
-        weekly_wins_due_day: 7,
-      })
+      .delete()
       .eq('id', enrollment.id);
 
     if (error) {
       console.error('Error restarting program:', error);
       toast.error('Failed to restart program');
     } else {
-      toast.success('Program restarted! You\'re back on Day 1');
+      toast.success('Program reset! You\'ll start fresh from the welcome page.');
+      setHasEnrollment(false);
       refetch();
     }
     
@@ -232,8 +226,8 @@ export default function Program() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Restart the 75-Day Program?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will reset your progress back to Day 1. Your streak will be reset to 0 
-                    and you'll start fresh. This action cannot be undone.
+                    This will reset your progress and take you back to the welcome page to start fresh. 
+                    Your streak will be reset to 0. This action cannot be undone.
                     {enrollment && enrollment.restart_count > 0 && (
                       <span className="block mt-2 text-muted-foreground">
                         You've restarted {enrollment.restart_count} time{enrollment.restart_count > 1 ? 's' : ''} before.
