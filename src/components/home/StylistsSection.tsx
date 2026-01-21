@@ -532,15 +532,16 @@ const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; i
 export function StylistsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
-  const [selectedLocation, setSelectedLocation] = useState<Location>("north-mesa");
+  const [selectedLocation, setSelectedLocation] = useState<Location | "all">("all");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
+  const [randomSeed] = useState(() => Math.random()); // Fixed seed for consistent randomization during session
   
   const [isFormExpanded, setIsFormExpanded] = useState(false);
 
   // Listen for location filter events from LocationsSection
   useEffect(() => {
-    const handleLocationFilter = (e: CustomEvent<{ location: Location }>) => {
+    const handleLocationFilter = (e: CustomEvent<{ location: Location | "all" }>) => {
       setSelectedLocation(e.detail.location);
       // Reset other filters when switching location
       setSelectedSpecialty(null);
@@ -553,6 +554,18 @@ export function StylistsSection() {
     };
   }, []);
 
+  // Seeded random shuffle function for consistent ordering
+  const shuffleArray = <T,>(array: T[], seed: number): T[] => {
+    const shuffled = [...array];
+    let currentSeed = seed;
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      currentSeed = (currentSeed * 9301 + 49297) % 233280;
+      const j = Math.floor((currentSeed / 233280) * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   const levelOrder: Record<string, number> = {
     "LEVEL 4 STYLIST": 1,
     "LEVEL 3 STYLIST": 2,
@@ -560,27 +573,16 @@ export function StylistsSection() {
     "LEVEL 1 STYLIST": 4
   };
 
-  const filteredStylists = stylists
-    .filter((s) => {
-      const matchesLocation = s.locations.includes(selectedLocation);
-      const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
-      const matchesLevel = !selectedLevel || s.level === selectedLevel;
-      return matchesLocation && matchesSpecialty && matchesLevel;
-    })
-    .sort((a, b) => {
-      // First, sort by booking status (booking stylists first)
-      const aNotBooking = a.isBooking === false ? 1 : 0;
-      const bNotBooking = b.isBooking === false ? 1 : 0;
-      if (aNotBooking !== bNotBooking) return aNotBooking - bNotBooking;
-      
-      // Then sort by extensions specialty (extension stylists first)
-      const aHasExtensions = a.specialties.includes("EXTENSIONS") ? 0 : 1;
-      const bHasExtensions = b.specialties.includes("EXTENSIONS") ? 0 : 1;
-      if (aHasExtensions !== bHasExtensions) return aHasExtensions - bHasExtensions;
-      
-      // Then sort by level (highest to lowest)
-      return (levelOrder[a.level] || 99) - (levelOrder[b.level] || 99);
-    });
+  const filteredStylists = shuffleArray(
+    stylists
+      .filter((s) => {
+        const matchesLocation = selectedLocation === "all" || s.locations.includes(selectedLocation);
+        const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
+        const matchesLevel = !selectedLevel || s.level === selectedLevel;
+        return matchesLocation && matchesSpecialty && matchesLevel;
+      }),
+    randomSeed
+  );
 
   const handleToggleFormExpand = useCallback(() => {
     startTransition(() => {
@@ -621,13 +623,16 @@ export function StylistsSection() {
           </Eyebrow>
           
           <TogglePill
-            options={locations.map(loc => ({
-              value: loc.id,
-              label: loc.name,
-              icon: <Info className="w-3.5 h-3.5" />,
-            }))}
+            options={[
+              { value: "all", label: "All", icon: <Info className="w-3.5 h-3.5" /> },
+              ...locations.map(loc => ({
+                value: loc.id,
+                label: loc.name,
+                icon: <Info className="w-3.5 h-3.5" />,
+              }))
+            ]}
             value={selectedLocation}
-            onChange={(val) => setSelectedLocation(val as Location)}
+            onChange={(val) => setSelectedLocation(val as Location | "all")}
             size="lg"
             variant="solid"
           />

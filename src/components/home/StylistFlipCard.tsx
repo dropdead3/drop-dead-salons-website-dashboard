@@ -21,7 +21,7 @@ const toTitleCase = (str: string) => {
 interface StylistFlipCardProps {
   stylist: Stylist;
   index: number;
-  selectedLocation: Location;
+  selectedLocation: Location | "all";
 }
 
 export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFlipCardProps) {
