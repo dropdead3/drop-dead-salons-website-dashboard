@@ -786,15 +786,9 @@ export function StylistsSection() {
       {/* Stylists Grid */}
       <div className="container mx-auto px-6 mt-8">
         {filteredStylists.length > 0 ? (
-          <motion.div
-            key={`${selectedLocation}-${selectedSpecialty}-${selectedLevel}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-          >
-            {filteredStylists.map((stylist, index) => (
-              <StylistFlipCard key={stylist.id} stylist={stylist} index={index} selectedLocation={selectedLocation} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredStylists.map((stylist) => (
+              <StylistFlipCard key={stylist.id} stylist={stylist} index={0} selectedLocation={selectedLocation} />
             ))}
             
             {/* Join Our Team Card - dynamically spans remaining columns */}
@@ -803,7 +797,7 @@ export function StylistsSection() {
               isExpanded={isFormExpanded}
               onToggleExpand={handleToggleFormExpand}
             />
-          </motion.div>
+          </div>
         ) : (
           <motion.div
             key="no-results"

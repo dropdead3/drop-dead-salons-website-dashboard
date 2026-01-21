@@ -34,11 +34,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
+    <div
       className="group relative aspect-[3/4] perspective-1000"
       onMouseLeave={() => setIsFlipped(false)}
     >
@@ -262,6 +258,6 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
