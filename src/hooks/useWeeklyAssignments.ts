@@ -234,16 +234,17 @@ export function useWeeklyAssignments(enrollmentId: string | undefined, currentDa
   const getCurrentWeekProgress = (): { completed: number; total: number; percentage: number } => {
     if (!currentWeek) return { completed: 0, total: 0, percentage: 0 };
 
-    const requiredAssignments = currentWeek.assignments.filter((a) => a.is_required);
-    const completedCount = requiredAssignments.filter((a) => {
+    // Count ALL assignments, not just required ones
+    const allAssignments = currentWeek.assignments;
+    const completedCount = allAssignments.filter((a) => {
       const completion = getAssignmentCompletion(a.id);
       return completion?.is_complete;
     }).length;
 
     return {
       completed: completedCount,
-      total: requiredAssignments.length,
-      percentage: requiredAssignments.length > 0 ? Math.round((completedCount / requiredAssignments.length) * 100) : 0,
+      total: allAssignments.length,
+      percentage: allAssignments.length > 0 ? Math.round((completedCount / allAssignments.length) * 100) : 0,
     };
   };
 
