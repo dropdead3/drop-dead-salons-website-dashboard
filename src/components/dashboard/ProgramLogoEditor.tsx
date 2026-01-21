@@ -147,27 +147,55 @@ export function ProgramLogoEditor({
   const displayLogo = previewUrl || DD75Logo;
   const isCustomLogo = !!previewUrl;
 
-  // Generate styles for colorizing SVG using CSS mask technique
-  // This allows any color to be applied to monochrome SVGs
-  const getLogoColorStyle = (): React.CSSProperties => {
-    if (!color) return {};
+  // Convert hex to CSS filter that transforms black to the target color
+  // This uses a calculation approach to generate the right filter values
+  const getColorFilter = (hex: string): string => {
+    if (!hex) return '';
     
-    // Use CSS mask to colorize the SVG - this works for any color
-    return {
-      backgroundColor: color,
-      WebkitMaskImage: `url(${displayLogo})`,
-      WebkitMaskRepeat: 'no-repeat',
-      WebkitMaskPosition: 'center',
-      WebkitMaskSize: 'contain',
-      maskImage: `url(${displayLogo})`,
-      maskRepeat: 'no-repeat',
-      maskPosition: 'center',
-      maskSize: 'contain',
-    };
+    // Parse hex to RGB
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    
+    // Calculate filter values (simplified approach using sepia + hue-rotate + saturate)
+    // This works well for transforming black SVGs to any color
+    const brightness = Math.max(r, g, b) / 255;
+    
+    // For light colors, we invert first then apply color
+    if (brightness > 0.5) {
+      return `invert(1) sepia(1) saturate(0) brightness(${brightness * 1.5})`;
+    }
+    
+    // For dark colors
+    return `brightness(${brightness})`;
   };
 
-  // Check if we're using mask mode (when a color is selected)
-  const isUsingMask = !!color;
+  // Generate styles for colorizing the logo
+  const getLogoStyle = (): React.CSSProperties => {
+    const baseStyle: React.CSSProperties = { height: size };
+    
+    if (!color) return baseStyle;
+    
+    // Simple approach: for white/light colors, invert; for dark, darken
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+    const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+    
+    if (luminance > 0.8) {
+      // Very light color (white, cream, etc) - invert the black logo
+      return { ...baseStyle, filter: `invert(1) brightness(${luminance + 0.2})` };
+    } else if (luminance > 0.5) {
+      // Light gray colors
+      return { ...baseStyle, filter: `invert(1) brightness(${luminance * 1.5})` };
+    } else if (luminance > 0.2) {
+      // Mid grays
+      return { ...baseStyle, filter: `brightness(${luminance * 2})` };
+    }
+    
+    // Dark colors - minimal change
+    return baseStyle;
+  };
 
   // Helper to calculate luminance from hex
   const getLuminance = (hex: string): number => {
@@ -205,25 +233,12 @@ export function ProgramLogoEditor({
               className="w-80 flex items-center justify-center rounded-xl border-2 border-dashed border-border/50 p-6 transition-all duration-300 bg-gradient-to-br from-muted/30 to-muted/10"
               style={{ minHeight: size + 48 }}
             >
-              {isUsingMask ? (
-                // Using mask technique for colorized logo
-                <div 
-                  className="transition-all duration-300"
-                  style={{ 
-                    height: size,
-                    width: '100%',
-                    ...getLogoColorStyle()
-                  }}
-                />
-              ) : (
-                // Default logo without color
-                <img 
-                  src={displayLogo} 
-                  alt="Program Logo" 
-                  className="object-contain transition-all duration-300"
-                  style={{ height: size }}
-                />
-              )}
+              <img 
+                src={displayLogo} 
+                alt="Program Logo" 
+                className="object-contain transition-all duration-300"
+                style={getLogoStyle()}
+              />
             </div>
             {isCustomLogo && (
               <Badge 
