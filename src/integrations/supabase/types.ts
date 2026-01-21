@@ -312,6 +312,7 @@ export type Database = {
           created_at: string
           enrollment_id: string
           id: string
+          is_pinned: boolean
           note_text: string
           note_type: string | null
           updated_at: string
@@ -321,6 +322,7 @@ export type Database = {
           created_at?: string
           enrollment_id: string
           id?: string
+          is_pinned?: boolean
           note_text: string
           note_type?: string | null
           updated_at?: string
@@ -330,6 +332,7 @@ export type Database = {
           created_at?: string
           enrollment_id?: string
           id?: string
+          is_pinned?: boolean
           note_text?: string
           note_type?: string | null
           updated_at?: string
@@ -1334,7 +1337,9 @@ export type Database = {
           high_five_enabled: boolean
           id: string
           meeting_reminder_enabled: boolean
+          program_reminder_enabled: boolean
           push_notifications_enabled: boolean | null
+          streak_warning_enabled: boolean
           task_reminder_enabled: boolean
           updated_at: string
           user_id: string
@@ -1347,7 +1352,9 @@ export type Database = {
           high_five_enabled?: boolean
           id?: string
           meeting_reminder_enabled?: boolean
+          program_reminder_enabled?: boolean
           push_notifications_enabled?: boolean | null
+          streak_warning_enabled?: boolean
           task_reminder_enabled?: boolean
           updated_at?: string
           user_id: string
@@ -1360,7 +1367,9 @@ export type Database = {
           high_five_enabled?: boolean
           id?: string
           meeting_reminder_enabled?: boolean
+          program_reminder_enabled?: boolean
           push_notifications_enabled?: boolean | null
+          streak_warning_enabled?: boolean
           task_reminder_enabled?: boolean
           updated_at?: string
           user_id?: string
@@ -1529,6 +1538,45 @@ export type Database = {
         }
         Relationships: []
       }
+      program_achievements: {
+        Row: {
+          achievement_type: string
+          badge_color: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          is_active: boolean
+          key: string
+          threshold: number
+          title: string
+        }
+        Insert: {
+          achievement_type: string
+          badge_color?: string
+          created_at?: string
+          description: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          key: string
+          threshold?: number
+          title: string
+        }
+        Update: {
+          achievement_type?: string
+          badge_color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          threshold?: number
+          title?: string
+        }
+        Relationships: []
+      }
       program_configuration: {
         Row: {
           allow_manual_restart: boolean
@@ -1606,6 +1654,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      program_resources: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          file_type: string
+          file_url: string
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          week_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          file_type?: string
+          file_url: string
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          week_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          week_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_resources_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "program_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       program_rules: {
         Row: {
@@ -2259,6 +2354,45 @@ export type Database = {
             columns: ["achievement_id"]
             isOneToOne: false
             referencedRelation: "leaderboard_achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_program_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          enrollment_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          enrollment_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          enrollment_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_program_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "program_achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_program_achievements_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_program_enrollment"
             referencedColumns: ["id"]
           },
         ]

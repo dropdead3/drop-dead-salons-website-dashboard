@@ -24,9 +24,12 @@ import {
   Edit2,
   Check,
   X,
-  Calendar
+  Calendar,
+  FileText
 } from 'lucide-react';
 import ProgramWeeksEditor from '@/components/dashboard/ProgramWeeksEditor';
+import ProgramResourcesEditor from '@/components/dashboard/ProgramResourcesEditor';
+import { ProgramPreviewModal } from '@/components/dashboard/ProgramPreviewModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
