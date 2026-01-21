@@ -63,6 +63,7 @@ import DashboardBuild from "./pages/dashboard/admin/DashboardBuild";
 import RecruitingPipeline from "./pages/dashboard/admin/RecruitingPipeline";
 import GraduationTracker from "./pages/dashboard/admin/GraduationTracker";
 import MyGraduation from "./pages/dashboard/MyGraduation";
+import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,7 @@ const App = () => (
               <Route path="/dashboard/admin/build" element={<ProtectedRoute requireSuperAdmin><DashboardBuild /></ProtectedRoute>} />
               <Route path="/dashboard/admin/recruiting" element={<ProtectedRoute requiredPermission="manage_user_roles"><RecruitingPipeline /></ProtectedRoute>} />
               <Route path="/dashboard/admin/graduation-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><GraduationTracker /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/program-editor" element={<ProtectedRoute requireSuperAdmin><ProgramEditor /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -1529,6 +1529,117 @@ export type Database = {
         }
         Relationships: []
       }
+      program_configuration: {
+        Row: {
+          allow_manual_restart: boolean
+          auto_restart_on_miss: boolean
+          created_at: string
+          id: string
+          is_active: boolean
+          program_name: string
+          require_metrics_logging: boolean
+          require_proof_upload: boolean
+          total_days: number
+          updated_at: string
+          weekly_wins_interval: number
+        }
+        Insert: {
+          allow_manual_restart?: boolean
+          auto_restart_on_miss?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          program_name?: string
+          require_metrics_logging?: boolean
+          require_proof_upload?: boolean
+          total_days?: number
+          updated_at?: string
+          weekly_wins_interval?: number
+        }
+        Update: {
+          allow_manual_restart?: boolean
+          auto_restart_on_miss?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          program_name?: string
+          require_metrics_logging?: boolean
+          require_proof_upload?: boolean
+          total_days?: number
+          updated_at?: string
+          weekly_wins_interval?: number
+        }
+        Relationships: []
+      }
+      program_daily_tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          is_required: boolean
+          label: string
+          task_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          label: string
+          task_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          label?: string
+          task_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      program_rules: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          is_emphasized: boolean
+          rule_number: number
+          rule_text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_emphasized?: boolean
+          rule_number: number
+          rule_text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_emphasized?: boolean
+          rule_number?: number
+          rule_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth_key: string
