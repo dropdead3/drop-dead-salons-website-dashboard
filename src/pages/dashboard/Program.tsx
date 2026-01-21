@@ -524,9 +524,9 @@ export default function Program() {
                 Did you book a new client or a high-ticket service (above $500) today? If so, ring the bell! We want to celebrate it.
               </p>
             </div>
-            <Button variant="outline" size="sm" asChild className="flex-shrink-0 bg-white/60 hover:bg-white/80 border-white/50">
+            <Button variant="outline" size="sm" asChild className="flex-shrink-0 bg-white/60 hover:bg-white/80 border-white/50 hover-scale">
               <Link to="/dashboard/ring-the-bell">
-                <Bell className="w-4 h-4 mr-2" />
+                <Bell className="w-4 h-4 mr-2 animate-swing origin-top" />
                 Ring It
               </Link>
             </Button>
