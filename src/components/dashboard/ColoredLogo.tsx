@@ -21,7 +21,7 @@ export function ColoredLogo({
   
   // For SVG files that we want to colorize, fetch and inline them
   useEffect(() => {
-    if (color && displayUrl.endsWith('.svg')) {
+    if (displayUrl.endsWith('.svg')) {
       fetch(displayUrl)
         .then(res => res.text())
         .then(text => {
@@ -29,7 +29,7 @@ export function ColoredLogo({
           let coloredSvg = text;
           
           // Remove any existing width/height attributes and add our own
-          // Also add fill color to the root svg element
+          // Also add fill color to the root svg element if color is provided
           coloredSvg = coloredSvg.replace(
             /<svg([^>]*)>/,
             (match, attrs) => {
@@ -37,12 +37,15 @@ export function ColoredLogo({
               let cleanAttrs = attrs
                 .replace(/width="[^"]*"/g, '')
                 .replace(/height="[^"]*"/g, '');
-              return `<svg${cleanAttrs} fill="${color}" style="height: ${size}px; width: auto;">`;
+              const fillAttr = color ? ` fill="${color}"` : '';
+              return `<svg${cleanAttrs}${fillAttr} style="height: ${size}px; width: auto;">`;
             }
           );
           
-          // For paths with fill="currentColor", replace it
-          coloredSvg = coloredSvg.replace(/fill="currentColor"/g, `fill="${color}"`);
+          // For paths with fill="currentColor", replace it if color is provided
+          if (color) {
+            coloredSvg = coloredSvg.replace(/fill="currentColor"/g, `fill="${color}"`);
+          }
           
           setSvgContent(coloredSvg);
         })
@@ -54,8 +57,8 @@ export function ColoredLogo({
     }
   }, [displayUrl, color, size]);
 
-  // If we have inline SVG content with color applied
-  if (svgContent && color) {
+  // If we have inline SVG content (for SVG files)
+  if (svgContent) {
     return (
       <div 
         className={`inline-flex ${className}`}
