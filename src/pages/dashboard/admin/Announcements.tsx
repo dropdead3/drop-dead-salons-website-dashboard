@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -84,6 +85,8 @@ export default function Announcements() {
   const [linkUrl, setLinkUrl] = useState('');
   const [linkLabel, setLinkLabel] = useState('');
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const { data: announcements, isLoading } = useQuery({
     queryKey: ['admin-announcements'],
     queryFn: async () => {
@@ -97,6 +100,26 @@ export default function Announcements() {
       return data as Announcement[];
     },
   });
+
+  // Handle edit query parameter from Command Center
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && announcements) {
+      const announcementToEdit = announcements.find(a => a.id === editId);
+      if (announcementToEdit) {
+        setEditingAnnouncement(announcementToEdit);
+        setTitle(announcementToEdit.title);
+        setContent(announcementToEdit.content);
+        setPriority(announcementToEdit.priority);
+        setIsPinned(announcementToEdit.is_pinned);
+        setExpiresAt(announcementToEdit.expires_at?.split('T')[0] || '');
+        setLinkUrl(announcementToEdit.link_url || '');
+        setLinkLabel(announcementToEdit.link_label || '');
+        // Clear the query param after opening
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, announcements, setSearchParams]);
 
   const createMutation = useMutation({
     mutationFn: async (newAnnouncement: Omit<Announcement, 'id' | 'created_at'>) => {
