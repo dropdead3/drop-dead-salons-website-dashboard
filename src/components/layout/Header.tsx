@@ -354,13 +354,23 @@ export function Header() {
                 </Tooltip>
               </TooltipProvider>
               
-              <button 
-                onClick={() => setIsStaffMenuOpen(!isStaffMenuOpen)}
-                className="p-2 opacity-70 hover:opacity-100 transition-opacity"
-                aria-label="More options"
-              >
-                <MoreVertical size={20} />
-              </button>
+              {/* 3-Dot Menu Button - Hide when staff menu is open */}
+              <AnimatePresence>
+                {!isStaffMenuOpen && (
+                  <motion.button 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 0.7, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    whileHover={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => setIsStaffMenuOpen(true)}
+                    className="p-2 transition-opacity"
+                    aria-label="More options"
+                  >
+                    <MoreVertical size={20} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </motion.div>
             
             {/* Staff Login Expanding Menu */}
