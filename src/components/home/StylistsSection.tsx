@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, memo, useCallback, startTransition, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { ArrowRight, Sparkles, Info, Star, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
@@ -336,198 +336,60 @@ function JoinTeamCardComponent({
   };
 
   return (
-    <motion.div
-      layout
-      className={`${getSpanClass()} relative bg-muted/50 border border-foreground/15 rounded-2xl flex flex-col items-center justify-center p-8`}
-      animate={{
-        minHeight: isExpanded ? "auto" : 300,
-      }}
-      transition={{ 
-        duration: 0.8, 
-        ease: [0.4, 0, 0.2, 1],
-        layout: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
-      }}
+    <div
+      className={cn(
+        getSpanClass(),
+        "relative bg-muted/50 border border-foreground/15 rounded-2xl flex flex-col items-center justify-center p-8 transition-all duration-300",
+        isExpanded ? "min-h-auto" : "min-h-[300px]"
+      )}
     >
-      <AnimatePresence mode="wait">
-        {!isExpanded ? (
-          <motion.div 
-            key="card-content"
-            className="text-center"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.92, y: 10 }}
-            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-          >
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-foreground/50" />
-              <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
-                Join Our Team
-              </p>
-            </div>
-            <h3 className="text-2xl md:text-3xl font-display mb-3">
-              Work at Drop Dead
-            </h3>
-            <p className="text-foreground/60 text-sm max-w-sm mx-auto mb-5">
-              Passionate stylist looking for your next opportunity? We'd love to hear from you.
+      {!isExpanded ? (
+        <div className="text-center animate-fade-in">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-foreground/50" />
+            <p className="text-xs uppercase tracking-[0.2em] text-foreground/50">
+              Join Our Team
             </p>
-            
-            <button
-              type="button"
-              onClick={handleClick}
-              className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
-            >
-              <span>Apply now</span>
-              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div 
-            key="form-content"
-            className="w-full"
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            transition={{ duration: 0.6, delay: 0.15, ease: [0.4, 0, 0.2, 1] }}
-          >
-            <ExpandedApplicationForm onClose={onToggleExpand} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Close button when expanded */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
+          </div>
+          <h3 className="text-2xl md:text-3xl font-display mb-3">
+            Work at Drop Dead
+          </h3>
+          <p className="text-foreground/60 text-sm max-w-sm mx-auto mb-5">
+            Passionate stylist looking for your next opportunity? We'd love to hear from you.
+          </p>
+          
+          <button
             type="button"
             onClick={handleClick}
-            className="absolute right-4 top-4 rounded-full p-2 bg-foreground/5 hover:bg-foreground/10 transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-sans font-medium text-foreground hover:text-foreground/70 transition-colors group"
           >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </motion.button>
-        )}
-      </AnimatePresence>
-    </motion.div>
+            <span>Apply now</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </button>
+        </div>
+      ) : (
+        <div className="w-full animate-fade-in">
+          <ExpandedApplicationForm onClose={onToggleExpand} />
+        </div>
+      )}
+      
+      {/* Close button when expanded */}
+      {isExpanded && (
+        <button
+          type="button"
+          onClick={handleClick}
+          className="absolute right-4 top-4 rounded-full p-2 bg-foreground/5 hover:bg-foreground/10 transition-colors"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </button>
+      )}
+    </div>
   );
 }
 
 const JoinTeamCard = memo(JoinTeamCardComponent);
 
-const StylistCard = ({ stylist, index, selectedLocation }: { stylist: Stylist; index: number; selectedLocation: Location }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
-      whileHover={{ y: -4 }}
-      className="group relative aspect-[3/4] bg-muted overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-500"
-    >
-      <ImageWithSkeleton
-        src={stylist.imageUrl}
-        alt={`${stylist.name} - ${stylist.level}`}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        wrapperClassName="absolute inset-0"
-      />
-      
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
-      
-      <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
-        {/* Display highlighted_services if available, otherwise fall back to specialties */}
-        {(() => {
-          const displayItems = (stylist.highlighted_services && stylist.highlighted_services.length > 0)
-            ? stylist.highlighted_services.slice(0, 3)
-            : [...stylist.specialties].sort((a, b) => {
-                if (a === "EXTENSIONS") return -1;
-                if (b === "EXTENSIONS") return 1;
-                return 0;
-              });
-          
-          return displayItems.map((item, idx) => (
-            <motion.span
-              key={item}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 + index * 0.1 }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-full ${
-                item === "EXTENSIONS" || stylist.specialties.includes("EXTENSIONS")
-                  ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
-                  : "bg-background/70 text-foreground"
-              }`}
-            >
-              {item === "EXTENSIONS" && <Star className="w-3 h-3 fill-current" />}
-              {toTitleCase(item)}
-            </motion.span>
-          ));
-        })()}
-      </div>
-      
-      <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform transition-transform duration-500 group-hover:translate-y-[-4px]">
-        <div className="flex items-center gap-1.5 mb-1">
-          <p className="text-xs tracking-[0.2em] text-white/70">{stylist.level}</p>
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="text-white/50 hover:text-white/90 transition-colors">
-                  <Info className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[280px] p-4 bg-background text-foreground border border-border">
-                <p className="font-medium mb-2">Stylist Level System</p>
-                <ul className="text-xs space-y-1.5 text-foreground/80">
-                  <li><span className="font-medium text-foreground">Level 1:</span> Rising talent building their craft</li>
-                  <li><span className="font-medium text-foreground">Level 2:</span> Skilled stylist with proven expertise</li>
-                  <li><span className="font-medium text-foreground">Level 3:</span> Master artist & senior specialist</li>
-                  <li><span className="font-medium text-foreground">Level 4:</span> Elite specialist & industry leader</li>
-                </ul>
-                <p className="text-xs text-muted-foreground mt-2">Higher levels reflect experience, training, and demand.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <h3 className="text-xl font-display mb-1">{stylist.name}</h3>
-        
-        <a 
-          href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-white/70 hover:text-white transition-colors duration-200 block mb-4"
-        >
-          {stylist.instagram}
-        </a>
-        
-        <div className="flex items-center justify-between gap-3">
-          {stylist.isBooking === false ? (
-            <div className="shrink-0 inline-flex items-center gap-2 bg-white/20 text-white/70 px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap cursor-not-allowed border border-white/40">
-              <X className="w-4 h-4 shrink-0" />
-              <span>Not Booking</span>
-            </div>
-          ) : (
-            <Link
-              to="/booking"
-              className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap hover:bg-white/90 hover:shadow-lg transition-all duration-300 group/btn active:scale-[0.98]"
-            >
-              <span>Book Consult</span>
-              <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/btn:translate-x-1" />
-            </Link>
-          )}
-          
-          {/* Location callout */}
-          <p className="text-xs text-white/60 text-right leading-tight min-w-0 pr-1">
-            {stylist.locations.length > 1 
-              ? stylist.locations.map(loc => getLocationName(loc)).join(" & ")
-              : getLocationName(stylist.locations[0])
-            }
-          </p>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
 
 export function StylistsSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -746,23 +608,17 @@ export function StylistsSection() {
             </div>
 
             {/* Clear Filters Button */}
-            <AnimatePresence>
-              {(selectedSpecialty || selectedLevel) && (
-                <motion.button
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  onClick={() => {
-                    setSelectedSpecialty(null);
-                    setSelectedLevel(null);
-                  }}
-                  className="text-xs tracking-wide text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
-                >
-                  Clear filters
-                </motion.button>
-              )}
-            </AnimatePresence>
+            {(selectedSpecialty || selectedLevel) && (
+              <button
+                onClick={() => {
+                  setSelectedSpecialty(null);
+                  setSelectedLevel(null);
+                }}
+                className="text-xs tracking-wide text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors animate-fade-in"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         </div>
 
@@ -791,28 +647,17 @@ export function StylistsSection() {
             />
           </div>
         ) : (
-          <motion.div
-            key="no-results"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-center py-16 px-6"
-          >
+          <div className="text-center py-16 px-6 animate-fade-in">
             <p className="text-lg text-muted-foreground">
               No stylists match your selected filters
             </p>
-          </motion.div>
+          </div>
         )}
       </div>
 
 
       {/* View All Link */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6, delay: 0.4 }}
-        className="container mx-auto px-6 mt-10 text-center"
-      >
+      <div className="container mx-auto px-6 mt-10 text-center">
         <Link
           to="/stylists"
           className="inline-flex items-center gap-2 text-sm font-medium group"
@@ -820,7 +665,7 @@ export function StylistsSection() {
           <span className="link-underline">View all stylists</span>
           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
         </Link>
-      </motion.div>
+      </div>
     </section>
   );
 }
