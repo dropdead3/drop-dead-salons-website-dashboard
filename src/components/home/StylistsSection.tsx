@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo, useCallback, startTransition } from "react";
+import { useState, useRef, useEffect, memo, useCallback, startTransition, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Info, Star, X, CheckCircle, AlertCircle } from "lucide-react";
@@ -22,9 +22,9 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { TogglePill } from "@/components/ui/toggle-pill";
 import { StylistFlipCard } from "./StylistFlipCard";
+import { useActiveLocations } from "@/hooks/useLocations";
 
-
-import { stylists, locations, allSpecialties, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
+import { stylists, locations as staticLocations, allSpecialties, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
 
 // Helper to convert text to title case
 const toTitleCase = (str: string) => {
@@ -539,6 +539,22 @@ export function StylistsSection() {
   
   const [isFormExpanded, setIsFormExpanded] = useState(false);
 
+  // Fetch locations from database
+  const { data: dbLocations } = useActiveLocations();
+  
+  // Merge database locations with static locations for tooltip info
+  const locations = useMemo(() => {
+    if (!dbLocations) return staticLocations;
+    return staticLocations.map(staticLoc => {
+      const dbLoc = dbLocations.find(db => db.id === staticLoc.id);
+      return {
+        ...staticLoc,
+        address: dbLoc?.address || staticLoc.address,
+        hours: dbLoc?.hours || "Hours not available",
+      };
+    });
+  }, [dbLocations]);
+
   // Listen for location filter events from LocationsSection
   useEffect(() => {
     const handleLocationFilter = (e: CustomEvent<{ location: Location | "all" }>) => {
@@ -629,7 +645,7 @@ export function StylistsSection() {
                 value: loc.id,
                 label: loc.name,
                 icon: <Info className="w-3.5 h-3.5" />,
-                tooltip: `${loc.address}\n${loc.hours}`,
+                tooltip: `${loc.address}\n${'hours' in loc ? loc.hours : 'Hours not available'}`,
               }))
             ]}
             value={selectedLocation}
