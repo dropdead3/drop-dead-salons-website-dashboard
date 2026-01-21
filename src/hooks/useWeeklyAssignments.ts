@@ -38,8 +38,19 @@ export interface WeeklyAssignmentCompletion {
   notes: string | null;
 }
 
+export interface WeekResource {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string;
+  file_type: string;
+  week_id: string | null;
+  is_active: boolean;
+}
+
 interface WeekWithAssignments extends ProgramWeek {
   assignments: WeeklyAssignment[];
+  resources: WeekResource[];
 }
 
 export function useWeeklyAssignments(enrollmentId: string | undefined, currentDay: number) {
@@ -55,7 +66,7 @@ export function useWeeklyAssignments(enrollmentId: string | undefined, currentDa
     }
 
     try {
-      // Fetch all active weeks with their assignments
+      // Fetch all active weeks with their assignments and resources
       const { data: weeksData, error: weeksError } = await supabase
         .from('program_weeks')
         .select('*')
@@ -73,6 +84,15 @@ export function useWeeklyAssignments(enrollmentId: string | undefined, currentDa
 
       if (assignmentsError) throw assignmentsError;
 
+      // Fetch all active resources
+      const { data: resourcesData, error: resourcesError } = await supabase
+        .from('program_resources')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (resourcesError) throw resourcesError;
+
       // Fetch completions for this enrollment
       const { data: completionsData, error: completionsError } = await supabase
         .from('weekly_assignment_completions')
@@ -81,10 +101,11 @@ export function useWeeklyAssignments(enrollmentId: string | undefined, currentDa
 
       if (completionsError) throw completionsError;
 
-      // Map assignments to their weeks
+      // Map assignments and resources to their weeks
       const weeksWithAssignments: WeekWithAssignments[] = (weeksData || []).map((week) => ({
         ...week,
         assignments: (assignmentsData || []).filter((a) => a.week_id === week.id),
+        resources: (resourcesData || []).filter((r) => r.week_id === week.id),
       }));
 
       setWeeks(weeksWithAssignments);
