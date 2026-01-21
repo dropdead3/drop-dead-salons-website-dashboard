@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -76,6 +76,7 @@ export default function Announcements() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -232,9 +233,15 @@ export default function Announcements() {
   };
 
   const toggleActive = (announcement: Announcement) => {
+    setTogglingId(announcement.id);
     updateMutation.mutate({
       id: announcement.id,
       is_active: !announcement.is_active,
+    }, {
+      onSettled: () => {
+        // Keep the animation visible for a moment
+        setTimeout(() => setTogglingId(null), 400);
+      }
     });
   };
 
@@ -300,7 +307,7 @@ export default function Announcements() {
             {announcements?.map((announcement) => (
               <Card 
                 key={announcement.id} 
-                className={`p-6 ${!announcement.is_active ? 'opacity-50' : ''}`}
+                className={`p-6 transition-all duration-300 ${!announcement.is_active ? 'opacity-50' : ''} ${togglingId === announcement.id ? 'scale-[0.98] ring-2 ring-primary/30' : ''}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
