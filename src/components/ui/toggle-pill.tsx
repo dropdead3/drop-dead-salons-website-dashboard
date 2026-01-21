@@ -22,6 +22,7 @@ interface TogglePillProps {
   size?: "sm" | "default" | "lg";
   variant?: "default" | "solid" | "glass";
   className?: string;
+  id?: string;
 }
 
 const sizeClasses = {
@@ -49,7 +50,12 @@ export function TogglePill({
   size = "default",
   variant = "solid",
   className,
+  id,
 }: TogglePillProps) {
+  // Generate a stable unique ID for this instance
+  const instanceId = React.useId();
+  const layoutId = id || instanceId;
+
   return (
     <TooltipProvider delayDuration={300}>
       <div
@@ -77,7 +83,7 @@ export function TogglePill({
             >
               {isSelected && (
                 <motion.div
-                  layoutId="toggle-pill-active"
+                  layoutId={`toggle-pill-active-${layoutId}`}
                   className="absolute inset-0 bg-foreground rounded-full"
                   initial={false}
                   transition={{
