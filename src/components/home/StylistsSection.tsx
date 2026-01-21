@@ -629,7 +629,7 @@ export function StylistsSection() {
                 value: loc.id,
                 label: loc.name,
                 icon: <Info className="w-3.5 h-3.5" />,
-                tooltip: `View stylists at ${loc.name}`,
+                tooltip: `${loc.address}\n${loc.hours}`,
               }))
             ]}
             value={selectedLocation}

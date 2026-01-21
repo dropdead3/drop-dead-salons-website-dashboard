@@ -100,8 +100,10 @@ export function TogglePill({
                 <TooltipTrigger asChild>
                   {buttonContent}
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>{option.tooltip}</p>
+                <TooltipContent className="text-center">
+                  {option.tooltip.split('\n').map((line, i) => (
+                    <p key={i} className={i > 0 ? "text-muted-foreground text-xs mt-0.5" : "font-medium"}>{line}</p>
+                  ))}
                 </TooltipContent>
               </Tooltip>
             );

@@ -109,8 +109,8 @@ export const stylistWorksAtLocation = (stylist: Stylist, location: Location): bo
 };
 
 export const locations = [
-  { id: "north-mesa" as Location, name: "North Mesa", address: "2036 N Gilbert Rd Ste 1, Mesa, AZ 85203" },
-  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes", address: "3641 E Baseline Rd Suite Q-103, Gilbert, AZ 85234" },
+  { id: "north-mesa" as Location, name: "North Mesa", address: "2036 N Gilbert Rd Ste 1, Mesa, AZ 85203", hours: "Tue–Sat: 9am–7pm" },
+  { id: "val-vista-lakes" as Location, name: "Val Vista Lakes", address: "3641 E Baseline Rd Suite Q-103, Gilbert, AZ 85234", hours: "Tue–Sat: 9am–7pm" },
 ];
 
 // Extract all unique specialties - with EXTENSIONS first
