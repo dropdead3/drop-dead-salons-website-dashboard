@@ -23,8 +23,10 @@ import {
   ChevronLeft,
   Edit2,
   Check,
-  X
+  X,
+  Calendar
 } from 'lucide-react';
+import ProgramWeeksEditor from '@/components/dashboard/ProgramWeeksEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -617,10 +619,14 @@ export default function ProgramEditor() {
         </div>
 
         <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="w-4 h-4" />
               Settings
+            </TabsTrigger>
+            <TabsTrigger value="weeks" className="gap-2">
+              <Calendar className="w-4 h-4" />
+              Weeks
             </TabsTrigger>
             <TabsTrigger value="tasks" className="gap-2">
               <ListChecks className="w-4 h-4" />
@@ -747,6 +753,19 @@ export default function ProgramEditor() {
                     </div>
                   </>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Weeks Tab */}
+          <TabsContent value="weeks">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Weekly Modules</CardTitle>
+                <CardDescription>Configure each week's theme, objectives, and unique assignments</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProgramWeeksEditor />
               </CardContent>
             </Card>
           </TabsContent>

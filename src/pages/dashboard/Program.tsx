@@ -1,10 +1,13 @@
 import { useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
+import { useWeeklyAssignments } from '@/hooks/useWeeklyAssignments';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Target, 
   Flame, 
@@ -12,11 +15,17 @@ import {
   AlertCircle, 
   Upload, 
   ChevronRight,
+  ChevronDown,
   Play,
   Lock,
   Loader2,
   ImageIcon,
-  RotateCcw
+  RotateCcw,
+  Calendar,
+  Video,
+  FileText,
+  ClipboardList,
+  ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,11 +58,21 @@ export default function Program() {
     acknowledgeMissedDay,
     refetch,
   } = useDailyCompletion(user?.id);
+
+  const {
+    currentWeek,
+    completions: weeklyCompletions,
+    toggleAssignmentCompletion,
+    getAssignmentCompletion,
+    getCurrentWeekProgress,
+    loading: weeklyLoading,
+  } = useWeeklyAssignments(enrollment?.id, enrollment?.current_day || 1);
   
   const [hasEnrollment, setHasEnrollment] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [restarting, setRestarting] = useState(false);
+  const [weeklyExpanded, setWeeklyExpanded] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check enrollment when data loads
@@ -198,6 +217,16 @@ export default function Program() {
   const progressPercent = ((enrollment?.current_day || 1) / 75) * 100;
   const isWeeklyWinsDue = enrollment?.weekly_wins_due_day === enrollment?.current_day;
   const isPaused = enrollment?.status === 'paused';
+  const weekProgress = getCurrentWeekProgress();
+
+  const getAssignmentIcon = (type: string) => {
+    switch (type) {
+      case 'video': return Video;
+      case 'reading': 
+      case 'worksheet': return FileText;
+      default: return ClipboardList;
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -281,6 +310,142 @@ export default function Program() {
           </div>
           <Progress value={progressPercent} className="h-2" />
         </Card>
+
+        {/* Current Week Module */}
+        {currentWeek && (
+          <Collapsible open={weeklyExpanded} onOpenChange={setWeeklyExpanded}>
+            <Card className="mb-8 overflow-hidden">
+              <CollapsibleTrigger asChild>
+                <div className="p-6 cursor-pointer hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-foreground text-background rounded-lg flex flex-col items-center justify-center">
+                        <span className="text-[10px] font-display tracking-wide opacity-70">WEEK</span>
+                        <span className="text-lg font-display font-bold -mt-1">{currentWeek.week_number}</span>
+                      </div>
+                      <div>
+                        <h2 className="font-display text-lg">{currentWeek.title}</h2>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground font-sans">
+                          <Calendar className="w-3 h-3" />
+                          Days {currentWeek.start_day} - {currentWeek.end_day}
+                          {currentWeek.assignments?.length > 0 && (
+                            <>
+                              <span>•</span>
+                              <span>{weekProgress.completed}/{weekProgress.total} assignments complete</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {weekProgress.total > 0 && (
+                        <Badge 
+                          variant={weekProgress.percentage === 100 ? "default" : "secondary"}
+                          className="font-display"
+                        >
+                          {weekProgress.percentage}%
+                        </Badge>
+                      )}
+                      <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${weeklyExpanded ? 'rotate-180' : ''}`} />
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <div className="px-6 pb-6 space-y-4 border-t pt-4">
+                  {/* Week Objective */}
+                  {currentWeek.objective && (
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <Target className="w-4 h-4 text-primary mt-0.5" />
+                        <div>
+                          <p className="text-xs font-display tracking-wide text-muted-foreground mb-1">THIS WEEK'S OBJECTIVE</p>
+                          <p className="text-sm font-sans">{currentWeek.objective}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Week Description */}
+                  {currentWeek.description && (
+                    <p className="text-sm text-muted-foreground font-sans">{currentWeek.description}</p>
+                  )}
+
+                  {/* Week Video */}
+                  {currentWeek.video_url && (
+                    <a 
+                      href={currentWeek.video_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <Video className="w-4 h-4" />
+                      Watch Week {currentWeek.week_number} Training Video
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+
+                  {/* Weekly Assignments */}
+                  {currentWeek.assignments && currentWeek.assignments.length > 0 && (
+                    <div className="space-y-3 pt-2">
+                      <h3 className="font-display text-xs tracking-wide text-muted-foreground">WEEKLY ASSIGNMENTS</h3>
+                      <div className="space-y-2">
+                        {currentWeek.assignments.map((assignment) => {
+                          const completion = getAssignmentCompletion(assignment.id);
+                          const isComplete = completion?.is_complete;
+                          const AssignmentIcon = getAssignmentIcon(assignment.assignment_type);
+
+                          return (
+                            <button
+                              key={assignment.id}
+                              onClick={() => toggleAssignmentCompletion(assignment.id)}
+                              disabled={isPaused}
+                              className={`w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                                isComplete 
+                                  ? 'bg-green-500/5 border-green-500/30' 
+                                  : 'bg-card hover:bg-muted/50 border-border'
+                              }`}
+                            >
+                              <div className={`
+                                w-5 h-5 border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors
+                                ${isComplete 
+                                  ? 'bg-green-600 border-green-600' 
+                                  : 'border-border'
+                                }
+                              `}>
+                                {isComplete && <CheckCircle2 className="w-3 h-3 text-white" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <AssignmentIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                                  <span className={`text-sm font-sans ${isComplete ? 'line-through text-muted-foreground' : ''}`}>
+                                    {assignment.title}
+                                  </span>
+                                  {assignment.is_required && !isComplete && (
+                                    <Badge variant="outline" className="text-[10px] h-4">Required</Badge>
+                                  )}
+                                </div>
+                                {assignment.description && (
+                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{assignment.description}</p>
+                                )}
+                                {assignment.proof_type !== 'none' && (
+                                  <p className="text-[10px] text-muted-foreground mt-1 capitalize">
+                                    Proof: {assignment.proof_type}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        )}
 
         {/* Missed Day Dialog */}
         <AlertDialog open={hasMissedDay}>

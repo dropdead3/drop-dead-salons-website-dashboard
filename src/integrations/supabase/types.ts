@@ -1640,6 +1640,54 @@ export type Database = {
         }
         Relationships: []
       }
+      program_weeks: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          end_day: number
+          id: string
+          is_active: boolean
+          objective: string | null
+          resources_json: Json | null
+          start_day: number
+          title: string
+          updated_at: string
+          video_url: string | null
+          week_number: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          end_day: number
+          id?: string
+          is_active?: boolean
+          objective?: string | null
+          resources_json?: Json | null
+          start_day: number
+          title: string
+          updated_at?: string
+          video_url?: string | null
+          week_number: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          end_day?: number
+          id?: string
+          is_active?: boolean
+          objective?: string | null
+          resources_json?: Json | null
+          start_day?: number
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+          week_number?: number
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth_key: string
@@ -2268,6 +2316,107 @@ export type Database = {
           visitors?: number
         }
         Relationships: []
+      }
+      weekly_assignment_completions: {
+        Row: {
+          assignment_id: string
+          completed_at: string | null
+          created_at: string
+          enrollment_id: string
+          id: string
+          is_complete: boolean
+          notes: string | null
+          proof_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          assignment_id: string
+          completed_at?: string | null
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          is_complete?: boolean
+          notes?: string | null
+          proof_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          completed_at?: string | null
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          is_complete?: boolean
+          notes?: string | null
+          proof_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_assignment_completions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_assignment_completions_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_program_enrollment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_assignments: {
+        Row: {
+          assignment_type: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          is_required: boolean
+          proof_type: string
+          title: string
+          updated_at: string
+          week_id: string
+        }
+        Insert: {
+          assignment_type?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          proof_type?: string
+          title: string
+          updated_at?: string
+          week_id: string
+        }
+        Update: {
+          assignment_type?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          proof_type?: string
+          title?: string
+          updated_at?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_assignments_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "program_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_wins_reports: {
         Row: {
