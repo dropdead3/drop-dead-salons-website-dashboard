@@ -1,5 +1,23 @@
 import type { Stylist } from "./stylists";
 
+// Import AI-generated headshots
+import oliviaMartinez from "@/assets/sample-stylists/olivia-martinez.jpg";
+import emmaJohnson from "@/assets/sample-stylists/emma-johnson.jpg";
+import sophiaWilliams from "@/assets/sample-stylists/sophia-williams.jpg";
+import isabellaBrown from "@/assets/sample-stylists/isabella-brown.jpg";
+import miaGarcia from "@/assets/sample-stylists/mia-garcia.jpg";
+import charlotteDavis from "@/assets/sample-stylists/charlotte-davis.jpg";
+import ameliaWilson from "@/assets/sample-stylists/amelia-wilson.jpg";
+import harperAnderson from "@/assets/sample-stylists/harper-anderson.jpg";
+import evelynThomas from "@/assets/sample-stylists/evelyn-thomas.jpg";
+import abigailJackson from "@/assets/sample-stylists/abigail-jackson.jpg";
+import emilyWhite from "@/assets/sample-stylists/emily-white.jpg";
+import elizabethHarris from "@/assets/sample-stylists/elizabeth-harris.jpg";
+import sofiaMartin from "@/assets/sample-stylists/sofia-martin.jpg";
+import averyThompson from "@/assets/sample-stylists/avery-thompson.jpg";
+import ellaGarcia from "@/assets/sample-stylists/ella-garcia.jpg";
+import scarlettLee from "@/assets/sample-stylists/scarlett-lee.jpg";
+
 // Sample stylists for preview purposes when no real stylists are visible
 // 7 for North Mesa, 9 for Val Vista Lakes
 // Note: highlighted_services should match specialty filter names (uppercase)
@@ -12,7 +30,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 4 STYLIST",
     specialties: ["EXTENSIONS", "BLONDING", "BALAYAGE"],
     highlighted_services: ["EXTENSIONS", "BLONDING", "BALAYAGE"],
-    imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=600&h=800&fit=crop",
+    imageUrl: oliviaMartinez,
     locations: ["north-mesa"],
     isBooking: true,
     bio: "Specializing in seamless extensions and sun-kissed blondes.",
@@ -24,7 +42,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["BALAYAGE", "CREATIVE COLOR", "LIVED-IN COLOR"],
     highlighted_services: ["BALAYAGE", "CREATIVE COLOR"],
-    imageUrl: "https://images.unsplash.com/photo-1595959183082-7b570b7e1dfa?w=600&h=800&fit=crop",
+    imageUrl: emmaJohnson,
     locations: ["north-mesa"],
     isBooking: true,
     bio: "Creating dimensional color that grows out beautifully.",
@@ -36,7 +54,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["EXTENSIONS", "PRECISION CUTS", "STYLING"],
     highlighted_services: ["EXTENSIONS", "PRECISION CUTS", "STYLING"],
-    imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=800&fit=crop",
+    imageUrl: sophiaWilliams,
     locations: ["north-mesa"],
     isBooking: true,
     bio: "Expert in natural-looking extensions and modern cuts.",
@@ -48,7 +66,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["BLONDING", "COLOR CORRECTION", "BALAYAGE"],
     highlighted_services: ["BLONDING", "COLOR CORRECTION"],
-    imageUrl: "https://images.unsplash.com/photo-1559599076-9c61d8e1b77c?w=600&h=800&fit=crop",
+    imageUrl: isabellaBrown,
     locations: ["north-mesa"],
     isBooking: true,
     bio: "Blonde specialist with a passion for transformations.",
@@ -60,7 +78,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["BALAYAGE", "LIVED-IN COLOR", "BLONDING"],
     highlighted_services: ["BALAYAGE", "LIVED-IN COLOR", "BLONDING"],
-    imageUrl: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=600&h=800&fit=crop",
+    imageUrl: miaGarcia,
     locations: ["north-mesa"],
     isBooking: true,
     bio: "Low-maintenance color that fits your lifestyle.",
@@ -72,7 +90,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 1 STYLIST",
     specialties: ["PRECISION CUTS", "STYLING", "BLOWOUTS"],
     highlighted_services: ["PRECISION CUTS", "STYLING"],
-    imageUrl: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&h=800&fit=crop",
+    imageUrl: charlotteDavis,
     locations: ["north-mesa"],
     isBooking: true,
     bio: "Creating confidence through precision haircuts.",
@@ -84,7 +102,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 1 STYLIST",
     specialties: ["STYLING", "BLOWOUTS", "PRECISION CUTS"],
     highlighted_services: ["STYLING", "BLOWOUTS"],
-    imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=800&fit=crop",
+    imageUrl: ameliaWilson,
     locations: ["north-mesa"],
     isBooking: true,
     bio: "Making every day a good hair day.",
@@ -98,7 +116,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 4 STYLIST",
     specialties: ["EXTENSIONS", "BLONDING", "BALAYAGE"],
     highlighted_services: ["EXTENSIONS", "BLONDING", "BALAYAGE"],
-    imageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600&h=800&fit=crop",
+    imageUrl: harperAnderson,
     locations: ["val-vista-lakes"],
     isBooking: true,
     bio: "Master extension artist creating your dream hair.",
@@ -110,7 +128,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 4 STYLIST",
     specialties: ["BLONDING", "COLOR CORRECTION", "CREATIVE COLOR"],
     highlighted_services: ["BLONDING", "COLOR CORRECTION", "CREATIVE COLOR"],
-    imageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&h=800&fit=crop",
+    imageUrl: evelynThomas,
     locations: ["val-vista-lakes"],
     isBooking: true,
     bio: "Color specialist turning hair goals into reality.",
@@ -122,7 +140,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["EXTENSIONS", "PRECISION CUTS", "BLONDING"],
     highlighted_services: ["EXTENSIONS", "PRECISION CUTS"],
-    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=800&fit=crop",
+    imageUrl: abigailJackson,
     locations: ["val-vista-lakes"],
     isBooking: true,
     bio: "Extensions that look and feel like your own hair.",
@@ -134,7 +152,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 3 STYLIST",
     specialties: ["BALAYAGE", "LIVED-IN COLOR", "BLONDING"],
     highlighted_services: ["BALAYAGE", "LIVED-IN COLOR", "BLONDING"],
-    imageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&h=800&fit=crop",
+    imageUrl: emilyWhite,
     locations: ["val-vista-lakes"],
     isBooking: true,
     bio: "Effortless, sun-kissed color is my specialty.",
@@ -146,7 +164,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["BLONDING", "BALAYAGE", "COLOR CORRECTION"],
     highlighted_services: ["BLONDING", "BALAYAGE"],
-    imageUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&h=800&fit=crop",
+    imageUrl: elizabethHarris,
     locations: ["val-vista-lakes"],
     isBooking: true,
     bio: "Bright blondes and seamless balayage.",
@@ -158,7 +176,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["CREATIVE COLOR", "VIVIDS"],
     highlighted_services: ["CREATIVE COLOR", "VIVIDS"],
-    imageUrl: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=600&h=800&fit=crop",
+    imageUrl: sofiaMartin,
     locations: ["val-vista-lakes"],
     isBooking: true,
     bio: "Bold, vibrant color for those who dare to stand out.",
@@ -170,7 +188,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 2 STYLIST",
     specialties: ["PRECISION CUTS", "STYLING", "BLOWOUTS"],
     highlighted_services: ["PRECISION CUTS", "STYLING", "BLOWOUTS"],
-    imageUrl: "https://images.unsplash.com/photo-1499557354967-2b2d8910bcca?w=600&h=800&fit=crop",
+    imageUrl: averyThompson,
     locations: ["val-vista-lakes"],
     isBooking: true,
     bio: "Modern cuts with timeless style.",
@@ -182,7 +200,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 1 STYLIST",
     specialties: ["STYLING", "BLOWOUTS", "PRECISION CUTS"],
     highlighted_services: ["STYLING", "BLOWOUTS"],
-    imageUrl: "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=600&h=800&fit=crop",
+    imageUrl: ellaGarcia,
     locations: ["val-vista-lakes"],
     isBooking: true,
     bio: "Gorgeous blowouts for any occasion.",
@@ -194,7 +212,7 @@ export const sampleStylists: Stylist[] = [
     level: "LEVEL 1 STYLIST",
     specialties: ["PRECISION CUTS", "CREATIVE COLOR", "STYLING"],
     highlighted_services: ["PRECISION CUTS", "CREATIVE COLOR"],
-    imageUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=600&h=800&fit=crop",
+    imageUrl: scarlettLee,
     locations: ["val-vista-lakes"],
     isBooking: true,
     bio: "Fresh cuts and glossy finishes.",
