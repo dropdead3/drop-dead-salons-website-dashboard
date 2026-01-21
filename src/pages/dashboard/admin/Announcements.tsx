@@ -320,8 +320,8 @@ export default function Announcements() {
                       className="flex items-center gap-2 cursor-pointer"
                       onClick={() => toggleActive(announcement)}
                     >
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        Display on team dashboards
+                      <span className={`text-xs whitespace-nowrap ${announcement.is_active ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}>
+                        {announcement.is_active ? 'Displaying on team dashboards' : 'Announcement not displaying'}
                       </span>
                       <Switch checked={announcement.is_active} />
                     </div>
