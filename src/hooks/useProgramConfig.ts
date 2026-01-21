@@ -15,7 +15,7 @@ export interface ProgramConfig {
   life_happens_passes_total: number;
   logo_url: string | null;
   logo_size: number;
-  logo_background_color: string | null;
+  logo_color: string | null;
 }
 
 export interface DailyTask {
