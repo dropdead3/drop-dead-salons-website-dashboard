@@ -378,9 +378,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div 
+      ref={setNavRef}
+      className="flex flex-col h-full overflow-y-auto"
+      onScroll={(e) => {
+        const target = e.currentTarget;
+        setIsScrolled(target.scrollTop > 50);
+      }}
+    >
       {/* Logo with scroll animation */}
-      <div className="p-6 border-b border-border">
+      <div className="p-6 border-b border-border sticky top-0 bg-card z-10">
         <Link to="/dashboard" className="block relative h-5 overflow-hidden">
           <motion.img 
             src={Logo} 
@@ -413,7 +420,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav ref={setNavRef} className="flex-1 py-4 overflow-y-auto">
+      <nav className="flex-1 py-4">
         <div className="space-y-1">
           {filterNavItems(mainNavItems).map((item) => (
             <NavLink 
