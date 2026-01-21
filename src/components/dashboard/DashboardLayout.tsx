@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -177,6 +177,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
@@ -186,6 +187,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   
   // Fetch team members for user impersonation picker
   const { data: teamMembers = [] } = useTeamDirectory();
+
+  // Track scroll position in sidebar nav
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const handleScroll = () => {
+      setIsScrolled(nav.scrollTop > 50);
+    };
+
+    nav.addEventListener('scroll', handleScroll);
+    return () => nav.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Use simulated role if viewing as a role, or the impersonated user's roles
   const roles = isViewingAsUser && viewAsUser 
@@ -356,20 +370,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   };
 
-  // Memoize scroll handler to prevent re-renders
-  const handleSidebarScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    const scrolled = target.scrollTop > 50;
-    setIsScrolled(scrolled);
-  }, []);
-
   const SidebarContent = () => (
-    <div 
-      className="flex flex-col h-full overflow-y-auto"
-      onScroll={handleSidebarScroll}
-    >
+    <div className="flex flex-col h-full">
       {/* Logo with scroll animation */}
-      <div className="p-6 border-b border-border sticky top-0 bg-card z-10">
+      <div className="p-6 border-b border-border">
         <Link to="/dashboard" className="block relative h-5 overflow-hidden">
           <motion.img 
             src={Logo} 
@@ -402,7 +406,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4">
+      <nav ref={navRef} className="flex-1 py-4 overflow-y-auto">
         <div className="space-y-1">
           {filterNavItems(mainNavItems).map((item) => (
             <NavLink 
