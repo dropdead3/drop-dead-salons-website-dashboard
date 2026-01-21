@@ -76,6 +76,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_pinned: boolean | null
+          link_label: string | null
+          link_url: string | null
           priority: string | null
           title: string
           updated_at: string
@@ -88,6 +90,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_pinned?: boolean | null
+          link_label?: string | null
+          link_url?: string | null
           priority?: string | null
           title: string
           updated_at?: string
@@ -100,6 +104,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_pinned?: boolean | null
+          link_label?: string | null
+          link_url?: string | null
           priority?: string | null
           title?: string
           updated_at?: string

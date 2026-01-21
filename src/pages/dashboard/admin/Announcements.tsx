@@ -50,6 +50,8 @@ interface Announcement {
   author_id: string;
   expires_at: string | null;
   created_at: string;
+  link_url: string | null;
+  link_label: string | null;
 }
 
 const priorityConfig: Record<Priority, { label: string; icon: React.ReactNode; color: string }> = {
@@ -70,6 +72,8 @@ export default function Announcements() {
   const [priority, setPriority] = useState<Priority>('normal');
   const [isPinned, setIsPinned] = useState(false);
   const [expiresAt, setExpiresAt] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkLabel, setLinkLabel] = useState('');
 
   const { data: announcements, isLoading } = useQuery({
     queryKey: ['admin-announcements'],
@@ -151,6 +155,8 @@ export default function Announcements() {
     setPriority('normal');
     setIsPinned(false);
     setExpiresAt('');
+    setLinkUrl('');
+    setLinkLabel('');
   };
 
   const handleCreate = () => {
@@ -163,6 +169,8 @@ export default function Announcements() {
       is_active: true,
       author_id: user.id,
       expires_at: expiresAt || null,
+      link_url: linkUrl || null,
+      link_label: linkLabel || null,
     });
   };
 
@@ -175,6 +183,8 @@ export default function Announcements() {
       priority,
       is_pinned: isPinned,
       expires_at: expiresAt || null,
+      link_url: linkUrl || null,
+      link_label: linkLabel || null,
     });
   };
 
@@ -185,6 +195,8 @@ export default function Announcements() {
     setPriority(announcement.priority);
     setIsPinned(announcement.is_pinned);
     setExpiresAt(announcement.expires_at?.split('T')[0] || '');
+    setLinkUrl(announcement.link_url || '');
+    setLinkLabel(announcement.link_label || '');
   };
 
   const toggleActive = (announcement: Announcement) => {
@@ -227,6 +239,10 @@ export default function Announcements() {
                 setIsPinned={setIsPinned}
                 expiresAt={expiresAt}
                 setExpiresAt={setExpiresAt}
+                linkUrl={linkUrl}
+                setLinkUrl={setLinkUrl}
+                linkLabel={linkLabel}
+                setLinkLabel={setLinkLabel}
                 onSubmit={handleCreate}
                 isLoading={createMutation.isPending}
                 submitLabel="Create Announcement"
@@ -330,6 +346,10 @@ export default function Announcements() {
               setIsPinned={setIsPinned}
               expiresAt={expiresAt}
               setExpiresAt={setExpiresAt}
+              linkUrl={linkUrl}
+              setLinkUrl={setLinkUrl}
+              linkLabel={linkLabel}
+              setLinkLabel={setLinkLabel}
               onSubmit={handleUpdate}
               isLoading={updateMutation.isPending}
               submitLabel="Save Changes"
@@ -352,6 +372,10 @@ interface AnnouncementFormProps {
   setIsPinned: (v: boolean) => void;
   expiresAt: string;
   setExpiresAt: (v: string) => void;
+  linkUrl: string;
+  setLinkUrl: (v: string) => void;
+  linkLabel: string;
+  setLinkLabel: (v: string) => void;
   onSubmit: () => void;
   isLoading: boolean;
   submitLabel: string;
@@ -368,6 +392,10 @@ function AnnouncementForm({
   setIsPinned,
   expiresAt,
   setExpiresAt,
+  linkUrl,
+  setLinkUrl,
+  linkLabel,
+  setLinkLabel,
   onSubmit,
   isLoading,
   submitLabel,
@@ -418,6 +446,23 @@ function AnnouncementForm({
             type="date"
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-muted-foreground text-xs uppercase tracking-wide">Link Button (optional)</Label>
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            value={linkLabel}
+            onChange={(e) => setLinkLabel(e.target.value)}
+            placeholder="Button label"
+          />
+          <Input
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            placeholder="https://..."
+            type="url"
           />
         </div>
       </div>
