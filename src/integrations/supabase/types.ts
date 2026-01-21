@@ -1633,6 +1633,7 @@ export type Database = {
           id: string
           is_active: boolean
           life_happens_passes_total: number
+          logo_url: string | null
           program_name: string
           require_metrics_logging: boolean
           require_proof_upload: boolean
@@ -1648,6 +1649,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           life_happens_passes_total?: number
+          logo_url?: string | null
           program_name?: string
           require_metrics_logging?: boolean
           require_proof_upload?: boolean
@@ -1663,6 +1665,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           life_happens_passes_total?: number
+          logo_url?: string | null
           program_name?: string
           require_metrics_logging?: boolean
           require_proof_upload?: boolean
