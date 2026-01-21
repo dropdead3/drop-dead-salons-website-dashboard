@@ -176,7 +176,7 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
                   <span className="font-display text-sm tracking-wide">DAILY TASKS</span>
                 </div>
                 <ul className="space-y-2.5">
-                  {tasks.slice(0, 4).map((task, i) => (
+                  {tasks.slice(0, 5).map((task, i) => (
                     <li key={task.id} className="flex items-start gap-3 text-sm font-sans">
                       <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary shrink-0 mt-0.5">
                         {i + 1}
@@ -184,9 +184,9 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
                       <span className="text-muted-foreground">{task.label}</span>
                     </li>
                   ))}
-                  {tasks.length > 4 && (
+                  {tasks.length > 5 && (
                     <li className="text-xs text-muted-foreground pl-8">
-                      + {tasks.length - 4} more tasks
+                      + {tasks.length - 5} more tasks
                     </li>
                   )}
                 </ul>
@@ -199,7 +199,7 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
                   <span className="font-display text-sm tracking-wide">THE RULES</span>
                 </div>
                 <ul className="space-y-2.5">
-                  {rules.slice(0, 4).map((rule) => (
+                  {rules.slice(0, 5).map((rule) => (
                     <li key={rule.id} className="flex items-start gap-3 text-sm font-sans">
                       <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5 ${
                         rule.is_emphasized 
@@ -213,9 +213,9 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
                       </span>
                     </li>
                   ))}
-                  {rules.length > 4 && (
+                  {rules.length > 5 && (
                     <li className="text-xs text-muted-foreground pl-8">
-                      + {rules.length - 4} more rules
+                      + {rules.length - 5} more rules
                     </li>
                   )}
                 </ul>
