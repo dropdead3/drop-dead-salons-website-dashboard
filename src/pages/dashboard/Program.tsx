@@ -170,7 +170,7 @@ export default function Program() {
     );
   }
 
-  if (!hasEnrollment && !enrollment) {
+  if (!hasEnrollment) {
     return (
       <DashboardLayout>
         <ClientEngineWelcome onStartProgram={startProgram} />
