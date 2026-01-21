@@ -31,10 +31,6 @@ const DAYS_OF_WEEK = [
 ];
 const stylistLevels = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4'];
 
-// Get all service names for highlighted services selection
-import { services } from '@/data/servicePricing';
-const allServiceNames = services.flatMap(cat => cat.items.map(item => item.name));
-
 // Format phone number as XXX-XXX-XXXX
 const formatPhoneNumber = (value: string) => {
   // Remove all non-numeric characters
@@ -785,50 +781,43 @@ export default function MyProfile() {
                   </p>
                 </div>
 
-                {/* Highlighted Services for Website Card */}
+                {/* Highlighted Services for Website Card - uses specialty options */}
                 <div className="space-y-2 pt-4 border-t">
                   <Label className="flex items-center gap-2">
                     <Star className="w-4 h-4" />
                     Highlighted Services
-                    <span className="text-muted-foreground text-xs font-normal">(select up to 3)</span>
+                    <span className="text-muted-foreground text-xs font-normal">(select 2-3 from your specialties)</span>
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    These services will appear as badges on your stylist card on the website homepage.
+                    These will appear as badges on your stylist card on the website homepage. Choose from your specialties above.
                   </p>
-                  <Select
-                    value=""
-                    onValueChange={(value) => toggleHighlightedService(value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Search and add services..." />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {allServiceNames
-                        .filter(s => !formData.highlighted_services.includes(s))
-                        .map(service => (
-                          <SelectItem key={service} value={service}>
-                            {service}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  {formData.highlighted_services.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.highlighted_services.map(service => (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.specialties.map(specialty => {
+                      const isSelected = formData.highlighted_services.includes(specialty);
+                      const isDisabled = !isSelected && formData.highlighted_services.length >= 3;
+                      return (
                         <Badge
-                          key={service}
-                          variant="default"
-                          className="cursor-pointer pr-1 gap-1"
-                          onClick={() => toggleHighlightedService(service)}
+                          key={specialty}
+                          variant={isSelected ? 'default' : 'outline'}
+                          className={cn(
+                            "cursor-pointer transition-all",
+                            isDisabled && "opacity-50 cursor-not-allowed"
+                          )}
+                          onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                         >
-                          {service}
-                          <X className="w-3 h-3 ml-1" />
+                          {isSelected && <Star className="w-3 h-3 mr-1 fill-current" />}
+                          {specialty}
                         </Badge>
-                      ))}
-                    </div>
+                      );
+                    })}
+                  </div>
+                  {formData.specialties.length === 0 && (
+                    <p className="text-xs text-muted-foreground italic">
+                      Select specialties above first, then choose which to highlight.
+                    </p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    {formData.highlighted_services.length}/3 selected
+                    {formData.highlighted_services.length}/3 highlighted
                   </p>
                 </div>
 
