@@ -130,15 +130,17 @@ export function MissedDayDialog({
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-oat/10 pointer-events-none" />
           
           <DialogHeader className="text-center space-y-4 relative">
-            {/* Premium alert icon with gradient ring */}
-            <div className="mx-auto relative">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-destructive/20 via-destructive/10 to-oat/20 flex items-center justify-center ring-1 ring-destructive/20">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-card to-oat/30 flex items-center justify-center shadow-inner">
-                  <AlertCircle className="h-7 w-7 text-destructive" />
+            {/* Premium alert icon with gradient ring - centered */}
+            <div className="flex justify-center">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-destructive/20 via-destructive/10 to-oat/20 flex items-center justify-center ring-1 ring-destructive/20">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-card to-oat/30 flex items-center justify-center shadow-inner">
+                    <AlertCircle className="h-7 w-7 text-destructive" />
+                  </div>
                 </div>
+                {/* Subtle glow effect */}
+                <div className="absolute inset-0 rounded-full bg-destructive/10 blur-xl -z-10" />
               </div>
-              {/* Subtle glow effect */}
-              <div className="absolute inset-0 rounded-full bg-destructive/10 blur-xl -z-10" />
             </div>
             
             <DialogTitle className="text-2xl font-display uppercase tracking-wider text-foreground">
