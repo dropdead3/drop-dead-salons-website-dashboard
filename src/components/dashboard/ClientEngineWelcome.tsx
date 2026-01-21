@@ -278,7 +278,7 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
         </motion.div>
 
         {/* CTA Section */}
-        <motion.div variants={itemVariants} className="text-center">
+        <motion.div variants={itemVariants} className="text-center mt-10">
           <Button
             onClick={isPreview ? undefined : onStartProgram}
             size="lg"
