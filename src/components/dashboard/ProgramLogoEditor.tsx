@@ -147,27 +147,27 @@ export function ProgramLogoEditor({
   const displayLogo = previewUrl || DD75Logo;
   const isCustomLogo = !!previewUrl;
 
-  // Generate CSS filter for colorizing SVG
-  const getLogoColorFilter = () => {
+  // Generate styles for colorizing SVG using CSS mask technique
+  // This allows any color to be applied to monochrome SVGs
+  const getLogoColorStyle = (): React.CSSProperties => {
     if (!color) return {};
     
-    // For SVG colorization, we use a combination of brightness and invert
-    // This works best with monochrome SVGs
-    if (color === '#FFFFFF' || color === '#FAF8F5' || color === '#E5E5E5') {
-      // Light colors - invert the black SVG
-      return { filter: 'brightness(0) invert(1)' };
-    } else if (color === '#1A1A1A' || color === '#0A0A0A') {
-      // Dark colors - keep as is (default is black)
-      return { filter: 'brightness(0)' };
-    } else if (color === '#3D3D3D') {
-      // Charcoal
-      return { filter: 'brightness(0) invert(0.3)' };
-    } else {
-      // Custom colors - use CSS filter trick
-      // Convert hex to filter using sepia + hue-rotate approach
-      return { filter: `brightness(0) invert(1) sepia(1) saturate(0) brightness(${getLuminance(color)})` };
-    }
+    // Use CSS mask to colorize the SVG - this works for any color
+    return {
+      backgroundColor: color,
+      WebkitMaskImage: `url(${displayLogo})`,
+      WebkitMaskRepeat: 'no-repeat',
+      WebkitMaskPosition: 'center',
+      WebkitMaskSize: 'contain',
+      maskImage: `url(${displayLogo})`,
+      maskRepeat: 'no-repeat',
+      maskPosition: 'center',
+      maskSize: 'contain',
+    };
   };
+
+  // Check if we're using mask mode (when a color is selected)
+  const isUsingMask = !!color;
 
   // Helper to calculate luminance from hex
   const getLuminance = (hex: string): number => {
@@ -205,15 +205,25 @@ export function ProgramLogoEditor({
               className="w-80 flex items-center justify-center rounded-xl border-2 border-dashed border-border/50 p-6 transition-all duration-300 bg-gradient-to-br from-muted/30 to-muted/10"
               style={{ minHeight: size + 48 }}
             >
-              <img 
-                src={displayLogo} 
-                alt="Program Logo" 
-                className="object-contain transition-all duration-300"
-                style={{ 
-                  height: size,
-                  ...getLogoColorFilter()
-                }}
-              />
+              {isUsingMask ? (
+                // Using mask technique for colorized logo
+                <div 
+                  className="transition-all duration-300"
+                  style={{ 
+                    height: size,
+                    width: '100%',
+                    ...getLogoColorStyle()
+                  }}
+                />
+              ) : (
+                // Default logo without color
+                <img 
+                  src={displayLogo} 
+                  alt="Program Logo" 
+                  className="object-contain transition-all duration-300"
+                  style={{ height: size }}
+                />
+              )}
             </div>
             {isCustomLogo && (
               <Badge 
