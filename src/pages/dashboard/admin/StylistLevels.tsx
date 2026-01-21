@@ -301,6 +301,30 @@ export default function StylistLevels() {
           </div>
         </div>
 
+        {/* Info Notice */}
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border/50">
+          <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            Level-based service pricing is displayed on the client-facing website{' '}
+            <a 
+              href="https://www.dropdeadsalon.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              www.dropdeadsalon.com
+            </a>
+            . To adjust or edit level pricing, you can do so in the{' '}
+            <a 
+              href="/dashboard/admin/services" 
+              className="text-primary hover:underline"
+            >
+              Services editor
+            </a>
+            .
+          </p>
+        </div>
+
         <div className="grid lg:grid-cols-5 gap-8">
           {/* Levels List */}
           <div className="lg:col-span-3 space-y-2">
