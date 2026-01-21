@@ -63,7 +63,7 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
         <TabsList className="grid grid-cols-2 w-full max-w-xs">
           <TabsTrigger value="preview" className="gap-2">
             <Eye className="w-4 h-4" />
-            Editor
+            Preview
           </TabsTrigger>
           <TabsTrigger value="edit" className="gap-2">
             <Paintbrush className="w-4 h-4" />
