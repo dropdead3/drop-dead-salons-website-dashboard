@@ -18,6 +18,7 @@ import {
   Megaphone,
   Flame,
   Pin,
+  Pencil,
   Hourglass,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -281,15 +282,30 @@ export default function DashboardHome() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
-                <Megaphone className="w-4 h-4 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  {isLeadership && (
+                    <Link to="/dashboard/admin/announcements" className="text-muted-foreground hover:text-foreground transition-colors">
+                      <Pencil className="w-4 h-4" />
+                    </Link>
+                  )}
+                  <Megaphone className="w-4 h-4 text-muted-foreground" />
+                </div>
               </div>
               <div className="space-y-3">
                 {announcements && announcements.length > 0 ? (
                   announcements.map((announcement) => (
                     <div 
                       key={announcement.id}
-                      className={`p-3 bg-muted/50 border-l-2 ${priorityColors[announcement.priority]}`}
+                      className={`group relative p-3 bg-muted/50 border-l-2 ${priorityColors[announcement.priority]}`}
                     >
+                      {isLeadership && (
+                        <Link 
+                          to={`/dashboard/admin/announcements?edit=${announcement.id}`}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Link>
+                      )}
                       <div className="flex items-center gap-2 mb-1">
                         {announcement.is_pinned && <Pin className="w-3 h-3" />}
                         <p className="text-sm font-sans font-medium">{announcement.title}</p>
