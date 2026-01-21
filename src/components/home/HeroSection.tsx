@@ -100,7 +100,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
       )}
 
       <motion.div 
-        className="flex-1 flex items-center justify-center py-24 lg:py-32 relative z-10"
+        className="flex-1 flex items-center justify-center pt-32 pb-24 lg:pt-40 lg:pb-32 relative z-0"
         style={{ opacity }}
       >
         <div className="container mx-auto px-6 lg:px-12">
