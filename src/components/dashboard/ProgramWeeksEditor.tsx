@@ -529,6 +529,7 @@ function WeekCard({
             <WeekResourcesManager
               weekId={week.id}
               resources={resources}
+              assignments={assignments}
               onResourcesChange={onResourcesChange}
             />
           </CardContent>
