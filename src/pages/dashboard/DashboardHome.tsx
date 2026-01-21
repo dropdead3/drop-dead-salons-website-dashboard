@@ -162,6 +162,65 @@ export default function DashboardHome() {
         {/* Today's Birthday Banner - visible to all */}
         <TodaysBirthdayBanner />
 
+        {/* Drop Dead 75 Program Section - Moved to top */}
+        {isVisible('client_engine') && (
+          <Card className="p-6 border-2 border-foreground/20">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center">
+                  <Target className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="font-display text-lg tracking-wide">CLIENT ENGINE</h2>
+                  <p className="text-sm text-muted-foreground font-sans">
+                    75 days of execution. No excuses.
+                  </p>
+                </div>
+              </div>
+              {enrollment && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  <span className="font-display">{enrollment.streak_count} DAY STREAK</span>
+                </div>
+              )}
+            </div>
+            
+            {enrollment ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-sans text-muted-foreground">
+                    You're on <span className="text-foreground font-medium">Day {enrollment.current_day}</span> of 75
+                  </p>
+                  <div className="w-48 h-2 bg-muted mt-2 overflow-hidden">
+                    <div 
+                      className="h-full bg-foreground transition-all" 
+                      style={{ width: `${(enrollment.current_day / 75) * 100}%` }}
+                    />
+                  </div>
+                </div>
+                <Button asChild>
+                  <Link to="/dashboard/program">
+                    Continue Today
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-sans text-muted-foreground">
+                  Ready to transform your book? Start the challenge today.
+                </p>
+                <Button asChild>
+                  <Link to="/dashboard/program">
+                    Start Program
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </Card>
+        )}
+
         {/* Header */}
         <div>
           <h1 className="font-display text-3xl lg:text-4xl mb-2">
@@ -373,64 +432,6 @@ export default function DashboardHome() {
           </div>
         )}
 
-        {/* Drop Dead 75 Program Section */}
-        {isVisible('client_engine') && (
-          <Card className="p-6 border-2 border-foreground/20">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center">
-                  <Target className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="font-display text-lg tracking-wide">CLIENT ENGINE</h2>
-                  <p className="text-sm text-muted-foreground font-sans">
-                    75 days of execution. No excuses.
-                  </p>
-                </div>
-              </div>
-              {enrollment && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="font-display">{enrollment.streak_count} day streak</span>
-                </div>
-              )}
-            </div>
-            
-            {enrollment ? (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-sans text-muted-foreground">
-                    You're on <span className="text-foreground font-medium">Day {enrollment.current_day}</span> of 75
-                  </p>
-                  <div className="w-48 h-2 bg-muted mt-2 overflow-hidden">
-                    <div 
-                      className="h-full bg-foreground transition-all" 
-                      style={{ width: `${(enrollment.current_day / 75) * 100}%` }}
-                    />
-                  </div>
-                </div>
-                <Button asChild>
-                  <Link to="/dashboard/program">
-                    Continue Today
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-sans text-muted-foreground">
-                  Ready to transform your book? Start the challenge today.
-                </p>
-                <Button asChild>
-                  <Link to="/dashboard/program">
-                    Start Program
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </Card>
-        )}
 
         {/* Quick Actions */}
         {isVisible('quick_actions') && (
