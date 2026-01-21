@@ -72,7 +72,14 @@ export function ProgramLogoEditor({
 
   useEffect(() => {
     setColor(logoColor);
+    // If the current color is not a preset, update customColor to show it
+    if (logoColor && !LOGO_COLOR_PRESETS.some(p => p.value === logoColor)) {
+      setCustomColor(logoColor);
+    }
   }, [logoColor]);
+
+  // Check if current color is a custom (non-preset) color
+  const isCustomColorActive = color && !LOGO_COLOR_PRESETS.some(p => p.value === color);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -328,12 +335,17 @@ export function ProgramLogoEditor({
             <div className="flex items-center gap-3 pt-2 border-t">
               <Label className="text-xs text-muted-foreground shrink-0">Custom:</Label>
               <div className="flex items-center gap-2 flex-1">
-                <input
-                  type="color"
-                  value={customColor}
-                  onChange={(e) => setCustomColor(e.target.value)}
-                  className="w-9 h-9 rounded-lg border border-border cursor-pointer"
-                />
+                <div className={`relative ${isCustomColorActive ? 'ring-2 ring-primary/20 rounded-lg' : ''}`}>
+                  <input
+                    type="color"
+                    value={customColor}
+                    onChange={(e) => setCustomColor(e.target.value)}
+                    className={`w-9 h-9 rounded-lg cursor-pointer ${isCustomColorActive ? 'border-2 border-primary' : 'border border-border'}`}
+                  />
+                  {isCustomColorActive && (
+                    <Check className={`absolute inset-0 m-auto w-4 h-4 pointer-events-none ${isLightColor(color) ? 'text-foreground' : 'text-white'}`} />
+                  )}
+                </div>
                 <input
                   type="text"
                   value={customColor}
