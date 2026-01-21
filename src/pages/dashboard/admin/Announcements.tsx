@@ -199,7 +199,7 @@ export default function Announcements() {
       <div className="p-6 lg:p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">Announcements</h1>
+            <h1 className="font-display text-3xl lg:text-4xl mb-2">Make An Announcement</h1>
             <p className="text-muted-foreground font-sans">
               Post updates and news for the team
             </p>
