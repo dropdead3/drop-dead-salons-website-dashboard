@@ -294,7 +294,7 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
           <Button
             onClick={isPreview ? undefined : onStartProgram}
             size="lg"
-            className="font-display tracking-wider px-10 py-7 text-base bg-foreground text-background hover:bg-foreground/90 shadow-xl hover:shadow-2xl transition-all duration-300 group"
+            className="font-display tracking-wider px-10 py-7 text-base bg-[hsl(0,0%,8%)] text-[hsl(40,30%,96%)] hover:bg-[hsl(0,0%,15%)] shadow-xl hover:shadow-2xl transition-all duration-300 group disabled:opacity-100 disabled:bg-[hsl(0,0%,8%)]"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             disabled={isPreview}
