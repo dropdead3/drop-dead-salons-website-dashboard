@@ -15,6 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { ClientEngineWelcome } from './ClientEngineWelcome';
+import { ProgramConfig } from '@/hooks/useProgramConfig';
 
 interface WelcomePageConfig {
   headline: string;
@@ -26,7 +27,11 @@ interface WelcomePageConfig {
   showWarningBanner: boolean;
 }
 
-export function WelcomePagePreview() {
+interface WelcomePagePreviewProps {
+  previewConfig?: ProgramConfig | null;
+}
+
+export function WelcomePagePreview({ previewConfig }: WelcomePagePreviewProps) {
   const [config, setConfig] = useState<WelcomePageConfig>({
     headline: 'BUILD YOUR CLIENT ENGINE',
     subheadline: '75 days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.',
@@ -74,7 +79,7 @@ export function WelcomePagePreview() {
               </span>
             </div>
             <div className="bg-background">
-              <ClientEngineWelcome onStartProgram={() => {}} isPreview />
+              <ClientEngineWelcome onStartProgram={() => {}} isPreview previewConfig={previewConfig} />
             </div>
           </Card>
         </TabsContent>

@@ -1101,7 +1101,7 @@ export default function ProgramEditor() {
                 <CardDescription>Customize the onboarding experience for new participants</CardDescription>
               </CardHeader>
               <CardContent>
-                <WelcomePagePreview />
+                <WelcomePagePreview previewConfig={config} />
               </CardContent>
             </Card>
 
