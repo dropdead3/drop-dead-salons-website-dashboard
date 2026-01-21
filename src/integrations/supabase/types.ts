@@ -79,6 +79,7 @@ export type Database = {
           link_label: string | null
           link_url: string | null
           priority: string | null
+          sort_order: number | null
           title: string
           updated_at: string
         }
@@ -93,6 +94,7 @@ export type Database = {
           link_label?: string | null
           link_url?: string | null
           priority?: string | null
+          sort_order?: number | null
           title: string
           updated_at?: string
         }
@@ -107,6 +109,7 @@ export type Database = {
           link_label?: string | null
           link_url?: string | null
           priority?: string | null
+          sort_order?: number | null
           title?: string
           updated_at?: string
         }
