@@ -190,15 +190,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Track scroll position in sidebar nav
   useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-
     const handleScroll = () => {
-      setIsScrolled(nav.scrollTop > 50);
+      const nav = navRef.current;
+      if (nav) {
+        setIsScrolled(nav.scrollTop > 50);
+      }
     };
 
-    nav.addEventListener('scroll', handleScroll);
-    return () => nav.removeEventListener('scroll', handleScroll);
+    // Use a small delay to ensure ref is attached after render
+    const timer = setTimeout(() => {
+      const nav = navRef.current;
+      if (nav) {
+        nav.addEventListener('scroll', handleScroll);
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      const nav = navRef.current;
+      if (nav) {
+        nav.removeEventListener('scroll', handleScroll);
+      }
+    };
   }, []);
 
   // Use simulated role if viewing as a role, or the impersonated user's roles
