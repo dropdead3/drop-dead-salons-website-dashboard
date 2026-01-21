@@ -25,11 +25,13 @@ import {
   Check,
   X,
   Calendar,
-  FileText
+  FileText,
+  Eye
 } from 'lucide-react';
 import ProgramWeeksEditor from '@/components/dashboard/ProgramWeeksEditor';
 import ProgramResourcesEditor from '@/components/dashboard/ProgramResourcesEditor';
 import { ProgramPreviewModal } from '@/components/dashboard/ProgramPreviewModal';
+import { MissedDayPreview } from '@/components/dashboard/MissedDayPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -626,7 +628,7 @@ export default function ProgramEditor() {
         </div>
 
         <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="w-4 h-4" />
               Settings
@@ -642,6 +644,10 @@ export default function ProgramEditor() {
             <TabsTrigger value="rules" className="gap-2">
               <ScrollText className="w-4 h-4" />
               Rules
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="gap-2">
+              <Eye className="w-4 h-4" />
+              Preview
             </TabsTrigger>
           </TabsList>
 
@@ -1059,6 +1065,19 @@ export default function ProgramEditor() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </TabsContent>
+
+          {/* Preview Tab */}
+          <TabsContent value="preview">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-display">Missed Day Dialog Preview</CardTitle>
+                <CardDescription>Preview how the force restart popup appears to participants</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MissedDayPreview />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
