@@ -446,7 +446,7 @@ export default function StylistLevels() {
                   value={newLevelName}
                   onChange={(e) => setNewLevelName(e.target.value)}
                   placeholder="Enter level name..."
-                  className="h-8 text-sm flex-1 border-0 bg-transparent focus-visible:ring-0 px-0"
+                  className="h-8 text-sm flex-1 border bg-background rounded-md px-3 ml-2"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleAddNew();
