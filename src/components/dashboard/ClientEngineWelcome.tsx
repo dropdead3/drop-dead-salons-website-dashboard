@@ -55,11 +55,11 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
   const logoSize = config?.logo_size || 64;
   const logoColor = config?.logo_color;
 
-  // Content with overrides - eyebrow uses config or override
+  // Content with overrides - use config values, then overrides, then fallbacks
   const eyebrow = contentOverrides?.eyebrow || config?.welcome_eyebrow || '75-DAY TRANSFORMATION';
-  const headline = contentOverrides?.headline || 'BUILD YOUR CLIENT ENGINE';
-  const subheadline = contentOverrides?.subheadline || `${totalDays} days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.`;
-  const ctaText = contentOverrides?.ctaText || "I'M READY — START DAY 1";
+  const headline = contentOverrides?.headline || config?.welcome_headline || 'BUILD YOUR CLIENT ENGINE';
+  const subheadline = contentOverrides?.subheadline || config?.welcome_subheadline || `${totalDays} days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.`;
+  const ctaText = contentOverrides?.ctaText || config?.welcome_cta_text || "I'M READY — START DAY 1";
 
   const highlights = [
     {
