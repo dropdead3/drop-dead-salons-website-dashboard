@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -26,19 +26,32 @@ import {
   Plus, 
   Megaphone, 
   Pin, 
-  Trash2, 
-  Edit2, 
   Loader2,
   AlertTriangle,
   Info,
   AlertCircle,
   Bell,
-  ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { DraggableAnnouncementCard } from '@/components/dashboard/DraggableAnnouncementCard';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -54,6 +67,7 @@ interface Announcement {
   created_at: string;
   link_url: string | null;
   link_label: string | null;
+  sort_order: number;
 }
 
 const priorityConfig: Record<Priority, { label: string; icon: React.ReactNode; color: string }> = {
@@ -95,12 +109,70 @@ export default function Announcements() {
         .from('announcements')
         .select('*')
         .order('is_pinned', { ascending: false })
+        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data as Announcement[];
     },
   });
+
+  // Separate pinned and unpinned announcements
+  const pinnedAnnouncements = useMemo(() => 
+    announcements?.filter(a => a.is_pinned) || [], 
+    [announcements]
+  );
+  const unpinnedAnnouncements = useMemo(() => 
+    announcements?.filter(a => !a.is_pinned) || [], 
+    [announcements]
+  );
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Mutation for updating sort order
+  const reorderMutation = useMutation({
+    mutationFn: async (updates: { id: string; sort_order: number }[]) => {
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('announcements')
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      toast.success('Order updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update order');
+      console.error(error);
+    },
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = pinnedAnnouncements.findIndex(a => a.id === active.id);
+      const newIndex = pinnedAnnouncements.findIndex(a => a.id === over.id);
+      
+      const newOrder = arrayMove(pinnedAnnouncements, oldIndex, newIndex);
+      const updates = newOrder.map((announcement, index) => ({
+        id: announcement.id,
+        sort_order: index + 1,
+      }));
+      
+      reorderMutation.mutate(updates);
+    }
+  };
 
   // Handle edit query parameter from Command Center
   useEffect(() => {
@@ -194,6 +266,11 @@ export default function Announcements() {
 
   const handleCreate = () => {
     if (!user) return;
+    // Get max sort_order for pinned announcements
+    const maxSortOrder = pinnedAnnouncements.length > 0 
+      ? Math.max(...pinnedAnnouncements.map(a => a.sort_order || 0)) 
+      : 0;
+    
     createMutation.mutate({
       title,
       content,
@@ -204,6 +281,7 @@ export default function Announcements() {
       expires_at: expiresAt || null,
       link_url: linkUrl || null,
       link_label: linkLabel || null,
+      sort_order: isPinned ? maxSortOrder + 1 : 0,
     });
   };
 
@@ -303,80 +381,65 @@ export default function Announcements() {
             </p>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {announcements?.map((announcement) => (
-              <Card 
-                key={announcement.id} 
-                className={`p-6 transition-all duration-300 ${!announcement.is_active ? 'opacity-50' : ''} ${togglingId === announcement.id ? 'scale-[0.98] ring-2 ring-primary/30' : ''}`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      {announcement.is_pinned && (
-                        <Pin className="w-4 h-4 text-foreground" />
-                      )}
-                      <span className={`flex items-center gap-1 text-xs font-medium ${priorityConfig[announcement.priority].color}`}>
-                        {priorityConfig[announcement.priority].icon}
-                        {priorityConfig[announcement.priority].label}
-                      </span>
-                      {!announcement.is_active && (
-                        <span className="text-xs bg-muted px-2 py-0.5">Inactive</span>
-                      )}
+          <div className="space-y-6">
+            {/* Pinned Announcements - Draggable */}
+            {pinnedAnnouncements.length > 0 && (
+              <div>
+                <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <Pin className="w-3 h-3" />
+                  Pinned Announcements
+                  <span className="text-muted-foreground/60">· Drag to reorder</span>
+                </h2>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={pinnedAnnouncements.map(a => a.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-4">
+                      {pinnedAnnouncements.map((announcement) => (
+                        <DraggableAnnouncementCard
+                          key={announcement.id}
+                          announcement={announcement}
+                          togglingId={togglingId}
+                          onToggleActive={toggleActive}
+                          onEdit={openEdit}
+                          onDelete={(id) => deleteMutation.mutate(id)}
+                          isDraggable={true}
+                        />
+                      ))}
                     </div>
-                    <h3 className="font-display text-lg mb-2">{announcement.title}</h3>
-                    <p className="text-sm text-muted-foreground font-sans whitespace-pre-wrap">
-                      {announcement.content}
-                    </p>
-                    {announcement.link_url && announcement.link_label && (
-                      <a 
-                        href={normalizeUrl(announcement.link_url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 text-xs font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity"
-                      >
-                        {announcement.link_label}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-4">
-                      Posted {format(new Date(announcement.created_at), 'MMM d, yyyy h:mm a')}
-                      {announcement.expires_at && (
-                        <span> · Expires {format(new Date(announcement.expires_at), 'MMM d, yyyy')}</span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => toggleActive(announcement)}
-                    >
-                      <span className={`text-xs whitespace-nowrap ${announcement.is_active ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}>
-                        {announcement.is_active ? 'Displaying on team dashboards' : 'Announcement not displaying'}
-                      </span>
-                      <Switch checked={announcement.is_active} />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEdit(announcement)}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm('Delete this announcement?')) {
-                          deleteMutation.mutate(announcement.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+
+            {/* Unpinned Announcements */}
+            {unpinnedAnnouncements.length > 0 && (
+              <div>
+                {pinnedAnnouncements.length > 0 && (
+                  <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                    Other Announcements
+                  </h2>
+                )}
+                <div className="space-y-4">
+                  {unpinnedAnnouncements.map((announcement) => (
+                    <DraggableAnnouncementCard
+                      key={announcement.id}
+                      announcement={announcement}
+                      togglingId={togglingId}
+                      onToggleActive={toggleActive}
+                      onEdit={openEdit}
+                      onDelete={(id) => deleteMutation.mutate(id)}
+                      isDraggable={false}
+                    />
+                  ))}
                 </div>
-              </Card>
-            ))}
+              </div>
+            )}
           </div>
         )}
 
