@@ -24,6 +24,8 @@ import { TogglePill } from "@/components/ui/toggle-pill";
 import { StylistFlipCard } from "./StylistFlipCard";
 import { useActiveLocations } from "@/hooks/useLocations";
 import { useHomepageStylists } from "@/hooks/useHomepageStylists";
+import { useHomepageStylistsSettings } from "@/hooks/useSiteSettings";
+import { sampleStylists } from "@/data/sampleStylists";
 
 import { locations as staticLocations, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
 
@@ -404,12 +406,16 @@ export function StylistsSection() {
 
   // Fetch stylists from database
   const { data: dbStylists, isLoading: stylistsLoading } = useHomepageStylists();
+  
+  // Fetch sample cards setting
+  const { data: settings } = useHomepageStylistsSettings();
+  const showSampleCards = settings?.show_sample_cards ?? false;
 
   // Fetch locations from database
   const { data: dbLocations } = useActiveLocations();
   
   // Transform database stylists to match Stylist type
-  const stylists: Stylist[] = useMemo(() => {
+  const realStylists: Stylist[] = useMemo(() => {
     if (!dbStylists) return [];
     return dbStylists.map(s => ({
       id: s.id,
@@ -426,7 +432,15 @@ export function StylistsSection() {
     }));
   }, [dbStylists]);
 
-  // Derive unique specialties from database stylists
+  // Use sample stylists if toggle is on and no real stylists exist
+  const stylists: Stylist[] = useMemo(() => {
+    if (showSampleCards && realStylists.length === 0) {
+      return sampleStylists;
+    }
+    return realStylists;
+  }, [showSampleCards, realStylists]);
+
+  // Derive unique specialties from displayed stylists (including samples)
   const allSpecialties = useMemo(() => {
     const specs = new Set<string>();
     stylists.forEach(s => s.specialties.forEach(spec => specs.add(spec)));
