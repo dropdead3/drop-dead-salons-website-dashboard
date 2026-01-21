@@ -271,8 +271,15 @@ export function LocationsSection() {
     <section 
       ref={sectionRef}
       data-theme="light"
-      className="py-20 md:py-28 bg-background"
+      className="relative pt-40 sm:pt-52 md:pt-64 pb-20 md:pb-28 bg-background"
     >
+      {/* Gradient transition from stylists section */}
+      <div 
+        className="absolute top-0 left-0 right-0 h-40 sm:h-52 md:h-64 pointer-events-none"
+        style={{ 
+          background: 'linear-gradient(180deg, hsl(var(--secondary)) 0%, hsl(var(--background)) 100%)' 
+        }}
+      />
       <div className="container mx-auto px-6">
         {/* Header */}
         <motion.div style={{ opacity: headerOpacity, y: headerY }}>
