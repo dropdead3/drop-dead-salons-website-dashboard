@@ -752,12 +752,15 @@ export default function MyProfile() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Specialties <span className="text-muted-foreground text-xs font-normal">(select up to 4)</span></Label>
+                  <Label>
+                    Specialties <span className="text-destructive">*</span>
+                    <span className="text-muted-foreground text-xs font-normal ml-1">(select 2-3 required)</span>
+                  </Label>
                   <div className="flex flex-wrap gap-2">
                     {specialtyOptions.map(option => {
                       const specialty = option.name;
                       const isSelected = formData.specialties.includes(specialty);
-                      const isDisabled = !isSelected && formData.specialties.length >= 4;
+                      const isDisabled = !isSelected && formData.specialties.length >= 3;
                       return (
                         <Badge
                           key={specialty}
@@ -773,11 +776,13 @@ export default function MyProfile() {
                       );
                     })}
                   </div>
-                  {formData.specialties.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {formData.specialties.length}/4 selected
-                    </p>
-                  )}
+                  <p className={cn(
+                    "text-xs",
+                    formData.specialties.length < 2 ? "text-destructive" : "text-muted-foreground"
+                  )}>
+                    {formData.specialties.length}/3 selected
+                    {formData.specialties.length < 2 && " — Please select at least 2 specialties"}
+                  </p>
                 </div>
 
                 {/* Highlighted Services for Website Card */}
