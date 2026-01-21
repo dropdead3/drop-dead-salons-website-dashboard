@@ -81,6 +81,9 @@ interface ProgramConfig {
   logo_url: string | null;
   logo_size: number;
   logo_color: string | null;
+  welcome_headline: string | null;
+  welcome_subheadline: string | null;
+  welcome_cta_text: string | null;
 }
 
 interface DailyTask {
@@ -365,6 +368,9 @@ export default function ProgramEditor() {
         logo_url: config.logo_url,
         logo_size: config.logo_size,
         logo_color: config.logo_color,
+        welcome_headline: config.welcome_headline,
+        welcome_subheadline: config.welcome_subheadline,
+        welcome_cta_text: config.welcome_cta_text,
       })
       .eq('id', config.id);
 
@@ -1092,9 +1098,12 @@ export default function ProgramEditor() {
               <CardContent>
                 <WelcomePagePreview 
                   previewConfig={config} 
-                  onLogoChange={(url) => setConfig({ ...config, logo_url: url })}
-                  onLogoSizeChange={(size) => setConfig({ ...config, logo_size: size })}
-                  onLogoColorChange={(color) => setConfig({ ...config, logo_color: color })}
+                  onLogoChange={(url) => setConfig({ ...config!, logo_url: url })}
+                  onLogoSizeChange={(size) => setConfig({ ...config!, logo_size: size })}
+                  onLogoColorChange={(color) => setConfig({ ...config!, logo_color: color })}
+                  onHeadlineChange={(headline) => setConfig({ ...config!, welcome_headline: headline })}
+                  onSubheadlineChange={(subheadline) => setConfig({ ...config!, welcome_subheadline: subheadline })}
+                  onCtaTextChange={(ctaText) => setConfig({ ...config!, welcome_cta_text: ctaText })}
                 />
               </CardContent>
             </Card>

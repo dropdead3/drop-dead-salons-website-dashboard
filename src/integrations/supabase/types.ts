@@ -1642,6 +1642,9 @@ export type Database = {
           total_days: number
           updated_at: string
           weekly_wins_interval: number
+          welcome_cta_text: string | null
+          welcome_headline: string | null
+          welcome_subheadline: string | null
         }
         Insert: {
           allow_manual_restart?: boolean
@@ -1660,6 +1663,9 @@ export type Database = {
           total_days?: number
           updated_at?: string
           weekly_wins_interval?: number
+          welcome_cta_text?: string | null
+          welcome_headline?: string | null
+          welcome_subheadline?: string | null
         }
         Update: {
           allow_manual_restart?: boolean
@@ -1678,6 +1684,9 @@ export type Database = {
           total_days?: number
           updated_at?: string
           weekly_wins_interval?: number
+          welcome_cta_text?: string | null
+          welcome_headline?: string | null
+          welcome_subheadline?: string | null
         }
         Relationships: []
       }

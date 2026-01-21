@@ -29,10 +29,7 @@ import { ProgramConfig } from '@/hooks/useProgramConfig';
 import { useProgramOutcomes, useUpdateProgramOutcome } from '@/hooks/useProgramOutcomes';
 import { Link } from 'react-router-dom';
 
-interface WelcomePageConfig {
-  headline: string;
-  subheadline: string;
-  ctaText: string;
+interface LayoutConfig {
   showHighlights: boolean;
   showRulesPreview: boolean;
   showTasksPreview: boolean;
@@ -44,18 +41,32 @@ interface WelcomePagePreviewProps {
   onLogoChange?: (url: string | null) => void;
   onLogoSizeChange?: (size: number) => void;
   onLogoColorChange?: (color: string | null) => void;
+  onHeadlineChange?: (headline: string) => void;
+  onSubheadlineChange?: (subheadline: string) => void;
+  onCtaTextChange?: (ctaText: string) => void;
 }
 
-export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChange, onLogoColorChange }: WelcomePagePreviewProps) {
+export function WelcomePagePreview({ 
+  previewConfig, 
+  onLogoChange, 
+  onLogoSizeChange, 
+  onLogoColorChange,
+  onHeadlineChange,
+  onSubheadlineChange,
+  onCtaTextChange
+}: WelcomePagePreviewProps) {
   const { data: outcomes = [], isLoading: outcomesLoading } = useProgramOutcomes();
   const updateOutcome = useUpdateProgramOutcome();
   const [editingOutcome, setEditingOutcome] = useState<string | null>(null);
   const [outcomeEdits, setOutcomeEdits] = useState<{ title: string; description: string }>({ title: '', description: '' });
   
-  const [config, setConfig] = useState<WelcomePageConfig>({
-    headline: 'BUILD YOUR CLIENT ENGINE',
-    subheadline: '75 days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.',
-    ctaText: "I'M READY — START DAY 1",
+  // Use values from previewConfig (database) or fallback to defaults
+  const headline = previewConfig?.welcome_headline || 'BUILD YOUR CLIENT ENGINE';
+  const subheadline = previewConfig?.welcome_subheadline || '75 days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.';
+  const ctaText = previewConfig?.welcome_cta_text || "I'M READY — START DAY 1";
+
+  // Local state for layout toggles (not persisted to DB)
+  const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>({
     showHighlights: true,
     showRulesPreview: true,
     showTasksPreview: true,
@@ -126,9 +137,9 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
                 isPreview 
                 previewConfig={previewConfig} 
                 contentOverrides={{
-                  headline: config.headline,
-                  subheadline: config.subheadline,
-                  ctaText: config.ctaText
+                  headline: headline,
+                  subheadline: subheadline,
+                  ctaText: ctaText
                 }}
               />
             </div>
@@ -160,8 +171,8 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
                 <Label htmlFor="headline">Main Headline</Label>
                 <Input
                   id="headline"
-                  value={config.headline}
-                  onChange={(e) => setConfig({ ...config, headline: e.target.value })}
+                  value={headline}
+                  onChange={(e) => onHeadlineChange?.(e.target.value)}
                   placeholder="BUILD YOUR CLIENT ENGINE"
                   className="font-display tracking-wide"
                 />
@@ -174,8 +185,8 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
                 <Label htmlFor="subheadline">Subheadline</Label>
                 <Textarea
                   id="subheadline"
-                  value={config.subheadline}
-                  onChange={(e) => setConfig({ ...config, subheadline: e.target.value })}
+                  value={subheadline}
+                  onChange={(e) => onSubheadlineChange?.(e.target.value)}
                   placeholder="75 days of focused execution..."
                   rows={3}
                 />
@@ -185,8 +196,8 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
                 <Label htmlFor="cta">Call to Action Button</Label>
                 <Input
                   id="cta"
-                  value={config.ctaText}
-                  onChange={(e) => setConfig({ ...config, ctaText: e.target.value })}
+                  value={ctaText}
+                  onChange={(e) => onCtaTextChange?.(e.target.value)}
                   placeholder="I'M READY — START DAY 1"
                   className="font-display tracking-wide"
                 />
@@ -215,8 +226,8 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
                     </button>
                   </CollapsibleTrigger>
                   <Switch
-                    checked={config.showHighlights}
-                    onCheckedChange={(checked) => setConfig({ ...config, showHighlights: checked })}
+                    checked={layoutConfig.showHighlights}
+                    onCheckedChange={(checked) => setLayoutConfig({ ...layoutConfig, showHighlights: checked })}
                   />
                 </div>
                 <CollapsibleContent className="pl-6 pb-3">
@@ -248,8 +259,8 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
                     </button>
                   </CollapsibleTrigger>
                   <Switch
-                    checked={config.showTasksPreview}
-                    onCheckedChange={(checked) => setConfig({ ...config, showTasksPreview: checked })}
+                    checked={layoutConfig.showTasksPreview}
+                    onCheckedChange={(checked) => setLayoutConfig({ ...layoutConfig, showTasksPreview: checked })}
                   />
                 </div>
                 <CollapsibleContent className="pl-6 pb-3">
@@ -280,8 +291,8 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
                     </button>
                   </CollapsibleTrigger>
                   <Switch
-                    checked={config.showRulesPreview}
-                    onCheckedChange={(checked) => setConfig({ ...config, showRulesPreview: checked })}
+                    checked={layoutConfig.showRulesPreview}
+                    onCheckedChange={(checked) => setLayoutConfig({ ...layoutConfig, showRulesPreview: checked })}
                   />
                 </div>
                 <CollapsibleContent className="pl-6 pb-3">
@@ -312,8 +323,8 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
                     </button>
                   </CollapsibleTrigger>
                   <Switch
-                    checked={config.showWarningBanner}
-                    onCheckedChange={(checked) => setConfig({ ...config, showWarningBanner: checked })}
+                    checked={layoutConfig.showWarningBanner}
+                    onCheckedChange={(checked) => setLayoutConfig({ ...layoutConfig, showWarningBanner: checked })}
                   />
                 </div>
                 <CollapsibleContent className="pl-6 pb-3">

@@ -16,6 +16,9 @@ export interface ProgramConfig {
   logo_url: string | null;
   logo_size: number;
   logo_color: string | null;
+  welcome_headline: string | null;
+  welcome_subheadline: string | null;
+  welcome_cta_text: string | null;
 }
 
 export interface DailyTask {
