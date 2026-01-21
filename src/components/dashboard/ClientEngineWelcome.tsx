@@ -234,17 +234,6 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
               </div>
             </div>
 
-            {/* Warning Banner */}
-            <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 flex items-start gap-3">
-              <Clock className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-foreground mb-1">Only begin when you're ready</p>
-                <p className="text-xs text-muted-foreground">
-                  This program requires {totalDays} consecutive days of execution. 
-                  Miss a day and you restart from Day 1. You get {totalPasses} Life Happens Passes—use them wisely.
-                </p>
-              </div>
-            </div>
           </Card>
         </motion.div>
 
@@ -289,8 +278,22 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
           </Card>
         </motion.div>
 
+        {/* Warning Banner - moved above CTA */}
+        <motion.div variants={itemVariants} className="mt-8">
+          <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4 flex items-start gap-3 max-w-2xl mx-auto">
+            <Clock className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-foreground mb-1">Only begin when you're ready</p>
+              <p className="text-xs text-muted-foreground">
+                This program requires {totalDays} consecutive days of execution. 
+                Miss a day and you restart from Day 1. You get {totalPasses} Life Happens Passes—use them wisely.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
         {/* CTA Section */}
-        <motion.div variants={itemVariants} className="text-center mt-10">
+        <motion.div variants={itemVariants} className="text-center mt-8">
           <motion.div
             whileHover={{ scale: 1.05, y: -4 }}
             whileTap={{ scale: 0.98 }}
