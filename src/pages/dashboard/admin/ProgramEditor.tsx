@@ -32,6 +32,7 @@ import ProgramWeeksEditor from '@/components/dashboard/ProgramWeeksEditor';
 import ProgramResourcesEditor from '@/components/dashboard/ProgramResourcesEditor';
 import { ProgramPreviewModal } from '@/components/dashboard/ProgramPreviewModal';
 import { MissedDayPreview } from '@/components/dashboard/MissedDayPreview';
+import { WelcomePagePreview } from '@/components/dashboard/WelcomePagePreview';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -1068,10 +1069,22 @@ export default function ProgramEditor() {
           </TabsContent>
 
           {/* Preview Tab */}
-          <TabsContent value="preview">
+          <TabsContent value="preview" className="space-y-8">
+            {/* Welcome Page Preview */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-display">Missed Day Dialog Preview</CardTitle>
+                <CardTitle className="text-lg font-display">Welcome Page</CardTitle>
+                <CardDescription>Customize the onboarding experience for new participants</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WelcomePagePreview />
+              </CardContent>
+            </Card>
+
+            {/* Missed Day Dialog Preview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-display">Missed Day Dialog</CardTitle>
                 <CardDescription>Preview how the force restart popup appears to participants</CardDescription>
               </CardHeader>
               <CardContent>

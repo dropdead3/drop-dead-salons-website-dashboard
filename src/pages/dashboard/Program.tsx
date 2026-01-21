@@ -37,6 +37,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import DD75Logo from '@/assets/dd75-logo.svg';
+import { ClientEngineWelcome } from '@/components/dashboard/ClientEngineWelcome';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -178,51 +179,7 @@ export default function Program() {
   if (!hasEnrollment && !enrollment) {
     return (
       <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-2xl mx-auto">
-          <div className="text-center py-20">
-            <img 
-              src={DD75Logo} 
-              alt="Drop Dead 75: Client Engine Program" 
-              className="h-10 lg:h-12 w-auto mx-auto mb-8"
-            />
-            <p className="text-muted-foreground font-sans mb-8 max-w-md mx-auto">
-              75 days of execution. No excuses. Build your client engine and 
-              transform your book.
-            </p>
-            <div className="bg-card border border-border p-6 mb-8 text-left max-w-md mx-auto">
-              <h3 className="font-display text-sm tracking-wide mb-4">THE RULES</h3>
-              <ul className="space-y-3 text-sm font-sans text-muted-foreground">
-                <li className="flex gap-2">
-                  <span className="text-foreground">1.</span>
-                  Complete all daily tasks
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-foreground">2.</span>
-                  Upload proof of work
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-foreground">3.</span>
-                  Log your metrics
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-foreground">4.</span>
-                  Submit Weekly Wins every 7 days
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-foreground font-medium">5.</span>
-                  <span className="text-foreground font-medium">Miss one day = restart (but you get 2 Life Happens Passes)</span>
-                </li>
-              </ul>
-            </div>
-            <Button 
-              onClick={startProgram}
-              className="font-display tracking-wide px-8 py-6 text-base"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              START DAY 1
-            </Button>
-          </div>
-        </div>
+        <ClientEngineWelcome onStartProgram={startProgram} />
       </DashboardLayout>
     );
   }
