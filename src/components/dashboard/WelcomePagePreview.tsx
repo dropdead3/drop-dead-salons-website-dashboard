@@ -16,11 +16,17 @@ import {
   Layout,
   Sparkles,
   ChevronDown,
-  ExternalLink
+  ExternalLink,
+  Target,
+  TrendingUp,
+  Users,
+  Award,
+  Loader2
 } from 'lucide-react';
 import { ClientEngineWelcome } from './ClientEngineWelcome';
 import { ProgramLogoEditor } from './ProgramLogoEditor';
 import { ProgramConfig } from '@/hooks/useProgramConfig';
+import { useProgramOutcomes, useUpdateProgramOutcome } from '@/hooks/useProgramOutcomes';
 import { Link } from 'react-router-dom';
 
 interface WelcomePageConfig {
@@ -41,6 +47,11 @@ interface WelcomePagePreviewProps {
 }
 
 export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChange, onLogoColorChange }: WelcomePagePreviewProps) {
+  const { data: outcomes = [], isLoading: outcomesLoading } = useProgramOutcomes();
+  const updateOutcome = useUpdateProgramOutcome();
+  const [editingOutcome, setEditingOutcome] = useState<string | null>(null);
+  const [outcomeEdits, setOutcomeEdits] = useState<{ title: string; description: string }>({ title: '', description: '' });
+  
   const [config, setConfig] = useState<WelcomePageConfig>({
     headline: 'BUILD YOUR CLIENT ENGINE',
     subheadline: '75 days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.',
@@ -50,6 +61,28 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
     showTasksPreview: true,
     showWarningBanner: true,
   });
+
+  const handleEditOutcome = (outcome: { id: string; title: string; description: string }) => {
+    setEditingOutcome(outcome.id);
+    setOutcomeEdits({ title: outcome.title, description: outcome.description });
+  };
+
+  const handleSaveOutcome = () => {
+    if (editingOutcome) {
+      updateOutcome.mutate({ id: editingOutcome, updates: outcomeEdits });
+      setEditingOutcome(null);
+    }
+  };
+
+  const getOutcomeIcon = (iconName: string) => {
+    const iconMap: Record<string, React.ReactNode> = {
+      'sparkles': <Sparkles className="w-4 h-4 text-primary" />,
+      'trending-up': <TrendingUp className="w-4 h-4 text-primary" />,
+      'users': <Users className="w-4 h-4 text-primary" />,
+      'award': <Award className="w-4 h-4 text-primary" />,
+    };
+    return iconMap[iconName] || <Target className="w-4 h-4 text-primary" />;
+  };
 
   return (
     <div className="space-y-6">
@@ -296,7 +329,80 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
             </div>
           </Card>
 
-          {/* Info Card */}
+          {/* Outcomes Editor */}
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Target className="w-4 h-4 text-primary" />
+              <h3 className="font-display text-sm tracking-wide">OUTCOMES</h3>
+              <Badge variant="secondary" className="text-xs ml-auto">
+                {outcomes.length} cards
+              </Badge>
+            </div>
+
+            {outcomesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {outcomes.map((outcome) => (
+                  <div
+                    key={outcome.id}
+                    className="bg-muted/30 rounded-lg p-4"
+                  >
+                    {editingOutcome === outcome.id ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            {getOutcomeIcon(outcome.icon)}
+                          </div>
+                          <Input
+                            value={outcomeEdits.title}
+                            onChange={(e) => setOutcomeEdits({ ...outcomeEdits, title: e.target.value })}
+                            placeholder="Title"
+                            className="font-medium"
+                          />
+                        </div>
+                        <Textarea
+                          value={outcomeEdits.description}
+                          onChange={(e) => setOutcomeEdits({ ...outcomeEdits, description: e.target.value })}
+                          placeholder="Description"
+                          rows={2}
+                          className="text-sm"
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleSaveOutcome} disabled={updateOutcome.isPending}>
+                            {updateOutcome.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setEditingOutcome(null)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        className="flex items-start gap-3 cursor-pointer hover:bg-muted/50 -m-2 p-2 rounded-lg transition-colors"
+                        onClick={() => handleEditOutcome(outcome)}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          {getOutcomeIcon(outcome.icon)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm mb-1">{outcome.title}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{outcome.description}</p>
+                        </div>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          Click to edit
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
           <Card className="p-5 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
             <div className="flex items-start gap-3">
               <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
