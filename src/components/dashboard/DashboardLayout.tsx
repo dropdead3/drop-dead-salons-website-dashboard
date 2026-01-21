@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -177,7 +177,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
-  const navRef = useRef<HTMLElement>(null);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
@@ -187,26 +186,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   
   // Fetch team members for user impersonation picker
   const { data: teamMembers = [] } = useTeamDirectory();
-
-  // Track scroll position in sidebar nav using a callback ref approach
-  const handleNavScroll = (e: Event) => {
-    const target = e.target as HTMLElement;
-    setIsScrolled(target.scrollTop > 50);
-  };
-
-  // Callback ref to attach scroll listener when nav mounts
-  const setNavRef = (node: HTMLElement | null) => {
-    // Clean up previous listener
-    if (navRef.current) {
-      navRef.current.removeEventListener('scroll', handleNavScroll);
-    }
-    
-    // Set new ref and attach listener
-    navRef.current = node;
-    if (node) {
-      node.addEventListener('scroll', handleNavScroll);
-    }
-  };
 
   // Use simulated role if viewing as a role, or the impersonated user's roles
   const roles = isViewingAsUser && viewAsUser 
@@ -377,16 +356,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   };
 
+  // Memoize scroll handler to prevent re-renders
+  const handleSidebarScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const scrolled = target.scrollTop > 50;
+    setIsScrolled(scrolled);
+  }, []);
+
   const SidebarContent = () => (
     <div 
-      ref={setNavRef}
       className="flex flex-col h-full overflow-y-auto"
-      onScroll={(e) => {
-        const target = e.currentTarget;
-        const scrolled = target.scrollTop > 50;
-        console.log('Sidebar scroll:', target.scrollTop, 'isScrolled:', scrolled);
-        setIsScrolled(scrolled);
-      }}
+      onScroll={handleSidebarScroll}
     >
       {/* Logo with scroll animation */}
       <div className="p-6 border-b border-border sticky top-0 bg-card z-10">
