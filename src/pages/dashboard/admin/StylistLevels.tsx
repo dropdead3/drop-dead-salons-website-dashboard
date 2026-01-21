@@ -101,6 +101,16 @@ export default function StylistLevels() {
     }
   }, [dbLevels, hasChanges]);
 
+  // Show toast when changes are made
+  useEffect(() => {
+    if (hasChanges) {
+      toast.warning('You have unsaved changes', {
+        id: 'unsaved-changes',
+        duration: 4000,
+      });
+    }
+  }, [hasChanges]);
+
   // Note: Realtime subscription is handled by useStylistLevels hook
 
   // Fetch stylists with their levels to show counts
