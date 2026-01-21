@@ -25,6 +25,7 @@ import { useProgramOutcomes, ProgramOutcome } from '@/hooks/useProgramOutcomes';
 import { icons } from 'lucide-react';
 
 interface WelcomePageContent {
+  eyebrow?: string;
   headline?: string;
   subheadline?: string;
   ctaText?: string;
@@ -54,7 +55,8 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
   const logoSize = config?.logo_size || 64;
   const logoColor = config?.logo_color;
 
-  // Content with overrides
+  // Content with overrides - eyebrow uses config or override
+  const eyebrow = contentOverrides?.eyebrow || config?.welcome_eyebrow || '75-DAY TRANSFORMATION';
   const headline = contentOverrides?.headline || 'BUILD YOUR CLIENT ENGINE';
   const subheadline = contentOverrides?.subheadline || `${totalDays} days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.`;
   const ctaText = contentOverrides?.ctaText || "I'M READY — START DAY 1";
@@ -136,16 +138,16 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
             />
           </motion.div>
           
-          <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-xs tracking-wider font-display uppercase">
+          <Badge variant="secondary" className="mb-8 px-4 py-1.5 text-xs tracking-wider font-display uppercase">
             <Sparkles className="w-3 h-3 mr-2" />
-            {programName} • {totalDays}-Day Transformation
+            {eyebrow}
           </Badge>
           
-          <h1 className="font-display text-3xl lg:text-4xl tracking-wide mb-4 text-balance">
+          <h1 className="font-display text-3xl lg:text-4xl tracking-wide mb-6 text-balance">
             {headline}
           </h1>
           
-          <p className="text-muted-foreground font-sans text-lg max-w-xl mx-auto leading-relaxed">
+          <p className="text-muted-foreground font-sans text-lg max-w-xl mx-auto leading-relaxed mb-4">
             {subheadline}
           </p>
         </motion.div>
