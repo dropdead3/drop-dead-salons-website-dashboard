@@ -274,13 +274,73 @@ export default function Program() {
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress Bar with Week Milestones */}
         <Card className="p-6 mb-8">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-sans text-muted-foreground">Program Progress</span>
             <span className="text-sm font-display">{Math.round(progressPercent)}%</span>
           </div>
-          <Progress value={progressPercent} className="h-2" />
+          
+          {/* Progress bar with week markers */}
+          <div className="relative">
+            <Progress value={progressPercent} className="h-2" />
+            
+            {/* Week milestone markers */}
+            <div className="absolute top-0 left-0 right-0 h-2 pointer-events-none">
+              {Array.from({ length: 10 }, (_, i) => {
+                const weekEndDay = (i + 1) * 7;
+                const position = (weekEndDay / 75) * 100;
+                const isPassed = (enrollment?.current_day || 1) > weekEndDay;
+                return (
+                  <div
+                    key={i}
+                    className={`absolute top-1/2 -translate-y-1/2 w-0.5 h-3 transition-colors ${
+                      isPassed ? 'bg-primary' : 'bg-border'
+                    }`}
+                    style={{ left: `${position}%` }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+          
+          {/* Week labels */}
+          <div className="relative mt-4 h-6">
+            {Array.from({ length: 11 }, (_, i) => {
+              const weekNum = i + 1;
+              const weekStartDay = i * 7 + 1;
+              const weekEndDay = Math.min((i + 1) * 7, 75);
+              const weekMidpoint = weekNum === 11 
+                ? ((70 + 75) / 2) / 75 * 100 
+                : ((weekStartDay + weekEndDay) / 2) / 75 * 100;
+              const currentDay = enrollment?.current_day || 1;
+              const isCurrentWeek = currentDay >= weekStartDay && currentDay <= weekEndDay;
+              const isCompleted = currentDay > weekEndDay;
+              
+              return (
+                <div
+                  key={weekNum}
+                  className="absolute -translate-x-1/2 flex flex-col items-center"
+                  style={{ left: `${weekMidpoint}%` }}
+                >
+                  <span 
+                    className={`text-[10px] font-display tracking-wide transition-colors ${
+                      isCurrentWeek 
+                        ? 'text-primary font-medium' 
+                        : isCompleted 
+                          ? 'text-foreground' 
+                          : 'text-muted-foreground/60'
+                    }`}
+                  >
+                    W{weekNum}
+                  </span>
+                  {isCurrentWeek && (
+                    <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </Card>
 
         {/* Current Week Module */}
