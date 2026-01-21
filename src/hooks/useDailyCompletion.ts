@@ -285,7 +285,7 @@ export function useDailyCompletion(userId: string | undefined) {
     if (!enrollment) return false;
     
     if (enrollment.forgive_credits_remaining <= 0) {
-      toast.error('No forgive credits remaining');
+      toast.error('No Life Happens Passes remaining');
       return false;
     }
 
@@ -297,7 +297,7 @@ export function useDailyCompletion(userId: string | undefined) {
       const hoursSinceMiss = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60);
       
       if (hoursSinceMiss > 48) { // 24 hours after the day was missed (so 48 hours after last completion)
-        toast.error('Credit expired. You have 24 hours after missing a day to use a credit.');
+        toast.error('Pass expired. You have 24 hours after missing a day to use a Life Happens Pass.');
         return false;
       }
     }
@@ -314,14 +314,15 @@ export function useDailyCompletion(userId: string | undefined) {
       .eq('id', enrollment.id);
 
     if (error) {
-      console.error('Error using forgive credit:', error);
-      toast.error('Failed to use credit');
+      console.error('Error using Life Happens Pass:', error);
+      toast.error('Failed to use pass');
       return false;
     }
 
     setHasMissedDay(false);
     setDaysMissed(0);
-    toast.success(`"Forgive Me" credit used! You have ${enrollment.forgive_credits_remaining - 1} credit(s) left. Keep going!`);
+    const remaining = enrollment.forgive_credits_remaining - 1;
+    toast.success(`Life Happens Pass used! You have ${remaining} ${remaining === 1 ? 'pass' : 'passes'} left. Keep going!`);
     await fetchData();
     return true;
   };

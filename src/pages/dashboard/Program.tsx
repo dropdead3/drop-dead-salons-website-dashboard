@@ -210,7 +210,7 @@ export default function Program() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-foreground font-medium">5.</span>
-                  <span className="text-foreground font-medium">Miss one day = restart (but you get 2 "Forgive Me" credits)</span>
+                  <span className="text-foreground font-medium">Miss one day = restart (but you get 2 Life Happens Passes)</span>
                 </li>
               </ul>
             </div>
@@ -304,7 +304,7 @@ export default function Program() {
             </div>
             <div className="flex items-center gap-2 text-sm font-sans">
               <Shield className="w-4 h-4 text-primary" />
-              <span>{enrollment?.forgive_credits_remaining ?? 2} forgive credits</span>
+              <span>{enrollment?.forgive_credits_remaining ?? 2} Life Happens {(enrollment?.forgive_credits_remaining ?? 2) === 1 ? 'Pass' : 'Passes'}</span>
             </div>
             {enrollment?.status === 'active' && (
               <span className="px-2 py-1 bg-green-500/10 text-green-600 text-xs font-display tracking-wide">
