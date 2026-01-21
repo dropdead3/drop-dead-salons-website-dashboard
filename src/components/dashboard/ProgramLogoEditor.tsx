@@ -147,53 +147,35 @@ export function ProgramLogoEditor({
   const displayLogo = previewUrl || DD75Logo;
   const isCustomLogo = !!previewUrl;
 
-  // Convert hex to CSS filter that transforms black to the target color
-  // This uses a calculation approach to generate the right filter values
-  const getColorFilter = (hex: string): string => {
-    if (!hex) return '';
-    
-    // Parse hex to RGB
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    
-    // Calculate filter values (simplified approach using sepia + hue-rotate + saturate)
-    // This works well for transforming black SVGs to any color
-    const brightness = Math.max(r, g, b) / 255;
-    
-    // For light colors, we invert first then apply color
-    if (brightness > 0.5) {
-      return `invert(1) sepia(1) saturate(0) brightness(${brightness * 1.5})`;
-    }
-    
-    // For dark colors
-    return `brightness(${brightness})`;
-  };
-
   // Generate styles for colorizing the logo
   const getLogoStyle = (): React.CSSProperties => {
     const baseStyle: React.CSSProperties = { height: size };
     
     if (!color) return baseStyle;
     
-    // Simple approach: for white/light colors, invert; for dark, darken
+    // Parse hex to RGB and calculate luminance
     const r = parseInt(color.slice(1, 3), 16);
     const g = parseInt(color.slice(3, 5), 16);
     const b = parseInt(color.slice(5, 7), 16);
     const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
     
-    if (luminance > 0.8) {
-      // Very light color (white, cream, etc) - invert the black logo
-      return { ...baseStyle, filter: `invert(1) brightness(${luminance + 0.2})` };
-    } else if (luminance > 0.5) {
-      // Light gray colors
-      return { ...baseStyle, filter: `invert(1) brightness(${luminance * 1.5})` };
-    } else if (luminance > 0.2) {
-      // Mid grays
-      return { ...baseStyle, filter: `brightness(${luminance * 2})` };
+    // For any non-black color, we need to invert the black SVG first
+    // then apply brightness/contrast to achieve the target color
+    if (luminance > 0.9) {
+      // Very light (white/near-white)
+      return { ...baseStyle, filter: 'invert(1)' };
+    } else if (luminance > 0.7) {
+      // Light colors (cream, beige, light gray)
+      return { ...baseStyle, filter: `invert(1) brightness(${luminance})` };
+    } else if (luminance > 0.4) {
+      // Mid-tone colors
+      return { ...baseStyle, filter: `invert(1) brightness(${luminance * 0.8})` };
+    } else if (luminance > 0.15) {
+      // Dark gray colors
+      return { ...baseStyle, filter: `brightness(${luminance * 3})` };
     }
     
-    // Dark colors - minimal change
+    // Very dark / black - no change needed
     return baseStyle;
   };
 
@@ -211,7 +193,6 @@ export function ProgramLogoEditor({
     if (hex === '#FFFFFF' || hex === '#FAF8F5' || hex === '#E5E5E5') return true;
     return getLuminance(hex) > 0.5;
   };
-
   return (
     <div className="space-y-6">
       {/* Header */}
