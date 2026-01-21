@@ -115,6 +115,8 @@ export default function Program() {
     } else {
       setHasEnrollment(true);
       refetch();
+      // Scroll to top after starting program
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
   };
 
