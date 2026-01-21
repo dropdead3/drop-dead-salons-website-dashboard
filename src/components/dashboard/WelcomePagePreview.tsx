@@ -83,7 +83,16 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
               </span>
             </div>
             <div className="bg-background">
-              <ClientEngineWelcome onStartProgram={() => {}} isPreview previewConfig={previewConfig} />
+              <ClientEngineWelcome 
+                onStartProgram={() => {}} 
+                isPreview 
+                previewConfig={previewConfig} 
+                contentOverrides={{
+                  headline: config.headline,
+                  subheadline: config.subheadline,
+                  ctaText: config.ctaText
+                }}
+              />
             </div>
           </Card>
         </TabsContent>
