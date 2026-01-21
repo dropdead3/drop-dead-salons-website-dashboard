@@ -44,8 +44,8 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
   const { data: outcomes = [] } = useProgramOutcomes();
   const [isHovered, setIsHovered] = useState(false);
 
-  // Use previewConfig (unsaved state) if provided, otherwise fall back to saved config
-  const config = previewConfig || savedConfig;
+  // ALWAYS use previewConfig when in preview mode (from parent's live state), otherwise use saved config from DB
+  const config = isPreview && previewConfig ? previewConfig : (previewConfig || savedConfig);
 
   const totalDays = config?.total_days || 75;
   const totalPasses = config?.life_happens_passes_total || 2;
