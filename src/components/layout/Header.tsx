@@ -333,9 +333,9 @@ export function Header() {
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
               animate={{ 
-                opacity: isScrollingUp ? (isStaffMenuOpen ? 0 : 1) : 0, 
-                y: isScrollingUp ? 0 : -10,
-                pointerEvents: isScrollingUp && !isStaffMenuOpen ? "auto" : "none"
+                opacity: isStaffMenuOpen ? 0 : 1, 
+                y: 0,
+                pointerEvents: isStaffMenuOpen ? "none" : "auto"
               }}
               transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
               className="hidden md:flex items-center gap-6"
