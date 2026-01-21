@@ -138,7 +138,7 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
           
           <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-xs tracking-wider font-display uppercase">
             <Sparkles className="w-3 h-3 mr-2" />
-            {totalDays}-Day Transformation
+            {programName} • {totalDays}-Day Transformation
           </Badge>
           
           <h1 className="font-display text-3xl lg:text-4xl tracking-wide mb-4 text-balance">
