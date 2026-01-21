@@ -291,18 +291,24 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
 
         {/* CTA Section */}
         <motion.div variants={itemVariants} className="text-center mt-10">
-          <Button
-            onClick={isPreview ? undefined : onStartProgram}
-            size="lg"
-            className="font-display tracking-wider px-10 py-7 text-base bg-[hsl(0,0%,8%)] text-[hsl(40,30%,96%)] hover:bg-[hsl(0,0%,15%)] shadow-xl hover:shadow-2xl transition-all duration-300 group disabled:opacity-100 disabled:bg-[hsl(0,0%,8%)]"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            disabled={isPreview}
+          <motion.div
+            whileHover={{ scale: 1.05, y: -4 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <Play className={`w-5 h-5 mr-3 transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`} />
-            {ctaText}
-            <ChevronRight className={`w-5 h-5 ml-2 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
-          </Button>
+            <Button
+              onClick={isPreview ? undefined : onStartProgram}
+              size="lg"
+              className="font-display tracking-wider px-10 py-7 text-base bg-[hsl(0,0%,8%)] text-[hsl(40,30%,96%)] hover:bg-[hsl(0,0%,15%)] shadow-xl hover:shadow-2xl transition-all duration-300 group disabled:opacity-100 disabled:bg-[hsl(0,0%,8%)]"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              disabled={isPreview}
+            >
+              <Play className={`w-5 h-5 mr-3 transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`} />
+              {ctaText}
+              <ChevronRight className={`w-5 h-5 ml-2 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
+            </Button>
+          </motion.div>
           
           <p className="text-xs text-muted-foreground mt-4 font-sans">
             By starting, you're committing to {totalDays} days of growth.
