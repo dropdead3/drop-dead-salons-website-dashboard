@@ -41,6 +41,7 @@ interface WelcomePagePreviewProps {
   onLogoChange?: (url: string | null) => void;
   onLogoSizeChange?: (size: number) => void;
   onLogoColorChange?: (color: string | null) => void;
+  onEyebrowChange?: (eyebrow: string) => void;
   onHeadlineChange?: (headline: string) => void;
   onSubheadlineChange?: (subheadline: string) => void;
   onCtaTextChange?: (ctaText: string) => void;
@@ -51,6 +52,7 @@ export function WelcomePagePreview({
   onLogoChange, 
   onLogoSizeChange, 
   onLogoColorChange,
+  onEyebrowChange,
   onHeadlineChange,
   onSubheadlineChange,
   onCtaTextChange
@@ -61,6 +63,7 @@ export function WelcomePagePreview({
   const [outcomeEdits, setOutcomeEdits] = useState<{ title: string; description: string }>({ title: '', description: '' });
   
   // Use values from previewConfig (database) or fallback to defaults
+  const eyebrow = previewConfig?.welcome_eyebrow || '75-DAY TRANSFORMATION';
   const headline = previewConfig?.welcome_headline || 'BUILD YOUR CLIENT ENGINE';
   const subheadline = previewConfig?.welcome_subheadline || '75 days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.';
   const ctaText = previewConfig?.welcome_cta_text || "I'M READY — START DAY 1";
@@ -137,6 +140,7 @@ export function WelcomePagePreview({
                 isPreview 
                 previewConfig={previewConfig} 
                 contentOverrides={{
+                  eyebrow: eyebrow,
                   headline: headline,
                   subheadline: subheadline,
                   ctaText: ctaText
@@ -166,7 +170,21 @@ export function WelcomePagePreview({
               <h3 className="font-display text-sm tracking-wide">CONTENT</h3>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="eyebrow">Eyebrow Text</Label>
+                <Input
+                  id="eyebrow"
+                  value={eyebrow}
+                  onChange={(e) => onEyebrowChange?.(e.target.value)}
+                  placeholder="75-DAY TRANSFORMATION"
+                  className="font-display tracking-wider uppercase text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Short text that appears above the headline in a badge
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="headline">Main Headline</Label>
                 <Input

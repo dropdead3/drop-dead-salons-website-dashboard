@@ -84,6 +84,7 @@ interface ProgramConfig {
   welcome_headline: string | null;
   welcome_subheadline: string | null;
   welcome_cta_text: string | null;
+  welcome_eyebrow: string | null;
 }
 
 interface DailyTask {
@@ -371,6 +372,7 @@ export default function ProgramEditor() {
         welcome_headline: config.welcome_headline,
         welcome_subheadline: config.welcome_subheadline,
         welcome_cta_text: config.welcome_cta_text,
+        welcome_eyebrow: config.welcome_eyebrow,
       })
       .eq('id', config.id);
 
@@ -1101,6 +1103,7 @@ export default function ProgramEditor() {
                   onLogoChange={(url) => setConfig({ ...config!, logo_url: url })}
                   onLogoSizeChange={(size) => setConfig({ ...config!, logo_size: size })}
                   onLogoColorChange={(color) => setConfig({ ...config!, logo_color: color })}
+                  onEyebrowChange={(eyebrow) => setConfig({ ...config!, welcome_eyebrow: eyebrow })}
                   onHeadlineChange={(headline) => setConfig({ ...config!, welcome_headline: headline })}
                   onSubheadlineChange={(subheadline) => setConfig({ ...config!, welcome_subheadline: subheadline })}
                   onCtaTextChange={(ctaText) => setConfig({ ...config!, welcome_cta_text: ctaText })}

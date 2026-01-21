@@ -1643,6 +1643,7 @@ export type Database = {
           updated_at: string
           weekly_wins_interval: number
           welcome_cta_text: string | null
+          welcome_eyebrow: string | null
           welcome_headline: string | null
           welcome_subheadline: string | null
         }
@@ -1664,6 +1665,7 @@ export type Database = {
           updated_at?: string
           weekly_wins_interval?: number
           welcome_cta_text?: string | null
+          welcome_eyebrow?: string | null
           welcome_headline?: string | null
           welcome_subheadline?: string | null
         }
@@ -1685,6 +1687,7 @@ export type Database = {
           updated_at?: string
           weekly_wins_interval?: number
           welcome_cta_text?: string | null
+          welcome_eyebrow?: string | null
           welcome_headline?: string | null
           welcome_subheadline?: string | null
         }

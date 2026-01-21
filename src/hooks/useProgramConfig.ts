@@ -19,6 +19,7 @@ export interface ProgramConfig {
   welcome_headline: string | null;
   welcome_subheadline: string | null;
   welcome_cta_text: string | null;
+  welcome_eyebrow: string | null;
 }
 
 export interface DailyTask {
