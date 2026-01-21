@@ -589,12 +589,19 @@ export function StylistsSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="stylists-section" data-theme="light" className="relative py-20 lg:py-32 bg-secondary overflow-hidden">
+    <section ref={sectionRef} id="stylists-section" data-theme="light" className="relative py-20 lg:py-32 bg-secondary overflow-visible">
       {/* Gradient transition from previous section */}
       <div 
         className="absolute top-0 left-0 right-0 h-40 sm:h-52 md:h-64 lg:h-80 -translate-y-full pointer-events-none"
         style={{ 
           background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)' 
+        }}
+      />
+      {/* Gradient transition to next section */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-40 sm:h-52 md:h-64 lg:h-80 translate-y-full pointer-events-none z-0"
+        style={{ 
+          background: 'linear-gradient(180deg, hsl(var(--secondary)) 0%, hsl(var(--background)) 100%)' 
         }}
       />
       <div className="container mx-auto px-6">
