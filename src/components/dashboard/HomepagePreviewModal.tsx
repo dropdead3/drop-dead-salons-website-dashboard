@@ -76,8 +76,8 @@ export function HomepagePreviewModal({ open, onOpenChange }: HomepagePreviewModa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
           <DialogTitle className="flex items-center gap-3">
             Homepage Stylists Preview
             {isSampleData && (
@@ -87,11 +87,9 @@ export function HomepagePreviewModal({ open, onOpenChange }: HomepagePreviewModa
               </Badge>
             )}
           </DialogTitle>
-        </DialogHeader>
-        
-        <div className="flex-1 overflow-y-auto -mx-6 px-6">
+          
           {/* Info Banner */}
-          <div className="flex items-start gap-2 p-3 bg-muted rounded-lg mb-4 text-sm">
+          <div className="flex items-start gap-2 p-3 bg-muted rounded-lg text-sm mt-2">
             <Info className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
             <div className="text-muted-foreground">
               {isSampleData ? (
@@ -103,6 +101,9 @@ export function HomepagePreviewModal({ open, onOpenChange }: HomepagePreviewModa
               )}
             </div>
           </div>
+        </DialogHeader>
+        
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
 
           {/* Location Filter */}
           <div className="flex flex-wrap gap-2 mb-6">
@@ -140,21 +141,20 @@ export function HomepagePreviewModal({ open, onOpenChange }: HomepagePreviewModa
               <p>No stylists to display for this location.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredStylists.slice(0, 8).map((stylist, index) => (
-                <div key={stylist.id} className="transform scale-90 origin-top-left">
-                  <StylistFlipCard
-                    stylist={stylist}
-                    index={index}
-                    selectedLocation={selectedLocation}
-                  />
-                </div>
+                <StylistFlipCard
+                  key={stylist.id}
+                  stylist={stylist}
+                  index={index}
+                  selectedLocation={selectedLocation}
+                />
               ))}
             </div>
           )}
           
           {filteredStylists.length > 8 && (
-            <p className="text-sm text-muted-foreground text-center pb-4">
+            <p className="text-sm text-muted-foreground text-center mt-6">
               Showing 8 of {filteredStylists.length} stylists in preview
             </p>
           )}
