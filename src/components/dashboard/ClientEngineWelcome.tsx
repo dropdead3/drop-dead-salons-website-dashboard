@@ -16,7 +16,7 @@ import {
   Star,
   Zap
 } from 'lucide-react';
-import DD75Logo from '@/assets/dd75-logo.svg';
+import { ColoredLogo } from './ColoredLogo';
 import { useProgramConfig, useProgramRules, useDailyTasks } from '@/hooks/useProgramConfig';
 
 interface ClientEngineWelcomeProps {
@@ -33,41 +33,9 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
   const totalDays = config?.total_days || 75;
   const totalPasses = config?.life_happens_passes_total || 2;
   const programName = config?.program_name || 'Client Engine';
-  const logoUrl = config?.logo_url || DD75Logo;
+  const logoUrl = config?.logo_url;
   const logoSize = config?.logo_size || 64;
   const logoColor = config?.logo_color;
-
-  // Generate filter style for colorizing SVG
-  const getLogoStyle = (): React.CSSProperties => {
-    const baseStyle: React.CSSProperties = { height: logoSize };
-    
-    if (!logoColor) return baseStyle;
-    
-    // Parse hex to RGB and calculate luminance
-    const r = parseInt(logoColor.slice(1, 3), 16);
-    const g = parseInt(logoColor.slice(3, 5), 16);
-    const b = parseInt(logoColor.slice(5, 7), 16);
-    const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
-    
-    // For any non-black color, we need to invert the black SVG first
-    // then apply brightness/contrast to achieve the target color
-    if (luminance > 0.9) {
-      // Very light (white/near-white)
-      return { ...baseStyle, filter: 'invert(1)' };
-    } else if (luminance > 0.7) {
-      // Light colors (cream, beige, light gray)
-      return { ...baseStyle, filter: `invert(1) brightness(${luminance})` };
-    } else if (luminance > 0.4) {
-      // Mid-tone colors
-      return { ...baseStyle, filter: `invert(1) brightness(${luminance * 0.8})` };
-    } else if (luminance > 0.15) {
-      // Dark gray colors
-      return { ...baseStyle, filter: `brightness(${luminance * 3})` };
-    }
-    
-    // Very dark / black - no change needed
-    return baseStyle;
-  };
 
   const highlights = [
     {
@@ -128,11 +96,11 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
             transition={{ duration: 0.6 }}
             className="mb-8 flex justify-center"
           >
-            <img 
-              src={logoUrl} 
+            <ColoredLogo 
+              logoUrl={logoUrl} 
+              color={logoColor}
+              size={logoSize}
               alt={programName}
-              className="w-auto"
-              style={getLogoStyle()}
             />
           </motion.div>
           
