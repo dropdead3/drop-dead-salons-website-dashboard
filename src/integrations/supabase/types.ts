@@ -1655,6 +1655,65 @@ export type Database = {
         }
         Relationships: []
       }
+      program_pause_requests: {
+        Row: {
+          created_at: string
+          enrollment_id: string
+          id: string
+          pause_end_date: string | null
+          pause_start_date: string | null
+          reason: string
+          requested_at: string
+          requested_duration_days: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          pause_end_date?: string | null
+          pause_start_date?: string | null
+          reason: string
+          requested_at?: string
+          requested_duration_days?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          pause_end_date?: string | null
+          pause_start_date?: string | null
+          reason?: string
+          requested_at?: string
+          requested_duration_days?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_pause_requests_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_program_enrollment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       program_resources: {
         Row: {
           assignment_id: string | null
@@ -2174,8 +2233,11 @@ export type Database = {
           completed_at: string | null
           created_at: string
           current_day: number
+          forgive_credits_remaining: number
+          forgive_credits_used: number
           id: string
           last_completion_date: string | null
+          last_credit_used_at: string | null
           restart_count: number
           start_date: string
           status: Database["public"]["Enums"]["program_status"]
@@ -2188,8 +2250,11 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           current_day?: number
+          forgive_credits_remaining?: number
+          forgive_credits_used?: number
           id?: string
           last_completion_date?: string | null
+          last_credit_used_at?: string | null
           restart_count?: number
           start_date?: string
           status?: Database["public"]["Enums"]["program_status"]
@@ -2202,8 +2267,11 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           current_day?: number
+          forgive_credits_remaining?: number
+          forgive_credits_used?: number
           id?: string
           last_completion_date?: string | null
+          last_credit_used_at?: string | null
           restart_count?: number
           start_date?: string
           status?: Database["public"]["Enums"]["program_status"]
