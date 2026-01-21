@@ -37,8 +37,21 @@ export function Header() {
   const [isOverDark, setIsOverDark] = useState(false);
   const [isStaffMenuOpen, setIsStaffMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const staffMenuRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const location = useLocation();
+
+  // Close staff menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isStaffMenuOpen && staffMenuRef.current && !staffMenuRef.current.contains(event.target as Node)) {
+        setIsStaffMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isStaffMenuOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -377,6 +390,7 @@ export function Header() {
             <AnimatePresence>
               {isStaffMenuOpen && (
                 <motion.div
+                  ref={staffMenuRef}
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: "auto", opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
