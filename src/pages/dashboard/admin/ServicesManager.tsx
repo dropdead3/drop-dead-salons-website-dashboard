@@ -571,7 +571,7 @@ export default function ServicesManager() {
                                     <div className="space-y-3">
                                       <Label>Pricing by Level</Label>
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        {stylistLevels.map((level, index) => (
+                                        {(stylistLevels || []).map((level, index) => (
                                           <div key={level.id} className="space-y-1">
                                             <Label className="text-xs text-muted-foreground">
                                               Level {index + 1} - {level.label}
