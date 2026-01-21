@@ -514,20 +514,17 @@ export default function Program() {
         )}
 
         {/* Ring the Bell Call-out */}
-        <Card className="p-4 mb-8 border-primary/30 bg-primary/5">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Bell className="w-5 h-5 text-primary" />
+        <Card className="p-5 mb-8 border-0 bg-gradient-to-r from-sky-100 to-green-100">
+          <div className="flex items-center gap-4 px-2">
+            <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center flex-shrink-0">
+              <Bell className="w-5 h-5 text-foreground" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-sans">
-                <span className="font-medium">Did you book a new client or a high-ticket service (above $500)?</span>{' '}
-                <Link to="/dashboard/ring-the-bell" className="text-primary hover:underline font-medium">
-                  Ring the Bell!
-                </Link>
+              <p className="text-sm font-sans text-foreground">
+                Did you book a new client or a high-ticket service (above $500) today? If so, ring the bell! We want to celebrate it.
               </p>
             </div>
-            <Button variant="outline" size="sm" asChild className="flex-shrink-0">
+            <Button variant="outline" size="sm" asChild className="flex-shrink-0 bg-white/60 hover:bg-white/80 border-white/50">
               <Link to="/dashboard/ring-the-bell">
                 <Bell className="w-4 h-4 mr-2" />
                 Ring It
