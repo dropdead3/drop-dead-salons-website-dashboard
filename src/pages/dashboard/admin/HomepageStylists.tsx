@@ -57,6 +57,23 @@ function useHomepagePendingRequests() {
   });
 }
 
+// Fetch ALL active stylists (for the All Stylists tab)
+function useAllStylists() {
+  return useQuery({
+    queryKey: ['all-stylists-for-homepage'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('*')
+        .eq('is_active', true)
+        .order('full_name', { ascending: true });
+
+      if (error) throw error;
+      return data as StylistProfile[];
+    },
+  });
+}
+
 // Level order for default sorting
 const LEVEL_ORDER: Record<string, number> = {
   "LEVEL 4 STYLIST": 1,
@@ -200,6 +217,7 @@ export default function HomepageStylists() {
   
   const { data: pendingRequests = [], isLoading: loadingPending } = useHomepagePendingRequests();
   const { data: visibleStylists = [], isLoading: loadingVisible } = useHomepageVisibleStylists();
+  const { data: allStylists = [], isLoading: loadingAll } = useAllStylists();
   const updateVisibility = useUpdateHomepageVisibility();
   const denyRequest = useDenyRequest();
   const updateOrder = useUpdateStylistOrder();
@@ -426,6 +444,9 @@ export default function HomepageStylists() {
             <TabsTrigger value="visible">
               Currently Visible ({visibleStylists.length})
             </TabsTrigger>
+            <TabsTrigger value="all">
+              All Stylists ({allStylists.length})
+            </TabsTrigger>
             <TabsTrigger value="specialties" className="gap-1">
               <Sparkles className="w-3 h-3" />
               Specialties
@@ -482,6 +503,27 @@ export default function HomepageStylists() {
                 isSaving={updateOrder.isPending}
                 hasChanges={hasOrderChanges}
               />
+            )}
+          </TabsContent>
+
+          <TabsContent value="all">
+            {loadingAll ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : allStylists.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No active stylists found.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {allStylists.map(stylist => (
+                  <StylistCard key={stylist.id} stylist={stylist} />
+                ))}
+              </div>
             )}
           </TabsContent>
 
