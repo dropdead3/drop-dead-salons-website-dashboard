@@ -14,7 +14,10 @@ import {
   Clock,
   CheckCircle2,
   Star,
-  Zap
+  Zap,
+  TrendingUp,
+  Users,
+  Award
 } from 'lucide-react';
 import { ColoredLogo } from './ColoredLogo';
 import { useProgramConfig, useProgramRules, useDailyTasks, ProgramConfig } from '@/hooks/useProgramConfig';
@@ -225,6 +228,63 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
                   This program requires {totalDays} consecutive days of execution. 
                   Miss a day and you restart from Day 1. You get {totalPasses} Life Happens Passes—use them wisely.
                 </p>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* The Outcome Section */}
+        <motion.div variants={itemVariants}>
+          <Card className="p-6 md:p-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Target className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-display text-2xl tracking-wider">THE OUTCOME</h2>
+                <p className="text-sm text-muted-foreground font-sans">What you'll walk away with</p>
+              </div>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm mb-1">Consistent Content Creation</p>
+                  <p className="text-xs text-muted-foreground">Build the habit of daily content that attracts your ideal clients</p>
+                </div>
+              </div>
+              
+              <div className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm mb-1">Increased Bookings</p>
+                  <p className="text-xs text-muted-foreground">Convert more leads into paying clients with proven follow-up systems</p>
+                </div>
+              </div>
+              
+              <div className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm mb-1">Stronger Client Relationships</p>
+                  <p className="text-xs text-muted-foreground">Master communication that builds loyalty and referrals</p>
+                </div>
+              </div>
+              
+              <div className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Award className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm mb-1">Professional Growth</p>
+                  <p className="text-xs text-muted-foreground">Develop discipline and skills that set you apart in the industry</p>
+                </div>
               </div>
             </div>
           </Card>
