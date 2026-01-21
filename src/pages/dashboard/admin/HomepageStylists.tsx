@@ -6,12 +6,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Check, X, Loader2, User, MapPin, Clock, Eye, EyeOff } from 'lucide-react';
+import { Globe, Check, X, Loader2, User, MapPin, Clock, Eye, EyeOff, Users, Settings } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { getLocationName, type Location } from '@/data/stylists';
+import { useHomepageStylistsSettings, useUpdateHomepageStylistsSettings } from '@/hooks/useSiteSettings';
+import { sampleStylists } from '@/data/sampleStylists';
 
 interface StylistProfile {
   id: string;
@@ -123,6 +125,29 @@ export default function HomepageStylists() {
   const { data: visibleStylists = [], isLoading: loadingVisible } = useHomepageVisibleStylists();
   const updateVisibility = useUpdateHomepageVisibility();
   const denyRequest = useDenyRequest();
+  
+  // Sample cards settings
+  const { data: settings, isLoading: settingsLoading } = useHomepageStylistsSettings();
+  const updateSettings = useUpdateHomepageStylistsSettings();
+  const showSampleCards = settings?.show_sample_cards ?? false;
+  
+  // Count sample stylists per location
+  const northMesaCount = sampleStylists.filter(s => s.locations.includes('north-mesa' as any)).length;
+  const valVistaCount = sampleStylists.filter(s => s.locations.includes('val-vista-lakes' as any)).length;
+  
+  const handleToggleSampleCards = () => {
+    updateSettings.mutate(
+      { show_sample_cards: !showSampleCards },
+      {
+        onSuccess: () => {
+          toast.success(showSampleCards ? 'Sample cards hidden' : 'Sample cards now visible');
+        },
+        onError: () => {
+          toast.error('Failed to update setting');
+        },
+      }
+    );
+  };
 
   const StylistCard = ({ stylist, showActions = false }: { stylist: StylistProfile; showActions?: boolean }) => (
     <Card>
@@ -222,6 +247,54 @@ export default function HomepageStylists() {
             Manage which stylists appear on the public website homepage.
           </p>
         </div>
+
+        {/* Sample Cards Settings */}
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Sample Cards Settings
+            </CardTitle>
+            <CardDescription>
+              Show placeholder stylist cards when no real stylists are visible on the homepage.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="sample-cards"
+                    checked={showSampleCards}
+                    onCheckedChange={handleToggleSampleCards}
+                    disabled={settingsLoading || updateSettings.isPending}
+                  />
+                  <label htmlFor="sample-cards" className="text-sm font-medium cursor-pointer">
+                    Show sample stylist cards
+                  </label>
+                </div>
+                {(settingsLoading || updateSettings.isPending) && (
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <Badge variant="outline" className="gap-1">
+                  <Users className="w-3 h-3" />
+                  {northMesaCount} North Mesa
+                </Badge>
+                <Badge variant="outline" className="gap-1">
+                  <Users className="w-3 h-3" />
+                  {valVistaCount} Val Vista
+                </Badge>
+              </div>
+            </div>
+            {showSampleCards && visibleStylists.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-3 p-2 bg-muted rounded">
+                Note: Sample cards won't appear because you have {visibleStylists.length} real stylist(s) visible. Sample cards only show when no real stylists are visible.
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         <Tabs defaultValue="requests" className="space-y-6">
           <TabsList>
