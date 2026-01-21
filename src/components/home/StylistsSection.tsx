@@ -572,7 +572,7 @@ export function StylistsSection() {
   }, []);
 
   // Seeded random shuffle function for consistent ordering
-  const shuffleArray = <T,>(array: T[], seed: number): T[] => {
+  const shuffleArray = useCallback(<T,>(array: T[], seed: number): T[] => {
     const shuffled = [...array];
     let currentSeed = seed;
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -581,7 +581,7 @@ export function StylistsSection() {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
-  };
+  }, []);
 
   const levelOrder: Record<string, number> = {
     "LEVEL 4 STYLIST": 1,
@@ -590,16 +590,15 @@ export function StylistsSection() {
     "LEVEL 1 STYLIST": 4
   };
 
-  const filteredStylists = shuffleArray(
-    stylists
-      .filter((s) => {
-        const matchesLocation = selectedLocation === "all" || s.locations.includes(selectedLocation);
-        const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
-        const matchesLevel = !selectedLevel || s.level === selectedLevel;
-        return matchesLocation && matchesSpecialty && matchesLevel;
-      }),
-    randomSeed
-  );
+  const filteredStylists = useMemo(() => {
+    const filtered = stylists.filter((s) => {
+      const matchesLocation = selectedLocation === "all" || s.locations.includes(selectedLocation as Location);
+      const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
+      const matchesLevel = !selectedLevel || s.level === selectedLevel;
+      return matchesLocation && matchesSpecialty && matchesLevel;
+    });
+    return shuffleArray(filtered, randomSeed);
+  }, [selectedLocation, selectedSpecialty, selectedLevel, randomSeed, shuffleArray]);
 
   const handleToggleFormExpand = useCallback(() => {
     startTransition(() => {
