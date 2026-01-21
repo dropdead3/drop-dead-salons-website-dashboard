@@ -21,9 +21,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { GripVertical, User, MapPin, Sparkles, RotateCcw, Save, Loader2 } from 'lucide-react';
+import { GripVertical, User, MapPin, Sparkles, RotateCcw, Save, Loader2, Pencil, Calendar, CalendarOff } from 'lucide-react';
 import { getLocationName, type Location } from '@/data/stylists';
 import { cn } from '@/lib/utils';
+import { EditStylistCardDialog } from './EditStylistCardDialog';
 
 interface StylistProfile {
   id: string;
@@ -32,9 +33,14 @@ interface StylistProfile {
   display_name: string | null;
   photo_url: string | null;
   instagram: string | null;
+  tiktok?: string | null;
   stylist_level: string | null;
   specialties: string[] | null;
+  highlighted_services?: string[] | null;
   location_id: string | null;
+  location_ids?: string[] | null;
+  bio?: string | null;
+  is_booking: boolean | null;
   homepage_visible: boolean | null;
   homepage_order: number | null;
 }
@@ -42,10 +48,11 @@ interface StylistProfile {
 interface SortableStylistCardProps {
   stylist: StylistProfile;
   onToggleVisibility: (userId: string, visible: boolean) => void;
+  onEdit: (stylist: StylistProfile) => void;
   isUpdating: boolean;
 }
 
-function SortableStylistCard({ stylist, onToggleVisibility, isUpdating }: SortableStylistCardProps) {
+function SortableStylistCard({ stylist, onToggleVisibility, onEdit, isUpdating }: SortableStylistCardProps) {
   const {
     attributes,
     listeners,
@@ -96,6 +103,17 @@ function SortableStylistCard({ stylist, onToggleVisibility, isUpdating }: Sortab
                     Extensions
                   </Badge>
                 )}
+                {/* Booking Status Badge */}
+                <Badge 
+                  variant={stylist.is_booking ? "outline" : "secondary"} 
+                  className={cn("text-xs gap-1 flex-shrink-0", !stylist.is_booking && "opacity-60")}
+                >
+                  {stylist.is_booking ? (
+                    <><Calendar className="w-3 h-3" /> Booking</>
+                  ) : (
+                    <><CalendarOff className="w-3 h-3" /> Not Booking</>
+                  )}
+                </Badge>
               </div>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 {stylist.stylist_level && (
@@ -110,15 +128,29 @@ function SortableStylistCard({ stylist, onToggleVisibility, isUpdating }: Sortab
               </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-sm text-muted-foreground">
-                {stylist.homepage_visible ? 'Visible' : 'Hidden'}
-              </span>
-              <Switch
-                checked={stylist.homepage_visible ?? false}
-                onCheckedChange={(checked) => onToggleVisibility(stylist.user_id, checked)}
-                disabled={isUpdating}
-              />
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Edit Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(stylist)}
+                className="gap-1"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit
+              </Button>
+              
+              {/* Visibility Toggle */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {stylist.homepage_visible ? 'Visible' : 'Hidden'}
+                </span>
+                <Switch
+                  checked={stylist.homepage_visible ?? false}
+                  onCheckedChange={(checked) => onToggleVisibility(stylist.user_id, checked)}
+                  disabled={isUpdating}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
@@ -148,6 +180,8 @@ export function ReorderableStylistList({
   isSaving,
   hasChanges,
 }: ReorderableStylistListProps) {
+  const [editingStylist, setEditingStylist] = useState<StylistProfile | null>(null);
+  
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -201,7 +235,7 @@ export function ReorderableStylistList({
       )}
 
       <p className="text-sm text-muted-foreground">
-        Drag to reorder. Stylists appear on the homepage in this order.
+        Drag to reorder. Click "Edit" to modify card details. Stylists appear on the homepage in this order.
       </p>
 
       <DndContext
@@ -219,12 +253,20 @@ export function ReorderableStylistList({
                 key={stylist.id}
                 stylist={stylist}
                 onToggleVisibility={onToggleVisibility}
+                onEdit={setEditingStylist}
                 isUpdating={isUpdating}
               />
             ))}
           </div>
         </SortableContext>
       </DndContext>
+
+      {/* Edit Dialog */}
+      <EditStylistCardDialog
+        open={!!editingStylist}
+        onOpenChange={(open) => !open && setEditingStylist(null)}
+        stylist={editingStylist}
+      />
     </div>
   );
 }

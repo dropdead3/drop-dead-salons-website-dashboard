@@ -25,9 +25,13 @@ interface StylistProfile {
   display_name: string | null;
   photo_url: string | null;
   instagram: string | null;
+  tiktok: string | null;
   stylist_level: string | null;
   specialties: string[] | null;
+  highlighted_services: string[] | null;
   location_id: string | null;
+  location_ids: string[] | null;
+  bio: string | null;
   is_booking: boolean | null;
   homepage_visible: boolean | null;
   homepage_requested: boolean | null;
