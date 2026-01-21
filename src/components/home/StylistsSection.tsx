@@ -624,11 +624,12 @@ export function StylistsSection() {
           
           <TogglePill
             options={[
-              { value: "all", label: "All", icon: <Info className="w-3.5 h-3.5" /> },
+              { value: "all", label: "All", icon: <Info className="w-3.5 h-3.5" />, tooltip: "View all stylists from both locations" },
               ...locations.map(loc => ({
                 value: loc.id,
                 label: loc.name,
                 icon: <Info className="w-3.5 h-3.5" />,
+                tooltip: `View stylists at ${loc.name}`,
               }))
             ]}
             value={selectedLocation}
