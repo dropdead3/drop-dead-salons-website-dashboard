@@ -11,6 +11,7 @@ interface Enrollment {
   weekly_wins_due_day: number | null;
   last_completion_date: string | null;
   restart_count: number;
+  start_date: string;
 }
 
 interface DailyCompletion {
@@ -40,6 +41,8 @@ export function useDailyCompletion(userId: string | undefined) {
     metrics_logged: false,
   });
   const [loading, setLoading] = useState(true);
+  const [hasMissedDay, setHasMissedDay] = useState(false);
+  const [daysMissed, setDaysMissed] = useState(0);
 
   const fetchData = useCallback(async () => {
     if (!userId) return;
@@ -217,11 +220,27 @@ export function useDailyCompletion(userId: string | undefined) {
     }
   };
 
-  const checkMissedDay = useCallback(async () => {
-    if (!enrollment || enrollment.status !== 'active') return;
+  const checkMissedDay = useCallback(() => {
+    if (!enrollment || enrollment.status === 'completed') return;
 
     const lastCompletion = enrollment.last_completion_date;
-    if (!lastCompletion) return;
+    
+    // If no completion yet but they started the program, check start date
+    if (!lastCompletion) {
+      const startDate = new Date(enrollment.start_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      startDate.setHours(0, 0, 0, 0);
+      
+      const diffDays = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // If more than 1 day since start without any completion
+      if (diffDays > 1 && enrollment.current_day === 1) {
+        setHasMissedDay(true);
+        setDaysMissed(diffDays - 1);
+      }
+      return;
+    }
 
     const lastDate = new Date(lastCompletion);
     const today = new Date();
@@ -230,36 +249,52 @@ export function useDailyCompletion(userId: string | undefined) {
 
     const diffDays = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
 
-    // If more than 1 day has passed, trigger restart
+    // If more than 1 day has passed, they missed a day
     if (diffDays > 1) {
-      await supabase
-        .from('stylist_program_enrollment')
-        .update({
-          current_day: 1,
-          streak_count: 0,
-          restart_count: enrollment.restart_count + 1,
-          status: 'restarted',
-          weekly_wins_due_day: 7,
-        })
-        .eq('id', enrollment.id);
-
-      toast.error('You missed a day. Program has been restarted.');
-      await fetchData();
+      setHasMissedDay(true);
+      setDaysMissed(diffDays - 1);
     }
-  }, [enrollment, fetchData]);
+  }, [enrollment]);
+
+  const acknowledgeMissedDay = async () => {
+    if (!enrollment) return;
+
+    await supabase
+      .from('stylist_program_enrollment')
+      .update({
+        current_day: 1,
+        streak_count: 0,
+        restart_count: enrollment.restart_count + 1,
+        status: 'active',
+        start_date: new Date().toISOString().split('T')[0],
+        last_completion_date: null,
+        weekly_wins_due_day: 7,
+      })
+      .eq('id', enrollment.id);
+
+    setHasMissedDay(false);
+    setDaysMissed(0);
+    toast.success("Program restarted. Let's go - Day 1 starts now!");
+    await fetchData();
+  };
 
   useEffect(() => {
-    checkMissedDay();
-  }, [checkMissedDay]);
+    if (enrollment && !loading) {
+      checkMissedDay();
+    }
+  }, [enrollment, loading, checkMissedDay]);
 
   return {
     enrollment,
     todayCompletion,
     tasks,
     loading,
+    hasMissedDay,
+    daysMissed,
     updateTask,
     uploadProof,
     submitDay,
+    acknowledgeMissedDay,
     refetch: fetchData,
   };
 }
