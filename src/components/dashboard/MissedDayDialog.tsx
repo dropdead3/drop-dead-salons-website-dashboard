@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, Heart, Pause, RotateCcw, Shield } from 'lucide-react';
+import { AlertCircle, Heart, Pause, RotateCcw, Shield, Sparkles } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { LiveCountdown } from './LiveCountdown';
 import { UsePassConfirmDialog } from './UsePassConfirmDialog';
 
@@ -67,10 +66,15 @@ export function MissedDayDialog({
   if (view === 'pause') {
     return (
       <Dialog open={open}>
-        <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent 
+          className="max-w-md border-none bg-gradient-to-b from-card via-card to-oat/20 shadow-2xl" 
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pause className="h-5 w-5 text-primary" />
+            <DialogTitle className="flex items-center gap-2 font-display">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <Pause className="h-4 w-4 text-primary" />
+              </div>
               Request Emergency Pause
             </DialogTitle>
           </DialogHeader>
@@ -88,14 +92,15 @@ export function MissedDayDialog({
                 value={pauseReason}
                 onChange={(e) => setPauseReason(e.target.value)}
                 rows={4}
+                className="bg-background/80 backdrop-blur-sm border-oat/50 focus:border-primary"
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 variant="outline"
                 onClick={() => setView('main')}
-                className="flex-1"
+                className="flex-1 border-oat/50 hover:bg-oat/20"
                 disabled={isLoading}
               >
                 Back
@@ -103,7 +108,7 @@ export function MissedDayDialog({
               <Button
                 onClick={handleRequestPause}
                 disabled={!pauseReason.trim() || isLoading}
-                className="flex-1"
+                className="flex-1 bg-primary hover:bg-primary/90"
               >
                 Submit Request
               </Button>
@@ -117,69 +122,119 @@ export function MissedDayDialog({
   return (
     <>
       <Dialog open={open}>
-        <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
-          <DialogHeader className="text-center space-y-3">
-            <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
+        <DialogContent 
+          className="max-w-md border-none bg-gradient-to-b from-card via-card to-oat/20 shadow-2xl overflow-hidden" 
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          {/* Decorative gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-oat/10 pointer-events-none" />
+          
+          <DialogHeader className="text-center space-y-4 relative">
+            {/* Premium alert icon with gradient ring */}
+            <div className="mx-auto relative">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-destructive/20 via-destructive/10 to-oat/20 flex items-center justify-center ring-1 ring-destructive/20">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-card to-oat/30 flex items-center justify-center shadow-inner">
+                  <AlertCircle className="h-7 w-7 text-destructive" />
+                </div>
+              </div>
+              {/* Subtle glow effect */}
+              <div className="absolute inset-0 rounded-full bg-destructive/10 blur-xl -z-10" />
             </div>
-            <DialogTitle className="text-2xl font-display uppercase tracking-wide">
+            
+            <DialogTitle className="text-2xl font-display uppercase tracking-wider text-foreground">
               You Missed {daysMissed} Day{daysMissed > 1 ? 's' : ''}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="text-center space-y-2">
-            <p className="text-muted-foreground">
-              The Client Engine is a <strong className="text-foreground">75-day consecutive challenge</strong>. 
+          <div className="text-center space-y-2 relative">
+            <p className="text-muted-foreground leading-relaxed">
+              The Client Engine is a <strong className="text-foreground font-medium">75-day consecutive challenge</strong>. 
               When you miss a day, you must start over from Day 1.
             </p>
           </div>
 
-          <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-            <h4 className="font-medium">Why the restart?</h4>
-            <p className="text-sm text-muted-foreground">
-              This program is designed to build <em>unbreakable habits</em>. 
+          {/* Why the restart - Premium card */}
+          <div className="relative bg-gradient-to-br from-oat/40 via-oat/20 to-transparent rounded-xl p-5 space-y-3 border border-oat/30">
+            <h4 className="font-display text-sm uppercase tracking-wide text-foreground">Why the restart?</h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This program is designed to build <em className="text-foreground/80 not-italic font-medium">unbreakable habits</em>. 
               Consistency is not optional—it's the foundation of a thriving book.
             </p>
-            <p className="text-sm italic text-muted-foreground">
+            <p className="text-sm font-serif italic text-muted-foreground/80 pt-1">
               Things worth building are not easy.
             </p>
           </div>
 
-          <Separator />
+          {/* Elegant divider */}
+          <div className="flex items-center gap-4 py-1">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-oat/60 to-transparent" />
+            <Sparkles className="h-3 w-3 text-oat-foreground/40" />
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-oat/60 to-transparent" />
+          </div>
 
-          <div className="space-y-3">
-            {/* Life Happens Pass Option */}
+          <div className="space-y-3 relative">
+            {/* Life Happens Pass Option - Premium styling */}
             {forgiveCreditsRemaining > 0 && daysMissed <= 1 && (
-              <div className={`border rounded-lg p-4 space-y-3 ${isExpired ? 'bg-muted/30 border-border' : 'bg-primary/5 border-primary/20'}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Shield className={`h-5 w-5 ${isExpired ? 'text-muted-foreground' : 'text-primary'}`} />
-                    <span className={`font-medium ${isExpired ? 'text-muted-foreground' : ''}`}>
+              <div className={`relative overflow-hidden rounded-xl p-5 space-y-4 transition-all duration-300 ${
+                isExpired 
+                  ? 'bg-muted/30 border border-border' 
+                  : 'bg-gradient-to-br from-card via-card to-oat/30 border border-oat/40 shadow-lg'
+              }`}>
+                {/* Shine effect for active state */}
+                {!isExpired && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_ease-in-out_infinite]" />
+                )}
+                
+                <div className="flex items-center justify-between relative">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      isExpired 
+                        ? 'bg-muted' 
+                        : 'bg-gradient-to-br from-primary to-primary/80 shadow-md'
+                    }`}>
+                      <Shield className={`h-5 w-5 ${isExpired ? 'text-muted-foreground' : 'text-primary-foreground'}`} />
+                    </div>
+                    <span className={`font-medium ${isExpired ? 'text-muted-foreground' : 'text-foreground'}`}>
                       Use a Life Happens Pass
                     </span>
                   </div>
-                  <Badge variant="secondary">
+                  <Badge 
+                    variant="secondary" 
+                    className={`font-medium ${
+                      isExpired 
+                        ? 'bg-muted text-muted-foreground' 
+                        : 'bg-oat/60 text-oat-foreground border border-oat/50'
+                    }`}
+                  >
                     {forgiveCreditsRemaining} left
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   Continue from where you left off without restarting. You only have 2 passes for the entire program.
                 </p>
+                
                 {creditExpiresAt && !isExpired && (
-                  <LiveCountdown 
-                    expiresAt={creditExpiresAt} 
-                    onExpire={() => setIsExpired(true)}
-                  />
+                  <div className="bg-oat/20 rounded-lg px-3 py-2 border border-oat/30">
+                    <LiveCountdown 
+                      expiresAt={creditExpiresAt} 
+                      onExpire={() => setIsExpired(true)}
+                      className="text-oat-foreground"
+                    />
+                  </div>
                 )}
+                
                 {isExpired && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
                     Your window to use a pass has expired.
                   </p>
                 )}
+                
                 <Button 
                   onClick={() => setShowConfirmDialog(true)} 
-                  className="w-full"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-xl"
                   disabled={isLoading || isExpired}
+                  size="lg"
                 >
                   <Heart className="mr-2 h-4 w-4" />
                   Use Pass & Continue
@@ -188,21 +243,24 @@ export function MissedDayDialog({
             )}
 
             {forgiveCreditsRemaining === 0 && daysMissed === 1 && (
-              <div className="border rounded-lg p-4 bg-muted/30">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Shield className="h-5 w-5" />
+              <div className="rounded-xl p-4 bg-muted/30 border border-border">
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                    <Shield className="h-4 w-4" />
+                  </div>
                   <span className="text-sm">No Life Happens Passes remaining</span>
                 </div>
               </div>
             )}
 
-            {/* Request Pause Option */}
+            {/* Request Pause Option - Outlined premium style */}
             {!hasPendingPauseRequest && (
               <Button
                 variant="outline"
                 onClick={() => setView('pause')}
-                className="w-full"
+                className="w-full border-oat/50 hover:bg-oat/20 hover:border-oat transition-all duration-300"
                 disabled={isLoading}
+                size="lg"
               >
                 <Pause className="mr-2 h-4 w-4" />
                 Request Emergency Pause
@@ -210,19 +268,20 @@ export function MissedDayDialog({
             )}
 
             {hasPendingPauseRequest && (
-              <div className="border rounded-lg p-3 bg-warning/10 border-warning/30">
-                <p className="text-sm text-warning-foreground">
+              <div className="rounded-xl p-4 bg-gradient-to-r from-amber-50/80 to-oat/20 border border-amber-200/50 dark:from-amber-950/30 dark:to-oat/10 dark:border-amber-800/30">
+                <p className="text-sm text-amber-700 dark:text-amber-400">
                   You have a pending pause request. Leadership is reviewing it.
                 </p>
               </div>
             )}
 
-            {/* Restart Option */}
+            {/* Restart Option - Subtle secondary style */}
             <Button
-              variant="secondary"
+              variant="ghost"
               onClick={handleRestart}
-              className="w-full"
+              className="w-full text-muted-foreground hover:text-foreground hover:bg-oat/20 transition-all duration-300"
               disabled={isLoading}
+              size="lg"
             >
               <RotateCcw className="mr-2 h-4 w-4" />
               Restart from Day 1

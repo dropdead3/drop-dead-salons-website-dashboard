@@ -10,6 +10,7 @@ interface LiveCountdownProps {
 export function LiveCountdown({ expiresAt, onExpire, className = '' }: LiveCountdownProps) {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isExpired, setIsExpired] = useState(false);
+  const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -22,6 +23,9 @@ export function LiveCountdown({ expiresAt, onExpire, className = '' }: LiveCount
         onExpire?.();
         return;
       }
+
+      // Set urgent state when less than 1 hour remaining
+      setIsUrgent(diff < 60 * 60 * 1000);
 
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -47,17 +51,25 @@ export function LiveCountdown({ expiresAt, onExpire, className = '' }: LiveCount
 
   if (isExpired) {
     return (
-      <div className={`flex items-center gap-1.5 text-sm text-destructive ${className}`}>
-        <Clock className="h-4 w-4" />
-        <span>Expired</span>
+      <div className={`flex items-center gap-2 text-sm text-destructive ${className}`}>
+        <div className="w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center">
+          <Clock className="h-3.5 w-3.5" />
+        </div>
+        <span className="font-medium">Expired</span>
       </div>
     );
   }
 
   return (
-    <div className={`flex items-center gap-1.5 text-sm text-amber-600 ${className}`}>
-      <Clock className="h-4 w-4" />
-      <span>Expires in {timeRemaining}</span>
+    <div className={`flex items-center gap-2 text-sm ${isUrgent ? 'text-destructive' : ''} ${className}`}>
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+        isUrgent ? 'bg-destructive/10' : 'bg-oat/40'
+      }`}>
+        <Clock className={`h-3.5 w-3.5 ${isUrgent ? 'animate-pulse' : ''}`} />
+      </div>
+      <span>
+        Expires in <span className="font-mono font-medium tabular-nums">{timeRemaining}</span>
+      </span>
     </div>
   );
 }
