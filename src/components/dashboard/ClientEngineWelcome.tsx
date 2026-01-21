@@ -19,13 +19,20 @@ import {
 import { ColoredLogo } from './ColoredLogo';
 import { useProgramConfig, useProgramRules, useDailyTasks, ProgramConfig } from '@/hooks/useProgramConfig';
 
+interface WelcomePageContent {
+  headline?: string;
+  subheadline?: string;
+  ctaText?: string;
+}
+
 interface ClientEngineWelcomeProps {
   onStartProgram: () => void;
   isPreview?: boolean;
   previewConfig?: ProgramConfig | null;
+  contentOverrides?: WelcomePageContent;
 }
 
-export function ClientEngineWelcome({ onStartProgram, isPreview = false, previewConfig }: ClientEngineWelcomeProps) {
+export function ClientEngineWelcome({ onStartProgram, isPreview = false, previewConfig, contentOverrides }: ClientEngineWelcomeProps) {
   const { config: savedConfig } = useProgramConfig();
   const { rules } = useProgramRules();
   const { tasks } = useDailyTasks();
@@ -40,6 +47,11 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
   const logoUrl = config?.logo_url;
   const logoSize = config?.logo_size || 64;
   const logoColor = config?.logo_color;
+
+  // Content with overrides
+  const headline = contentOverrides?.headline || 'BUILD YOUR CLIENT ENGINE';
+  const subheadline = contentOverrides?.subheadline || `${totalDays} days of focused execution. No shortcuts. No excuses. Transform your book and build a business that runs on autopilot.`;
+  const ctaText = contentOverrides?.ctaText || "I'M READY — START DAY 1";
 
   const highlights = [
     {
@@ -114,12 +126,11 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
           </Badge>
           
           <h1 className="font-display text-3xl lg:text-4xl tracking-wide mb-4 text-balance">
-            BUILD YOUR CLIENT ENGINE
+            {headline}
           </h1>
           
           <p className="text-muted-foreground font-sans text-lg max-w-xl mx-auto leading-relaxed">
-            {totalDays} days of focused execution. No shortcuts. No excuses. 
-            Transform your book and build a business that runs on autopilot.
+            {subheadline}
           </p>
         </motion.div>
 
@@ -236,7 +247,7 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
             disabled={isPreview}
           >
             <Play className={`w-5 h-5 mr-3 transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`} />
-            I'M READY — START DAY 1
+            {ctaText}
             <ChevronRight className={`w-5 h-5 ml-2 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
           </Button>
           
