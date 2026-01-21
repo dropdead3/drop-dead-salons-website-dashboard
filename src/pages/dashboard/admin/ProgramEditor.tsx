@@ -664,7 +664,7 @@ export default function ProgramEditor() {
             </TabsTrigger>
             <TabsTrigger value="preview" className="gap-2">
               <Eye className="w-4 h-4" />
-              Preview
+              Editor
             </TabsTrigger>
           </TabsList>
 
