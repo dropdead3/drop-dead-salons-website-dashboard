@@ -138,6 +138,13 @@ export default {
           "0%": { backgroundPosition: "200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },
+        "swing": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "20%": { transform: "rotate(12deg)" },
+          "40%": { transform: "rotate(-10deg)" },
+          "60%": { transform: "rotate(6deg)" },
+          "80%": { transform: "rotate(-4deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -153,6 +160,7 @@ export default {
         "shine": "shine 8s ease-in-out infinite",
         "bounce-once": "bounce-once 0.3s ease-out",
         "shimmer": "shimmer 3s ease-in-out infinite",
+        "swing": "swing 1s ease-in-out infinite",
       },
     },
   },
