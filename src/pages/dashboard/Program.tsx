@@ -535,7 +535,6 @@ export default function Program() {
         {/* Missed Day Dialog with Forgive Credits */}
         <MissedDayDialog
           open={hasMissedDay}
-          onClose={acknowledgeMissedDay}
           daysMissed={daysMissed}
           forgiveCreditsRemaining={enrollment?.forgive_credits_remaining ?? 2}
           hasPendingPauseRequest={!!pendingRequest}
