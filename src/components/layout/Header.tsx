@@ -163,7 +163,7 @@ export function Header() {
           }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className={cn(
-            "rounded-2xl border transition-colors duration-300",
+            "rounded-full border transition-colors duration-300",
             isScrolled 
               ? isOverDark ? "bg-black/20" : "bg-white/10" 
               : "bg-transparent"
