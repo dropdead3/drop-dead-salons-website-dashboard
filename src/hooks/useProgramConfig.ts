@@ -14,6 +14,8 @@ export interface ProgramConfig {
   grace_period_hours: number;
   life_happens_passes_total: number;
   logo_url: string | null;
+  logo_size: number;
+  logo_background_color: string | null;
 }
 
 export interface DailyTask {

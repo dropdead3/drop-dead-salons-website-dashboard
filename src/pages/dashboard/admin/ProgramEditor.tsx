@@ -79,6 +79,8 @@ interface ProgramConfig {
   grace_period_hours: number;
   life_happens_passes_total: number;
   logo_url: string | null;
+  logo_size: number;
+  logo_background_color: string | null;
 }
 
 interface DailyTask {
@@ -781,7 +783,11 @@ export default function ProgramEditor() {
                     <div className="border-t pt-6">
                       <ProgramLogoEditor
                         currentLogoUrl={config.logo_url}
+                        logoSize={config.logo_size || 64}
+                        logoBackgroundColor={config.logo_background_color}
                         onLogoChange={(url) => setConfig({ ...config, logo_url: url })}
+                        onSizeChange={(size) => setConfig({ ...config, logo_size: size })}
+                        onBackgroundColorChange={(color) => setConfig({ ...config, logo_background_color: color })}
                       />
                     </div>
 

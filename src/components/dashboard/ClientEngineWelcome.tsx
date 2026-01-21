@@ -34,6 +34,17 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
   const totalPasses = config?.life_happens_passes_total || 2;
   const programName = config?.program_name || 'Client Engine';
   const logoUrl = config?.logo_url || DD75Logo;
+  const logoSize = config?.logo_size || 64;
+  const logoBgColor = config?.logo_background_color;
+
+  const getLogoBackgroundStyle = () => {
+    if (!logoBgColor) return {};
+    return { 
+      backgroundColor: logoBgColor,
+      padding: '16px 24px',
+      borderRadius: '12px'
+    };
+  };
 
   const highlights = [
     {
@@ -92,12 +103,14 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="mb-8"
+            className="mb-8 inline-block"
+            style={getLogoBackgroundStyle()}
           >
             <img 
               src={logoUrl} 
               alt={programName}
-              className="h-14 lg:h-16 w-auto mx-auto"
+              className="w-auto mx-auto"
+              style={{ height: logoSize }}
             />
           </motion.div>
           

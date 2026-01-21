@@ -1633,6 +1633,8 @@ export type Database = {
           id: string
           is_active: boolean
           life_happens_passes_total: number
+          logo_background_color: string | null
+          logo_size: number | null
           logo_url: string | null
           program_name: string
           require_metrics_logging: boolean
@@ -1649,6 +1651,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           life_happens_passes_total?: number
+          logo_background_color?: string | null
+          logo_size?: number | null
           logo_url?: string | null
           program_name?: string
           require_metrics_logging?: boolean
@@ -1665,6 +1669,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           life_happens_passes_total?: number
+          logo_background_color?: string | null
+          logo_size?: number | null
           logo_url?: string | null
           program_name?: string
           require_metrics_logging?: boolean
