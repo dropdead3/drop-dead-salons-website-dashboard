@@ -17,18 +17,22 @@ import {
   Zap
 } from 'lucide-react';
 import { ColoredLogo } from './ColoredLogo';
-import { useProgramConfig, useProgramRules, useDailyTasks } from '@/hooks/useProgramConfig';
+import { useProgramConfig, useProgramRules, useDailyTasks, ProgramConfig } from '@/hooks/useProgramConfig';
 
 interface ClientEngineWelcomeProps {
   onStartProgram: () => void;
   isPreview?: boolean;
+  previewConfig?: ProgramConfig | null;
 }
 
-export function ClientEngineWelcome({ onStartProgram, isPreview = false }: ClientEngineWelcomeProps) {
-  const { config } = useProgramConfig();
+export function ClientEngineWelcome({ onStartProgram, isPreview = false, previewConfig }: ClientEngineWelcomeProps) {
+  const { config: savedConfig } = useProgramConfig();
   const { rules } = useProgramRules();
   const { tasks } = useDailyTasks();
   const [isHovered, setIsHovered] = useState(false);
+
+  // Use previewConfig (unsaved state) if provided, otherwise fall back to saved config
+  const config = previewConfig || savedConfig;
 
   const totalDays = config?.total_days || 75;
   const totalPasses = config?.life_happens_passes_total || 2;
