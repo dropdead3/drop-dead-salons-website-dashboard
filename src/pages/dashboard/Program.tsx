@@ -2,7 +2,9 @@ import { useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
 import { useWeeklyAssignments } from '@/hooks/useWeeklyAssignments';
+import { usePauseRequests } from '@/hooks/usePauseRequests';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { MissedDayDialog } from '@/components/dashboard/MissedDayDialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -28,7 +30,8 @@ import {
   ExternalLink,
   Download,
   Eye,
-  Image as ImageLucide
+  Image as ImageLucide,
+  Shield
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,8 +62,15 @@ export default function Program() {
     uploadProof,
     submitDay,
     acknowledgeMissedDay,
+    useForgiveCredit,
+    creditExpiresAt,
     refetch,
   } = useDailyCompletion(user?.id);
+
+  const {
+    pendingRequest,
+    submitPauseRequest,
+  } = usePauseRequests(enrollment?.id);
 
   const {
     currentWeek,
@@ -200,7 +210,7 @@ export default function Program() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-foreground font-medium">5.</span>
-                  <span className="text-foreground font-medium">Miss one day = restart</span>
+                  <span className="text-foreground font-medium">Miss one day = restart (but you get 2 "Forgive Me" credits)</span>
                 </li>
               </ul>
             </div>
@@ -287,10 +297,14 @@ export default function Program() {
             </AlertDialog>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2 text-sm font-sans">
               <Flame className="w-4 h-4 text-orange-500" />
               <span>{enrollment?.streak_count} day streak</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-sans">
+              <Shield className="w-4 h-4 text-primary" />
+              <span>{enrollment?.forgive_credits_remaining ?? 2} forgive credits</span>
             </div>
             {enrollment?.status === 'active' && (
               <span className="px-2 py-1 bg-green-500/10 text-green-600 text-xs font-display tracking-wide">
@@ -518,49 +532,23 @@ export default function Program() {
           </Collapsible>
         )}
 
-        {/* Missed Day Dialog */}
-        <AlertDialog open={hasMissedDay}>
-          <AlertDialogContent className="max-w-md">
-            <AlertDialogHeader>
-              <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-6 h-6 text-destructive" />
-              </div>
-              <AlertDialogTitle className="text-center text-xl">
-                You Missed {daysMissed} Day{daysMissed > 1 ? 's' : ''}
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-center space-y-4">
-                <p>
-                  The Client Engine is a <strong>75-day consecutive challenge</strong>. 
-                  When you miss a day, you must start over from Day 1.
-                </p>
-                <div className="bg-muted/50 p-4 rounded-lg text-left space-y-2">
-                  <p className="text-sm font-medium text-foreground">Why the restart?</p>
-                  <p className="text-sm text-muted-foreground">
-                    This program is designed to build <em>unbreakable habits</em>. 
-                    Consistency is not optional—it's the foundation of a thriving book.
-                  </p>
-                  <p className="text-sm text-muted-foreground italic">
-                    Things worth building are not easy.
-                  </p>
-                </div>
-                {enrollment && enrollment.restart_count > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    This will be restart #{enrollment.restart_count + 1}. Each restart makes you stronger.
-                  </p>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="sm:justify-center">
-              <AlertDialogAction
-                onClick={acknowledgeMissedDay}
-                className="w-full sm:w-auto"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Restart from Day 1
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {/* Missed Day Dialog with Forgive Credits */}
+        <MissedDayDialog
+          open={hasMissedDay}
+          daysMissed={daysMissed}
+          forgiveCreditsRemaining={enrollment?.forgive_credits_remaining ?? 2}
+          hasPendingPauseRequest={!!pendingRequest}
+          creditExpiresAt={creditExpiresAt}
+          onUseCredit={async () => {
+            await useForgiveCredit();
+          }}
+          onRequestPause={async (reason) => {
+            if (user) {
+              await submitPauseRequest(user.id, reason);
+            }
+          }}
+          onRestart={acknowledgeMissedDay}
+        />
 
         {/* Paused Warning */}
         {isPaused && (

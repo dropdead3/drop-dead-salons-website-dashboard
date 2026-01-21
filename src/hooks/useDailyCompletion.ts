@@ -12,6 +12,9 @@ interface Enrollment {
   last_completion_date: string | null;
   restart_count: number;
   start_date: string;
+  forgive_credits_remaining: number;
+  forgive_credits_used: number;
+  last_credit_used_at: string | null;
 }
 
 interface DailyCompletion {
@@ -278,6 +281,60 @@ export function useDailyCompletion(userId: string | undefined) {
     await fetchData();
   };
 
+  const useForgiveCredit = async (): Promise<boolean> => {
+    if (!enrollment) return false;
+    
+    if (enrollment.forgive_credits_remaining <= 0) {
+      toast.error('No forgive credits remaining');
+      return false;
+    }
+
+    // Check if within 24 hours of miss
+    const lastCompletion = enrollment.last_completion_date;
+    if (lastCompletion) {
+      const lastDate = new Date(lastCompletion);
+      const now = new Date();
+      const hoursSinceMiss = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60);
+      
+      if (hoursSinceMiss > 48) { // 24 hours after the day was missed (so 48 hours after last completion)
+        toast.error('Credit expired. You have 24 hours after missing a day to use a credit.');
+        return false;
+      }
+    }
+
+    const { error } = await supabase
+      .from('stylist_program_enrollment')
+      .update({
+        forgive_credits_remaining: enrollment.forgive_credits_remaining - 1,
+        forgive_credits_used: enrollment.forgive_credits_used + 1,
+        last_credit_used_at: new Date().toISOString(),
+        last_completion_date: new Date().toISOString().split('T')[0],
+        status: 'active',
+      })
+      .eq('id', enrollment.id);
+
+    if (error) {
+      console.error('Error using forgive credit:', error);
+      toast.error('Failed to use credit');
+      return false;
+    }
+
+    setHasMissedDay(false);
+    setDaysMissed(0);
+    toast.success(`"Forgive Me" credit used! You have ${enrollment.forgive_credits_remaining - 1} credit(s) left. Keep going!`);
+    await fetchData();
+    return true;
+  };
+
+  // Calculate when credit expires (24 hours after the day was technically missed)
+  const getCreditExpirationTime = (): Date | null => {
+    if (!enrollment?.last_completion_date) return null;
+    const lastDate = new Date(enrollment.last_completion_date);
+    // Credit expires 48 hours after last completion (which is 24 hours after the missed day)
+    lastDate.setHours(lastDate.getHours() + 48);
+    return lastDate;
+  };
+
   useEffect(() => {
     if (enrollment && !loading) {
       checkMissedDay();
@@ -295,6 +352,8 @@ export function useDailyCompletion(userId: string | undefined) {
     uploadProof,
     submitDay,
     acknowledgeMissedDay,
+    useForgiveCredit,
+    creditExpiresAt: getCreditExpirationTime(),
     refetch: fetchData,
   };
 }
