@@ -157,6 +157,7 @@ const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/stylist-levels', label: 'Stylist Levels', icon: Layers, permission: 'manage_settings' },
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText, permission: 'manage_handbooks' },
   { href: '/dashboard/admin/command-center-console', label: 'Command Center Console', icon: LayoutDashboard, permission: 'manage_settings' },
+  { href: '/dashboard/admin/program-editor', label: 'Program Editor', icon: Target, permission: 'manage_settings' },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 
