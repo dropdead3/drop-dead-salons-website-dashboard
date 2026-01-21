@@ -61,6 +61,14 @@ const priorityColors: Record<Priority, string> = {
   urgent: 'border-red-500',
 };
 
+const normalizeUrl = (url: string): string => {
+  if (!url) return url;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return `https://${url}`;
+};
+
 export default function DashboardHome() {
   const { user, roles } = useAuth();
   const { enrollment } = useDailyCompletion(user?.id);
@@ -315,7 +323,7 @@ export default function DashboardHome() {
                       </p>
                       {announcement.link_url && announcement.link_label && (
                         <a 
-                          href={announcement.link_url}
+                          href={normalizeUrl(announcement.link_url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-block mt-2 px-3 py-1.5 text-xs font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity"
