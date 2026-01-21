@@ -193,7 +193,7 @@ export default function Settings() {
 
         {/* Category Tabs */}
         <Tabs value={activeCategory} onValueChange={setActiveCategory} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
             <TabsTrigger value="email" className="gap-2">
               <Mail className="w-4 h-4" />
               <span className="hidden sm:inline">Email</span>
@@ -205,10 +205,6 @@ export default function Settings() {
             <TabsTrigger value="onboarding" className="gap-2">
               <Rocket className="w-4 h-4" />
               <span className="hidden sm:inline">Onboarding</span>
-            </TabsTrigger>
-            <TabsTrigger value="program" className="gap-2">
-              <UserCog className="w-4 h-4" />
-              <span className="hidden sm:inline">Program</span>
             </TabsTrigger>
             <TabsTrigger value="system" className="gap-2">
               <Cog className="w-4 h-4" />
@@ -402,55 +398,6 @@ export default function Settings() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-          </TabsContent>
-
-          {/* Program Category */}
-          <TabsContent value="program" className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <UserCog className="w-5 h-5 text-primary" />
-              <h2 className="font-display text-xl tracking-wide">PROGRAM SETTINGS</h2>
-            </div>
-
-            <Card className="p-6">
-              <p className="text-sm text-muted-foreground font-sans mb-6">
-                Configure the 75-day program parameters.
-              </p>
-
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wider">Program Duration</Label>
-                  <Input type="number" defaultValue={75} disabled />
-                  <p className="text-xs text-muted-foreground">Days in the program</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs uppercase tracking-wider">Weekly Wins Due Day</Label>
-                  <Select defaultValue="5">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">Friday</SelectItem>
-                      <SelectItem value="6">Saturday</SelectItem>
-                      <SelectItem value="0">Sunday</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">When weekly reports are due</p>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-6 border-t space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-sans font-medium text-sm">Auto-Restart on Miss</p>
-                    <p className="text-xs text-muted-foreground">
-                      Automatically restart progress if a day is missed
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-              </div>
-            </Card>
           </TabsContent>
 
           {/* System Category */}
