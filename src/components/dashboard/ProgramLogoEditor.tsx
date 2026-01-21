@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import DD75Logo from '@/assets/dd75-logo.svg';
+import { ColoredLogo } from './ColoredLogo';
 
 interface ProgramLogoEditorProps {
   currentLogoUrl: string | null;
@@ -144,40 +144,7 @@ export function ProgramLogoEditor({
     onColorChange(customColor);
   };
 
-  const displayLogo = previewUrl || DD75Logo;
   const isCustomLogo = !!previewUrl;
-
-  // Generate styles for colorizing the logo
-  const getLogoStyle = (): React.CSSProperties => {
-    const baseStyle: React.CSSProperties = { height: size };
-    
-    if (!color) return baseStyle;
-    
-    // Parse hex to RGB and calculate luminance
-    const r = parseInt(color.slice(1, 3), 16);
-    const g = parseInt(color.slice(3, 5), 16);
-    const b = parseInt(color.slice(5, 7), 16);
-    const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
-    
-    // For any non-black color, we need to invert the black SVG first
-    // then apply brightness/contrast to achieve the target color
-    if (luminance > 0.9) {
-      // Very light (white/near-white)
-      return { ...baseStyle, filter: 'invert(1)' };
-    } else if (luminance > 0.7) {
-      // Light colors (cream, beige, light gray)
-      return { ...baseStyle, filter: `invert(1) brightness(${luminance})` };
-    } else if (luminance > 0.4) {
-      // Mid-tone colors
-      return { ...baseStyle, filter: `invert(1) brightness(${luminance * 0.8})` };
-    } else if (luminance > 0.15) {
-      // Dark gray colors
-      return { ...baseStyle, filter: `brightness(${luminance * 3})` };
-    }
-    
-    // Very dark / black - no change needed
-    return baseStyle;
-  };
 
   // Helper to calculate luminance from hex
   const getLuminance = (hex: string): number => {
@@ -214,11 +181,11 @@ export function ProgramLogoEditor({
               className="w-80 flex items-center justify-center rounded-xl border-2 border-dashed border-border/50 p-6 transition-all duration-300 bg-gradient-to-br from-muted/30 to-muted/10"
               style={{ minHeight: size + 48 }}
             >
-              <img 
-                src={displayLogo} 
-                alt="Program Logo" 
-                className="object-contain transition-all duration-300"
-                style={getLogoStyle()}
+              <ColoredLogo 
+                logoUrl={previewUrl}
+                color={color}
+                size={size}
+                alt="Program Logo"
               />
             </div>
             {isCustomLogo && (
