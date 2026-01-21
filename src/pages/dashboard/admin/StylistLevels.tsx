@@ -277,7 +277,7 @@ export default function StylistLevels() {
               <div
                   key={level.id}
                   className={cn(
-                    "group rounded-xl bg-card border transition-all duration-200 hover:shadow-sm",
+                    "group rounded-xl bg-muted/50 border transition-all duration-200 hover:shadow-sm",
                     editingIndex === index && "ring-2 ring-primary/50 shadow-sm"
                   )}
                 >
@@ -400,7 +400,7 @@ export default function StylistLevels() {
                         value={level.description}
                         onChange={(e) => handleDescriptionChange(index, e.target.value)}
                         placeholder="Brief description for tooltip..."
-                        className="h-7 text-xs text-muted-foreground bg-muted/50 border-0 focus-visible:ring-1"
+                        className="h-7 text-xs text-muted-foreground bg-background border focus-visible:ring-1"
                       />
                     </div>
                   </div>
