@@ -58,7 +58,7 @@ export const NewClientSection = () => {
 
   return (
     <section 
-      className="py-12 md:py-16 pb-32 md:pb-40 lg:pb-48 relative z-10"
+      className="py-12 md:py-16 pb-16 md:pb-20 lg:pb-24 relative z-10"
       style={{ 
         background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)' 
       }}
