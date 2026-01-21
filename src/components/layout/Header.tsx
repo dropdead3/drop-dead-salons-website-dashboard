@@ -202,9 +202,9 @@ export function Header() {
             <motion.nav 
               className="hidden lg:flex items-center gap-6 xl:gap-10"
               animate={{ 
-                x: isScrollingUp ? 0 : 450,
+                x: isScrollingUp ? (isStaffMenuOpen ? -120 : 0) : 450,
               }}
-              transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
             >
               {/* Services Link */}
               <motion.div
@@ -321,6 +321,7 @@ export function Header() {
               animate={{ 
                 opacity: isScrollingUp ? 1 : 0, 
                 y: isScrollingUp ? 0 : -10,
+                x: isStaffMenuOpen ? -120 : 0,
                 pointerEvents: isScrollingUp ? "auto" : "none"
               }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
