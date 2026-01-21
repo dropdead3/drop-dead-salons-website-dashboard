@@ -52,17 +52,27 @@ type LocalStylistLevel = {
   description: string;
 };
 
-// Progressive level colors - peaks at Level 6 with rich bronze/gold
-const levelColors = [
-  { bg: 'bg-stone-100 dark:bg-stone-800', text: 'text-stone-600 dark:text-stone-400' },        // Level 1 - Stone
-  { bg: 'bg-stone-200 dark:bg-stone-700', text: 'text-stone-700 dark:text-stone-300' },        // Level 2 - Warmer stone
-  { bg: 'bg-amber-100/70 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-400' },  // Level 3 - Light tan
-  { bg: 'bg-amber-200/80 dark:bg-amber-900/60', text: 'text-amber-800 dark:text-amber-300' },  // Level 4 - Tan
-  { bg: 'bg-amber-300/80 dark:bg-amber-800/70', text: 'text-amber-900 dark:text-amber-200' },  // Level 5 - Bronze
-  { bg: 'bg-yellow-600 dark:bg-yellow-700', text: 'text-yellow-50 dark:text-yellow-100' },     // Level 6 - Rich bronze/gold (peak)
-];
-
-const getLevelColor = (index: number) => levelColors[index % levelColors.length];
+// Dynamic progressive level colors - from stone to rich bronze/gold
+// Generates colors based on position in total levels, with final level being richest
+const getLevelColor = (index: number, totalLevels: number) => {
+  // Color stops from lightest (stone) to richest (bronze/gold)
+  const colorStops = [
+    { bg: 'bg-stone-100 dark:bg-stone-800', text: 'text-stone-600 dark:text-stone-400' },        // Lightest
+    { bg: 'bg-stone-200 dark:bg-stone-700', text: 'text-stone-700 dark:text-stone-300' },        // Light stone
+    { bg: 'bg-amber-100/70 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-400' },  // Light tan
+    { bg: 'bg-amber-200/80 dark:bg-amber-900/60', text: 'text-amber-800 dark:text-amber-300' },  // Tan
+    { bg: 'bg-amber-300/80 dark:bg-amber-800/70', text: 'text-amber-900 dark:text-amber-200' },  // Bronze
+    { bg: 'bg-yellow-600 dark:bg-yellow-700', text: 'text-yellow-50 dark:text-yellow-100' },     // Rich bronze/gold (peak)
+  ];
+  
+  if (totalLevels <= 1) return colorStops[colorStops.length - 1]; // Single level gets peak color
+  
+  // Map index to color stop based on position ratio
+  const ratio = index / (totalLevels - 1);
+  const colorIndex = Math.round(ratio * (colorStops.length - 1));
+  
+  return colorStops[Math.min(colorIndex, colorStops.length - 1)];
+};
 
 export default function StylistLevels() {
   const { data: dbLevels, isLoading, error, refetch } = useStylistLevels();
@@ -312,11 +322,11 @@ export default function StylistLevels() {
                       </button>
                     </div>
 
-                    {/* Level number - with unique color */}
+                    {/* Level number - with dynamic progressive color */}
                     <span className={cn(
                       "px-2 py-1 rounded-full text-xs font-medium",
-                      getLevelColor(index).bg,
-                      getLevelColor(index).text
+                      getLevelColor(index, levels.length).bg,
+                      getLevelColor(index, levels.length).text
                     )}>
                       Level {index + 1}
                     </span>
