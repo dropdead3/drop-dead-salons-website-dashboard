@@ -49,9 +49,31 @@ export function TogglePill({
   variant = "solid",
   className,
 }: TogglePillProps) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = React.useState<React.CSSProperties>({});
+
+  // Calculate indicator position based on selected value
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const selectedIndex = options.findIndex(opt => opt.value === value);
+    if (selectedIndex === -1) return;
+
+    const buttons = containerRef.current.querySelectorAll('button');
+    const selectedButton = buttons[selectedIndex];
+    
+    if (selectedButton) {
+      setIndicatorStyle({
+        width: selectedButton.offsetWidth,
+        transform: `translateX(${selectedButton.offsetLeft - (size === 'sm' ? 4 : size === 'lg' ? 6 : 4)}px)`,
+      });
+    }
+  }, [value, options, size]);
+
   return (
     <TooltipProvider delayDuration={300}>
       <div
+        ref={containerRef}
         className={cn(
           "inline-flex items-center rounded-full relative",
           containerSizeClasses[size],
@@ -59,6 +81,12 @@ export function TogglePill({
           className
         )}
       >
+        {/* Sliding indicator */}
+        <div
+          className="absolute top-1 bottom-1 bg-foreground rounded-full transition-all duration-300 ease-out"
+          style={indicatorStyle}
+        />
+        
         {options.map((option) => {
           const isSelected = option.value === value;
           
@@ -67,10 +95,10 @@ export function TogglePill({
               type="button"
               onClick={() => onChange(option.value)}
               className={cn(
-                "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-all duration-200",
+                "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors duration-200",
                 sizeClasses[size],
                 isSelected
-                  ? "text-background bg-foreground"
+                  ? "text-background"
                   : "text-foreground/60 hover:text-foreground/80"
               )}
             >
