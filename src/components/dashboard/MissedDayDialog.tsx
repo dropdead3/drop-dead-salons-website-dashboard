@@ -15,6 +15,7 @@ import { UsePassConfirmDialog } from './UsePassConfirmDialog';
 
 interface MissedDayDialogProps {
   open: boolean;
+  onClose: () => void;
   daysMissed: number;
   forgiveCreditsRemaining: number;
   hasPendingPauseRequest: boolean;
@@ -26,6 +27,7 @@ interface MissedDayDialogProps {
 
 export function MissedDayDialog({
   open,
+  onClose,
   daysMissed,
   forgiveCreditsRemaining,
   hasPendingPauseRequest,
@@ -63,7 +65,7 @@ export function MissedDayDialog({
 
   if (view === 'pause') {
     return (
-      <Dialog open={open}>
+      <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -116,7 +118,7 @@ export function MissedDayDialog({
 
   return (
     <>
-      <Dialog open={open}>
+      <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader className="text-center space-y-4">
             {/* Premium alert icon with gradient ring */}
