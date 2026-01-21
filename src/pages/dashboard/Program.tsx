@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
 import { useWeeklyAssignments } from '@/hooks/useWeeklyAssignments';
-import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useActualUserId } from '@/hooks/useEffectiveUser';
 import { usePauseRequests } from '@/hooks/usePauseRequests';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { MissedDayDialog } from '@/components/dashboard/MissedDayDialog';
@@ -32,7 +32,8 @@ import {
   Download,
   Eye,
   Image as ImageLucide,
-  Shield
+  Shield,
+  ChevronLeft
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,11 +51,27 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Program() {
   const { user } = useAuth();
-  const { data: profile } = useEmployeeProfile();
-  const isSuperAdmin = profile?.is_super_admin;
+  const actualUserId = useActualUserId();
+  
+  // Check if the ACTUAL logged-in user (not impersonated) is a super admin
+  const { data: actualProfile } = useQuery({
+    queryKey: ['actual-user-profile', actualUserId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('is_super_admin')
+        .eq('user_id', actualUserId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!actualUserId,
+  });
+  const isSuperAdmin = actualProfile?.is_super_admin;
   
   const {
     enrollment,
@@ -247,9 +264,34 @@ export default function Program() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-4">
+              {/* Super Admin Day Navigation */}
+              {isSuperAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => jumpToDay((enrollment?.current_day || 1) - 1)}
+                  disabled={(enrollment?.current_day || 1) <= 1}
+                  className="h-8 w-8"
+                  title="Previous day (←)"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+              )}
               <h1 className="font-display text-3xl lg:text-4xl">
                 DAY {enrollment?.current_day}
               </h1>
+              {isSuperAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => jumpToDay((enrollment?.current_day || 1) + 1)}
+                  disabled={(enrollment?.current_day || 1) >= 75}
+                  className="h-8 w-8"
+                  title="Next day (→)"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              )}
               <span className="text-sm text-muted-foreground font-sans">of 75</span>
             </div>
             
