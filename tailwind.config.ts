@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        serif: ['"Laguna"', 'Georgia', 'serif'],
+        serif: ['Georgia', 'Times New Roman', 'serif'],
         sans: ['"Aeonik Pro"', 'system-ui', 'sans-serif'],
         display: ['"Termina"', 'sans-serif'],
         script: ['"Sloop Script"', 'cursive'],

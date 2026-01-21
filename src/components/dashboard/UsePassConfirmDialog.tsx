@@ -27,11 +27,8 @@ export function UsePassConfirmDialog({
 }: UsePassConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="border-none bg-gradient-to-b from-card via-card to-oat/20 shadow-2xl overflow-hidden">
-        {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-oat/10 pointer-events-none" />
-        
-        <AlertDialogHeader className="relative">
+      <AlertDialogContent>
+        <AlertDialogHeader>
           {/* Premium icon with gradient */}
           <div className="mx-auto mb-4 relative">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 via-primary/10 to-oat/20 flex items-center justify-center ring-1 ring-primary/20">
@@ -39,22 +36,21 @@ export function UsePassConfirmDialog({
                 <Shield className="h-5 w-5 text-primary" />
               </div>
             </div>
-            {/* Subtle glow effect */}
             <div className="absolute inset-0 rounded-full bg-primary/10 blur-xl -z-10" />
           </div>
           
-          <AlertDialogTitle className="text-center font-display uppercase tracking-wide text-lg">
+          <AlertDialogTitle className="text-center text-lg">
             Use a Life Happens Pass?
           </AlertDialogTitle>
           
           <AlertDialogDescription className="text-center space-y-4 pt-2">
-            <p className="text-muted-foreground">
+            <p>
               This will use <strong className="text-foreground font-medium">1 of your {passesRemaining}</strong> remaining{' '}
               {passesRemaining === 1 ? 'pass' : 'passes'}.
             </p>
             
             {passesRemaining === 1 && (
-              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-50/80 to-oat/20 border border-amber-200/50 rounded-xl text-amber-700 dark:from-amber-950/30 dark:to-oat/10 dark:border-amber-800/30 dark:text-amber-400">
+              <div className="premium-alert flex items-center gap-3 p-4 text-amber-700 dark:text-amber-400">
                 <AlertTriangle className="h-5 w-5 flex-shrink-0" />
                 <span className="text-sm text-left">
                   This is your <strong>last pass</strong>. Use it wisely—you won't get another one.
@@ -75,18 +71,11 @@ export function UsePassConfirmDialog({
           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-oat/60 to-transparent" />
         </div>
         
-        <AlertDialogFooter className="sm:justify-center gap-3 relative">
-          <AlertDialogCancel 
-            disabled={isLoading}
-            className="flex-1 sm:flex-none border-oat/50 hover:bg-oat/20 hover:border-oat transition-all duration-300"
-          >
+        <AlertDialogFooter className="sm:justify-center">
+          <AlertDialogCancel disabled={isLoading}>
             Cancel
           </AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onConfirm} 
-            disabled={isLoading}
-            className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-xl"
-          >
+          <AlertDialogAction onClick={onConfirm} disabled={isLoading}>
             {isLoading ? 'Using...' : 'Yes, Use Pass'}
           </AlertDialogAction>
         </AlertDialogFooter>
