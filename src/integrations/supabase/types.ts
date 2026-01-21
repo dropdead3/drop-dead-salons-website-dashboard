@@ -1657,6 +1657,7 @@ export type Database = {
       }
       program_resources: {
         Row: {
+          assignment_id: string | null
           created_at: string
           description: string | null
           display_order: number
@@ -1669,6 +1670,7 @@ export type Database = {
           week_id: string | null
         }
         Insert: {
+          assignment_id?: string | null
           created_at?: string
           description?: string | null
           display_order?: number
@@ -1681,6 +1683,7 @@ export type Database = {
           week_id?: string | null
         }
         Update: {
+          assignment_id?: string | null
           created_at?: string
           description?: string | null
           display_order?: number
@@ -1693,6 +1696,13 @@ export type Database = {
           week_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "program_resources_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "program_resources_week_id_fkey"
             columns: ["week_id"]

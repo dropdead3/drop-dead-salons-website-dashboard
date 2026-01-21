@@ -55,6 +55,19 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { WeekResourcesManager } from './WeekResourcesManager';
+
+interface ProgramResource {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string;
+  file_type: string;
+  week_id: string | null;
+  assignment_id: string | null;
+  display_order: number;
+  is_active: boolean;
+}
 
 interface ProgramWeek {
   id: string;
@@ -199,21 +212,25 @@ function SortableAssignmentItem({
 function WeekCard({
   week,
   assignments,
+  resources,
   onUpdateWeek,
   onAddAssignment,
   onUpdateAssignment,
   onDeleteAssignment,
   onToggleAssignmentActive,
   onReorderAssignments,
+  onResourcesChange,
 }: {
   week: ProgramWeek;
   assignments: WeeklyAssignment[];
+  resources: ProgramResource[];
   onUpdateWeek: (week: ProgramWeek) => Promise<void>;
   onAddAssignment: (weekId: string, assignment: Partial<WeeklyAssignment>) => Promise<void>;
   onUpdateAssignment: (assignment: WeeklyAssignment) => Promise<void>;
   onDeleteAssignment: (id: string) => Promise<void>;
   onToggleAssignmentActive: (id: string, active: boolean) => Promise<void>;
   onReorderAssignments: (weekId: string, assignments: WeeklyAssignment[]) => Promise<void>;
+  onResourcesChange: () => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -507,6 +524,13 @@ function WeekCard({
                 </div>
               )}
             </div>
+
+            {/* Resources Section */}
+            <WeekResourcesManager
+              weekId={week.id}
+              resources={resources}
+              onResourcesChange={onResourcesChange}
+            />
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
@@ -603,6 +627,7 @@ function WeekCard({
 export default function ProgramWeeksEditor() {
   const [weeks, setWeeks] = useState<ProgramWeek[]>([]);
   const [assignments, setAssignments] = useState<WeeklyAssignment[]>([]);
+  const [resources, setResources] = useState<ProgramResource[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -611,13 +636,15 @@ export default function ProgramWeeksEditor() {
 
   const fetchData = async () => {
     try {
-      const [weeksResult, assignmentsResult] = await Promise.all([
+      const [weeksResult, assignmentsResult, resourcesResult] = await Promise.all([
         supabase.from('program_weeks').select('*').order('week_number'),
         supabase.from('weekly_assignments').select('*').order('display_order'),
+        supabase.from('program_resources').select('*').order('display_order'),
       ]);
 
       if (weeksResult.data) setWeeks(weeksResult.data);
       if (assignmentsResult.data) setAssignments(assignmentsResult.data);
+      if (resourcesResult.data) setResources(resourcesResult.data);
     } catch (error) {
       console.error('Error fetching weeks data:', error);
       toast.error('Failed to load weeks');
@@ -759,12 +786,14 @@ export default function ProgramWeeksEditor() {
             assignments={assignments
               .filter((a) => a.week_id === week.id)
               .sort((a, b) => a.display_order - b.display_order)}
+            resources={resources.filter((r) => r.week_id === week.id)}
             onUpdateWeek={updateWeek}
             onAddAssignment={addAssignment}
             onUpdateAssignment={updateAssignment}
             onDeleteAssignment={deleteAssignment}
             onToggleAssignmentActive={toggleAssignmentActive}
             onReorderAssignments={reorderAssignments}
+            onResourcesChange={fetchData}
           />
         ))}
       </div>

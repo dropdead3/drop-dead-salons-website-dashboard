@@ -25,7 +25,10 @@ import {
   Video,
   FileText,
   ClipboardList,
-  ExternalLink
+  ExternalLink,
+  Download,
+  Eye,
+  Image as ImageLucide
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -436,6 +439,74 @@ export default function Program() {
                                 )}
                               </div>
                             </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Week Resources */}
+                  {currentWeek.resources && currentWeek.resources.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t">
+                      <h3 className="font-display text-xs tracking-wide text-muted-foreground">RESOURCES & MATERIALS</h3>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {currentWeek.resources.map((resource) => {
+                          const isImage = resource.file_type.startsWith('image/') || 
+                            ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(resource.file_type);
+                          const isPdf = resource.file_type === 'application/pdf' || resource.file_type === 'pdf';
+
+                          return (
+                            <div
+                              key={resource.id}
+                              className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                            >
+                              {/* Thumbnail/Icon */}
+                              {isImage ? (
+                                <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0 bg-muted">
+                                  <img 
+                                    src={resource.file_url} 
+                                    alt={resource.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-5 h-5 text-muted-foreground" />
+                                </div>
+                              )}
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{resource.title}</p>
+                                {resource.description && (
+                                  <p className="text-xs text-muted-foreground truncate">{resource.description}</p>
+                                )}
+                                <Badge variant="outline" className="text-[10px] mt-1">
+                                  {isImage ? 'Image' : isPdf ? 'PDF' : resource.file_type.toUpperCase()}
+                                </Badge>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center gap-1">
+                                <a
+                                  href={resource.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors"
+                                  title={isImage ? "View Image" : "View"}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                                <a
+                                  href={resource.file_url}
+                                  download
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors"
+                                  title="Download"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
