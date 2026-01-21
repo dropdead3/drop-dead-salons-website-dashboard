@@ -791,17 +791,6 @@ export default function ProgramEditor() {
                       </div>
                     </div>
 
-                    {/* Logo Editor Section */}
-                    <div className="border-t pt-6">
-                      <ProgramLogoEditor
-                        currentLogoUrl={config.logo_url}
-                        logoSize={config.logo_size || 64}
-                        logoColor={config.logo_color}
-                        onLogoChange={(url) => setConfig({ ...config, logo_url: url })}
-                        onSizeChange={(size) => setConfig({ ...config, logo_size: size })}
-                        onColorChange={(color) => setConfig({ ...config, logo_color: color })}
-                      />
-                    </div>
 
                     <div className="border-t pt-6">
                       <div className="flex items-center gap-3">
@@ -1101,7 +1090,12 @@ export default function ProgramEditor() {
                 <CardDescription>Customize the onboarding experience for new participants</CardDescription>
               </CardHeader>
               <CardContent>
-                <WelcomePagePreview previewConfig={config} />
+                <WelcomePagePreview 
+                  previewConfig={config} 
+                  onLogoChange={(url) => setConfig({ ...config, logo_url: url })}
+                  onLogoSizeChange={(size) => setConfig({ ...config, logo_size: size })}
+                  onLogoColorChange={(color) => setConfig({ ...config, logo_color: color })}
+                />
               </CardContent>
             </Card>
 
