@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -80,7 +80,6 @@ import {
   Pause,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
-import SecondaryLogo from '@/assets/dd-secondary-logo.svg';
 
 const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
 
@@ -176,8 +175,6 @@ const websiteNavItems: NavItem[] = [
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userSearch, setUserSearch] = useState('');
-  const [isScrolled, setIsScrolled] = useState(false);
-  const navRef = useRef<HTMLElement>(null);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
@@ -187,19 +184,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   
   // Fetch team members for user impersonation picker
   const { data: teamMembers = [] } = useTeamDirectory();
-
-  // Track scroll position in sidebar nav
-  useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-
-    const handleScroll = () => {
-      setIsScrolled(nav.scrollTop > 50);
-    };
-
-    nav.addEventListener('scroll', handleScroll);
-    return () => nav.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Use simulated role if viewing as a role, or the impersonated user's roles
   const roles = isViewingAsUser && viewAsUser 
@@ -372,33 +356,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      {/* Logo with scroll animation */}
+      {/* Logo */}
       <div className="p-6 border-b border-border">
-        <Link to="/dashboard" className="block relative h-5 overflow-hidden">
-          <motion.img 
-            src={Logo} 
-            alt="Drop Dead" 
-            className="h-5 w-auto absolute left-0"
-            initial={false}
-            animate={{ 
-              opacity: isScrolled ? 0 : 1,
-              y: isScrolled ? -10 : 0,
-              scale: isScrolled ? 0.9 : 1
-            }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-          />
-          <motion.img 
-            src={SecondaryLogo} 
-            alt="Drop Dead" 
-            className="h-5 w-auto absolute left-0"
-            initial={false}
-            animate={{ 
-              opacity: isScrolled ? 1 : 0,
-              y: isScrolled ? 0 : 10,
-              scale: isScrolled ? 1 : 0.9
-            }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-          />
+        <Link to="/dashboard" className="block">
+          <img src={Logo} alt="Drop Dead" className="h-5 w-auto" />
         </Link>
         <p className="text-xs text-muted-foreground mt-2 font-sans">
           Staff Dashboard
@@ -406,7 +367,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav ref={navRef} className="flex-1 py-4 overflow-y-auto">
+      <nav className="flex-1 py-4 overflow-y-auto">
         <div className="space-y-1">
           {filterNavItems(mainNavItems).map((item) => (
             <NavLink 
