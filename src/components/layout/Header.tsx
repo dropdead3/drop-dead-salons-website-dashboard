@@ -342,7 +342,7 @@ export function Header() {
             >
               <Link
                 to="/contact"
-                className="text-sm tracking-wide font-sans font-medium opacity-70 hover:opacity-100 transition-all duration-300 link-underline"
+                className="text-sm tracking-wide font-sans font-medium opacity-70 hover:opacity-100 transition-opacity duration-300 link-underline"
               >
                 Contact Us
               </Link>
