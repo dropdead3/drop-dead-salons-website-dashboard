@@ -732,7 +732,8 @@ export default function Program() {
                       </p>
                       <div className="space-y-2">
                         {currentWeek.assignments.map((assignment) => {
-                          const isComplete = getAssignmentCompletion(assignment.id);
+                          const completion = getAssignmentCompletion(assignment.id);
+                          const isComplete = completion?.is_complete ?? false;
                           const AssignmentIcon = getAssignmentIcon(assignment.assignment_type);
                           
                           return (
