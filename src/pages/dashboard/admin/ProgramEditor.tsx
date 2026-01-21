@@ -286,6 +286,7 @@ export default function ProgramEditor() {
   const [saving, setSaving] = useState(false);
   
   const [config, setConfig] = useState<ProgramConfig | null>(null);
+  const [initialConfig, setInitialConfig] = useState<ProgramConfig | null>(null);
   const [tasks, setTasks] = useState<DailyTask[]>([]);
   const [rules, setRules] = useState<ProgramRule[]>([]);
   
@@ -296,6 +297,10 @@ export default function ProgramEditor() {
   
   const [newTask, setNewTask] = useState({ task_key: '', label: '', description: '', is_required: true });
   const [newRule, setNewRule] = useState({ rule_text: '', is_emphasized: false });
+
+  // Track unsaved changes
+  const hasUnsavedChanges = config && initialConfig ? 
+    JSON.stringify(config) !== JSON.stringify(initialConfig) : false;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -326,7 +331,10 @@ export default function ProgramEditor() {
         supabase.from('program_rules').select('*').order('display_order'),
       ]);
 
-      if (configResult.data) setConfig(configResult.data);
+      if (configResult.data) {
+        setConfig(configResult.data);
+        setInitialConfig(configResult.data);
+      }
       if (tasksResult.data) setTasks(tasksResult.data);
       if (rulesResult.data) setRules(rulesResult.data);
     } catch (error) {
@@ -354,6 +362,9 @@ export default function ProgramEditor() {
         is_active: config.is_active,
         grace_period_hours: config.grace_period_hours,
         life_happens_passes_total: config.life_happens_passes_total,
+        logo_url: config.logo_url,
+        logo_size: config.logo_size,
+        logo_color: config.logo_color,
       })
       .eq('id', config.id);
 
@@ -361,6 +372,7 @@ export default function ProgramEditor() {
       toast.error('Failed to save configuration');
     } else {
       toast.success('Configuration saved');
+      setInitialConfig(config); // Reset initial state after save
     }
     setSaving(false);
   };
@@ -791,7 +803,7 @@ export default function ProgramEditor() {
                       />
                     </div>
 
-                    <div className="border-t pt-6 flex items-center justify-between">
+                    <div className="border-t pt-6">
                       <div className="flex items-center gap-3">
                         <Switch
                           checked={config.is_active}
@@ -804,10 +816,6 @@ export default function ProgramEditor() {
                           </p>
                         </div>
                       </div>
-                      <Button onClick={saveConfig} disabled={saving}>
-                        {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                        Save Changes
-                      </Button>
                     </div>
                   </>
                 )}
@@ -1109,6 +1117,43 @@ export default function ProgramEditor() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Sticky Save Bar */}
+        {config && (
+          <div className="sticky bottom-0 left-0 right-0 z-50 mt-6 -mx-4 lg:-mx-6">
+            <div className="bg-gradient-to-t from-background via-background to-background/80 pt-4 pb-6 px-4 lg:px-6">
+              <div className="flex items-center justify-between gap-4 p-4 bg-card border rounded-2xl shadow-lg">
+                <div className="flex items-center gap-3">
+                  {hasUnsavedChanges && (
+                    <div className="flex items-center gap-2 text-destructive">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span className="text-sm font-medium">Unsaved changes</span>
+                    </div>
+                  )}
+                  {!hasUnsavedChanges && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Check className="w-4 h-4" />
+                      <span className="text-sm">All changes saved</span>
+                    </div>
+                  )}
+                </div>
+                <Button 
+                  onClick={saveConfig} 
+                  disabled={saving || !hasUnsavedChanges}
+                  size="lg"
+                  className="font-display tracking-wide px-6"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
