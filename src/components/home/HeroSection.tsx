@@ -31,7 +31,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
     
     const interval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
-    }, 2500); // Change word every 2.5 seconds
+    }, 4000); // Change word every 4 seconds
 
     return () => clearInterval(interval);
   }, [isAnimationReady]);
