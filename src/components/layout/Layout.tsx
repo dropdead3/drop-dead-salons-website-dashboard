@@ -40,11 +40,11 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main content that scrolls over the footer */}
       <div 
-        className="relative z-10 flex flex-col min-h-screen"
+        className="relative z-10 flex flex-col min-h-screen bg-background"
         style={{ marginBottom: footerHeight }}
       >
         <Header />
-        <main className="flex-1 bg-background">
+        <main className="flex-1 bg-background overflow-hidden">
           <PageTransition>{children}</PageTransition>
         </main>
       </div>
