@@ -151,6 +151,16 @@ export default function Program() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSuperAdmin, enrollment, jumpToDay]);
 
+  // Auto-collapse weekly section when completed
+  const weekProgress = getCurrentWeekProgress();
+  const isWeekComplete = weekProgress.total > 0 && weekProgress.percentage === 100;
+  
+  useEffect(() => {
+    if (isWeekComplete) {
+      setWeeklyExpanded(false);
+    }
+  }, [isWeekComplete]);
+
   // Check enrollment when data loads - only set to true if not explicitly set to false
   if (!loading && hasEnrollment === null) {
     setHasEnrollment(!!enrollment);
@@ -247,7 +257,6 @@ export default function Program() {
   const progressPercent = ((enrollment?.current_day || 1) / 75) * 100;
   const isWeeklyWinsDue = enrollment?.weekly_wins_due_day === enrollment?.current_day;
   const isPaused = enrollment?.status === 'paused';
-  const weekProgress = getCurrentWeekProgress();
 
   const getAssignmentIcon = (type: string) => {
     switch (type) {
@@ -657,12 +666,19 @@ export default function Program() {
                     </div>
                     <div className="flex items-center gap-3">
                       {weekProgress.total > 0 && (
-                        <Badge 
-                          variant={weekProgress.percentage === 100 ? "default" : "secondary"}
-                          className="font-display"
-                        >
-                          {weekProgress.percentage}%
-                        </Badge>
+                        isWeekComplete ? (
+                          <Badge variant="default" className="font-display bg-green-600 hover:bg-green-600">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Completed!
+                          </Badge>
+                        ) : (
+                          <Badge 
+                            variant="secondary"
+                            className="font-display"
+                          >
+                            {weekProgress.percentage}%
+                          </Badge>
+                        )
                       )}
                       <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${weeklyExpanded ? 'rotate-180' : ''}`} />
                     </div>
@@ -707,7 +723,13 @@ export default function Program() {
                   {/* Weekly Assignments */}
                   {currentWeek.assignments && currentWeek.assignments.length > 0 && (
                     <div className="space-y-3 pt-2">
-                      <h3 className="font-display text-xs tracking-wide text-muted-foreground">WEEKLY ASSIGNMENTS</h3>
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-display text-xs tracking-wide text-muted-foreground">WEEKLY ASSIGNMENTS</h3>
+                        <span className="text-xs text-muted-foreground font-sans">Complete these once this week</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-sans -mt-1">
+                        These are one-time tasks to complete over the next 7 days — not daily repeating.
+                      </p>
                       <div className="space-y-2">
                         {currentWeek.assignments.map((assignment) => {
                           const isComplete = getAssignmentCompletion(assignment.id);
