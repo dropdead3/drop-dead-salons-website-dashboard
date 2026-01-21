@@ -16,6 +16,53 @@ export interface HomepageStylist {
   location_ids: string[] | null;
   is_booking: boolean | null;
   bio: string | null;
+  homepage_order: number | null;
+}
+
+// Level order for default sorting (higher level = lower number = comes first)
+const LEVEL_ORDER: Record<string, number> = {
+  "LEVEL 4 STYLIST": 1,
+  "LEVEL 3 STYLIST": 2,
+  "LEVEL 2 STYLIST": 3,
+  "LEVEL 1 STYLIST": 4,
+};
+
+// Sort function: custom order first, then by level, then by extensions specialty
+function sortStylists(stylists: HomepageStylist[]): HomepageStylist[] {
+  return [...stylists].sort((a, b) => {
+    // First, check if both have custom order
+    const aHasOrder = a.homepage_order !== null;
+    const bHasOrder = b.homepage_order !== null;
+    
+    // If both have custom order, sort by that
+    if (aHasOrder && bHasOrder) {
+      return (a.homepage_order ?? 0) - (b.homepage_order ?? 0);
+    }
+    
+    // Items with custom order come first
+    if (aHasOrder !== bHasOrder) {
+      return aHasOrder ? -1 : 1;
+    }
+    
+    // Default sorting: by level first
+    const aLevel = LEVEL_ORDER[a.stylist_level || "LEVEL 1 STYLIST"] ?? 5;
+    const bLevel = LEVEL_ORDER[b.stylist_level || "LEVEL 1 STYLIST"] ?? 5;
+    
+    if (aLevel !== bLevel) {
+      return aLevel - bLevel;
+    }
+    
+    // Within same level, extensions specialists come first
+    const aHasExtensions = a.specialties?.some(s => s.toLowerCase().includes('extension')) ?? false;
+    const bHasExtensions = b.specialties?.some(s => s.toLowerCase().includes('extension')) ?? false;
+    
+    if (aHasExtensions !== bHasExtensions) {
+      return aHasExtensions ? -1 : 1;
+    }
+    
+    // Finally, alphabetical by name
+    return (a.display_name || a.full_name).localeCompare(b.display_name || b.full_name);
+  });
 }
 
 export function useHomepageStylists() {
@@ -24,13 +71,14 @@ export function useHomepageStylists() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('id, user_id, full_name, display_name, photo_url, instagram, tiktok, stylist_level, specialties, highlighted_services, location_id, location_ids, is_booking, bio')
+        .select('id, user_id, full_name, display_name, photo_url, instagram, tiktok, stylist_level, specialties, highlighted_services, location_id, location_ids, is_booking, bio, homepage_order')
         .eq('is_active', true)
-        .eq('homepage_visible', true)
-        .order('stylist_level', { ascending: false });
+        .eq('homepage_visible', true);
 
       if (error) throw error;
-      return data as HomepageStylist[];
+      
+      // Apply custom sorting logic
+      return sortStylists(data as HomepageStylist[]);
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
