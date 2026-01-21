@@ -25,6 +25,7 @@ import { StylistFlipCard } from "./StylistFlipCard";
 import { useActiveLocations } from "@/hooks/useLocations";
 import { useHomepageStylists } from "@/hooks/useHomepageStylists";
 import { useHomepageStylistsSettings } from "@/hooks/useSiteSettings";
+import { useSpecialtyOptions } from "@/hooks/useSpecialtyOptions";
 import { sampleStylists } from "@/data/sampleStylists";
 
 import { locations as staticLocations, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
@@ -410,6 +411,9 @@ export function StylistsSection() {
   const { data: settings } = useHomepageStylistsSettings();
   const showSampleCards = settings?.show_sample_cards ?? false;
 
+  // Fetch specialty options from database
+  const { data: specialtyOptionsData } = useSpecialtyOptions();
+
   // Fetch locations from database
   const { data: dbLocations } = useActiveLocations();
   
@@ -439,8 +443,12 @@ export function StylistsSection() {
     return realStylists;
   }, [showSampleCards, realStylists]);
 
-  // Derive unique specialties from displayed stylists (including samples)
+  // Use specialty options from database, ordered by display_order
   const allSpecialties = useMemo(() => {
+    if (specialtyOptionsData && specialtyOptionsData.length > 0) {
+      return specialtyOptionsData.map(opt => opt.name);
+    }
+    // Fallback: derive from stylists if no database options
     const specs = new Set<string>();
     stylists.forEach(s => s.specialties.forEach(spec => specs.add(spec)));
     return Array.from(specs).sort((a, b) => {
@@ -448,7 +456,7 @@ export function StylistsSection() {
       if (b === "EXTENSIONS") return 1;
       return a.localeCompare(b);
     });
-  }, [stylists]);
+  }, [specialtyOptionsData, stylists]);
   
   // Merge database locations with static locations for tooltip info
   const locations = useMemo(() => {
