@@ -52,16 +52,16 @@ type LocalStylistLevel = {
   description: string;
 };
 
-// Unique colors for each level badge - neutral luxury tones
+// Progressive level colors - from neutral to gold (achievement progression)
 const levelColors = [
-  { bg: 'bg-stone-200 dark:bg-stone-800', text: 'text-stone-700 dark:text-stone-300' },
-  { bg: 'bg-amber-100 dark:bg-amber-900', text: 'text-amber-800 dark:text-amber-200' },
-  { bg: 'bg-yellow-100/80 dark:bg-yellow-900/50', text: 'text-yellow-800 dark:text-yellow-300' },
-  { bg: 'bg-neutral-300 dark:bg-neutral-700', text: 'text-neutral-800 dark:text-neutral-200' },
-  { bg: 'bg-orange-100/70 dark:bg-orange-900/40', text: 'text-orange-900 dark:text-orange-200' },
-  { bg: 'bg-zinc-200 dark:bg-zinc-800', text: 'text-zinc-700 dark:text-zinc-300' },
-  { bg: 'bg-stone-300 dark:bg-stone-700', text: 'text-stone-800 dark:text-stone-200' },
-  { bg: 'bg-amber-200/80 dark:bg-amber-800/60', text: 'text-amber-900 dark:text-amber-100' },
+  { bg: 'bg-stone-100 dark:bg-stone-800', text: 'text-stone-600 dark:text-stone-400' },        // Level 1 - Stone
+  { bg: 'bg-stone-200 dark:bg-stone-700', text: 'text-stone-700 dark:text-stone-300' },        // Level 2 - Warmer stone
+  { bg: 'bg-amber-100/60 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-400' },  // Level 3 - Light tan
+  { bg: 'bg-amber-100 dark:bg-amber-900/60', text: 'text-amber-800 dark:text-amber-300' },     // Level 4 - Tan
+  { bg: 'bg-amber-200/80 dark:bg-amber-800/60', text: 'text-amber-800 dark:text-amber-200' },  // Level 5 - Bronze
+  { bg: 'bg-yellow-200/70 dark:bg-yellow-800/50', text: 'text-yellow-800 dark:text-yellow-200' }, // Level 6 - Light gold
+  { bg: 'bg-yellow-300/80 dark:bg-yellow-700/60', text: 'text-yellow-900 dark:text-yellow-100' }, // Level 7 - Gold
+  { bg: 'bg-yellow-400/70 dark:bg-yellow-600/50', text: 'text-yellow-950 dark:text-yellow-50' },  // Level 8 - Rich gold
 ];
 
 const getLevelColor = (index: number) => levelColors[index % levelColors.length];
