@@ -49,6 +49,8 @@ interface Announcement {
   priority: Priority;
   is_pinned: boolean;
   created_at: string;
+  link_url: string | null;
+  link_label: string | null;
 }
 
 const priorityColors: Record<Priority, string> = {
@@ -295,6 +297,16 @@ export default function DashboardHome() {
                       <p className="text-xs text-muted-foreground line-clamp-2">
                         {announcement.content}
                       </p>
+                      {announcement.link_url && announcement.link_label && (
+                        <a 
+                          href={announcement.link_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block mt-2 px-3 py-1.5 text-xs font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity"
+                        >
+                          {announcement.link_label}
+                        </a>
+                      )}
                       <p className="text-xs text-muted-foreground/60 mt-1">
                         {format(new Date(announcement.created_at), 'MMM d')}
                       </p>
