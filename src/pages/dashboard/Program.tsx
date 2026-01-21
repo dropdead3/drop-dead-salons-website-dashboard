@@ -429,210 +429,6 @@ export default function Program() {
           </div>
         </Card>
 
-        {/* Current Week Module */}
-        {currentWeek && (
-          <Collapsible open={weeklyExpanded} onOpenChange={setWeeklyExpanded}>
-            <Card className="mb-8 overflow-hidden">
-              <CollapsibleTrigger asChild>
-                <div className="p-6 cursor-pointer hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-foreground text-background rounded-lg flex flex-col items-center justify-center">
-                        <span className="text-[10px] font-display tracking-wide opacity-70">WEEK</span>
-                        <span className="text-lg font-display font-bold -mt-1">{currentWeek.week_number}</span>
-                      </div>
-                      <div>
-                        <h2 className="font-display text-lg">{currentWeek.title}</h2>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground font-sans">
-                          <Calendar className="w-3 h-3" />
-                          Days {currentWeek.start_day} - {currentWeek.end_day}
-                          {currentWeek.assignments?.length > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>{weekProgress.completed}/{weekProgress.total} assignments complete</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {weekProgress.total > 0 && (
-                        <Badge 
-                          variant={weekProgress.percentage === 100 ? "default" : "secondary"}
-                          className="font-display"
-                        >
-                          {weekProgress.percentage}%
-                        </Badge>
-                      )}
-                      <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${weeklyExpanded ? 'rotate-180' : ''}`} />
-                    </div>
-                  </div>
-                </div>
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent>
-                <div className="px-6 pb-6 space-y-4 border-t pt-4">
-                  {/* Week Objective */}
-                  {currentWeek.objective && (
-                    <div className="p-4 bg-muted/30 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <Target className="w-4 h-4 text-primary mt-0.5" />
-                        <div>
-                          <p className="text-xs font-display tracking-wide text-muted-foreground mb-1">THIS WEEK'S OBJECTIVE</p>
-                          <p className="text-sm font-sans">{currentWeek.objective}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Week Description */}
-                  {currentWeek.description && (
-                    <p className="text-sm text-muted-foreground font-sans">{currentWeek.description}</p>
-                  )}
-
-                  {/* Week Video */}
-                  {currentWeek.video_url && (
-                    <a 
-                      href={currentWeek.video_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-primary hover:underline"
-                    >
-                      <Video className="w-4 h-4" />
-                      Watch Week {currentWeek.week_number} Training Video
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-
-                  {/* Weekly Assignments */}
-                  {currentWeek.assignments && currentWeek.assignments.length > 0 && (
-                    <div className="space-y-3 pt-2">
-                      <h3 className="font-display text-xs tracking-wide text-muted-foreground">WEEKLY ASSIGNMENTS</h3>
-                      <div className="space-y-2">
-                        {currentWeek.assignments.map((assignment) => {
-                          const completion = getAssignmentCompletion(assignment.id);
-                          const isComplete = completion?.is_complete;
-                          const AssignmentIcon = getAssignmentIcon(assignment.assignment_type);
-
-                          return (
-                            <button
-                              key={assignment.id}
-                              onClick={() => toggleAssignmentCompletion(assignment.id)}
-                              disabled={isPaused}
-                              className={`w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                                isComplete 
-                                  ? 'bg-green-500/5 border-green-500/30' 
-                                  : 'bg-card hover:bg-muted/50 border-border'
-                              }`}
-                            >
-                              <div className={`
-                                w-5 h-5 border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors
-                                ${isComplete 
-                                  ? 'bg-green-600 border-green-600' 
-                                  : 'border-border'
-                                }
-                              `}>
-                                {isComplete && <CheckCircle2 className="w-3 h-3 text-white" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <AssignmentIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                                  <span className={`text-sm font-sans ${isComplete ? 'line-through text-muted-foreground' : ''}`}>
-                                    {assignment.title}
-                                  </span>
-                                  {assignment.is_required && !isComplete && (
-                                    <Badge variant="outline" className="text-[10px] h-4">Required</Badge>
-                                  )}
-                                </div>
-                                {assignment.description && (
-                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{assignment.description}</p>
-                                )}
-                                {assignment.proof_type !== 'none' && (
-                                  <p className="text-[10px] text-muted-foreground mt-1 capitalize">
-                                    Proof: {assignment.proof_type}
-                                  </p>
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Week Resources */}
-                  {currentWeek.resources && currentWeek.resources.length > 0 && (
-                    <div className="space-y-3 pt-4 border-t">
-                      <h3 className="font-display text-xs tracking-wide text-muted-foreground">RESOURCES & MATERIALS</h3>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {currentWeek.resources.map((resource) => {
-                          const isImage = resource.file_type.startsWith('image/') || 
-                            ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(resource.file_type);
-                          const isPdf = resource.file_type === 'application/pdf' || resource.file_type === 'pdf';
-
-                          return (
-                            <div
-                              key={resource.id}
-                              className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                            >
-                              {/* Thumbnail/Icon */}
-                              {isImage ? (
-                                <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0 bg-muted">
-                                  <img 
-                                    src={resource.file_url} 
-                                    alt={resource.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                                  <FileText className="w-5 h-5 text-muted-foreground" />
-                                </div>
-                              )}
-
-                              {/* Info */}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{resource.title}</p>
-                                {resource.description && (
-                                  <p className="text-xs text-muted-foreground truncate">{resource.description}</p>
-                                )}
-                                <Badge variant="outline" className="text-[10px] mt-1">
-                                  {isImage ? 'Image' : isPdf ? 'PDF' : resource.file_type.toUpperCase()}
-                                </Badge>
-                              </div>
-
-                              {/* Actions */}
-                              <div className="flex items-center gap-1">
-                                <a
-                                  href={resource.file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors"
-                                  title={isImage ? "View Image" : "View"}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </a>
-                                <a
-                                  href={resource.file_url}
-                                  download
-                                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors"
-                                  title="Download"
-                                >
-                                  <Download className="w-4 h-4" />
-                                </a>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
-        )}
-
         {/* Missed Day Dialog with Forgive Credits */}
         <MissedDayDialog
           open={hasMissedDay}
@@ -708,7 +504,7 @@ export default function Program() {
         )}
 
         {/* Today's Tasks */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2 mb-8">
           <Card className="p-6">
             <h2 className="font-display text-sm tracking-wide mb-6">TODAY'S TASKS</h2>
             <div className="space-y-4">
@@ -808,6 +604,214 @@ export default function Program() {
             </Card>
           </div>
         </div>
+
+        {/* Current Week Module */}
+        {currentWeek && (
+          <Collapsible open={weeklyExpanded} onOpenChange={setWeeklyExpanded}>
+            <Card className="mb-8 overflow-hidden">
+              <CollapsibleTrigger asChild>
+                <div className="p-6 cursor-pointer hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-foreground text-background rounded-lg flex flex-col items-center justify-center">
+                        <span className="text-[10px] font-display tracking-wide opacity-70">WEEK</span>
+                        <span className="text-lg font-display font-bold -mt-1">{currentWeek.week_number}</span>
+                      </div>
+                      <div>
+                        <h2 className="font-display text-lg">{currentWeek.title}</h2>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground font-sans">
+                          <Calendar className="w-3 h-3" />
+                          Days {currentWeek.start_day} - {currentWeek.end_day}
+                          {currentWeek.assignments?.length > 0 && (
+                            <>
+                              <span>•</span>
+                              <span>{weekProgress.completed}/{weekProgress.total} assignments complete</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {weekProgress.total > 0 && (
+                        <Badge 
+                          variant={weekProgress.percentage === 100 ? "default" : "secondary"}
+                          className="font-display"
+                        >
+                          {weekProgress.percentage}%
+                        </Badge>
+                      )}
+                      <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${weeklyExpanded ? 'rotate-180' : ''}`} />
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <div className="px-6 pb-6 space-y-4 border-t pt-4">
+                  {/* Week Objective */}
+                  {currentWeek.objective && (
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <Target className="w-4 h-4 text-primary mt-0.5" />
+                        <div>
+                          <p className="text-xs font-display tracking-wide text-muted-foreground mb-1">THIS WEEK'S OBJECTIVE</p>
+                          <p className="text-sm font-sans">{currentWeek.objective}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Week Description */}
+                  {currentWeek.description && (
+                    <p className="text-sm text-muted-foreground font-sans">{currentWeek.description}</p>
+                  )}
+
+                  {/* Week Video */}
+                  {currentWeek.video_url && (
+                    <a 
+                      href={currentWeek.video_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <Video className="w-4 h-4" />
+                      Watch Week {currentWeek.week_number} Training Video
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+
+                  {/* Weekly Assignments */}
+                  {currentWeek.assignments && currentWeek.assignments.length > 0 && (
+                    <div className="space-y-3 pt-2">
+                      <h3 className="font-display text-xs tracking-wide text-muted-foreground">WEEKLY ASSIGNMENTS</h3>
+                      <div className="space-y-2">
+                        {currentWeek.assignments.map((assignment) => {
+                          const isComplete = getAssignmentCompletion(assignment.id);
+                          const AssignmentIcon = getAssignmentIcon(assignment.assignment_type);
+                          
+                          return (
+                            <button
+                              key={assignment.id}
+                              onClick={() => toggleAssignmentCompletion(assignment.id)}
+                              disabled={isPaused}
+                              className="w-full text-left p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <div className="flex items-start gap-3">
+                                {/* Checkbox */}
+                                <div className={`
+                                  w-5 h-5 border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors
+                                  ${isComplete 
+                                    ? 'bg-foreground border-foreground' 
+                                    : 'border-border hover:border-foreground'
+                                  }
+                                `}>
+                                  {isComplete && <CheckCircle2 className="w-3 h-3 text-background" />}
+                                </div>
+                                
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <AssignmentIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <span className={`text-sm font-medium ${isComplete ? 'line-through text-muted-foreground' : ''}`}>
+                                      {assignment.title}
+                                    </span>
+                                    {assignment.is_required && (
+                                      <Badge variant="secondary" className="text-[10px]">
+                                        Required
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {assignment.description && (
+                                    <p className={`text-sm mt-1 ${isComplete ? 'text-muted-foreground/60 line-through' : 'text-muted-foreground'}`}>
+                                      {assignment.description}
+                                    </p>
+                                  )}
+                                  {assignment.proof_type !== 'none' && (
+                                    <p className="text-[10px] text-muted-foreground mt-1 capitalize">
+                                      Proof: {assignment.proof_type}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Week Resources */}
+                  {currentWeek.resources && currentWeek.resources.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t">
+                      <h3 className="font-display text-xs tracking-wide text-muted-foreground">RESOURCES & MATERIALS</h3>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {currentWeek.resources.map((resource) => {
+                          const isImage = resource.file_type.startsWith('image/') || 
+                            ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(resource.file_type);
+                          const isPdf = resource.file_type === 'application/pdf' || resource.file_type === 'pdf';
+
+                          return (
+                            <div
+                              key={resource.id}
+                              className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                            >
+                              {/* Thumbnail/Icon */}
+                              {isImage ? (
+                                <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0 bg-muted">
+                                  <img 
+                                    src={resource.file_url} 
+                                    alt={resource.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-5 h-5 text-muted-foreground" />
+                                </div>
+                              )}
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{resource.title}</p>
+                                {resource.description && (
+                                  <p className="text-xs text-muted-foreground truncate">{resource.description}</p>
+                                )}
+                                <Badge variant="outline" className="text-[10px] mt-1">
+                                  {isImage ? 'Image' : isPdf ? 'PDF' : resource.file_type.toUpperCase()}
+                                </Badge>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center gap-1">
+                                <a
+                                  href={resource.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors"
+                                  title={isImage ? "View Image" : "View"}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                                <a
+                                  href={resource.file_url}
+                                  download
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors"
+                                  title="Download"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        )}
 
         {/* Submit Day Button */}
         <div className="mt-8">
