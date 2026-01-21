@@ -215,7 +215,7 @@ export function Header() {
             <motion.nav 
               className="hidden lg:flex items-center gap-6 xl:gap-10"
               animate={{ 
-                x: isScrollingUp ? (isStaffMenuOpen ? -200 : 0) : 450,
+                x: isScrollingUp ? 0 : 450,
                 opacity: isStaffMenuOpen ? 0 : 1,
                 pointerEvents: isStaffMenuOpen ? "none" : "auto"
               }}
