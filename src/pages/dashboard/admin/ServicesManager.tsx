@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -290,17 +291,19 @@ export default function ServicesManager() {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-                <Settings2 className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{(stylistLevels || []).length}</p>
-                <p className="text-sm text-muted-foreground">Stylist Levels</p>
-              </div>
-            </CardContent>
-          </Card>
+          <Link to="/dashboard/admin/stylist-levels">
+            <Card className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md hover:border-primary/30">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                  <Settings2 className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{(stylistLevels || []).length}</p>
+                  <p className="text-sm text-muted-foreground">Stylist Levels</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/30">
