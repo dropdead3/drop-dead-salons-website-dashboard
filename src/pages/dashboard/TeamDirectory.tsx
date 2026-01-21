@@ -344,7 +344,7 @@ export default function TeamDirectory() {
                     {locationId === 'unassigned' ? 'No Location Assigned' : getLocationName(locationId)}
                     <Badge variant="secondary" className="ml-2">{members.length}</Badge>
                   </h2>
-                  <div className="ml-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+                  <div className="ml-6 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
                     {members.map(member => (
                       <TeamMemberCard 
                         key={member.id} 
@@ -433,7 +433,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
       )}
       onClick={isSuperAdmin ? onViewProfile : undefined}
     >
-    <CardContent className="p-4">
+    <CardContent className="p-5">
         {/* Bottom-right action icons - appear on hover */}
         <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-1.5">
           {/* Strike indicator for admins/managers - links to Staff Strikes page */}
@@ -484,9 +484,9 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
         <div className="flex gap-4">
           {/* Larger Avatar */}
           <div className="relative shrink-0">
-            <Avatar className="w-16 h-16 ring-2 ring-background shadow-md">
+            <Avatar className="w-20 h-20 ring-2 ring-background shadow-md">
               <AvatarImage src={member.photo_url || undefined} alt={member.full_name} className="object-cover" />
-              <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-lg font-semibold">
+              <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-xl font-semibold">
                 {member.full_name?.charAt(0) || <User className="w-6 h-6" />}
               </AvatarFallback>
             </Avatar>
@@ -503,7 +503,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
             {/* Name and actions row */}
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="font-display font-semibold text-sm leading-tight truncate">
+                <h3 className="font-display font-semibold text-base leading-tight truncate">
                   {member.display_name || member.full_name}
                 </h3>
                 {/* Meta info */}
