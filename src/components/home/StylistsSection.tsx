@@ -400,7 +400,6 @@ export function StylistsSection() {
   const [selectedLocation, setSelectedLocation] = useState<Location | "all">("all");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
-  const [randomSeed] = useState(() => Math.random()); // Fixed seed for consistent randomization during session
   
   const [isFormExpanded, setIsFormExpanded] = useState(false);
 
@@ -480,34 +479,15 @@ export function StylistsSection() {
     };
   }, []);
 
-  // Seeded random shuffle function for consistent ordering
-  const shuffleArray = useCallback(<T,>(array: T[], seed: number): T[] => {
-    const shuffled = [...array];
-    let currentSeed = seed;
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      currentSeed = (currentSeed * 9301 + 49297) % 233280;
-      const j = Math.floor((currentSeed / 233280) * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  }, []);
-
-  const levelOrder: Record<string, number> = {
-    "LEVEL 4 STYLIST": 1,
-    "LEVEL 3 STYLIST": 2,
-    "LEVEL 2 STYLIST": 3,
-    "LEVEL 1 STYLIST": 4
-  };
-
+  // Filter stylists - order is already set from admin panel or default sorting in the hook
   const filteredStylists = useMemo(() => {
-    const filtered = stylists.filter((s) => {
+    return stylists.filter((s) => {
       const matchesLocation = selectedLocation === "all" || s.locations.includes(selectedLocation as Location);
       const matchesSpecialty = !selectedSpecialty || s.specialties.includes(selectedSpecialty);
       const matchesLevel = !selectedLevel || s.level === selectedLevel;
       return matchesLocation && matchesSpecialty && matchesLevel;
     });
-    return shuffleArray(filtered, randomSeed);
-  }, [stylists, selectedLocation, selectedSpecialty, selectedLevel, randomSeed, shuffleArray]);
+  }, [stylists, selectedLocation, selectedSpecialty, selectedLevel]);
 
   const handleToggleFormExpand = useCallback(() => {
     startTransition(() => {

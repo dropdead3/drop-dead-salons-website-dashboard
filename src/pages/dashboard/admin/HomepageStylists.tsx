@@ -15,6 +15,7 @@ import { getLocationName, type Location } from '@/data/stylists';
 import { useHomepageStylistsSettings, useUpdateHomepageStylistsSettings } from '@/hooks/useSiteSettings';
 import { sampleStylists } from '@/data/sampleStylists';
 import { HomepagePreviewModal } from '@/components/dashboard/HomepagePreviewModal';
+import { ReorderableStylistList } from '@/components/dashboard/ReorderableStylistList';
 
 interface StylistProfile {
   id: string;
@@ -30,6 +31,7 @@ interface StylistProfile {
   homepage_visible: boolean | null;
   homepage_requested: boolean | null;
   homepage_requested_at: string | null;
+  homepage_order: number | null;
 }
 
 function useHomepagePendingRequests() {
@@ -50,6 +52,44 @@ function useHomepagePendingRequests() {
   });
 }
 
+// Level order for default sorting
+const LEVEL_ORDER: Record<string, number> = {
+  "LEVEL 4 STYLIST": 1,
+  "LEVEL 3 STYLIST": 2,
+  "LEVEL 2 STYLIST": 3,
+  "LEVEL 1 STYLIST": 4,
+};
+
+function sortVisibleStylists(stylists: StylistProfile[]): StylistProfile[] {
+  return [...stylists].sort((a, b) => {
+    // First, check if both have custom order
+    const aHasOrder = a.homepage_order !== null;
+    const bHasOrder = b.homepage_order !== null;
+    
+    if (aHasOrder && bHasOrder) {
+      return (a.homepage_order ?? 0) - (b.homepage_order ?? 0);
+    }
+    
+    if (aHasOrder !== bHasOrder) {
+      return aHasOrder ? -1 : 1;
+    }
+    
+    // Default: by level
+    const aLevel = LEVEL_ORDER[a.stylist_level || "LEVEL 1 STYLIST"] ?? 5;
+    const bLevel = LEVEL_ORDER[b.stylist_level || "LEVEL 1 STYLIST"] ?? 5;
+    
+    if (aLevel !== bLevel) return aLevel - bLevel;
+    
+    // Extensions specialists first within level
+    const aExt = a.specialties?.some(s => s.toLowerCase().includes('extension')) ?? false;
+    const bExt = b.specialties?.some(s => s.toLowerCase().includes('extension')) ?? false;
+    
+    if (aExt !== bExt) return aExt ? -1 : 1;
+    
+    return (a.display_name || a.full_name).localeCompare(b.display_name || b.full_name);
+  });
+}
+
 function useHomepageVisibleStylists() {
   return useQuery({
     queryKey: ['homepage-visible-stylists'],
@@ -58,11 +98,39 @@ function useHomepageVisibleStylists() {
         .from('employee_profiles')
         .select('*')
         .eq('is_active', true)
-        .eq('homepage_visible', true)
-        .order('full_name');
+        .eq('homepage_visible', true);
 
       if (error) throw error;
-      return data as StylistProfile[];
+      return sortVisibleStylists(data as StylistProfile[]);
+    },
+  });
+}
+
+function useUpdateStylistOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      // Update each stylist's homepage_order
+      const updates = orderedIds.map((id, index) => 
+        supabase
+          .from('employee_profiles')
+          .update({ homepage_order: index })
+          .eq('id', id)
+      );
+      
+      const results = await Promise.all(updates);
+      const error = results.find(r => r.error)?.error;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['homepage-visible-stylists'] });
+      queryClient.invalidateQueries({ queryKey: ['homepage-stylists'] });
+      toast.success('Display order saved');
+    },
+    onError: (error) => {
+      console.error('Error updating order:', error);
+      toast.error('Failed to save order');
     },
   });
 }
@@ -123,11 +191,13 @@ function useDenyRequest() {
 
 export default function HomepageStylists() {
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [orderedIds, setOrderedIds] = useState<string[] | null>(null);
   
   const { data: pendingRequests = [], isLoading: loadingPending } = useHomepagePendingRequests();
   const { data: visibleStylists = [], isLoading: loadingVisible } = useHomepageVisibleStylists();
   const updateVisibility = useUpdateHomepageVisibility();
   const denyRequest = useDenyRequest();
+  const updateOrder = useUpdateStylistOrder();
   
   // Sample cards settings
   const { data: settings, isLoading: settingsLoading } = useHomepageStylistsSettings();
@@ -137,6 +207,31 @@ export default function HomepageStylists() {
   // Count sample stylists per location
   const northMesaCount = sampleStylists.filter(s => s.locations.includes('north-mesa' as any)).length;
   const valVistaCount = sampleStylists.filter(s => s.locations.includes('val-vista-lakes' as any)).length;
+  
+  // Get ordered stylists for display
+  const displayStylists = orderedIds 
+    ? orderedIds.map(id => visibleStylists.find(s => s.id === id)).filter(Boolean) as StylistProfile[]
+    : visibleStylists;
+  
+  const hasOrderChanges = orderedIds !== null;
+  
+  const handleReorder = (newOrderedIds: string[]) => {
+    setOrderedIds(newOrderedIds);
+  };
+  
+  const handleSaveOrder = () => {
+    if (orderedIds) {
+      updateOrder.mutate(orderedIds, {
+        onSuccess: () => {
+          setOrderedIds(null);
+        },
+      });
+    }
+  };
+  
+  const handleResetOrder = () => {
+    setOrderedIds(null);
+  };
   
   const handleToggleSampleCards = () => {
     updateSettings.mutate(
@@ -368,11 +463,16 @@ export default function HomepageStylists() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4">
-                {visibleStylists.map(stylist => (
-                  <StylistCard key={stylist.id} stylist={stylist} />
-                ))}
-              </div>
+              <ReorderableStylistList
+                stylists={displayStylists}
+                onReorder={handleReorder}
+                onToggleVisibility={(userId, visible) => updateVisibility.mutate({ userId, visible })}
+                onSaveOrder={handleSaveOrder}
+                onResetOrder={handleResetOrder}
+                isUpdating={updateVisibility.isPending}
+                isSaving={updateOrder.isPending}
+                hasChanges={hasOrderChanges}
+              />
             )}
           </TabsContent>
         </Tabs>

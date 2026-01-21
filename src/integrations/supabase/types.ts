@@ -686,6 +686,7 @@ export type Database = {
           full_name: string
           highlighted_services: string[] | null
           hire_date: string | null
+          homepage_order: number | null
           homepage_requested: boolean | null
           homepage_requested_at: string | null
           homepage_visible: boolean | null
@@ -723,6 +724,7 @@ export type Database = {
           full_name: string
           highlighted_services?: string[] | null
           hire_date?: string | null
+          homepage_order?: number | null
           homepage_requested?: boolean | null
           homepage_requested_at?: string | null
           homepage_visible?: boolean | null
@@ -760,6 +762,7 @@ export type Database = {
           full_name?: string
           highlighted_services?: string[] | null
           hire_date?: string | null
+          homepage_order?: number | null
           homepage_requested?: boolean | null
           homepage_requested_at?: string | null
           homepage_visible?: boolean | null
