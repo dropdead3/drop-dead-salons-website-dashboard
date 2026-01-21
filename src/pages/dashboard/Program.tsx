@@ -625,9 +625,9 @@ export default function Program() {
                   className="w-full justify-start"
                   asChild
                 >
-                  <Link to="/dashboard/ring-the-bell">
+                  <Link to="/dashboard/training">
                     <ChevronRight className="w-4 h-4 mr-2" />
-                    Ring the Bell
+                    See Content Ideas
                   </Link>
                 </Button>
               </div>
