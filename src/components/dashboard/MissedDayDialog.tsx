@@ -234,12 +234,12 @@ export function MissedDayDialog({
                 
                 <Button 
                   onClick={() => setShowConfirmDialog(true)} 
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-xl"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-xl group overflow-hidden"
                   disabled={isLoading || isExpired}
                   size="lg"
                 >
-                  <Heart className="mr-2 h-4 w-4" />
-                  Use Pass & Continue
+                  <Heart className="h-4 w-4 mr-2 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out" />
+                  <span className="group-hover:translate-x-0 -translate-x-3 transition-transform duration-300 ease-out">Use Pass & Continue</span>
                 </Button>
               </div>
             )}
