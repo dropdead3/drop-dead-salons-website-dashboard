@@ -383,7 +383,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       className="flex flex-col h-full overflow-y-auto"
       onScroll={(e) => {
         const target = e.currentTarget;
-        setIsScrolled(target.scrollTop > 50);
+        const scrolled = target.scrollTop > 50;
+        console.log('Sidebar scroll:', target.scrollTop, 'isScrolled:', scrolled);
+        setIsScrolled(scrolled);
       }}
     >
       {/* Logo with scroll animation */}
