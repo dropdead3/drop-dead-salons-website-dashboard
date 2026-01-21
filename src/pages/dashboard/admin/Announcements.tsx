@@ -31,7 +31,8 @@ import {
   AlertTriangle,
   Info,
   AlertCircle,
-  Bell
+  Bell,
+  ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,6 +60,14 @@ const priorityConfig: Record<Priority, { label: string; icon: React.ReactNode; c
   normal: { label: 'Normal', icon: <Bell className="w-4 h-4" />, color: 'text-blue-600' },
   high: { label: 'High', icon: <AlertCircle className="w-4 h-4" />, color: 'text-orange-600' },
   urgent: { label: 'Urgent', icon: <AlertTriangle className="w-4 h-4" />, color: 'text-red-600' },
+};
+
+const normalizeUrl = (url: string): string => {
+  if (!url) return url;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return `https://${url}`;
 };
 
 export default function Announcements() {
@@ -288,6 +297,17 @@ export default function Announcements() {
                     <p className="text-sm text-muted-foreground font-sans whitespace-pre-wrap">
                       {announcement.content}
                     </p>
+                    {announcement.link_url && announcement.link_label && (
+                      <a 
+                        href={normalizeUrl(announcement.link_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 text-xs font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity"
+                      >
+                        {announcement.link_label}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
                     <p className="text-xs text-muted-foreground mt-4">
                       Posted {format(new Date(announcement.created_at), 'MMM d, yyyy h:mm a')}
                       {announcement.expires_at && (
