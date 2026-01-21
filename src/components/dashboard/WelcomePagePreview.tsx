@@ -7,16 +7,21 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
 import { 
   Eye, 
   Paintbrush, 
   Type, 
   Layout,
-  Sparkles
+  Sparkles,
+  ChevronDown,
+  ExternalLink
 } from 'lucide-react';
 import { ClientEngineWelcome } from './ClientEngineWelcome';
 import { ProgramLogoEditor } from './ProgramLogoEditor';
 import { ProgramConfig } from '@/hooks/useProgramConfig';
+import { Link } from 'react-router-dom';
 
 interface WelcomePageConfig {
   headline: string;
@@ -163,56 +168,131 @@ export function WelcomePagePreview({ previewConfig, onLogoChange, onLogoSizeChan
               <h3 className="font-display text-sm tracking-wide">LAYOUT</h3>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Show Highlights Grid</Label>
-                  <p className="text-xs text-muted-foreground">Display the 4 program highlights</p>
+            <div className="space-y-2">
+              {/* Highlights Grid */}
+              <Collapsible>
+                <div className="flex items-center justify-between py-3">
+                  <CollapsibleTrigger asChild>
+                    <button className="flex items-center gap-2 text-left hover:text-primary transition-colors group">
+                      <ChevronDown className="w-4 h-4 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+                      <div>
+                        <Label className="cursor-pointer">Show Highlights Grid</Label>
+                        <p className="text-xs text-muted-foreground">Display the 4 program highlights</p>
+                      </div>
+                    </button>
+                  </CollapsibleTrigger>
+                  <Switch
+                    checked={config.showHighlights}
+                    onCheckedChange={(checked) => setConfig({ ...config, showHighlights: checked })}
+                  />
                 </div>
-                <Switch
-                  checked={config.showHighlights}
-                  onCheckedChange={(checked) => setConfig({ ...config, showHighlights: checked })}
-                />
-              </div>
+                <CollapsibleContent className="pl-6 pb-3">
+                  <div className="bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground">
+                    <p className="mb-2">The highlights grid shows 4 key program features:</p>
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                      <li>75 Consecutive Days</li>
+                      <li>Streak-Based System</li>
+                      <li>Life Happens Passes</li>
+                      <li>Weekly Wins</li>
+                    </ul>
+                    <p className="mt-3 text-xs italic">Highlight content is based on program settings.</p>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               <Separator />
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Show Tasks Preview</Label>
-                  <p className="text-xs text-muted-foreground">Preview daily tasks in the commitment section</p>
+              {/* Tasks Preview */}
+              <Collapsible>
+                <div className="flex items-center justify-between py-3">
+                  <CollapsibleTrigger asChild>
+                    <button className="flex items-center gap-2 text-left hover:text-primary transition-colors group">
+                      <ChevronDown className="w-4 h-4 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+                      <div>
+                        <Label className="cursor-pointer">Show Tasks Preview</Label>
+                        <p className="text-xs text-muted-foreground">Preview daily tasks in the commitment section</p>
+                      </div>
+                    </button>
+                  </CollapsibleTrigger>
+                  <Switch
+                    checked={config.showTasksPreview}
+                    onCheckedChange={(checked) => setConfig({ ...config, showTasksPreview: checked })}
+                  />
                 </div>
-                <Switch
-                  checked={config.showTasksPreview}
-                  onCheckedChange={(checked) => setConfig({ ...config, showTasksPreview: checked })}
-                />
-              </div>
+                <CollapsibleContent className="pl-6 pb-3">
+                  <div className="bg-muted/30 rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground mb-3">Tasks shown are pulled from your program configuration.</p>
+                    <Button variant="outline" size="sm" asChild className="gap-2">
+                      <Link to="/dashboard/admin/program-editor?tab=tasks">
+                        <ExternalLink className="w-3 h-3" />
+                        Edit Daily Tasks
+                      </Link>
+                    </Button>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               <Separator />
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Show Rules Preview</Label>
-                  <p className="text-xs text-muted-foreground">Preview program rules in the commitment section</p>
+              {/* Rules Preview */}
+              <Collapsible>
+                <div className="flex items-center justify-between py-3">
+                  <CollapsibleTrigger asChild>
+                    <button className="flex items-center gap-2 text-left hover:text-primary transition-colors group">
+                      <ChevronDown className="w-4 h-4 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+                      <div>
+                        <Label className="cursor-pointer">Show Rules Preview</Label>
+                        <p className="text-xs text-muted-foreground">Preview program rules in the commitment section</p>
+                      </div>
+                    </button>
+                  </CollapsibleTrigger>
+                  <Switch
+                    checked={config.showRulesPreview}
+                    onCheckedChange={(checked) => setConfig({ ...config, showRulesPreview: checked })}
+                  />
                 </div>
-                <Switch
-                  checked={config.showRulesPreview}
-                  onCheckedChange={(checked) => setConfig({ ...config, showRulesPreview: checked })}
-                />
-              </div>
+                <CollapsibleContent className="pl-6 pb-3">
+                  <div className="bg-muted/30 rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground mb-3">Rules shown are pulled from your program configuration.</p>
+                    <Button variant="outline" size="sm" asChild className="gap-2">
+                      <Link to="/dashboard/admin/program-editor?tab=rules">
+                        <ExternalLink className="w-3 h-3" />
+                        Edit Program Rules
+                      </Link>
+                    </Button>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               <Separator />
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Show Warning Banner</Label>
-                  <p className="text-xs text-muted-foreground">Display the "Only begin when ready" warning</p>
+              {/* Warning Banner */}
+              <Collapsible>
+                <div className="flex items-center justify-between py-3">
+                  <CollapsibleTrigger asChild>
+                    <button className="flex items-center gap-2 text-left hover:text-primary transition-colors group">
+                      <ChevronDown className="w-4 h-4 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" />
+                      <div>
+                        <Label className="cursor-pointer">Show Warning Banner</Label>
+                        <p className="text-xs text-muted-foreground">Display the "Only begin when ready" warning</p>
+                      </div>
+                    </button>
+                  </CollapsibleTrigger>
+                  <Switch
+                    checked={config.showWarningBanner}
+                    onCheckedChange={(checked) => setConfig({ ...config, showWarningBanner: checked })}
+                  />
                 </div>
-                <Switch
-                  checked={config.showWarningBanner}
-                  onCheckedChange={(checked) => setConfig({ ...config, showWarningBanner: checked })}
-                />
-              </div>
+                <CollapsibleContent className="pl-6 pb-3">
+                  <div className="bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground">
+                    <p className="mb-2">The warning banner displays:</p>
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-xs">
+                      <p className="font-medium text-foreground mb-1">Only begin when you're ready</p>
+                      <p>This program requires consecutive days of execution. Miss a day and you restart from Day 1.</p>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </Card>
 
