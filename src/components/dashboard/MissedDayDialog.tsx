@@ -155,20 +155,20 @@ export function MissedDayDialog({
         <Separator />
 
         <div className="space-y-3">
-          {/* Forgive Me Credit Option */}
+          {/* Life Happens Pass Option */}
           {canUseCredit && (
             <div className="border rounded-lg p-4 space-y-3 bg-primary/5 border-primary/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Use a "Forgive Me" Credit</span>
+                  <span className="font-medium">Use a Life Happens Pass</span>
                 </div>
                 <Badge variant="secondary">
                   {forgiveCreditsRemaining} left
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Continue from where you left off without restarting. You only have 2 credits for the entire program.
+                Continue from where you left off without restarting. You only have 2 passes for the entire program.
               </p>
               {timeRemaining && (
                 <div className="flex items-center gap-1.5 text-sm text-amber-600">
@@ -191,7 +191,7 @@ export function MissedDayDialog({
             <div className="border rounded-lg p-4 bg-muted/30">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Shield className="h-5 w-5" />
-                <span className="text-sm">No "Forgive Me" credits remaining</span>
+                <span className="text-sm">No Life Happens Passes remaining</span>
               </div>
             </div>
           )}
