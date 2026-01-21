@@ -69,24 +69,29 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                 const displayItems = (stylist.highlighted_services && stylist.highlighted_services.length > 0)
                   ? stylist.highlighted_services.slice(0, 3)
                   : [...stylist.specialties].sort((a, b) => {
-                      if (a === "EXTENSIONS") return -1;
-                      if (b === "EXTENSIONS") return 1;
+                      if (a.toUpperCase() === "EXTENSIONS") return -1;
+                      if (b.toUpperCase() === "EXTENSIONS") return 1;
                       return 0;
-                    });
+                    }).slice(0, 3);
                 
-                return displayItems.map((item) => (
-                  <span
-                    key={item}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-full ${
-                      item === "EXTENSIONS" || stylist.specialties.includes("EXTENSIONS")
-                        ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
-                        : "bg-background/70 text-foreground"
-                    }`}
-                  >
-                    {item === "EXTENSIONS" && <Star className="w-3 h-3 fill-current" />}
-                    {toTitleCase(item)}
-                  </span>
-                ));
+                return displayItems.map((item) => {
+                  const isExtensions = item.toUpperCase() === "EXTENSIONS";
+                  
+                  return (
+                    <span
+                      key={item}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-full",
+                        isExtensions
+                          ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
+                          : "bg-background/70 text-foreground border border-border/30"
+                      )}
+                    >
+                      {isExtensions && <Star className="w-3 h-3 fill-current" />}
+                      {toTitleCase(item)}
+                    </span>
+                  );
+                });
               })()}
             </div>
             
