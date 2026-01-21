@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { ColoredLogo } from './ColoredLogo';
 import { useProgramConfig, useProgramRules, useDailyTasks, ProgramConfig } from '@/hooks/useProgramConfig';
+import { useProgramOutcomes, ProgramOutcome } from '@/hooks/useProgramOutcomes';
+import { icons } from 'lucide-react';
 
 interface WelcomePageContent {
   headline?: string;
@@ -39,6 +41,7 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
   const { config: savedConfig } = useProgramConfig();
   const { rules } = useProgramRules();
   const { tasks } = useDailyTasks();
+  const { data: outcomes = [] } = useProgramOutcomes();
   const [isHovered, setIsHovered] = useState(false);
 
   // Use previewConfig (unsaved state) if provided, otherwise fall back to saved config
@@ -78,6 +81,16 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
       description: 'Celebrate milestones every 7 days'
     }
   ];
+
+  // Helper function to render dynamic icons
+  const renderIcon = (iconName: string) => {
+    const iconKey = iconName
+      .split('-')
+      .map((part, i) => i === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))
+      .join('') as keyof typeof icons;
+    const IconComponent = icons[iconKey] || icons['Sparkles'];
+    return <IconComponent className="w-4 h-4 text-primary" />;
+  };
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -247,45 +260,17 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
             </div>
             
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4 text-primary" />
+              {outcomes.map((outcome) => (
+                <div key={outcome.id} className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    {renderIcon(outcome.icon)}
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">{outcome.title}</p>
+                    <p className="text-xs text-muted-foreground">{outcome.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-sm mb-1">Consistent Content Creation</p>
-                  <p className="text-xs text-muted-foreground">Build the habit of daily content that attracts your ideal clients</p>
-                </div>
-              </div>
-              
-              <div className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm mb-1">Increased Bookings</p>
-                  <p className="text-xs text-muted-foreground">Convert more leads into paying clients with proven follow-up systems</p>
-                </div>
-              </div>
-              
-              <div className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Users className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm mb-1">Stronger Client Relationships</p>
-                  <p className="text-xs text-muted-foreground">Master communication that builds loyalty and referrals</p>
-                </div>
-              </div>
-              
-              <div className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Award className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm mb-1">Professional Growth</p>
-                  <p className="text-xs text-muted-foreground">Develop discipline and skills that set you apart in the industry</p>
-                </div>
-              </div>
+              ))}
             </div>
           </Card>
         </motion.div>
