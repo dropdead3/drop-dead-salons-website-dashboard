@@ -44,7 +44,7 @@ export function Layout({ children }: LayoutProps) {
         style={{ marginBottom: footerHeight }}
       >
         <Header />
-        <main className="flex-1 bg-background overflow-hidden">
+        <main className="flex-1 bg-background">
           <PageTransition>{children}</PageTransition>
         </main>
       </div>

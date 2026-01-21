@@ -67,7 +67,7 @@ export const NewClientSection = () => {
         <motion.div 
           ref={scrollRef}
           data-theme="light"
-          className="bg-secondary rounded-2xl p-12 md:p-16 lg:p-20"
+          className="bg-secondary rounded-2xl p-12 md:p-16 lg:p-20 overflow-visible"
           style={{ opacity, y, filter: blurFilter }}
         >
           <div ref={contentRef} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 lg:gap-16">
