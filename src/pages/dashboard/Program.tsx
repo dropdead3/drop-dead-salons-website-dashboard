@@ -82,16 +82,16 @@ export default function Program() {
     loading: weeklyLoading,
   } = useWeeklyAssignments(enrollment?.id, enrollment?.current_day || 1);
   
-  const [hasEnrollment, setHasEnrollment] = useState(false);
+  const [hasEnrollment, setHasEnrollment] = useState<boolean | null>(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [weeklyExpanded, setWeeklyExpanded] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check enrollment when data loads
-  if (!loading && enrollment && !hasEnrollment) {
-    setHasEnrollment(true);
+  // Check enrollment when data loads - only set to true if not explicitly set to false
+  if (!loading && hasEnrollment === null) {
+    setHasEnrollment(!!enrollment);
   }
 
   const startProgram = async () => {
@@ -162,7 +162,7 @@ export default function Program() {
     setSubmitting(false);
   };
 
-  if (loading) {
+  if (loading || hasEnrollment === null) {
     return (
       <DashboardLayout>
         <div className="p-6 lg:p-8 flex items-center justify-center min-h-[60vh]">
@@ -172,7 +172,7 @@ export default function Program() {
     );
   }
 
-  if (!hasEnrollment) {
+  if (hasEnrollment === false) {
     return (
       <DashboardLayout>
         <ClientEngineWelcome onStartProgram={startProgram} />
