@@ -23,8 +23,9 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { TogglePill } from "@/components/ui/toggle-pill";
 import { StylistFlipCard } from "./StylistFlipCard";
 import { useActiveLocations } from "@/hooks/useLocations";
+import { useHomepageStylists } from "@/hooks/useHomepageStylists";
 
-import { stylists, locations as staticLocations, allSpecialties, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
+import { locations as staticLocations, stylistLevels, getLocationName, type Stylist, type Location } from "@/data/stylists";
 
 // Helper to convert text to title case
 const toTitleCase = (str: string) => {
@@ -401,8 +402,40 @@ export function StylistsSection() {
   
   const [isFormExpanded, setIsFormExpanded] = useState(false);
 
+  // Fetch stylists from database
+  const { data: dbStylists, isLoading: stylistsLoading } = useHomepageStylists();
+
   // Fetch locations from database
   const { data: dbLocations } = useActiveLocations();
+  
+  // Transform database stylists to match Stylist type
+  const stylists: Stylist[] = useMemo(() => {
+    if (!dbStylists) return [];
+    return dbStylists.map(s => ({
+      id: s.id,
+      name: s.display_name || s.full_name,
+      instagram: s.instagram || "",
+      tiktok: s.tiktok || undefined,
+      level: s.stylist_level || "LEVEL 1 STYLIST",
+      specialties: s.specialties || [],
+      highlighted_services: s.highlighted_services || undefined,
+      imageUrl: s.photo_url || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=800&fit=crop",
+      locations: (s.location_ids && s.location_ids.length > 0 ? s.location_ids : (s.location_id ? [s.location_id] : [])) as Location[],
+      isBooking: s.is_booking ?? true,
+      bio: s.bio || undefined,
+    }));
+  }, [dbStylists]);
+
+  // Derive unique specialties from database stylists
+  const allSpecialties = useMemo(() => {
+    const specs = new Set<string>();
+    stylists.forEach(s => s.specialties.forEach(spec => specs.add(spec)));
+    return Array.from(specs).sort((a, b) => {
+      if (a === "EXTENSIONS") return -1;
+      if (b === "EXTENSIONS") return 1;
+      return a.localeCompare(b);
+    });
+  }, [stylists]);
   
   // Merge database locations with static locations for tooltip info
   const locations = useMemo(() => {
@@ -460,7 +493,7 @@ export function StylistsSection() {
       return matchesLocation && matchesSpecialty && matchesLevel;
     });
     return shuffleArray(filtered, randomSeed);
-  }, [selectedLocation, selectedSpecialty, selectedLevel, randomSeed, shuffleArray]);
+  }, [stylists, selectedLocation, selectedSpecialty, selectedLevel, randomSeed, shuffleArray]);
 
   const handleToggleFormExpand = useCallback(() => {
     startTransition(() => {

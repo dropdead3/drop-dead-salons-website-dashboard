@@ -13,6 +13,7 @@ export interface HomepageStylist {
   specialties: string[] | null;
   highlighted_services: string[] | null;
   location_id: string | null;
+  location_ids: string[] | null;
   is_booking: boolean | null;
   bio: string | null;
 }
@@ -23,7 +24,7 @@ export function useHomepageStylists() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('id, user_id, full_name, display_name, photo_url, instagram, tiktok, stylist_level, specialties, highlighted_services, location_id, is_booking, bio')
+        .select('id, user_id, full_name, display_name, photo_url, instagram, tiktok, stylist_level, specialties, highlighted_services, location_id, location_ids, is_booking, bio')
         .eq('is_active', true)
         .eq('homepage_visible', true)
         .order('stylist_level', { ascending: false });
