@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+
+const rotatingWords = ["Salon", "Extensions", "Blonding", "Color", "Results"];
 
 interface HeroSectionProps {
   videoSrc?: string;
@@ -12,6 +14,53 @@ interface HeroSectionProps {
 export function HeroSection({ videoSrc }: HeroSectionProps) {
   const [consultationOpen, setConsultationOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  
+  // Typewriter state
+  const [displayText, setDisplayText] = useState("Salon");
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [animationStarted, setAnimationStarted] = useState(false);
+
+  // Start typewriter after initial animations complete
+  useEffect(() => {
+    const startDelay = setTimeout(() => {
+      setAnimationStarted(true);
+    }, 5000); // Start after heading animation completes
+    
+    return () => clearTimeout(startDelay);
+  }, []);
+
+  // Typewriter effect
+  useEffect(() => {
+    if (!animationStarted) return;
+
+    const currentWord = rotatingWords[currentWordIndex];
+    const typingSpeed = isDeleting ? 50 : 80;
+    const pauseDuration = 2000;
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        // Typing
+        if (displayText.length < currentWord.length) {
+          setDisplayText(currentWord.slice(0, displayText.length + 1));
+        } else {
+          // Word complete, pause then start deleting
+          setTimeout(() => setIsDeleting(true), pauseDuration);
+        }
+      } else {
+        // Deleting
+        if (displayText.length > 0) {
+          setDisplayText(displayText.slice(0, -1));
+        } else {
+          // Move to next word
+          setIsDeleting(false);
+          setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+        }
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, currentWordIndex, animationStarted]);
   
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -136,12 +185,13 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               </motion.span>
               {" "}
               <motion.span
-                className="inline-block"
+                className="inline-block min-w-[160px] md:min-w-[280px] lg:min-w-[360px] text-left"
                 initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 3.0 }}
               >
-                Salon
+                {displayText}
+                <span className="animate-pulse ml-0.5 opacity-70">|</span>
               </motion.span>
             </motion.h1>
 
