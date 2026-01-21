@@ -254,38 +254,40 @@ export default function StylistLevels() {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-display font-bold">Stylist Levels</h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Manage experience levels and pricing tiers
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {hasChanges && (
-              <>
-                <Button 
-                  variant="ghost"
-                  onClick={handleDiscard}
-                >
-                  Discard
-                </Button>
-                <Button 
-                  className="gap-2" 
-                  onClick={handleSave}
-                  disabled={saveLevels.isPending}
-                >
-                  {saveLevels.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  Save Changes
-                </Button>
-              </>
-            )}
+        {/* Header - Sticky */}
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm -mx-6 px-6 py-4 -mt-6 mb-2 border-b border-transparent transition-all duration-200" style={{ borderColor: 'transparent' }}>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-display font-bold">Stylist Levels</h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Manage experience levels and pricing tiers
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {hasChanges && (
+                <>
+                  <Button 
+                    variant="ghost"
+                    onClick={handleDiscard}
+                  >
+                    Discard
+                  </Button>
+                  <Button 
+                    className="gap-2" 
+                    onClick={handleSave}
+                    disabled={saveLevels.isPending}
+                  >
+                    {saveLevels.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Changes
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
