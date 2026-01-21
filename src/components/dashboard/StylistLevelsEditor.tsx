@@ -185,7 +185,7 @@ export function StylistLevelsEditor({
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-3 py-4 max-h-[400px] overflow-y-auto">
+          <div className="space-y-3 py-4 pr-2 mr-1 max-h-[400px] overflow-y-auto scrollbar-thin">
             {editingLevels.map((level, index) => (
               <div
                 key={level.slug}
