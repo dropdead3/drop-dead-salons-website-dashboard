@@ -662,34 +662,30 @@ export function StylistsSection() {
                 VIEW BY SPECIALTY
               </Eyebrow>
               <div className="flex flex-wrap justify-center gap-2">
-                <motion.button
+                <button
                   onClick={() => setSelectedSpecialty(null)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  animate={{
-                    backgroundColor: selectedSpecialty === null ? "hsl(var(--foreground))" : "hsl(var(--background))",
-                    color: selectedSpecialty === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
-                  }}
-                  transition={{ duration: 0.2 }}
-                  className="px-5 py-2.5 text-sm font-medium border border-border rounded-full"
+                  className={cn(
+                    "px-5 py-2.5 text-sm font-medium border border-border rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
+                    selectedSpecialty === null 
+                      ? "bg-foreground text-background" 
+                      : "bg-background text-foreground"
+                  )}
                 >
                   All
-                </motion.button>
+                </button>
                 {allSpecialties.map((specialty) => (
-                  <motion.button
+                  <button
                     key={specialty}
                     onClick={() => setSelectedSpecialty(specialty)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    animate={{
-                      backgroundColor: selectedSpecialty === specialty ? "hsl(var(--foreground))" : "hsl(var(--background))",
-                      color: selectedSpecialty === specialty ? "hsl(var(--background))" : "hsl(var(--foreground))",
-                    }}
-                    transition={{ duration: 0.2 }}
-                    className="px-5 py-2.5 text-sm font-medium border border-border rounded-full"
+                    className={cn(
+                      "px-5 py-2.5 text-sm font-medium border border-border rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
+                      selectedSpecialty === specialty 
+                        ? "bg-foreground text-background" 
+                        : "bg-background text-foreground"
+                    )}
                   >
                     {toTitleCase(specialty)}
-                  </motion.button>
+                  </button>
                 ))}
               </div>
             </div>
@@ -721,34 +717,30 @@ export function StylistsSection() {
                 </TooltipProvider>
               </div>
               <div className="flex flex-wrap justify-center gap-2">
-                <motion.button
+                <button
                   onClick={() => setSelectedLevel(null)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  animate={{
-                    backgroundColor: selectedLevel === null ? "hsl(var(--foreground))" : "hsl(var(--background))",
-                    color: selectedLevel === null ? "hsl(var(--background))" : "hsl(var(--foreground))",
-                  }}
-                  transition={{ duration: 0.2 }}
-                  className="px-5 py-2.5 text-sm font-medium border border-border rounded-full"
+                  className={cn(
+                    "px-5 py-2.5 text-sm font-medium border border-border rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
+                    selectedLevel === null 
+                      ? "bg-foreground text-background" 
+                      : "bg-background text-foreground"
+                  )}
                 >
                   All Levels
-                </motion.button>
+                </button>
                 {stylistLevels.map((level) => (
-                  <motion.button
+                  <button
                     key={level.id}
                     onClick={() => setSelectedLevel(level.id)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    animate={{
-                      backgroundColor: selectedLevel === level.id ? "hsl(var(--foreground))" : "hsl(var(--background))",
-                      color: selectedLevel === level.id ? "hsl(var(--background))" : "hsl(var(--foreground))",
-                    }}
-                    transition={{ duration: 0.2 }}
-                    className="px-5 py-2.5 text-sm font-medium border border-border rounded-full"
+                    className={cn(
+                      "px-5 py-2.5 text-sm font-medium border border-border rounded-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
+                      selectedLevel === level.id 
+                        ? "bg-foreground text-background" 
+                        : "bg-background text-foreground"
+                    )}
                   >
                     <span>{level.name}</span>
-                  </motion.button>
+                  </button>
                 ))}
               </div>
             </div>
