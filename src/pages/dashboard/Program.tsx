@@ -15,12 +15,24 @@ import {
   Play,
   Lock,
   Loader2,
-  ImageIcon
+  ImageIcon,
+  RotateCcw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import DD75Logo from '@/assets/dd75-logo.svg';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function Program() {
   const { user } = useAuth();
@@ -38,6 +50,7 @@ export default function Program() {
   const [hasEnrollment, setHasEnrollment] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [restarting, setRestarting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check enrollment when data loads
@@ -67,6 +80,35 @@ export default function Program() {
       setHasEnrollment(true);
       refetch();
     }
+  };
+
+  const restartProgram = async () => {
+    if (!user || !enrollment) return;
+    
+    setRestarting(true);
+    
+    const { error } = await supabase
+      .from('stylist_program_enrollment')
+      .update({
+        current_day: 1,
+        streak_count: 0,
+        status: 'active',
+        restart_count: (enrollment.restart_count || 0) + 1,
+        start_date: new Date().toISOString().split('T')[0],
+        last_completion_date: null,
+        weekly_wins_due_day: 7,
+      })
+      .eq('id', enrollment.id);
+
+    if (error) {
+      console.error('Error restarting program:', error);
+      toast.error('Failed to restart program');
+    } else {
+      toast.success('Program restarted! You\'re back on Day 1');
+      refetch();
+    }
+    
+    setRestarting(false);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,12 +201,57 @@ export default function Program() {
       <div className="p-6 lg:p-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-2">
-            <h1 className="font-display text-3xl lg:text-4xl">
-              DAY {enrollment?.current_day}
-            </h1>
-            <span className="text-sm text-muted-foreground font-sans">of 75</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              <h1 className="font-display text-3xl lg:text-4xl">
+                DAY {enrollment?.current_day}
+              </h1>
+              <span className="text-sm text-muted-foreground font-sans">of 75</span>
+            </div>
+            
+            {/* Restart Button */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  disabled={restarting}
+                  className="text-muted-foreground hover:text-destructive hover:border-destructive"
+                >
+                  {restarting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                  )}
+                  Restart
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Restart the 75-Day Program?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will reset your progress back to Day 1. Your streak will be reset to 0 
+                    and you'll start fresh. This action cannot be undone.
+                    {enrollment && enrollment.restart_count > 0 && (
+                      <span className="block mt-2 text-muted-foreground">
+                        You've restarted {enrollment.restart_count} time{enrollment.restart_count > 1 ? 's' : ''} before.
+                      </span>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={restartProgram}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Yes, Restart Program
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
+          
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm font-sans">
               <Flame className="w-4 h-4 text-orange-500" />
