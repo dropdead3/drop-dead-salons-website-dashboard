@@ -316,7 +316,7 @@ export default function StylistLevels() {
             </a>
             . To adjust or edit level pricing, you can do so in the{' '}
             <a 
-              href="/services" 
+              href="/dashboard/admin/services-manager" 
               className="text-primary hover:underline"
             >
               Services editor
