@@ -352,10 +352,10 @@ export function Header() {
                     <Link
                       to="/booking"
                       className={cn(
-                        "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-full border-2 transition-all duration-300 active:scale-[0.98] hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg",
+                        "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-full border transition-all duration-300 active:scale-[0.98] hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg",
                         isOverDark 
-                          ? "bg-transparent border-white text-white hover:bg-white hover:text-black" 
-                          : "bg-background border-foreground text-foreground hover:bg-foreground hover:text-background"
+                          ? "bg-transparent border-white/40 text-white hover:bg-white/10 hover:border-white/60" 
+                          : "bg-transparent border-foreground/30 text-foreground hover:bg-foreground/5 hover:border-foreground/50"
                       )}
                     >
                       Book Consult
