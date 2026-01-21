@@ -1,6 +1,5 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import {
   Tooltip,
   TooltipContent,
@@ -77,22 +76,10 @@ export function TogglePill({
                 "relative z-10 flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors duration-200",
                 sizeClasses[size],
                 isSelected
-                  ? "text-background"
+                  ? "text-background bg-foreground"
                   : "text-foreground/60 hover:text-foreground/80"
               )}
             >
-              {isSelected && (
-                <motion.div
-                  layoutId={`toggle-pill-active-${layoutId}`}
-                  className="absolute inset-0 bg-foreground rounded-full"
-                  initial={false}
-                  transition={{
-                    type: "spring",
-                    stiffness: 500,
-                    damping: 35,
-                  }}
-                />
-              )}
               <span className="relative z-10 flex items-center gap-1.5">
                 {option.icon}
                 {option.label}
