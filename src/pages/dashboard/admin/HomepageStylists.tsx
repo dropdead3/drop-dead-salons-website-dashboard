@@ -176,6 +176,7 @@ function useUpdateHomepageVisibility() {
       queryClient.invalidateQueries({ queryKey: ['homepage-pending-requests'] });
       queryClient.invalidateQueries({ queryKey: ['homepage-visible-stylists'] });
       queryClient.invalidateQueries({ queryKey: ['homepage-stylists'] });
+      queryClient.invalidateQueries({ queryKey: ['all-stylists-for-homepage'] });
       toast.success(visible ? 'Stylist added to homepage' : 'Stylist removed from homepage');
     },
     onError: (error) => {
