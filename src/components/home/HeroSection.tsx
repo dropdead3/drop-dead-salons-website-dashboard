@@ -23,6 +23,10 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   const blur = useTransform(scrollYProgress, [0, 0.5], [0, 20]);
   const blurFilter = useTransform(blur, (v) => `blur(${v}px)`);
   
+  // Heading-specific blur (starts earlier, more intense)
+  const headingBlur = useTransform(scrollYProgress, [0, 0.3], [0, 15]);
+  const headingBlurFilter = useTransform(headingBlur, (v) => `blur(${v}px)`);
+  
   // Parallax transforms - different speeds for depth effect
   const taglineY = useTransform(scrollYProgress, [0, 1], [0, -50]);
   const headlineY = useTransform(scrollYProgress, [0, 1], [0, -100]);
@@ -120,7 +124,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
             {/* Main headline - Split into two lines for stagger effect */}
             <motion.h1
               className="font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-normal text-foreground leading-[0.95]"
-              style={{ y: headlineY }}
+              style={{ y: headlineY, filter: headingBlurFilter }}
             >
               <motion.span 
                 className="whitespace-nowrap inline-block"
