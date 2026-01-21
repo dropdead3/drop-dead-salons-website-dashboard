@@ -592,7 +592,7 @@ export function StylistsSection() {
     <section ref={sectionRef} id="stylists-section" data-theme="light" className="relative py-20 lg:py-32 bg-secondary overflow-visible pb-0">
       {/* Gradient transition from previous section */}
       <div 
-        className="absolute top-0 left-0 right-0 h-40 sm:h-52 md:h-64 lg:h-80 -translate-y-full pointer-events-none"
+        className="absolute top-0 left-0 right-0 h-24 sm:h-32 md:h-40 -translate-y-full pointer-events-none"
         style={{ 
           background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)' 
         }}
