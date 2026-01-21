@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
 import { useWeeklyAssignments } from '@/hooks/useWeeklyAssignments';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { usePauseRequests } from '@/hooks/usePauseRequests';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { MissedDayDialog } from '@/components/dashboard/MissedDayDialog';
@@ -52,6 +53,9 @@ import {
 
 export default function Program() {
   const { user } = useAuth();
+  const { data: profile } = useEmployeeProfile();
+  const isSuperAdmin = profile?.is_super_admin;
+  
   const {
     enrollment,
     todayCompletion,
@@ -88,6 +92,46 @@ export default function Program() {
   const [restarting, setRestarting] = useState(false);
   const [weeklyExpanded, setWeeklyExpanded] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Super admin day navigation with arrow keys
+  const jumpToDay = useCallback(async (newDay: number) => {
+    if (!enrollment || !isSuperAdmin) return;
+    if (newDay < 1 || newDay > 75) return;
+    
+    const { error } = await supabase
+      .from('stylist_program_enrollment')
+      .update({ current_day: newDay })
+      .eq('id', enrollment.id);
+    
+    if (error) {
+      toast.error('Failed to change day');
+    } else {
+      toast.success(`Jumped to Day ${newDay}`);
+      refetch();
+    }
+  }, [enrollment, isSuperAdmin, refetch]);
+
+  useEffect(() => {
+    if (!isSuperAdmin || !enrollment) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      const currentDay = enrollment.current_day || 1;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        jumpToDay(currentDay - 1);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        jumpToDay(currentDay + 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSuperAdmin, enrollment, jumpToDay]);
 
   // Check enrollment when data loads - only set to true if not explicitly set to false
   if (!loading && hasEnrollment === null) {
