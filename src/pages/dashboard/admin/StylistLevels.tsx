@@ -301,8 +301,8 @@ export default function StylistLevels() {
                     </div>
 
                     {/* Level number - minimal */}
-                    <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
-                      {index + 1}
+                    <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                      Level {index + 1}
                     </span>
 
                     {/* Level name - editable or display */}
