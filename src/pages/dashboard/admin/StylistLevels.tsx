@@ -31,6 +31,7 @@ import {
   Info,
   Loader2,
   RefreshCw,
+  Palette,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -491,6 +492,61 @@ export default function StylistLevels() {
 
           {/* Right Column - Preview & Stats */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Color Progression Preview */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Palette className="w-4 h-4" />
+                <span>Color Progression</span>
+              </div>
+              
+              <div className="bg-card border rounded-xl p-4 space-y-4">
+                {/* Current levels */}
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium">Current ({levels.length} levels)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {levels.map((level, idx) => (
+                      <span 
+                        key={level.id}
+                        className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium transition-all",
+                          getLevelColor(idx, levels.length).bg,
+                          getLevelColor(idx, levels.length).text
+                        )}
+                      >
+                        {idx + 1}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Preview with +1 level */}
+                <div className="space-y-2 pt-3 border-t border-dashed">
+                  <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    <Plus className="w-3 h-3" />
+                    After adding a level ({levels.length + 1} levels)
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[...levels, { id: 'preview', label: 'New' }].map((_, idx) => (
+                      <span 
+                        key={idx}
+                        className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium transition-all",
+                          getLevelColor(idx, levels.length + 1).bg,
+                          getLevelColor(idx, levels.length + 1).text,
+                          idx === levels.length && "ring-2 ring-primary/30 ring-offset-1"
+                        )}
+                      >
+                        {idx + 1}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground/70 italic">
+                    Colors adjust to maintain progression
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Stylists Overview */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
