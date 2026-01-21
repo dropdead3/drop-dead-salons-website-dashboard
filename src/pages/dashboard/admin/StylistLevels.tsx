@@ -29,43 +29,56 @@ import {
   ChevronDown as ChevronDownIcon,
   Users,
   Info,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { stylistLevels as initialLevels } from '@/data/servicePricing';
+import {
+  useStylistLevels, 
+  useSaveStylistLevels,
+  StylistLevel 
+} from '@/hooks/useStylistLevels';
 
-type StylistLevel = {
+type LocalStylistLevel = {
   id: string;
+  dbId?: string;
+  slug: string;
   label: string;
   clientLabel: string;
   description: string;
 };
 
-const defaultDescriptions = [
-  'Rising talent building their craft',
-  'Skilled stylist with proven expertise',
-  'Master artist & senior specialist',
-  'Elite specialist & industry leader',
-  'Signature artist with distinguished reputation',
-  'Icon-level artist at the pinnacle of the craft',
-];
-
 export default function StylistLevels() {
-  const [levels, setLevels] = useState<StylistLevel[]>(() => 
-    initialLevels.map((l, idx) => ({ 
-      id: l.id, 
-      label: l.label, 
-      clientLabel: `Level ${idx + 1}`,
-      description: defaultDescriptions[idx] || 'Experienced stylist',
-    }))
-  );
+  const { data: dbLevels, isLoading, error, refetch } = useStylistLevels();
+  const saveLevels = useSaveStylistLevels();
+  
+  const [levels, setLevels] = useState<LocalStylistLevel[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [newLevelName, setNewLevelName] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [previewLevel, setPreviewLevel] = useState(0);
+
+  // Sync local state with database when data changes
+  useEffect(() => {
+    if (dbLevels && !hasChanges) {
+      const localLevels: LocalStylistLevel[] = dbLevels.map((l) => ({
+        id: l.slug,
+        dbId: l.id,
+        slug: l.slug,
+        label: l.label,
+        clientLabel: l.client_label,
+        description: l.description || '',
+      }));
+      setLevels(localLevels);
+    }
+  }, [dbLevels, hasChanges]);
+
+  // Note: Realtime subscription is handled by useStylistLevels hook
 
   // Fetch stylists with their levels to show counts
   const { data: stylistsByLevel } = useQuery({
@@ -145,34 +158,75 @@ export default function StylistLevels() {
     }));
     setLevels(updatedLevels);
     setHasChanges(true);
-    toast.success('Level deleted');
   };
 
   const handleAddNew = () => {
     if (!newLevelName.trim()) return;
     
-    const newId = newLevelName.toLowerCase().replace(/\s+/g, '-');
-    const newLevel: StylistLevel = {
-      id: newId,
+    const newSlug = newLevelName.toLowerCase().replace(/\s+/g, '-');
+    const newLevel: LocalStylistLevel = {
+      id: newSlug,
+      slug: newSlug,
       label: newLevelName.trim(),
       clientLabel: `Level ${levels.length + 1}`,
-      description: defaultDescriptions[levels.length] || 'Experienced stylist',
+      description: '',
     };
     
     setLevels([...levels, newLevel]);
     setNewLevelName('');
     setIsAddingNew(false);
     setHasChanges(true);
-    toast.success('Level added');
   };
 
-  const handleSave = () => {
-    // In a real implementation, this would save to the database
-    toast.success('Stylist levels saved successfully');
+  const handleSave = async () => {
+    const levelsToSave = levels.map((level, idx) => ({
+      id: level.dbId,
+      slug: level.slug,
+      label: level.label,
+      client_label: `Level ${idx + 1}`,
+      description: level.description || undefined,
+      display_order: idx,
+    }));
+
+    saveLevels.mutate(levelsToSave, {
+      onSuccess: () => {
+        setHasChanges(false);
+        toast.success('Stylist levels saved successfully');
+      },
+    });
+  };
+
+  const handleDiscard = () => {
     setHasChanges(false);
+    // This will trigger the useEffect to reset from DB
   };
 
-  const [previewLevel, setPreviewLevel] = useState(0);
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <p className="text-destructive">Failed to load stylist levels</p>
+          <Button 
+            variant="outline" 
+            onClick={() => refetch()}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -186,15 +240,30 @@ export default function StylistLevels() {
             </p>
           </div>
           
-          {hasChanges && (
-            <Button 
-              className="gap-2" 
-              onClick={handleSave}
-            >
-              <Save className="w-4 h-4" />
-              Save Changes
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {hasChanges && (
+              <>
+                <Button 
+                  variant="ghost"
+                  onClick={handleDiscard}
+                >
+                  Discard
+                </Button>
+                <Button 
+                  className="gap-2" 
+                  onClick={handleSave}
+                  disabled={saveLevels.isPending}
+                >
+                  {saveLevels.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Save Changes
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-5 gap-8">

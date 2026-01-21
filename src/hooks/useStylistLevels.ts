@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,7 +22,38 @@ export interface StylistLevelSimple {
   clientLabel: string;
 }
 
+// Hook to set up realtime subscription for stylist levels
+export function useStylistLevelsRealtime() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('stylist-levels-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stylist_levels',
+        },
+        () => {
+          // Invalidate all stylist-levels queries when changes occur
+          queryClient.invalidateQueries({ queryKey: ['stylist-levels'] });
+          queryClient.invalidateQueries({ queryKey: ['stylist-levels-all'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+}
+
 export function useStylistLevels() {
+  // Set up realtime subscription
+  useStylistLevelsRealtime();
+  
   return useQuery({
     queryKey: ['stylist-levels'],
     queryFn: async () => {
