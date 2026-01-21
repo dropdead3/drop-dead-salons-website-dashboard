@@ -514,7 +514,7 @@ export default function Program() {
         )}
 
         {/* Ring the Bell Call-out */}
-        <Card className="p-5 mb-8 border-0 bg-gradient-to-r from-[hsl(35,40%,88%)] to-[hsl(40,50%,75%)]">
+        <Card className="p-5 mb-8 border-0 bg-gradient-to-r from-[hsl(40,50%,75%)] to-[hsl(35,40%,88%)]">
           <div className="flex items-center gap-4 px-2">
             <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center flex-shrink-0">
               <Bell className="w-5 h-5 text-foreground" />
