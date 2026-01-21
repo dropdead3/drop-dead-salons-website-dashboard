@@ -78,7 +78,7 @@ export function TestimonialSection() {
       className="py-20 lg:py-32 overflow-hidden"
     >
       {/* Header */}
-      <div className="container mx-auto px-6 mb-10">
+      <div className="container mx-auto px-6 lg:px-12 mb-10">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div className="flex flex-col gap-3">
             <motion.div
