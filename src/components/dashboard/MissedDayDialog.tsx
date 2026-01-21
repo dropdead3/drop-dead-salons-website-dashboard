@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, Heart, Pause, RotateCcw, Clock, Shield } from 'lucide-react';
+import { AlertCircle, Heart, Pause, RotateCcw, Shield } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { LiveCountdown } from './LiveCountdown';
+import { UsePassConfirmDialog } from './UsePassConfirmDialog';
 
 interface MissedDayDialogProps {
   open: boolean;
@@ -36,23 +38,13 @@ export function MissedDayDialog({
   const [view, setView] = useState<'main' | 'pause'>('main');
   const [pauseReason, setPauseReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
 
-  const canUseCredit = forgiveCreditsRemaining > 0 && daysMissed <= 1;
-  
-  // Calculate time remaining for credit use (24 hours from miss)
-  const getTimeRemaining = () => {
-    if (!creditExpiresAt) return null;
-    const now = new Date();
-    const diff = creditExpiresAt.getTime() - now.getTime();
-    if (diff <= 0) return null;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
-  };
-
-  const timeRemaining = getTimeRemaining();
+  const canUseCredit = forgiveCreditsRemaining > 0 && daysMissed <= 1 && !isExpired;
 
   const handleUseCredit = async () => {
+    setShowConfirmDialog(false);
     setIsLoading(true);
     await onUseCredit();
     setIsLoading(false);
@@ -123,112 +115,129 @@ export function MissedDayDialog({
   }
 
   return (
-    <Dialog open={open}>
-      <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-            <AlertCircle className="h-8 w-8 text-destructive" />
+    <>
+      <Dialog open={open}>
+        <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader className="text-center space-y-3">
+            <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <DialogTitle className="text-2xl font-display uppercase tracking-wide">
+              You Missed {daysMissed} Day{daysMissed > 1 ? 's' : ''}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="text-center space-y-2">
+            <p className="text-muted-foreground">
+              The Client Engine is a <strong className="text-foreground">75-day consecutive challenge</strong>. 
+              When you miss a day, you must start over from Day 1.
+            </p>
           </div>
-          <DialogTitle className="text-2xl font-display uppercase tracking-wide">
-            You Missed {daysMissed} Day{daysMissed > 1 ? 's' : ''}
-          </DialogTitle>
-        </DialogHeader>
 
-        <div className="text-center space-y-2">
-          <p className="text-muted-foreground">
-            The Client Engine is a <strong className="text-foreground">75-day consecutive challenge</strong>. 
-            When you miss a day, you must start over from Day 1.
-          </p>
-        </div>
+          <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+            <h4 className="font-medium">Why the restart?</h4>
+            <p className="text-sm text-muted-foreground">
+              This program is designed to build <em>unbreakable habits</em>. 
+              Consistency is not optional—it's the foundation of a thriving book.
+            </p>
+            <p className="text-sm italic text-muted-foreground">
+              Things worth building are not easy.
+            </p>
+          </div>
 
-        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-          <h4 className="font-medium">Why the restart?</h4>
-          <p className="text-sm text-muted-foreground">
-            This program is designed to build <em>unbreakable habits</em>. 
-            Consistency is not optional—it's the foundation of a thriving book.
-          </p>
-          <p className="text-sm italic text-muted-foreground">
-            Things worth building are not easy.
-          </p>
-        </div>
+          <Separator />
 
-        <Separator />
-
-        <div className="space-y-3">
-          {/* Life Happens Pass Option */}
-          {canUseCredit && (
-            <div className="border rounded-lg p-4 space-y-3 bg-primary/5 border-primary/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Use a Life Happens Pass</span>
+          <div className="space-y-3">
+            {/* Life Happens Pass Option */}
+            {forgiveCreditsRemaining > 0 && daysMissed <= 1 && (
+              <div className={`border rounded-lg p-4 space-y-3 ${isExpired ? 'bg-muted/30 border-border' : 'bg-primary/5 border-primary/20'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className={`h-5 w-5 ${isExpired ? 'text-muted-foreground' : 'text-primary'}`} />
+                    <span className={`font-medium ${isExpired ? 'text-muted-foreground' : ''}`}>
+                      Use a Life Happens Pass
+                    </span>
+                  </div>
+                  <Badge variant="secondary">
+                    {forgiveCreditsRemaining} left
+                  </Badge>
                 </div>
-                <Badge variant="secondary">
-                  {forgiveCreditsRemaining} left
-                </Badge>
+                <p className="text-sm text-muted-foreground">
+                  Continue from where you left off without restarting. You only have 2 passes for the entire program.
+                </p>
+                {creditExpiresAt && !isExpired && (
+                  <LiveCountdown 
+                    expiresAt={creditExpiresAt} 
+                    onExpire={() => setIsExpired(true)}
+                  />
+                )}
+                {isExpired && (
+                  <p className="text-sm text-destructive">
+                    Your window to use a pass has expired.
+                  </p>
+                )}
+                <Button 
+                  onClick={() => setShowConfirmDialog(true)} 
+                  className="w-full"
+                  disabled={isLoading || isExpired}
+                >
+                  <Heart className="mr-2 h-4 w-4" />
+                  Use Pass & Continue
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Continue from where you left off without restarting. You only have 2 passes for the entire program.
-              </p>
-              {timeRemaining && (
-                <div className="flex items-center gap-1.5 text-sm text-amber-600">
-                  <Clock className="h-4 w-4" />
-                  <span>Expires in {timeRemaining}</span>
+            )}
+
+            {forgiveCreditsRemaining === 0 && daysMissed === 1 && (
+              <div className="border rounded-lg p-4 bg-muted/30">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Shield className="h-5 w-5" />
+                  <span className="text-sm">No Life Happens Passes remaining</span>
                 </div>
-              )}
-              <Button 
-                onClick={handleUseCredit} 
+              </div>
+            )}
+
+            {/* Request Pause Option */}
+            {!hasPendingPauseRequest && (
+              <Button
+                variant="outline"
+                onClick={() => setView('pause')}
                 className="w-full"
                 disabled={isLoading}
               >
-                <Heart className="mr-2 h-4 w-4" />
-                Use Credit & Continue
+                <Pause className="mr-2 h-4 w-4" />
+                Request Emergency Pause
               </Button>
-            </div>
-          )}
+            )}
 
-          {forgiveCreditsRemaining === 0 && daysMissed === 1 && (
-            <div className="border rounded-lg p-4 bg-muted/30">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Shield className="h-5 w-5" />
-                <span className="text-sm">No Life Happens Passes remaining</span>
+            {hasPendingPauseRequest && (
+              <div className="border rounded-lg p-3 bg-warning/10 border-warning/30">
+                <p className="text-sm text-warning-foreground">
+                  You have a pending pause request. Leadership is reviewing it.
+                </p>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Request Pause Option */}
-          {!hasPendingPauseRequest && (
+            {/* Restart Option */}
             <Button
-              variant="outline"
-              onClick={() => setView('pause')}
+              variant="secondary"
+              onClick={handleRestart}
               className="w-full"
               disabled={isLoading}
             >
-              <Pause className="mr-2 h-4 w-4" />
-              Request Emergency Pause
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Restart from Day 1
             </Button>
-          )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
-          {hasPendingPauseRequest && (
-            <div className="border rounded-lg p-3 bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-              <p className="text-sm text-amber-700 dark:text-amber-400">
-                You have a pending pause request. Leadership is reviewing it.
-              </p>
-            </div>
-          )}
-
-          {/* Restart Option */}
-          <Button
-            variant="secondary"
-            onClick={handleRestart}
-            className="w-full"
-            disabled={isLoading}
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Restart from Day 1
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <UsePassConfirmDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        passesRemaining={forgiveCreditsRemaining}
+        onConfirm={handleUseCredit}
+        isLoading={isLoading}
+      />
+    </>
   );
 }

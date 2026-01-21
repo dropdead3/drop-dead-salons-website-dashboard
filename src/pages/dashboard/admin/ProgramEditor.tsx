@@ -72,6 +72,8 @@ interface ProgramConfig {
   allow_manual_restart: boolean;
   auto_restart_on_miss: boolean;
   is_active: boolean;
+  grace_period_hours: number;
+  life_happens_passes_total: number;
 }
 
 interface DailyTask {
@@ -343,6 +345,8 @@ export default function ProgramEditor() {
         allow_manual_restart: config.allow_manual_restart,
         auto_restart_on_miss: config.auto_restart_on_miss,
         is_active: config.is_active,
+        grace_period_hours: config.grace_period_hours,
+        life_happens_passes_total: config.life_happens_passes_total,
       })
       .eq('id', config.id);
 
@@ -706,6 +710,34 @@ export default function ProgramEditor() {
                             checked={config.require_metrics_logging}
                             onCheckedChange={(checked) => setConfig({ ...config, require_metrics_logging: checked })}
                           />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6 space-y-4">
+                      <h3 className="font-medium text-sm">Life Happens Pass Settings</h3>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Grace Period (hours)</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={72}
+                            value={config.grace_period_hours || 24}
+                            onChange={(e) => setConfig({ ...config, grace_period_hours: parseInt(e.target.value) || 24 })}
+                          />
+                          <p className="text-xs text-muted-foreground">Time users have to use a pass after missing a day</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Total Passes Per Enrollment</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={10}
+                            value={config.life_happens_passes_total || 2}
+                            onChange={(e) => setConfig({ ...config, life_happens_passes_total: parseInt(e.target.value) || 2 })}
+                          />
+                          <p className="text-xs text-muted-foreground">Number of Life Happens Passes each participant gets</p>
                         </div>
                       </div>
                     </div>

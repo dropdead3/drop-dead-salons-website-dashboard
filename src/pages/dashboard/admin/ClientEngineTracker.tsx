@@ -45,6 +45,7 @@ import {
   Bell,
   Calendar,
   TrendingUp,
+  Shield,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -72,6 +73,8 @@ interface Enrollment {
   last_completion_date: string | null;
   restart_count: number;
   completed_at: string | null;
+  forgive_credits_remaining: number;
+  forgive_credits_used: number;
 }
 
 interface RingTheBellEntry {
@@ -93,6 +96,8 @@ interface ParticipantData {
   completedDays: number;
   progressPercent: number;
   daysSinceLastCompletion: number | null;
+  passesUsed: number;
+  passesRemaining: number;
 }
 
 const STATUS_CONFIG: Record<ProgramStatus, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -194,6 +199,8 @@ export default function ClientEngineTracker() {
           completedDays,
           progressPercent: Math.round((enrollment.current_day / 75) * 100),
           daysSinceLastCompletion,
+          passesUsed: enrollment.forgive_credits_used || 0,
+          passesRemaining: enrollment.forgive_credits_remaining ?? 2,
         };
       });
 
@@ -478,6 +485,10 @@ export default function ClientEngineTracker() {
                               {participant.ringCount} rings
                             </span>
                           )}
+                          <span className="flex items-center gap-1">
+                            <Shield className="w-3 h-3 text-primary" />
+                            {participant.passesUsed}/2 passes used
+                          </span>
                         </div>
                       </div>
 
@@ -526,6 +537,26 @@ export default function ClientEngineTracker() {
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">Days Completed</p>
                           <p className="text-sm font-medium">{participant.completedDays}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Life Happens Passes */}
+                      <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-medium">Life Happens Passes</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-sm">
+                            <span className="text-muted-foreground">
+                              {participant.passesRemaining} remaining
+                            </span>
+                            {participant.passesUsed > 0 && (
+                              <Badge variant="secondary">
+                                {participant.passesUsed} used
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                       
