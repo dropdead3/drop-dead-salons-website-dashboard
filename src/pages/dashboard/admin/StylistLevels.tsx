@@ -52,16 +52,16 @@ type LocalStylistLevel = {
   description: string;
 };
 
-// Unique colors for each level badge
+// Unique colors for each level badge - neutral luxury tones
 const levelColors = [
-  { bg: 'bg-emerald-100 dark:bg-emerald-950', text: 'text-emerald-700 dark:text-emerald-300' },
-  { bg: 'bg-sky-100 dark:bg-sky-950', text: 'text-sky-700 dark:text-sky-300' },
-  { bg: 'bg-violet-100 dark:bg-violet-950', text: 'text-violet-700 dark:text-violet-300' },
-  { bg: 'bg-amber-100 dark:bg-amber-950', text: 'text-amber-700 dark:text-amber-300' },
-  { bg: 'bg-rose-100 dark:bg-rose-950', text: 'text-rose-700 dark:text-rose-300' },
-  { bg: 'bg-teal-100 dark:bg-teal-950', text: 'text-teal-700 dark:text-teal-300' },
-  { bg: 'bg-indigo-100 dark:bg-indigo-950', text: 'text-indigo-700 dark:text-indigo-300' },
-  { bg: 'bg-orange-100 dark:bg-orange-950', text: 'text-orange-700 dark:text-orange-300' },
+  { bg: 'bg-stone-200 dark:bg-stone-800', text: 'text-stone-700 dark:text-stone-300' },
+  { bg: 'bg-amber-100 dark:bg-amber-900', text: 'text-amber-800 dark:text-amber-200' },
+  { bg: 'bg-yellow-100/80 dark:bg-yellow-900/50', text: 'text-yellow-800 dark:text-yellow-300' },
+  { bg: 'bg-neutral-300 dark:bg-neutral-700', text: 'text-neutral-800 dark:text-neutral-200' },
+  { bg: 'bg-orange-100/70 dark:bg-orange-900/40', text: 'text-orange-900 dark:text-orange-200' },
+  { bg: 'bg-zinc-200 dark:bg-zinc-800', text: 'text-zinc-700 dark:text-zinc-300' },
+  { bg: 'bg-stone-300 dark:bg-stone-700', text: 'text-stone-800 dark:text-stone-200' },
+  { bg: 'bg-amber-200/80 dark:bg-amber-800/60', text: 'text-amber-900 dark:text-amber-100' },
 ];
 
 const getLevelColor = (index: number) => levelColors[index % levelColors.length];
