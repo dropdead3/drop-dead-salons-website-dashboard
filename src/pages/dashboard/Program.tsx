@@ -33,7 +33,8 @@ import {
   Eye,
   Image as ImageLucide,
   Shield,
-  ChevronLeft
+  ChevronLeft,
+  Bell
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -502,6 +503,29 @@ export default function Program() {
             </div>
           </Card>
         )}
+
+        {/* Ring the Bell Call-out */}
+        <Card className="p-4 mb-8 border-primary/30 bg-primary/5">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Bell className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-sans">
+                <span className="font-medium">Did you book a new client or a high-ticket service (above $500)?</span>{' '}
+                <Link to="/dashboard/ring-the-bell" className="text-primary hover:underline font-medium">
+                  Ring the Bell!
+                </Link>
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild className="flex-shrink-0">
+              <Link to="/dashboard/ring-the-bell">
+                <Bell className="w-4 h-4 mr-2" />
+                Ring It
+              </Link>
+            </Button>
+          </div>
+        </Card>
 
         {/* Today's Tasks */}
         <div className="grid gap-6 lg:grid-cols-2 mb-8">
