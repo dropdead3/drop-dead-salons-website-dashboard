@@ -315,15 +315,16 @@ export default function Announcements() {
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                  <div className="flex items-center gap-4">
+                    <div 
+                      className="flex items-center gap-2 cursor-pointer"
                       onClick={() => toggleActive(announcement)}
-                      title={announcement.is_active ? 'Deactivate' : 'Activate'}
                     >
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        Display on team dashboards
+                      </span>
                       <Switch checked={announcement.is_active} />
-                    </Button>
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
