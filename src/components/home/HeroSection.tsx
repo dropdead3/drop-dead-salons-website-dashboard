@@ -159,16 +159,16 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 Drop Dead
               </motion.span>
               {" "}
-              <span className="relative inline-block min-w-[180px] md:min-w-[260px] lg:min-w-[320px] h-[1.1em] align-bottom">
-                <AnimatePresence>
+              <span className="inline-block overflow-hidden align-bottom h-[1.1em]">
+                <AnimatePresence mode="wait">
                   <motion.span
                     key={rotatingWords[currentWordIndex]}
-                    className="absolute left-0 bottom-0 inline-block"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
+                    className="inline-block"
+                    initial={{ y: "100%", opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: "-100%", opacity: 0 }}
                     transition={{ 
-                      duration: 0.6, 
+                      duration: 0.5, 
                       ease: [0.22, 1, 0.36, 1] 
                     }}
                   >
