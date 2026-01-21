@@ -1,0 +1,345 @@
+import { useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { GripVertical, Plus, Trash2, Loader2, Sparkles, Edit2, Check, X } from 'lucide-react';
+import {
+  useAllSpecialtyOptions,
+  useAddSpecialtyOption,
+  useUpdateSpecialtyOption,
+  useDeleteSpecialtyOption,
+  useReorderSpecialtyOptions,
+  type SpecialtyOption,
+} from '@/hooks/useSpecialtyOptions';
+import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+interface SortableSpecialtyItemProps {
+  option: SpecialtyOption;
+  onUpdate: (id: string, updates: Partial<SpecialtyOption>) => void;
+  onDelete: (id: string) => void;
+  isUpdating: boolean;
+}
+
+function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: SortableSpecialtyItemProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(option.name);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: option.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const handleSaveName = () => {
+    if (editName.trim() && editName.trim().toUpperCase() !== option.name) {
+      onUpdate(option.id, { name: editName.trim() });
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditName(option.name);
+    setIsEditing(false);
+  };
+
+  const isExtensions = option.name === 'EXTENSIONS';
+
+  return (
+    <>
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={cn(
+          "flex items-center gap-3 p-3 bg-background border rounded-lg transition-all",
+          isDragging && "opacity-50 shadow-lg ring-2 ring-primary",
+          !option.is_active && "opacity-60"
+        )}
+      >
+        <button
+          {...attributes}
+          {...listeners}
+          className="touch-none p-1 rounded hover:bg-muted cursor-grab active:cursor-grabbing"
+        >
+          <GripVertical className="w-4 h-4 text-muted-foreground" />
+        </button>
+
+        {isEditing ? (
+          <div className="flex-1 flex items-center gap-2">
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value.toUpperCase())}
+              className="h-8 text-sm uppercase"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveName();
+                if (e.key === 'Escape') handleCancelEdit();
+              }}
+            />
+            <Button size="sm" variant="ghost" onClick={handleSaveName}>
+              <Check className="w-4 h-4" />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 flex items-center gap-2">
+              <Badge
+                variant={isExtensions ? "default" : "outline"}
+                className={cn(
+                  isExtensions && "bg-oat text-oat-foreground"
+                )}
+              >
+                {isExtensions && <Sparkles className="w-3 h-3 mr-1" />}
+                {option.name}
+              </Badge>
+              {!option.is_active && (
+                <span className="text-xs text-muted-foreground">(hidden)</span>
+              )}
+            </div>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsEditing(true)}
+              disabled={isUpdating}
+            >
+              <Edit2 className="w-4 h-4" />
+            </Button>
+
+            <Switch
+              checked={option.is_active}
+              onCheckedChange={(checked) => onUpdate(option.id, { is_active: checked })}
+              disabled={isUpdating}
+            />
+
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isUpdating}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </>
+        )}
+      </div>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Specialty</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{option.name}"? This will not remove it from existing stylist profiles, but it will no longer appear as an option.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDelete(option.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+export function SpecialtyOptionsManager() {
+  const [newSpecialty, setNewSpecialty] = useState('');
+  const [orderedIds, setOrderedIds] = useState<string[] | null>(null);
+
+  const { data: options = [], isLoading } = useAllSpecialtyOptions();
+  const addOption = useAddSpecialtyOption();
+  const updateOption = useUpdateSpecialtyOption();
+  const deleteOption = useDeleteSpecialtyOption();
+  const reorderOptions = useReorderSpecialtyOptions();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const displayOptions = orderedIds
+    ? orderedIds.map(id => options.find(o => o.id === id)).filter(Boolean) as SpecialtyOption[]
+    : options;
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const currentOrder = orderedIds || options.map(o => o.id);
+      const oldIndex = currentOrder.findIndex((id) => id === active.id);
+      const newIndex = currentOrder.findIndex((id) => id === over.id);
+      const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
+      setOrderedIds(newOrder);
+    }
+  };
+
+  const handleSaveOrder = () => {
+    if (orderedIds) {
+      reorderOptions.mutate(orderedIds, {
+        onSuccess: () => setOrderedIds(null),
+      });
+    }
+  };
+
+  const handleAddSpecialty = () => {
+    if (newSpecialty.trim()) {
+      addOption.mutate({ name: newSpecialty.trim() }, {
+        onSuccess: () => setNewSpecialty(''),
+      });
+    }
+  };
+
+  const hasOrderChanges = orderedIds !== null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5" />
+          Specialty Options
+        </CardTitle>
+        <CardDescription>
+          Manage the specialty options that stylists can select in their profiles and that appear as filters on the homepage.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Add New Specialty */}
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add new specialty..."
+            value={newSpecialty}
+            onChange={(e) => setNewSpecialty(e.target.value.toUpperCase())}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddSpecialty()}
+            className="uppercase"
+          />
+          <Button
+            onClick={handleAddSpecialty}
+            disabled={!newSpecialty.trim() || addOption.isPending}
+          >
+            {addOption.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+
+        {/* Order Save Bar */}
+        {hasOrderChanges && (
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg animate-fade-in">
+            <p className="text-sm text-muted-foreground">
+              Unsaved order changes
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOrderedIds(null)}
+                disabled={reorderOptions.isPending}
+              >
+                Reset
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveOrder}
+                disabled={reorderOptions.isPending}
+              >
+                {reorderOptions.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                ) : null}
+                Save Order
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Specialty List */}
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : options.length === 0 ? (
+          <p className="text-center py-8 text-muted-foreground">
+            No specialty options yet. Add one above.
+          </p>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={displayOptions.map(o => o.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {displayOptions.map((option) => (
+                  <SortableSpecialtyItem
+                    key={option.id}
+                    option={option}
+                    onUpdate={(id, updates) => updateOption.mutate({ id, ...updates })}
+                    onDelete={(id) => deleteOption.mutate(id)}
+                    isUpdating={updateOption.isPending || deleteOption.isPending}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+
+        <p className="text-xs text-muted-foreground">
+          Drag to reorder. The order here determines the order of filters on the homepage.
+          Toggle visibility to hide options from selection without deleting them.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}

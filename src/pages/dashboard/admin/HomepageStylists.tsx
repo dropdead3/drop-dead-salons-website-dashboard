@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Check, X, Loader2, User, MapPin, Clock, Eye, EyeOff, Users, Settings, ExternalLink } from 'lucide-react';
+import { Globe, Check, X, Loader2, User, MapPin, Clock, Eye, EyeOff, Users, Settings, ExternalLink, Sparkles } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,6 +16,7 @@ import { useHomepageStylistsSettings, useUpdateHomepageStylistsSettings } from '
 import { sampleStylists } from '@/data/sampleStylists';
 import { HomepagePreviewModal } from '@/components/dashboard/HomepagePreviewModal';
 import { ReorderableStylistList } from '@/components/dashboard/ReorderableStylistList';
+import { SpecialtyOptionsManager } from '@/components/dashboard/SpecialtyOptionsManager';
 
 interface StylistProfile {
   id: string;
@@ -421,6 +422,10 @@ export default function HomepageStylists() {
             <TabsTrigger value="visible">
               Currently Visible ({visibleStylists.length})
             </TabsTrigger>
+            <TabsTrigger value="specialties" className="gap-1">
+              <Sparkles className="w-3 h-3" />
+              Specialties
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="requests">
@@ -474,6 +479,10 @@ export default function HomepageStylists() {
                 hasChanges={hasOrderChanges}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="specialties">
+            <SpecialtyOptionsManager />
           </TabsContent>
         </Tabs>
       </div>

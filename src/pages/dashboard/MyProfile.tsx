@@ -14,6 +14,7 @@ import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } f
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { useLocationSchedules, useUpsertLocationSchedule } from '@/hooks/useLocationSchedules';
+import { useSpecialtyOptions } from '@/hooks/useSpecialtyOptions';
 import { locations as staticLocations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -29,12 +30,6 @@ const DAYS_OF_WEEK = [
   { key: 'Sun', label: 'Sunday' },
 ];
 const stylistLevels = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4'];
-
-const specialtyOptions = [
-  'EXTENSIONS', 'BLONDING', 'CREATIVE COLOR', 'AIRTOUCH', 
-  'COLOR BLOCKING', 'LAYERED CUTS', 'CUSTOM CUTS', 'BALAYAGE',
-  'VIVIDS', 'CORRECTIVE COLOR', 'KERATIN', 'BRIDAL'
-];
 
 // Get all service names for highlighted services selection
 import { services } from '@/data/servicePricing';
@@ -75,6 +70,7 @@ export default function MyProfile() {
   const { data: profile, isLoading } = useEmployeeProfile();
   const { data: locations = [] } = useLocations();
   const { data: existingSchedules } = useLocationSchedules();
+  const { data: specialtyOptions = [] } = useSpecialtyOptions();
   const upsertSchedule = useUpsertLocationSchedule();
   const updateProfile = useUpdateEmployeeProfile();
   const uploadPhoto = useUploadProfilePhoto();
@@ -758,7 +754,8 @@ export default function MyProfile() {
                 <div className="space-y-2">
                   <Label>Specialties <span className="text-muted-foreground text-xs font-normal">(select up to 4)</span></Label>
                   <div className="flex flex-wrap gap-2">
-                    {specialtyOptions.map(specialty => {
+                    {specialtyOptions.map(option => {
+                      const specialty = option.name;
                       const isSelected = formData.specialties.includes(specialty);
                       const isDisabled = !isSelected && formData.specialties.length >= 4;
                       return (
