@@ -201,16 +201,10 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
                 <ul className="space-y-2.5">
                   {rules.slice(0, 5).map((rule) => (
                     <li key={rule.id} className="flex items-start gap-3 text-sm font-sans">
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5 ${
-                        rule.is_emphasized 
-                          ? 'bg-primary text-primary-foreground font-medium' 
-                          : 'bg-primary/10 text-primary'
-                      }`}>
+                      <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary shrink-0 mt-0.5">
                         {rule.rule_number}
                       </span>
-                      <span className={rule.is_emphasized ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-                        {rule.rule_text}
-                      </span>
+                      <span className="text-muted-foreground">{rule.rule_text}</span>
                     </li>
                   ))}
                   {rules.length > 5 && (
