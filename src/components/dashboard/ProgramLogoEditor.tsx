@@ -29,11 +29,11 @@ interface ProgramLogoEditorProps {
 }
 
 const SIZE_PRESETS = [
-  { label: 'XS', value: 40 },
-  { label: 'S', value: 56 },
-  { label: 'M', value: 64 },
-  { label: 'L', value: 80 },
-  { label: 'XL', value: 100 },
+  { label: 'XS', value: 24 },
+  { label: 'S', value: 40 },
+  { label: 'M', value: 56 },
+  { label: 'L', value: 72 },
+  { label: 'XL', value: 96 },
   { label: '2XL', value: 120 },
 ];
 
@@ -261,7 +261,7 @@ export function ProgramLogoEditor({
             <Slider
               value={[size]}
               onValueChange={handleSizeChange}
-              min={40}
+              min={24}
               max={120}
               step={4}
               className="w-full"
