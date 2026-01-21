@@ -544,12 +544,13 @@ export function StylistsSection() {
   
   // Merge database locations with static locations for tooltip info
   const locations = useMemo(() => {
-    if (!dbLocations) return staticLocations;
+    if (!dbLocations) return staticLocations.map(loc => ({ ...loc, city: '', hours: '' }));
     return staticLocations.map(staticLoc => {
       const dbLoc = dbLocations.find(db => db.id === staticLoc.id);
       return {
         ...staticLoc,
         address: dbLoc?.address || staticLoc.address,
+        city: dbLoc?.city || "",
         hours: dbLoc?.hours || "Hours not available",
       };
     });
@@ -645,7 +646,7 @@ export function StylistsSection() {
                 value: loc.id,
                 label: loc.name,
                 icon: <Info className="w-3.5 h-3.5" />,
-                tooltip: `${loc.address}\n${'hours' in loc ? loc.hours : 'Hours not available'}`,
+                tooltip: `${loc.address}\n${loc.city}\n${loc.hours}`,
               }))
             ]}
             value={selectedLocation}
