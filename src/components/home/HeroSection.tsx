@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { ChevronDown, ArrowRight } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+
+const rotatingWords = ["Salon", "Extensions", "Blonding", "Color", "Results"];
 
 interface HeroSectionProps {
   videoSrc?: string;
@@ -11,6 +13,28 @@ interface HeroSectionProps {
 
 export function HeroSection({ videoSrc }: HeroSectionProps) {
   const [consultationOpen, setConsultationOpen] = useState(false);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [isAnimationReady, setIsAnimationReady] = useState(false);
+
+  // Start word rotation after initial heading animation completes
+  useEffect(() => {
+    const startDelay = setTimeout(() => {
+      setIsAnimationReady(true);
+    }, 4000); // Start after heading fade-in (3.0s delay + animation time)
+
+    return () => clearTimeout(startDelay);
+  }, []);
+
+  // Cycle through words
+  useEffect(() => {
+    if (!isAnimationReady) return;
+    
+    const interval = setInterval(() => {
+      setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+    }, 2500); // Change word every 2.5 seconds
+
+    return () => clearInterval(interval);
+  }, [isAnimationReady]);
   const sectionRef = useRef<HTMLElement>(null);
   
   const { scrollYProgress } = useScroll({
@@ -135,14 +159,23 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 Drop Dead
               </motion.span>
               {" "}
-              <motion.span
-                className="inline-block"
-                initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ ...springTransition, delay: 3.0 }}
-              >
-                Salon
-              </motion.span>
+              <span className="inline-block overflow-hidden align-bottom h-[1.1em]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={rotatingWords[currentWordIndex]}
+                    className="inline-block"
+                    initial={{ y: "100%", opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: "-100%", opacity: 0 }}
+                    transition={{ 
+                      duration: 0.5, 
+                      ease: [0.22, 1, 0.36, 1] 
+                    }}
+                  >
+                    {rotatingWords[currentWordIndex]}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
             </motion.h1>
 
             {/* Subheadline */}
