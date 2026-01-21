@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   Upload, 
   Image as ImageIcon, 
@@ -23,10 +22,10 @@ import DD75Logo from '@/assets/dd75-logo.svg';
 interface ProgramLogoEditorProps {
   currentLogoUrl: string | null;
   logoSize: number;
-  logoBackgroundColor: string | null;
+  logoColor: string | null;
   onLogoChange: (url: string | null) => void;
   onSizeChange: (size: number) => void;
-  onBackgroundColorChange: (color: string | null) => void;
+  onColorChange: (color: string | null) => void;
 }
 
 const SIZE_PRESETS = [
@@ -38,28 +37,28 @@ const SIZE_PRESETS = [
   { label: '2XL', value: 120 },
 ];
 
-const COLOR_PRESETS = [
-  { label: 'None', value: null },
+const LOGO_COLOR_PRESETS = [
+  { label: 'Default', value: null },
   { label: 'White', value: '#FFFFFF' },
   { label: 'Cream', value: '#FAF8F5' },
-  { label: 'Light Gray', value: '#F5F5F5' },
+  { label: 'Light Gray', value: '#E5E5E5' },
+  { label: 'Charcoal', value: '#3D3D3D' },
   { label: 'Black', value: '#1A1A1A' },
-  { label: 'Charcoal', value: '#2D2D2D' },
-  { label: 'Primary', value: 'hsl(var(--primary))' },
+  { label: 'Dark', value: '#0A0A0A' },
 ];
 
 export function ProgramLogoEditor({ 
   currentLogoUrl, 
   logoSize,
-  logoBackgroundColor,
+  logoColor,
   onLogoChange, 
   onSizeChange,
-  onBackgroundColorChange 
+  onColorChange 
 }: ProgramLogoEditorProps) {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentLogoUrl);
   const [size, setSize] = useState(logoSize || 64);
-  const [bgColor, setBgColor] = useState<string | null>(logoBackgroundColor);
+  const [color, setColor] = useState<string | null>(logoColor);
   const [customColor, setCustomColor] = useState('#FAF8F5');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,8 +71,8 @@ export function ProgramLogoEditor({
   }, [logoSize]);
 
   useEffect(() => {
-    setBgColor(logoBackgroundColor);
-  }, [logoBackgroundColor]);
+    setColor(logoColor);
+  }, [logoColor]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -135,25 +134,54 @@ export function ProgramLogoEditor({
     onSizeChange(newSize);
   };
 
-  const handleColorSelect = (color: string | null) => {
-    setBgColor(color);
-    onBackgroundColorChange(color);
+  const handleColorSelect = (selectedColor: string | null) => {
+    setColor(selectedColor);
+    onColorChange(selectedColor);
   };
 
   const handleCustomColorApply = () => {
-    setBgColor(customColor);
-    onBackgroundColorChange(customColor);
+    setColor(customColor);
+    onColorChange(customColor);
   };
 
   const displayLogo = previewUrl || DD75Logo;
   const isCustomLogo = !!previewUrl;
 
-  const getBackgroundStyle = () => {
-    if (!bgColor) return {};
-    if (bgColor.startsWith('hsl')) {
-      return { backgroundColor: bgColor };
+  // Generate CSS filter for colorizing SVG
+  const getLogoColorFilter = () => {
+    if (!color) return {};
+    
+    // For SVG colorization, we use a combination of brightness and invert
+    // This works best with monochrome SVGs
+    if (color === '#FFFFFF' || color === '#FAF8F5' || color === '#E5E5E5') {
+      // Light colors - invert the black SVG
+      return { filter: 'brightness(0) invert(1)' };
+    } else if (color === '#1A1A1A' || color === '#0A0A0A') {
+      // Dark colors - keep as is (default is black)
+      return { filter: 'brightness(0)' };
+    } else if (color === '#3D3D3D') {
+      // Charcoal
+      return { filter: 'brightness(0) invert(0.3)' };
+    } else {
+      // Custom colors - use CSS filter trick
+      // Convert hex to filter using sepia + hue-rotate approach
+      return { filter: `brightness(0) invert(1) sepia(1) saturate(0) brightness(${getLuminance(color)})` };
     }
-    return { backgroundColor: bgColor };
+  };
+
+  // Helper to calculate luminance from hex
+  const getLuminance = (hex: string): number => {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+    return (r * 0.299 + g * 0.587 + b * 0.114);
+  };
+
+  // Determine if a color is light or dark for checkmark visibility
+  const isLightColor = (hex: string | null): boolean => {
+    if (!hex) return false;
+    if (hex === '#FFFFFF' || hex === '#FAF8F5' || hex === '#E5E5E5') return true;
+    return getLuminance(hex) > 0.5;
   };
 
   return (
@@ -174,17 +202,17 @@ export function ProgramLogoEditor({
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
             <div 
-              className="w-80 flex items-center justify-center rounded-xl border-2 border-dashed border-border/50 p-6 transition-all duration-300"
-              style={{
-                ...getBackgroundStyle(),
-                minHeight: size + 48,
-              }}
+              className="w-80 flex items-center justify-center rounded-xl border-2 border-dashed border-border/50 p-6 transition-all duration-300 bg-gradient-to-br from-muted/30 to-muted/10"
+              style={{ minHeight: size + 48 }}
             >
               <img 
                 src={displayLogo} 
                 alt="Program Logo" 
                 className="object-contain transition-all duration-300"
-                style={{ height: size }}
+                style={{ 
+                  height: size,
+                  ...getLogoColorFilter()
+                }}
               />
             </div>
             {isCustomLogo && (
@@ -278,12 +306,12 @@ export function ProgramLogoEditor({
           </div>
         </Card>
 
-        {/* Background Color Control */}
+        {/* Logo Color Control */}
         <Card className="p-5">
           <div className="flex items-center gap-2 mb-4">
             <Palette className="w-4 h-4 text-primary" />
-            <Label className="font-display text-sm tracking-wide">BACKGROUND</Label>
-            {bgColor && (
+            <Label className="font-display text-sm tracking-wide">LOGO COLOR</Label>
+            {color && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -291,33 +319,33 @@ export function ProgramLogoEditor({
                 className="ml-auto h-6 px-2 text-xs text-muted-foreground"
               >
                 <X className="w-3 h-3 mr-1" />
-                Clear
+                Reset
               </Button>
             )}
           </div>
 
           <div className="space-y-4">
-            {/* Preset Colors */}
+            {/* Preset Color Swatches */}
             <div className="flex flex-wrap gap-2">
-              {COLOR_PRESETS.map((preset) => (
+              {LOGO_COLOR_PRESETS.map((preset) => (
                 <button
                   key={preset.label}
                   onClick={() => handleColorSelect(preset.value)}
                   className={`
                     w-9 h-9 rounded-lg border-2 transition-all duration-200 flex items-center justify-center
-                    ${bgColor === preset.value 
+                    ${color === preset.value 
                       ? 'border-primary ring-2 ring-primary/20' 
                       : 'border-border hover:border-primary/50'
                     }
                   `}
-                  style={preset.value ? { backgroundColor: preset.value.startsWith('hsl') ? 'hsl(var(--primary))' : preset.value } : undefined}
+                  style={preset.value ? { backgroundColor: preset.value } : undefined}
                   title={preset.label}
                 >
                   {!preset.value && (
                     <X className="w-4 h-4 text-muted-foreground" />
                   )}
-                  {bgColor === preset.value && preset.value && (
-                    <Check className={`w-4 h-4 ${preset.value === '#FFFFFF' || preset.value === '#FAF8F5' || preset.value === '#F5F5F5' ? 'text-foreground' : 'text-white'}`} />
+                  {color === preset.value && preset.value && (
+                    <Check className={`w-4 h-4 ${isLightColor(preset.value) ? 'text-foreground' : 'text-white'}`} />
                   )}
                 </button>
               ))}
@@ -372,7 +400,7 @@ export function ProgramLogoEditor({
           </li>
           <li className="flex items-start gap-2">
             <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-            <span>Transparent background works best with color overlays</span>
+            <span>Logo color works best with monochrome SVG logos</span>
           </li>
         </ul>
       </Card>

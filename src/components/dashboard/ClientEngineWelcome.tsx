@@ -35,15 +35,29 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
   const programName = config?.program_name || 'Client Engine';
   const logoUrl = config?.logo_url || DD75Logo;
   const logoSize = config?.logo_size || 64;
-  const logoBgColor = config?.logo_background_color;
+  const logoColor = config?.logo_color;
 
-  const getLogoBackgroundStyle = () => {
-    if (!logoBgColor) return {};
-    return { 
-      backgroundColor: logoBgColor,
-      padding: '16px 24px',
-      borderRadius: '12px'
+  // Generate CSS filter for colorizing SVG
+  const getLogoColorFilter = () => {
+    if (!logoColor) return {};
+    
+    // Helper to calculate luminance from hex
+    const getLuminance = (hex: string): number => {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      return (r * 0.299 + g * 0.587 + b * 0.114);
     };
+    
+    if (logoColor === '#FFFFFF' || logoColor === '#FAF8F5' || logoColor === '#E5E5E5') {
+      return { filter: 'brightness(0) invert(1)' };
+    } else if (logoColor === '#1A1A1A' || logoColor === '#0A0A0A') {
+      return { filter: 'brightness(0)' };
+    } else if (logoColor === '#3D3D3D') {
+      return { filter: 'brightness(0) invert(0.3)' };
+    } else {
+      return { filter: `brightness(0) invert(1) sepia(1) saturate(0) brightness(${getLuminance(logoColor)})` };
+    }
   };
 
   const highlights = [
@@ -104,13 +118,15 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false }: Clien
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6 }}
             className="mb-8 inline-block"
-            style={getLogoBackgroundStyle()}
           >
             <img 
               src={logoUrl} 
               alt={programName}
               className="w-auto mx-auto"
-              style={{ height: logoSize }}
+              style={{ 
+                height: logoSize,
+                ...getLogoColorFilter()
+              }}
             />
           </motion.div>
           
