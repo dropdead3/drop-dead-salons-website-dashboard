@@ -248,31 +248,43 @@ export function ClientEngineWelcome({ onStartProgram, isPreview = false, preview
           </Card>
         </motion.div>
 
-        {/* The Outcome Section */}
+        {/* The Outcome Section - Premium Bronze Gold */}
         <motion.div variants={itemVariants}>
-          <Card className="p-6 md:p-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Target className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-display text-2xl tracking-wider">THE OUTCOME</h2>
-                <p className="text-sm text-muted-foreground font-sans">What you'll walk away with</p>
-              </div>
-            </div>
+          <Card className="relative p-6 md:p-8 bg-gradient-to-br from-[hsl(35,30%,12%)] via-[hsl(38,25%,18%)] to-[hsl(30,20%,8%)] border-[hsl(38,50%,35%)]/40 shadow-2xl overflow-hidden">
+            {/* Subtle gold shimmer overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(42,60%,50%)]/5 to-transparent opacity-50" />
             
-            <div className="grid md:grid-cols-2 gap-4">
-              {outcomes.map((outcome) => (
-                <div key={outcome.id} className="bg-background/80 rounded-xl p-4 flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    {renderIcon(outcome.icon)}
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm mb-1">{outcome.title}</p>
-                    <p className="text-xs text-muted-foreground">{outcome.description}</p>
-                  </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(42,70%,45%)] to-[hsl(35,60%,35%)] flex items-center justify-center shadow-lg">
+                  <Target className="w-6 h-6 text-[hsl(45,100%,97%)]" />
                 </div>
-              ))}
+                <div>
+                  <h2 className="font-display text-2xl tracking-wider text-[hsl(45,50%,92%)]">THE OUTCOME</h2>
+                  <p className="text-sm text-[hsl(40,20%,65%)] font-sans">What you'll walk away with</p>
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                {outcomes.map((outcome) => (
+                  <motion.div 
+                    key={outcome.id} 
+                    className="bg-[hsl(35,20%,15%)]/60 backdrop-blur-sm rounded-xl p-4 flex items-start gap-3 border border-[hsl(42,50%,40%)]/20 hover:border-[hsl(42,60%,50%)]/40 transition-colors duration-300"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[hsl(42,70%,50%)] to-[hsl(38,60%,40%)] flex items-center justify-center shrink-0 shadow-md">
+                      <div className="text-[hsl(45,100%,97%)]">
+                        {renderIcon(outcome.icon)}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm mb-1 text-[hsl(45,40%,90%)]">{outcome.title}</p>
+                      <p className="text-xs text-[hsl(40,15%,60%)]">{outcome.description}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </Card>
         </motion.div>
