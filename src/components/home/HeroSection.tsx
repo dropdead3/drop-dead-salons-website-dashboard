@@ -186,9 +186,9 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               className="mt-10 text-base md:text-lg text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
               style={{ y: subheadlineY }}
             >
-              Step into a world where science meets artistry.
+              Where technical talent meets artistry.
               <br />
-              We believe in more than just treatments.
+              We believe in more than just the status quo.
             </motion.p>
 
             {/* CTAs */}
