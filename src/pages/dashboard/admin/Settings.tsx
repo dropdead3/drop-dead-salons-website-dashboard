@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from 'next-themes';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,11 @@ import {
   ClipboardCheck,
   Trophy,
   Rocket,
+  Palette,
+  Sun,
+  Moon,
+  Monitor,
+  Check,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -45,6 +51,7 @@ import { EmailVariablesManager } from '@/components/dashboard/EmailVariablesMana
 import { SignaturePresetsManager } from '@/components/dashboard/SignaturePresetsManager';
 import { OnboardingTasksManager } from '@/components/dashboard/OnboardingTasksManager';
 import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
+import { cn } from '@/lib/utils';
 
 interface UserWithRole {
   user_id: string;
@@ -64,10 +71,17 @@ const roleOptions = [
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('email');
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -407,7 +421,92 @@ export default function Settings() {
               <h2 className="font-display text-xl tracking-wide">SYSTEM SETTINGS</h2>
             </div>
 
-            <Accordion type="single" collapsible defaultValue="notifications" className="space-y-4">
+            <Accordion type="single" collapsible defaultValue="appearance" className="space-y-4">
+              {/* Appearance Settings */}
+              <AccordionItem value="appearance" className="border rounded-lg px-4">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <Palette className="w-5 h-5" />
+                    <span className="font-display text-sm tracking-wide">APPEARANCE</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="py-4 space-y-6">
+                    <p className="text-sm text-muted-foreground font-sans">
+                      Customize the dashboard appearance. These settings only affect the backend dashboard, not the public website.
+                    </p>
+
+                    {/* Theme Mode Toggle */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Theme Mode</Label>
+                      <div className="grid grid-cols-3 gap-3">
+                        <button
+                          onClick={() => setTheme('light')}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                            mounted && theme === 'light'
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
+                            <Sun className="w-5 h-5 text-amber-600" />
+                          </div>
+                          <span className="text-sm font-medium">Light</span>
+                          {mounted && theme === 'light' && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </button>
+                        
+                        <button
+                          onClick={() => setTheme('dark')}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                            mounted && theme === 'dark'
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center">
+                            <Moon className="w-5 h-5 text-slate-300" />
+                          </div>
+                          <span className="text-sm font-medium">Dark</span>
+                          {mounted && theme === 'dark' && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </button>
+                        
+                        <button
+                          onClick={() => setTheme('system')}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                            mounted && theme === 'system'
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-50 to-slate-900 border border-border flex items-center justify-center">
+                            <Monitor className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <span className="text-sm font-medium">System</span>
+                          {mounted && theme === 'system' && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Theme Info */}
+                    <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                      <p className="text-xs text-muted-foreground">
+                        <strong>Note:</strong> Theme preferences are saved to your browser and will persist across sessions. 
+                        The public-facing website always uses the light theme.
+                      </p>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
               {/* Notification Settings */}
               <AccordionItem value="notifications" className="border rounded-lg px-4">
                 <AccordionTrigger className="hover:no-underline">
