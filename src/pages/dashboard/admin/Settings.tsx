@@ -247,7 +247,7 @@ function UserCard({
             <SelectGroup>
               <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leadership</SelectLabel>
               {dynamicRoleOptions
-                .filter(role => ['super_admin', 'admin', 'manager'].includes(role.value))
+                .filter(role => ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager'].includes(role.value))
                 .map(role => (
                   <SelectItem key={role.value} value={role.value}>
                     {role.label}
@@ -274,6 +274,22 @@ function UserCard({
                   </SelectItem>
                 ))}
             </SelectGroup>
+            {/* Other roles not in the 3 main categories */}
+            {(() => {
+              const categorizedRoles = ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager', 'director_of_operations', 'operations_assistant', 'receptionist', 'front_desk', 'stylist', 'stylist_assistant'];
+              const otherRoles = dynamicRoleOptions.filter(role => !categorizedRoles.includes(role.value));
+              if (otherRoles.length === 0) return null;
+              return (
+                <SelectGroup>
+                  <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Other</SelectLabel>
+                  {otherRoles.map(role => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              );
+            })()}
           </SelectContent>
         </Select>
         <Button
@@ -617,7 +633,7 @@ export default function Settings() {
                     {/* Leadership Section */}
                     {(() => {
                       const leadershipUsers = users.filter(u => 
-                        ['super_admin', 'admin', 'manager'].includes(u.role)
+                        ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager'].includes(u.role)
                       );
                       if (leadershipUsers.length === 0) return null;
                       return (
@@ -701,7 +717,7 @@ export default function Settings() {
                     {/* Uncategorized Section */}
                     {(() => {
                       const uncategorizedUsers = users.filter(u => 
-                        !['super_admin', 'admin', 'manager', 'director_of_operations', 'operations_assistant', 'receptionist', 'front_desk', 'stylist', 'stylist_assistant'].includes(u.role)
+                        !['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager', 'director_of_operations', 'operations_assistant', 'receptionist', 'front_desk', 'stylist', 'stylist_assistant'].includes(u.role)
                       );
                       if (uncategorizedUsers.length === 0) return null;
                       return (
