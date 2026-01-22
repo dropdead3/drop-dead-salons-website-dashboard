@@ -121,6 +121,7 @@ const housekeepingNavItems: NavItem[] = [
 const growthNavItems: NavItem[] = [
   { href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training' },
   { href: '/dashboard/program', label: 'New-Client Engine Program', icon: Target, permission: 'access_client_engine' },
+  { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell' },
   { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, roles: ['stylist_assistant'] },
 ];
@@ -139,7 +140,6 @@ const statsNavItems: NavItem[] = [
 
 // Manager-accessible admin items
 const managerNavItems: NavItem[] = [
-  { href: '/dashboard/admin/team', label: 'Team Overview', icon: Users, permission: 'view_team_overview' },
   { href: '/dashboard/admin/birthdays', label: 'Team Birthdays', icon: Cake, permission: 'view_team_overview' },
   { href: '/dashboard/admin/onboarding-tracker', label: 'Onboarding Tracker', icon: ClipboardList, permission: 'view_team_overview' },
   { href: '/dashboard/admin/client-engine-tracker', label: 'Client Engine Tracker', icon: Target, permission: 'view_team_overview' },
