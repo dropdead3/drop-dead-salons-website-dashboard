@@ -55,8 +55,17 @@ export function useSettingsLayout() {
 
       // Return stored preferences or defaults
       const stored = data?.settings_layout as unknown as SettingsLayoutPreferences | null;
+      
+      // Merge stored order with defaults to include any new categories
+      let order = stored?.order || DEFAULT_ORDER;
+      // Add any new categories from DEFAULT_ORDER that aren't in stored order
+      const missingCategories = DEFAULT_ORDER.filter(cat => !order.includes(cat));
+      if (missingCategories.length > 0) {
+        order = [...missingCategories, ...order];
+      }
+      
       return {
-        order: stored?.order || DEFAULT_ORDER,
+        order,
         iconColors: { ...DEFAULT_ICON_COLORS, ...(stored?.iconColors || {}) },
       };
     },
