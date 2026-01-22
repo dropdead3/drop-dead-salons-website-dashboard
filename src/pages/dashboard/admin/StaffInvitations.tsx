@@ -79,64 +79,64 @@ const getStaffLoginUrl = () => {
   return '/staff-login';
 };
 
-// Premium PDF Preview Component
+// Premium PDF Preview Component - 8.5x11 ratio
 function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
   return (
-    <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-8 shadow-inner">
-      {/* Premium PDF Preview */}
-      <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-sm mx-auto">
-        {/* Header with gradient - smaller logo */}
-        <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
+    <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-6 shadow-inner">
+      {/* Premium PDF Preview - 8.5:11 aspect ratio */}
+      <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto" style={{ aspectRatio: '8.5/11', maxWidth: '320px' }}>
+        {/* Header with gradient */}
+        <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-4 px-4 text-center" style={{ height: '10%' }}>
           <img 
             src={DropDeadLogo} 
             alt="Drop Dead" 
-            className="h-3 mx-auto invert"
+            className="h-4 mx-auto invert"
           />
-          <p className="text-[hsl(40,30%,85%)] text-[10px] mt-1 tracking-widest uppercase">
+          <p className="text-[hsl(40,30%,85%)] text-[9px] mt-1 tracking-widest uppercase">
             Staff Portal
           </p>
         </div>
 
-        {/* QR Code Section */}
-        <div className="p-6 flex flex-col items-center">
+        {/* Main Content */}
+        <div className="flex flex-col items-center justify-center px-4" style={{ height: '83%' }}>
           {/* Welcome message */}
-          <div className="text-center mb-5">
+          <div className="text-center mb-4">
             <p className="text-sm text-foreground font-medium">Welcome to the team!</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] text-muted-foreground mt-1">
               You need to create your profile on our software system.
             </p>
           </div>
 
-          <div className="p-4 bg-white rounded-xl border-2 border-[hsl(35,30%,88%)] shadow-sm">
+          <div className="p-3 bg-white rounded-xl border-2 border-[hsl(35,30%,88%)] shadow-sm">
             <QRCodeCanvas 
               value={staffLoginUrl} 
-              size={140}
+              size={120}
               level="H"
               marginSize={1}
               fgColor="hsl(0, 0%, 8%)"
             />
           </div>
           
-          <div className="mt-5 text-center">
-            <h3 className="font-display text-base text-[hsl(0,0%,8%)]">
+          <div className="mt-4 text-center">
+            <h3 className="font-display text-sm text-[hsl(0,0%,8%)]">
               Create Your Account
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] text-muted-foreground mt-1">
               Scan this QR code to get started
+            </p>
+          </div>
+
+          {/* URL Section */}
+          <div className="mt-4 pt-3 border-t border-[hsl(35,25%,90%)] w-full text-center">
+            <p className="text-[9px] text-muted-foreground">
+              Or visit: <span className="font-medium text-foreground break-all">{staffLoginUrl.replace('https://', '')}</span>
             </p>
           </div>
         </div>
 
-        {/* URL Footer */}
-        <div className="bg-[hsl(40,30%,96%)] px-6 py-3 text-center border-t border-[hsl(35,25%,90%)]">
-          <p className="text-xs text-muted-foreground">
-            Or visit: <span className="font-medium text-foreground">{staffLoginUrl.replace('https://', '')}</span>
-          </p>
-        </div>
-
         {/* Powered By Footer */}
-        <div className="bg-[hsl(0,0%,8%)] px-6 py-1.5 text-center">
-          <p className="text-[8px] text-[hsl(40,30%,55%)]">
+        <div className="bg-[hsl(0,0%,8%)] px-4 flex items-center justify-center" style={{ height: '4%' }}>
+          <p className="text-[7px] text-[hsl(40,30%,55%)]">
             Powered by Drop Dead Salon Software
           </p>
         </div>
@@ -155,13 +155,13 @@ function QRCodeCard() {
     const canvas = qrRef.current?.querySelector('canvas');
     if (!canvas) return;
 
-    // Create a premium branded canvas
+    // Create a premium branded canvas - 8.5x11 inches at 300ppi
     const pdfCanvas = document.createElement('canvas');
     const ctx = pdfCanvas.getContext('2d');
     if (!ctx) return;
 
-    const width = 400;
-    const height = 580;
+    const width = 2550; // 8.5 inches * 300ppi
+    const height = 3300; // 11 inches * 300ppi
     pdfCanvas.width = width;
     pdfCanvas.height = height;
 
@@ -172,45 +172,45 @@ function QRCodeCard() {
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
 
-    // Header background (dark) - smaller
-    const headerHeight = 50;
+    // Header background (dark)
+    const headerHeight = 320;
     const headerGradient = ctx.createLinearGradient(0, 0, width, 0);
     headerGradient.addColorStop(0, '#141414');
     headerGradient.addColorStop(1, '#262626');
     ctx.fillStyle = headerGradient;
     ctx.fillRect(0, 0, width, headerHeight);
 
-    // Header text - smaller logo
+    // Header text
     ctx.fillStyle = '#f8f6f1';
-    ctx.font = 'bold 14px Termina, sans-serif';
+    ctx.font = 'bold 90px Termina, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('DROP DEAD®', width / 2, 25);
-    ctx.font = '8px sans-serif';
+    ctx.fillText('DROP DEAD®', width / 2, 160);
+    ctx.font = '48px sans-serif';
     ctx.fillStyle = '#a8a090';
-    ctx.fillText('STAFF PORTAL', width / 2, 40);
+    ctx.fillText('STAFF PORTAL', width / 2, 240);
 
-    // QR Code container
-    const qrSize = 160;
-    const qrX = (width - qrSize) / 2;
-    const qrY = headerHeight + 100;
-    
-    // Welcome message above QR
+    // Welcome message
     ctx.fillStyle = '#141414';
-    ctx.font = '500 14px Termina, sans-serif';
+    ctx.font = '500 72px Termina, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Welcome to the team!', width / 2, headerHeight + 40);
+    ctx.fillText('Welcome to the team!', width / 2, headerHeight + 200);
     
     ctx.fillStyle = '#666666';
-    ctx.font = '11px sans-serif';
-    ctx.fillText('You need to create your profile on our software system.', width / 2, headerHeight + 60);
+    ctx.font = '48px sans-serif';
+    ctx.fillText('You need to create your profile on our software system.', width / 2, headerHeight + 280);
+
+    // QR Code container
+    const qrSize = 900;
+    const qrX = (width - qrSize) / 2;
+    const qrY = headerHeight + 400;
     
-    // QR border
+    // QR border with shadow
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-    ctx.shadowBlur = 20;
-    ctx.shadowOffsetY = 5;
+    ctx.shadowBlur = 80;
+    ctx.shadowOffsetY = 20;
     ctx.beginPath();
-    ctx.roundRect(qrX - 15, qrY - 15, qrSize + 30, qrSize + 30, 12);
+    ctx.roundRect(qrX - 80, qrY - 80, qrSize + 160, qrSize + 160, 60);
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
@@ -220,38 +220,38 @@ function QRCodeCard() {
 
     // Title text
     ctx.fillStyle = '#141414';
-    ctx.font = '500 18px Termina, sans-serif';
+    ctx.font = '500 96px Termina, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Create Your Account', width / 2, qrY + qrSize + 50);
+    ctx.fillText('Create Your Account', width / 2, qrY + qrSize + 280);
 
     // Subtitle
     ctx.fillStyle = '#666666';
-    ctx.font = '12px sans-serif';
-    ctx.fillText('Scan this QR code to get started', width / 2, qrY + qrSize + 72);
+    ctx.font = '56px sans-serif';
+    ctx.fillText('Scan this QR code to get started', width / 2, qrY + qrSize + 380);
 
     // URL divider
-    const urlY = height - 80;
+    const urlY = height - 400;
     ctx.strokeStyle = '#d4d0c8';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(40, urlY);
-    ctx.lineTo(width - 40, urlY);
+    ctx.moveTo(200, urlY);
+    ctx.lineTo(width - 200, urlY);
     ctx.stroke();
 
     // URL text
     ctx.fillStyle = '#888888';
-    ctx.font = '11px sans-serif';
+    ctx.font = '44px sans-serif';
     const urlText = staffLoginUrl.replace('https://', '').replace('http://', '');
-    ctx.fillText(urlText, width / 2, urlY + 25);
+    ctx.fillText(urlText, width / 2, urlY + 100);
 
-    // Powered by footer (dark bar at bottom) - smaller font
-    const footerHeight = 24;
+    // Powered by footer (dark bar at bottom)
+    const footerHeight = 120;
     ctx.fillStyle = '#141414';
     ctx.fillRect(0, height - footerHeight, width, footerHeight);
     
     ctx.fillStyle = '#8a8070';
-    ctx.font = '8px sans-serif';
-    ctx.fillText('Powered by Drop Dead Salon Software', width / 2, height - 8);
+    ctx.font = '36px sans-serif';
+    ctx.fillText('Powered by Drop Dead Salon Software', width / 2, height - 40);
 
     // Download
     const link = document.createElement('a');
@@ -284,36 +284,36 @@ function QRCodeCard() {
           />
         </div>
 
-        {/* Preview thumbnail */}
+        {/* Preview thumbnail - 8.5x11 ratio */}
         <div className="flex justify-center p-4 bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden w-36">
-            <div className="bg-foreground py-1.5 flex items-center justify-center">
-              <span className="text-[5px] text-background font-display tracking-wider">DROP DEAD®</span>
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ width: '102px', aspectRatio: '8.5/11' }}>
+            <div className="bg-foreground flex items-center justify-center" style={{ height: '10%' }}>
+              <span className="text-[4px] text-background font-display tracking-wider">DROP DEAD®</span>
             </div>
-            <div className="p-3 pt-2">
+            <div className="flex flex-col items-center justify-center px-2" style={{ height: '86%' }}>
               {/* Welcome message */}
-              <div className="text-center mb-2">
-                <p className="text-[5px] font-medium text-foreground">Welcome to the team!</p>
-                <p className="text-[4px] text-muted-foreground leading-tight">
+              <div className="text-center mb-1">
+                <p className="text-[4px] font-medium text-foreground">Welcome to the team!</p>
+                <p className="text-[3px] text-muted-foreground leading-tight">
                   You need to create your profile on our software system.
                 </p>
               </div>
-              <div className="flex justify-center mb-2">
+              <div className="flex justify-center mb-1">
                 <QRCodeCanvas 
                   value={staffLoginUrl} 
-                  size={55}
+                  size={45}
                   level="H"
                   marginSize={0}
                   fgColor="#141414"
                 />
               </div>
               <div className="text-center">
-                <p className="text-[5px] font-medium">Create Your Account</p>
-                <p className="text-[4px] text-muted-foreground">Scan to get started</p>
+                <p className="text-[4px] font-medium">Create Your Account</p>
+                <p className="text-[3px] text-muted-foreground">Scan to get started</p>
               </div>
             </div>
-            <div className="bg-foreground py-0.5 flex items-center justify-center">
-              <span className="text-[3px] text-[hsl(40,30%,55%)]">Powered by Drop Dead Salon Software</span>
+            <div className="bg-foreground flex items-center justify-center" style={{ height: '4%' }}>
+              <span className="text-[2px] text-[hsl(40,30%,55%)]">Powered by Drop Dead Salon Software</span>
             </div>
           </div>
         </div>
