@@ -599,8 +599,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <ChevronDown className="w-3.5 h-3.5 opacity-60" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80 p-0 bg-card border border-border shadow-lg max-h-[70vh] overflow-hidden">
-          <ScrollArea className="h-full max-h-[70vh]">
+        <DropdownMenuContent align="end" className="w-80 p-0 bg-card border border-border shadow-lg max-h-[70vh] overflow-y-auto">
             <div className="p-2">
               <div className="flex items-center gap-3 px-2 py-3 mb-2">
                 <div className="p-2 bg-muted">
@@ -761,7 +760,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </DialogContent>
               </Dialog>
             </div>
-          </ScrollArea>
         </DropdownMenuContent>
       </DropdownMenu>
     );
