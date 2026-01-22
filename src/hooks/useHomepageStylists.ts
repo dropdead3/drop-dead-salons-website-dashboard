@@ -9,6 +9,7 @@ export interface HomepageStylist {
   photo_url: string | null;
   instagram: string | null;
   tiktok: string | null;
+  preferred_social_handle: 'instagram' | 'tiktok' | null;
   stylist_level: string | null;
   specialties: string[] | null;
   highlighted_services: string[] | null;
@@ -85,7 +86,7 @@ export function useHomepageStylists() {
 
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('id, user_id, full_name, display_name, photo_url, instagram, tiktok, stylist_level, specialties, highlighted_services, location_id, location_ids, is_booking, bio, homepage_order')
+        .select('id, user_id, full_name, display_name, photo_url, instagram, tiktok, preferred_social_handle, stylist_level, specialties, highlighted_services, location_id, location_ids, is_booking, bio, homepage_order')
         .eq('is_active', true)
         .eq('homepage_visible', true)
         .in('user_id', stylistUserIds);

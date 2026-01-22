@@ -8,6 +8,7 @@ export interface Stylist {
   displayName?: string | null; // Nickname for card display
   instagram: string;
   tiktok?: string;
+  preferred_social_handle?: 'instagram' | 'tiktok' | null;
   level: string;
   specialties: string[];
   highlighted_services?: string[];

@@ -700,6 +700,7 @@ export type Database = {
           location_ids: string[] | null
           phone: string | null
           photo_url: string | null
+          preferred_social_handle: string | null
           specialties: string[] | null
           stylist_level: string | null
           stylist_type: Database["public"]["Enums"]["stylist_type"] | null
@@ -738,6 +739,7 @@ export type Database = {
           location_ids?: string[] | null
           phone?: string | null
           photo_url?: string | null
+          preferred_social_handle?: string | null
           specialties?: string[] | null
           stylist_level?: string | null
           stylist_type?: Database["public"]["Enums"]["stylist_type"] | null
@@ -776,6 +778,7 @@ export type Database = {
           location_ids?: string[] | null
           phone?: string | null
           photo_url?: string | null
+          preferred_social_handle?: string | null
           specialties?: string[] | null
           stylist_level?: string | null
           stylist_type?: Database["public"]["Enums"]["stylist_type"] | null

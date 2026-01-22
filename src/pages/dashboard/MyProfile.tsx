@@ -89,6 +89,7 @@ export default function MyProfile() {
     phone: '',
     instagram: '',
     tiktok: '',
+    preferred_social_handle: 'instagram' as 'instagram' | 'tiktok',
     birthday: '',
     hire_date: '',
     location_id: '',
@@ -132,6 +133,7 @@ export default function MyProfile() {
         phone: profile.phone || '',
         instagram: profile.instagram || '',
         tiktok: profile.tiktok || '',
+        preferred_social_handle: ((profile as any).preferred_social_handle || 'instagram') as 'instagram' | 'tiktok',
         birthday: (profile as any).birthday || '',
         hire_date: profile.hire_date || '',
         location_id: profile.location_id || '',
@@ -266,6 +268,7 @@ export default function MyProfile() {
       phone: formData.phone,
       instagram: formData.instagram,
       tiktok: formData.tiktok,
+      preferred_social_handle: formData.preferred_social_handle,
       birthday: formData.birthday,
       hire_date: formData.hire_date || null,
       location_id: formData.location_id,
@@ -652,6 +655,59 @@ export default function MyProfile() {
                 </div>
               </div>
 
+              {/* Preferred Social Handle for Card Display */}
+              {(formData.instagram || formData.tiktok) && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    Display on Stylist Card
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Choose which social handle appears on your public stylist card.
+                  </p>
+                  <div className="flex gap-2">
+                    <Badge
+                      variant={formData.preferred_social_handle === 'instagram' ? 'default' : 'outline'}
+                      className={cn(
+                        "cursor-pointer transition-all px-4 py-2",
+                        !formData.instagram && "opacity-50 cursor-not-allowed"
+                      )}
+                      onClick={() => {
+                        if (formData.instagram) {
+                          setFormData(prev => ({ ...prev, preferred_social_handle: 'instagram' }));
+                        }
+                      }}
+                    >
+                      <Instagram className="w-4 h-4 mr-2" />
+                      Instagram
+                      {formData.preferred_social_handle === 'instagram' && (
+                        <Check className="w-3 h-3 ml-2" />
+                      )}
+                    </Badge>
+                    <Badge
+                      variant={formData.preferred_social_handle === 'tiktok' ? 'default' : 'outline'}
+                      className={cn(
+                        "cursor-pointer transition-all px-4 py-2",
+                        !formData.tiktok && "opacity-50 cursor-not-allowed"
+                      )}
+                      onClick={() => {
+                        if (formData.tiktok) {
+                          setFormData(prev => ({ ...prev, preferred_social_handle: 'tiktok' }));
+                        }
+                      }}
+                    >
+                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                      </svg>
+                      TikTok
+                      {formData.preferred_social_handle === 'tiktok' && (
+                        <Check className="w-3 h-3 ml-2" />
+                      )}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
               {/* Birthday & Start Date Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -1021,6 +1077,7 @@ export default function MyProfile() {
                   photoUrl={profile?.photo_url || undefined}
                   instagram={formData.instagram}
                   tiktok={formData.tiktok}
+                  preferredSocialHandle={formData.preferred_social_handle}
                   highlightedServices={formData.highlighted_services}
                   specialties={formData.specialties}
                   bio={formData.bio}

@@ -148,34 +148,47 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
               </div>
               <h3 className="text-xl font-display mb-1">{formatCardName(stylist.name, stylist.displayName)}</h3>
               
-              {/* Social Links - Stacked */}
+              {/* Social Link - Show preferred handle only */}
               <div className="flex flex-col gap-1 mb-4">
-                {stylist.instagram && (
-                  <a 
-                    href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition-colors duration-200"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Instagram className="w-4 h-4" />
-                    <span>{stylist.instagram}</span>
-                  </a>
-                )}
-                {stylist.tiktok && (
-                  <a 
-                    href={`https://tiktok.com/@${stylist.tiktok.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition-colors duration-200"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                    </svg>
-                    <span>{stylist.tiktok}</span>
-                  </a>
-                )}
+                {(() => {
+                  const preferred = stylist.preferred_social_handle || 'instagram';
+                  const showInstagram = preferred === 'instagram' && stylist.instagram;
+                  const showTiktok = preferred === 'tiktok' && stylist.tiktok;
+                  
+                  // Fallback: if preferred doesn't exist, show the other
+                  const handle = showInstagram ? stylist.instagram : 
+                                 showTiktok ? stylist.tiktok :
+                                 stylist.instagram || stylist.tiktok;
+                  const isInstagram = showInstagram || (!showTiktok && stylist.instagram);
+                  
+                  if (!handle) return null;
+                  
+                  return isInstagram ? (
+                    <a 
+                      href={`https://instagram.com/${handle.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition-colors duration-200"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Instagram className="w-4 h-4" />
+                      <span>{handle}</span>
+                    </a>
+                  ) : (
+                    <a 
+                      href={`https://tiktok.com/@${handle.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition-colors duration-200"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                      </svg>
+                      <span>{handle}</span>
+                    </a>
+                  );
+                })()}
               </div>
               
               <div className="flex items-center justify-start">
@@ -226,34 +239,46 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
               {stylist.bio || "No bio available"}
             </p>
 
-            {/* Social Media Links */}
+            {/* Social Media Link - Show preferred handle only */}
             <div className="flex items-center justify-center gap-4 mb-3">
-              {stylist.instagram && (
-                <a 
-                  href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors duration-200"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Instagram className="w-4 h-4" />
-                  <span>{stylist.instagram}</span>
-                </a>
-              )}
-              {stylist.tiktok && (
-                <a 
-                  href={`https://tiktok.com/@${stylist.tiktok.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors duration-200"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                  </svg>
-                  <span>{stylist.tiktok}</span>
-                </a>
-              )}
+              {(() => {
+                const preferred = stylist.preferred_social_handle || 'instagram';
+                const showInstagram = preferred === 'instagram' && stylist.instagram;
+                const showTiktok = preferred === 'tiktok' && stylist.tiktok;
+                
+                const handle = showInstagram ? stylist.instagram : 
+                               showTiktok ? stylist.tiktok :
+                               stylist.instagram || stylist.tiktok;
+                const isInstagram = showInstagram || (!showTiktok && stylist.instagram);
+                
+                if (!handle) return null;
+                
+                return isInstagram ? (
+                  <a 
+                    href={`https://instagram.com/${handle.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors duration-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Instagram className="w-4 h-4" />
+                    <span>{handle}</span>
+                  </a>
+                ) : (
+                  <a 
+                    href={`https://tiktok.com/@${handle.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors duration-200"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                    </svg>
+                    <span>{handle}</span>
+                  </a>
+                );
+              })()}
             </div>
 
             {/* Location */}
