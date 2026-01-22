@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +28,7 @@ import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
+import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -174,58 +175,15 @@ const websiteNavItems: NavItem[] = [
   { href: '/dashboard/admin/locations', label: 'Locations', icon: MapPin, permission: 'manage_settings' },
 ];
 
-// Sidebar scroll key for sessionStorage
-const SIDEBAR_SCROLL_KEY = 'dashboard-sidebar-scroll';
-
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userSearch, setUserSearch] = useState('');
-  const desktopNavRef = useRef<HTMLElement>(null);
-  const mobileNavRef = useRef<HTMLElement>(null);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
-
-  // Track desktop sidebar scroll position and persist to sessionStorage
-  useEffect(() => {
-    const nav = desktopNavRef.current;
-    if (!nav) return;
-    
-    const handleScroll = () => {
-      sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(nav.scrollTop));
-    };
-    
-    nav.addEventListener('scroll', handleScroll, { passive: true });
-    return () => nav.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Restore sidebar scroll position on mount and after navigation
-  useEffect(() => {
-    const savedPosition = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
-    if (!savedPosition) return;
-    
-    const scrollPos = parseInt(savedPosition, 10);
-    if (isNaN(scrollPos) || scrollPos === 0) return;
-
-    const restoreScroll = () => {
-      if (desktopNavRef.current) {
-        desktopNavRef.current.scrollTop = scrollPos;
-      }
-      if (mobileNavRef.current) {
-        mobileNavRef.current.scrollTop = scrollPos;
-      }
-    };
-    
-    // Multiple attempts to ensure content is ready
-    restoreScroll();
-    requestAnimationFrame(restoreScroll);
-    const timer = setTimeout(restoreScroll, 100);
-    
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
 
   // Close mobile sidebar on navigation
   const handleNavClick = () => {
@@ -380,194 +338,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     });
   };
 
-  const NavLink = ({ href, label, icon: Icon, badgeCount }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; badgeCount?: number }) => {
-    const isActive = location.pathname === href;
-    return (
-      <Link
-        to={href}
-        onClick={handleNavClick}
-        className={cn(
-          "flex items-center gap-3 px-4 py-3 text-sm font-sans transition-colors",
-          isActive 
-            ? "bg-foreground text-background" 
-            : "text-muted-foreground hover:text-foreground hover:bg-muted"
-        )}
-      >
-        <Icon className="w-4 h-4" />
-        <span className="flex-1">{label}</span>
-        {badgeCount !== undefined && badgeCount > 0 && (
-          <Badge variant="destructive" className="h-5 min-w-5 flex items-center justify-center text-xs px-1.5">
-            {badgeCount > 9 ? '9+' : badgeCount}
-          </Badge>
-        )}
-      </Link>
-    );
-  };
-
-  const SidebarContent = ({ navRef }: { navRef?: React.RefObject<HTMLElement> }) => (
-    <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="p-6 border-b border-border">
-        <Link to="/dashboard" className="block">
-          <img src={Logo} alt="Drop Dead" className="h-5 w-auto" />
-        </Link>
-        <p className="text-xs text-muted-foreground mt-2 font-sans">
-          Staff Dashboard
-        </p>
-      </div>
-
-      {/* Navigation */}
-      <nav ref={navRef} className="flex-1 py-4 overflow-y-auto">
-        <div className="space-y-1">
-          {filterNavItems(mainNavItems).map((item) => (
-            <NavLink 
-              key={item.href} 
-              {...item} 
-              badgeCount={item.href === '/dashboard' ? unreadCount : undefined}
-            />
-          ))}
-        </div>
-
-        {/* Growth Section */}
-        {filterNavItems(growthNavItems).length > 0 && (
-          <>
-            <div className="my-4 px-4">
-              <div className="h-px bg-border" />
-            </div>
-            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Growth
-            </p>
-            <div className="space-y-1">
-              {filterNavItems(growthNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Stats & Leaderboard Section */}
-        {filterNavItems(statsNavItems).length > 0 && (
-          <>
-            <div className="my-4 px-4">
-              <div className="h-px bg-border" />
-            </div>
-            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Stats & Leaderboard
-            </p>
-            <div className="space-y-1">
-              {filterNavItems(statsNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Get Help Section */}
-        {filterNavItems(getHelpNavItems).length > 0 && (
-          <>
-            <div className="my-4 px-4">
-              <div className="h-px bg-border" />
-            </div>
-            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Get Help
-            </p>
-            <div className="space-y-1">
-              {filterNavItems(getHelpNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Housekeeping Section */}
-        {filterNavItems(housekeepingNavItems).length > 0 && (
-          <>
-            <div className="my-4 px-4">
-              <div className="h-px bg-border" />
-            </div>
-            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Housekeeping
-            </p>
-            <div className="space-y-1">
-              {filterNavItems(housekeepingNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Manager Section - visible to managers and admins */}
-        {effectiveIsCoach && filterNavItems(managerNavItems).length > 0 && (
-          <>
-            <div className="my-4 px-4">
-              <div className="h-px bg-border" />
-            </div>
-            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Management
-            </p>
-            <div className="space-y-1">
-              {filterNavItems(managerNavItems).map((item) => (
-                <NavLink 
-                  key={item.href} 
-                  {...item} 
-                  badgeCount={item.href === '/dashboard/admin/announcements' ? unreadCount : undefined}
-                />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Website Section - visible to those with homepage management permissions */}
-        {filterNavItems(websiteNavItems).length > 0 && (
-          <>
-            <div className="my-4 px-4">
-              <div className="h-px bg-border" />
-            </div>
-            <div className="px-4 mb-2 flex items-center justify-between">
-              <p className="text-xs uppercase tracking-wider text-foreground font-display font-medium">
-                Website
-              </p>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a 
-                    href="/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="p-1 rounded hover:bg-muted transition-colors"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent side="right">View Website</TooltipContent>
-              </Tooltip>
-            </div>
-            <div className="space-y-1">
-              {filterNavItems(websiteNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Admin Only Section - visible only to admins */}
-        {roles.includes('admin') && filterNavItems(adminOnlyNavItems).length > 0 && (
-          <>
-            <div className="my-4 px-4">
-              <div className="h-px bg-border" />
-            </div>
-            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Super Admin
-            </p>
-            <div className="space-y-1">
-              {filterNavItems(adminOnlyNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-      </nav>
-    </div>
-  );
 
 
   // View As Component for admins - allows viewing dashboard as different roles or specific users
@@ -898,7 +668,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:border-r lg:border-border lg:bg-card">
-        <SidebarContent navRef={desktopNavRef} />
+        <SidebarNavContent
+          mainNavItems={mainNavItems}
+          growthNavItems={growthNavItems}
+          statsNavItems={statsNavItems}
+          getHelpNavItems={getHelpNavItems}
+          housekeepingNavItems={housekeepingNavItems}
+          managerNavItems={managerNavItems}
+          websiteNavItems={websiteNavItems}
+          adminOnlyNavItems={adminOnlyNavItems}
+          unreadCount={unreadCount}
+          roles={roles}
+          effectiveIsCoach={effectiveIsCoach}
+          filterNavItems={filterNavItems}
+          onNavClick={handleNavClick}
+        />
       </aside>
 
       {/* Mobile Header */}
@@ -910,7 +694,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
-            <SidebarContent navRef={mobileNavRef} />
+            <SidebarNavContent
+              mainNavItems={mainNavItems}
+              growthNavItems={growthNavItems}
+              statsNavItems={statsNavItems}
+              getHelpNavItems={getHelpNavItems}
+              housekeepingNavItems={housekeepingNavItems}
+              managerNavItems={managerNavItems}
+              websiteNavItems={websiteNavItems}
+              adminOnlyNavItems={adminOnlyNavItems}
+              unreadCount={unreadCount}
+              roles={roles}
+              effectiveIsCoach={effectiveIsCoach}
+              filterNavItems={filterNavItems}
+              onNavClick={handleNavClick}
+            />
           </SheetContent>
         </Sheet>
 
