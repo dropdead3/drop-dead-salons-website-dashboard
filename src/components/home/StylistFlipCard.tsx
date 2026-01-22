@@ -148,8 +148,8 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
               </div>
               <h3 className="text-xl font-display mb-1">{formatCardName(stylist.name, stylist.displayName)}</h3>
               
-              {/* Social Links */}
-              <div className="flex items-center gap-3 mb-4">
+              {/* Social Links - Stacked */}
+              <div className="flex flex-col gap-1 mb-4">
                 {stylist.instagram && (
                   <a 
                     href={`https://instagram.com/${stylist.instagram.replace('@', '')}`}
@@ -159,7 +159,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Instagram className="w-4 h-4" />
-                    <span className="hidden sm:inline">{stylist.instagram}</span>
+                    <span>{stylist.instagram}</span>
                   </a>
                 )}
                 {stylist.tiktok && (
@@ -173,7 +173,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
                     </svg>
-                    <span className="hidden sm:inline">{stylist.tiktok}</span>
+                    <span>{stylist.tiktok}</span>
                   </a>
                 )}
               </div>
