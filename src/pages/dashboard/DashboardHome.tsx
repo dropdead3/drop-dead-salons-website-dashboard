@@ -406,13 +406,13 @@ export default function DashboardHome() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-4">
-                  <p className="text-sm font-sans text-[hsl(35,20%,40%)] text-center">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm font-sans text-[hsl(35,20%,40%)]">
                     Ready to transform your book? Start the challenge today.
                   </p>
                   <Button 
                     asChild
-                    className="bg-gradient-to-r from-[hsl(40,40%,25%)] to-[hsl(35,35%,15%)] hover:from-[hsl(40,45%,30%)] hover:to-[hsl(35,40%,20%)] text-[hsl(45,50%,90%)] border border-[hsl(45,50%,60%)]/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] px-8"
+                    className="bg-gradient-to-r from-[hsl(40,40%,25%)] to-[hsl(35,35%,15%)] hover:from-[hsl(40,45%,30%)] hover:to-[hsl(35,40%,20%)] text-[hsl(45,50%,90%)] border border-[hsl(45,50%,60%)]/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] px-8 shrink-0"
                   >
                     <Link to="/dashboard/program">
                       Start Program
