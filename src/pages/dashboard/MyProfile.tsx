@@ -849,7 +849,9 @@ export default function MyProfile() {
                     </SelectTrigger>
                     <SelectContent>
                       {stylistLevels.map(level => (
-                        <SelectItem key={level.id} value={level.label}>{level.label}</SelectItem>
+                        <SelectItem key={level.id} value={level.label}>
+                          {level.client_label} — {level.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
