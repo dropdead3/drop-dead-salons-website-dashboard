@@ -108,8 +108,13 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
           <div className="flex-1 flex items-center gap-2">
             <Input
               value={editName}
-              onChange={(e) => setEditName(e.target.value.toUpperCase())}
-              className="h-8 text-sm uppercase"
+              onChange={(e) => {
+                const value = e.target.value.split(' ').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ');
+                setEditName(value);
+              }}
+              className="h-8 text-sm"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSaveName();
@@ -259,9 +264,13 @@ export function SpecialtyOptionsManager() {
           <Input
             placeholder="Add new specialty..."
             value={newSpecialty}
-            onChange={(e) => setNewSpecialty(e.target.value.toUpperCase())}
+            onChange={(e) => {
+              const value = e.target.value.split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ');
+              setNewSpecialty(value);
+            }}
             onKeyDown={(e) => e.key === 'Enter' && handleAddSpecialty()}
-            className="uppercase"
           />
           <Button
             onClick={handleAddSpecialty}
