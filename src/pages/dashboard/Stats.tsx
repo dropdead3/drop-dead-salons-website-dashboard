@@ -23,7 +23,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { SalesStatsCard } from '@/components/dashboard/SalesStatsCard';
+
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { PersonalGoalsCard } from '@/components/dashboard/sales/PersonalGoalsCard';
 import { TierProgressAlert } from '@/components/dashboard/sales/TierProgressAlert';
@@ -151,9 +151,6 @@ export default function Stats() {
             )}
           </Button>
         </div>
-
-        {/* Sales Data Card - Top Priority */}
-        <SalesStatsCard userId={user?.id} />
 
         {/* Phorest Stats Card (if connected) */}
         {myPhorestMetrics && (
