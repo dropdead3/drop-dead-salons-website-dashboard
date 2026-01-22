@@ -7,7 +7,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation, CalendarX, Signpost, Sparkles, Copy, Check } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Building2, ExternalLink, AlertTriangle, Crown, Navigation, CalendarX, Signpost, Sparkles, Copy, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -15,7 +15,7 @@ import { useLocations, formatHoursForDisplay, getClosedDays, getTodayHours, isCl
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { differenceInYears, differenceInMonths, parseISO, format, setYear, isSameDay, differenceInDays, isBefore } from 'date-fns';
-import { useUpcomingAnniversaries, useTodaysAnniversaries, MILESTONE_YEARS, getAnniversaryMilestone } from '@/hooks/useAnniversaries';
+import { getAnniversaryMilestone } from '@/hooks/useAnniversaries';
 import { cn, formatFullDisplayName } from '@/lib/utils';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -115,8 +115,6 @@ export default function TeamDirectory() {
   const { data: team = [], isLoading } = useTeamDirectory(locationFilter === 'all' ? undefined : locationFilter);
   const { data: locations = [] } = useLocations();
   const { data: currentUserProfile } = useEmployeeProfile();
-  const { data: todaysAnniversaries = [] } = useTodaysAnniversaries();
-  const { data: upcomingAnniversaries = [] } = useUpcomingAnniversaries(30);
   const { isViewingAsUser } = useViewAs();
   const { roles: actualRoles } = useAuth();
   
@@ -221,92 +219,7 @@ export default function TeamDirectory() {
           </TabsList>
 
           <TabsContent value="team" className="mt-6">
-            {/* Today's Anniversaries Banner */}
-            {todaysAnniversaries.length > 0 && (
-              <Card className="mb-6 border-2 border-amber-400/50 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30">
-                <CardContent className="py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-full">
-                      <PartyPopper className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-amber-800 dark:text-amber-200">
-                        🎉 Work Anniversary Today!
-                      </p>
-                      <p className="text-sm text-amber-700 dark:text-amber-300">
-                        {todaysAnniversaries.map((a, i) => (
-                          <span 
-                            key={a.id}
-                            className={cn(
-                              isViewingAsUser && a.isCurrentUser && "bg-primary/20 px-1.5 py-0.5 rounded ring-1 ring-primary/30"
-                            )}
-                          >
-                            {i > 0 && (i === todaysAnniversaries.length - 1 ? ' and ' : ', ')}
-                            <strong className="inline-flex items-center gap-1">
-                              {a.display_name || a.full_name}
-                              {isViewingAsUser && a.isCurrentUser && <Eye className="w-3 h-3 text-primary" />}
-                            </strong> ({a.years} year{a.years > 1 ? 's' : ''})
-                          </span>
-                        ))}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Upcoming Anniversaries */}
-            {upcomingAnniversaries.length > 0 && (
-              <Card className="mb-6">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Award className="w-4 h-4 text-amber-500" />
-                    Upcoming Work Anniversaries
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-3">
-                    {upcomingAnniversaries.slice(0, 5).map(anniversary => {
-                      const isMilestone = MILESTONE_YEARS.includes(anniversary.years);
-                      const isImpersonatedUser = isViewingAsUser && anniversary.isCurrentUser;
-                      return (
-                        <div
-                          key={anniversary.id}
-                          className={cn(
-                            "flex items-center gap-2 px-3 py-2 rounded-lg border",
-                            isImpersonatedUser 
-                              ? "bg-primary/10 border-primary/30 ring-1 ring-primary/30"
-                              : isMilestone
-                                ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800"
-                                : "bg-muted/50 border-border"
-                          )}
-                        >
-                          <Avatar className={cn(
-                            "w-8 h-8",
-                            isImpersonatedUser && "ring-2 ring-primary"
-                          )}>
-                            <AvatarImage src={anniversary.photo_url || undefined} />
-                            <AvatarFallback className="text-xs">
-                              {anniversary.full_name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="text-sm">
-                            <p className="font-medium leading-tight flex items-center gap-1">
-                              {anniversary.display_name || anniversary.full_name}
-                              {isImpersonatedUser && <Eye className="w-3 h-3 text-primary" />}
-                            </p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              {isMilestone && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
-                              {anniversary.years} year{anniversary.years > 1 ? 's' : ''} • {format(anniversary.anniversaryDate, 'MMM d')}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="relative flex-1 max-w-md">
