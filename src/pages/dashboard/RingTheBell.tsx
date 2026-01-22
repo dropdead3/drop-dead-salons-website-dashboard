@@ -62,7 +62,7 @@ const leadSources = [
 export default function RingTheBell() {
   const { user } = useAuth();
   const roles = useEffectiveRoles();
-  const isCoach = roles.includes('admin') || roles.includes('manager');
+  const isCoach = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   const { toast } = useToast();
   const { playBellSound } = useBellSound();
   const [entries, setEntries] = useState<BellEntry[]>([]);

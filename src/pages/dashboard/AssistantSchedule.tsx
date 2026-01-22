@@ -279,7 +279,7 @@ export default function AssistantSchedule() {
   const isStylist = effectiveRoles.includes('stylist');
   // Check for both legacy 'assistant' role and new 'stylist_assistant' role
   const isStylistAssistant = effectiveRoles.includes('stylist_assistant') || effectiveRoles.includes('assistant');
-  const isAdmin = effectiveRoles.includes('admin') || effectiveRoles.includes('manager');
+  const isAdmin = effectiveRoles.includes('admin') || effectiveRoles.includes('manager') || effectiveRoles.includes('super_admin');
 
   const [activeTab, setActiveTab] = useState<'my-requests' | 'my-assignments' | 'all'>(
     isStylist ? 'my-requests' : isStylistAssistant ? 'my-assignments' : 'all'

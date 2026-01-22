@@ -30,7 +30,7 @@ const timeSlots = [
 export default function ScheduleMeeting() {
   const { user } = useAuth();
   const roles = useEffectiveRoles();
-  const isCoach = roles.includes('admin') || roles.includes('manager');
+  const isCoach = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   const { data: coaches = [], isLoading: loadingCoaches } = useAvailableCoaches();
   const { data: meetings = [], isLoading: loadingMeetings } = useOneOnOneMeetings();
   const createMeeting = useCreateMeeting();

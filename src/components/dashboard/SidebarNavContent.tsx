@@ -273,7 +273,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         )}
 
         {/* Admin Only Section */}
-        {roles.includes('admin') && filterNavItems(adminOnlyNavItems).length > 0 && (
+        {(roles.includes('admin') || roles.includes('super_admin')) && filterNavItems(adminOnlyNavItems).length > 0 && (
           <>
             <div className="my-4 px-4">
               <div className="h-px bg-border" />

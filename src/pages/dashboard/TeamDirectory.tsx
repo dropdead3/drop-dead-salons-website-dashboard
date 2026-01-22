@@ -119,7 +119,7 @@ export default function TeamDirectory() {
   const { roles: actualRoles } = useAuth();
   
   const isSuperAdmin = currentUserProfile?.is_super_admin;
-  const isAdmin = actualRoles.includes('admin');
+  const isAdmin = actualRoles.includes('admin') || actualRoles.includes('super_admin');
   const isManager = actualRoles.includes('manager');
   const canViewStrikes = isAdmin || isManager;
   

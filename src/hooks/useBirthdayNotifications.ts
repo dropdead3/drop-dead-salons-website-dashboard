@@ -10,7 +10,7 @@ import { toast } from 'sonner';
  */
 export function useBirthdayNotifications() {
   const roles = useEffectiveRoles();
-  const isLeadership = roles.includes('admin') || roles.includes('manager');
+  const isLeadership = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   const { data: upcomingBirthdays } = useUpcomingBirthdays(4);
 
   useEffect(() => {

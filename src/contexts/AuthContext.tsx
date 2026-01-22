@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
 
-  const isCoach = roles.includes('admin') || roles.includes('manager');
+  const isCoach = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
 
   const fetchRoles = async (userId: string) => {
     try {
