@@ -66,11 +66,13 @@ export function useTeamDirectory(locationFilter?: string, options?: { includeTes
   const { roles, loading: authLoading } = useAuth();
   const isAdminOrSuperAdmin = roles.includes('admin') || roles.includes('super_admin');
   
-  // Only admins can see test accounts, and only when explicitly requested
+  // Only admins/super admins can see test accounts, and only when explicitly requested
   const shouldIncludeTestAccounts = options?.includeTestAccounts && isAdminOrSuperAdmin;
 
   return useQuery({
     queryKey: ['team-directory', locationFilter, shouldIncludeTestAccounts, roles],
+    // Don't run query until auth is loaded to ensure correct role check
+    enabled: !authLoading,
     queryFn: async () => {
       let query = supabase
         .from('employee_profiles')
