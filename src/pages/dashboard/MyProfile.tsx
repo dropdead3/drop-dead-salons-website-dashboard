@@ -892,7 +892,7 @@ export default function MyProfile() {
                             isDisabled && "border-muted bg-muted/30 text-muted-foreground/50 cursor-not-allowed opacity-50"
                           )}
                         >
-                          {isExtensions && <Sparkles className="w-3 h-3 fill-current" />}
+                          {isExtensions && <Sparkles className="w-3 h-3" />}
                           {displayName}
                         </button>
                       );
@@ -918,7 +918,7 @@ export default function MyProfile() {
                     These will appear as badges on your stylist card on the website homepage. Choose from your specialties above.
                   </p>
                   <p className="text-xs text-muted-foreground/80 italic">
-                    Note: Extensions is the only badge displayed with a <Sparkles className="w-3 h-3 inline fill-current text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services.
+                    Note: Extensions is the only badge displayed with a <Sparkles className="w-3 h-3 inline text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services. and gold accent color to attract our highest-ticket services.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {formData.specialties.map(specialty => {
@@ -934,7 +934,7 @@ export default function MyProfile() {
                           )}
                           onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                         >
-                          {isSelected && <Sparkles className="w-3 h-3 mr-1 fill-current" />}
+                          {isSelected && <Sparkles className="w-3 h-3 mr-1" />}
                           {specialty.charAt(0).toUpperCase() + specialty.slice(1).toLowerCase()}
                         </Badge>
                       );

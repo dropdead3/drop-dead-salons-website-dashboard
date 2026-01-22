@@ -87,7 +87,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                           : "bg-background/70 text-foreground border border-border/30"
                       )}
                     >
-                      {isExtensions && <Sparkles className="w-3 h-3 fill-current" />}
+                      {isExtensions && <Sparkles className="w-3 h-3" />}
                       {toTitleCase(item)}
                     </span>
                   );
