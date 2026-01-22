@@ -606,7 +606,7 @@ export default function MyProfile() {
                     "flex items-center rounded-md border bg-background",
                     !formData.instagram.trim() ? "border-destructive/50" : "border-input"
                   )}>
-                    <div className="flex items-center gap-1.5 pl-3 pr-2 text-muted-foreground border-r border-input bg-muted/30">
+                    <div className="flex items-center gap-1.5 pl-3 text-muted-foreground">
                       <Instagram className="w-4 h-4" />
                       <span className="text-sm font-medium">@</span>
                     </div>
@@ -617,7 +617,7 @@ export default function MyProfile() {
                         const clean = e.target.value.replace(/[^a-zA-Z0-9._]/g, '');
                         setFormData(prev => ({ ...prev, instagram: clean ? `@${clean}` : '' }));
                       }}
-                      className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-1"
                       placeholder="yourhandle"
                       required
                     />
@@ -626,7 +626,7 @@ export default function MyProfile() {
                 <div className="space-y-2">
                   <Label htmlFor="tiktok">TikTok <span className="text-muted-foreground text-xs font-normal">(optional)</span></Label>
                   <div className="flex items-center rounded-md border border-input bg-background">
-                    <div className="flex items-center gap-1.5 pl-3 pr-2 text-muted-foreground border-r border-input bg-muted/30">
+                    <div className="flex items-center gap-1.5 pl-3 text-muted-foreground">
                       <svg 
                         className="w-4 h-4"
                         viewBox="0 0 24 24" 
@@ -643,7 +643,7 @@ export default function MyProfile() {
                         const clean = e.target.value.replace(/[^a-zA-Z0-9._]/g, '');
                         setFormData(prev => ({ ...prev, tiktok: clean ? `@${clean}` : '' }));
                       }}
-                      className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-1"
                       placeholder="yourhandle"
                     />
                   </div>
