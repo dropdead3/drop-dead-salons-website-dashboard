@@ -203,6 +203,93 @@ function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick 
   );
 }
 
+// User card component for team members list
+function UserCard({ 
+  u, 
+  updatingUser, 
+  updateUserRole, 
+  removeUser, 
+  currentUserId, 
+  dynamicRoleOptions 
+}: { 
+  u: UserWithRole; 
+  updatingUser: string | null; 
+  updateUserRole: (userId: string, role: string) => void;
+  removeUser: (userId: string) => void;
+  currentUserId?: string;
+  dynamicRoleOptions: { value: string; label: string }[];
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 border">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center font-display text-sm">
+          {u.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+        </div>
+        <div>
+          <p className="font-sans font-medium">{u.full_name}</p>
+          <p className="text-xs text-muted-foreground">{u.email}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Select
+          value={u.role}
+          onValueChange={(value) => updateUserRole(u.user_id, value)}
+          disabled={updatingUser === u.user_id}
+        >
+          <SelectTrigger className="w-32">
+            {updatingUser === u.user_id ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <SelectValue />
+            )}
+          </SelectTrigger>
+          <SelectContent className="bg-popover">
+            <SelectGroup>
+              <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leadership</SelectLabel>
+              {dynamicRoleOptions
+                .filter(role => ['super_admin', 'admin', 'manager'].includes(role.value))
+                .map(role => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Operations</SelectLabel>
+              {dynamicRoleOptions
+                .filter(role => ['director_of_operations', 'operations_assistant', 'receptionist', 'front_desk'].includes(role.value))
+                .map(role => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stylists</SelectLabel>
+              {dynamicRoleOptions
+                .filter(role => ['stylist', 'stylist_assistant'].includes(role.value))
+                .map(role => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => removeUser(u.user_id)}
+          disabled={u.user_id === currentUserId}
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -526,76 +613,118 @@ export default function Settings() {
                     No active users found.
                   </p>
                 ) : (
-                  <div className="space-y-3">
-                    {users.map(u => (
-                      <div key={u.user_id} className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 border">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center font-display text-sm">
-                            {u.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  <div className="space-y-6">
+                    {/* Leadership Section */}
+                    {(() => {
+                      const leadershipUsers = users.filter(u => 
+                        ['super_admin', 'admin', 'manager'].includes(u.role)
+                      );
+                      if (leadershipUsers.length === 0) return null;
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 pb-2 border-b">
+                            <Shield className="w-4 h-4 text-primary" />
+                            <h3 className="font-display text-sm uppercase tracking-wider text-foreground">Leadership</h3>
+                            <span className="text-xs text-muted-foreground">({leadershipUsers.length})</span>
                           </div>
-                          <div>
-                            <p className="font-sans font-medium">{u.full_name}</p>
-                            <p className="text-xs text-muted-foreground">{u.email}</p>
+                          {leadershipUsers.map(u => (
+                            <UserCard 
+                              key={u.user_id} 
+                              u={u} 
+                              updatingUser={updatingUser}
+                              updateUserRole={updateUserRole}
+                              removeUser={removeUser}
+                              currentUserId={user?.id}
+                              dynamicRoleOptions={dynamicRoleOptions}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Operations Section */}
+                    {(() => {
+                      const operationsUsers = users.filter(u => 
+                        ['director_of_operations', 'operations_assistant', 'receptionist', 'front_desk'].includes(u.role)
+                      );
+                      if (operationsUsers.length === 0) return null;
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 pb-2 border-b">
+                            <Cog className="w-4 h-4 text-primary" />
+                            <h3 className="font-display text-sm uppercase tracking-wider text-foreground">Operations</h3>
+                            <span className="text-xs text-muted-foreground">({operationsUsers.length})</span>
                           </div>
+                          {operationsUsers.map(u => (
+                            <UserCard 
+                              key={u.user_id} 
+                              u={u} 
+                              updatingUser={updatingUser}
+                              updateUserRole={updateUserRole}
+                              removeUser={removeUser}
+                              currentUserId={user?.id}
+                              dynamicRoleOptions={dynamicRoleOptions}
+                            />
+                          ))}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={u.role}
-                            onValueChange={(value) => updateUserRole(u.user_id, value)}
-                            disabled={updatingUser === u.user_id}
-                          >
-                            <SelectTrigger className="w-32">
-                              {updatingUser === u.user_id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <SelectValue />
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leadership</SelectLabel>
-                                {dynamicRoleOptions
-                                  .filter(role => ['super_admin', 'admin', 'manager'].includes(role.value))
-                                  .map(role => (
-                                    <SelectItem key={role.value} value={role.value}>
-                                      {role.label}
-                                    </SelectItem>
-                                  ))}
-                              </SelectGroup>
-                              <SelectGroup>
-                                <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Operations</SelectLabel>
-                                {dynamicRoleOptions
-                                  .filter(role => ['director_of_operations', 'operations_assistant', 'receptionist', 'front_desk'].includes(role.value))
-                                  .map(role => (
-                                    <SelectItem key={role.value} value={role.value}>
-                                      {role.label}
-                                    </SelectItem>
-                                  ))}
-                              </SelectGroup>
-                              <SelectGroup>
-                                <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stylists</SelectLabel>
-                                {dynamicRoleOptions
-                                  .filter(role => ['stylist', 'stylist_assistant'].includes(role.value))
-                                  .map(role => (
-                                    <SelectItem key={role.value} value={role.value}>
-                                      {role.label}
-                                    </SelectItem>
-                                  ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeUser(u.user_id)}
-                            disabled={u.user_id === user?.id}
-                            className="text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                      );
+                    })()}
+
+                    {/* Stylists Section */}
+                    {(() => {
+                      const stylistUsers = users.filter(u => 
+                        ['stylist', 'stylist_assistant'].includes(u.role)
+                      );
+                      if (stylistUsers.length === 0) return null;
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 pb-2 border-b">
+                            <Users className="w-4 h-4 text-primary" />
+                            <h3 className="font-display text-sm uppercase tracking-wider text-foreground">Stylists</h3>
+                            <span className="text-xs text-muted-foreground">({stylistUsers.length})</span>
+                          </div>
+                          {stylistUsers.map(u => (
+                            <UserCard 
+                              key={u.user_id} 
+                              u={u} 
+                              updatingUser={updatingUser}
+                              updateUserRole={updateUserRole}
+                              removeUser={removeUser}
+                              currentUserId={user?.id}
+                              dynamicRoleOptions={dynamicRoleOptions}
+                            />
+                          ))}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })()}
+
+                    {/* Uncategorized Section */}
+                    {(() => {
+                      const uncategorizedUsers = users.filter(u => 
+                        !['super_admin', 'admin', 'manager', 'director_of_operations', 'operations_assistant', 'receptionist', 'front_desk', 'stylist', 'stylist_assistant'].includes(u.role)
+                      );
+                      if (uncategorizedUsers.length === 0) return null;
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 pb-2 border-b">
+                            <Users className="w-4 h-4 text-muted-foreground" />
+                            <h3 className="font-display text-sm uppercase tracking-wider text-muted-foreground">Other Roles</h3>
+                            <span className="text-xs text-muted-foreground">({uncategorizedUsers.length})</span>
+                          </div>
+                          {uncategorizedUsers.map(u => (
+                            <UserCard 
+                              key={u.user_id} 
+                              u={u} 
+                              updatingUser={updatingUser}
+                              updateUserRole={updateUserRole}
+                              removeUser={removeUser}
+                              currentUserId={user?.id}
+                              dynamicRoleOptions={dynamicRoleOptions}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </CardContent>
