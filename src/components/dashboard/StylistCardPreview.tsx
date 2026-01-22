@@ -1,5 +1,12 @@
-import { Star, Instagram, MapPin, X, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Star, Instagram, MapPin, X, ArrowRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Helper to convert text to title case
 const toTitleCase = (str: string) => {
@@ -33,6 +40,8 @@ export function StylistCardPreview({
   isBooking = true,
   locations = [],
 }: StylistCardPreviewProps) {
+  const [isFlipped, setIsFlipped] = useState(false);
+
   // Get display items - highlighted services or fallback to specialties
   const displayItems = (highlightedServices && highlightedServices.length > 0)
     ? highlightedServices.slice(0, 3)
@@ -43,152 +52,229 @@ export function StylistCardPreview({
       }).slice(0, 3);
 
   const showName = displayName || name || "Your Name";
+  const hasBio = !!bio;
+
+  const handleFlip = () => {
+    if (hasBio) {
+      setIsFlipped(!isFlipped);
+    }
+  };
 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span className="font-medium">Live Preview</span>
-        <span className="text-xs">(updates as you type)</span>
+        <span className="text-xs">(tap card to flip)</span>
       </div>
       
-      <div className="flex gap-4">
-        {/* Front of card */}
-        <div className="relative aspect-[3/4] w-48 bg-muted overflow-hidden rounded-2xl shadow-md group">
-          {/* Photo or placeholder */}
-          {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt={showName}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center">
-              <span className="text-4xl font-display text-muted-foreground/30">
-                {showName.charAt(0)}
-              </span>
-            </div>
+      {/* Card with flip animation - exactly matching frontend */}
+      <div
+        className="group relative aspect-[3/4] w-64 perspective-1000"
+        onMouseLeave={() => setIsFlipped(false)}
+      >
+        <div
+          className={cn(
+            "relative w-full h-full transition-transform duration-700 transform-style-3d cursor-pointer",
+            isFlipped && "rotate-y-180"
           )}
-          
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80" />
-          
-          {/* Specialty badges */}
-          <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-1.5">
-            {displayItems.length > 0 ? displayItems.map((item) => {
-              const isExtensions = item.toUpperCase() === "EXTENSIONS";
-              return (
-                <span
-                  key={item}
-                  className={cn(
-                    "inline-flex items-center gap-1 px-2 py-1 backdrop-blur-sm text-[10px] font-medium tracking-wide rounded-full",
-                    isExtensions
-                      ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
-                      : "bg-background/70 text-foreground border border-border/30"
+          onClick={handleFlip}
+          style={{
+            transformStyle: "preserve-3d",
+            transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          }}
+        >
+          {/* Front of card */}
+          <div
+            className="absolute inset-0 backface-hidden"
+            style={{ backfaceVisibility: "hidden" }}
+          >
+            <div className="relative w-full h-full bg-muted overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-500">
+              {/* Photo or placeholder */}
+              {photoUrl ? (
+                <img
+                  src={photoUrl}
+                  alt={showName}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+              ) : (
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center transition-transform duration-700 group-hover:scale-110">
+                  <span className="text-6xl font-display text-muted-foreground/30">
+                    {showName.charAt(0)}
+                  </span>
+                </div>
+              )}
+              
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
+              
+              {/* Specialty badges */}
+              <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
+                {displayItems.length > 0 ? displayItems.map((item) => {
+                  const isExtensions = item.toUpperCase() === "EXTENSIONS";
+                  return (
+                    <span
+                      key={item}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-sm text-xs font-medium tracking-wide rounded-full",
+                        isExtensions
+                          ? "bg-oat/90 text-oat-foreground border border-oat-foreground/30 badge-shine"
+                          : "bg-background/70 text-foreground border border-border/30"
+                      )}
+                    >
+                      {isExtensions && <Star className="w-3 h-3 fill-current" />}
+                      {toTitleCase(item)}
+                    </span>
+                  );
+                }) : (
+                  <span className="inline-flex items-center px-3 py-1.5 bg-background/70 text-foreground/50 border border-border/30 text-xs rounded-full">
+                    No specialties
+                  </span>
+                )}
+              </div>
+              
+              {/* Bottom content */}
+              <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform translate-y-6 transition-transform duration-500 ease-out group-hover:translate-y-0">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <p className="text-xs tracking-[0.2em] text-white/70">
+                    {level || "LEVEL"}
+                  </p>
+                  <TooltipProvider delayDuration={100}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button 
+                          className="text-white/50 hover:text-white/90 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[280px] p-4 bg-background text-foreground border border-border">
+                        <p className="font-medium mb-2">Stylist Level System</p>
+                        <ul className="text-xs space-y-1.5 text-foreground/80">
+                          <li><span className="font-medium text-foreground">Level 1:</span> Rising talent building their craft</li>
+                          <li><span className="font-medium text-foreground">Level 2:</span> Skilled stylist with proven expertise</li>
+                          <li><span className="font-medium text-foreground">Level 3:</span> Master artist & senior specialist</li>
+                          <li><span className="font-medium text-foreground">Level 4:</span> Elite specialist & industry leader</li>
+                        </ul>
+                        <p className="text-xs text-muted-foreground mt-2">Higher levels reflect experience, training, and demand.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <h3 className="text-xl font-display mb-1">{showName}</h3>
+                
+                {/* Social Links */}
+                <div className="flex items-center gap-3 mb-4">
+                  {instagram && (
+                    <span className="flex items-center gap-1.5 text-sm text-white/70">
+                      <Instagram className="w-4 h-4" />
+                      <span className="hidden sm:inline">{instagram}</span>
+                    </span>
                   )}
-                >
-                  {isExtensions && <Star className="w-2.5 h-2.5 fill-current" />}
-                  {toTitleCase(item)}
-                </span>
-              );
-            }) : (
-              <span className="inline-flex items-center px-2 py-1 bg-background/70 text-foreground/50 border border-border/30 text-[10px] rounded-full">
-                No specialties
-              </span>
-            )}
-          </div>
-          
-          {/* Bottom content */}
-          <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-            <p className="text-[10px] tracking-[0.15em] text-white/70 mb-0.5">
-              {level || "LEVEL"}
-            </p>
-            <h3 className="text-sm font-display mb-1">{showName}</h3>
-            
-            {/* Social Links */}
-            <div className="flex items-center gap-2 mb-2">
-              {instagram ? (
-                <span className="flex items-center gap-1 text-[10px] text-white/70">
-                  <Instagram className="w-3 h-3" />
-                  <span className="hidden sm:inline truncate max-w-[60px]">{instagram}</span>
-                </span>
-              ) : null}
-              {tiktok ? (
-                <span className="flex items-center gap-1 text-[10px] text-white/70">
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                  </svg>
-                  <span className="hidden sm:inline truncate max-w-[60px]">{tiktok}</span>
-                </span>
-              ) : null}
-            </div>
-            
-            {/* Book button */}
-            {isBooking === false ? (
-              <div className="inline-flex items-center gap-1 bg-white/20 text-white/70 px-3 py-1.5 text-[10px] font-medium rounded-full cursor-not-allowed border border-white/40">
-                <X className="w-3 h-3" />
-                <span>Not Booking</span>
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-1 bg-white text-black px-3 py-1.5 text-[10px] font-medium rounded-full">
-                <span>Book Consult</span>
-                <ArrowRight className="w-3 h-3" />
-              </div>
-            )}
-          </div>
-        </div>
+                  {tiktok && (
+                    <span className="flex items-center gap-1.5 text-sm text-white/70">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                      </svg>
+                      <span className="hidden sm:inline">{tiktok}</span>
+                    </span>
+                  )}
+                </div>
+                
+                {/* Book button */}
+                <div className="flex items-center justify-start">
+                  {isBooking === false ? (
+                    <div className="shrink-0 inline-flex items-center gap-2 bg-white/20 text-white/70 px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap cursor-not-allowed border border-white/40">
+                      <X className="w-4 h-4 shrink-0" />
+                      <span>Not Booking</span>
+                    </div>
+                  ) : (
+                    <div className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap group/btn">
+                      <span>Book Consult</span>
+                      <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/btn:translate-x-1" />
+                    </div>
+                  )}
+                </div>
 
-        {/* Back of card (flip side preview) */}
-        <div className="relative aspect-[3/4] w-48 bg-foreground overflow-hidden rounded-2xl shadow-md flex flex-col items-center justify-center p-4 text-center">
-          <h3 className="text-base font-display text-background mb-0.5">{showName}</h3>
-          <p className="text-[10px] tracking-[0.15em] text-background/60 mb-3">
-            {level || "LEVEL"}
-          </p>
-          
-          {/* Bio */}
-          <p className="text-[10px] text-background/80 leading-relaxed mb-3 line-clamp-4">
-            {bio || <span className="italic text-background/50">Add a bio to tell clients about yourself...</span>}
-          </p>
-          
-          {/* Social Links */}
-          <div className="flex items-center justify-center gap-3 mb-2 text-[10px]">
-            {instagram && (
-              <span className="inline-flex items-center gap-1 text-background/70">
-                <Instagram className="w-3 h-3" />
-                <span>{instagram}</span>
-              </span>
-            )}
-            {tiktok && (
-              <span className="inline-flex items-center gap-1 text-background/70">
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                </svg>
-                <span>{tiktok}</span>
-              </span>
-            )}
+                {/* Tap hint - visible on hover */}
+                {hasBio && (
+                  <div className="mt-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150 translate-y-2 group-hover:translate-y-0">
+                    <p className="text-xs text-white/80 tracking-wide font-aeonik animate-pulse">
+                      Tap to learn more
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          
-          {/* Location */}
-          {locations.length > 0 && (
-            <div className="inline-flex items-center gap-1 text-[10px] text-background/50 mb-3">
-              <MapPin className="w-3 h-3" />
-              <span>
-                {locations.map(l => l.name).join(" & ")}
-              </span>
+
+          {/* Back of card */}
+          <div
+            className="absolute inset-0 backface-hidden rotate-y-180"
+            style={{ 
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)"
+            }}
+          >
+            <div className="relative w-full h-full bg-foreground overflow-hidden rounded-2xl shadow-md flex flex-col items-center justify-center p-6 text-center">
+              {/* Name */}
+              <h3 className="text-2xl font-display text-background mb-1">{showName}</h3>
+              <p className="text-xs tracking-[0.2em] text-background/60 mb-5">
+                {level || "LEVEL"}
+              </p>
+
+              {/* Bio */}
+              <p className="text-sm text-background/80 leading-relaxed max-w-[90%] mb-6">
+                {bio || "No bio available"}
+              </p>
+
+              {/* Social Media Links */}
+              <div className="flex items-center justify-center gap-4 mb-3">
+                {instagram && (
+                  <span className="inline-flex items-center gap-2 text-sm text-background/70">
+                    <Instagram className="w-4 h-4" />
+                    <span>{instagram}</span>
+                  </span>
+                )}
+                {tiktok && (
+                  <span className="inline-flex items-center gap-2 text-sm text-background/70">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                    </svg>
+                    <span>{tiktok}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Location */}
+              {locations.length > 0 && (
+                <div className="inline-flex items-center gap-1.5 text-xs text-background/50 mb-6">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>
+                    {locations.length > 1 
+                      ? locations.map(l => l.name).join(" & ")
+                      : locations[0]?.name
+                    }
+                  </span>
+                </div>
+              )}
+
+              {/* Book button */}
+              <div>
+                {isBooking !== false && (
+                  <div className="inline-flex items-center gap-2 bg-background text-foreground px-5 py-2.5 text-sm font-medium rounded-full whitespace-nowrap group/btn">
+                    <span>Book Consult</span>
+                    <ArrowRight className="w-4 h-4 shrink-0 transition-transform duration-300 group-hover/btn:translate-x-1" />
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-          
-          {/* Book button on back */}
-          {isBooking !== false && (
-            <div className="inline-flex items-center gap-1 bg-background text-foreground px-3 py-1.5 text-[10px] font-medium rounded-full">
-              <span>Book Consult</span>
-              <ArrowRight className="w-3 h-3" />
-            </div>
-          )}
+          </div>
         </div>
       </div>
       
       <p className="text-xs text-muted-foreground">
-        Front side (left) • Back side when tapped (right)
+        {hasBio ? "Tap card to see the flip side" : "Add a bio to enable the flip animation"}
       </p>
     </div>
   );
