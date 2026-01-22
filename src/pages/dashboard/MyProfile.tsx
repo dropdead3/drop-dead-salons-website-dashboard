@@ -629,11 +629,8 @@ export default function MyProfile() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="instagram">Instagram <span className="text-destructive">*</span></Label>
-                  <div className={cn(
-                    "flex items-center rounded-md border bg-background",
-                    !formData.instagram.trim() ? "border-destructive/50" : "border-input"
-                  )}>
+                  <Label htmlFor="instagram">Instagram <span className="text-muted-foreground text-xs font-normal">(optional)</span></Label>
+                  <div className="flex items-center rounded-md border border-input bg-background">
                     <div className="flex items-center gap-1.5 pl-3 text-muted-foreground">
                       <Instagram className="w-4 h-4" />
                       <span className="text-sm font-medium">@</span>
@@ -648,7 +645,6 @@ export default function MyProfile() {
                       className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-1"
                       placeholder="yourhandle"
                       autoCapitalize="none"
-                      required
                     />
                   </div>
                 </div>
