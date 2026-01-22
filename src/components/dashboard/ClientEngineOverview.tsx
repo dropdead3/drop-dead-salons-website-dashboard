@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 type ProgramStatus = Database['public']['Enums']['program_status'];
 
@@ -174,7 +175,7 @@ export function ClientEngineOverview() {
           <DollarSign className="w-4 h-4 text-emerald-600" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground">Revenue</p>
-            <p className="text-sm font-medium">${stats.totalRevenue.toLocaleString()}</p>
+            <BlurredAmount className="text-sm font-medium">${stats.totalRevenue.toLocaleString()}</BlurredAmount>
           </div>
         </div>
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">

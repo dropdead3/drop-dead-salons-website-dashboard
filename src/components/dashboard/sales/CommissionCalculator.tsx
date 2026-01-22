@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Calculator, DollarSign, TrendingUp, Settings } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import {
   Dialog,
   DialogContent,
@@ -101,8 +102,10 @@ export function CommissionCalculator({
                       <TableRow key={tier.id}>
                         <TableCell className="font-medium">{tier.tier_name}</TableCell>
                         <TableCell>
-                          ${tier.min_revenue.toLocaleString()} - 
-                          {tier.max_revenue ? `$${tier.max_revenue.toLocaleString()}` : '∞'}
+                          <BlurredAmount>
+                            ${tier.min_revenue.toLocaleString()} - 
+                            {tier.max_revenue ? `$${tier.max_revenue.toLocaleString()}` : '∞'}
+                          </BlurredAmount>
                         </TableCell>
                         <TableCell className="text-right">
                           {(tier.commission_rate * 100).toFixed(0)}%
@@ -130,7 +133,9 @@ export function CommissionCalculator({
         {/* Main commission display */}
         <div className="text-center p-4 bg-gradient-to-br from-primary/10 to-chart-2/10 rounded-lg">
           <p className="text-sm text-muted-foreground mb-1">Estimated Commission</p>
-          <p className="text-3xl font-display">${commission.totalCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+          <BlurredAmount className="text-3xl font-display">
+            ${commission.totalCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </BlurredAmount>
           <Badge variant="outline" className="mt-2">{commission.tierName}</Badge>
         </div>
 
@@ -138,13 +143,21 @@ export function CommissionCalculator({
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3 bg-muted/30 rounded-lg">
             <p className="text-xs text-muted-foreground">Service Commission</p>
-            <p className="text-lg font-medium">${commission.serviceCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            <p className="text-xs text-muted-foreground">from ${serviceRevenue.toLocaleString()} in services</p>
+            <BlurredAmount className="text-lg font-medium">
+              ${commission.serviceCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </BlurredAmount>
+            <BlurredAmount className="text-xs text-muted-foreground">
+              from ${serviceRevenue.toLocaleString()} in services
+            </BlurredAmount>
           </div>
           <div className="p-3 bg-muted/30 rounded-lg">
             <p className="text-xs text-muted-foreground">Product Commission</p>
-            <p className="text-lg font-medium">${commission.productCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            <p className="text-xs text-muted-foreground">from ${productRevenue.toLocaleString()} in products</p>
+            <BlurredAmount className="text-lg font-medium">
+              ${commission.productCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </BlurredAmount>
+            <BlurredAmount className="text-xs text-muted-foreground">
+              from ${productRevenue.toLocaleString()} in products
+            </BlurredAmount>
           </div>
         </div>
 
@@ -153,14 +166,14 @@ export function CommissionCalculator({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progress to {nextTier.tier_name}</span>
-              <span className="font-medium">
+              <BlurredAmount className="font-medium">
                 ${(nextTier.min_revenue - serviceRevenue).toLocaleString()} to go
-              </span>
+              </BlurredAmount>
             </div>
             <Progress value={progressToNextTier} className="h-2" />
-            <p className="text-xs text-muted-foreground">
+            <BlurredAmount className="text-xs text-muted-foreground">
               Reach ${nextTier.min_revenue.toLocaleString()} in services to unlock {(nextTier.commission_rate * 100).toFixed(0)}% rate
-            </p>
+            </BlurredAmount>
           </div>
         )}
 

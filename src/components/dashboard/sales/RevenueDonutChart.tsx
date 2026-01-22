@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { useHideNumbers } from '@/contexts/HideNumbersContext';
 
 interface RevenueDonutChartProps {
   serviceRevenue: number;
@@ -12,6 +13,8 @@ export function RevenueDonutChart({
   productRevenue,
   size = 80 
 }: RevenueDonutChartProps) {
+  const { hideNumbers } = useHideNumbers();
+  
   const data = useMemo(() => {
     const total = serviceRevenue + productRevenue;
     if (total === 0) return [];
@@ -53,15 +56,17 @@ export function RevenueDonutChart({
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip 
-              formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--background))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                fontSize: '12px',
-              }}
-            />
+            {!hideNumbers && (
+              <Tooltip 
+                formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                contentStyle={{ 
+                  backgroundColor: 'hsl(var(--background))', 
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                }}
+              />
+            )}
           </PieChart>
         </ResponsiveContainer>
       </div>

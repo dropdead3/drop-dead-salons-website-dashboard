@@ -31,6 +31,7 @@ import {
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { Plus, Edit2, Trash2, Percent, Loader2, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface TierFormData {
   tier_name: string;
@@ -227,7 +228,9 @@ export function CommissionTiersEditor() {
                 <TableRow key={tier.id}>
                   <TableCell className="font-medium">{tier.tier_name}</TableCell>
                   <TableCell>
-                    ${tier.min_revenue.toLocaleString()} - {tier.max_revenue ? `$${tier.max_revenue.toLocaleString()}` : '∞'}
+                    <BlurredAmount>
+                      ${tier.min_revenue.toLocaleString()} - {tier.max_revenue ? `$${tier.max_revenue.toLocaleString()}` : '∞'}
+                    </BlurredAmount>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{(tier.commission_rate * 100).toFixed(0)}%</Badge>

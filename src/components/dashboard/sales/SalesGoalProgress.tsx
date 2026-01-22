@@ -1,6 +1,7 @@
 import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface SalesGoalProgressProps {
   current: number;
@@ -46,14 +47,14 @@ export function SalesGoalProgress({
       />
       
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>${current.toLocaleString()} earned</span>
+        <BlurredAmount>${current.toLocaleString()} earned</BlurredAmount>
         {isComplete ? (
           <span className="text-chart-2 flex items-center gap-1">
             <TrendingUp className="w-3 h-3" />
             Goal reached!
           </span>
         ) : (
-          <span>${remaining.toLocaleString()} to go</span>
+          <BlurredAmount>${remaining.toLocaleString()} to go</BlurredAmount>
         )}
       </div>
     </div>

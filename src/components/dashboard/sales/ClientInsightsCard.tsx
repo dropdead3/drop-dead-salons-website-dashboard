@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { useLocations } from '@/hooks/useLocations';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface ClientInsightsCardProps {
   userId: string;
@@ -186,7 +187,9 @@ export function ClientInsightsCard({
                     </div>
                     <p className="text-xs text-muted-foreground">{client.visit_count} visits</p>
                   </div>
-                  <p className="font-display text-sm">${Number(client.total_spend || 0).toLocaleString()}</p>
+                  <BlurredAmount className="font-display text-sm">
+                    ${Number(client.total_spend || 0).toLocaleString()}
+                  </BlurredAmount>
                 </div>
               ))}
             </div>
