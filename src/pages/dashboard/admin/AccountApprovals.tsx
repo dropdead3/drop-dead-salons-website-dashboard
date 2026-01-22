@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GenerateTestAccountsButton } from '@/components/dashboard/GenerateTestAccountsButton';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -231,11 +232,14 @@ export default function AccountApprovals() {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-display">Account Approvals</h1>
-          <p className="text-muted-foreground">
-            Manage account access and admin permissions
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-display">Account Approvals</h1>
+            <p className="text-muted-foreground">
+              Manage account access and admin permissions
+            </p>
+          </div>
+          <GenerateTestAccountsButton />
         </div>
 
         {/* Stats */}
