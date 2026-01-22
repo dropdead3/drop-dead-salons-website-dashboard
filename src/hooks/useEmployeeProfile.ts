@@ -63,14 +63,14 @@ export function useUpdateEmployeeProfile() {
 }
 
 export function useTeamDirectory(locationFilter?: string, options?: { includeTestAccounts?: boolean }) {
-  const { roles } = useAuth();
+  const { roles, loading: authLoading } = useAuth();
   const isAdminOrSuperAdmin = roles.includes('admin') || roles.includes('super_admin');
   
   // Only admins can see test accounts, and only when explicitly requested
   const shouldIncludeTestAccounts = options?.includeTestAccounts && isAdminOrSuperAdmin;
 
   return useQuery({
-    queryKey: ['team-directory', locationFilter, shouldIncludeTestAccounts],
+    queryKey: ['team-directory', locationFilter, shouldIncludeTestAccounts, roles],
     queryFn: async () => {
       let query = supabase
         .from('employee_profiles')
