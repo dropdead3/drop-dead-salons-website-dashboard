@@ -5,7 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PHOREST_BASE_URL = "https://api-gateway-eu.phorest.com/third-party-api-server/api";
+// Phorest uses different regional gateways
+const PHOREST_REGIONS = [
+  { name: "US", url: "https://platform-us.phorest.com/third-party-api-server/api" },
+  { name: "EU", url: "https://api-gateway-eu.phorest.com/third-party-api-server/api" },
+  { name: "Global", url: "https://platform.phorest.com/third-party-api-server/api" },
+];
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -32,39 +37,64 @@ serve(async (req: Request) => {
       );
     }
 
-    // Create Basic Auth header with username:password
-    const basicAuth = btoa(`${username}:${password}`);
+    // Try username with and without global/ prefix
+    const usernamesToTry = [
+      username,
+      username.startsWith('global/') ? username : `global/${username}`,
+    ];
 
-    // Test connection by fetching business info using Basic Auth
-    const response = await fetch(`${PHOREST_BASE_URL}/business/${businessId}`, {
-      headers: {
-        "Authorization": `Basic ${basicAuth}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-    });
+    let successfulRegion = null;
+    let businessData = null;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Phorest connection test failed (${response.status}):`, errorText);
-      
+    // Try each region and username combination
+    for (const region of PHOREST_REGIONS) {
+      for (const usernameAttempt of usernamesToTry) {
+        const basicAuth = btoa(`${usernameAttempt}:${password}`);
+        
+        try {
+          const response = await fetch(`${region.url}/business/${businessId}`, {
+            headers: {
+              "Authorization": `Basic ${basicAuth}`,
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+            },
+          });
+
+          if (response.ok) {
+            businessData = await response.json();
+            successfulRegion = region;
+            console.log(`Success with region ${region.name} and username ${usernameAttempt}`);
+            break;
+          } else {
+            const errorText = await response.text();
+            console.log(`${region.name} with ${usernameAttempt}: ${response.status} - ${errorText.substring(0, 100)}`);
+          }
+        } catch (e) {
+          console.log(`${region.name} connection error:`, e);
+        }
+      }
+      if (successfulRegion) break;
+    }
+
+    if (!successfulRegion || !businessData) {
       return new Response(
         JSON.stringify({ 
           connected: false, 
-          error: `Connection failed: ${response.status}`,
-          details: errorText,
+          error: "Could not connect to Phorest with any region. Please verify your credentials.",
+          details: "Tried US, EU, and Global endpoints with username variations.",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const businessData = await response.json();
-
-    // Fetch full staff list
+    // Fetch full staff list using successful region
     let staffCount = 0;
     let staffList: Array<{ id: string; name: string; email?: string }> = [];
     try {
-      const staffResponse = await fetch(`${PHOREST_BASE_URL}/business/${businessId}/staff`, {
+      const workingUsername = username.startsWith('global/') ? username : `global/${username}`;
+      const basicAuth = btoa(`${workingUsername}:${password}`);
+      
+      const staffResponse = await fetch(`${successfulRegion.url}/business/${businessId}/staff`, {
         headers: {
           "Authorization": `Basic ${basicAuth}`,
           "Content-Type": "application/json",
@@ -95,6 +125,7 @@ serve(async (req: Request) => {
           name: businessData.name || businessData.businessName,
           id: businessId,
         },
+        region: successfulRegion.name,
         staff_count: staffCount,
         staff_list: staffList,
         api_version: "v1",
