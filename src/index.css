@@ -323,6 +323,23 @@
   100% { background-position: 200% 0; }
 }
 
+@keyframes gold-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.gold-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(45 70% 75% / 0.4) 50%,
+    transparent 100%
+  );
+  animation: gold-shimmer 3s ease-in-out infinite;
+}
+
 @keyframes pulse-glow {
   0%, 100% { 
     box-shadow: 0 0 0 0 hsl(var(--foreground) / 0.1);
