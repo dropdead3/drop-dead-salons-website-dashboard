@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Rocket, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { ExternalLink, Rocket, PanelLeftClose, ChevronRight } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
@@ -247,7 +247,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 className="w-full h-8 text-muted-foreground hover:text-foreground"
                 onClick={onToggleCollapse}
               >
-                <PanelLeft className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">Expand sidebar</TooltipContent>
