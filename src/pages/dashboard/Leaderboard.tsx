@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -10,14 +10,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info, History, BadgeCheck } from 'lucide-react';
+import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info, History, BadgeCheck, RefreshCw, Settings } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { useLeaderboardHistory } from '@/hooks/useLeaderboardHistory';
 import { useLeaderboardAchievements } from '@/hooks/useLeaderboardAchievements';
+import { usePhorestPerformanceMetrics, usePhorestConnection, useTriggerPhorestSync } from '@/hooks/usePhorestSync';
 import { LeaderboardTrendIndicator } from '@/components/dashboard/LeaderboardTrendIndicator';
 import { LeaderboardHistoryPanel } from '@/components/dashboard/LeaderboardHistoryPanel';
 import { AchievementBadgeStack } from '@/components/dashboard/AchievementBadge';
 import { AchievementsShowcase } from '@/components/dashboard/AchievementsShowcase';
+import { Link } from 'react-router-dom';
 
 interface LeaderboardEntry {
   user_id: string;
@@ -102,7 +104,7 @@ const calculateScoreBreakdown = (
   };
 };
 
-// Mock data - will be replaced with Phorest API data
+// Mock data - fallback when Phorest is not connected
 const mockPhorestData: PhorestPerformer[] = [
   { id: '1', name: 'Jessica Martinez', newClients: 12, retentionRate: 94, retailSales: 580, extensionClients: 8, _revenue: 4850 },
   { id: '2', name: 'Amanda Chen', newClients: 8, retentionRate: 91, retailSales: 420, extensionClients: 11, _revenue: 4320 },
@@ -155,16 +157,42 @@ export default function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [metric, setMetric] = useState<MetricType>('day');
-  const [phorestData] = useState<PhorestPerformer[]>(mockPhorestData);
   const [phorestCategory, setPhorestCategory] = useState<PhorestCategory>('overall');
   const [weights, setWeights] = useState<ScoreWeights>(DEFAULT_WEIGHTS);
   const [showHistory, setShowHistory] = useState(false);
 
   const { getTrendForUser } = useLeaderboardHistory();
-  const { getUserAchievements, userAchievements } = useLeaderboardAchievements();
-
+  const { getUserAchievements } = useLeaderboardAchievements();
+  
+  // Get current week's Monday for performance data
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+  
+  // Fetch Phorest data
+  const { data: phorestConnection } = usePhorestConnection();
+  const { data: phorestMetrics, isLoading: phorestLoading, refetch: refetchPhorest } = usePhorestPerformanceMetrics(weekStartStr);
+  const triggerSync = useTriggerPhorestSync();
+
+  // Transform Phorest metrics to display format
+  const phorestData: PhorestPerformer[] = useMemo(() => {
+    if (!phorestMetrics || phorestMetrics.length === 0) {
+      return mockPhorestData;
+    }
+    
+    return phorestMetrics.map((metric: any) => ({
+      id: metric.user_id,
+      name: metric.employee_profiles?.display_name || metric.employee_profiles?.full_name || 'Unknown',
+      photoUrl: metric.employee_profiles?.photo_url,
+      newClients: metric.new_clients || 0,
+      retentionRate: Number(metric.retention_rate) || 0,
+      retailSales: Number(metric.retail_sales) || 0,
+      extensionClients: metric.extension_clients || 0,
+      _revenue: Number(metric.total_revenue) || 0,
+    }));
+  }, [phorestMetrics]);
+  
+  const isUsingLiveData = phorestMetrics && phorestMetrics.length > 0;
 
   useEffect(() => {
     fetchWeights();
@@ -367,6 +395,20 @@ export default function Leaderboard() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => triggerSync.mutate('reports')}
+                    disabled={triggerSync.isPending || phorestLoading}
+                    className="font-display text-xs tracking-wide"
+                  >
+                    {triggerSync.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    <span className="ml-2 hidden sm:inline">Sync</span>
+                  </Button>
+                  <Button
                     variant={showHistory ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setShowHistory(!showHistory)}
@@ -375,6 +417,15 @@ export default function Leaderboard() {
                     <History className="w-4 h-4 mr-2" />
                     History
                   </Button>
+                  <Link to="/dashboard/admin/phorest">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="font-display text-xs tracking-wide"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  </Link>
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground font-display mb-1">
                       Category
@@ -409,12 +460,21 @@ export default function Leaderboard() {
               {currentConfig.description}
             </p>
 
-            {/* Mock Data Notice */}
-            <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
-              <p className="text-xs text-muted-foreground font-sans text-center">
-                📊 Showing sample data • Connect Phorest to see live rankings
-              </p>
-            </div>
+            {/* Data Source Notice */}
+            {isUsingLiveData ? (
+              <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                <p className="text-xs text-primary font-sans text-center flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  Live data from Phorest • {phorestData.length} team members
+                </p>
+              </div>
+            ) : (
+              <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
+                <p className="text-xs text-muted-foreground font-sans text-center">
+                  📊 Showing sample data • <Link to="/dashboard/admin/phorest" className="underline hover:text-foreground">Connect Phorest</Link> to see live rankings
+                </p>
+              </div>
+            )}
 
             {/* Top 3 Podium */}
             <div className="grid grid-cols-3 gap-3 mb-6">
