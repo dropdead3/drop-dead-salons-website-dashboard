@@ -302,10 +302,10 @@ export function RolePermissionsManager() {
                                   {isDeviation && (
                                     <TooltipProvider delayDuration={100}>
                                       <Tooltip>
-                                        <TooltipTrigger>
+                                        <TooltipTrigger className="inline-flex items-center">
                                           <Badge 
                                             variant="outline" 
-                                            className="text-[9px] px-1.5 py-0.5 h-5 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-1 cursor-help"
+                                            className="text-[9px] px-1.5 py-0.5 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-1 cursor-help inline-flex items-center"
                                           >
                                             Custom Change
                                             <Info className="w-2.5 h-2.5" />
