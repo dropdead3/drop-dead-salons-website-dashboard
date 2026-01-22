@@ -22,7 +22,6 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { services } from '@/data/servicePricing';
-import { StrikeHistoryTimeline } from '@/components/dashboard/StrikeHistoryTimeline';
 import { AssistantRequestHistoryCard } from '@/components/dashboard/AssistantRequestHistoryCard';
 
 const DAYS_OF_WEEK = [
@@ -923,8 +922,6 @@ export default function ViewProfile() {
             </CardContent>
           </Card>
 
-          {/* Strike History Timeline */}
-          {userId && <StrikeHistoryTimeline userId={userId} />}
 
           {/* Assistant Request History - show for assistants */}
           {isAssistant && userId && (
