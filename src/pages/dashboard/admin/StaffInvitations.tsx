@@ -98,7 +98,15 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
         </div>
 
         {/* QR Code Section */}
-        <div className="p-8 flex flex-col items-center">
+        <div className="p-6 flex flex-col items-center">
+          {/* Welcome message */}
+          <div className="text-center mb-5">
+            <p className="text-sm text-foreground font-medium">Welcome to the team!</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              You need to create your profile on our software system.
+            </p>
+          </div>
+
           <div className="p-4 bg-white rounded-xl border-2 border-[hsl(35,30%,88%)] shadow-sm">
             <QRCodeCanvas 
               value={staffLoginUrl} 
@@ -109,11 +117,11 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
             />
           </div>
           
-          <div className="mt-6 text-center">
-            <h3 className="font-display text-lg text-[hsl(0,0%,8%)]">
+          <div className="mt-5 text-center">
+            <h3 className="font-display text-base text-[hsl(0,0%,8%)]">
               Create Your Account
             </h3>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Scan this QR code to get started
             </p>
           </div>
@@ -127,8 +135,8 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
         </div>
 
         {/* Powered By Footer */}
-        <div className="bg-[hsl(0,0%,8%)] px-6 py-2 text-center">
-          <p className="text-[10px] text-[hsl(40,30%,60%)]">
+        <div className="bg-[hsl(0,0%,8%)] px-6 py-1.5 text-center">
+          <p className="text-[8px] text-[hsl(40,30%,55%)]">
             Powered by Drop Dead Salon Software
           </p>
         </div>
@@ -182,9 +190,19 @@ function QRCodeCard() {
     ctx.fillText('STAFF PORTAL', width / 2, 40);
 
     // QR Code container
-    const qrSize = 180;
+    const qrSize = 160;
     const qrX = (width - qrSize) / 2;
-    const qrY = headerHeight + 50;
+    const qrY = headerHeight + 100;
+    
+    // Welcome message above QR
+    ctx.fillStyle = '#141414';
+    ctx.font = '500 14px Termina, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Welcome to the team!', width / 2, headerHeight + 40);
+    
+    ctx.fillStyle = '#666666';
+    ctx.font = '11px sans-serif';
+    ctx.fillText('You need to create your profile on our software system.', width / 2, headerHeight + 60);
     
     // QR border
     ctx.fillStyle = '#ffffff';
@@ -202,14 +220,14 @@ function QRCodeCard() {
 
     // Title text
     ctx.fillStyle = '#141414';
-    ctx.font = '500 20px Termina, sans-serif';
+    ctx.font = '500 18px Termina, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Create Your Account', width / 2, qrY + qrSize + 60);
+    ctx.fillText('Create Your Account', width / 2, qrY + qrSize + 50);
 
     // Subtitle
     ctx.fillStyle = '#666666';
-    ctx.font = '14px sans-serif';
-    ctx.fillText('Scan this QR code to get started', width / 2, qrY + qrSize + 85);
+    ctx.font = '12px sans-serif';
+    ctx.fillText('Scan this QR code to get started', width / 2, qrY + qrSize + 72);
 
     // URL divider
     const urlY = height - 80;
@@ -226,14 +244,14 @@ function QRCodeCard() {
     const urlText = staffLoginUrl.replace('https://', '').replace('http://', '');
     ctx.fillText(urlText, width / 2, urlY + 25);
 
-    // Powered by footer (dark bar at bottom)
-    const footerHeight = 30;
+    // Powered by footer (dark bar at bottom) - smaller font
+    const footerHeight = 24;
     ctx.fillStyle = '#141414';
     ctx.fillRect(0, height - footerHeight, width, footerHeight);
     
     ctx.fillStyle = '#8a8070';
-    ctx.font = '10px sans-serif';
-    ctx.fillText('Powered by Drop Dead Salon Software', width / 2, height - 10);
+    ctx.font = '8px sans-serif';
+    ctx.fillText('Powered by Drop Dead Salon Software', width / 2, height - 8);
 
     // Download
     const link = document.createElement('a');
