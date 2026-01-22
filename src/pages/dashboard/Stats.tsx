@@ -31,6 +31,7 @@ import { SalesAchievements } from '@/components/dashboard/sales/SalesAchievement
 import { PerformanceTrendChart } from '@/components/dashboard/sales/PerformanceTrendChart';
 import { ClientInsightsCard } from '@/components/dashboard/sales/ClientInsightsCard';
 import { ServiceMixChart } from '@/components/dashboard/sales/ServiceMixChart';
+import { StylistLocationRevenueChart } from '@/components/dashboard/sales/StylistLocationRevenueChart';
 
 interface DailyMetrics {
   posts_published: number;
@@ -228,6 +229,13 @@ export default function Stats() {
               onLocationChange={setClientInsightsLocation}
               showLocationFilter={true}
             />
+          </div>
+        )}
+
+        {/* Location Revenue Comparison - for multi-branch stylists */}
+        {user && isLinkedToPhorest && (
+          <div className="mt-6">
+            <StylistLocationRevenueChart userId={user.id} months={3} />
           </div>
         )}
 
