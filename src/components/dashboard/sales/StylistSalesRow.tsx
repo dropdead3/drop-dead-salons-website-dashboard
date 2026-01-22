@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface Stylist {
   user_id: string;
@@ -79,7 +80,7 @@ export function StylistSalesRow({ stylist, rank, maxRevenue }: StylistSalesRowPr
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <p className="font-medium truncate">{stylist.name}</p>
-              <p className="font-display text-lg">${stylist.totalRevenue.toLocaleString()}</p>
+              <BlurredAmount className="font-display text-lg">${stylist.totalRevenue.toLocaleString()}</BlurredAmount>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
               <div 
@@ -100,7 +101,7 @@ export function StylistSalesRow({ stylist, rank, maxRevenue }: StylistSalesRowPr
               <p className="text-xs">Products</p>
             </div>
             <div className="text-center">
-              <p className="font-medium text-foreground">${Math.round(avgTicket)}</p>
+              <BlurredAmount className="font-medium text-foreground">${Math.round(avgTicket)}</BlurredAmount>
               <p className="text-xs">Avg</p>
             </div>
           </div>
@@ -121,7 +122,7 @@ export function StylistSalesRow({ stylist, rank, maxRevenue }: StylistSalesRowPr
           </div>
           <div className="flex items-center gap-1 text-muted-foreground">
             <TrendingUp className="w-3 h-3" />
-            <span>${Math.round(avgTicket)} avg</span>
+            <BlurredAmount>${Math.round(avgTicket)} avg</BlurredAmount>
           </div>
         </div>
       </CardContent>

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 interface HideNumbersContextType {
   hideNumbers: boolean;
@@ -77,19 +78,26 @@ export function useHideNumbers() {
   return context;
 }
 
-// Utility component for blurring numbers
-export function BlurredNumber({ 
-  children, 
-  className = '' 
-}: { 
-  children: ReactNode; 
+// Utility component for blurring dollar amounts
+interface BlurredAmountProps {
+  children: ReactNode;
   className?: string;
-}) {
+  as?: 'span' | 'p' | 'div';
+}
+
+export function BlurredAmount({ 
+  children, 
+  className,
+  as: Component = 'span'
+}: BlurredAmountProps) {
   const { hideNumbers } = useHideNumbers();
   
   return (
-    <span className={`${className} ${hideNumbers ? 'blur-sm select-none' : ''}`}>
+    <Component className={cn(className, hideNumbers && 'blur-md select-none')}>
       {children}
-    </span>
+    </Component>
   );
 }
+
+// Legacy alias for backwards compatibility
+export const BlurredNumber = BlurredAmount;

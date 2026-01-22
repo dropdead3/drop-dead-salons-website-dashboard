@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Clock, TrendingUp } from 'lucide-react';
 import { usePeakHoursAnalysis } from '@/hooks/useSalesAnalytics';
 import { cn } from '@/lib/utils';
+import { useHideNumbers } from '@/contexts/HideNumbersContext';
 
 interface PeakHoursHeatmapProps {
   dateFrom: string;
@@ -15,6 +16,7 @@ const HOURS = Array.from({ length: 12 }, (_, i) => i + 8); // 8 AM to 7 PM
 
 export function PeakHoursHeatmap({ dateFrom, dateTo, locationId }: PeakHoursHeatmapProps) {
   const { data, isLoading } = usePeakHoursAnalysis(dateFrom, dateTo, locationId);
+  const { hideNumbers } = useHideNumbers();
 
   // Build heatmap matrix
   const heatmapData: Record<string, { count: number; revenue: number }> = {};
@@ -105,11 +107,16 @@ export function PeakHoursHeatmap({ dateFrom, dateTo, locationId }: PeakHoursHeat
                       const cellData = heatmapData[key] || { count: 0, revenue: 0 };
                       const intensity = getIntensity(cellData.count);
                       
+                      // Build tooltip - hide revenue if hideNumbers is on
+                      const tooltipText = hideNumbers 
+                        ? `${day} ${hour}:00 - ${cellData.count} transactions`
+                        : `${day} ${hour}:00 - ${cellData.count} transactions, $${cellData.revenue.toLocaleString()}`;
+                      
                       return (
                         <div 
                           key={hour} 
                           className="flex-1 px-0.5"
-                          title={`${day} ${hour}:00 - ${cellData.count} transactions, $${cellData.revenue.toLocaleString()}`}
+                          title={tooltipText}
                         >
                           <div 
                             className={cn(

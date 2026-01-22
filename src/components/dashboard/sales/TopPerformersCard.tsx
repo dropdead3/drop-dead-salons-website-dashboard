@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Medal } from 'lucide-react';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface Performer {
   user_id: string;
@@ -93,9 +94,9 @@ export function TopPerformersCard({ performers, isLoading }: TopPerformersCardPr
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{performer.name}</p>
-              <p className="text-xs text-muted-foreground">
+              <BlurredAmount className="text-xs text-muted-foreground">
                 ${performer.totalRevenue.toLocaleString()}
-              </p>
+              </BlurredAmount>
             </div>
             <Badge variant="outline" className="text-xs">
               #{rank}
