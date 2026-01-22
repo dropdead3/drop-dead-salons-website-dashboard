@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ArrowRight, MoreVertical, ChevronDown } from "lucide-react";
+import { Menu, X, ArrowRight, MoreVertical, ChevronDown, MoreHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/assets/drop-dead-logo.svg";
 import LogoIcon from "@/assets/dd-secondary-logo.svg";
@@ -18,11 +18,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Priority: lower number = higher priority (hidden last)
 const navLinks = [
-  { href: "/services", label: "Services" },
-  { href: "/extensions", label: "Hair Extensions" },
-  { href: "/careers", label: "Join The Team" },
-  { href: "/gallery", label: "Gallery" },
+  { href: "/services", label: "Services", priority: 1 },
+  { href: "/extensions", label: "Hair Extensions", priority: 3 },
+  { href: "/careers", label: "Join The Team", priority: 4 },
+  { href: "/gallery", label: "Gallery", priority: 5 },
 ];
 
 const aboutLinks = [
@@ -30,16 +31,100 @@ const aboutLinks = [
   { href: "/policies", label: "Salon Policies" },
 ];
 
+// About dropdown has priority 2 (between Services and Hair Extensions)
+
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOverDark, setIsOverDark] = useState(false);
   const [isStaffMenuOpen, setIsStaffMenuOpen] = useState(false);
+  const [hiddenNavItems, setHiddenNavItems] = useState<number[]>([]);
   const headerRef = useRef<HTMLElement>(null);
   const staffMenuRef = useRef<HTMLDivElement>(null);
+  const navContainerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const location = useLocation();
+
+  // All nav items with their priorities for responsive hiding
+  // Priority: higher number = hidden first
+  const allNavItems = [
+    { href: "/services", label: "Services", priority: 1, type: "link" as const },
+    { href: "/about", label: "About", priority: 2, type: "dropdown" as const },
+    { href: "/extensions", label: "Hair Extensions", priority: 3, type: "link" as const },
+    { href: "/careers", label: "Join The Team", priority: 4, type: "link" as const },
+    { href: "/gallery", label: "Gallery", priority: 5, type: "link" as const },
+  ];
+
+  // Calculate which items should be hidden based on container width
+  const calculateHiddenItems = useCallback(() => {
+    const container = navContainerRef.current;
+    if (!container) return;
+
+    const parent = container.parentElement;
+    if (!parent) return;
+
+    // Get the available width for nav items
+    // Total header width minus logo, right side buttons, and gaps
+    const headerWidth = parent.offsetWidth;
+    const logoWidth = 224; // w-56 = 14rem = 224px approx
+    const rightSideWidth = 280; // Contact + Book + More button
+    const safetyMargin = 40;
+    
+    const availableWidth = headerWidth - logoWidth - rightSideWidth - safetyMargin;
+    
+    // Measure actual nav items width
+    const navItems = container.querySelectorAll('[data-nav-item]');
+    let totalWidth = 0;
+    const itemWidths: { priority: number; width: number }[] = [];
+    const gap = 40; // gap-10 = 2.5rem = 40px
+
+    navItems.forEach((item, index) => {
+      const width = (item as HTMLElement).offsetWidth;
+      const priority = parseInt((item as HTMLElement).dataset.priority || '0');
+      itemWidths.push({ priority, width: width + (index > 0 ? gap : 0) });
+      totalWidth += width + (index > 0 ? gap : 0);
+    });
+
+    // If everything fits, show all
+    if (totalWidth <= availableWidth) {
+      setHiddenNavItems([]);
+      return;
+    }
+
+    // Otherwise, hide items from highest priority number (least important) first
+    const sortedByPriority = [...itemWidths].sort((a, b) => b.priority - a.priority);
+    const hidden: number[] = [];
+    let currentTotal = totalWidth;
+    const overflowButtonWidth = 60; // Space for overflow dropdown
+
+    for (const item of sortedByPriority) {
+      if (currentTotal <= availableWidth - overflowButtonWidth) break;
+      hidden.push(item.priority);
+      currentTotal -= item.width;
+    }
+
+    setHiddenNavItems(hidden);
+  }, []);
+
+  // ResizeObserver for responsive nav
+  useEffect(() => {
+    calculateHiddenItems();
+
+    const resizeObserver = new ResizeObserver(() => {
+      calculateHiddenItems();
+    });
+
+    if (navContainerRef.current?.parentElement) {
+      resizeObserver.observe(navContainerRef.current.parentElement);
+    }
+
+    window.addEventListener("resize", calculateHiddenItems);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", calculateHiddenItems);
+    };
+  }, [calculateHiddenItems]);
 
   // Close staff menu when clicking outside
   useEffect(() => {
@@ -211,122 +296,171 @@ export function Header() {
               </Link>
             </div>
 
-            {/* Desktop Navigation - Center */}
+            {/* Desktop Navigation - Center with Responsive Hiding */}
             <motion.nav 
-              className="hidden lg:flex items-center gap-6 xl:gap-10"
+              ref={navContainerRef}
+              className="hidden lg:flex items-center gap-6 xl:gap-10 flex-1 justify-center min-w-0"
               animate={{ 
                 opacity: isStaffMenuOpen ? 0 : 1,
                 pointerEvents: isStaffMenuOpen ? "none" : "auto"
               }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
             >
-              {/* Services Link */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  duration: 0.4, 
-                  delay: 0.1,
-                  ease: [0.25, 0.1, 0.25, 1] 
-                }}
-              >
-                <Link
-                  to="/services"
-                  className={cn(
-                    "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none",
-                    location.pathname === "/services"
-                      ? "opacity-100"
-                      : "opacity-70 hover:opacity-100"
-                  )}
-                >
-                  <span className="transition-transform duration-300 group-hover:-translate-x-1">
-                    Services
-                  </span>
-                  <ArrowRight 
-                    size={14} 
-                    className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" 
-                  />
-                </Link>
-              </motion.div>
-
-              {/* About Dropdown */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  duration: 0.4, 
-                  delay: 0.15,
-                  ease: [0.25, 0.1, 0.25, 1] 
-                }}
-                className="relative"
-              >
-                <DropdownMenu>
-                  <DropdownMenuTrigger 
-                    className={cn(
-                      "flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none outline-none",
-                      (location.pathname === "/about" || location.pathname === "/policies")
-                        ? "opacity-100"
-                        : "opacity-70 hover:opacity-100"
-                    )}
-                  >
-                    About
-                    <ChevronDown size={14} className="transition-transform duration-200" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    align="center" 
-                    sideOffset={12}
-                    className="w-[180px] rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5"
-                  >
-                    {aboutLinks.map((link) => (
-                      <DropdownMenuItem key={link.href} asChild>
-                        <Link
-                          to={link.href}
+              {/* Visible Nav Items - rendered in priority order */}
+              {allNavItems.map((item, index) => {
+                const isHidden = hiddenNavItems.includes(item.priority);
+                
+                if (isHidden) return null;
+                
+                if (item.type === "dropdown") {
+                  // About Dropdown
+                  return (
+                    <motion.div
+                      key={item.href}
+                      data-nav-item
+                      data-priority={item.priority}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ 
+                        duration: 0.4, 
+                        delay: 0.1 + index * 0.05,
+                        ease: [0.25, 0.1, 0.25, 1] 
+                      }}
+                      className="relative shrink-0"
+                    >
+                      <DropdownMenu>
+                        <DropdownMenuTrigger 
                           className={cn(
-                            "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
-                            location.pathname === link.href 
-                              ? "bg-accent text-accent-foreground" 
-                              : "text-foreground/80"
+                            "flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none outline-none whitespace-nowrap",
+                            (location.pathname === "/about" || location.pathname === "/policies")
+                              ? "opacity-100"
+                              : "opacity-70 hover:opacity-100"
                           )}
                         >
-                          {link.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </motion.div>
+                          About
+                          <ChevronDown size={14} className="transition-transform duration-200" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent 
+                          align="center" 
+                          sideOffset={12}
+                          className="w-[180px] rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5"
+                        >
+                          {aboutLinks.map((link) => (
+                            <DropdownMenuItem key={link.href} asChild>
+                              <Link
+                                to={link.href}
+                                className={cn(
+                                  "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
+                                  location.pathname === link.href 
+                                    ? "bg-accent text-accent-foreground" 
+                                    : "text-foreground/80"
+                                )}
+                              >
+                                {link.label}
+                              </Link>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </motion.div>
+                  );
+                }
 
-              {/* Remaining Nav Links */}
-              {navLinks.slice(1).map((link, index) => (
-                <motion.div
-                  key={link.href}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ 
-                    duration: 0.4, 
-                    delay: 0.2 + index * 0.05,
-                    ease: [0.25, 0.1, 0.25, 1] 
-                  }}
-                >
-                  <Link
-                    to={link.href}
-                    className={cn(
-                      "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none",
-                      location.pathname === link.href
-                        ? "opacity-100"
-                        : "opacity-70 hover:opacity-100"
-                    )}
+                // Regular link
+                return (
+                  <motion.div
+                    key={item.href}
+                    data-nav-item
+                    data-priority={item.priority}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      duration: 0.4, 
+                      delay: 0.1 + index * 0.05,
+                      ease: [0.25, 0.1, 0.25, 1] 
+                    }}
+                    className="shrink-0"
                   >
-                    <span className="transition-transform duration-300 group-hover:-translate-x-1">
-                      {link.label}
-                    </span>
-                    <ArrowRight 
-                      size={14} 
-                      className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" 
-                    />
-                  </Link>
+                    <Link
+                      to={item.href}
+                      className={cn(
+                        "group relative flex items-center gap-1 text-sm tracking-wide font-sans font-medium transition-opacity leading-none whitespace-nowrap",
+                        location.pathname === item.href
+                          ? "opacity-100"
+                          : "opacity-70 hover:opacity-100"
+                      )}
+                    >
+                      <span className="transition-transform duration-300 group-hover:-translate-x-1">
+                        {item.label}
+                      </span>
+                      <ArrowRight 
+                        size={14} 
+                        className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" 
+                      />
+                    </Link>
+                  </motion.div>
+                );
+              })}
+
+              {/* Overflow Dropdown - shows hidden items */}
+              {hiddenNavItems.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="shrink-0"
+                >
+                  <DropdownMenu>
+                    <DropdownMenuTrigger 
+                      className="flex items-center justify-center w-8 h-8 rounded-full opacity-70 hover:opacity-100 hover:bg-foreground/5 transition-all outline-none"
+                    >
+                      <MoreHorizontal size={18} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent 
+                      align="end" 
+                      sideOffset={12}
+                      className="w-[200px] rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5"
+                    >
+                      {allNavItems
+                        .filter(item => hiddenNavItems.includes(item.priority))
+                        .map((item) => {
+                          if (item.type === "dropdown") {
+                            // Render about links as individual menu items
+                            return aboutLinks.map((link) => (
+                              <DropdownMenuItem key={link.href} asChild>
+                                <Link
+                                  to={link.href}
+                                  className={cn(
+                                    "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
+                                    location.pathname === link.href 
+                                      ? "bg-accent text-accent-foreground" 
+                                      : "text-foreground/80"
+                                  )}
+                                >
+                                  {link.label}
+                                </Link>
+                              </DropdownMenuItem>
+                            ));
+                          }
+                          return (
+                            <DropdownMenuItem key={item.href} asChild>
+                              <Link
+                                to={item.href}
+                                className={cn(
+                                  "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
+                                  location.pathname === item.href 
+                                    ? "bg-accent text-accent-foreground" 
+                                    : "text-foreground/80"
+                                )}
+                              >
+                                {item.label}
+                              </Link>
+                            </DropdownMenuItem>
+                          );
+                        })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </motion.div>
-              ))}
+              )}
             </motion.nav>
 
             {/* Right Side - Contact & Book */}
