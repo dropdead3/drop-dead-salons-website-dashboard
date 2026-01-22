@@ -14,13 +14,31 @@
     cursor: none !important;
   }
   
-  /* Dashboard: restore normal cursor behavior - all elements use auto (arrow) */
+  /* Dashboard: use default arrow cursor for everything */
   body.dashboard-cursor,
-  body.dashboard-cursor * {
-    cursor: auto;
+  body.dashboard-cursor *,
+  body.dashboard-cursor a,
+  body.dashboard-cursor button,
+  body.dashboard-cursor [role="button"],
+  body.dashboard-cursor input,
+  body.dashboard-cursor textarea,
+  body.dashboard-cursor select {
+    cursor: default !important;
   }
   
-  /* Grab cursor for drag handles - highest specificity */
+  /* Text inputs should allow text selection cursor */
+  body.dashboard-cursor input[type="text"],
+  body.dashboard-cursor input[type="email"],
+  body.dashboard-cursor input[type="password"],
+  body.dashboard-cursor input[type="search"],
+  body.dashboard-cursor input[type="url"],
+  body.dashboard-cursor input[type="number"],
+  body.dashboard-cursor textarea,
+  body.dashboard-cursor [contenteditable="true"] {
+    cursor: text !important;
+  }
+  
+  /* Grab cursor for drag handles */
   body.dashboard-cursor .cursor-grab,
   body.dashboard-cursor [class*="cursor-grab"] {
     cursor: grab !important;
