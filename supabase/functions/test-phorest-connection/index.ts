@@ -5,11 +5,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Phorest uses different regional gateways
-const PHOREST_REGIONS = [
-  { name: "US", url: "https://platform-us.phorest.com/third-party-api-server/api" },
-  { name: "EU", url: "https://api-gateway-eu.phorest.com/third-party-api-server/api" },
-  { name: "Global", url: "https://platform.phorest.com/third-party-api-server/api" },
+// Phorest uses different regional gateways and API versions
+const PHOREST_ENDPOINTS = [
+  // Try v3 API first (from their docs URL)
+  { name: "Global-v3", baseUrl: "https://platform.phorest.com/third-party-api-server/api/business" },
+  { name: "US-v3", baseUrl: "https://platform-us.phorest.com/third-party-api-server/api/business" },
+  { name: "EU-v3", baseUrl: "https://api-gateway-eu.phorest.com/third-party-api-server/api/business" },
+  // Try alternative path structure
+  { name: "Global-alt", baseUrl: "https://platform.phorest.com/api/business" },
+  { name: "US-alt", baseUrl: "https://platform-us.phorest.com/api/business" },
 ];
 
 serve(async (req: Request) => {
@@ -43,16 +47,20 @@ serve(async (req: Request) => {
       username.startsWith('global/') ? username : `global/${username}`,
     ];
 
-    let successfulRegion = null;
+    let successfulEndpoint: { name: string; baseUrl: string } | null = null;
     let businessData = null;
 
-    // Try each region and username combination
-    for (const region of PHOREST_REGIONS) {
+    // Try each endpoint and username combination
+    for (const endpoint of PHOREST_ENDPOINTS) {
       for (const usernameAttempt of usernamesToTry) {
         const basicAuth = btoa(`${usernameAttempt}:${password}`);
         
         try {
-          const response = await fetch(`${region.url}/business/${businessId}`, {
+          // Try direct business ID path
+          const url = `${endpoint.baseUrl}/${businessId}`;
+          console.log(`Trying: ${url}`);
+          
+          const response = await fetch(url, {
             headers: {
               "Authorization": `Basic ${basicAuth}`,
               "Content-Type": "application/json",
@@ -62,39 +70,39 @@ serve(async (req: Request) => {
 
           if (response.ok) {
             businessData = await response.json();
-            successfulRegion = region;
-            console.log(`Success with region ${region.name} and username ${usernameAttempt}`);
+            successfulEndpoint = endpoint;
+            console.log(`Success with ${endpoint.name} and username ${usernameAttempt}`);
             break;
           } else {
             const errorText = await response.text();
-            console.log(`${region.name} with ${usernameAttempt}: ${response.status} - ${errorText.substring(0, 100)}`);
+            console.log(`${endpoint.name} with ${usernameAttempt}: ${response.status} - ${errorText.substring(0, 150)}`);
           }
         } catch (e) {
-          console.log(`${region.name} connection error:`, e);
+          console.log(`${endpoint.name} connection error:`, e);
         }
       }
-      if (successfulRegion) break;
+      if (successfulEndpoint) break;
     }
 
-    if (!successfulRegion || !businessData) {
+    if (!successfulEndpoint || !businessData) {
       return new Response(
         JSON.stringify({ 
           connected: false, 
-          error: "Could not connect to Phorest with any region. Please verify your credentials.",
-          details: "Tried US, EU, and Global endpoints with username variations.",
+          error: "Could not connect to Phorest with any endpoint. Please verify your credentials.",
+          details: "Tried multiple API endpoints and username variations.",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Fetch full staff list using successful region
+    // Fetch full staff list using successful endpoint
     let staffCount = 0;
     let staffList: Array<{ id: string; name: string; email?: string }> = [];
     try {
       const workingUsername = username.startsWith('global/') ? username : `global/${username}`;
       const basicAuth = btoa(`${workingUsername}:${password}`);
       
-      const staffResponse = await fetch(`${successfulRegion.url}/business/${businessId}/staff`, {
+      const staffResponse = await fetch(`${successfulEndpoint.baseUrl}/${businessId}/staff`, {
         headers: {
           "Authorization": `Basic ${basicAuth}`,
           "Content-Type": "application/json",
@@ -104,15 +112,20 @@ serve(async (req: Request) => {
       
       if (staffResponse.ok) {
         const staffData = await staffResponse.json();
-        const rawStaff = staffData._embedded?.staff || staffData.staff || [];
-        staffCount = rawStaff.length;
+        const rawStaff = staffData._embedded?.staff || staffData.staff || staffData.data || [];
+        staffCount = Array.isArray(rawStaff) ? rawStaff.length : 0;
         
         // Map to simplified structure
-        staffList = rawStaff.map((s: any) => ({
-          id: s.staffId || s.id,
-          name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
-          email: s.email,
-        }));
+        if (Array.isArray(rawStaff)) {
+          staffList = rawStaff.map((s: any) => ({
+            id: s.staffId || s.id,
+            name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
+            email: s.email,
+          }));
+        }
+      } else {
+        const staffError = await staffResponse.text();
+        console.log(`Staff fetch failed: ${staffResponse.status} - ${staffError.substring(0, 100)}`);
       }
     } catch (e) {
       console.log("Could not fetch staff list:", e);
@@ -122,13 +135,13 @@ serve(async (req: Request) => {
       JSON.stringify({ 
         connected: true,
         business: {
-          name: businessData.name || businessData.businessName,
+          name: businessData.name || businessData.businessName || businessData.companyName,
           id: businessId,
         },
-        region: successfulRegion.name,
+        endpoint: successfulEndpoint.name,
         staff_count: staffCount,
         staff_list: staffList,
-        api_version: "v1",
+        api_version: "v3",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
