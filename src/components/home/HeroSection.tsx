@@ -145,25 +145,24 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               </Eyebrow>
             </motion.div>
 
-            {/* Main headline - Split into two lines for stagger effect */}
+            {/* Main headline - Always two lines: "Drop Dead" on first, rotating word on second */}
             <motion.h1
-              className="font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-normal text-foreground leading-[0.95]"
+              className="font-display text-[clamp(2.5rem,10vw,7rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center"
               style={{ y: headlineY, filter: headingBlurFilter }}
             >
               <motion.span 
-                className="whitespace-nowrap inline-block"
+                className="whitespace-nowrap block"
                 initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 2.5 }}
               >
                 Drop Dead
               </motion.span>
-              {" "}
-              <span className="inline-block overflow-hidden align-bottom h-[1.1em]">
+              <span className="block overflow-hidden h-[1.15em]">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={rotatingWords[currentWordIndex]}
-                    className="inline-block"
+                    className="block"
                     initial={{ y: "100%", opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: "-100%", opacity: 0 }}
