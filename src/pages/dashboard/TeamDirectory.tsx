@@ -567,18 +567,32 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
             href={location.google_maps_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full h-32 rounded-lg overflow-hidden bg-muted relative group"
+            className="block w-full h-36 rounded-xl overflow-hidden relative group shadow-md ring-1 ring-border/50"
           >
+            {/* Gradient overlay for polish */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
+            
             <iframe
               src={`https://www.google.com/maps?q=${encodeURIComponent(location.address + ', ' + location.city)}&output=embed&z=15`}
-              className="w-full h-full border-0 pointer-events-none"
+              className="w-full h-full border-0 pointer-events-none scale-105"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title={`Map of ${location.name}`}
             />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-medium bg-background/90 px-2 py-1 rounded shadow">
+            
+            {/* Hover overlay with CTA */}
+            <div className="absolute inset-0 z-20 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+              <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-y-0 translate-y-2 text-xs font-medium bg-background/95 backdrop-blur-sm text-foreground px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                <Navigation className="w-3 h-3" />
                 Open in Maps
+              </span>
+            </div>
+            
+            {/* Corner badge */}
+            <div className="absolute top-2 right-2 z-20">
+              <span className="text-[10px] font-medium bg-background/90 backdrop-blur-sm text-muted-foreground px-2 py-0.5 rounded-full shadow-sm">
+                <MapPin className="w-2.5 h-2.5 inline mr-0.5" />
+                Preview
               </span>
             </div>
           </a>
