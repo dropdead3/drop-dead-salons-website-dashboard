@@ -285,75 +285,76 @@ export default function PhorestSettings() {
 
         {/* Quick Sync Actions */}
         {connection?.connected && (
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-            <Card className="p-5 flex flex-col items-center text-center gap-3">
-              <Users className="w-5 h-5 text-muted-foreground" />
-              <h3 className="font-display text-xs tracking-wide">STAFF</h3>
-              <Button
-                onClick={() => triggerSync.mutate('staff')}
-                disabled={triggerSync.isPending}
-                size="sm"
-                variant="outline"
-                className="w-full px-3 whitespace-nowrap"
-              >
-                {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Staff'}
-              </Button>
-            </Card>
+          <div className="space-y-4">
+            {/* Row 1: Individual Sync Actions */}
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+              <Card className="p-6 flex flex-col items-center text-center gap-4">
+                <Users className="w-6 h-6 text-muted-foreground" />
+                <h3 className="font-display text-sm tracking-wide uppercase">Staff</h3>
+                <Button
+                  onClick={() => triggerSync.mutate('staff')}
+                  disabled={triggerSync.isPending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Staff'}
+                </Button>
+              </Card>
 
-            <Card className="p-5 flex flex-col items-center text-center gap-3">
-              <Calendar className="w-5 h-5 text-muted-foreground" />
-              <h3 className="font-display text-xs tracking-wide">APPOINTMENTS</h3>
-              <Button
-                onClick={() => triggerSync.mutate('appointments')}
-                disabled={triggerSync.isPending}
-                size="sm"
-                variant="outline"
-                className="w-full px-2 text-xs whitespace-nowrap"
-              >
-                {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Appointments'}
-              </Button>
-            </Card>
+              <Card className="p-6 flex flex-col items-center text-center gap-4">
+                <Calendar className="w-6 h-6 text-muted-foreground" />
+                <h3 className="font-display text-sm tracking-wide uppercase">Appointments</h3>
+                <Button
+                  onClick={() => triggerSync.mutate('appointments')}
+                  disabled={triggerSync.isPending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync'}
+                </Button>
+              </Card>
 
-            <Card className="p-5 flex flex-col items-center text-center gap-3">
-              <DollarSign className="w-5 h-5 text-muted-foreground" />
-              <h3 className="font-display text-xs tracking-wide">SALES</h3>
-              <Button
-                onClick={() => triggerSync.mutate('sales')}
-                disabled={triggerSync.isPending}
-                size="sm"
-                variant="outline"
-                className="w-full px-3 whitespace-nowrap"
-              >
-                {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Sales'}
-              </Button>
-            </Card>
+              <Card className="p-6 flex flex-col items-center text-center gap-4">
+                <DollarSign className="w-6 h-6 text-muted-foreground" />
+                <h3 className="font-display text-sm tracking-wide uppercase">Sales</h3>
+                <Button
+                  onClick={() => triggerSync.mutate('sales')}
+                  disabled={triggerSync.isPending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Sales'}
+                </Button>
+              </Card>
 
-            <Card className="p-5 flex flex-col items-center text-center gap-3">
-              <BarChart3 className="w-5 h-5 text-muted-foreground" />
-              <h3 className="font-display text-xs tracking-wide">REPORTS</h3>
-              <Button
-                onClick={() => triggerSync.mutate('reports')}
-                disabled={triggerSync.isPending}
-                size="sm"
-                variant="outline"
-                className="w-full px-3 whitespace-nowrap"
-              >
-                {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Reports'}
-              </Button>
-            </Card>
+              <Card className="p-6 flex flex-col items-center text-center gap-4">
+                <BarChart3 className="w-6 h-6 text-muted-foreground" />
+                <h3 className="font-display text-sm tracking-wide uppercase">Reports</h3>
+                <Button
+                  onClick={() => triggerSync.mutate('reports')}
+                  disabled={triggerSync.isPending}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Reports'}
+                </Button>
+              </Card>
+            </div>
 
-            <Card className="p-5 flex flex-col items-center text-center gap-3 col-span-2 md:col-span-1">
-              <RefreshCw className="w-5 h-5 text-muted-foreground" />
-              <h3 className="font-display text-xs tracking-wide">FULL SYNC</h3>
-              <Button
-                onClick={() => triggerSync.mutate('all')}
-                disabled={triggerSync.isPending}
-                size="sm"
-                className="w-full px-3 whitespace-nowrap"
-              >
-                {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync All'}
-              </Button>
-            </Card>
+            {/* Row 2: Full Sync */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-4">
+              <Card className="p-6 flex flex-col items-center text-center gap-4 md:col-start-2 md:col-span-2">
+                <RefreshCw className="w-6 h-6 text-muted-foreground" />
+                <h3 className="font-display text-sm tracking-wide uppercase">Full Sync</h3>
+                <Button
+                  onClick={() => triggerSync.mutate('all')}
+                  disabled={triggerSync.isPending}
+                  className="w-full"
+                >
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync All'}
+                </Button>
+              </Card>
+            </div>
           </div>
         )}
 
