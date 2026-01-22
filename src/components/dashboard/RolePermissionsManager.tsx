@@ -136,45 +136,42 @@ export function RolePermissionsManager() {
       <CardContent>
         {/* Role Tabs - Dynamic from database */}
         <Tabs value={selectedRole} onValueChange={setSelectedRole}>
-          <ScrollArea className="w-full whitespace-nowrap mb-6">
-            <TabsList className="inline-flex w-max gap-1">
-              {allRolesWithSuper.map(role => {
-                const Icon = getIconComponent(role.icon);
-                const isSuperAdmin = role.name === 'super_admin';
-                return (
-                  <TabsTrigger 
-                    key={role.name} 
-                    value={role.name}
-                    className={cn(
-                      "flex items-center gap-1.5 text-xs sm:text-sm px-3",
-                      isSuperAdmin && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-100 data-[state=active]:to-orange-100 dark:data-[state=active]:from-amber-900/40 dark:data-[state=active]:to-orange-900/40"
-                    )}
-                    style={!isSuperAdmin && role.color ? { 
-                      '--role-color': role.color,
-                    } as React.CSSProperties : undefined}
+          <TabsList className="flex flex-wrap h-auto gap-1 mb-6 p-1">
+            {allRolesWithSuper.map(role => {
+              const Icon = getIconComponent(role.icon);
+              const isSuperAdmin = role.name === 'super_admin';
+              return (
+                <TabsTrigger 
+                  key={role.name} 
+                  value={role.name}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs sm:text-sm px-3 py-1.5",
+                    isSuperAdmin && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-100 data-[state=active]:to-orange-100 dark:data-[state=active]:from-amber-900/40 dark:data-[state=active]:to-orange-900/40"
+                  )}
+                  style={!isSuperAdmin && role.color ? { 
+                    '--role-color': role.color,
+                  } as React.CSSProperties : undefined}
+                >
+                  <span 
+                    className="w-3.5 h-3.5 flex items-center justify-center"
+                    style={!isSuperAdmin && role.color ? { color: role.color } : isSuperAdmin ? { color: '#d97706' } : undefined}
                   >
-                    <span 
-                      className="w-3.5 h-3.5 flex items-center justify-center"
-                      style={!isSuperAdmin && role.color ? { color: role.color } : isSuperAdmin ? { color: '#d97706' } : undefined}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                    </span>
-                    <span className="hidden sm:inline">{role.display_name}</span>
-                    <Badge 
-                      variant="secondary" 
-                      className={cn(
-                        "ml-1 text-[10px] px-1.5 py-0",
-                        isSuperAdmin && "bg-amber-200/50 text-amber-800 dark:bg-amber-800/30 dark:text-amber-300"
-                      )}
-                    >
-                      {getPermissionCountForRole(role.name)}
-                    </Badge>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+                    <Icon className="w-3.5 h-3.5" />
+                  </span>
+                  <span className="hidden sm:inline">{role.display_name}</span>
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      "ml-1 text-[10px] px-1.5 py-0",
+                      isSuperAdmin && "bg-amber-200/50 text-amber-800 dark:bg-amber-800/30 dark:text-amber-300"
+                    )}
+                  >
+                    {getPermissionCountForRole(role.name)}
+                  </Badge>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
           {allRolesWithSuper.map(role => {
             const isSuperAdmin = role.name === 'super_admin';
