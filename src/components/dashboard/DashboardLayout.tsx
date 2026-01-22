@@ -1029,8 +1029,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Main Content */}
       <main className="lg:pl-64">
-        <div className={cn("min-h-screen", isAdmin && "lg:pt-0")}>
-          {children}
+        <div className={cn("min-h-screen flex flex-col", isAdmin && "lg:pt-0")}>
+          <div className="flex-1">
+            {children}
+          </div>
+          {/* Dashboard Footer */}
+          <footer className="py-6 text-center border-t border-border mt-auto">
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Drop Dead · Powered by Drop Dead Salon Software
+            </p>
+          </footer>
         </div>
       </main>
     </div>
