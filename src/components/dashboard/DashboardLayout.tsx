@@ -815,8 +815,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </AnimatePresence>
 
       {/* Desktop Top Bar */}
-      <div className="hidden lg:block lg:pl-64">
-        <div className="sticky top-0 z-30 flex items-center justify-end gap-3 h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
+      <div className="hidden lg:block lg:pl-64 sticky top-0 z-30">
+        <div className="flex items-center justify-end gap-3 h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
           <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
             <AccessIcon className="w-3 h-3" />
             {getAccessLabel()}
