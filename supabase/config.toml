@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.send-inactivity-alerts]
 verify_jwt = false
+
+[functions.sync-phorest-data]
+verify_jwt = false
+
+[functions.test-phorest-connection]
+verify_jwt = false

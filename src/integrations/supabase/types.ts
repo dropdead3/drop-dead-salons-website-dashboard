@@ -1597,6 +1597,270 @@ export type Database = {
         }
         Relationships: []
       }
+      phorest_appointments: {
+        Row: {
+          appointment_date: string
+          client_name: string | null
+          client_phone: string | null
+          created_at: string
+          end_time: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          phorest_id: string
+          phorest_staff_id: string | null
+          service_category: string | null
+          service_name: string | null
+          start_time: string
+          status: string
+          stylist_user_id: string | null
+          total_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_date: string
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          end_time: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          phorest_id: string
+          phorest_staff_id?: string | null
+          service_category?: string | null
+          service_name?: string | null
+          start_time: string
+          status?: string
+          stylist_user_id?: string | null
+          total_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_date?: string
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          end_time?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          phorest_id?: string
+          phorest_staff_id?: string | null
+          service_category?: string | null
+          service_name?: string | null
+          start_time?: string
+          status?: string
+          stylist_user_id?: string | null
+          total_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phorest_appointments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phorest_appointments_stylist_user_id_fkey"
+            columns: ["stylist_user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      phorest_clients: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_visit: string | null
+          id: string
+          is_vip: boolean | null
+          last_visit: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          phorest_client_id: string
+          preferred_services: string[] | null
+          preferred_stylist_id: string | null
+          total_spend: number
+          updated_at: string
+          visit_count: number
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_visit?: string | null
+          id?: string
+          is_vip?: boolean | null
+          last_visit?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          phorest_client_id: string
+          preferred_services?: string[] | null
+          preferred_stylist_id?: string | null
+          total_spend?: number
+          updated_at?: string
+          visit_count?: number
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_visit?: string | null
+          id?: string
+          is_vip?: boolean | null
+          last_visit?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          phorest_client_id?: string
+          preferred_services?: string[] | null
+          preferred_stylist_id?: string | null
+          total_spend?: number
+          updated_at?: string
+          visit_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phorest_clients_preferred_stylist_id_fkey"
+            columns: ["preferred_stylist_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      phorest_performance_metrics: {
+        Row: {
+          average_ticket: number | null
+          created_at: string
+          extension_clients: number
+          id: string
+          new_clients: number
+          rebooking_rate: number | null
+          retail_sales: number
+          retention_rate: number | null
+          service_count: number
+          total_revenue: number
+          updated_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          average_ticket?: number | null
+          created_at?: string
+          extension_clients?: number
+          id?: string
+          new_clients?: number
+          rebooking_rate?: number | null
+          retail_sales?: number
+          retention_rate?: number | null
+          service_count?: number
+          total_revenue?: number
+          updated_at?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          average_ticket?: number | null
+          created_at?: string
+          extension_clients?: number
+          id?: string
+          new_clients?: number
+          rebooking_rate?: number | null
+          retail_sales?: number
+          retention_rate?: number | null
+          service_count?: number
+          total_revenue?: number
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phorest_performance_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      phorest_staff_mapping: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          phorest_staff_id: string
+          phorest_staff_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          phorest_staff_id: string
+          phorest_staff_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          phorest_staff_id?: string
+          phorest_staff_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phorest_staff_mapping_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      phorest_sync_log: {
+        Row: {
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          records_synced: number | null
+          started_at: string
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          records_synced?: number | null
+          started_at?: string
+          status?: string
+          sync_type: string
+        }
+        Update: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          records_synced?: number | null
+          started_at?: string
+          status?: string
+          sync_type?: string
+        }
+        Relationships: []
+      }
       program_achievements: {
         Row: {
           achievement_type: string

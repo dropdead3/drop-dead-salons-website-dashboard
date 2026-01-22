@@ -66,7 +66,7 @@ import GraduationTracker from "./pages/dashboard/admin/GraduationTracker";
 import MyGraduation from "./pages/dashboard/MyGraduation";
 import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
 import ProgramAnalytics from "./pages/dashboard/admin/ProgramAnalytics";
-
+import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 
 const queryClient = new QueryClient();
 
@@ -139,7 +139,8 @@ const App = () => (
               <Route path="/dashboard/admin/graduation-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><GraduationTracker /></ProtectedRoute>} />
               <Route path="/dashboard/admin/program-editor" element={<ProtectedRoute requiredPermission="manage_program_editor"><ProgramEditor /></ProtectedRoute>} />
               <Route path="/dashboard/admin/program-analytics" element={<ProtectedRoute requiredPermission="view_program_analytics"><ProgramAnalytics /></ProtectedRoute>} />
-              
+              <Route path="/dashboard/admin/phorest" element={<ProtectedRoute requiredPermission="manage_settings"><PhorestSettings /></ProtectedRoute>} />
+
 
               <Route path="*" element={<NotFound />} />
             </Routes>
