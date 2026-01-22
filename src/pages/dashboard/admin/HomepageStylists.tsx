@@ -57,15 +57,31 @@ function useHomepagePendingRequests() {
   });
 }
 
-// Fetch ALL active stylists (for the All Stylists tab)
+// Fetch only stylists and stylist assistants (for the All Stylists tab)
 function useAllStylists() {
   return useQuery({
     queryKey: ['all-stylists-for-homepage'],
     queryFn: async () => {
+      // First, get user_ids that have stylist or stylist_assistant roles
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['stylist', 'stylist_assistant']);
+
+      if (roleError) throw roleError;
+      
+      const stylistUserIds = roleData?.map(r => r.user_id) || [];
+      
+      if (stylistUserIds.length === 0) {
+        return [] as StylistProfile[];
+      }
+
+      // Then fetch only those profiles
       const { data, error } = await supabase
         .from('employee_profiles')
         .select('*')
         .eq('is_active', true)
+        .in('user_id', stylistUserIds)
         .order('full_name', { ascending: true });
 
       if (error) throw error;
