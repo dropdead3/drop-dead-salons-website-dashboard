@@ -1036,7 +1036,7 @@ export default function MyProfile() {
                   See how your stylist card will appear on the website homepage as you fill in your information.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex justify-center">
                 <StylistCardPreview
                   name={formData.full_name}
                   displayName={formData.display_name}
