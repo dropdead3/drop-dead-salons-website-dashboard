@@ -133,7 +133,7 @@ export function StylistCardPreview({
               </div>
               
               {/* Bottom content */}
-              <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform translate-y-6 transition-transform duration-500 ease-out group-hover:translate-y-0">
+              <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
                 <div className="flex items-center gap-1.5 mb-1">
                   <p className="text-xs tracking-[0.2em] text-white/70">
                     {level || "LEVEL"}
@@ -196,9 +196,9 @@ export function StylistCardPreview({
                   )}
                 </div>
 
-                {/* Tap hint - visible on hover */}
+                {/* Tap hint - slides up from bottom on hover */}
                 {hasBio && (
-                  <div className="mt-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150 translate-y-2 group-hover:translate-y-0">
+                  <div className="mt-4 flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out delay-150">
                     <p className="text-xs text-white/80 tracking-wide font-aeonik animate-pulse">
                       Tap to learn more
                     </p>
