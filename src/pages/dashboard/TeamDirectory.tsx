@@ -805,6 +805,9 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
     return locations.find(l => l.id === id)?.name || id;
   };
 
+  // Check if stylist level should be shown (only for stylists and stylist assistants)
+  const isStylistOrAssistant = member.roles.includes('stylist') || member.roles.includes('stylist_assistant');
+  
   // Get primary role to display
   const getPrimaryRole = () => {
     if (member.is_super_admin) return { key: 'super_admin', label: roleLabels['super_admin'], color: roleColors['super_admin'] };
@@ -929,6 +932,12 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
+                  )}
+                  {isStylistOrAssistant && member.stylist_level && (
+                    <span className="flex items-center gap-1 font-medium text-foreground/70">
+                      <Award className="w-3 h-3" />
+                      {member.stylist_level.replace(' STYLIST', '')}
+                    </span>
                   )}
                 </div>
               </div>
