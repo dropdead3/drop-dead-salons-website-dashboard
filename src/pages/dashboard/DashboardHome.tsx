@@ -359,7 +359,8 @@ export default function DashboardHome() {
         </div>
 
         {/* Drop Dead 75 Program Section */}
-        {isVisible('client_engine') && (
+        {/* Client Engine - only show for stylists/assistants */}
+        {hasStylistRole && isVisible('client_engine') && (
           <div className="relative group">
             {/* Gold shimmer border effect */}
             <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-[hsl(45,60%,70%)] via-[hsl(40,50%,85%)] to-[hsl(45,60%,70%)] opacity-60 blur-[0.5px]" />
