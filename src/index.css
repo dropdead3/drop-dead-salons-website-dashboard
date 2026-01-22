@@ -93,7 +93,9 @@
 }
 
 @layer base {
-  :root {
+  /* ===== THEME: CREAM (Default) ===== */
+  :root,
+  .theme-cream {
     /* Light cream luxury palette */
     --background: 40 30% 96%;
     --foreground: 0 0% 8%;
@@ -133,7 +135,7 @@
 
     --radius: 0rem;
 
-    /* Sidebar (if needed) */
+    /* Sidebar */
     --sidebar-background: 40 25% 97%;
     --sidebar-foreground: 0 0% 8%;
     --sidebar-primary: 0 0% 8%;
@@ -144,7 +146,8 @@
     --sidebar-ring: 0 0% 8%;
   }
 
-  .dark {
+  .dark.theme-cream,
+  .dark:not([class*="theme-"]) {
     --background: 0 0% 4%;
     --foreground: 40 20% 92%;
 
@@ -166,11 +169,9 @@
     --accent: 40 30% 85%;
     --accent-foreground: 0 0% 4%;
 
-    /* Oat/Tan accent - dark mode */
     --oat: 35 25% 30%;
     --oat-foreground: 35 30% 85%;
 
-    /* Gold accent - dark mode */
     --gold: 42 75% 45%;
     --gold-foreground: 45 100% 97%;
 
@@ -180,6 +181,288 @@
     --border: 0 0% 18%;
     --input: 0 0% 12%;
     --ring: 40 20% 92%;
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 40 20% 92%;
+    --sidebar-primary: 40 20% 92%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 40 20% 92%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 40 20% 92%;
+  }
+
+  /* ===== THEME: ROSE (Blush Pink Pastel) ===== */
+  .theme-rose {
+    --background: 350 30% 97%;
+    --foreground: 350 25% 12%;
+
+    --card: 350 25% 99%;
+    --card-foreground: 350 25% 12%;
+
+    --popover: 350 25% 99%;
+    --popover-foreground: 350 25% 12%;
+
+    --primary: 350 60% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 350 20% 93%;
+    --secondary-foreground: 350 25% 12%;
+
+    --muted: 350 15% 90%;
+    --muted-foreground: 350 10% 45%;
+
+    --accent: 350 25% 92%;
+    --accent-foreground: 350 25% 12%;
+
+    --oat: 350 30% 85%;
+    --oat-foreground: 350 20% 25%;
+
+    --gold: 38 70% 38%;
+    --gold-foreground: 45 100% 97%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 350 15% 88%;
+    --input: 350 15% 92%;
+    --ring: 350 60% 55%;
+
+    --sidebar-background: 350 25% 98%;
+    --sidebar-foreground: 350 25% 12%;
+    --sidebar-primary: 350 60% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 350 20% 93%;
+    --sidebar-accent-foreground: 350 25% 12%;
+    --sidebar-border: 350 15% 88%;
+    --sidebar-ring: 350 60% 55%;
+  }
+
+  .dark.theme-rose {
+    --background: 350 15% 6%;
+    --foreground: 350 20% 92%;
+
+    --card: 350 15% 9%;
+    --card-foreground: 350 20% 92%;
+
+    --popover: 350 15% 9%;
+    --popover-foreground: 350 20% 92%;
+
+    --primary: 350 55% 60%;
+    --primary-foreground: 350 15% 6%;
+
+    --secondary: 350 10% 14%;
+    --secondary-foreground: 350 20% 92%;
+
+    --muted: 350 10% 18%;
+    --muted-foreground: 350 15% 55%;
+
+    --accent: 350 20% 20%;
+    --accent-foreground: 350 20% 92%;
+
+    --oat: 350 20% 25%;
+    --oat-foreground: 350 25% 85%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 350 10% 20%;
+    --input: 350 10% 14%;
+    --ring: 350 55% 60%;
+
+    --sidebar-background: 350 15% 8%;
+    --sidebar-foreground: 350 20% 92%;
+    --sidebar-primary: 350 55% 60%;
+    --sidebar-primary-foreground: 350 15% 6%;
+    --sidebar-accent: 350 10% 14%;
+    --sidebar-accent-foreground: 350 20% 92%;
+    --sidebar-border: 350 10% 20%;
+    --sidebar-ring: 350 55% 60%;
+  }
+
+  /* ===== THEME: SAGE (Mint Green Pastel) ===== */
+  .theme-sage {
+    --background: 145 25% 96%;
+    --foreground: 145 20% 12%;
+
+    --card: 145 20% 98%;
+    --card-foreground: 145 20% 12%;
+
+    --popover: 145 20% 98%;
+    --popover-foreground: 145 20% 12%;
+
+    --primary: 145 45% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 145 18% 92%;
+    --secondary-foreground: 145 20% 12%;
+
+    --muted: 145 12% 88%;
+    --muted-foreground: 145 10% 45%;
+
+    --accent: 145 20% 90%;
+    --accent-foreground: 145 20% 12%;
+
+    --oat: 145 25% 82%;
+    --oat-foreground: 145 18% 25%;
+
+    --gold: 38 70% 38%;
+    --gold-foreground: 45 100% 97%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 145 12% 85%;
+    --input: 145 12% 90%;
+    --ring: 145 45% 42%;
+
+    --sidebar-background: 145 20% 97%;
+    --sidebar-foreground: 145 20% 12%;
+    --sidebar-primary: 145 45% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 145 18% 92%;
+    --sidebar-accent-foreground: 145 20% 12%;
+    --sidebar-border: 145 12% 85%;
+    --sidebar-ring: 145 45% 42%;
+  }
+
+  .dark.theme-sage {
+    --background: 145 12% 6%;
+    --foreground: 145 18% 92%;
+
+    --card: 145 12% 9%;
+    --card-foreground: 145 18% 92%;
+
+    --popover: 145 12% 9%;
+    --popover-foreground: 145 18% 92%;
+
+    --primary: 145 40% 50%;
+    --primary-foreground: 145 12% 6%;
+
+    --secondary: 145 8% 14%;
+    --secondary-foreground: 145 18% 92%;
+
+    --muted: 145 8% 18%;
+    --muted-foreground: 145 12% 55%;
+
+    --accent: 145 15% 20%;
+    --accent-foreground: 145 18% 92%;
+
+    --oat: 145 15% 25%;
+    --oat-foreground: 145 20% 85%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 145 8% 20%;
+    --input: 145 8% 14%;
+    --ring: 145 40% 50%;
+
+    --sidebar-background: 145 12% 8%;
+    --sidebar-foreground: 145 18% 92%;
+    --sidebar-primary: 145 40% 50%;
+    --sidebar-primary-foreground: 145 12% 6%;
+    --sidebar-accent: 145 8% 14%;
+    --sidebar-accent-foreground: 145 18% 92%;
+    --sidebar-border: 145 8% 20%;
+    --sidebar-ring: 145 40% 50%;
+  }
+
+  /* ===== THEME: OCEAN (Soft Blue Pastel) ===== */
+  .theme-ocean {
+    --background: 210 30% 97%;
+    --foreground: 210 25% 12%;
+
+    --card: 210 25% 99%;
+    --card-foreground: 210 25% 12%;
+
+    --popover: 210 25% 99%;
+    --popover-foreground: 210 25% 12%;
+
+    --primary: 210 60% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 20% 93%;
+    --secondary-foreground: 210 25% 12%;
+
+    --muted: 210 15% 90%;
+    --muted-foreground: 210 12% 45%;
+
+    --accent: 210 22% 92%;
+    --accent-foreground: 210 25% 12%;
+
+    --oat: 210 28% 85%;
+    --oat-foreground: 210 20% 25%;
+
+    --gold: 38 70% 38%;
+    --gold-foreground: 45 100% 97%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 15% 88%;
+    --input: 210 15% 92%;
+    --ring: 210 60% 50%;
+
+    --sidebar-background: 210 25% 98%;
+    --sidebar-foreground: 210 25% 12%;
+    --sidebar-primary: 210 60% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 93%;
+    --sidebar-accent-foreground: 210 25% 12%;
+    --sidebar-border: 210 15% 88%;
+    --sidebar-ring: 210 60% 50%;
+  }
+
+  .dark.theme-ocean {
+    --background: 210 15% 6%;
+    --foreground: 210 20% 92%;
+
+    --card: 210 15% 9%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 210 15% 9%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 210 55% 55%;
+    --primary-foreground: 210 15% 6%;
+
+    --secondary: 210 10% 14%;
+    --secondary-foreground: 210 20% 92%;
+
+    --muted: 210 10% 18%;
+    --muted-foreground: 210 15% 55%;
+
+    --accent: 210 18% 20%;
+    --accent-foreground: 210 20% 92%;
+
+    --oat: 210 18% 25%;
+    --oat-foreground: 210 22% 85%;
+
+    --gold: 42 75% 45%;
+    --gold-foreground: 45 100% 97%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 10% 20%;
+    --input: 210 10% 14%;
+    --ring: 210 55% 55%;
+
+    --sidebar-background: 210 15% 8%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 210 55% 55%;
+    --sidebar-primary-foreground: 210 15% 6%;
+    --sidebar-accent: 210 10% 14%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 210 10% 20%;
+    --sidebar-ring: 210 55% 55%;
   }
 }
 
