@@ -70,19 +70,17 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
     return null;
   }
 
-  // User is linked but no data yet
-  if (!data) {
-    return (
-      <Card className="p-4 bg-muted/50 border-dashed mb-6">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <p className="text-sm text-muted-foreground text-center">
-            No sales data available yet.
-          </p>
-          <PhorestSyncButton syncType="sales" />
-        </div>
-      </Card>
-    );
-  }
+  // Use actual data or default to zeros
+  const displayData = data || {
+    totalRevenue: 0,
+    serviceRevenue: 0,
+    productRevenue: 0,
+    totalTransactions: 0,
+    averageTicket: 0,
+    daysWithData: 0,
+  };
+
+  const hasNoSales = !data || displayData.daysWithData === 0;
 
   const getRangeLabel = () => {
     switch (dateRange) {
@@ -98,6 +96,11 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
         <div className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-chart-2" />
           <h2 className="font-display text-sm tracking-wide">MY SALES DATA</h2>
+          {hasNoSales && (
+            <span className="text-xs text-muted-foreground ml-2">
+              (No sales recorded for this period)
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <PhorestSyncButton syncType="sales" size="sm" />
@@ -112,7 +115,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
             </SelectContent>
           </Select>
           <Badge variant="outline" className="text-chart-2 border-chart-2">
-            {data.daysWithData} days
+            {displayData.daysWithData} days
           </Badge>
         </div>
       </div>
@@ -120,35 +123,35 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <DollarSign className="w-4 h-4 text-chart-2" />
-            <p className="text-2xl font-display">${data.totalRevenue.toLocaleString()}</p>
+            <p className="text-2xl font-display">${displayData.totalRevenue.toLocaleString()}</p>
           </div>
           <p className="text-xs text-muted-foreground">Total Revenue</p>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <Scissors className="w-4 h-4 text-chart-3" />
-            <p className="text-2xl font-display">${data.serviceRevenue.toLocaleString()}</p>
+            <p className="text-2xl font-display">${displayData.serviceRevenue.toLocaleString()}</p>
           </div>
           <p className="text-xs text-muted-foreground">Services</p>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <ShoppingBag className="w-4 h-4 text-chart-4" />
-            <p className="text-2xl font-display">${data.productRevenue.toLocaleString()}</p>
+            <p className="text-2xl font-display">${displayData.productRevenue.toLocaleString()}</p>
           </div>
           <p className="text-xs text-muted-foreground">Products</p>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <Receipt className="w-4 h-4 text-chart-5" />
-            <p className="text-2xl font-display">{data.totalTransactions}</p>
+            <p className="text-2xl font-display">{displayData.totalTransactions}</p>
           </div>
           <p className="text-xs text-muted-foreground">Transactions</p>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <TrendingUp className="w-4 h-4 text-primary" />
-            <p className="text-2xl font-display">${Math.round(data.averageTicket)}</p>
+            <p className="text-2xl font-display">${Math.round(displayData.averageTicket)}</p>
           </div>
           <p className="text-xs text-muted-foreground">Avg Ticket</p>
         </div>
