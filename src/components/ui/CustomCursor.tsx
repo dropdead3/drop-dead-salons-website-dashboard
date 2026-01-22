@@ -12,6 +12,13 @@ export function CustomCursor() {
   const isDashboard = location.pathname.startsWith("/dashboard");
 
   useEffect(() => {
+    // Toggle body class for cursor styling
+    if (isDashboard) {
+      document.body.classList.add('dashboard-cursor');
+    } else {
+      document.body.classList.remove('dashboard-cursor');
+    }
+
     // Only enable on devices with fine pointer (desktop) and not on dashboard
     const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
     if (!hasFinePointer || isDashboard) {

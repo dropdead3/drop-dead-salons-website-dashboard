@@ -8,9 +8,14 @@
 */
 
 /* Hide default cursor on desktop - custom cursor component handles this */
+/* Only apply on public-facing pages, not dashboard */
 @media (pointer: fine) {
-  * {
+  body:not(.dashboard-cursor) * {
     cursor: none !important;
+  }
+  
+  body.dashboard-cursor * {
+    cursor: auto !important;
   }
 }
 
