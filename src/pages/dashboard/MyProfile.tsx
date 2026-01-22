@@ -474,12 +474,15 @@ export default function MyProfile() {
                         <p>Your profile photo appears on the website stylist directory and must be a professional headshot.</p>
                         <p><span className="font-medium">Recommended:</span> 800×1000px (4:5 portrait ratio)</p>
                         <p><span className="font-medium">Minimum:</span> 400×500px, JPG or PNG format</p>
-                        <p className="text-muted-foreground/80 italic">
-                          Schedule your headshot as part of your{' '}
-                          <a href="/dashboard/onboarding" className="underline hover:text-primary transition-colors">
-                            onboarding tasks
-                          </a>.
-                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-2 w-full"
+                          onClick={() => window.location.href = '/dashboard/onboarding'}
+                        >
+                          <Calendar className="w-4 h-4 mr-2" />
+                          Schedule Headshot in Onboarding
+                        </Button>
                       </div>
                     </div>
                   </div>
