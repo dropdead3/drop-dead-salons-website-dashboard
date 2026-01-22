@@ -84,25 +84,25 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
   return (
     <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-6 shadow-inner">
       {/* Premium PDF Preview - 8.5:11 aspect ratio */}
-      <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto" style={{ aspectRatio: '8.5/11', maxWidth: '340px' }}>
-        {/* Header with gradient */}
-        <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-5 px-4 text-center">
+      <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto flex flex-col" style={{ aspectRatio: '8.5/11', maxWidth: '340px' }}>
+        {/* Header with gradient - small logo */}
+        <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
           <img 
             src={DropDeadLogo} 
             alt="Drop Dead" 
-            className="h-6 mx-auto invert"
+            className="h-3 mx-auto invert"
           />
-          <p className="text-[hsl(40,30%,70%)] text-[8px] mt-1 tracking-[0.2em] uppercase">
+          <p className="text-[hsl(40,30%,70%)] text-[7px] mt-0.5 tracking-[0.2em] uppercase">
             Staff Portal
           </p>
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-col items-center px-6 py-6 flex-1">
+        <div className="flex flex-col items-center px-6 py-5 flex-1">
           {/* Welcome message */}
-          <div className="text-center mb-5">
+          <div className="text-center mb-4">
             <p className="text-base text-foreground font-display tracking-wide">Welcome to the team!</p>
-            <p className="text-xs text-muted-foreground mt-1.5">
+            <p className="text-xs text-muted-foreground mt-1">
               You need to create your profile on our software system.
             </p>
           </div>
@@ -117,11 +117,11 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
             />
           </div>
           
-          <div className="mt-5 text-center">
+          <div className="mt-4 text-center">
             <h3 className="font-display text-sm tracking-[0.15em] uppercase text-foreground">
               Create Your Account
             </h3>
-            <p className="text-xs text-muted-foreground mt-1.5">
+            <p className="text-xs text-muted-foreground mt-1">
               Scan this QR code to get started
             </p>
           </div>
@@ -134,9 +134,9 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
           </div>
         </div>
 
-        {/* Powered By Footer */}
-        <div className="bg-[hsl(0,0%,8%)] px-4 py-2 flex items-center justify-center">
-          <p className="text-[8px] text-[hsl(40,30%,55%)] tracking-wide">
+        {/* Powered By Footer - small */}
+        <div className="bg-[hsl(0,0%,8%)] px-4 py-1.5 flex items-center justify-center mt-auto">
+          <p className="text-[7px] text-[hsl(40,30%,55%)] tracking-wide">
             Powered by Drop Dead Salon Software
           </p>
         </div>
