@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key, UserPlus, Settings2, RotateCcw } from 'lucide-react';
+import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key, UserPlus, Settings2, RotateCcw, Files } from 'lucide-react';
 import { useAllUsersWithRoles, useToggleUserRole } from '@/hooks/useUserRoles';
 import { useRoles } from '@/hooks/useRoles';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
@@ -29,6 +29,7 @@ import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
 import { RolePermissionsManager } from '@/components/dashboard/RolePermissionsManager';
 import { RoleEditor } from '@/components/dashboard/RoleEditor';
 import { SystemDefaultsConfigurator } from '@/components/dashboard/settings/SystemDefaultsConfigurator';
+import { RoleTemplatesManager } from '@/components/dashboard/RoleTemplatesManager';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -206,22 +207,26 @@ export default function ManageRoles() {
 
         {/* Main Tabs: User Roles vs Role Permissions vs Manage Roles */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-3xl grid-cols-5">
             <TabsTrigger value="users" className="gap-2">
               <Users className="w-4 h-4" />
-              User Roles
+              <span className="hidden sm:inline">User Roles</span>
             </TabsTrigger>
             <TabsTrigger value="permissions" className="gap-2">
               <Key className="w-4 h-4" />
-              Permissions
+              <span className="hidden sm:inline">Permissions</span>
             </TabsTrigger>
             <TabsTrigger value="defaults" className="gap-2">
               <RotateCcw className="w-4 h-4" />
-              Defaults
+              <span className="hidden sm:inline">Defaults</span>
+            </TabsTrigger>
+            <TabsTrigger value="templates" className="gap-2">
+              <Files className="w-4 h-4" />
+              <span className="hidden sm:inline">Templates</span>
             </TabsTrigger>
             <TabsTrigger value="manage" className="gap-2">
               <Settings2 className="w-4 h-4" />
-              Manage Roles
+              <span className="hidden sm:inline">Manage</span>
             </TabsTrigger>
           </TabsList>
 
@@ -506,6 +511,10 @@ export default function ManageRoles() {
 
           <TabsContent value="defaults">
             <SystemDefaultsConfigurator />
+          </TabsContent>
+
+          <TabsContent value="templates">
+            <RoleTemplatesManager />
           </TabsContent>
 
           <TabsContent value="manage">
