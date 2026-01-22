@@ -174,14 +174,14 @@ const websiteNavItems: NavItem[] = [
   { href: '/dashboard/admin/locations', label: 'Locations', icon: MapPin, permission: 'manage_settings' },
 ];
 
-// Store sidebar scroll position outside component to persist across re-renders
-let sidebarScrollPosition = 0;
+// Sidebar scroll key for sessionStorage
+const SIDEBAR_SCROLL_KEY = 'dashboard-sidebar-scroll';
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userSearch, setUserSearch] = useState('');
-  const sidebarNavRef = useRef<HTMLElement>(null);
-  const isRestoringScroll = useRef(false);
+  const desktopNavRef = useRef<HTMLElement>(null);
+  const mobileNavRef = useRef<HTMLElement>(null);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
@@ -189,48 +189,42 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
 
-  // Track sidebar scroll position continuously
+  // Track desktop sidebar scroll position and persist to sessionStorage
   useEffect(() => {
-    const nav = sidebarNavRef.current;
+    const nav = desktopNavRef.current;
     if (!nav) return;
     
     const handleScroll = () => {
-      if (!isRestoringScroll.current) {
-        sidebarScrollPosition = nav.scrollTop;
-      }
+      sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(nav.scrollTop));
     };
     
     nav.addEventListener('scroll', handleScroll, { passive: true });
     return () => nav.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Restore sidebar scroll position after navigation
-  useLayoutEffect(() => {
-    if (sidebarScrollPosition === 0) return;
+  // Restore sidebar scroll position on mount and after navigation
+  useEffect(() => {
+    const savedPosition = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
+    if (!savedPosition) return;
     
-    isRestoringScroll.current = true;
-    
+    const scrollPos = parseInt(savedPosition, 10);
+    if (isNaN(scrollPos) || scrollPos === 0) return;
+
     const restoreScroll = () => {
-      if (sidebarNavRef.current) {
-        sidebarNavRef.current.scrollTop = sidebarScrollPosition;
+      if (desktopNavRef.current) {
+        desktopNavRef.current.scrollTop = scrollPos;
+      }
+      if (mobileNavRef.current) {
+        mobileNavRef.current.scrollTop = scrollPos;
       }
     };
     
     // Multiple attempts to ensure content is ready
     restoreScroll();
-    const timer1 = requestAnimationFrame(restoreScroll);
-    const timer2 = setTimeout(restoreScroll, 50);
-    const timer3 = setTimeout(() => {
-      restoreScroll();
-      isRestoringScroll.current = false;
-    }, 200);
+    requestAnimationFrame(restoreScroll);
+    const timer = setTimeout(restoreScroll, 100);
     
-    return () => {
-      cancelAnimationFrame(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-      isRestoringScroll.current = false;
-    };
+    return () => clearTimeout(timer);
   }, [location.pathname]);
 
   // Close mobile sidebar on navigation
@@ -410,7 +404,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   };
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ navRef }: { navRef?: React.RefObject<HTMLElement> }) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="p-6 border-b border-border">
@@ -423,7 +417,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav ref={sidebarNavRef} className="flex-1 py-4 overflow-y-auto">
+      <nav ref={navRef} className="flex-1 py-4 overflow-y-auto">
         <div className="space-y-1">
           {filterNavItems(mainNavItems).map((item) => (
             <NavLink 
@@ -904,7 +898,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:border-r lg:border-border lg:bg-card">
-        <SidebarContent />
+        <SidebarContent navRef={desktopNavRef} />
       </aside>
 
       {/* Mobile Header */}
@@ -916,7 +910,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
-            <SidebarContent />
+            <SidebarContent navRef={mobileNavRef} />
           </SheetContent>
         </Sheet>
 
