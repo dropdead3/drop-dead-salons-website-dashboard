@@ -44,44 +44,80 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
   console.log("Syncing staff data...");
   
   try {
-    // First get branches, then fetch staff from each branch
     let allStaff: any[] = [];
     
+    // First get branches to see what data is available
     try {
-      // Try fetching branches first
       const branchData = await phorestRequest("/branch", businessId, username, password);
-      const branches = branchData._embedded?.branches || branchData.branches || branchData || [];
-      console.log(`Found ${Array.isArray(branches) ? branches.length : 0} branches`);
+      console.log("Branch response:", JSON.stringify(branchData).substring(0, 500));
       
-      if (Array.isArray(branches) && branches.length > 0) {
-        // Fetch staff for each branch
+      const branches = branchData._embedded?.branches || branchData.branches || 
+                       (Array.isArray(branchData) ? branchData : []);
+      console.log(`Found ${branches.length} branches`);
+      
+      if (branches.length > 0) {
         for (const branch of branches) {
           const branchId = branch.branchId || branch.id;
-          if (branchId) {
+          console.log(`Branch: ${branch.name || branchId}, ID: ${branchId}`);
+          
+          // Check if staff is embedded in branch data
+          const embeddedStaff = branch._embedded?.staff || branch.staff;
+          if (embeddedStaff && Array.isArray(embeddedStaff)) {
+            console.log(`Found ${embeddedStaff.length} embedded staff in branch`);
+            allStaff = [...allStaff, ...embeddedStaff];
+            continue;
+          }
+          
+          // Try multiple staff endpoint patterns
+          const staffEndpoints = [
+            `/branch/${branchId}/staff`,
+            `/staff?branchId=${branchId}`,
+          ];
+          
+          for (const endpoint of staffEndpoints) {
             try {
-              const branchStaff = await phorestRequest(`/branch/${branchId}/staff`, businessId, username, password);
-              const staffList = branchStaff._embedded?.staff || branchStaff.staff || branchStaff || [];
-              if (Array.isArray(staffList)) {
-                console.log(`Found ${staffList.length} staff in branch ${branchId}`);
+              console.log(`Trying staff endpoint: ${endpoint}`);
+              const branchStaff = await phorestRequest(endpoint, businessId, username, password);
+              const staffList = branchStaff._embedded?.staff || branchStaff.staff || 
+                               (Array.isArray(branchStaff) ? branchStaff : []);
+              if (staffList.length > 0) {
+                console.log(`Found ${staffList.length} staff via ${endpoint}`);
                 allStaff = [...allStaff, ...staffList];
+                break;
               }
-            } catch (branchError) {
-              console.log(`Could not fetch staff for branch ${branchId}:`, branchError);
+            } catch (e: any) {
+              console.log(`Endpoint ${endpoint} failed: ${e.message?.substring(0, 100)}`);
             }
           }
         }
       }
-    } catch (branchError) {
-      console.log("Could not fetch branches, trying direct staff endpoint:", branchError);
+    } catch (branchError: any) {
+      console.log("Branch fetch failed:", branchError.message);
     }
     
-    // If no staff found via branches, try direct staff endpoint as fallback
+    // If still no staff, try other API patterns
     if (allStaff.length === 0) {
-      try {
-        const staffData = await phorestRequest("/staff", businessId, username, password);
-        allStaff = staffData._embedded?.staff || staffData.staff || staffData || [];
-      } catch (staffError) {
-        console.log("Direct staff endpoint also failed:", staffError);
+      const fallbackEndpoints = [
+        "/staff",
+        "/staff?size=100",
+        "/staffmember",
+      ];
+      
+      for (const endpoint of fallbackEndpoints) {
+        try {
+          console.log(`Trying fallback: ${endpoint}`);
+          const staffData = await phorestRequest(endpoint, businessId, username, password);
+          const staffList = staffData._embedded?.staff || staffData.staff || 
+                           staffData._embedded?.staffmembers || staffData.staffmembers ||
+                           (Array.isArray(staffData) ? staffData : []);
+          if (staffList.length > 0) {
+            console.log(`Found ${staffList.length} staff via ${endpoint}`);
+            allStaff = staffList;
+            break;
+          }
+        } catch (e: any) {
+          console.log(`Fallback ${endpoint} failed: ${e.message?.substring(0, 100)}`);
+        }
       }
     }
     
@@ -90,7 +126,7 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
       new Map(allStaff.map((s: any) => [s.staffId || s.id, s])).values()
     );
     
-    console.log(`Found ${uniqueStaff.length} unique staff members in Phorest`);
+    console.log(`Found ${uniqueStaff.length} unique staff members total`);
 
     // Get existing mappings
     const { data: existingMappings } = await supabase
@@ -99,7 +135,7 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
 
     const mappedIds = new Set(existingMappings?.map((m: any) => m.phorest_staff_id) || []);
 
-    // Return staff that aren't mapped yet for admin to map
+    // Return staff that aren't mapped yet
     const unmappedStaff = uniqueStaff.filter((s: any) => !mappedIds.has(s.staffId || s.id));
 
     return {
