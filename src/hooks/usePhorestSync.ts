@@ -3,6 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export interface PhorestStaffMember {
+  id: string;
+  name: string;
+  email?: string;
+}
+
 export interface PhorestConnectionStatus {
   connected: boolean;
   business?: {
@@ -10,6 +16,7 @@ export interface PhorestConnectionStatus {
     id: string;
   };
   staff_count?: number;
+  staff_list?: PhorestStaffMember[];
   error?: string;
 }
 
