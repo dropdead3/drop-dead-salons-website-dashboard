@@ -599,129 +599,64 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <ChevronDown className="w-3.5 h-3.5 opacity-60" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80 p-2 bg-card border border-border shadow-lg">
-          <div className="flex items-center gap-3 px-2 py-3 mb-2">
-            <div className="p-2 bg-muted">
-              <Eye className="w-5 h-5 text-foreground" />
-            </div>
-            <div>
-              <p className="font-display text-sm font-medium">View Dashboard As</p>
-              <p className="text-xs text-muted-foreground">Preview how roles or team members see the app</p>
-            </div>
-          </div>
-          <DropdownMenuSeparator className="my-2" />
-          
-          {/* Exit button when viewing */}
-          {isViewingAs && (
-            <>
-              <DropdownMenuItem
-                onClick={() => clearViewAs()}
-                className="flex items-center gap-3 px-3 py-3 cursor-pointer bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 mb-2"
-              >
-                <div className="p-1.5 bg-amber-500 text-white">
-                  <X className="w-4 h-4" />
+        <DropdownMenuContent align="end" className="w-80 p-0 bg-card border border-border shadow-lg max-h-[70vh] overflow-hidden">
+          <ScrollArea className="h-full max-h-[70vh]">
+            <div className="p-2">
+              <div className="flex items-center gap-3 px-2 py-3 mb-2">
+                <div className="p-2 bg-muted">
+                  <Eye className="w-5 h-5 text-foreground" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Exit Preview Mode</p>
-                  <p className="text-xs text-amber-600 dark:text-amber-500">Return to your admin view</p>
+                <div>
+                  <p className="font-display text-sm font-medium">View Dashboard As</p>
+                  <p className="text-xs text-muted-foreground">Preview how roles or team members see the app</p>
                 </div>
-              </DropdownMenuItem>
+              </div>
               <DropdownMenuSeparator className="my-2" />
-            </>
-          )}
-
-          {/* Role-based view section */}
-          <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground px-3 py-2">
-            View as Role
-          </DropdownMenuLabel>
-          <div className="space-y-1 mb-2">
-            {ALL_ROLES.map(role => {
-              const RoleIcon = roleIcons[role];
-              const isSelected = viewAsRole === role && !isViewingAsUser;
-              return (
-                <DropdownMenuItem
-                  key={role}
-                  onClick={() => setViewAsRole(role)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 cursor-pointer transition-all group",
-                    isSelected && "bg-accent"
-                  )}
-                >
-                  <div className={cn(
-                    "p-1.5 transition-all border border-transparent group-hover:border-foreground/30",
-                    roleColors[role]
-                  )}>
-                    <RoleIcon className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{ROLE_LABELS[role]}</p>
-                  </div>
-                  {isSelected && (
-                    <div className="p-1 bg-amber-500 text-white">
-                      <Eye className="w-3 h-3" />
+              
+              {/* Exit button when viewing */}
+              {isViewingAs && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => clearViewAs()}
+                    className="flex items-center gap-3 px-3 py-3 cursor-pointer bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 mb-2"
+                  >
+                    <div className="p-1.5 bg-amber-500 text-white">
+                      <X className="w-4 h-4" />
                     </div>
-                  )}
-                </DropdownMenuItem>
-              );
-            })}
-          </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Exit Preview Mode</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-500">Return to your admin view</p>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="my-2" />
+                </>
+              )}
 
-          <DropdownMenuSeparator className="my-2" />
-
-          {/* User-specific view section */}
-          <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground px-3 py-2">
-            View as Team Member
-          </DropdownMenuLabel>
-          
-          {/* Search input - use onKeyDown to prevent dropdown from closing */}
-          <div className="px-2 pb-2">
-            <Input
-              placeholder="Search team members..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
-              onKeyDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-              className="h-8 text-sm"
-            />
-          </div>
-
-          <ScrollArea className="max-h-48">
-            <div className="space-y-1 px-1">
-              {filteredMembers.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  {userSearch ? 'No team members found' : 'Start typing to search...'}
-                </p>
-              ) : (
-                filteredMembers.map(member => {
-                  const isSelected = viewAsUser?.id === member.user_id;
-                  const memberRoles = member.roles as AppRole[];
-                  const primaryRole = memberRoles[0];
-                  
+              {/* Role-based view section */}
+              <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground px-3 py-2">
+                View as Role
+              </DropdownMenuLabel>
+              <div className="space-y-1 mb-2">
+                {ALL_ROLES.map(role => {
+                  const RoleIcon = roleIcons[role];
+                  const isSelected = viewAsRole === role && !isViewingAsUser;
                   return (
                     <DropdownMenuItem
-                      key={member.user_id}
-                      onClick={() => setViewAsUser({
-                        id: member.user_id,
-                        full_name: member.full_name,
-                        photo_url: member.photo_url,
-                        roles: memberRoles,
-                      })}
+                      key={role}
+                      onClick={() => setViewAsRole(role)}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 cursor-pointer transition-all",
+                        "flex items-center gap-3 px-3 py-2 cursor-pointer transition-all group",
                         isSelected && "bg-accent"
                       )}
                     >
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.photo_url || undefined} />
-                        <AvatarFallback className="text-xs">
-                          {member.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className={cn(
+                        "p-1.5 transition-all border border-transparent group-hover:border-foreground/30",
+                        roleColors[role]
+                      )}>
+                        <RoleIcon className="w-3.5 h-3.5" />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{member.full_name}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {primaryRole ? ROLE_LABELS[primaryRole] : 'No role'}
-                        </p>
+                        <p className="text-sm font-medium">{ROLE_LABELS[role]}</p>
                       </div>
                       {isSelected && (
                         <div className="p-1 bg-amber-500 text-white">
@@ -730,36 +665,103 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       )}
                     </DropdownMenuItem>
                   );
-                })
-              )}
+                })}
+              </div>
+
+              <DropdownMenuSeparator className="my-2" />
+
+              {/* User-specific view section */}
+              <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground px-3 py-2">
+                View as Team Member
+              </DropdownMenuLabel>
+              
+              {/* Search input - use onKeyDown to prevent dropdown from closing */}
+              <div className="px-2 pb-2">
+                <Input
+                  placeholder="Search team members..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-8 text-sm"
+                />
+              </div>
+
+              <div className="space-y-1 px-1">
+                {filteredMembers.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    {userSearch ? 'No team members found' : 'Start typing to search...'}
+                  </p>
+                ) : (
+                  filteredMembers.map(member => {
+                    const isSelected = viewAsUser?.id === member.user_id;
+                    const memberRoles = member.roles as AppRole[];
+                    const primaryRole = memberRoles[0];
+                    
+                    return (
+                      <DropdownMenuItem
+                        key={member.user_id}
+                        onClick={() => setViewAsUser({
+                          id: member.user_id,
+                          full_name: member.full_name,
+                          photo_url: member.photo_url,
+                          roles: memberRoles,
+                        })}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 cursor-pointer transition-all",
+                          isSelected && "bg-accent"
+                        )}
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={member.photo_url || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {member.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{member.full_name}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {primaryRole ? ROLE_LABELS[primaryRole] : 'No role'}
+                          </p>
+                        </div>
+                        {isSelected && (
+                          <div className="p-1 bg-amber-500 text-white">
+                            <Eye className="w-3 h-3" />
+                          </div>
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })
+                )}
+              </div>
+
+              <DropdownMenuSeparator className="my-2" />
+
+              {/* View History Button */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    className="flex items-center gap-3 px-3 py-2 cursor-pointer"
+                  >
+                    <div className="p-1.5 bg-muted">
+                      <History className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">View History</p>
+                      <p className="text-xs text-muted-foreground">See all impersonation activity</p>
+                    </div>
+                  </DropdownMenuItem>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Impersonation Audit Log</DialogTitle>
+                  </DialogHeader>
+                  <ImpersonationHistoryPanel limit={50} />
+                </DialogContent>
+              </Dialog>
             </div>
           </ScrollArea>
-
-          <DropdownMenuSeparator className="my-2" />
-
-          {/* View History Button */}
-          <Dialog>
-            <DialogTrigger asChild>
-              <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-                className="flex items-center gap-3 px-3 py-2 cursor-pointer"
-              >
-                <div className="p-1.5 bg-muted">
-                  <History className="w-3.5 h-3.5" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">View History</p>
-                  <p className="text-xs text-muted-foreground">See all impersonation activity</p>
-                </div>
-              </DropdownMenuItem>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Impersonation Audit Log</DialogTitle>
-              </DialogHeader>
-              <ImpersonationHistoryPanel limit={50} />
-            </DialogContent>
-          </Dialog>
         </DropdownMenuContent>
       </DropdownMenu>
     );
