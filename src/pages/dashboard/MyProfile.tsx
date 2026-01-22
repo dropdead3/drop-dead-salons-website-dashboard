@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Star, X } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Star, X, ChevronDown, Check } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
@@ -193,8 +195,43 @@ export default function MyProfile() {
 
   const missingFields = profileFields.filter(f => !f.filled);
 
+  const isStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
+
+  // Validation for required fields
+  const validationErrors = useMemo(() => {
+    const errors: string[] = [];
+    
+    if (!formData.full_name.trim()) errors.push('Full Name is required');
+    if (!formData.display_name.trim()) errors.push('Display Name is required');
+    if (!formData.email.trim()) errors.push('Email is required');
+    if (!formData.phone.trim()) errors.push('Phone is required');
+    if (!formData.instagram.trim()) errors.push('Instagram is required');
+    if (formData.location_ids.length === 0) errors.push('At least one location is required');
+    if (!formData.emergency_contact.trim()) errors.push('Emergency Contact is required');
+    if (!formData.emergency_phone.trim()) errors.push('Emergency Phone is required');
+    
+    // Stylist-specific validation
+    if (isStylistRole) {
+      if (!formData.stylist_level) errors.push('Stylist Level is required');
+      if (formData.specialties.length < 2) errors.push('At least 2 specialties are required');
+      if (formData.specialties.length > 3) errors.push('Maximum 3 specialties allowed');
+    }
+    
+    return errors;
+  }, [formData, isStylistRole]);
+
+  const isFormValid = validationErrors.length === 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!isFormValid) {
+      toast.error('Please fill in all required fields', {
+        description: validationErrors.slice(0, 3).join(', ') + (validationErrors.length > 3 ? '...' : ''),
+      });
+      return;
+    }
     
     // Save location schedules to the database - only for selected locations
     const schedulePromises = formData.location_ids
@@ -267,11 +304,16 @@ export default function MyProfile() {
     setFormData(prev => {
       const isSelected = prev.specialties.includes(specialty);
       if (isSelected) {
-        return { ...prev, specialties: prev.specialties.filter(s => s !== specialty) };
+        // Also remove from highlighted services if it was highlighted
+        return { 
+          ...prev, 
+          specialties: prev.specialties.filter(s => s !== specialty),
+          highlighted_services: prev.highlighted_services.filter(s => s !== specialty)
+        };
       }
-      // Limit to 4 specialties
-      if (prev.specialties.length >= 4) {
-        toast.error('You can select up to 4 specialties');
+      // Limit to 3 specialties
+      if (prev.specialties.length >= 3) {
+        toast.error('You can select up to 3 specialties');
         return prev;
       }
       return { ...prev, specialties: [...prev.specialties, specialty] };
@@ -439,32 +481,35 @@ export default function MyProfile() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">Full Name</Label>
+                  <Label htmlFor="full_name">Full Name <span className="text-destructive">*</span></Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="full_name"
                       value={formData.full_name}
                       onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                      className="pl-10"
+                      className={cn("pl-10", !formData.full_name.trim() && "border-destructive/50")}
                       placeholder="Your full name"
+                      required
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="display_name">Display Name</Label>
+                  <Label htmlFor="display_name">Display Name <span className="text-destructive">*</span></Label>
                   <Input
                     id="display_name"
                     value={formData.display_name}
                     onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
+                    className={cn(!formData.display_name.trim() && "border-destructive/50")}
                     placeholder="How you'd like to be called"
+                    required
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -472,13 +517,14 @@ export default function MyProfile() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      className="pl-10"
+                      className={cn("pl-10", !formData.email.trim() && "border-destructive/50")}
                       placeholder="your@email.com"
+                      required
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">Phone <span className="text-destructive">*</span></Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -486,9 +532,10 @@ export default function MyProfile() {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
-                      className="pl-10"
+                      className={cn("pl-10", !formData.phone.trim() && "border-destructive/50")}
                       placeholder="480-555-1234"
                       maxLength={12}
+                      required
                     />
                   </div>
                 </div>
@@ -496,7 +543,7 @@ export default function MyProfile() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="instagram">Instagram</Label>
+                  <Label htmlFor="instagram">Instagram <span className="text-destructive">*</span></Label>
                   <div className="relative">
                     <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -508,13 +555,14 @@ export default function MyProfile() {
                           setFormData(prev => ({ ...prev, instagram: formatSocialHandle(prev.instagram) }));
                         }
                       }}
-                      className="pl-10"
+                      className={cn("pl-10", !formData.instagram.trim() && "border-destructive/50")}
                       placeholder="@yourhandle"
+                      required
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tiktok">TikTok</Label>
+                  <Label htmlFor="tiktok">TikTok <span className="text-muted-foreground text-xs font-normal">(optional)</span></Label>
                   <div className="relative">
                     <svg 
                       className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
@@ -574,7 +622,7 @@ export default function MyProfile() {
               </div>
 
               <div className="space-y-2">
-                <Label>Locations</Label>
+                <Label>Locations <span className="text-destructive">*</span></Label>
                 <div className="flex flex-wrap gap-2">
                   {locations.map(loc => {
                     const isSelected = formData.location_ids.includes(loc.id);
@@ -731,12 +779,12 @@ export default function MyProfile() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="stylist_level">Stylist Level</Label>
+                  <Label htmlFor="stylist_level">Stylist Level <span className="text-destructive">*</span></Label>
                   <Select
                     value={formData.stylist_level}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, stylist_level: value }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={cn(!formData.stylist_level && "border-destructive/50")}>
                       <SelectValue placeholder="Select level..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -752,26 +800,77 @@ export default function MyProfile() {
                     Specialties <span className="text-destructive">*</span>
                     <span className="text-muted-foreground text-xs font-normal ml-1">(select 2-3 required)</span>
                   </Label>
-                  <div className="flex flex-wrap gap-2">
-                    {specialtyOptions.map(option => {
-                      const specialty = option.name;
-                      const isSelected = formData.specialties.includes(specialty);
-                      const isDisabled = !isSelected && formData.specialties.length >= 3;
-                      return (
-                        <Badge
-                          key={specialty}
-                          variant={isSelected ? 'default' : 'outline'}
-                          className={cn(
-                            "cursor-pointer transition-all",
-                            isDisabled && "opacity-50 cursor-not-allowed"
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between h-auto min-h-10 py-2",
+                          formData.specialties.length < 2 && "border-destructive/50"
+                        )}
+                      >
+                        <div className="flex flex-wrap gap-1 flex-1">
+                          {formData.specialties.length > 0 ? (
+                            formData.specialties.map(specialty => (
+                              <Badge key={specialty} variant="secondary" className="mr-1 mb-1">
+                                {specialty}
+                                <button
+                                  type="button"
+                                  className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSpecialty(specialty);
+                                  }}
+                                >
+                                  <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                </button>
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-muted-foreground">Select specialties...</span>
                           )}
-                          onClick={() => !isDisabled && toggleSpecialty(specialty)}
-                        >
-                          {specialty}
-                        </Badge>
-                      );
-                    })}
-                  </div>
+                        </div>
+                        <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search specialties..." />
+                        <CommandList>
+                          <CommandEmpty>No specialty found.</CommandEmpty>
+                          <CommandGroup>
+                            {specialtyOptions.map(option => {
+                              const specialty = option.name;
+                              const isSelected = formData.specialties.includes(specialty);
+                              const isDisabled = !isSelected && formData.specialties.length >= 3;
+                              return (
+                                <CommandItem
+                                  key={specialty}
+                                  value={specialty}
+                                  disabled={isDisabled}
+                                  onSelect={() => {
+                                    if (!isDisabled) {
+                                      toggleSpecialty(specialty);
+                                    }
+                                  }}
+                                  className={cn(isDisabled && "opacity-50")}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      isSelected ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {specialty}
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <p className={cn(
                     "text-xs",
                     formData.specialties.length < 2 ? "text-destructive" : "text-muted-foreground"
@@ -981,22 +1080,27 @@ export default function MyProfile() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="emergency_contact">Contact Name</Label>
+                  <Label htmlFor="emergency_contact">Contact Name <span className="text-destructive">*</span></Label>
                   <Input
                     id="emergency_contact"
                     value={formData.emergency_contact}
                     onChange={(e) => setFormData(prev => ({ ...prev, emergency_contact: e.target.value }))}
+                    className={cn(!formData.emergency_contact.trim() && "border-destructive/50")}
                     placeholder="Emergency contact name"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="emergency_phone">Contact Phone</Label>
+                  <Label htmlFor="emergency_phone">Contact Phone <span className="text-destructive">*</span></Label>
                   <Input
                     id="emergency_phone"
                     type="tel"
                     value={formData.emergency_phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, emergency_phone: e.target.value }))}
-                    placeholder="(480) 555-1234"
+                    onChange={(e) => setFormData(prev => ({ ...prev, emergency_phone: formatPhoneNumber(e.target.value) }))}
+                    className={cn(!formData.emergency_phone.trim() && "border-destructive/50")}
+                    placeholder="480-555-1234"
+                    maxLength={12}
+                    required
                   />
                 </div>
               </div>
