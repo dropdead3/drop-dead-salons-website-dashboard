@@ -18,6 +18,7 @@ import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { useLocationSchedules, useUpsertLocationSchedule } from '@/hooks/useLocationSchedules';
 import { useSpecialtyOptions } from '@/hooks/useSpecialtyOptions';
+import { useStylistLevels } from '@/hooks/useStylistLevels';
 import { locations as staticLocations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -33,7 +34,7 @@ const DAYS_OF_WEEK = [
   { key: 'Sat', label: 'Saturday' },
   { key: 'Sun', label: 'Sunday' },
 ];
-const stylistLevels = ['LEVEL 1', 'LEVEL 2', 'LEVEL 3', 'LEVEL 4'];
+
 
 // Format phone number as XXX-XXX-XXXX
 const formatPhoneNumber = (value: string) => {
@@ -73,6 +74,7 @@ export default function MyProfile() {
   const { data: locations = [] } = useLocations();
   const { data: existingSchedules } = useLocationSchedules();
   const { data: specialtyOptions = [] } = useSpecialtyOptions();
+  const { data: stylistLevels = [] } = useStylistLevels();
   const upsertSchedule = useUpsertLocationSchedule();
   const updateProfile = useUpdateEmployeeProfile();
   const uploadPhoto = useUploadProfilePhoto();
@@ -847,7 +849,7 @@ export default function MyProfile() {
                     </SelectTrigger>
                     <SelectContent>
                       {stylistLevels.map(level => (
-                        <SelectItem key={level} value={level}>{level}</SelectItem>
+                        <SelectItem key={level.id} value={level.label}>{level.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
