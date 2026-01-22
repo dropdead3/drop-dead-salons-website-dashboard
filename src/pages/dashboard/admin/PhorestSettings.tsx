@@ -73,7 +73,8 @@ export default function PhorestSettings() {
     });
   };
 
-  const { data: connection, isLoading: connectionLoading, refetch: refetchConnection } = usePhorestConnection();
+  const { data: connection, isLoading, isFetching, refetch: refetchConnection } = usePhorestConnection();
+  const connectionLoading = isLoading || isFetching;
   const { data: syncLogs, isLoading: logsLoading } = usePhorestSyncLogs();
   const { data: staffMappings, isLoading: mappingsLoading } = usePhorestStaffMappings();
   
