@@ -28,6 +28,9 @@ import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { PersonalGoalsCard } from '@/components/dashboard/sales/PersonalGoalsCard';
 import { TierProgressAlert } from '@/components/dashboard/sales/TierProgressAlert';
 import { SalesAchievements } from '@/components/dashboard/sales/SalesAchievements';
+import { PerformanceTrendChart } from '@/components/dashboard/sales/PerformanceTrendChart';
+import { ClientInsightsCard } from '@/components/dashboard/sales/ClientInsightsCard';
+import { ServiceMixChart } from '@/components/dashboard/sales/ServiceMixChart';
 
 interface DailyMetrics {
   posts_published: number;
@@ -212,8 +215,31 @@ export default function Stats() {
           </div>
         )}
 
-        {/* Sales Achievements */}
-        {user && (userMonthlySales?.totalRevenue || 0) > 0 && (
+        {/* Performance Visualizations */}
+        {user && isLinkedToPhorest && (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
+            <div className="lg:col-span-2">
+              <PerformanceTrendChart userId={user.id} weeks={8} />
+            </div>
+            <ClientInsightsCard userId={user.id} />
+          </div>
+        )}
+
+        {/* Service Mix */}
+        {user && isLinkedToPhorest && (
+          <div className="grid gap-6 md:grid-cols-2 mt-6">
+            <ServiceMixChart userId={user.id} days={30} />
+            <SalesAchievements
+              totalRevenue={userMonthlySales?.totalRevenue || 0}
+              serviceRevenue={userMonthlySales?.serviceRevenue || 0}
+              productRevenue={userMonthlySales?.productRevenue || 0}
+              totalTransactions={userMonthlySales?.totalTransactions || 0}
+            />
+          </div>
+        )}
+
+        {/* Fallback for non-Phorest users */}
+        {user && !isLinkedToPhorest && (userMonthlySales?.totalRevenue || 0) > 0 && (
           <div className="mt-6">
             <SalesAchievements
               totalRevenue={userMonthlySales?.totalRevenue || 0}
