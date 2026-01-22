@@ -1,20 +1,18 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { usePermissionsByCategory, useRolePermissions, useToggleRolePermission } from '@/hooks/usePermissions';
-import { ROLE_LABELS } from '@/hooks/useUserRoles';
+import { useRoles } from '@/hooks/useRoles';
 import type { Database } from '@/integrations/supabase/types';
+import * as LucideIcons from 'lucide-react';
 import { 
   Shield, 
-  Crown, 
-  Scissors, 
-  Headset, 
-  HandHelping,
   Lock,
   LayoutDashboard,
   TrendingUp,
@@ -23,44 +21,10 @@ import {
   Users,
   Settings,
   Sparkles,
-  UserCheck,
-  ClipboardList,
+  CircleDot,
 } from 'lucide-react';
 
 type AppRole = Database['public']['Enums']['app_role'];
-type RoleOrSuperAdmin = AppRole | 'super_admin';
-
-const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
-const ALL_ROLES_WITH_SUPER: RoleOrSuperAdmin[] = ['super_admin', 'admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
-
-const roleIcons: Record<RoleOrSuperAdmin, React.ComponentType<{ className?: string }>> = {
-  super_admin: Sparkles,
-  admin: Crown,
-  manager: Shield,
-  stylist: Scissors,
-  receptionist: Headset,
-  assistant: HandHelping, // Legacy
-  stylist_assistant: HandHelping,
-  admin_assistant: UserCheck,
-  operations_assistant: ClipboardList,
-};
-
-const roleColors: Record<RoleOrSuperAdmin, string> = {
-  super_admin: 'bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 text-amber-900 dark:from-amber-900/30 dark:via-orange-900/20 dark:to-amber-900/30 dark:text-amber-300 border-amber-300 dark:border-amber-700',
-  admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800',
-  manager: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800',
-  stylist: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-  receptionist: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800',
-  assistant: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200 dark:border-gray-800', // Legacy
-  stylist_assistant: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800',
-  admin_assistant: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400 border-pink-200 dark:border-pink-800',
-  operations_assistant: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800',
-};
-
-const roleLabels: Record<RoleOrSuperAdmin, string> = {
-  super_admin: 'Super Admin',
-  ...ROLE_LABELS,
-};
 
 const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Dashboard: LayoutDashboard,
@@ -73,26 +37,54 @@ const categoryIcons: Record<string, React.ComponentType<{ className?: string }>>
 
 const categoryOrder = ['Dashboard', 'Growth', 'Scheduling', 'Housekeeping', 'Management', 'Administration'];
 
+// Helper to get icon component from string name
+const getIconComponent = (iconName: string | null): React.ComponentType<{ className?: string }> => {
+  if (!iconName) return CircleDot;
+  // Access lucide icons dynamically
+  const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>;
+  const Icon = icons[iconName];
+  return Icon || CircleDot;
+};
+
 export function RolePermissionsManager() {
-  const [selectedRole, setSelectedRole] = useState<RoleOrSuperAdmin>('super_admin');
+  const [selectedRole, setSelectedRole] = useState<string>('super_admin');
   const { data: permissionsByCategory, isLoading: permissionsLoading } = usePermissionsByCategory();
   const { data: rolePermissions, isLoading: rolePermissionsLoading } = useRolePermissions();
+  const { data: dynamicRoles, isLoading: rolesLoading } = useRoles();
   const togglePermission = useToggleRolePermission();
 
-  const isLoading = permissionsLoading || rolePermissionsLoading;
+  const isLoading = permissionsLoading || rolePermissionsLoading || rolesLoading;
+
+  // Build roles list dynamically from database, with Super Admin always first
+  const allRolesWithSuper = useMemo(() => {
+    const superAdminRole = {
+      id: 'super_admin',
+      name: 'super_admin',
+      display_name: 'Super Admin',
+      icon: 'Sparkles',
+      color: '#f59e0b', // amber
+      is_active: true,
+      description: 'Full system access',
+      display_order: -1,
+      category: 'leadership',
+    };
+    
+    const activeRoles = dynamicRoles?.filter(r => r.is_active) || [];
+    return [superAdminRole, ...activeRoles];
+  }, [dynamicRoles]);
 
   // Get total number of permissions for Super Admin (always has all)
   const totalPermissions = Object.values(permissionsByCategory || {}).flat().length;
 
-  const hasPermission = (role: RoleOrSuperAdmin, permissionId: string) => {
+  const hasPermission = (roleName: string, permissionId: string) => {
     // Super Admin always has all permissions
-    if (role === 'super_admin') return true;
-    return rolePermissions?.some(rp => rp.role === role && rp.permission_id === permissionId) ?? false;
+    if (roleName === 'super_admin') return true;
+    return rolePermissions?.some(rp => rp.role === roleName && rp.permission_id === permissionId) ?? false;
   };
 
-  const getPermissionCountForRole = (role: RoleOrSuperAdmin) => {
-    if (role === 'super_admin') return totalPermissions;
-    return rolePermissions?.filter(rp => rp.role === role).length ?? 0;
+  const getPermissionCountForRole = (roleName: string) => {
+    if (roleName === 'super_admin') return totalPermissions;
+    return rolePermissions?.filter(rp => rp.role === roleName).length ?? 0;
   };
 
   const handleToggle = (permissionId: string, currentlyHas: boolean) => {
@@ -106,7 +98,9 @@ export function RolePermissionsManager() {
     });
   };
 
-  const RoleIcon = roleIcons[selectedRole];
+  // Get selected role data
+  const selectedRoleData = allRolesWithSuper.find(r => r.name === selectedRole);
+  const RoleIcon = selectedRoleData ? getIconComponent(selectedRoleData.icon) : Sparkles;
 
   if (isLoading) {
     return (
@@ -139,57 +133,75 @@ export function RolePermissionsManager() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Role Tabs */}
-        <Tabs value={selectedRole} onValueChange={(v) => setSelectedRole(v as RoleOrSuperAdmin)}>
-          <TabsList className="grid grid-cols-6 mb-6">
-            {ALL_ROLES_WITH_SUPER.map(role => {
-              const Icon = roleIcons[role];
-              const isSuperAdmin = role === 'super_admin';
-              return (
-                <TabsTrigger 
-                  key={role} 
-                  value={role}
-                  className={cn(
-                    "flex items-center gap-1.5 text-xs sm:text-sm",
-                    isSuperAdmin && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-100 data-[state=active]:to-orange-100 dark:data-[state=active]:from-amber-900/40 dark:data-[state=active]:to-orange-900/40"
-                  )}
-                >
-                  <Icon className={cn("w-3.5 h-3.5", isSuperAdmin && "text-amber-600")} />
-                  <span className="hidden sm:inline">{roleLabels[role]}</span>
-                  <Badge 
-                    variant="secondary" 
+        {/* Role Tabs - Dynamic from database */}
+        <Tabs value={selectedRole} onValueChange={setSelectedRole}>
+          <ScrollArea className="w-full whitespace-nowrap mb-6">
+            <TabsList className="inline-flex w-max gap-1">
+              {allRolesWithSuper.map(role => {
+                const Icon = getIconComponent(role.icon);
+                const isSuperAdmin = role.name === 'super_admin';
+                return (
+                  <TabsTrigger 
+                    key={role.name} 
+                    value={role.name}
                     className={cn(
-                      "ml-1 text-[10px] px-1.5 py-0",
-                      isSuperAdmin && "bg-amber-200/50 text-amber-800 dark:bg-amber-800/30 dark:text-amber-300"
+                      "flex items-center gap-1.5 text-xs sm:text-sm px-3",
+                      isSuperAdmin && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-100 data-[state=active]:to-orange-100 dark:data-[state=active]:from-amber-900/40 dark:data-[state=active]:to-orange-900/40"
                     )}
+                    style={!isSuperAdmin && role.color ? { 
+                      '--role-color': role.color,
+                    } as React.CSSProperties : undefined}
                   >
-                    {getPermissionCountForRole(role)}
-                  </Badge>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+                    <span 
+                      className="w-3.5 h-3.5 flex items-center justify-center"
+                      style={!isSuperAdmin && role.color ? { color: role.color } : isSuperAdmin ? { color: '#d97706' } : undefined}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                    </span>
+                    <span className="hidden sm:inline">{role.display_name}</span>
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "ml-1 text-[10px] px-1.5 py-0",
+                        isSuperAdmin && "bg-amber-200/50 text-amber-800 dark:bg-amber-800/30 dark:text-amber-300"
+                      )}
+                    >
+                      {getPermissionCountForRole(role.name)}
+                    </Badge>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
 
-          {ALL_ROLES_WITH_SUPER.map(role => {
-            const isSuperAdmin = role === 'super_admin';
-            const CurrentRoleIcon = roleIcons[role];
+          {allRolesWithSuper.map(role => {
+            const isSuperAdmin = role.name === 'super_admin';
+            const CurrentRoleIcon = getIconComponent(role.icon);
             
             return (
-              <TabsContent key={role} value={role} className="space-y-6">
+              <TabsContent key={role.name} value={role.name} className="space-y-6">
                 {/* Role Header */}
-                <div className={cn(
-                  "flex items-center gap-3 p-4 rounded-lg border",
-                  roleColors[role]
-                )}>
+                <div 
+                  className={cn(
+                    "flex items-center gap-3 p-4 rounded-lg border",
+                    isSuperAdmin && "bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 text-amber-900 dark:from-amber-900/30 dark:via-orange-900/20 dark:to-amber-900/30 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+                  )}
+                  style={!isSuperAdmin && role.color ? {
+                    backgroundColor: `${role.color}15`,
+                    borderColor: `${role.color}40`,
+                    color: role.color,
+                  } : undefined}
+                >
                   <CurrentRoleIcon className="w-8 h-8" />
                   <div>
                     <h3 className="font-display font-medium text-lg">
-                      {roleLabels[role]} Permissions
+                      {role.display_name} Permissions
                     </h3>
                     <p className="text-sm opacity-80">
                       {isSuperAdmin 
                         ? 'All permissions granted (locked) - Full system access'
-                        : `${getPermissionCountForRole(role)} permissions granted`
+                        : `${getPermissionCountForRole(role.name)} permissions granted`
                       }
                     </p>
                   </div>
@@ -215,12 +227,12 @@ export function RolePermissionsManager() {
                           <CategoryIcon className="w-4 h-4 text-muted-foreground" />
                           <h4 className="font-display font-medium text-sm">{category}</h4>
                           <Badge variant="secondary" className="ml-auto text-[10px]">
-                            {permissions.filter(p => hasPermission(role, p.id)).length}/{permissions.length}
+                            {permissions.filter(p => hasPermission(role.name, p.id)).length}/{permissions.length}
                           </Badge>
                         </div>
                         <div className="divide-y">
                           {permissions.map(permission => {
-                            const has = hasPermission(role, permission.id);
+                            const has = hasPermission(role.name, permission.id);
                             const isLocked = isSuperAdmin;
 
                             return (
