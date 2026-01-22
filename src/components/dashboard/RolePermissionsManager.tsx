@@ -301,7 +301,7 @@ export function RolePermissionsManager() {
                                           <TooltipTrigger asChild>
                                             <Info className="w-2.5 h-2.5 cursor-help" />
                                           </TooltipTrigger>
-                                          <TooltipContent className="max-w-xs">
+                                          <TooltipContent side="top" align="center" className="max-w-xs z-50">
                                             This is a permission that has been toggled on that is a deviation from the default role permissions
                                           </TooltipContent>
                                         </Tooltip>
