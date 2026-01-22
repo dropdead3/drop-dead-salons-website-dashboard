@@ -14,10 +14,9 @@ export function NextClientIndicator({ userId }: NextClientIndicatorProps) {
   // Find the next upcoming appointment (start_time in the future)
   const nextAppointment = useMemo(() => {
     if (!appointments || appointments.length === 0) {
-      // Faux appointment for demo purposes - 2 hours and 15 minutes from now
+      // Faux appointment for demo purposes - 3 days from now
       const fauxDateTime = new Date();
-      fauxDateTime.setHours(fauxDateTime.getHours() + 2);
-      fauxDateTime.setMinutes(fauxDateTime.getMinutes() + 15);
+      fauxDateTime.setDate(fauxDateTime.getDate() + 3);
       return {
         client_name: 'Sarah Mitchell',
         dateTime: fauxDateTime,
