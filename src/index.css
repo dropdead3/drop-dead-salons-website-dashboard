@@ -14,15 +14,28 @@
     cursor: none !important;
   }
   
-  body.dashboard-cursor * {
-    cursor: auto !important;
+  /* Dashboard: restore normal cursor behavior */
+  body.dashboard-cursor {
+    cursor: auto;
   }
   
-  body.dashboard-cursor .cursor-grab {
+  body.dashboard-cursor *:not(.cursor-grab):not(.cursor-pointer):not(a):not(button) {
+    cursor: auto;
+  }
+  
+  body.dashboard-cursor a,
+  body.dashboard-cursor button,
+  body.dashboard-cursor .cursor-pointer {
+    cursor: pointer;
+  }
+  
+  body.dashboard-cursor .cursor-grab,
+  body.dashboard-cursor [class*="cursor-grab"] {
     cursor: grab !important;
   }
   
   body.dashboard-cursor .cursor-grab:active,
+  body.dashboard-cursor [class*="cursor-grab"]:active,
   body.dashboard-cursor .cursor-grabbing {
     cursor: grabbing !important;
   }
