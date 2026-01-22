@@ -65,7 +65,7 @@ import GraduationTracker from "./pages/dashboard/admin/GraduationTracker";
 import MyGraduation from "./pages/dashboard/MyGraduation";
 import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
 import ProgramAnalytics from "./pages/dashboard/admin/ProgramAnalytics";
-import PauseRequests from "./pages/dashboard/admin/PauseRequests";
+
 
 const queryClient = new QueryClient();
 
@@ -137,7 +137,7 @@ const App = () => (
               <Route path="/dashboard/admin/graduation-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><GraduationTracker /></ProtectedRoute>} />
               <Route path="/dashboard/admin/program-editor" element={<ProtectedRoute requireSuperAdmin><ProgramEditor /></ProtectedRoute>} />
               <Route path="/dashboard/admin/program-analytics" element={<ProtectedRoute requireSuperAdmin><ProgramAnalytics /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/pause-requests" element={<ProtectedRoute requiredPermission="view_team_overview"><PauseRequests /></ProtectedRoute>} />
+              
 
               <Route path="*" element={<NotFound />} />
             </Routes>
