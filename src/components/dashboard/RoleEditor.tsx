@@ -30,8 +30,12 @@ import {
   Lock,
   GripVertical,
   Users,
+  Shield,
+  Cog,
+  Scissors,
+  MoreHorizontal,
 } from 'lucide-react';
-import { useAllRoles, useArchiveRole, useRestoreRole, useDeleteRole, useReorderRoles, Role } from '@/hooks/useRoles';
+import { useAllRoles, useArchiveRole, useRestoreRole, useDeleteRole, useReorderRoles, Role, ROLE_CATEGORIES } from '@/hooks/useRoles';
 import { getRoleColorClasses } from './RoleColorPicker';
 import { getRoleIconComponent } from './RoleIconPicker';
 import { CreateRoleDialog } from './CreateRoleDialog';
@@ -256,6 +260,22 @@ export function RoleEditor() {
   const activeRoles = roles?.filter((r) => r.is_active) || [];
   const archivedRoles = roles?.filter((r) => !r.is_active) || [];
 
+  // Category icons
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'leadership': return Shield;
+      case 'operations': return Cog;
+      case 'stylists': return Scissors;
+      default: return MoreHorizontal;
+    }
+  };
+
+  // Group active roles by category
+  const groupedActiveRoles = ROLE_CATEGORIES.map(cat => ({
+    ...cat,
+    roles: activeRoles.filter(r => r.category === cat.value),
+  })).filter(group => group.roles.length > 0);
+
   return (
     <>
       <Card>
@@ -272,27 +292,36 @@ export function RoleEditor() {
           </Button>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Active Roles */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-muted-foreground">Active Roles</h4>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={activeRoles.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2">
-                  {activeRoles.map((role) => (
-                    <SortableRoleCard
-                      key={role.id}
-                      role={role}
-                      userCount={userCounts[role.name] || 0}
-                      onEdit={handleEdit}
-                      onArchive={handleArchive}
-                      onRestore={handleRestore}
-                      onDelete={handleDelete}
-                    />
-                  ))}
+          {/* Active Roles grouped by category */}
+          {groupedActiveRoles.map(group => {
+            const CategoryIcon = getCategoryIcon(group.value);
+            return (
+              <div key={group.value} className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b">
+                  <CategoryIcon className="h-4 w-4 text-primary" />
+                  <h4 className="text-sm font-display uppercase tracking-wider text-foreground">{group.label}</h4>
+                  <span className="text-xs text-muted-foreground">({group.roles.length})</span>
                 </div>
-              </SortableContext>
-            </DndContext>
-          </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={group.roles.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-2">
+                      {group.roles.map((role) => (
+                        <SortableRoleCard
+                          key={role.id}
+                          role={role}
+                          userCount={userCounts[role.name] || 0}
+                          onEdit={handleEdit}
+                          onArchive={handleArchive}
+                          onRestore={handleRestore}
+                          onDelete={handleDelete}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            );
+          })}
 
           {/* Archived Roles */}
           {archivedRoles.length > 0 && (

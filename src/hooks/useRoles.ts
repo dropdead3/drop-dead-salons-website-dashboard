@@ -9,6 +9,7 @@ export interface Role {
   description: string | null;
   color: string;
   icon: string;
+  category: string;
   sort_order: number;
   is_system: boolean;
   is_active: boolean;
@@ -16,12 +17,22 @@ export interface Role {
   updated_at: string;
 }
 
+export const ROLE_CATEGORIES = [
+  { value: 'leadership', label: 'Leadership' },
+  { value: 'operations', label: 'Operations' },
+  { value: 'stylists', label: 'Stylists' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export type RoleCategory = typeof ROLE_CATEGORIES[number]['value'];
+
 export interface CreateRoleData {
   name: string;
   display_name: string;
   description?: string;
   color: string;
   icon: string;
+  category: string;
 }
 
 export interface UpdateRoleData {
@@ -29,6 +40,7 @@ export interface UpdateRoleData {
   description?: string;
   color?: string;
   icon?: string;
+  category?: string;
   is_active?: boolean;
 }
 
