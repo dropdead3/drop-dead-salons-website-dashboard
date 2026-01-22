@@ -358,8 +358,9 @@ export default function ManageRoles() {
                             {isSuperAdmin && (
                               <Badge 
                                 variant="outline" 
-                                className="text-xs bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300"
+                                className="text-xs bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300 gap-1"
                               >
+                                <Crown className="w-3 h-3" />
                                 Super Admin
                               </Badge>
                             )}
