@@ -86,6 +86,12 @@ export default function DashboardHome() {
   // Leadership team: super admins, admins, and managers
   const isLeadership = profile?.is_super_admin || roles.includes('admin') || roles.includes('manager');
   
+  // Check if user has stylist or stylist_assistant roles (for Quick Actions visibility)
+  const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
+  
+  // Quick Actions should only show for stylists/assistants, or leadership who also have stylist roles
+  const showQuickActions = hasStylistRole || (!isLeadership);
+  
   // Helper to check visibility
   const isVisible = (key: string) => visibility[key] !== false;
   
@@ -442,8 +448,8 @@ export default function DashboardHome() {
         )}
 
 
-        {/* Quick Actions */}
-        {isVisible('quick_actions') && (
+        {/* Quick Actions - only show for stylists/assistants, or leadership with stylist roles */}
+        {showQuickActions && isVisible('quick_actions') && (
           <div>
             <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
