@@ -29,7 +29,6 @@ import {
 import {
   DollarSign,
   TrendingUp,
-  Users,
   ShoppingBag,
   Scissors,
   Calendar,
@@ -37,19 +36,26 @@ import {
   Loader2,
   MapPin,
   Download,
+  Target,
+  GitCompare,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation } from '@/hooks/useSalesData';
 import { useTriggerPhorestSync } from '@/hooks/usePhorestSync';
 import { useLocations } from '@/hooks/useLocations';
+import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { cn } from '@/lib/utils';
 
-type DateRange = '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+// Sub-components
+import { SalesGoalsDialog } from '@/components/dashboard/sales/SalesGoalsDialog';
+import { SalesGoalProgress } from '@/components/dashboard/sales/SalesGoalProgress';
+import { LocationComparison } from '@/components/dashboard/sales/LocationComparison';
+import { HistoricalComparison } from '@/components/dashboard/sales/HistoricalComparison';
+import { StylistSalesRow } from '@/components/dashboard/sales/StylistSalesRow';
+import { SalesTrendIndicator } from '@/components/dashboard/sales/SalesTrendIndicator';
+import { LastSyncIndicator } from '@/components/dashboard/sales/LastSyncIndicator';
 
-interface Location {
-  id: string;
-  name: string;
-}
+type DateRange = '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
 const CHART_COLORS = [
   'hsl(var(--primary))',
@@ -62,9 +68,11 @@ const CHART_COLORS = [
 export default function SalesDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>('30d');
   const [locationFilter, setLocationFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState('overview');
   
   const { data: locations } = useLocations();
   const syncSales = useTriggerPhorestSync();
+  const { goals } = useSalesGoals();
 
   // Calculate date filters
   const dateFilters = useMemo(() => {
@@ -109,6 +117,17 @@ export default function SalesDashboard() {
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: locationData, isLoading: locationLoading } = useSalesByLocation(dateFilters.dateFrom, dateFilters.dateTo);
 
+  // Calculate goal based on date range
+  const currentGoal = useMemo(() => {
+    const isMonthly = dateRange === 'thisMonth' || dateRange === '30d' || dateRange === 'lastMonth';
+    if (locationFilter !== 'all' && goals?.locationTargets?.[locationFilter]) {
+      return isMonthly 
+        ? goals.locationTargets[locationFilter].monthly 
+        : goals.locationTargets[locationFilter].weekly;
+    }
+    return isMonthly ? (goals?.monthlyTarget || 50000) : (goals?.weeklyTarget || 12500);
+  }, [dateRange, locationFilter, goals]);
+
   // Format trend data for chart
   const chartData = useMemo(() => {
     const data = trendData?.overall || trendData || [];
@@ -126,6 +145,10 @@ export default function SalesDashboard() {
       { name: 'Products', value: metrics.productRevenue, color: CHART_COLORS[1] },
     ].filter(d => d.value > 0);
   }, [metrics]);
+
+  const maxStylistRevenue = useMemo(() => {
+    return Math.max(...(stylistData || []).map(s => s.totalRevenue), 1);
+  }, [stylistData]);
 
   const handleExportCSV = () => {
     if (!stylistData) return;
@@ -148,25 +171,28 @@ export default function SalesDashboard() {
     a.href = url;
     a.download = `sales-report-${dateFilters.dateFrom}-to-${dateFilters.dateTo}.csv`;
     a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="p-4 md:p-6 lg:p-8 space-y-6">
+        {/* Header - Mobile optimized */}
+        <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center rounded-lg">
+            <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center rounded-lg shrink-0">
               <DollarSign className="w-5 h-5" />
             </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-display">SALES DASHBOARD</h1>
-              <p className="text-muted-foreground text-sm">Revenue and transaction analytics</p>
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-2xl font-display truncate">SALES DASHBOARD</h1>
+              <p className="text-muted-foreground text-sm hidden sm:block">Revenue and transaction analytics</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          
+          {/* Controls - Scrollable on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 -mb-2 scrollbar-hide">
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[140px] shrink-0">
                 <MapPin className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="All Locations" />
               </SelectTrigger>
@@ -178,7 +204,7 @@ export default function SalesDashboard() {
               </SelectContent>
             </Select>
             <Select value={dateRange} onValueChange={(v: DateRange) => setDateRange(v)}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[130px] shrink-0">
                 <Calendar className="w-4 h-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -190,11 +216,13 @@ export default function SalesDashboard() {
                 <SelectItem value="lastMonth">Last Month</SelectItem>
               </SelectContent>
             </Select>
+            <SalesGoalsDialog />
             <Button
               variant="outline"
               size="icon"
               onClick={() => syncSales.mutate('sales')}
               disabled={syncSales.isPending}
+              className="shrink-0"
             >
               {syncSales.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -202,37 +230,53 @@ export default function SalesDashboard() {
                 <RefreshCw className="w-4 h-4" />
               )}
             </Button>
-            <Button variant="outline" size="icon" onClick={handleExportCSV}>
+            <Button variant="outline" size="icon" onClick={handleExportCSV} className="shrink-0">
               <Download className="w-4 h-4" />
             </Button>
           </div>
+
+          {/* Sync indicator */}
+          <LastSyncIndicator syncType="sales" showAutoRefresh />
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-primary" />
+        {/* Goal Progress */}
+        <SalesGoalProgress 
+          current={metrics?.totalRevenue || 0} 
+          target={currentGoal}
+          label={
+            locationFilter !== 'all' 
+              ? `${locations?.find(l => l.id === locationFilter)?.name} Goal`
+              : dateRange === 'thisMonth' || dateRange === '30d' || dateRange === 'lastMonth'
+                ? 'Monthly Goal'
+                : 'Weekly Goal'
+          }
+        />
+
+        {/* KPI Cards - Swipeable on mobile */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <Card className="col-span-1">
+            <CardContent className="p-4 md:pt-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 </div>
-                <div>
-                  <p className="text-2xl font-display">
+                <div className="min-w-0">
+                  <p className="text-lg md:text-2xl font-display truncate">
                     {metricsLoading ? '...' : `$${(metrics?.totalRevenue || 0).toLocaleString()}`}
                   </p>
-                  <p className="text-xs text-muted-foreground">Total Revenue</p>
+                  <p className="text-xs text-muted-foreground">Revenue</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-chart-2/10 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-chart-2" />
+          <Card className="col-span-1">
+            <CardContent className="p-4 md:pt-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-chart-2/10 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-chart-2" />
                 </div>
-                <div>
-                  <p className="text-2xl font-display">
+                <div className="min-w-0">
+                  <p className="text-lg md:text-2xl font-display">
                     {metricsLoading ? '...' : `$${Math.round(metrics?.averageTicket || 0)}`}
                   </p>
                   <p className="text-xs text-muted-foreground">Avg Ticket</p>
@@ -240,14 +284,14 @@ export default function SalesDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-chart-3/10 flex items-center justify-center">
-                  <Scissors className="w-5 h-5 text-chart-3" />
+          <Card className="col-span-1">
+            <CardContent className="p-4 md:pt-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-chart-3/10 flex items-center justify-center shrink-0">
+                  <Scissors className="w-4 h-4 md:w-5 md:h-5 text-chart-3" />
                 </div>
-                <div>
-                  <p className="text-2xl font-display">
+                <div className="min-w-0">
+                  <p className="text-lg md:text-2xl font-display">
                     {metricsLoading ? '...' : (metrics?.totalServices || 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">Services</p>
@@ -255,28 +299,39 @@ export default function SalesDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-chart-4/10 flex items-center justify-center">
-                  <ShoppingBag className="w-5 h-5 text-chart-4" />
+          <Card className="col-span-1">
+            <CardContent className="p-4 md:pt-6">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-chart-4/10 flex items-center justify-center shrink-0">
+                  <ShoppingBag className="w-4 h-4 md:w-5 md:h-5 text-chart-4" />
                 </div>
-                <div>
-                  <p className="text-2xl font-display">
+                <div className="min-w-0">
+                  <p className="text-lg md:text-2xl font-display">
                     {metricsLoading ? '...' : (metrics?.totalProducts || 0).toLocaleString()}
                   </p>
-                  <p className="text-xs text-muted-foreground">Products Sold</p>
+                  <p className="text-xs text-muted-foreground">Products</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="stylists">By Stylist</TabsTrigger>
-            <TabsTrigger value="locations">By Location</TabsTrigger>
+        {/* Historical Comparison */}
+        <HistoricalComparison 
+          currentDateFrom={dateFilters.dateFrom}
+          currentDateTo={dateFilters.dateTo}
+          locationId={locationFilter !== 'all' ? locationFilter : undefined}
+        />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="w-full md:w-auto overflow-x-auto">
+            <TabsTrigger value="overview" className="flex-1 md:flex-none">Overview</TabsTrigger>
+            <TabsTrigger value="stylists" className="flex-1 md:flex-none">By Stylist</TabsTrigger>
+            <TabsTrigger value="locations" className="flex-1 md:flex-none">By Location</TabsTrigger>
+            <TabsTrigger value="compare" className="flex-1 md:flex-none">
+              <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
+              Compare
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -289,7 +344,7 @@ export default function SalesDashboard() {
                   <CardDescription>Daily revenue over time</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px]">
+                  <div className="h-[250px] md:h-[300px]">
                     {trendLoading ? (
                       <div className="h-full flex items-center justify-center">
                         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -339,7 +394,7 @@ export default function SalesDashboard() {
                   <CardDescription>Services vs Products</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px]">
+                  <div className="h-[200px] md:h-[250px]">
                     {metricsLoading ? (
                       <div className="h-full flex items-center justify-center">
                         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -351,8 +406,8 @@ export default function SalesDashboard() {
                             data={revenueBreakdown}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
+                            innerRadius={50}
+                            outerRadius={80}
                             paddingAngle={5}
                             dataKey="value"
                           >
@@ -388,75 +443,53 @@ export default function SalesDashboard() {
             </div>
           </TabsContent>
 
-          {/* By Stylist Tab */}
-          <TabsContent value="stylists" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-display">Sales by Stylist</CardTitle>
-                <CardDescription>Top performers by revenue</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {stylistLoading ? (
-                  <div className="h-[300px] flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="h-[300px] mb-6">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={(stylistData || []).slice(0, 10)} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                          <XAxis type="number" tickFormatter={(v) => `$${v}`} />
-                          <YAxis 
-                            type="category" 
-                            dataKey="name" 
-                            width={120}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <Tooltip 
-                            formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-                            contentStyle={{ 
-                              backgroundColor: 'hsl(var(--background))', 
-                              border: '1px solid hsl(var(--border))',
-                              borderRadius: '8px',
-                            }}
-                          />
-                          <Bar dataKey="totalRevenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left py-2 font-display">Stylist</th>
-                            <th className="text-right py-2">Revenue</th>
-                            <th className="text-right py-2">Services</th>
-                            <th className="text-right py-2">Products</th>
-                            <th className="text-right py-2">Avg Ticket</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(stylistData || []).map(stylist => (
-                            <tr key={stylist.user_id} className="border-b border-border/50">
-                              <td className="py-2 font-medium">{stylist.name}</td>
-                              <td className="text-right">${stylist.totalRevenue.toLocaleString()}</td>
-                              <td className="text-right">{stylist.totalServices}</td>
-                              <td className="text-right">{stylist.totalProducts}</td>
-                              <td className="text-right">
-                                ${stylist.totalTransactions > 0 
-                                  ? Math.round(stylist.totalRevenue / stylist.totalTransactions)
-                                  : 0}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
+          {/* By Stylist Tab - With clickable rows */}
+          <TabsContent value="stylists" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-display text-lg">Sales by Stylist</h2>
+                <p className="text-sm text-muted-foreground">Click to view detailed stats</p>
+              </div>
+              <Badge variant="outline">
+                {stylistData?.length || 0} stylists
+              </Badge>
+            </div>
+            
+            {stylistLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-muted rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-muted rounded w-1/3" />
+                          <div className="h-2 bg-muted rounded w-full" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(stylistData || []).map((stylist, idx) => (
+                  <StylistSalesRow 
+                    key={stylist.user_id}
+                    stylist={stylist}
+                    rank={idx + 1}
+                    maxRevenue={maxStylistRevenue}
+                  />
+                ))}
+                {(!stylistData || stylistData.length === 0) && (
+                  <Card>
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                      No stylist data available for this period
+                    </CardContent>
+                  </Card>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            )}
           </TabsContent>
 
           {/* By Location Tab */}
@@ -473,7 +506,7 @@ export default function SalesDashboard() {
                   </div>
                 ) : (
                   <>
-                    <div className="h-[300px] mb-6">
+                    <div className="h-[250px] md:h-[300px] mb-6">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={locationData || []}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -525,6 +558,14 @@ export default function SalesDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Compare Tab */}
+          <TabsContent value="compare" className="space-y-6">
+            <LocationComparison 
+              locations={locationData || []} 
+              isLoading={locationLoading}
+            />
           </TabsContent>
         </Tabs>
       </div>
