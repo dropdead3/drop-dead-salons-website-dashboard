@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
+import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
@@ -171,6 +172,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
+  const { isComplete: isOnboardingComplete } = useOnboardingProgress();
   const { roleNames: ALL_ROLES, roleLabels: ROLE_LABELS, getRoleBadgeClasses, getRoleIcon, getRoleDescription } = useRoleUtils();
 
   // Close mobile sidebar on navigation
@@ -657,6 +659,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           effectiveIsCoach={effectiveIsCoach}
           filterNavItems={filterNavItems}
           onNavClick={handleNavClick}
+          isOnboardingComplete={isOnboardingComplete}
         />
       </aside>
 
@@ -683,6 +686,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               effectiveIsCoach={effectiveIsCoach}
               filterNavItems={filterNavItems}
               onNavClick={handleNavClick}
+              isOnboardingComplete={isOnboardingComplete}
             />
           </SheetContent>
         </Sheet>

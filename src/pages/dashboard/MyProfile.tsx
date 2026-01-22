@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Sparkles, X, ChevronDown, Check, Lock, Info, Eye } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Sparkles, X, ChevronDown, Check, Lock, Info, Eye, ClipboardList, ArrowRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
+import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles, useEffectiveUserContext } from '@/hooks/useEffectiveUser';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
@@ -83,6 +85,7 @@ export default function MyProfile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedToast, setShowUnsavedToast] = useState(false);
+  const { isComplete: isOnboardingComplete } = useOnboardingProgress();
   
   // When impersonating, the page is read-only
   const isReadOnly = isImpersonating;
@@ -458,6 +461,29 @@ export default function MyProfile() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Onboarding Link - Only shows when onboarding is complete */}
+        {isOnboardingComplete && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <Link 
+                to="/dashboard/onboarding"
+                className="flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-muted rounded-lg">
+                    <ClipboardList className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Onboarding Complete</p>
+                    <p className="text-xs text-muted-foreground">View your onboarding checklist</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </CardContent>
+          </Card>
+        )}
 
         <fieldset disabled={isReadOnly} className="space-y-6">
           {/* Photo Section */}
