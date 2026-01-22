@@ -152,12 +152,7 @@ export function RolePermissionsManager() {
                     '--role-color': role.color,
                   } as React.CSSProperties : undefined}
                 >
-                  <span 
-                    className="w-3.5 h-3.5 flex items-center justify-center"
-                    style={!isSuperAdmin && role.color ? { color: role.color } : isSuperAdmin ? { color: '#d97706' } : undefined}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                  </span>
+                  <Icon className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="hidden sm:inline">{role.display_name}</span>
                   <Badge 
                     variant="secondary" 
