@@ -98,16 +98,16 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-col items-center px-6 py-5">
+        <div className="flex flex-col items-center px-6 py-4">
           {/* Welcome message */}
-          <div className="text-center mb-4">
+          <div className="text-center mb-3">
             <p className="text-base text-foreground font-display tracking-wide">Welcome to the team!</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-0.5">
               You need to create your profile on our software system.
             </p>
           </div>
 
-          <div className="p-4 bg-white rounded-xl border border-[hsl(35,30%,88%)] shadow-md">
+          <div className="p-3 bg-white rounded-xl border border-[hsl(35,30%,88%)] shadow-md">
             <QRCodeCanvas 
               value={staffLoginUrl} 
               size={140}
@@ -117,19 +117,19 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
             />
           </div>
           
-          <div className="mt-4 text-center">
+          <div className="mt-3 text-center">
             <h3 className="font-display text-sm tracking-[0.15em] uppercase text-foreground">
               Create Your Account
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Scan this QR code to get started
             </p>
           </div>
 
-          {/* URL Section */}
-          <div className="pt-4 w-full text-center">
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              Or visit: <span className="font-medium text-foreground break-all block mt-0.5">{staffLoginUrl.replace('https://', '')}</span>
+          {/* URL Section - smaller */}
+          <div className="pt-3 w-full text-center">
+            <p className="text-[8px] text-muted-foreground">
+              Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', '')}</span>
             </p>
           </div>
         </div>
