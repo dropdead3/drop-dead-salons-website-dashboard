@@ -259,7 +259,7 @@ export default function TestimonialsManager() {
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
-                  <div className="p-1 cursor-grab text-muted-foreground">
+                  <div className="p-1 cursor-grab active:cursor-grabbing text-muted-foreground">
                     <GripVertical className="w-4 h-4" />
                   </div>
                   
