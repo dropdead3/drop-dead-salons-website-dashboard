@@ -21,6 +21,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Plus,
   MoreVertical,
   Pencil,
@@ -28,6 +34,7 @@ import {
   RotateCcw,
   Trash2,
   Lock,
+  Unlock,
   GripVertical,
   Users,
   Shield,
@@ -35,7 +42,7 @@ import {
   Scissors,
   MoreHorizontal,
 } from 'lucide-react';
-import { useAllRoles, useArchiveRole, useRestoreRole, useDeleteRole, useReorderRoles, Role, ROLE_CATEGORIES } from '@/hooks/useRoles';
+import { useAllRoles, useArchiveRole, useRestoreRole, useDeleteRole, useReorderRoles, useToggleSystemRole, Role, ROLE_CATEGORIES } from '@/hooks/useRoles';
 import { getRoleColorClasses } from './RoleColorPicker';
 import { getRoleIconComponent } from './RoleIconPicker';
 import { CreateRoleDialog } from './CreateRoleDialog';
@@ -45,17 +52,20 @@ import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SortableRoleCardProps {
   role: Role;
   userCount: number;
+  isSuperAdmin: boolean;
   onEdit: (role: Role) => void;
   onArchive: (role: Role) => void;
   onRestore: (role: Role) => void;
   onDelete: (role: Role) => void;
+  onToggleSystem: (role: Role) => void;
 }
 
-function SortableRoleCard({ role, userCount, onEdit, onArchive, onRestore, onDelete }: SortableRoleCardProps) {
+function SortableRoleCard({ role, userCount, isSuperAdmin, onEdit, onArchive, onRestore, onDelete, onToggleSystem }: SortableRoleCardProps) {
   const {
     attributes,
     listeners,
@@ -100,10 +110,19 @@ function SortableRoleCard({ role, userCount, onEdit, onArchive, onRestore, onDel
         <div className="flex items-center gap-2">
           <span className="font-medium truncate">{role.display_name}</span>
           {role.is_system && (
-            <Badge variant="outline" className="text-xs gap-1">
-              <Lock className="h-3 w-3" />
-              System
-            </Badge>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs gap-1 cursor-help">
+                    <Lock className="h-3 w-3" />
+                    System
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p>System roles are protected from deletion and archiving to ensure core application functionality remains intact.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {!role.is_active && (
             <Badge variant="secondary" className="text-xs">
@@ -133,6 +152,24 @@ function SortableRoleCard({ role, userCount, onEdit, onArchive, onRestore, onDel
               <Pencil className="h-4 w-4 mr-2" />
               Edit
             </DropdownMenuItem>
+            {isSuperAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onToggleSystem(role)}>
+                  {role.is_system ? (
+                    <>
+                      <Unlock className="h-4 w-4 mr-2" />
+                      Remove System Lock
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-4 w-4 mr-2" />
+                      Mark as System Role
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             {role.is_active ? (
               <DropdownMenuItem
@@ -172,10 +209,15 @@ export function RoleEditor() {
   const restoreRole = useRestoreRole();
   const deleteRole = useDeleteRole();
   const reorderRoles = useReorderRoles();
+  const toggleSystemRole = useToggleSystemRole();
+  const { user, roles: userRoles } = useAuth();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Role | null>(null);
+
+  // Check if current user is super admin via their roles
+  const isSuperAdmin = userRoles.includes('super_admin');
 
   // Fetch user counts per role
   const { data: userCounts = {} } = useQuery({
@@ -228,6 +270,10 @@ export function RoleEditor() {
 
   const handleDelete = (role: Role) => {
     setDeleteConfirm(role);
+  };
+
+  const handleToggleSystem = (role: Role) => {
+    toggleSystemRole.mutate({ id: role.id, isSystem: !role.is_system });
   };
 
   const confirmDelete = () => {
@@ -310,10 +356,12 @@ export function RoleEditor() {
                           key={role.id}
                           role={role}
                           userCount={userCounts[role.name] || 0}
+                          isSuperAdmin={isSuperAdmin}
                           onEdit={handleEdit}
                           onArchive={handleArchive}
                           onRestore={handleRestore}
                           onDelete={handleDelete}
+                          onToggleSystem={handleToggleSystem}
                         />
                       ))}
                     </div>
@@ -333,10 +381,12 @@ export function RoleEditor() {
                     key={role.id}
                     role={role}
                     userCount={userCounts[role.name] || 0}
+                    isSuperAdmin={isSuperAdmin}
                     onEdit={handleEdit}
                     onArchive={handleArchive}
                     onRestore={handleRestore}
                     onDelete={handleDelete}
+                    onToggleSystem={handleToggleSystem}
                   />
                 ))}
               </div>
