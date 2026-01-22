@@ -172,7 +172,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               )}
             >
               <Rocket className="w-4 h-4" />
-              <span className="flex-1 font-medium">START HERE</span>
+              <span className="flex-1 font-display">START HERE</span>
               {onboardingProgress && (
                 <div className="flex items-center gap-2">
                   <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
