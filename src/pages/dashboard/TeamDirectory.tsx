@@ -7,7 +7,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation, CalendarX, Signpost, Sparkles } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation, CalendarX, Signpost, Sparkles, Copy, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -405,6 +405,61 @@ export default function TeamDirectory() {
   );
 }
 
+// Copyable Field Component
+function CopyableField({ 
+  icon, 
+  value, 
+  label, 
+  children 
+}: { 
+  icon: React.ReactNode; 
+  value: string; 
+  label: string; 
+  children: React.ReactNode;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <div className="flex items-start gap-3 group/copy">
+      {icon}
+      <div className="flex-1 min-w-0">
+        {children}
+      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleCopy}
+              className={cn(
+                "p-1.5 rounded-md transition-all shrink-0",
+                copied 
+                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400" 
+                  : "opacity-0 group-hover/copy:opacity-100 hover:bg-muted text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="text-xs">
+            {copied ? 'Copied!' : `Copy ${label}`}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
+}
+
 // Location Card Component
 interface LocationCardProps {
   location: Location;
@@ -599,22 +654,28 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
         )}
 
         {/* Address */}
-        <div className="flex items-start gap-3">
-          <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+        <CopyableField 
+          icon={<MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
+          value={`${location.address}, ${location.city}`}
+          label="address"
+        >
           <div className="text-sm">
             <p>{location.address}</p>
             <p className="text-muted-foreground">{location.city}</p>
           </div>
-        </div>
+        </CopyableField>
 
         {/* Major Crossroads */}
         {location.major_crossroads && (
-          <div className="flex items-center gap-3">
-            <Signpost className="w-4 h-4 text-muted-foreground shrink-0" />
+          <CopyableField 
+            icon={<Signpost className="w-4 h-4 text-muted-foreground shrink-0" />}
+            value={location.major_crossroads}
+            label="crossroads"
+          >
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">Crossroads:</span> {location.major_crossroads}
             </p>
-          </div>
+          </CopyableField>
         )}
 
         {/* Phone */}
