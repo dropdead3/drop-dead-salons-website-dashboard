@@ -17,6 +17,13 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -41,10 +48,13 @@ import {
   RefreshCw,
   AlertTriangle,
   QrCode,
-  Download
+  Download,
+  Eye,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
+import DropDeadLogo from '@/assets/drop-dead-logo.svg';
 
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
@@ -69,85 +79,237 @@ const getStaffLoginUrl = () => {
   return '/staff-login';
 };
 
+// Premium PDF Preview Component
+function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
+  return (
+    <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-8 shadow-inner">
+      {/* Premium PDF Preview */}
+      <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-sm mx-auto">
+        {/* Header with gradient */}
+        <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] p-6 text-center">
+          <img 
+            src={DropDeadLogo} 
+            alt="Drop Dead" 
+            className="h-6 mx-auto invert"
+          />
+          <p className="text-[hsl(40,30%,85%)] text-xs mt-2 tracking-widest uppercase">
+            Staff Portal
+          </p>
+        </div>
+
+        {/* QR Code Section */}
+        <div className="p-8 flex flex-col items-center">
+          <div className="p-4 bg-white rounded-xl border-2 border-[hsl(35,30%,88%)] shadow-sm">
+            <QRCodeCanvas 
+              value={staffLoginUrl} 
+              size={140}
+              level="H"
+              marginSize={1}
+              fgColor="hsl(0, 0%, 8%)"
+            />
+          </div>
+          
+          <div className="mt-6 text-center">
+            <h3 className="font-display text-lg text-[hsl(0,0%,8%)]">
+              Create Your Account
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Scan this QR code to get started
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-[hsl(40,30%,96%)] px-6 py-4 text-center border-t border-[hsl(35,25%,90%)]">
+          <p className="text-xs text-muted-foreground">
+            Or visit: <span className="font-medium text-foreground">{staffLoginUrl.replace('https://', '')}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // QR Code Card Component
 function QRCodeCard() {
   const qrRef = useRef<HTMLDivElement>(null);
   const staffLoginUrl = getStaffLoginUrl();
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const downloadQRCode = () => {
     const canvas = qrRef.current?.querySelector('canvas');
     if (!canvas) return;
 
-    // Create a new canvas with padding and branding
-    const paddedCanvas = document.createElement('canvas');
-    const ctx = paddedCanvas.getContext('2d');
+    // Create a premium branded canvas
+    const pdfCanvas = document.createElement('canvas');
+    const ctx = pdfCanvas.getContext('2d');
     if (!ctx) return;
 
-    const padding = 40;
-    const textHeight = 80;
-    paddedCanvas.width = canvas.width + padding * 2;
-    paddedCanvas.height = canvas.height + padding * 2 + textHeight;
+    const width = 400;
+    const height = 550;
+    pdfCanvas.width = width;
+    pdfCanvas.height = height;
 
-    // White background
+    // Background gradient (cream to oat)
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+    bgGradient.addColorStop(0, '#f8f6f1');
+    bgGradient.addColorStop(1, '#ede9e0');
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Header background (dark)
+    const headerHeight = 80;
+    const headerGradient = ctx.createLinearGradient(0, 0, width, 0);
+    headerGradient.addColorStop(0, '#141414');
+    headerGradient.addColorStop(1, '#262626');
+    ctx.fillStyle = headerGradient;
+    ctx.fillRect(0, 0, width, headerHeight);
+
+    // Header text
+    ctx.fillStyle = '#f8f6f1';
+    ctx.font = 'bold 22px Termina, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('DROP DEAD®', width / 2, 40);
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = '#a8a090';
+    ctx.fillText('STAFF PORTAL', width / 2, 60);
+
+    // QR Code container
+    const qrSize = 180;
+    const qrX = (width - qrSize) / 2;
+    const qrY = headerHeight + 50;
+    
+    // QR border
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, paddedCanvas.width, paddedCanvas.height);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 5;
+    ctx.beginPath();
+    ctx.roundRect(qrX - 15, qrY - 15, qrSize + 30, qrSize + 30, 12);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
 
     // Draw QR code
-    ctx.drawImage(canvas, padding, padding);
+    ctx.drawImage(canvas, qrX, qrY, qrSize, qrSize);
 
-    // Add title text
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 20px sans-serif';
+    // Title text
+    ctx.fillStyle = '#141414';
+    ctx.font = '500 20px Termina, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Create Your Staff Account', paddedCanvas.width / 2, canvas.height + padding + 35);
-    
-    // Add URL text
-    ctx.font = '14px sans-serif';
+    ctx.fillText('Create Your Account', width / 2, qrY + qrSize + 60);
+
+    // Subtitle
     ctx.fillStyle = '#666666';
-    ctx.fillText('Scan to get started', paddedCanvas.width / 2, canvas.height + padding + 60);
+    ctx.font = '14px sans-serif';
+    ctx.fillText('Scan this QR code to get started', width / 2, qrY + qrSize + 85);
+
+    // Footer divider
+    const footerY = height - 60;
+    ctx.strokeStyle = '#d4d0c8';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(40, footerY);
+    ctx.lineTo(width - 40, footerY);
+    ctx.stroke();
+
+    // URL text
+    ctx.fillStyle = '#888888';
+    ctx.font = '11px sans-serif';
+    const urlText = staffLoginUrl.replace('https://', '').replace('http://', '');
+    ctx.fillText(urlText, width / 2, height - 30);
 
     // Download
     const link = document.createElement('a');
-    link.download = 'staff-signup-qr-code.png';
-    link.href = paddedCanvas.toDataURL('image/png');
+    link.download = 'drop-dead-staff-signup-qr.png';
+    link.href = pdfCanvas.toDataURL('image/png');
     link.click();
   };
 
   return (
-    <Card className="bg-muted/50">
+    <Card className="premium-card overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <QrCode className="w-4 h-4" />
           Staff Signup QR Code
+          <Sparkles className="w-3 h-3 text-amber-500" />
         </CardTitle>
         <CardDescription>
           Print this for your handbook or post in the break room
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div 
-          ref={qrRef}
-          className="flex justify-center p-4 bg-white rounded-lg"
-        >
+        {/* Hidden QR canvas for export */}
+        <div ref={qrRef} className="hidden">
           <QRCodeCanvas 
             value={staffLoginUrl} 
-            size={160}
+            size={180}
             level="H"
-            marginSize={2}
+            marginSize={0}
+            fgColor="#141414"
           />
         </div>
+
+        {/* Preview thumbnail */}
+        <div className="flex justify-center p-4 bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl">
+          <div className="bg-white rounded-lg shadow-lg p-4 w-32">
+            <div className="bg-foreground rounded h-6 mb-3 flex items-center justify-center">
+              <span className="text-[6px] text-background font-display tracking-wider">DROP DEAD®</span>
+            </div>
+            <div className="flex justify-center mb-3">
+              <QRCodeCanvas 
+                value={staffLoginUrl} 
+                size={60}
+                level="H"
+                marginSize={0}
+                fgColor="#141414"
+              />
+            </div>
+            <div className="text-center">
+              <p className="text-[6px] font-medium">Create Your Account</p>
+              <p className="text-[5px] text-muted-foreground">Scan to get started</p>
+            </div>
+          </div>
+        </div>
+
         <div className="text-center text-sm text-muted-foreground">
           <p className="font-medium text-foreground">Create Your Staff Account</p>
           <p className="text-xs mt-1 break-all">{staffLoginUrl}</p>
         </div>
-        <Button 
-          onClick={downloadQRCode} 
-          variant="outline" 
-          className="w-full gap-2"
-        >
-          <Download className="w-4 h-4" />
-          Download for Print
-        </Button>
+
+        <div className="flex gap-2">
+          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex-1 gap-2">
+                <Eye className="w-4 h-4" />
+                Preview
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  QR Code Preview
+                </DialogTitle>
+              </DialogHeader>
+              <QRCodePDFPreview staffLoginUrl={staffLoginUrl} />
+              <div className="flex justify-end">
+                <Button onClick={() => { downloadQRCode(); setPreviewOpen(false); }} className="gap-2">
+                  <Download className="w-4 h-4" />
+                  Download
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
+          <Button 
+            onClick={downloadQRCode} 
+            className="flex-1 gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Download
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
