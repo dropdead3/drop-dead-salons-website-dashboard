@@ -380,7 +380,7 @@ export default function TeamDirectory() {
           </TabsContent>
 
           <TabsContent value="locations" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {locations.filter(loc => loc.is_active).map(location => (
                 <LocationCard 
                   key={location.id} 
