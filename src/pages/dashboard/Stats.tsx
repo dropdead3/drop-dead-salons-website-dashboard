@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SalesStatsCard } from '@/components/dashboard/SalesStatsCard';
+import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 
 interface DailyMetrics {
   posts_published: number;
@@ -146,10 +147,13 @@ export default function Stats() {
                 <Link2 className="w-5 h-5 text-primary" />
                 <h2 className="font-display text-sm tracking-wide">PHOREST DATA - THIS WEEK</h2>
               </div>
-              <Badge variant="outline" className="text-primary border-primary">
-                <span className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
-                Live
-              </Badge>
+              <div className="flex items-center gap-2">
+                <PhorestSyncButton syncType="reports" size="sm" />
+                <Badge variant="outline" className="text-primary border-primary">
+                  <span className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
+                  Live
+                </Badge>
+              </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <div className="text-center">
