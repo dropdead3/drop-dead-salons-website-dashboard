@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { ExternalLink, Rocket } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
+import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 
 interface NavItem {
   href: string;
@@ -155,6 +156,9 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           Staff Dashboard
         </p>
       </div>
+
+      {/* Announcements Widget - at the very top */}
+      <SidebarAnnouncementsWidget onNavClick={onNavClick} />
 
       {/* Navigation */}
       <nav ref={internalRef} className="flex-1 py-4 overflow-y-auto">
