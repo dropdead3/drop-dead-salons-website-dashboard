@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Users, 
   Search, 
@@ -19,13 +20,15 @@ import {
   UserCheck,
   Clock,
   Mail,
-  Phone
+  Phone,
+  MapPin
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
+import { useLocations } from '@/hooks/useLocations';
 
 type SortField = 'total_spend' | 'visit_count' | 'last_visit' | 'name';
 type SortDirection = 'asc' | 'desc';
@@ -36,6 +39,10 @@ export default function MyClients() {
   const [sortField, setSortField] = useState<SortField>('total_spend');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+
+  // Fetch locations for the filter dropdown
+  const { data: locations } = useLocations();
 
   // Fetch clients from the dedicated phorest_clients table
   const { data: clients, isLoading } = useQuery({
@@ -79,9 +86,41 @@ export default function MyClients() {
     });
   }, [clients]);
 
+  // Get unique locations from client data for the filter
+  const clientLocations = useMemo(() => {
+    if (!processedClients) return [];
+    
+    const locationMap = new Map<string, { id: string; name: string }>();
+    
+    processedClients.forEach(client => {
+      if (client.location_id) {
+        const loc = locations?.find(l => l.id === client.location_id);
+        locationMap.set(client.location_id, {
+          id: client.location_id,
+          name: loc?.name || client.branch_name || client.location_id
+        });
+      } else if (client.branch_name) {
+        // Fallback to branch_name if no location_id
+        locationMap.set(client.branch_name, {
+          id: client.branch_name,
+          name: client.branch_name
+        });
+      }
+    });
+    
+    return Array.from(locationMap.values());
+  }, [processedClients, locations]);
+
   // Filter and sort clients
   const filteredClients = useMemo(() => {
     let filtered = processedClients;
+
+    // Location filter
+    if (selectedLocation !== 'all') {
+      filtered = filtered.filter(c => 
+        c.location_id === selectedLocation || c.branch_name === selectedLocation
+      );
+    }
 
     // Tab filter
     if (activeTab === 'vip') {
@@ -125,7 +164,7 @@ export default function MyClients() {
     });
 
     return filtered;
-  }, [processedClients, activeTab, searchQuery, sortField, sortDirection]);
+  }, [processedClients, selectedLocation, activeTab, searchQuery, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -136,14 +175,20 @@ export default function MyClients() {
     }
   };
 
-  // Stats
-  const stats = useMemo(() => ({
-    total: processedClients.length,
-    vip: processedClients.filter(c => c.is_vip).length,
-    atRisk: processedClients.filter(c => c.isAtRisk).length,
-    newClients: processedClients.filter(c => c.isNew).length,
-    totalRevenue: processedClients.reduce((s, c) => s + Number(c.total_spend || 0), 0),
-  }), [processedClients]);
+  // Stats (filtered by location if selected)
+  const stats = useMemo(() => {
+    const clientsForStats = selectedLocation === 'all' 
+      ? processedClients 
+      : processedClients.filter(c => c.location_id === selectedLocation || c.branch_name === selectedLocation);
+    
+    return {
+      total: clientsForStats.length,
+      vip: clientsForStats.filter(c => c.is_vip).length,
+      atRisk: clientsForStats.filter(c => c.isAtRisk).length,
+      newClients: clientsForStats.filter(c => c.isNew).length,
+      totalRevenue: clientsForStats.reduce((s, c) => s + Number(c.total_spend || 0), 0),
+    };
+  }, [processedClients, selectedLocation]);
 
   return (
     <DashboardLayout>
@@ -199,6 +244,25 @@ export default function MyClients() {
               className="pl-10"
             />
           </div>
+          
+          {/* Location Filter */}
+          {clientLocations.length > 0 && (
+            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="All Locations" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {clientLocations.map(loc => (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
@@ -219,6 +283,12 @@ export default function MyClients() {
             <div className="flex items-center justify-between">
               <CardTitle className="font-display text-lg">
                 {filteredClients.length} {activeTab === 'all' ? 'Clients' : activeTab === 'vip' ? 'VIP Clients' : activeTab === 'at-risk' ? 'At-Risk Clients' : 'New Clients'}
+                {selectedLocation !== 'all' && (
+                  <Badge variant="outline" className="ml-2 font-sans font-normal">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    {clientLocations.find(l => l.id === selectedLocation)?.name}
+                  </Badge>
+                )}
               </CardTitle>
               <div className="flex gap-2">
                 <Button 
@@ -268,82 +338,94 @@ export default function MyClients() {
               </div>
             ) : (
               <div className="divide-y">
-                {filteredClients.map((client) => (
-                  <div key={client.id} className="py-4 flex items-center gap-4">
-                    <Avatar className="w-12 h-12">
-                      <AvatarFallback className="font-display text-sm bg-primary/10">
-                        {client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium truncate">{client.name}</p>
-                        {client.is_vip && (
-                          <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 text-xs">
-                            <Star className="w-3 h-3 mr-1" /> VIP
-                          </Badge>
-                        )}
-                        {client.isAtRisk && (
-                          <Badge variant="destructive" className="text-xs">
-                            <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
-                          </Badge>
-                        )}
-                        {client.isNew && (
-                          <Badge variant="outline" className="text-xs text-green-600 border-green-300">
-                            New
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>{client.visit_count} visits</span>
-                        {client.last_visit && (
-                          <>
-                            <span>•</span>
-                            <span>Last: {format(new Date(client.last_visit), 'MMM d, yyyy')}</span>
-                          </>
-                        )}
-                        {client.daysSinceVisit !== null && client.daysSinceVisit > 30 && (
-                          <>
-                            <span>•</span>
-                            <span className={cn(
-                              client.daysSinceVisit > 60 ? "text-red-600" : "text-amber-600"
-                            )}>
-                              {client.daysSinceVisit} days ago
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {/* Contact info & preferred services */}
-                      <div className="flex items-center gap-3 mt-1.5">
-                        {client.email && (
-                          <a href={`mailto:${client.email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
-                            <Mail className="w-3 h-3" /> {client.email}
-                          </a>
-                        )}
-                        {client.phone && (
-                          <a href={`tel:${client.phone}`} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                            <Phone className="w-3 h-3" /> {client.phone}
-                          </a>
-                        )}
-                      </div>
-                      {client.preferred_services && client.preferred_services.length > 0 && (
-                        <div className="flex gap-1 mt-2">
-                          {client.preferred_services.slice(0, 3).map(service => (
-                            <Badge key={service} variant="secondary" className="text-xs">
-                              {service}
+                {filteredClients.map((client) => {
+                  const locationName = locations?.find(l => l.id === client.location_id)?.name || client.branch_name;
+                  
+                  return (
+                    <div key={client.id} className="py-4 flex items-center gap-4">
+                      <Avatar className="w-12 h-12">
+                        <AvatarFallback className="font-display text-sm bg-primary/10">
+                          {client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium truncate">{client.name}</p>
+                          {client.is_vip && (
+                            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 text-xs">
+                              <Star className="w-3 h-3 mr-1" /> VIP
                             </Badge>
-                          ))}
+                          )}
+                          {client.isAtRisk && (
+                            <Badge variant="destructive" className="text-xs">
+                              <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
+                            </Badge>
+                          )}
+                          {client.isNew && (
+                            <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                              New
+                            </Badge>
+                          )}
                         </div>
-                      )}
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>{client.visit_count} visits</span>
+                          {client.last_visit && (
+                            <>
+                              <span>•</span>
+                              <span>Last: {format(new Date(client.last_visit), 'MMM d, yyyy')}</span>
+                            </>
+                          )}
+                          {client.daysSinceVisit !== null && client.daysSinceVisit > 30 && (
+                            <>
+                              <span>•</span>
+                              <span className={cn(
+                                client.daysSinceVisit > 60 ? "text-red-600" : "text-amber-600"
+                              )}>
+                                {client.daysSinceVisit} days ago
+                              </span>
+                            </>
+                          )}
+                          {locationName && (
+                            <>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> {locationName}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        {/* Contact info & preferred services */}
+                        <div className="flex items-center gap-3 mt-1.5">
+                          {client.email && (
+                            <a href={`mailto:${client.email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                              <Mail className="w-3 h-3" /> {client.email}
+                            </a>
+                          )}
+                          {client.phone && (
+                            <a href={`tel:${client.phone}`} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
+                              <Phone className="w-3 h-3" /> {client.phone}
+                            </a>
+                          )}
+                        </div>
+                        {client.preferred_services && client.preferred_services.length > 0 && (
+                          <div className="flex gap-1 mt-2">
+                            {client.preferred_services.slice(0, 3).map(service => (
+                              <Badge key={service} variant="secondary" className="text-xs">
+                                {service}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className="font-display text-lg">${Number(client.total_spend || 0).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">lifetime</p>
+                      </div>
                     </div>
-                    
-                    <div className="text-right">
-                      <p className="font-display text-lg">${Number(client.total_spend || 0).toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">lifetime</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
