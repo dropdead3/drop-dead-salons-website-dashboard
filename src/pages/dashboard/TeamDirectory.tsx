@@ -830,13 +830,13 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
   return (
     <Card 
       className={cn(
-        "group transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 relative",
+        "group transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 relative h-full",
         anniversaryInfo?.isToday && "ring-2 ring-amber-400",
         isSuperAdmin && "cursor-pointer"
       )}
       onClick={isSuperAdmin ? onViewProfile : undefined}
     >
-    <CardContent className="p-5">
+    <CardContent className="p-5 h-full flex flex-col">
         {/* Bottom-left strike indicator - appears on hover */}
         {canViewStrikes && (
           <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -885,7 +885,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
         )}
         
         {/* Main content - horizontal layout */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-1">
           {/* Larger Avatar */}
           <div className="relative shrink-0">
             <Avatar className="w-20 h-20 ring-2 ring-background shadow-md">
@@ -1020,19 +1020,21 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
             </div>
             
             {/* Phone number displayed */}
-            {member.phone && (
-              <a 
-                href={`tel:${member.phone}`}
-                className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Phone className="w-3 h-3" />
-                {formatPhone(member.phone)}
-              </a>
-            )}
+            <div className="min-h-[20px] mt-2">
+              {member.phone && (
+                <a 
+                  href={`tel:${member.phone}`}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Phone className="w-3 h-3" />
+                  {formatPhone(member.phone)}
+                </a>
+              )}
+            </div>
             
             {/* Contact icons row */}
-            <div className="flex items-center gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1 mt-2 min-h-[28px]" onClick={(e) => e.stopPropagation()}>
               {member.email && (
                 <TooltipProvider>
                   <Tooltip>
@@ -1066,42 +1068,44 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                 </TooltipProvider>
               )}
             </div>
-            
-            {/* Specialty Badges - Only for stylists and stylist assistants */}
-            {isStylistOrAssistant && member.specialties && member.specialties.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-1 mt-2.5 pt-2.5 border-t border-border/50">
-                {member.specialties.slice(0, 4).map((specialty) => {
-                  const isHighlighted = member.highlighted_services?.includes(specialty);
-                  const isExtensions = specialty.toLowerCase() === 'extensions';
-                  
-                  return (
-                    <Badge
-                      key={specialty}
-                      variant="outline"
-                      className={cn(
-                        "text-[10px] font-medium h-5 px-1.5 gap-0.5 normal-case",
-                        isExtensions
-                          ? "bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300 dark:from-amber-950/40 dark:to-yellow-950/40 dark:text-amber-300 dark:border-amber-700"
-                          : isHighlighted
-                            ? "bg-primary/5 text-primary border-primary/30"
-                            : "bg-muted/50 text-muted-foreground border-border"
-                      )}
-                    >
-                      {(isHighlighted || isExtensions) && (
-                        <Sparkles className="w-2.5 h-2.5" />
-                      )}
-                      {specialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
-                    </Badge>
-                  );
-                })}
-                {member.specialties.length > 4 && (
-                  <Badge variant="outline" className="text-[10px] font-medium h-5 px-1.5 bg-muted/30 text-muted-foreground normal-case">
-                    +{member.specialties.length - 4}
-                  </Badge>
-                )}
-              </div>
-            )}
           </div>
+        </div>
+        
+        {/* Specialty Badges - Always at bottom, only for stylists and stylist assistants */}
+        <div className="min-h-[36px] mt-auto">
+          {isStylistOrAssistant && member.specialties && member.specialties.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1 pt-2.5 border-t border-border/50">
+              {member.specialties.slice(0, 4).map((specialty) => {
+                const isHighlighted = member.highlighted_services?.includes(specialty);
+                const isExtensions = specialty.toLowerCase() === 'extensions';
+                
+                return (
+                  <Badge
+                    key={specialty}
+                    variant="outline"
+                    className={cn(
+                      "text-[10px] font-medium h-5 px-1.5 gap-0.5 normal-case",
+                      isExtensions
+                        ? "bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300 dark:from-amber-950/40 dark:to-yellow-950/40 dark:text-amber-300 dark:border-amber-700"
+                        : isHighlighted
+                          ? "bg-primary/5 text-primary border-primary/30"
+                          : "bg-muted/50 text-muted-foreground border-border"
+                    )}
+                  >
+                    {(isHighlighted || isExtensions) && (
+                      <Sparkles className="w-2.5 h-2.5" />
+                    )}
+                    {specialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
+                  </Badge>
+                );
+              })}
+              {member.specialties.length > 4 && (
+                <Badge variant="outline" className="text-[10px] font-medium h-5 px-1.5 bg-muted/30 text-muted-foreground normal-case">
+                  +{member.specialties.length - 4}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
