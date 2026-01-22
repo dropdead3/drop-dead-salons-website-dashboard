@@ -33,6 +33,7 @@ import {
   GraduationCap,
   BookOpen,
   Layers,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -43,6 +44,7 @@ import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWei
 import { IntegrationsTab } from '@/components/dashboard/IntegrationsTab';
 import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLevelsContent';
 import { HandbooksContent } from '@/components/dashboard/settings/HandbooksContent';
+import { CommandCenterContent } from '@/components/dashboard/settings/CommandCenterContent';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +63,7 @@ const roleOptions = [
   { value: 'assistant', label: 'Assistant' },
 ];
 
-type SettingsCategory = 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | null;
+type SettingsCategory = 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | null;
 
 export default function Settings() {
   const { user } = useAuth();
@@ -232,6 +234,12 @@ export default function Settings() {
       label: 'Handbooks',
       description: 'Team documents & training',
       icon: BookOpen,
+    },
+    {
+      id: 'visibility' as const,
+      label: 'Visibility Console',
+      description: 'Control dashboard element visibility by role',
+      icon: LayoutDashboard,
     },
   ];
 
@@ -589,6 +597,8 @@ export default function Settings() {
           {activeCategory === 'levels' && <StylistLevelsContent />}
 
           {activeCategory === 'handbooks' && <HandbooksContent />}
+
+          {activeCategory === 'visibility' && <CommandCenterContent />}
         </div>
       </DashboardLayout>
     );
