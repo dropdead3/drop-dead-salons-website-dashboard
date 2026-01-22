@@ -177,7 +177,7 @@ export function ScheduleCalendar({ requests, isStylistView }: ScheduleCalendarPr
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <h3 className="font-semibold text-lg">
+        <h3 className="font-medium text-lg">
           {format(weekDays[0], 'MMM d')} - {format(weekDays[6], 'MMM d, yyyy')}
         </h3>
       </div>

@@ -84,7 +84,7 @@ export function ImpersonationHistoryPanel({ limit = 50, className }: Impersonati
   if (isLoading) {
     return (
       <div className={className}>
-        <h3 className="text-lg font-semibold mb-4">Impersonation History</h3>
+        <h3 className="text-lg font-medium mb-4">Impersonation History</h3>
         <LoadingSkeleton />
       </div>
     );
@@ -93,7 +93,7 @@ export function ImpersonationHistoryPanel({ limit = 50, className }: Impersonati
   if (error) {
     return (
       <div className={className}>
-        <h3 className="text-lg font-semibold mb-4">Impersonation History</h3>
+        <h3 className="text-lg font-medium mb-4">Impersonation History</h3>
         <p className="text-sm text-muted-foreground">Failed to load history</p>
       </div>
     );
@@ -102,7 +102,7 @@ export function ImpersonationHistoryPanel({ limit = 50, className }: Impersonati
   if (!logs || logs.length === 0) {
     return (
       <div className={className}>
-        <h3 className="text-lg font-semibold mb-4">Impersonation History</h3>
+        <h3 className="text-lg font-medium mb-4">Impersonation History</h3>
         <div className="text-center py-8 text-muted-foreground">
           <Eye className="h-8 w-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">No impersonation activity yet</p>
@@ -114,7 +114,7 @@ export function ImpersonationHistoryPanel({ limit = 50, className }: Impersonati
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Impersonation History</h3>
+        <h3 className="text-lg font-medium">Impersonation History</h3>
         <Badge variant="secondary" className="text-xs">
           {logs.length} events
         </Badge>

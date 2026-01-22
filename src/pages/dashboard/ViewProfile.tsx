@@ -323,7 +323,7 @@ export default function ViewProfile() {
           <Card className="border-destructive">
             <CardContent className="p-8 text-center">
               <Shield className="w-12 h-12 mx-auto text-destructive mb-4" />
-              <h2 className="text-lg font-semibold mb-2">Access Denied</h2>
+              <h2 className="text-lg font-medium mb-2">Access Denied</h2>
               <p className="text-muted-foreground mb-4">
                 Only super admins can view and edit team member profiles.
               </p>
@@ -345,7 +345,7 @@ export default function ViewProfile() {
           <Card>
             <CardContent className="p-8 text-center">
               <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h2 className="text-lg font-semibold mb-2">Profile Not Found</h2>
+              <h2 className="text-lg font-medium mb-2">Profile Not Found</h2>
               <p className="text-muted-foreground mb-4">
                 The requested user profile could not be found.
               </p>
