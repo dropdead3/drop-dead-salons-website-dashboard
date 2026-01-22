@@ -939,7 +939,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Next Client Indicator - Stylists and Assistants only */}
           {(isStylistRole || isStylistAssistantRole) && (
-            <NextClientIndicator userId={user?.id} />
+            <NextClientIndicator userId={isViewingAsUser && viewAsUser ? viewAsUser.id : user?.id} />
           )}
           
           {/* Right side - User controls */}
