@@ -21,7 +21,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key, UserPlus, Settings2 } from 'lucide-react';
-import { useAllUsersWithRoles, useToggleUserRole, ALL_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/hooks/useUserRoles';
+import { useAllUsersWithRoles, useToggleUserRole } from '@/hooks/useUserRoles';
+import { useRoles } from '@/hooks/useRoles';
+import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
 import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
 import { RolePermissionsManager } from '@/components/dashboard/RolePermissionsManager';
@@ -31,15 +33,35 @@ import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
-const roleColors: Record<AppRole, string> = {
-  admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800',
-  manager: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800',
-  stylist: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-  receptionist: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800',
-  assistant: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200 dark:border-gray-800', // Legacy
-  stylist_assistant: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800',
-  admin_assistant: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400 border-pink-200 dark:border-pink-800',
-  operations_assistant: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800',
+// Dynamic color classes based on role color from database
+const getRoleBorderBgClasses = (color: string) => {
+  const colorMap: Record<string, string> = {
+    red: 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/10',
+    purple: 'border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/10',
+    blue: 'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/10',
+    green: 'border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/10',
+    cyan: 'border-cyan-200 dark:border-cyan-800 bg-cyan-50/50 dark:bg-cyan-950/10',
+    orange: 'border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/10',
+    yellow: 'border-yellow-200 dark:border-yellow-800 bg-yellow-50/50 dark:bg-yellow-950/10',
+    pink: 'border-pink-200 dark:border-pink-800 bg-pink-50/50 dark:bg-pink-950/10',
+    gray: 'border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/10',
+  };
+  return colorMap[color] || colorMap.gray;
+};
+
+const getRoleTextClasses = (color: string) => {
+  const colorMap: Record<string, string> = {
+    red: 'text-red-700 dark:text-red-400',
+    purple: 'text-purple-700 dark:text-purple-400',
+    blue: 'text-blue-700 dark:text-blue-400',
+    green: 'text-green-700 dark:text-green-400',
+    cyan: 'text-cyan-700 dark:text-cyan-400',
+    orange: 'text-orange-700 dark:text-orange-400',
+    yellow: 'text-yellow-700 dark:text-yellow-400',
+    pink: 'text-pink-700 dark:text-pink-400',
+    gray: 'text-gray-700 dark:text-gray-400',
+  };
+  return colorMap[color] || colorMap.gray;
 };
 
 export default function ManageRoles() {
@@ -53,6 +75,7 @@ export default function ManageRoles() {
   const { data: users = [], isLoading } = useAllUsersWithRoles();
   const { data: accounts } = useAccountApprovals();
   const { data: canApproveAdmin } = useCanApproveAdmin();
+  const { data: roles = [] } = useRoles();
   const toggleRole = useToggleUserRole();
   const toggleSuperAdmin = useToggleSuperAdmin();
 
@@ -70,39 +93,39 @@ export default function ManageRoles() {
     return accounts?.find(a => a.user_id === userId);
   };
 
-  // Calculate role statistics
+  // Calculate role statistics dynamically based on roles from database
   const roleStats = useMemo(() => {
-    const stats: Record<AppRole | 'super_admin' | 'total', number> = {
+    const stats: Record<string, number> = {
       total: users.length,
       super_admin: 0,
-      admin: 0,
-      manager: 0,
-      stylist: 0,
-      receptionist: 0,
-      assistant: 0, // Legacy
-      stylist_assistant: 0,
-      admin_assistant: 0,
-      operations_assistant: 0,
     };
+
+    // Initialize counts for all active roles
+    roles.forEach(role => {
+      stats[role.name] = 0;
+    });
 
     users.forEach(user => {
       const accountInfo = getAccountInfo(user.user_id);
-      // Super Admins are counted separately - don't count their regular roles
       if (accountInfo?.is_super_admin) {
         stats.super_admin++;
       } else {
-        // Only count regular roles for non-Super Admin users
         user.roles.forEach(role => {
-          stats[role]++;
+          if (stats[role] !== undefined) {
+            stats[role]++;
+          }
         });
       }
     });
 
     return stats;
-  }, [users, accounts]);
+  }, [users, accounts, roles]);
 
-  const handleToggleRole = (userId: string, role: AppRole, hasRole: boolean) => {
-    toggleRole.mutate({ userId, role, hasRole });
+  // Helper to get role info
+  const getRoleInfo = (roleName: string) => roles.find(r => r.name === roleName);
+
+  const handleToggleRole = (userId: string, role: string, hasRole: boolean) => {
+    toggleRole.mutate({ userId, role: role as AppRole, hasRole });
   };
 
   const handleToggleSuperAdmin = (userId: string, userName: string, isSuperAdmin: boolean) => {
@@ -130,14 +153,14 @@ export default function ManageRoles() {
         </div>
 
         {/* Role Statistics Overview */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-          <Card className="bg-muted/30">
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Card className="bg-muted/30 min-w-[100px]">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-display font-medium">{roleStats.total}</p>
               <p className="text-xs text-muted-foreground">Total Users</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800">
+          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800 min-w-[100px]">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-display font-medium text-amber-700 dark:text-amber-400">{roleStats.super_admin}</p>
               <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center justify-center gap-1">
@@ -146,29 +169,13 @@ export default function ManageRoles() {
               </p>
             </CardContent>
           </Card>
-          {ALL_ROLES.map(role => (
-            <Card key={role} className={cn(
-              "border",
-              role === 'admin' && "border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/10",
-              role === 'manager' && "border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/10",
-              role === 'stylist' && "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/10",
-              role === 'receptionist' && "border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/10",
-              role === 'stylist_assistant' && "border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/10",
-              role === 'admin_assistant' && "border-pink-200 dark:border-pink-800 bg-pink-50/50 dark:bg-pink-950/10",
-              role === 'operations_assistant' && "border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-teal-950/10",
-            )}>
+          {roles.map(role => (
+            <Card key={role.name} className={cn("border min-w-[100px]", getRoleBorderBgClasses(role.color))}>
               <CardContent className="p-4 text-center">
-                <p className={cn(
-                  "text-2xl font-display font-medium",
-                  role === 'admin' && "text-red-700 dark:text-red-400",
-                  role === 'manager' && "text-purple-700 dark:text-purple-400",
-                  role === 'stylist' && "text-blue-700 dark:text-blue-400",
-                  role === 'receptionist' && "text-green-700 dark:text-green-400",
-                  role === 'stylist_assistant' && "text-orange-700 dark:text-orange-400",
-                  role === 'admin_assistant' && "text-pink-700 dark:text-pink-400",
-                  role === 'operations_assistant' && "text-teal-700 dark:text-teal-400",
-                )}>{roleStats[role]}</p>
-                <p className="text-xs text-muted-foreground">{ROLE_LABELS[role]}s</p>
+                <p className={cn("text-2xl font-display font-medium", getRoleTextClasses(role.color))}>
+                  {roleStats[role.name] || 0}
+                </p>
+                <p className="text-xs text-muted-foreground">{role.display_name}s</p>
               </CardContent>
             </Card>
           ))}
@@ -220,19 +227,22 @@ export default function ManageRoles() {
                       Super user with ability to approve admin roles
                     </span>
                   </div>
-                  {ALL_ROLES.map(role => (
-                    <div key={role} className="flex items-start gap-2">
-                      <Badge variant="outline" className={cn("text-xs shrink-0", roleColors[role])}>
-                        {ROLE_LABELS[role]}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {ROLE_DESCRIPTIONS[role]}
-                        {role === 'admin' && !canApproveAdmin && (
-                          <span className="text-amber-600 dark:text-amber-400 ml-1">(Super Admin required)</span>
-                        )}
-                      </span>
-                    </div>
-                  ))}
+                  {roles.map(role => {
+                    const colorClasses = getRoleColorClasses(role.color);
+                    return (
+                      <div key={role.name} className="flex items-start gap-2">
+                        <Badge variant="outline" className={cn("text-xs shrink-0", colorClasses.bg, colorClasses.text)}>
+                          {role.display_name}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {role.description || 'No description'}
+                          {role.name === 'admin' && !canApproveAdmin && (
+                            <span className="text-amber-600 dark:text-amber-400 ml-1">(Super Admin required)</span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -325,15 +335,19 @@ export default function ManageRoles() {
                         {/* Current Roles */}
                         {user.roles.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {user.roles.map(role => (
-                              <Badge 
-                                key={role} 
-                                variant="outline" 
-                                className={cn("text-xs", roleColors[role])}
-                              >
-                                {ROLE_LABELS[role]}
-                              </Badge>
-                            ))}
+                            {user.roles.map(roleName => {
+                              const roleInfo = getRoleInfo(roleName);
+                              const colorClasses = roleInfo ? getRoleColorClasses(roleInfo.color) : getRoleColorClasses('gray');
+                              return (
+                                <Badge 
+                                  key={roleName} 
+                                  variant="outline" 
+                                  className={cn("text-xs", colorClasses.bg, colorClasses.text)}
+                                >
+                                  {roleInfo?.display_name || roleName}
+                                </Badge>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -373,23 +387,23 @@ export default function ManageRoles() {
                       )}
                       
                       {/* Regular Role Toggles */}
-                      {ALL_ROLES.map(role => {
-                        const hasRole = user.roles.includes(role);
-                        const isAdminRole = role === 'admin';
+                      {roles.map(role => {
+                        const hasRole = user.roles.includes(role.name as AppRole);
+                        const isAdminRole = role.name === 'admin';
                         const isLockedByPermission = isAdminRole && !canApproveAdmin;
                         const isLockedBySuperAdmin = isSuperAdmin; // Lock all roles when user is super admin
                         const isLocked = isLockedByPermission || isLockedBySuperAdmin;
                         
                         return (
-                          <div key={role} className="flex items-center gap-2">
+                          <div key={role.name} className="flex items-center gap-2">
                             <label 
-                              htmlFor={`${user.user_id}-${role}`}
+                              htmlFor={`${user.user_id}-${role.name}`}
                               className={cn(
                                 "text-sm font-medium",
                                 isLocked ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"
                               )}
                             >
-                              {ROLE_LABELS[role]}
+                              {role.display_name}
                             </label>
                             {isLockedByPermission && !isLockedBySuperAdmin && (
                               <Tooltip>
@@ -408,9 +422,9 @@ export default function ManageRoles() {
                               </Tooltip>
                             )}
                             <Switch
-                              id={`${user.user_id}-${role}`}
+                              id={`${user.user_id}-${role.name}`}
                               checked={isLockedBySuperAdmin ? false : hasRole}
-                              onCheckedChange={() => handleToggleRole(user.user_id, role, hasRole)}
+                              onCheckedChange={() => handleToggleRole(user.user_id, role.name, hasRole)}
                               disabled={toggleRole.isPending || isLocked}
                             />
                           </div>
