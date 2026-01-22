@@ -382,7 +382,13 @@ export default function TeamDirectory() {
           <TabsContent value="locations" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {locations.filter(loc => loc.is_active).map(location => (
-                <LocationCard key={location.id} location={location} />
+                <LocationCard 
+                  key={location.id} 
+                  location={location} 
+                  teamMembers={team.filter(m => 
+                    m.location_ids?.includes(location.id) || m.location_id === location.id
+                  )}
+                />
               ))}
             </div>
             {locations.filter(loc => loc.is_active).length === 0 && (
@@ -402,19 +408,82 @@ export default function TeamDirectory() {
 // Location Card Component
 interface LocationCardProps {
   location: Location;
+  teamMembers: Array<{
+    id: string;
+    user_id: string;
+    full_name: string;
+    display_name: string | null;
+    photo_url: string | null;
+    roles: string[];
+    is_super_admin: boolean | null;
+  }>;
 }
 
-function LocationCard({ location }: LocationCardProps) {
+const LEADERSHIP_ROLES = ['admin', 'manager', 'general_manager', 'super_admin'];
+
+function LocationCard({ location, teamMembers }: LocationCardProps) {
+  const navigate = useNavigate();
   const hoursDisplay = formatHoursForDisplay(location.hours_json);
   const closedDays = getClosedDays(location.hours_json);
+
+  // Get leadership team members (admins, managers) sorted by role priority
+  const leadership = teamMembers
+    .filter(m => 
+      m.is_super_admin || 
+      m.roles.some(r => LEADERSHIP_ROLES.includes(r))
+    )
+    .sort((a, b) => {
+      const aPriority = a.is_super_admin ? 0 : Math.min(...a.roles.map(r => rolePriority[r] ?? 99));
+      const bPriority = b.is_super_admin ? 0 : Math.min(...b.roles.map(r => rolePriority[r] ?? 99));
+      return aPriority - bPriority;
+    })
+    .slice(0, 5); // Max 5 leadership avatars
+
+  const getLeadershipRole = (member: typeof leadership[0]) => {
+    if (member.is_super_admin) return 'Super Admin';
+    const leaderRole = member.roles.find(r => LEADERSHIP_ROLES.includes(r));
+    return leaderRole ? roleLabels[leaderRole] || leaderRole : 'Leadership';
+  };
 
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Building2 className="w-5 h-5 text-primary" />
-          {location.name}
-        </CardTitle>
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Building2 className="w-5 h-5 text-primary" />
+            {location.name}
+          </CardTitle>
+          
+          {/* Leadership Avatars */}
+          {leadership.length > 0 && (
+            <div className="flex -space-x-2">
+              {leadership.map((leader, index) => (
+                <TooltipProvider key={leader.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => navigate(`/dashboard/profile/${leader.user_id}`)}
+                        className="relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full transition-transform hover:scale-110 hover:z-10"
+                        style={{ zIndex: leadership.length - index }}
+                      >
+                        <Avatar className="w-8 h-8 border-2 border-background">
+                          <AvatarImage src={leader.photo_url || undefined} />
+                          <AvatarFallback className="text-[10px] bg-muted">
+                            {(leader.display_name || leader.full_name).charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      <p className="font-medium">{leader.display_name || leader.full_name}</p>
+                      <p className="text-muted-foreground">{getLeadershipRole(leader)}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Address */}
