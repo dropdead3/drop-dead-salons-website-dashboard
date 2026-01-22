@@ -3,11 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -15,21 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Settings as SettingsIcon, 
   Users, 
   Bell, 
   Shield,
   Loader2,
-  Save,
-  UserCog,
   Trash2,
   Mail,
   Variable,
@@ -45,6 +34,7 @@ import {
   Monitor,
   Check,
   Plug,
+  ChevronRight,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -71,6 +61,8 @@ const roleOptions = [
   { value: 'assistant', label: 'Assistant' },
 ];
 
+type SettingsCategory = 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | null;
+
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -79,10 +71,9 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState('email');
+  const [activeCategory, setActiveCategory] = useState<SettingsCategory>(null);
   const [mounted, setMounted] = useState(false);
 
-  // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -92,7 +83,6 @@ export default function Settings() {
   }, []);
 
   const fetchUsers = async () => {
-    // Get all employee profiles with their roles
     const { data: profiles, error: profilesError } = await supabase
       .from('employee_profiles')
       .select('user_id, email, full_name')
@@ -104,7 +94,6 @@ export default function Settings() {
       return;
     }
 
-    // Get all roles
     const { data: roles, error: rolesError } = await supabase
       .from('user_roles')
       .select('user_id, role');
@@ -130,7 +119,6 @@ export default function Settings() {
   const updateUserRole = async (userId: string, newRole: string) => {
     setUpdatingUser(userId);
 
-    // Check if user has a role entry
     const { data: existingRole } = await supabase
       .from('user_roles')
       .select('id')
@@ -139,14 +127,12 @@ export default function Settings() {
 
     let error;
     if (existingRole) {
-      // Update existing role
       const result = await supabase
         .from('user_roles')
         .update({ role: newRole as any })
         .eq('user_id', userId);
       error = result.error;
     } else {
-      // Insert new role
       const result = await supabase
         .from('user_roles')
         .insert({ user_id: userId, role: newRole as any });
@@ -198,6 +184,422 @@ export default function Settings() {
     }
   };
 
+  const categories = [
+    {
+      id: 'email' as const,
+      label: 'Email',
+      description: 'Templates, variables & signatures',
+      icon: Mail,
+    },
+    {
+      id: 'users' as const,
+      label: 'Users',
+      description: 'Team members & roles',
+      icon: Users,
+    },
+    {
+      id: 'onboarding' as const,
+      label: 'Onboarding',
+      description: 'Tasks & leaderboard scoring',
+      icon: Rocket,
+    },
+    {
+      id: 'integrations' as const,
+      label: 'Integrations',
+      description: 'Third-party connections',
+      icon: Plug,
+    },
+    {
+      id: 'system' as const,
+      label: 'System',
+      description: 'Appearance, notifications & security',
+      icon: Cog,
+    },
+  ];
+
+  // If a category is selected, show detailed view
+  if (activeCategory) {
+    return (
+      <DashboardLayout>
+        <div className="p-6 lg:p-8">
+          {/* Back button and header */}
+          <div className="mb-6">
+            <Button 
+              variant="ghost" 
+              className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+              onClick={() => setActiveCategory(null)}
+            >
+              ← Back to Settings
+            </Button>
+            <h1 className="font-display text-2xl lg:text-3xl">
+              {categories.find(c => c.id === activeCategory)?.label.toUpperCase()}
+            </h1>
+          </div>
+
+          {/* Category Content */}
+          {activeCategory === 'email' && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    <CardTitle className="font-display text-lg">EMAIL TEMPLATES</CardTitle>
+                  </div>
+                  <CardDescription>Customize email templates for automated notifications.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EmailTemplatesManager />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Variable className="w-5 h-5 text-primary" />
+                    <CardTitle className="font-display text-lg">EMAIL VARIABLES</CardTitle>
+                  </div>
+                  <CardDescription>Manage available template variables.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EmailVariablesManager />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <PenTool className="w-5 h-5 text-primary" />
+                    <CardTitle className="font-display text-lg">SIGNATURE PRESETS</CardTitle>
+                  </div>
+                  <CardDescription>Reusable email signature blocks.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SignaturePresetsManager />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeCategory === 'users' && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  <CardTitle className="font-display text-lg">TEAM MEMBERS</CardTitle>
+                </div>
+                <CardDescription>Manage team members and their access levels.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : users.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No active users found.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {users.map(u => (
+                      <div key={u.user_id} className="flex items-center justify-between gap-4 p-4 rounded-lg bg-muted/30 border">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center font-display text-sm">
+                            {u.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </div>
+                          <div>
+                            <p className="font-sans font-medium">{u.full_name}</p>
+                            <p className="text-xs text-muted-foreground">{u.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={u.role}
+                            onValueChange={(value) => updateUserRole(u.user_id, value)}
+                            disabled={updatingUser === u.user_id}
+                          >
+                            <SelectTrigger className="w-32">
+                              {updatingUser === u.user_id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <SelectValue />
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roleOptions.map(role => (
+                                <SelectItem key={role.value} value={role.value}>
+                                  {role.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeUser(u.user_id)}
+                            disabled={u.user_id === user?.id}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {activeCategory === 'onboarding' && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <ClipboardCheck className="w-5 h-5 text-primary" />
+                    <CardTitle className="font-display text-lg">ONBOARDING TASKS</CardTitle>
+                  </div>
+                  <CardDescription>Configure onboarding checklist items by role.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <OnboardingTasksManager />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-primary" />
+                    <CardTitle className="font-display text-lg">LEADERBOARD SCORING</CardTitle>
+                  </div>
+                  <CardDescription>Adjust weight distribution for performance metrics.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <LeaderboardWeightsManager />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeCategory === 'integrations' && (
+            <IntegrationsTab />
+          )}
+
+          {activeCategory === 'system' && (
+            <div className="space-y-6">
+              {/* Appearance */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Palette className="w-5 h-5 text-primary" />
+                    <CardTitle className="font-display text-lg">APPEARANCE</CardTitle>
+                  </div>
+                  <CardDescription>Customize the dashboard appearance. Only affects the backend dashboard.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                  {/* Color Theme Selection */}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium">Color Theme</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {colorThemes.map((themeOption) => {
+                        const isSelected = colorMounted && colorTheme === themeOption.id;
+                        const isDark = resolvedTheme === 'dark';
+                        const preview = isDark ? themeOption.darkPreview : themeOption.lightPreview;
+                        
+                        return (
+                          <button
+                            key={themeOption.id}
+                            onClick={() => setColorTheme(themeOption.id)}
+                            className={cn(
+                              "relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
+                              isSelected
+                                ? "border-primary ring-2 ring-primary/20"
+                                : "border-border hover:border-primary/50"
+                            )}
+                          >
+                            <div className="flex items-center gap-1.5 w-full">
+                              <div 
+                                className="w-8 h-8 rounded-lg border border-black/10"
+                                style={{ backgroundColor: preview.bg }}
+                              />
+                              <div 
+                                className="w-8 h-8 rounded-lg border border-black/10"
+                                style={{ backgroundColor: preview.accent }}
+                              />
+                              <div 
+                                className="w-8 h-8 rounded-lg border border-black/10"
+                                style={{ backgroundColor: preview.primary }}
+                              />
+                            </div>
+                            
+                            <div className="space-y-0.5">
+                              <span className="text-sm font-medium">{themeOption.name}</span>
+                              <p className="text-xs text-muted-foreground">{themeOption.description}</p>
+                            </div>
+                            
+                            {isSelected && (
+                              <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                <Check className="w-3 h-3 text-primary-foreground" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Theme Mode Toggle */}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium">Theme Mode</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      <button
+                        onClick={() => setTheme('light')}
+                        className={cn(
+                          "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                          mounted && theme === 'light'
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        )}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center">
+                          <Sun className="w-5 h-5 text-foreground" />
+                        </div>
+                        <span className="text-sm font-medium">Light</span>
+                        {mounted && theme === 'light' && (
+                          <Check className="w-4 h-4 text-primary" />
+                        )}
+                      </button>
+                      
+                      <button
+                        onClick={() => setTheme('dark')}
+                        className={cn(
+                          "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                          mounted && theme === 'dark'
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        )}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-foreground border border-border flex items-center justify-center">
+                          <Moon className="w-5 h-5 text-background" />
+                        </div>
+                        <span className="text-sm font-medium">Dark</span>
+                        {mounted && theme === 'dark' && (
+                          <Check className="w-4 h-4 text-primary" />
+                        )}
+                      </button>
+                      
+                      <button
+                        onClick={() => setTheme('system')}
+                        className={cn(
+                          "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                          mounted && theme === 'system'
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        )}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-foreground border border-border flex items-center justify-center">
+                          <Monitor className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <span className="text-sm font-medium">System</span>
+                        {mounted && theme === 'system' && (
+                          <Check className="w-4 h-4 text-primary" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Notifications */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-primary" />
+                    <CardTitle className="font-display text-lg">NOTIFICATIONS</CardTitle>
+                  </div>
+                  <CardDescription>Configure email reminders and notifications.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-sans font-medium text-sm">Daily Check-in Reminders</p>
+                      <p className="text-xs text-muted-foreground">
+                        Send reminder emails at 10 AM and 9 PM AZ time
+                      </p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-sans font-medium text-sm">Weekly Wins Reminders</p>
+                      <p className="text-xs text-muted-foreground">
+                        Remind stylists to submit weekly wins
+                      </p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-sans font-medium text-sm">Birthday Reminders (3 days before)</p>
+                      <p className="text-xs text-muted-foreground">
+                        Email leadership team about upcoming birthdays
+                      </p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-sans font-medium text-sm">Ring the Bell Notifications</p>
+                      <p className="text-xs text-muted-foreground">
+                        Email coaches when someone rings the bell
+                      </p>
+                    </div>
+                    <Switch />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Security */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-primary" />
+                    <CardTitle className="font-display text-lg">SECURITY</CardTitle>
+                  </div>
+                  <CardDescription>Security and access settings.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-sans font-medium text-sm">Require Email Verification</p>
+                      <p className="text-xs text-muted-foreground">
+                        New users must verify email before accessing dashboard
+                      </p>
+                    </div>
+                    <Switch />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-sans font-medium text-sm">Restrict Sign-ups</p>
+                      <p className="text-xs text-muted-foreground">
+                        Only allow sign-ups from approved email domains
+                      </p>
+                    </div>
+                    <Switch />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Main settings grid view
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
@@ -209,473 +611,32 @@ export default function Settings() {
           </p>
         </div>
 
-        {/* Category Tabs */}
-        <Tabs value={activeCategory} onValueChange={setActiveCategory} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
-            <TabsTrigger value="email" className="gap-2">
-              <Mail className="w-4 h-4" />
-              <span className="hidden sm:inline">Email</span>
-            </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2">
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Users</span>
-            </TabsTrigger>
-            <TabsTrigger value="onboarding" className="gap-2">
-              <Rocket className="w-4 h-4" />
-              <span className="hidden sm:inline">Onboarding</span>
-            </TabsTrigger>
-            <TabsTrigger value="integrations" className="gap-2">
-              <Plug className="w-4 h-4" />
-              <span className="hidden sm:inline">Integrations</span>
-            </TabsTrigger>
-            <TabsTrigger value="system" className="gap-2">
-              <Cog className="w-4 h-4" />
-              <span className="hidden sm:inline">System</span>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Email Category */}
-          <TabsContent value="email" className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Mail className="w-5 h-5 text-primary" />
-              <h2 className="font-display text-xl tracking-wide">EMAIL SETTINGS</h2>
-            </div>
-            
-            <Accordion type="single" collapsible defaultValue="email-templates" className="space-y-4">
-              {/* Email Templates */}
-              <AccordionItem value="email-templates" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5" />
-                    <span className="font-display text-sm tracking-wide">EMAIL TEMPLATES</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-4">
-                    <EmailTemplatesManager />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Email Variables */}
-              <AccordionItem value="email-variables" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Variable className="w-5 h-5" />
-                    <span className="font-display text-sm tracking-wide">EMAIL VARIABLES</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-4">
-                    <p className="text-sm text-muted-foreground font-sans mb-4">
-                      Manage available template variables. New variables will automatically appear in the email editor.
-                    </p>
-                    <EmailVariablesManager />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Signature Presets */}
-              <AccordionItem value="signature-presets" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <PenTool className="w-5 h-5" />
-                    <span className="font-display text-sm tracking-wide">SIGNATURE PRESETS</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-4">
-                    <SignaturePresetsManager />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </TabsContent>
-
-          {/* Users Category */}
-          <TabsContent value="users" className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-primary" />
-              <h2 className="font-display text-xl tracking-wide">USER MANAGEMENT</h2>
-            </div>
-
-            <Accordion type="single" collapsible defaultValue="team-members" className="space-y-4">
-              {/* Team Members */}
-              <AccordionItem value="team-members" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5" />
-                    <span className="font-display text-sm tracking-wide">TEAM MEMBERS</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-4">
-                    <p className="text-sm text-muted-foreground font-sans mb-6">
-                      Manage team members and their access levels.
-                    </p>
-
-                    {loading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : users.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">
-                        No active users found.
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {users.map(u => (
-                          <Card key={u.user_id} className="p-4 bg-muted/30">
-                            <div className="flex items-center justify-between gap-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center font-display text-sm">
-                                  {u.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                </div>
-                                <div>
-                                  <p className="font-sans font-medium">{u.full_name}</p>
-                                  <p className="text-xs text-muted-foreground">{u.email}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Select
-                                  value={u.role}
-                                  onValueChange={(value) => updateUserRole(u.user_id, value)}
-                                  disabled={updatingUser === u.user_id}
-                                >
-                                  <SelectTrigger className="w-32">
-                                    {updatingUser === u.user_id ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <SelectValue />
-                                    )}
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {roleOptions.map(role => (
-                                      <SelectItem key={role.value} value={role.value}>
-                                        {role.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeUser(u.user_id)}
-                                  disabled={u.user_id === user?.id}
-                                  className="text-muted-foreground hover:text-destructive"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-            </Accordion>
-          </TabsContent>
-
-          {/* Onboarding Category */}
-          <TabsContent value="onboarding" className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Rocket className="w-5 h-5 text-primary" />
-              <h2 className="font-display text-xl tracking-wide">ONBOARDING SETTINGS</h2>
-            </div>
-
-            <Accordion type="single" collapsible defaultValue="onboarding-tasks" className="space-y-4">
-              {/* Onboarding Tasks */}
-              <AccordionItem value="onboarding-tasks" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <ClipboardCheck className="w-5 h-5" />
-                    <span className="font-display text-sm tracking-wide">ONBOARDING TASKS</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-4">
-                    <p className="text-sm text-muted-foreground font-sans mb-4">
-                      Configure onboarding checklist items. Tasks are shown based on user roles.
-                    </p>
-                    <OnboardingTasksManager />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Leaderboard Weights */}
-              <AccordionItem value="leaderboard-weights" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Trophy className="w-5 h-5" />
-                    <span className="font-display text-sm tracking-wide">LEADERBOARD SCORING</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-4">
-                    <LeaderboardWeightsManager />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </TabsContent>
-
-          {/* Integrations Category */}
-          <TabsContent value="integrations" className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Plug className="w-5 h-5 text-primary" />
-              <h2 className="font-display text-xl tracking-wide">INTEGRATIONS</h2>
-            </div>
-            <IntegrationsTab />
-          </TabsContent>
-
-          {/* System Category */}
-          <TabsContent value="system" className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Cog className="w-5 h-5 text-primary" />
-              <h2 className="font-display text-xl tracking-wide">SYSTEM SETTINGS</h2>
-            </div>
-
-            <Accordion type="single" collapsible defaultValue="appearance" className="space-y-4">
-              {/* Appearance Settings */}
-              <AccordionItem value="appearance" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Palette className="w-5 h-5" />
-                    <span className="font-display text-sm tracking-wide">APPEARANCE</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-4 space-y-8">
-                    <p className="text-sm text-muted-foreground font-sans">
-                      Customize the dashboard appearance. These settings only affect the backend dashboard, not the public website.
-                    </p>
-
-                    {/* Color Theme Selection */}
-                    <div className="space-y-4">
-                      <Label className="text-sm font-medium">Color Theme</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {colorThemes.map((themeOption) => {
-                          const isSelected = colorMounted && colorTheme === themeOption.id;
-                          const isDark = resolvedTheme === 'dark';
-                          const preview = isDark ? themeOption.darkPreview : themeOption.lightPreview;
-                          
-                          return (
-                            <button
-                              key={themeOption.id}
-                              onClick={() => setColorTheme(themeOption.id)}
-                              className={cn(
-                                "relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
-                                isSelected
-                                  ? "border-primary ring-2 ring-primary/20"
-                                  : "border-border hover:border-primary/50"
-                              )}
-                            >
-                              {/* Color Preview Swatches */}
-                              <div className="flex items-center gap-1.5 w-full">
-                                <div 
-                                  className="w-8 h-8 rounded-lg border border-black/10"
-                                  style={{ backgroundColor: preview.bg }}
-                                />
-                                <div 
-                                  className="w-8 h-8 rounded-lg border border-black/10"
-                                  style={{ backgroundColor: preview.accent }}
-                                />
-                                <div 
-                                  className="w-8 h-8 rounded-lg border border-black/10"
-                                  style={{ backgroundColor: preview.primary }}
-                                />
-                              </div>
-                              
-                              {/* Theme Info */}
-                              <div className="space-y-0.5">
-                                <span className="text-sm font-medium">{themeOption.name}</span>
-                                <p className="text-xs text-muted-foreground">{themeOption.description}</p>
-                              </div>
-                              
-                              {/* Selected Check */}
-                              {isSelected && (
-                                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                                  <Check className="w-3 h-3 text-primary-foreground" />
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
+        {/* Category Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((category) => {
+            const Icon = category.icon;
+            return (
+              <Card 
+                key={category.id}
+                className="cursor-pointer hover:border-primary/50 transition-all group"
+                onClick={() => setActiveCategory(category.id)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-primary" />
                     </div>
-
-                    {/* Theme Mode Toggle */}
-                    <div className="space-y-4">
-                      <Label className="text-sm font-medium">Theme Mode</Label>
-                      <div className="grid grid-cols-3 gap-3">
-                        <button
-                          onClick={() => setTheme('light')}
-                          className={cn(
-                            "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                            mounted && theme === 'light'
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center">
-                            <Sun className="w-5 h-5 text-foreground" />
-                          </div>
-                          <span className="text-sm font-medium">Light</span>
-                          {mounted && theme === 'light' && (
-                            <Check className="w-4 h-4 text-primary" />
-                          )}
-                        </button>
-                        
-                        <button
-                          onClick={() => setTheme('dark')}
-                          className={cn(
-                            "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                            mounted && theme === 'dark'
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <div className="w-10 h-10 rounded-full bg-foreground border border-border flex items-center justify-center">
-                            <Moon className="w-5 h-5 text-background" />
-                          </div>
-                          <span className="text-sm font-medium">Dark</span>
-                          {mounted && theme === 'dark' && (
-                            <Check className="w-4 h-4 text-primary" />
-                          )}
-                        </button>
-                        
-                        <button
-                          onClick={() => setTheme('system')}
-                          className={cn(
-                            "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                            mounted && theme === 'system'
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-foreground border border-border flex items-center justify-center">
-                            <Monitor className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <span className="text-sm font-medium">System</span>
-                          {mounted && theme === 'system' && (
-                            <Check className="w-4 h-4 text-primary" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Theme Info */}
-                    <div className="p-4 rounded-lg bg-muted/50 border border-border">
-                      <p className="text-xs text-muted-foreground">
-                        <strong>Note:</strong> Theme preferences are saved to your browser and will persist across sessions. 
-                        The public-facing website always uses the light cream theme.
-                      </p>
-                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Notification Settings */}
-              <AccordionItem value="notifications" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Bell className="w-5 h-5" />
-                    <span className="font-display text-sm tracking-wide">NOTIFICATIONS</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-4 space-y-6">
-                    <p className="text-sm text-muted-foreground font-sans">
-                      Configure email reminders and notifications.
-                    </p>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-sans font-medium text-sm">Daily Check-in Reminders</p>
-                          <p className="text-xs text-muted-foreground">
-                            Send reminder emails at 10 AM and 9 PM AZ time
-                          </p>
-                        </div>
-                        <Switch defaultChecked />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-sans font-medium text-sm">Weekly Wins Reminders</p>
-                          <p className="text-xs text-muted-foreground">
-                            Remind stylists to submit weekly wins
-                          </p>
-                        </div>
-                        <Switch defaultChecked />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-sans font-medium text-sm">Birthday Reminders (3 days before)</p>
-                          <p className="text-xs text-muted-foreground">
-                            Email leadership team about upcoming birthdays
-                          </p>
-                        </div>
-                        <Switch defaultChecked />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-sans font-medium text-sm">Ring the Bell Notifications</p>
-                          <p className="text-xs text-muted-foreground">
-                            Email coaches when someone rings the bell
-                          </p>
-                        </div>
-                        <Switch />
-                      </div>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Security */}
-              <AccordionItem value="security" className="border rounded-lg px-4">
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5" />
-                    <span className="font-display text-sm tracking-wide">SECURITY</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="py-4 space-y-6">
-                    <p className="text-sm text-muted-foreground font-sans">
-                      Security and access settings.
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-sans font-medium text-sm">Require Email Verification</p>
-                        <p className="text-xs text-muted-foreground">
-                          New users must verify email before accessing dashboard
-                        </p>
-                      </div>
-                      <Switch />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-sans font-medium text-sm">Restrict Sign-ups</p>
-                        <p className="text-xs text-muted-foreground">
-                          Only allow sign-ups from approved email domains
-                        </p>
-                      </div>
-                      <Switch />
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </TabsContent>
-        </Tabs>
+                </CardHeader>
+                <CardContent>
+                  <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
+                  <CardDescription>{category.description}</CardDescription>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     </DashboardLayout>
   );
