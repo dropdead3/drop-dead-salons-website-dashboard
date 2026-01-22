@@ -168,12 +168,13 @@
   }
 }
 
-/* Termina font rules: always uppercase, wide tracking, never italic */
+/* Termina font rules: always uppercase, wide tracking, never italic, NEVER synthetic bold */
 @layer utilities {
   .font-display {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-style: normal !important;
+    font-weight: 500 !important; /* Termina only has Medium weight - prevent synthetic bolding */
   }
   
   /* Laguna (serif) should NOT be uppercase */

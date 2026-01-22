@@ -223,7 +223,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between p-3 border-b border-border">
-          <h4 className="font-semibold text-sm">Notifications</h4>
+          <h4 className="font-medium text-sm">Notifications</h4>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
