@@ -1,10 +1,12 @@
 import { forwardRef, useEffect, useRef, useImperativeHandle } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTheme } from 'next-themes';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ExternalLink } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
+import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 
 interface NavItem {
   href: string;
@@ -49,6 +51,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     onNavClick,
   }, ref) => {
   const location = useLocation();
+  const { resolvedTheme } = useTheme();
   const internalRef = useRef<HTMLElement>(null);
   
   // Expose the internal ref
@@ -132,7 +135,11 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Logo */}
       <div className="p-6 border-b border-border">
         <Link to="/dashboard" className="block">
-          <img src={Logo} alt="Drop Dead" className="h-5 w-auto" />
+          <img 
+            src={resolvedTheme === 'dark' ? LogoWhite : Logo} 
+            alt="Drop Dead" 
+            className="h-5 w-auto" 
+          />
         </Link>
         <p className="text-xs text-muted-foreground mt-2 font-sans">
           Staff Dashboard
