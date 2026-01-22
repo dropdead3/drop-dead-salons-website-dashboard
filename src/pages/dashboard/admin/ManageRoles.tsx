@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key, UserPlus, Settings2 } from 'lucide-react';
+import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key, UserPlus, Settings2, RotateCcw } from 'lucide-react';
 import { useAllUsersWithRoles, useToggleUserRole } from '@/hooks/useUserRoles';
 import { useRoles } from '@/hooks/useRoles';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
@@ -28,6 +28,7 @@ import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
 import { RolePermissionsManager } from '@/components/dashboard/RolePermissionsManager';
 import { RoleEditor } from '@/components/dashboard/RoleEditor';
+import { SystemDefaultsConfigurator } from '@/components/dashboard/settings/SystemDefaultsConfigurator';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -205,7 +206,7 @@ export default function ManageRoles() {
 
         {/* Main Tabs: User Roles vs Role Permissions vs Manage Roles */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full max-w-lg grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="users" className="gap-2">
               <Users className="w-4 h-4" />
               User Roles
@@ -213,6 +214,10 @@ export default function ManageRoles() {
             <TabsTrigger value="permissions" className="gap-2">
               <Key className="w-4 h-4" />
               Permissions
+            </TabsTrigger>
+            <TabsTrigger value="defaults" className="gap-2">
+              <RotateCcw className="w-4 h-4" />
+              Defaults
             </TabsTrigger>
             <TabsTrigger value="manage" className="gap-2">
               <Settings2 className="w-4 h-4" />
@@ -497,6 +502,10 @@ export default function ManageRoles() {
 
           <TabsContent value="permissions">
             <RolePermissionsManager />
+          </TabsContent>
+
+          <TabsContent value="defaults">
+            <SystemDefaultsConfigurator />
           </TabsContent>
 
           <TabsContent value="manage">
