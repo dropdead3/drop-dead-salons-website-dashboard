@@ -4,7 +4,7 @@ import { useTheme } from 'next-themes';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Users } from 'lucide-react';
+import { ExternalLink, Rocket } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 
@@ -14,6 +14,12 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   permission?: string;
   roles?: string[];
+}
+
+interface OnboardingProgress {
+  completedCount: number;
+  totalCount: number;
+  percentage: number;
 }
 
 interface SidebarNavContentProps {
@@ -31,6 +37,7 @@ interface SidebarNavContentProps {
   filterNavItems: (items: NavItem[]) => NavItem[];
   onNavClick: () => void;
   isOnboardingComplete: boolean;
+  onboardingProgress?: OnboardingProgress;
 }
 
 const SIDEBAR_SCROLL_KEY = 'dashboard-sidebar-scroll';
@@ -51,6 +58,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     filterNavItems,
     onNavClick,
     isOnboardingComplete,
+    onboardingProgress,
   }, ref) => {
   const location = useLocation();
   const { resolvedTheme } = useTheme();
@@ -150,14 +158,35 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
 
       {/* Navigation */}
       <nav ref={internalRef} className="flex-1 py-4 overflow-y-auto">
-        {/* Onboarding Priority Item - Shows first when incomplete */}
+        {/* START HERE Priority Section - Only shows when onboarding incomplete */}
         {!isOnboardingComplete && (
-          <div className="space-y-1 mb-2">
-            <NavLink 
-              href="/dashboard/onboarding" 
-              label="Onboarding" 
-              icon={Users}
-            />
+          <div className="mb-4">
+            <Link
+              to="/dashboard/onboarding"
+              onClick={onNavClick}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 text-sm font-sans transition-colors",
+                location.pathname === '/dashboard/onboarding'
+                  ? "bg-foreground text-background" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <Rocket className="w-4 h-4" />
+              <span className="flex-1 font-medium">START HERE</span>
+              {onboardingProgress && (
+                <div className="flex items-center gap-2">
+                  <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary rounded-full transition-all duration-300"
+                      style={{ width: `${onboardingProgress.percentage}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {onboardingProgress.percentage}%
+                  </span>
+                </div>
+              )}
+            </Link>
             <div className="my-3 px-4">
               <div className="h-px bg-border" />
             </div>
