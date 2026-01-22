@@ -325,7 +325,7 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
     queryFn: async () => {
       let query = supabase
         .from('phorest_daily_sales_summary')
-        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions')
+        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions, location_id')
         .order('summary_date', { ascending: true });
 
       if (dateFrom) {
@@ -341,9 +341,13 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
       const { data, error } = await query;
       if (error) throw error;
 
-      // Aggregate by date
+      // Aggregate by date (for overall trend)
       const byDate: Record<string, any> = {};
+      // Also track by location
+      const byLocationDate: Record<string, Record<string, number>> = {};
+      
       data?.forEach(row => {
+        // Overall aggregation
         if (!byDate[row.summary_date]) {
           byDate[row.summary_date] = {
             date: row.summary_date,
@@ -357,9 +361,31 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
         byDate[row.summary_date].services += Number(row.service_revenue) || 0;
         byDate[row.summary_date].products += Number(row.product_revenue) || 0;
         byDate[row.summary_date].transactions += row.total_transactions || 0;
+
+        // Per-location aggregation
+        if (row.location_id) {
+          if (!byLocationDate[row.location_id]) {
+            byLocationDate[row.location_id] = {};
+          }
+          if (!byLocationDate[row.location_id][row.summary_date]) {
+            byLocationDate[row.location_id][row.summary_date] = 0;
+          }
+          byLocationDate[row.location_id][row.summary_date] += Number(row.total_revenue) || 0;
+        }
       });
 
-      return Object.values(byDate);
+      // Convert location data to arrays
+      const locationTrends: Record<string, { date: string; value: number }[]> = {};
+      Object.entries(byLocationDate).forEach(([locId, dates]) => {
+        locationTrends[locId] = Object.entries(dates)
+          .map(([date, value]) => ({ date, value }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+      });
+
+      return {
+        overall: Object.values(byDate),
+        byLocation: locationTrends,
+      };
     },
   });
 }

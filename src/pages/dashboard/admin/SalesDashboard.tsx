@@ -111,7 +111,8 @@ export default function SalesDashboard() {
 
   // Format trend data for chart
   const chartData = useMemo(() => {
-    return (trendData || []).map(d => ({
+    const data = trendData?.overall || trendData || [];
+    return (Array.isArray(data) ? data : []).map((d: any) => ({
       ...d,
       dateLabel: format(new Date(d.date), 'MMM d'),
     }));
