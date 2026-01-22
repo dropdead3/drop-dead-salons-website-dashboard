@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateInvitation } from '@/hooks/useStaffInvitations';
+import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { UserPlus, Loader2, Mail } from 'lucide-react';
 import { z } from 'zod';
 import type { Database } from '@/integrations/supabase/types';
@@ -27,17 +28,6 @@ type AppRole = Database['public']['Enums']['app_role'];
 
 const emailSchema = z.string().email('Please enter a valid email address');
 
-const roleOptions: { value: AppRole; label: string; description: string }[] = [
-  { value: 'stylist', label: 'Stylist', description: 'Hair stylist or extension specialist' },
-  { value: 'stylist_assistant', label: 'Stylist Assistant', description: 'Assists stylists with services' },
-  { value: 'assistant', label: 'Assistant', description: 'General assistant' },
-  { value: 'receptionist', label: 'Receptionist', description: 'Front desk staff' },
-  { value: 'admin_assistant', label: 'Admin Assistant', description: 'Administrative support' },
-  { value: 'operations_assistant', label: 'Operations Assistant', description: 'Operations support' },
-  { value: 'manager', label: 'Manager', description: 'Salon manager or coach' },
-  { value: 'admin', label: 'Admin', description: 'Full system access' },
-];
-
 export function InviteStaffDialog() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -45,6 +35,7 @@ export function InviteStaffDialog() {
   const [emailError, setEmailError] = useState<string | null>(null);
   
   const createInvitation = useCreateInvitation();
+  const { roleOptions } = useRoleUtils();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
