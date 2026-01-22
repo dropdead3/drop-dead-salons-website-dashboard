@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useUpcomingBirthdays } from './useBirthdays';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { toast } from 'sonner';
 
 /**
@@ -9,7 +9,7 @@ import { toast } from 'sonner';
  * - 1 day before: urgent notification
  */
 export function useBirthdayNotifications() {
-  const { roles } = useAuth();
+  const roles = useEffectiveRoles();
   const isLeadership = roles.includes('admin') || roles.includes('manager');
   const { data: upcomingBirthdays } = useUpcomingBirthdays(4);
 

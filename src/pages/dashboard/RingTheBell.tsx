@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { BellEntryCard } from '@/components/dashboard/BellEntryCard';
@@ -59,7 +60,9 @@ const leadSources = [
 ];
 
 export default function RingTheBell() {
-  const { user, isCoach } = useAuth();
+  const { user } = useAuth();
+  const roles = useEffectiveRoles();
+  const isCoach = roles.includes('admin') || roles.includes('manager');
   const { toast } = useToast();
   const { playBellSound } = useBellSound();
   const [entries, setEntries] = useState<BellEntry[]>([]);

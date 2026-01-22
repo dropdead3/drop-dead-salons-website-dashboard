@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,8 @@ interface Acknowledgment {
 }
 
 export default function MyHandbooks() {
-  const { roles, user } = useAuth();
+  const { user } = useAuth();
+  const roles = useEffectiveRoles();
   const { toast } = useToast();
   const [handbooks, setHandbooks] = useState<Handbook[]>([]);
   const [acknowledgments, setAcknowledgments] = useState<Acknowledgment[]>([]);

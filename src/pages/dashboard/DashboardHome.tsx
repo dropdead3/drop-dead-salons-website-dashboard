@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -70,7 +71,8 @@ const normalizeUrl = (url: string): string => {
 };
 
 export default function DashboardHome() {
-  const { user, roles } = useAuth();
+  const { user } = useAuth();
+  const roles = useEffectiveRoles();
   const { enrollment } = useDailyCompletion(user?.id);
   const { tasks, createTask, toggleTask, deleteTask, isImpersonating } = useTasks();
   const { data: approvalStatus } = useCurrentUserApprovalStatus();

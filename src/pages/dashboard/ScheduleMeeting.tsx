@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Clock, User, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useAvailableCoaches, useOneOnOneMeetings, useCreateMeeting, useUpdateMeetingStatus } from '@/hooks/useOneOnOneMeetings';
 import { format, parseISO } from 'date-fns';
 
@@ -27,7 +28,9 @@ const timeSlots = [
 ];
 
 export default function ScheduleMeeting() {
-  const { user, isCoach } = useAuth();
+  const { user } = useAuth();
+  const roles = useEffectiveRoles();
+  const isCoach = roles.includes('admin') || roles.includes('manager');
   const { data: coaches = [], isLoading: loadingCoaches } = useAvailableCoaches();
   const { data: meetings = [], isLoading: loadingMeetings } = useOneOnOneMeetings();
   const createMeeting = useCreateMeeting();
