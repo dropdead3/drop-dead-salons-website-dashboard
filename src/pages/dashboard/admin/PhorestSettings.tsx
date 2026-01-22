@@ -310,7 +310,7 @@ export default function PhorestSettings() {
                   variant="outline"
                   className="w-full"
                 >
-                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync'}
+                  {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Appts'}
                 </Button>
               </Card>
 
