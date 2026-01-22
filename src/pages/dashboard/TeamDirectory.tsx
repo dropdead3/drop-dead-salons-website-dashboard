@@ -582,246 +582,232 @@ function LocationCard({ location, teamMembers, allLocations, isSuperAdmin, canVi
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
       <Card className="overflow-hidden">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Building2 className="w-5 h-5 text-primary" />
-                {location.name}
-              </CardTitle>
-              <Badge variant="secondary" className="text-xs">
-                {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
-              </Badge>
-              {/* Open/Closed Status */}
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "text-[10px] font-medium gap-1",
-                  openStatus.isOpen 
-                    ? openStatus.type === 'closing-soon'
-                      ? "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700"
-                      : "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700"
-                    : "bg-muted text-muted-foreground border-muted-foreground/20"
-                )}
-              >
-                <span className={cn(
-                  "w-1.5 h-1.5 rounded-full",
-                  openStatus.isOpen
-                    ? openStatus.type === 'closing-soon'
-                      ? "bg-amber-500"
-                      : "bg-emerald-500"
-                    : "bg-muted-foreground/50"
-                )} />
-                {openStatus.label}
-              </Badge>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-3 cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap flex-1">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Building2 className="w-5 h-5 text-primary" />
+                  {location.name}
+                </CardTitle>
+                <Badge variant="secondary" className="text-xs">
+                  {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
+                </Badge>
+                {/* Open/Closed Status */}
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "text-[10px] font-medium gap-1",
+                    openStatus.isOpen 
+                      ? openStatus.type === 'closing-soon'
+                        ? "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700"
+                        : "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700"
+                      : "bg-muted text-muted-foreground border-muted-foreground/20"
+                  )}
+                >
+                  <span className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    openStatus.isOpen
+                      ? openStatus.type === 'closing-soon'
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                      : "bg-muted-foreground/50"
+                  )} />
+                  {openStatus.label}
+                </Badge>
+              </div>
+              
+              <ChevronDown className={cn(
+                "w-5 h-5 text-muted-foreground transition-transform duration-200 shrink-0",
+                isExpanded && "rotate-180"
+              )} />
             </div>
             
-            {/* Manager Avatars */}
-            {managers.length > 0 && (
-              <div className="flex -space-x-2">
-                {managers.map((manager, index) => (
-                  <TooltipProvider key={manager.id}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => navigate(`/dashboard/profile/${manager.user_id}`)}
-                          className="relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full transition-transform hover:scale-110 hover:z-10"
-                          style={{ zIndex: managers.length - index }}
-                        >
-                          <Avatar className="w-8 h-8 border-2 border-background">
-                            <AvatarImage src={manager.photo_url || undefined} />
-                            <AvatarFallback className="text-[10px] bg-muted">
-                              {(manager.display_name || manager.full_name).charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">
-                        <p className="font-medium">{manager.display_name || manager.full_name}</p>
-                        <p className="text-muted-foreground">{getManagerRole(manager)}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Map Preview */}
-          {location.google_maps_url && (
-            <a
-              href={location.google_maps_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full h-36 rounded-xl overflow-hidden relative group shadow-md ring-1 ring-border/50"
-            >
-              {/* Gradient overlay for polish */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
-              
-              <iframe
-                src={`https://www.google.com/maps?q=${encodeURIComponent(location.address + ', ' + location.city)}&output=embed&z=15`}
-                className="w-full h-full border-0 pointer-events-none scale-105"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title={`Map of ${location.name}`}
-              />
-              
-              {/* Hover overlay with CTA */}
-              <div className="absolute inset-0 z-20 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-y-0 translate-y-2 text-xs font-medium bg-background/95 backdrop-blur-sm text-foreground px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
-                  <Navigation className="w-3 h-3" />
-                  Open in Maps
-                </span>
-              </div>
-              
-              {/* Corner badge */}
-              <div className="absolute top-2 right-2 z-20">
-                <span className="text-[10px] font-medium bg-background/90 backdrop-blur-sm text-muted-foreground px-2 py-0.5 rounded-full shadow-sm">
-                  <MapPin className="w-2.5 h-2.5 inline mr-0.5" />
-                  Preview
-                </span>
-              </div>
-            </a>
-          )}
-
-          {/* Address */}
-          <CopyableField 
-            icon={<MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
-            value={`${location.address}, ${location.city}`}
-            label="address"
-          >
-            <div className="text-sm">
-              <p>{location.address}</p>
-              <p className="text-muted-foreground">{location.city}</p>
-            </div>
-          </CopyableField>
-
-          {/* Major Crossroads */}
-          {location.major_crossroads && (
-            <CopyableField 
-              icon={<Signpost className="w-4 h-4 text-muted-foreground shrink-0" />}
-              value={location.major_crossroads}
-              label="crossroads"
-            >
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Crossroads:</span> {location.major_crossroads}
-              </p>
-            </CopyableField>
-          )}
-
-          {/* Phone */}
-          {location.phone && (
-            <CopyableField 
-              icon={<Phone className="w-4 h-4 text-muted-foreground shrink-0" />}
-              value={location.phone}
-              label="phone"
-            >
-              <a 
-                href={`tel:${location.phone}`} 
-                className="text-sm hover:text-primary transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {location.phone}
-              </a>
-            </CopyableField>
-          )}
-
-          {/* Hours */}
-          <CopyableField 
-            icon={<Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
-            value={`${hoursDisplay || location.hours || 'Hours not set'}${closedDays ? ` (${closedDays})` : ''}`}
-            label="hours"
-          >
-            <div className="text-sm space-y-1">
-              {hoursDisplay ? (
-                <p>{hoursDisplay}</p>
-              ) : location.hours ? (
-                <p>{location.hours}</p>
-              ) : (
-                <p className="text-muted-foreground">Hours not set</p>
-              )}
-              {closedDays && (
-                <p className="text-muted-foreground text-xs">{closedDays}</p>
+            {/* Always visible: Address & Phone in compact form */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" />
+                {location.address}, {location.city}
+              </span>
+              {location.phone && (
+                <a 
+                  href={`tel:${location.phone}`} 
+                  className="flex items-center gap-1.5 hover:text-primary transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  {location.phone}
+                </a>
               )}
             </div>
-          </CopyableField>
+          </CardHeader>
+        </CollapsibleTrigger>
 
-          {/* Upcoming Holiday Closures */}
-          {upcomingHolidays.length > 0 && (
-            <div className="flex items-start gap-3">
-              <CalendarX className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-              <div className="text-sm space-y-1">
-                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Upcoming Closures</p>
-                {upcomingHolidays.map((holiday, idx) => (
-                  <p key={idx} className="text-xs text-muted-foreground">
-                    {format(new Date(holiday.date), 'MMM d')} — {holiday.name}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Action Links */}
-          <div className="flex gap-2 pt-2">
+        <CollapsibleContent>
+          <CardContent className="space-y-4 pt-0">
+            {/* Map Preview */}
             {location.google_maps_url && (
               <a
                 href={location.google_maps_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                className="block w-full h-36 rounded-xl overflow-hidden relative group shadow-md ring-1 ring-border/50"
               >
-                <Navigation className="w-3.5 h-3.5" />
-                Directions
+                {/* Gradient overlay for polish */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
+                
+                <iframe
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(location.address + ', ' + location.city)}&output=embed&z=15`}
+                  className="w-full h-full border-0 pointer-events-none scale-105"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title={`Map of ${location.name}`}
+                />
+                
+                {/* Hover overlay with CTA */}
+                <div className="absolute inset-0 z-20 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                  <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-y-0 translate-y-2 text-xs font-medium bg-background/95 backdrop-blur-sm text-foreground px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                    <Navigation className="w-3 h-3" />
+                    Open in Maps
+                  </span>
+                </div>
+                
+                {/* Corner badge */}
+                <div className="absolute top-2 right-2 z-20">
+                  <span className="text-[10px] font-medium bg-background/90 backdrop-blur-sm text-muted-foreground px-2 py-0.5 rounded-full shadow-sm">
+                    <MapPin className="w-2.5 h-2.5 inline mr-0.5" />
+                    Preview
+                  </span>
+                </div>
               </a>
             )}
-            {location.booking_url && (
-              <a
-                href={location.booking_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                Book Here
-              </a>
-            )}
-          </div>
 
-          {/* Expand/Collapse Trigger */}
-          {teamMembers.length > 0 && (
-            <CollapsibleTrigger asChild>
-              <button className="w-full flex items-center justify-center gap-2 pt-3 mt-2 border-t border-border text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <Users className="w-4 h-4" />
-                {isExpanded ? 'Hide' : 'View'} Team Members
-                <ChevronDown className={cn(
-                  "w-4 h-4 transition-transform duration-200",
-                  isExpanded && "rotate-180"
-                )} />
-              </button>
-            </CollapsibleTrigger>
-          )}
-        </CardContent>
-
-        {/* Expandable Team Members Section */}
-        <CollapsibleContent>
-          <div className="border-t border-border bg-muted/30">
-            <div className="p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {sortedTeamMembers.map((member) => (
-                  <TeamMemberCard
-                    key={member.id}
-                    member={member}
-                    locations={allLocations}
-                    isSuperAdmin={isSuperAdmin}
-                    canViewStrikes={canViewStrikes}
-                    strikeCount={strikeCounts[member.user_id] || 0}
-                    onViewProfile={() => onViewProfile?.(member.user_id)}
-                  />
-                ))}
+            {/* Address with copy */}
+            <CopyableField 
+              icon={<MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
+              value={`${location.address}, ${location.city}`}
+              label="address"
+            >
+              <div className="text-sm">
+                <p>{location.address}</p>
+                <p className="text-muted-foreground">{location.city}</p>
               </div>
+            </CopyableField>
+
+            {/* Major Crossroads */}
+            {location.major_crossroads && (
+              <CopyableField 
+                icon={<Signpost className="w-4 h-4 text-muted-foreground shrink-0" />}
+                value={location.major_crossroads}
+                label="crossroads"
+              >
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Crossroads:</span> {location.major_crossroads}
+                </p>
+              </CopyableField>
+            )}
+
+            {/* Phone with copy */}
+            {location.phone && (
+              <CopyableField 
+                icon={<Phone className="w-4 h-4 text-muted-foreground shrink-0" />}
+                value={location.phone}
+                label="phone"
+              >
+                <a 
+                  href={`tel:${location.phone}`} 
+                  className="text-sm hover:text-primary transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {location.phone}
+                </a>
+              </CopyableField>
+            )}
+
+            {/* Hours */}
+            <CopyableField 
+              icon={<Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
+              value={`${hoursDisplay || location.hours || 'Hours not set'}${closedDays ? ` (${closedDays})` : ''}`}
+              label="hours"
+            >
+              <div className="text-sm space-y-1">
+                {hoursDisplay ? (
+                  <p>{hoursDisplay}</p>
+                ) : location.hours ? (
+                  <p>{location.hours}</p>
+                ) : (
+                  <p className="text-muted-foreground">Hours not set</p>
+                )}
+                {closedDays && (
+                  <p className="text-muted-foreground text-xs">{closedDays}</p>
+                )}
+              </div>
+            </CopyableField>
+
+            {/* Upcoming Holiday Closures */}
+            {upcomingHolidays.length > 0 && (
+              <div className="flex items-start gap-3">
+                <CalendarX className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                <div className="text-sm space-y-1">
+                  <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Upcoming Closures</p>
+                  {upcomingHolidays.map((holiday, idx) => (
+                    <p key={idx} className="text-xs text-muted-foreground">
+                      {format(new Date(holiday.date), 'MMM d')} — {holiday.name}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Action Links */}
+            <div className="flex gap-2 pt-2">
+              {location.google_maps_url && (
+                <a
+                  href={location.google_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  Directions
+                </a>
+              )}
+              {location.booking_url && (
+                <a
+                  href={location.booking_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Book Here
+                </a>
+              )}
             </div>
-          </div>
+
+            {/* Team Members Section */}
+            {teamMembers.length > 0 && (
+              <div className="pt-4 mt-2 border-t border-border">
+                <p className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Team Members ({teamMembers.length})
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {sortedTeamMembers.map((member) => (
+                    <TeamMemberCard
+                      key={member.id}
+                      member={member}
+                      locations={allLocations}
+                      isSuperAdmin={isSuperAdmin}
+                      canViewStrikes={canViewStrikes}
+                      strikeCount={strikeCounts[member.user_id] || 0}
+                      onViewProfile={() => onViewProfile?.(member.user_id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
         </CollapsibleContent>
       </Card>
     </Collapsible>
