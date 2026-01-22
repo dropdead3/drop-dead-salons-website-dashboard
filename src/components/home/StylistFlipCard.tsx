@@ -148,8 +148,8 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
               </div>
               <h3 className="text-xl font-display mb-1">{formatCardName(stylist.name, stylist.displayName)}</h3>
               
-              {/* Social Link - Show preferred handle only */}
-              <div className="flex flex-col gap-1 mb-4">
+              {/* Social Link - Show preferred handle only, maintain consistent height */}
+              <div className="min-h-[24px] mb-4">
                 {(() => {
                   const preferred = stylist.preferred_social_handle || 'instagram';
                   const showInstagram = preferred === 'instagram' && stylist.instagram;
