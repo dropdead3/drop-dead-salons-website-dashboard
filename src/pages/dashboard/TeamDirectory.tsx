@@ -11,7 +11,7 @@ import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
-import { useLocations, formatHoursForDisplay, getClosedDays, type Location } from '@/hooks/useLocations';
+import { useLocations, formatHoursForDisplay, getClosedDays, getTodayHours, isClosedToday, isClosedForHoliday, type Location } from '@/hooks/useLocations';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { differenceInYears, differenceInMonths, parseISO, format, setYear, isSameDay, differenceInDays, isBefore } from 'date-fns';
@@ -452,17 +452,80 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
     return member.roles.includes('general_manager') ? 'General Manager' : 'Manager';
   };
 
+  // Determine open/closed status
+  const getOpenStatus = () => {
+    // Check for holiday closure first
+    const holidayClosure = isClosedForHoliday(location.holiday_closures);
+    if (holidayClosure) {
+      return { isOpen: false, label: `Closed – ${holidayClosure.name}`, type: 'holiday' as const };
+    }
+    
+    // Check if closed today based on regular hours
+    if (isClosedToday(location.hours_json)) {
+      return { isOpen: false, label: 'Closed Today', type: 'regular' as const };
+    }
+    
+    // Check current time against today's hours
+    const todayHours = getTodayHours(location.hours_json);
+    if (!todayHours) {
+      return { isOpen: false, label: 'Closed', type: 'regular' as const };
+    }
+    
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    const [openHour, openMin] = todayHours.open.split(':').map(Number);
+    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
+    const openMinutes = openHour * 60 + openMin;
+    const closeMinutes = closeHour * 60 + closeMin;
+    
+    if (currentMinutes >= openMinutes && currentMinutes < closeMinutes) {
+      // Calculate minutes until close
+      const minsUntilClose = closeMinutes - currentMinutes;
+      if (minsUntilClose <= 60) {
+        return { isOpen: true, label: `Closes in ${minsUntilClose}m`, type: 'closing-soon' as const };
+      }
+      return { isOpen: true, label: 'Open', type: 'open' as const };
+    }
+    
+    return { isOpen: false, label: 'Closed', type: 'regular' as const };
+  };
+
+  const openStatus = getOpenStatus();
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Building2 className="w-5 h-5 text-primary" />
               {location.name}
             </CardTitle>
             <Badge variant="secondary" className="text-xs">
               {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
+            </Badge>
+            {/* Open/Closed Status */}
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-[10px] font-medium gap-1",
+                openStatus.isOpen 
+                  ? openStatus.type === 'closing-soon'
+                    ? "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700"
+                    : "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700"
+                  : "bg-muted text-muted-foreground border-muted-foreground/20"
+              )}
+            >
+              <span className={cn(
+                "w-1.5 h-1.5 rounded-full",
+                openStatus.isOpen
+                  ? openStatus.type === 'closing-soon'
+                    ? "bg-amber-500"
+                    : "bg-emerald-500"
+                  : "bg-muted-foreground/50"
+              )} />
+              {openStatus.label}
             </Badge>
           </div>
           
