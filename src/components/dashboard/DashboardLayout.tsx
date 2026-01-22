@@ -93,6 +93,7 @@ import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { useTheme } from 'next-themes';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 
 // Role colors/icons now come from useRoleUtils hook
 
@@ -935,6 +936,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </TooltipContent>
             </Tooltip>
           </div>
+
+          {/* Next Client Indicator - Stylists and Assistants only */}
+          {(isStylistRole || isStylistAssistantRole) && (
+            <NextClientIndicator userId={user?.id} />
+          )}
           
           {/* Right side - User controls */}
           <div className="flex items-center gap-3">

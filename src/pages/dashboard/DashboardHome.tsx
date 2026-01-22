@@ -46,7 +46,6 @@ import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrac
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
-import { NextClientWidget } from '@/components/dashboard/NextClientWidget';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -242,11 +241,6 @@ export default function DashboardHome() {
               )}
             </div>
           </div>
-        )}
-
-        {/* Next Client Widget - Stylists and Assistants only */}
-        {hasStylistRole && (
-          <NextClientWidget userId={user?.id} />
         )}
 
         {/* Aggregate Sales Overview - Leadership Only */}
