@@ -5,9 +5,10 @@ import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
-export const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'assistant', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
+export const ALL_ROLES: AppRole[] = ['super_admin', 'admin', 'manager', 'stylist', 'receptionist', 'assistant', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
 
 export const ROLE_LABELS: Record<AppRole, string> = {
+  super_admin: 'Super Admin',
   admin: 'Admin',
   manager: 'Manager',
   stylist: 'Stylist',
@@ -19,6 +20,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 };
 
 export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
+  super_admin: 'Complete system access and user management',
   admin: 'Full access to all features and settings',
   manager: 'Can manage team, view reports, and approve requests',
   stylist: 'Access to stylist features and 75 Hard program',

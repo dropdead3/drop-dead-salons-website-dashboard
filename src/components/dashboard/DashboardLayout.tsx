@@ -198,6 +198,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const getSimulatedPermissions = (role: AppRole): string[] => {
     // These are the default permissions for each role - should match database seed
     const rolePermissionMap: Record<AppRole, string[]> = {
+      super_admin: [
+        'view_command_center', 'view_team_directory', 'view_training', 'access_client_engine',
+        'ring_the_bell', 'view_leaderboard', 'view_own_stats', 'view_assistant_schedule',
+        'request_assistant', 'manage_assistant_schedule', 'schedule_meetings', 'view_onboarding',
+        'view_handbooks', 'view_team_overview', 'manage_announcements', 'view_all_stats',
+        'approve_accounts', 'manage_user_roles', 'manage_handbooks', 'manage_homepage_stylists',
+        'manage_settings', 'grant_super_admin'
+      ],
       admin: [
         'view_command_center', 'view_team_directory', 'view_training', 'access_client_engine',
         'ring_the_bell', 'view_leaderboard', 'view_own_stats', 'view_assistant_schedule',

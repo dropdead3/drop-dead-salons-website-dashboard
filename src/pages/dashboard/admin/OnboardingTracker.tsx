@@ -121,6 +121,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const ROLE_LABELS: Record<AppRole, string> = {
+  super_admin: 'Super Admin',
   admin: 'Admin',
   manager: 'Manager',
   stylist: 'Stylist',
