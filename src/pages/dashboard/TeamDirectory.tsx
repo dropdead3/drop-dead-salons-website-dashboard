@@ -986,7 +986,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
             
             {/* Specialty Badges */}
             {member.specialties && member.specialties.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2.5 pt-2.5 border-t border-border/50">
+              <div className="flex flex-wrap justify-center gap-1 mt-2.5 pt-2.5 border-t border-border/50">
                 {member.specialties.slice(0, 4).map((specialty) => {
                   const isHighlighted = member.highlighted_services?.includes(specialty);
                   const isExtensions = specialty.toLowerCase() === 'extensions';
@@ -996,7 +996,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                       key={specialty}
                       variant="outline"
                       className={cn(
-                        "text-[10px] font-medium h-5 px-1.5 gap-0.5",
+                        "text-[10px] font-medium h-5 px-1.5 gap-0.5 normal-case",
                         isExtensions
                           ? "bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300 dark:from-amber-950/40 dark:to-yellow-950/40 dark:text-amber-300 dark:border-amber-700"
                           : isHighlighted
@@ -1012,7 +1012,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                   );
                 })}
                 {member.specialties.length > 4 && (
-                  <Badge variant="outline" className="text-[10px] font-medium h-5 px-1.5 bg-muted/30 text-muted-foreground">
+                  <Badge variant="outline" className="text-[10px] font-medium h-5 px-1.5 bg-muted/30 text-muted-foreground normal-case">
                     +{member.specialties.length - 4}
                   </Badge>
                 )}
