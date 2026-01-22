@@ -20,7 +20,7 @@ interface SalesStatsCardProps {
   userId: string | undefined;
 }
 
-type DateRange = '7d' | '30d' | 'thisWeek';
+type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek';
 
 export function SalesStatsCard({ userId }: SalesStatsCardProps) {
   const [dateRange, setDateRange] = useState<DateRange>('7d');
@@ -29,6 +29,11 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
   const dateFilters = (() => {
     const now = new Date();
     switch (dateRange) {
+      case 'today':
+        return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+      case 'yesterday':
+        const yesterday = subDays(now, 1);
+        return { dateFrom: format(yesterday, 'yyyy-MM-dd'), dateTo: format(yesterday, 'yyyy-MM-dd') };
       case '7d':
         return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
       case '30d':
@@ -109,6 +114,8 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="yesterday">Yesterday</SelectItem>
               <SelectItem value="thisWeek">This Week</SelectItem>
               <SelectItem value="7d">Last 7 Days</SelectItem>
               <SelectItem value="30d">Last 30 Days</SelectItem>

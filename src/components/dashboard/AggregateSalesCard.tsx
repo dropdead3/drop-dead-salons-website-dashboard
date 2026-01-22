@@ -44,7 +44,7 @@ import { RevenueDonutChart } from './sales/RevenueDonutChart';
 import { SalesGoalProgress } from './sales/SalesGoalProgress';
 import { LastSyncIndicator } from './sales/LastSyncIndicator';
 
-type DateRange = '7d' | '30d' | 'thisWeek' | 'thisMonth';
+type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth';
 
 export function AggregateSalesCard() {
   const navigate = useNavigate();
@@ -54,6 +54,11 @@ export function AggregateSalesCard() {
   const dateFilters = (() => {
     const now = new Date();
     switch (dateRange) {
+      case 'today':
+        return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+      case 'yesterday':
+        const yesterday = subDays(now, 1);
+        return { dateFrom: format(yesterday, 'yyyy-MM-dd'), dateTo: format(yesterday, 'yyyy-MM-dd') };
       case '7d':
         return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
       case '30d':
@@ -183,6 +188,8 @@ export function AggregateSalesCard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="yesterday">Yesterday</SelectItem>
               <SelectItem value="thisWeek">This Week</SelectItem>
               <SelectItem value="7d">Last 7 Days</SelectItem>
               <SelectItem value="thisMonth">This Month</SelectItem>
