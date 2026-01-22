@@ -151,10 +151,7 @@ const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/invitations', label: 'Staff Invitations', icon: UserPlus, permission: 'approve_accounts' },
   { href: '/dashboard/admin/approvals', label: 'Account Approvals', icon: UserCheck, permission: 'approve_accounts' },
   { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
-  { href: '/dashboard/admin/stylist-levels', label: 'Stylist Levels', icon: Layers, permission: 'manage_settings' },
-  { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText, permission: 'manage_handbooks' },
   { href: '/dashboard/admin/command-center-console', label: 'Command Center Console', icon: LayoutDashboard, permission: 'manage_visibility_console' },
-  { href: '/dashboard/admin/program-editor', label: 'Program Editor', icon: Target, permission: 'manage_program_editor' },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 

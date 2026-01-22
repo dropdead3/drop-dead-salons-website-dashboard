@@ -21,12 +21,7 @@ import {
   Loader2,
   Trash2,
   Mail,
-  Variable,
-  PenTool,
-  FileText,
   Cog,
-  ClipboardCheck,
-  Trophy,
   Rocket,
   Palette,
   Sun,
@@ -35,6 +30,9 @@ import {
   Check,
   Plug,
   ChevronRight,
+  GraduationCap,
+  BookOpen,
+  Layers,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -43,6 +41,8 @@ import { SignaturePresetsManager } from '@/components/dashboard/SignaturePresets
 import { OnboardingTasksManager } from '@/components/dashboard/OnboardingTasksManager';
 import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
 import { IntegrationsTab } from '@/components/dashboard/IntegrationsTab';
+import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLevelsContent';
+import { HandbooksContent } from '@/components/dashboard/settings/HandbooksContent';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +61,7 @@ const roleOptions = [
   { value: 'assistant', label: 'Assistant' },
 ];
 
-type SettingsCategory = 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | null;
+type SettingsCategory = 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | null;
 
 export default function Settings() {
   const { user } = useAuth();
@@ -215,6 +215,24 @@ export default function Settings() {
       description: 'Appearance, notifications & security',
       icon: Cog,
     },
+    {
+      id: 'program' as const,
+      label: 'Program Editor',
+      description: 'Client Engine course configuration',
+      icon: GraduationCap,
+    },
+    {
+      id: 'levels' as const,
+      label: 'Stylist Levels',
+      description: 'Experience tiers & pricing',
+      icon: Layers,
+    },
+    {
+      id: 'handbooks' as const,
+      label: 'Handbooks',
+      description: 'Team documents & training',
+      icon: BookOpen,
+    },
   ];
 
   // If a category is selected, show detailed view
@@ -241,10 +259,7 @@ export default function Settings() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-primary" />
-                    <CardTitle className="font-display text-lg">EMAIL TEMPLATES</CardTitle>
-                  </div>
+                  <CardTitle className="font-display text-lg">EMAIL TEMPLATES</CardTitle>
                   <CardDescription>Customize email templates for automated notifications.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -254,10 +269,7 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Variable className="w-5 h-5 text-primary" />
-                    <CardTitle className="font-display text-lg">EMAIL VARIABLES</CardTitle>
-                  </div>
+                  <CardTitle className="font-display text-lg">EMAIL VARIABLES</CardTitle>
                   <CardDescription>Manage available template variables.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -267,10 +279,7 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <PenTool className="w-5 h-5 text-primary" />
-                    <CardTitle className="font-display text-lg">SIGNATURE PRESETS</CardTitle>
-                  </div>
+                  <CardTitle className="font-display text-lg">SIGNATURE PRESETS</CardTitle>
                   <CardDescription>Reusable email signature blocks.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -283,10 +292,7 @@ export default function Settings() {
           {activeCategory === 'users' && (
             <Card>
               <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  <CardTitle className="font-display text-lg">TEAM MEMBERS</CardTitle>
-                </div>
+                <CardTitle className="font-display text-lg">TEAM MEMBERS</CardTitle>
                 <CardDescription>Manage team members and their access levels.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -354,10 +360,7 @@ export default function Settings() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <ClipboardCheck className="w-5 h-5 text-primary" />
-                    <CardTitle className="font-display text-lg">ONBOARDING TASKS</CardTitle>
-                  </div>
+                  <CardTitle className="font-display text-lg">ONBOARDING TASKS</CardTitle>
                   <CardDescription>Configure onboarding checklist items by role.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -367,10 +370,7 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-primary" />
-                    <CardTitle className="font-display text-lg">LEADERBOARD SCORING</CardTitle>
-                  </div>
+                  <CardTitle className="font-display text-lg">LEADERBOARD SCORING</CardTitle>
                   <CardDescription>Adjust weight distribution for performance metrics.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -418,15 +418,15 @@ export default function Settings() {
                           >
                             <div className="flex items-center gap-1.5 w-full">
                               <div 
-                                className="w-8 h-8 rounded-lg border border-black/10"
+                                className="w-8 h-8 rounded-lg border border-border"
                                 style={{ backgroundColor: preview.bg }}
                               />
                               <div 
-                                className="w-8 h-8 rounded-lg border border-black/10"
+                                className="w-8 h-8 rounded-lg border border-border"
                                 style={{ backgroundColor: preview.accent }}
                               />
                               <div 
-                                className="w-8 h-8 rounded-lg border border-black/10"
+                                className="w-8 h-8 rounded-lg border border-border"
                                 style={{ backgroundColor: preview.primary }}
                               />
                             </div>
@@ -522,41 +522,23 @@ export default function Settings() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-sans font-medium text-sm">Daily Check-in Reminders</p>
-                      <p className="text-xs text-muted-foreground">
-                        Send reminder emails at 10 AM and 9 PM AZ time
-                      </p>
+                      <p className="text-xs text-muted-foreground">Send reminder emails at 10 AM and 9 PM AZ time</p>
                     </div>
                     <Switch defaultChecked />
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-sans font-medium text-sm">Weekly Wins Reminders</p>
-                      <p className="text-xs text-muted-foreground">
-                        Remind stylists to submit weekly wins
-                      </p>
+                      <p className="text-xs text-muted-foreground">Remind stylists to submit weekly wins</p>
                     </div>
                     <Switch defaultChecked />
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-sans font-medium text-sm">Birthday Reminders (3 days before)</p>
-                      <p className="text-xs text-muted-foreground">
-                        Email leadership team about upcoming birthdays
-                      </p>
+                      <p className="font-sans font-medium text-sm">Birthday Reminders</p>
+                      <p className="text-xs text-muted-foreground">Email leadership team 3 days before</p>
                     </div>
                     <Switch defaultChecked />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-sans font-medium text-sm">Ring the Bell Notifications</p>
-                      <p className="text-xs text-muted-foreground">
-                        Email coaches when someone rings the bell
-                      </p>
-                    </div>
-                    <Switch />
                   </div>
                 </CardContent>
               </Card>
@@ -574,19 +556,14 @@ export default function Settings() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-sans font-medium text-sm">Require Email Verification</p>
-                      <p className="text-xs text-muted-foreground">
-                        New users must verify email before accessing dashboard
-                      </p>
+                      <p className="text-xs text-muted-foreground">New users must verify email</p>
                     </div>
                     <Switch />
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-sans font-medium text-sm">Restrict Sign-ups</p>
-                      <p className="text-xs text-muted-foreground">
-                        Only allow sign-ups from approved email domains
-                      </p>
+                      <p className="text-xs text-muted-foreground">Only approved email domains</p>
                     </div>
                     <Switch />
                   </div>
@@ -594,6 +571,24 @@ export default function Settings() {
               </Card>
             </div>
           )}
+
+          {activeCategory === 'program' && (
+            <Card className="p-6">
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <GraduationCap className="w-12 h-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  The Program Editor is a complex configuration tool.
+                </p>
+                <Button onClick={() => window.location.href = '/dashboard/admin/program-editor'}>
+                  Open Program Editor
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {activeCategory === 'levels' && <StylistLevelsContent />}
+
+          {activeCategory === 'handbooks' && <HandbooksContent />}
         </div>
       </DashboardLayout>
     );
@@ -612,7 +607,7 @@ export default function Settings() {
         </div>
 
         {/* Category Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {categories.map((category) => {
             const Icon = category.icon;
             return (
