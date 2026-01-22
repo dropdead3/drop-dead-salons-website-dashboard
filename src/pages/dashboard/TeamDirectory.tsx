@@ -449,10 +449,15 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Building2 className="w-5 h-5 text-primary" />
-            {location.name}
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Building2 className="w-5 h-5 text-primary" />
+              {location.name}
+            </CardTitle>
+            <Badge variant="secondary" className="text-xs">
+              {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
+            </Badge>
+          </div>
           
           {/* Leadership Avatars */}
           {leadership.length > 0 && (
