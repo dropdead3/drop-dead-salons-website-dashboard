@@ -222,30 +222,30 @@ export default function ManageRoles() {
 
           <TabsContent value="users" className="space-y-6">
             {/* Role Legend */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Role Overview</CardTitle>
+            <Card className="bg-muted/20 border-muted/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-display uppercase tracking-wider">Role Overview</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-4">
                   {roles.map(role => {
                     const colorClasses = getRoleColorClasses(role.color);
                     const isSuperAdminRole = role.name === 'super_admin';
                     return (
-                      <div key={role.name} className="flex items-start gap-2">
+                      <div key={role.name} className="flex items-start gap-3">
                         <Badge 
-                          variant={isSuperAdminRole ? "default" : "outline"} 
+                          variant="outline" 
                           className={cn(
-                            "text-xs shrink-0",
+                            "text-xs shrink-0 whitespace-nowrap px-3 py-1",
                             isSuperAdminRole 
-                              ? "bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300 gap-1" 
-                              : cn(colorClasses.bg, colorClasses.text)
+                              ? "bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 text-amber-800 border-amber-300/60 gap-1.5" 
+                              : cn(colorClasses.bg, colorClasses.text, "border-current/20")
                           )}
                         >
                           {isSuperAdminRole && <Crown className="w-3 h-3" />}
                           {role.display_name}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-sm text-muted-foreground leading-snug">
                           {role.description || 'No description'}
                           {role.name === 'admin' && !canApproveAdmin && (
                             <span className="text-amber-600 dark:text-amber-400 ml-1">(Super Admin required)</span>
