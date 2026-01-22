@@ -125,7 +125,7 @@ const growthNavItems: NavItem[] = [
   { href: '/dashboard/program', label: 'New-Client Engine Program', icon: Target, permission: 'access_client_engine' },
   { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell' },
-  { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, roles: ['stylist_assistant'] },
+  { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, permission: 'view_my_graduation' },
 ];
 
 // Base get help items - the assistant schedule label is computed dynamically in the component
@@ -161,8 +161,8 @@ const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/stylist-levels', label: 'Stylist Levels', icon: Layers, permission: 'manage_settings' },
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText, permission: 'manage_handbooks' },
-  { href: '/dashboard/admin/command-center-console', label: 'Command Center Console', icon: LayoutDashboard, permission: 'manage_settings' },
-  { href: '/dashboard/admin/program-editor', label: 'Program Editor', icon: Target, permission: 'manage_settings' },
+  { href: '/dashboard/admin/command-center-console', label: 'Command Center Console', icon: LayoutDashboard, permission: 'manage_visibility_console' },
+  { href: '/dashboard/admin/program-editor', label: 'Program Editor', icon: Target, permission: 'manage_program_editor' },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 
