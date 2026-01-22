@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { usePhorestPerformanceMetrics, usePhorestConnection, useUserPhorestMapping } from '@/hooks/usePhorestSync';
-import { format, startOfWeek } from 'date-fns';
+import { useUserSalesSummary } from '@/hooks/useSalesData';
+import { format, startOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { 
   Eye, 
   MessageCircle, 
@@ -24,6 +25,9 @@ import {
 import { Link } from 'react-router-dom';
 import { SalesStatsCard } from '@/components/dashboard/SalesStatsCard';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
+import { PersonalGoalsCard } from '@/components/dashboard/sales/PersonalGoalsCard';
+import { TierProgressAlert } from '@/components/dashboard/sales/TierProgressAlert';
+import { SalesAchievements } from '@/components/dashboard/sales/SalesAchievements';
 
 interface DailyMetrics {
   posts_published: number;
@@ -70,11 +74,20 @@ export default function Stats() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Date ranges for sales data
+  const today = new Date();
+  const weekStart = format(startOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const monthStart = format(startOfMonth(today), 'yyyy-MM-dd');
+  const monthEnd = format(endOfMonth(today), 'yyyy-MM-dd');
+
   // Phorest data
-  const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
   const { data: phorestConnection } = usePhorestConnection();
   const { data: phorestMetrics, isLoading: phorestLoading } = usePhorestPerformanceMetrics(weekStart);
   const { data: userPhorestMapping } = useUserPhorestMapping(user?.id);
+
+  // User sales data for goals and achievements
+  const { data: userWeeklySales } = useUserSalesSummary(user?.id, weekStart, format(today, 'yyyy-MM-dd'));
+  const { data: userMonthlySales } = useUserSalesSummary(user?.id, monthStart, monthEnd);
 
   // Find current user's Phorest metrics
   const myPhorestMetrics = useMemo(() => {
@@ -183,6 +196,30 @@ export default function Stats() {
               Your account isn't linked to Phorest yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
             </p>
           </Card>
+        )}
+
+        {/* Personal Goals & Progress Section */}
+        {user && (
+          <div className="grid gap-6 md:grid-cols-2">
+            <PersonalGoalsCard 
+              userId={user.id}
+              currentMonthlyRevenue={userMonthlySales?.totalRevenue || 0}
+              currentWeeklyRevenue={userWeeklySales?.totalRevenue || 0}
+            />
+            <TierProgressAlert 
+              currentRevenue={userMonthlySales?.totalRevenue || 0}
+            />
+          </div>
+        )}
+
+        {/* Sales Achievements */}
+        {user && (userMonthlySales?.totalRevenue || 0) > 0 && (
+          <SalesAchievements
+            totalRevenue={userMonthlySales?.totalRevenue || 0}
+            serviceRevenue={userMonthlySales?.serviceRevenue || 0}
+            productRevenue={userMonthlySales?.productRevenue || 0}
+            totalTransactions={userMonthlySales?.totalTransactions || 0}
+          />
         )}
 
         {/* Sales Data Card */}
