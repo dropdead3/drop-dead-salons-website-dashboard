@@ -227,16 +227,16 @@ export default function ManageRoles() {
                 <CardTitle className="text-sm font-display uppercase tracking-wider">Role Overview</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-5">
                   {roles.map(role => {
                     const colorClasses = getRoleColorClasses(role.color);
                     const isSuperAdminRole = role.name === 'super_admin';
                     return (
-                      <div key={role.name} className="flex items-start gap-3">
+                      <div key={role.name} className="flex flex-col gap-1.5">
                         <Badge 
                           variant="outline" 
                           className={cn(
-                            "text-xs shrink-0 whitespace-nowrap px-3 py-1",
+                            "text-xs w-fit whitespace-nowrap px-3 py-1",
                             isSuperAdminRole 
                               ? "bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 text-amber-800 border-amber-300/60 gap-1.5" 
                               : cn(colorClasses.bg, colorClasses.text, "border-current/20")
