@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ArrowRight, MoreVertical, ChevronDown, MoreHorizontal } from "lucide-react";
+import { Menu, X, ArrowRight, ChevronDown, MoreHorizontal, UserRound } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/assets/drop-dead-logo.svg";
 import LogoIcon from "@/assets/dd-secondary-logo.svg";
@@ -483,9 +483,9 @@ export function Header() {
                     transition={{ duration: 0.2 }}
                     onClick={() => setIsStaffMenuOpen(true)}
                     className="p-2 transition-opacity"
-                    aria-label="More options"
+                    aria-label="Staff login"
                   >
-                    <MoreVertical size={20} />
+                    <UserRound size={20} />
                   </motion.button>
                 )}
               </AnimatePresence>
