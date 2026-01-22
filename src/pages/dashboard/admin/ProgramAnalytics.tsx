@@ -90,7 +90,7 @@ export default function ProgramAnalytics() {
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState<EnrollmentData[]>([]);
   const [completions, setCompletions] = useState<CompletionData[]>([]);
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [dateRange, setDateRange] = useState<'today' | 'yesterday' | '7d' | '30d' | '90d' | 'all'>('30d');
 
   useEffect(() => {
     fetchData();
@@ -168,7 +168,7 @@ export default function ProgramAnalytics() {
 
   // Daily completion trend
   const completionTrend = useMemo(() => {
-    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : dateRange === '90d' ? 90 : 365;
+    const days = dateRange === 'today' ? 1 : dateRange === 'yesterday' ? 1 : dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : dateRange === '90d' ? 90 : 365;
     const trendData: { date: string; completions: number }[] = [];
 
     for (let i = days - 1; i >= 0; i--) {
@@ -245,6 +245,8 @@ export default function ProgramAnalytics() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="yesterday">Yesterday</SelectItem>
                 <SelectItem value="7d">Last 7 days</SelectItem>
                 <SelectItem value="30d">Last 30 days</SelectItem>
                 <SelectItem value="90d">Last 90 days</SelectItem>

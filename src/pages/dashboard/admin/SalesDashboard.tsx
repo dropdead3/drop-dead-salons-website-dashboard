@@ -67,7 +67,7 @@ import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
 
-type DateRange = '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
 const CHART_COLORS = [
   'hsl(var(--primary))',
@@ -90,6 +90,11 @@ export default function SalesDashboard() {
   const dateFilters = useMemo(() => {
     const now = new Date();
     switch (dateRange) {
+      case 'today':
+        return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+      case 'yesterday':
+        const yesterday = subDays(now, 1);
+        return { dateFrom: format(yesterday, 'yyyy-MM-dd'), dateTo: format(yesterday, 'yyyy-MM-dd') };
       case '7d':
         return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
       case '30d':
@@ -221,6 +226,8 @@ export default function SalesDashboard() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="yesterday">Yesterday</SelectItem>
                 <SelectItem value="7d">Last 7 days</SelectItem>
                 <SelectItem value="30d">Last 30 days</SelectItem>
                 <SelectItem value="thisWeek">This Week</SelectItem>
