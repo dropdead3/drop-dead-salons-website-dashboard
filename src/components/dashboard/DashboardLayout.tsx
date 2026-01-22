@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -85,6 +85,8 @@ import {
   FlaskConical,
   Link2,
   DollarSign,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -167,9 +169,24 @@ const websiteNavItems: NavItem[] = [
   { href: '/dashboard/admin/locations', label: 'Locations', icon: MapPin, permission: 'manage_settings' },
 ];
 
+const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
+
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+    }
+    return false;
+  });
   const [userSearch, setUserSearch] = useState('');
+  
+  // Persist sidebar collapsed state
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
+  
+  const toggleSidebarCollapsed = () => setSidebarCollapsed(prev => !prev);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
@@ -673,7 +690,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:border-r lg:border-border lg:bg-card">
+      <aside 
+        className={cn(
+          "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:border-r lg:border-border lg:bg-card transition-[width] duration-200 ease-in-out",
+          sidebarCollapsed ? "lg:w-16" : "lg:w-64"
+        )}
+      >
         <SidebarNavContent
           mainNavItems={mainNavItems}
           growthNavItems={growthNavItems}
@@ -690,6 +712,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           onNavClick={handleNavClick}
           isOnboardingComplete={isOnboardingComplete}
           onboardingProgress={onboardingProgress}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebarCollapsed}
         />
       </aside>
 
@@ -856,7 +880,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </AnimatePresence>
 
       {/* Desktop Top Bar */}
-      <div className="hidden lg:block lg:pl-64 sticky top-0 z-30">
+      <div className={cn(
+        "hidden lg:block sticky top-0 z-30 transition-[padding-left] duration-200 ease-in-out",
+        sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
+      )}>
         <div className="flex items-center justify-end gap-3 h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
           <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
             <AccessIcon className="w-3 h-3" />
@@ -890,7 +917,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <main className="lg:pl-64">
+      <main className={cn(
+        "transition-[padding-left] duration-200 ease-in-out",
+        sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
+      )}>
         <div className={cn("min-h-screen flex flex-col", isAdmin && "lg:pt-0")}>
           <div className="flex-1">
             {children}
