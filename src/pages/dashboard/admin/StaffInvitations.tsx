@@ -84,7 +84,7 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
   return (
     <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-6 shadow-inner">
       {/* Premium PDF Preview - 8.5:11 aspect ratio */}
-      <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto flex flex-col" style={{ aspectRatio: '8.5/11', maxWidth: '340px' }}>
+      <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto relative" style={{ aspectRatio: '8.5/11', maxWidth: '340px' }}>
         {/* Header with gradient - small logo */}
         <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
           <img 
@@ -98,7 +98,7 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-col items-center px-6 py-5 flex-1">
+        <div className="flex flex-col items-center px-6 py-5">
           {/* Welcome message */}
           <div className="text-center mb-4">
             <p className="text-base text-foreground font-display tracking-wide">Welcome to the team!</p>
@@ -127,15 +127,15 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
           </div>
 
           {/* URL Section */}
-          <div className="mt-auto pt-4 w-full text-center">
+          <div className="pt-4 w-full text-center">
             <p className="text-[10px] text-muted-foreground leading-relaxed">
               Or visit: <span className="font-medium text-foreground break-all block mt-0.5">{staffLoginUrl.replace('https://', '')}</span>
             </p>
           </div>
         </div>
 
-        {/* Powered By Footer - small */}
-        <div className="bg-[hsl(0,0%,8%)] px-4 py-1.5 flex items-center justify-center mt-auto">
+        {/* Powered By Footer - absolutely positioned at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 bg-[hsl(0,0%,8%)] px-4 py-1.5 flex items-center justify-center">
           <p className="text-[7px] text-[hsl(40,30%,55%)] tracking-wide">
             Powered by Drop Dead Salon Software
           </p>
