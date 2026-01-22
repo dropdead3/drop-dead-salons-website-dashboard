@@ -240,7 +240,10 @@ export function RolePermissionsManager() {
                                   isLocked && "opacity-75"
                                 )}
                               >
-                                <div className="flex-1 min-w-0 mr-4">
+                                <div className={cn(
+                                  "flex-1 min-w-0 mr-4 transition-opacity",
+                                  !has && !isLocked && "opacity-50"
+                                )}>
                                   <p className="font-medium text-sm">
                                     {permission.display_name}
                                   </p>
