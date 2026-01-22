@@ -557,9 +557,6 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
               <Building2 className="w-5 h-5 text-primary" />
               {location.name}
             </CardTitle>
-            <Badge variant="secondary" className="text-xs">
-              {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
-            </Badge>
             {/* Open/Closed Status */}
             <Badge 
               variant="outline" 
@@ -754,6 +751,13 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
               Book Here
             </a>
           )}
+        </div>
+
+        {/* Member Count */}
+        <div className="pt-3 mt-3 border-t border-border">
+          <Badge variant="secondary" className="text-xs">
+            {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
+          </Badge>
         </div>
       </CardContent>
     </Card>
