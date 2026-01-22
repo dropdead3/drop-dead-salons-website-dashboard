@@ -181,6 +181,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const sidebarNavRef = useRef<HTMLElement>(null);
+  const isRestoringScroll = useRef(false);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
@@ -188,34 +189,52 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
 
-  // Restore sidebar scroll position after navigation - use multiple attempts to ensure content is ready
+  // Track sidebar scroll position continuously
+  useEffect(() => {
+    const nav = sidebarNavRef.current;
+    if (!nav) return;
+    
+    const handleScroll = () => {
+      if (!isRestoringScroll.current) {
+        sidebarScrollPosition = nav.scrollTop;
+      }
+    };
+    
+    nav.addEventListener('scroll', handleScroll, { passive: true });
+    return () => nav.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Restore sidebar scroll position after navigation
   useLayoutEffect(() => {
+    if (sidebarScrollPosition === 0) return;
+    
+    isRestoringScroll.current = true;
+    
     const restoreScroll = () => {
-      if (sidebarNavRef.current && sidebarScrollPosition > 0) {
+      if (sidebarNavRef.current) {
         sidebarNavRef.current.scrollTop = sidebarScrollPosition;
       }
     };
     
-    // Try immediately
+    // Multiple attempts to ensure content is ready
     restoreScroll();
-    
-    // Also try after a short delay to handle async rendering
     const timer1 = requestAnimationFrame(restoreScroll);
     const timer2 = setTimeout(restoreScroll, 50);
-    const timer3 = setTimeout(restoreScroll, 150);
+    const timer3 = setTimeout(() => {
+      restoreScroll();
+      isRestoringScroll.current = false;
+    }, 200);
     
     return () => {
       cancelAnimationFrame(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
+      isRestoringScroll.current = false;
     };
   }, [location.pathname]);
 
-  // Save sidebar scroll position before navigation
+  // Close mobile sidebar on navigation
   const handleNavClick = () => {
-    if (sidebarNavRef.current) {
-      sidebarScrollPosition = sidebarNavRef.current.scrollTop;
-    }
     setSidebarOpen(false);
   };
   
