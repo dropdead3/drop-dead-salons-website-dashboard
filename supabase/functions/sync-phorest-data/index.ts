@@ -15,10 +15,11 @@ interface SyncRequest {
 // Phorest API configuration
 const PHOREST_BASE_URL = "https://api-gateway-eu.phorest.com/third-party-api-server/api";
 
-async function phorestRequest(endpoint: string, businessId: string, apiKey: string) {
+async function phorestRequest(endpoint: string, businessId: string, username: string, password: string) {
+  const basicAuth = btoa(`${username}:${password}`);
   const response = await fetch(`${PHOREST_BASE_URL}/business/${businessId}${endpoint}`, {
     headers: {
-      "Authorization": `Bearer ${apiKey}`,
+      "Authorization": `Basic ${basicAuth}`,
       "Content-Type": "application/json",
       "Accept": "application/json",
     },
@@ -33,12 +34,12 @@ async function phorestRequest(endpoint: string, businessId: string, apiKey: stri
   return response.json();
 }
 
-async function syncStaff(supabase: any, businessId: string, apiKey: string) {
+async function syncStaff(supabase: any, businessId: string, username: string, password: string) {
   console.log("Syncing staff data...");
   
   try {
     // Fetch staff from Phorest
-    const staffData = await phorestRequest("/staff", businessId, apiKey);
+    const staffData = await phorestRequest("/staff", businessId, username, password);
     const staffList = staffData._embedded?.staff || staffData.staff || [];
     
     console.log(`Found ${staffList.length} staff members in Phorest`);
@@ -72,7 +73,8 @@ async function syncStaff(supabase: any, businessId: string, apiKey: string) {
 async function syncAppointments(
   supabase: any, 
   businessId: string, 
-  apiKey: string,
+  username: string,
+  password: string,
   dateFrom: string,
   dateTo: string
 ) {
@@ -83,7 +85,8 @@ async function syncAppointments(
     const appointmentsData = await phorestRequest(
       `/appointment?startDate=${dateFrom}&endDate=${dateTo}`,
       businessId,
-      apiKey
+      username,
+      password
     );
     
     const appointments = appointmentsData._embedded?.appointments || appointmentsData.appointments || [];
@@ -145,13 +148,14 @@ function mapPhorestStatus(phorestStatus: string): string {
 async function syncClients(
   supabase: any, 
   businessId: string, 
-  apiKey: string
+  username: string,
+  password: string
 ) {
   console.log("Syncing client data...");
 
   try {
     // Fetch recently updated clients
-    const clientsData = await phorestRequest("/client?size=500", businessId, apiKey);
+    const clientsData = await phorestRequest("/client?size=500", businessId, username, password);
     const clients = clientsData._embedded?.clients || clientsData.clients || [];
     
     console.log(`Found ${clients.length} clients`);
@@ -200,7 +204,8 @@ async function syncClients(
 async function syncPerformanceReports(
   supabase: any,
   businessId: string,
-  apiKey: string,
+  username: string,
+  password: string,
   weekStart: string
 ) {
   console.log(`Syncing performance reports for week starting ${weekStart}...`);
@@ -216,7 +221,8 @@ async function syncPerformanceReports(
     const reportData = await phorestRequest(
       `/report/staff-performance?startDate=${weekStart}&endDate=${weekEnd}`,
       businessId,
-      apiKey
+      username,
+      password
     );
 
     const staffPerformance = reportData._embedded?.staffPerformance || reportData.staffPerformance || [];
@@ -288,9 +294,10 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const businessId = Deno.env.get("PHOREST_BUSINESS_ID")!;
-    const apiKey = Deno.env.get("PHOREST_API_KEY")!;
+    const username = Deno.env.get("PHOREST_USERNAME")!;
+    const password = Deno.env.get("PHOREST_API_KEY")!;
 
-    if (!businessId || !apiKey) {
+    if (!businessId || !username || !password) {
       return new Response(
         JSON.stringify({ error: "Phorest API credentials not configured" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -316,7 +323,7 @@ serve(async (req: Request) => {
 
     if (sync_type === 'staff' || sync_type === 'all') {
       try {
-        results.staff = await syncStaff(supabase, businessId, apiKey);
+        results.staff = await syncStaff(supabase, businessId, username, password);
         await logSync(supabase, 'staff', 'success', results.staff.mapped);
       } catch (error: any) {
         results.staff = { error: error.message };
@@ -326,7 +333,7 @@ serve(async (req: Request) => {
 
     if (sync_type === 'appointments' || sync_type === 'all') {
       try {
-        results.appointments = await syncAppointments(supabase, businessId, apiKey, defaultFrom, defaultTo);
+        results.appointments = await syncAppointments(supabase, businessId, username, password, defaultFrom, defaultTo);
         await logSync(supabase, 'appointments', 'success', results.appointments.synced);
       } catch (error: any) {
         results.appointments = { error: error.message };
@@ -336,7 +343,7 @@ serve(async (req: Request) => {
 
     if (sync_type === 'clients' || sync_type === 'all') {
       try {
-        results.clients = await syncClients(supabase, businessId, apiKey);
+        results.clients = await syncClients(supabase, businessId, username, password);
         await logSync(supabase, 'clients', 'success', results.clients.synced);
       } catch (error: any) {
         results.clients = { error: error.message };
@@ -346,7 +353,7 @@ serve(async (req: Request) => {
 
     if (sync_type === 'reports' || sync_type === 'all') {
       try {
-        results.reports = await syncPerformanceReports(supabase, businessId, apiKey, weekStart);
+        results.reports = await syncPerformanceReports(supabase, businessId, username, password, weekStart);
         await logSync(supabase, 'reports', 'success', results.reports.synced);
       } catch (error: any) {
         results.reports = { error: error.message };

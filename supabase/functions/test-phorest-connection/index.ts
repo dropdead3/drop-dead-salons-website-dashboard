@@ -14,26 +14,31 @@ serve(async (req: Request) => {
 
   try {
     const businessId = Deno.env.get("PHOREST_BUSINESS_ID");
-    const apiKey = Deno.env.get("PHOREST_API_KEY");
+    const username = Deno.env.get("PHOREST_USERNAME");
+    const password = Deno.env.get("PHOREST_API_KEY");
 
-    if (!businessId || !apiKey) {
+    if (!businessId || !username || !password) {
       return new Response(
         JSON.stringify({ 
           connected: false, 
           error: "Phorest API credentials not configured",
           details: {
             has_business_id: !!businessId,
-            has_api_key: !!apiKey,
+            has_username: !!username,
+            has_password: !!password,
           }
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Test connection by fetching business info using Bearer token auth
+    // Create Basic Auth header with username:password
+    const basicAuth = btoa(`${username}:${password}`);
+
+    // Test connection by fetching business info using Basic Auth
     const response = await fetch(`${PHOREST_BASE_URL}/business/${businessId}`, {
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Basic ${basicAuth}`,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
@@ -61,7 +66,7 @@ serve(async (req: Request) => {
     try {
       const staffResponse = await fetch(`${PHOREST_BASE_URL}/business/${businessId}/staff`, {
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          "Authorization": `Basic ${basicAuth}`,
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
