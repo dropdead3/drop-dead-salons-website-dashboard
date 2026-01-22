@@ -10,6 +10,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { Award, Cake, Calendar, ChevronLeft, ChevronRight, Info, PartyPopper, Star, Users } from 'lucide-react';
 import { useMonthlyBirthdays, useUpcomingBirthdays, useTodaysBirthdays } from '@/hooks/useBirthdays';
 import { useTodaysAnniversaries, useUpcomingAnniversaries, MILESTONE_YEARS } from '@/hooks/useAnniversaries';
+import { useBusinessName } from '@/hooks/useBusinessSettings';
 import { format, addMonths, subMonths, getMonth, getDate, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
@@ -27,6 +28,9 @@ export default function TeamBirthdays() {
   // Anniversary hooks
   const { data: todaysAnniversaries, isLoading: loadingTodayAnniversaries } = useTodaysAnniversaries();
   const { data: upcomingAnniversaries, isLoading: loadingUpcomingAnniversaries } = useUpcomingAnniversaries(365);
+  
+  // Business name for tooltip
+  const businessName = useBusinessName();
   
   const nextMonth = addMonths(currentMonth, 1);
   const { data: nextMonthBirthdays, isLoading: loadingNextMonth } = useMonthlyBirthdays(nextMonth);
@@ -238,7 +242,7 @@ export default function TeamBirthdays() {
                     <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-[220px] text-center">
-                    Work anniversaries are to celebrate the length of time a stylist has worked at Drop Dead
+                    Work anniversaries are to celebrate the length of time a stylist has worked at {businessName}
                   </TooltipContent>
                 </Tooltip>
               </CardTitle>
