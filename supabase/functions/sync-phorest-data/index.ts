@@ -46,63 +46,36 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
   try {
     let allStaff: any[] = [];
     
-    // Get branches first
-    try {
-      const branchData = await phorestRequest("/branch", businessId, username, password);
-      const branches = branchData._embedded?.branches || branchData.branches || 
-                       (Array.isArray(branchData) ? branchData : []);
-      console.log(`Found ${branches.length} branches`);
+    // Get branches first - staff endpoints require branchId per the API docs
+    const branchData = await phorestRequest("/branch", businessId, username, password);
+    const branches = branchData._embedded?.branches || branchData.branches || 
+                     (Array.isArray(branchData) ? branchData : []);
+    console.log(`Found ${branches.length} branches`);
+    
+    for (const branch of branches) {
+      const branchId = branch.branchId || branch.id;
+      console.log(`Fetching staff for branch: ${branch.name} (${branchId})`);
       
-      if (branches.length > 0) {
-        for (const branch of branches) {
-          const branchId = branch.branchId || branch.id;
-          
-          // Try to get staff for this branch - note: this might fail if no staff permissions
-          try {
-            const branchStaff = await phorestRequest(`/branch/${branchId}/staff`, businessId, username, password);
-            const staffList = branchStaff._embedded?.staff || branchStaff.staff || 
-                             (Array.isArray(branchStaff) ? branchStaff : []);
-            if (staffList.length > 0) {
-              console.log(`Found ${staffList.length} staff in branch ${branchId}`);
-              allStaff = [...allStaff, ...staffList];
-            }
-          } catch (e: any) {
-            console.log(`Could not get staff for branch ${branchId}: ${e.message?.substring(0, 50)}`);
-          }
-        }
-      }
-    } catch (e: any) {
-      console.log("Branch fetch failed:", e.message);
-    }
-    
-    // If no staff found via branches, try clients endpoint to get stylists from preferred_stylist
-    if (allStaff.length === 0) {
-      console.log("No staff API access - extracting staff from client data...");
+      // Correct endpoint per API docs: /api/business/{businessId}/branch/{branchId}/staff
       try {
-        const clientData = await phorestRequest("/client?size=500", businessId, username, password);
-        const clients = clientData._embedded?.clients || clientData.clients || [];
+        const staffResponse = await phorestRequest(`/branch/${branchId}/staff`, businessId, username, password);
+        console.log(`Staff response for ${branchId}:`, JSON.stringify(staffResponse).substring(0, 300));
         
-        // Extract unique staff IDs from preferred stylist fields
-        const staffFromClients = new Map<string, any>();
-        for (const client of clients) {
-          if (client.preferredStaffId && client.preferredStaffName) {
-            staffFromClients.set(client.preferredStaffId, {
-              staffId: client.preferredStaffId,
-              firstName: client.preferredStaffName.split(' ')[0] || '',
-              lastName: client.preferredStaffName.split(' ').slice(1).join(' ') || '',
-              name: client.preferredStaffName,
-            });
-          }
+        const staffList = staffResponse._embedded?.staff || staffResponse.staff || 
+                         staffResponse.page?.content || (Array.isArray(staffResponse) ? staffResponse : []);
+        
+        if (staffList.length > 0) {
+          console.log(`Found ${staffList.length} staff in branch ${branch.name}`);
+          // Add branchId to each staff member for reference
+          const staffWithBranch = staffList.map((s: any) => ({ ...s, branchId, branchName: branch.name }));
+          allStaff = [...allStaff, ...staffWithBranch];
         }
-        
-        allStaff = Array.from(staffFromClients.values());
-        console.log(`Extracted ${allStaff.length} unique staff from client preferences`);
       } catch (e: any) {
-        console.log("Could not extract staff from clients:", e.message);
+        console.log(`Staff fetch failed for branch ${branchId}:`, e.message);
       }
     }
     
-    // Deduplicate by staffId
+    // Deduplicate by staffId (staff may work at multiple branches)
     const uniqueStaff = Array.from(
       new Map(allStaff.map((s: any) => [s.staffId || s.id, s])).values()
     );
@@ -125,7 +98,7 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
       unmapped: unmappedStaff.length,
       unmapped_staff: unmappedStaff.map((s: any) => ({
         phorest_id: s.staffId || s.id,
-        name: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim() || 'Unknown',
+        name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || 'Unknown',
         email: s.email,
       })),
     };
