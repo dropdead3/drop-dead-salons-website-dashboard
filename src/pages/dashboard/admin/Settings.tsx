@@ -51,6 +51,7 @@ import { EmailVariablesManager } from '@/components/dashboard/EmailVariablesMana
 import { SignaturePresetsManager } from '@/components/dashboard/SignaturePresetsManager';
 import { OnboardingTasksManager } from '@/components/dashboard/OnboardingTasksManager';
 import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
+import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { cn } from '@/lib/utils';
 
 interface UserWithRole {
@@ -71,7 +72,8 @@ const roleOptions = [
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { colorTheme, setColorTheme, mounted: colorMounted } = useColorTheme();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
@@ -431,13 +433,67 @@ export default function Settings() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className="py-4 space-y-6">
+                  <div className="py-4 space-y-8">
                     <p className="text-sm text-muted-foreground font-sans">
                       Customize the dashboard appearance. These settings only affect the backend dashboard, not the public website.
                     </p>
 
+                    {/* Color Theme Selection */}
+                    <div className="space-y-4">
+                      <Label className="text-sm font-medium">Color Theme</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {colorThemes.map((themeOption) => {
+                          const isSelected = colorMounted && colorTheme === themeOption.id;
+                          const isDark = resolvedTheme === 'dark';
+                          const preview = isDark ? themeOption.darkPreview : themeOption.lightPreview;
+                          
+                          return (
+                            <button
+                              key={themeOption.id}
+                              onClick={() => setColorTheme(themeOption.id)}
+                              className={cn(
+                                "relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
+                                isSelected
+                                  ? "border-primary ring-2 ring-primary/20"
+                                  : "border-border hover:border-primary/50"
+                              )}
+                            >
+                              {/* Color Preview Swatches */}
+                              <div className="flex items-center gap-1.5 w-full">
+                                <div 
+                                  className="w-8 h-8 rounded-lg border border-black/10"
+                                  style={{ backgroundColor: preview.bg }}
+                                />
+                                <div 
+                                  className="w-8 h-8 rounded-lg border border-black/10"
+                                  style={{ backgroundColor: preview.accent }}
+                                />
+                                <div 
+                                  className="w-8 h-8 rounded-lg border border-black/10"
+                                  style={{ backgroundColor: preview.primary }}
+                                />
+                              </div>
+                              
+                              {/* Theme Info */}
+                              <div className="space-y-0.5">
+                                <span className="text-sm font-medium">{themeOption.name}</span>
+                                <p className="text-xs text-muted-foreground">{themeOption.description}</p>
+                              </div>
+                              
+                              {/* Selected Check */}
+                              {isSelected && (
+                                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                  <Check className="w-3 h-3 text-primary-foreground" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     {/* Theme Mode Toggle */}
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <Label className="text-sm font-medium">Theme Mode</Label>
                       <div className="grid grid-cols-3 gap-3">
                         <button
@@ -449,8 +505,8 @@ export default function Settings() {
                               : "border-border hover:border-primary/50"
                           )}
                         >
-                          <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
-                            <Sun className="w-5 h-5 text-amber-600" />
+                          <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center">
+                            <Sun className="w-5 h-5 text-foreground" />
                           </div>
                           <span className="text-sm font-medium">Light</span>
                           {mounted && theme === 'light' && (
@@ -467,8 +523,8 @@ export default function Settings() {
                               : "border-border hover:border-primary/50"
                           )}
                         >
-                          <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center">
-                            <Moon className="w-5 h-5 text-slate-300" />
+                          <div className="w-10 h-10 rounded-full bg-foreground border border-border flex items-center justify-center">
+                            <Moon className="w-5 h-5 text-background" />
                           </div>
                           <span className="text-sm font-medium">Dark</span>
                           {mounted && theme === 'dark' && (
@@ -485,7 +541,7 @@ export default function Settings() {
                               : "border-border hover:border-primary/50"
                           )}
                         >
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-50 to-slate-900 border border-border flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-foreground border border-border flex items-center justify-center">
                             <Monitor className="w-5 h-5 text-muted-foreground" />
                           </div>
                           <span className="text-sm font-medium">System</span>
@@ -500,7 +556,7 @@ export default function Settings() {
                     <div className="p-4 rounded-lg bg-muted/50 border border-border">
                       <p className="text-xs text-muted-foreground">
                         <strong>Note:</strong> Theme preferences are saved to your browser and will persist across sessions. 
-                        The public-facing website always uses the light theme.
+                        The public-facing website always uses the light cream theme.
                       </p>
                     </div>
                   </div>
