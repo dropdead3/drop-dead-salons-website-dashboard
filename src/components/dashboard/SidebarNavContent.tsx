@@ -4,7 +4,7 @@ import { useTheme } from 'next-themes';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Users } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 
@@ -30,6 +30,7 @@ interface SidebarNavContentProps {
   effectiveIsCoach: boolean;
   filterNavItems: (items: NavItem[]) => NavItem[];
   onNavClick: () => void;
+  isOnboardingComplete: boolean;
 }
 
 const SIDEBAR_SCROLL_KEY = 'dashboard-sidebar-scroll';
@@ -49,6 +50,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     effectiveIsCoach,
     filterNavItems,
     onNavClick,
+    isOnboardingComplete,
   }, ref) => {
   const location = useLocation();
   const { resolvedTheme } = useTheme();
@@ -148,6 +150,20 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
 
       {/* Navigation */}
       <nav ref={internalRef} className="flex-1 py-4 overflow-y-auto">
+        {/* Onboarding Priority Item - Shows first when incomplete */}
+        {!isOnboardingComplete && (
+          <div className="space-y-1 mb-2">
+            <NavLink 
+              href="/dashboard/onboarding" 
+              label="Onboarding" 
+              icon={Users}
+            />
+            <div className="my-3 px-4">
+              <div className="h-px bg-border" />
+            </div>
+          </div>
+        )}
+
         <div className="space-y-1">
           {filterNavItems(mainNavItems).map((item) => (
             <NavLink 
@@ -209,22 +225,27 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           </>
         )}
 
-        {/* Housekeeping Section */}
-        {filterNavItems(housekeepingNavItems).length > 0 && (
-          <>
-            <div className="my-4 px-4">
-              <div className="h-px bg-border" />
-            </div>
-            <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-              Housekeeping
-            </p>
-            <div className="space-y-1">
-              {filterNavItems(housekeepingNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
+        {/* Housekeeping Section - Filter out onboarding when incomplete (shown at top instead) */}
+        {(() => {
+          const filteredHousekeeping = filterNavItems(housekeepingNavItems).filter(item => 
+            isOnboardingComplete || item.href !== '/dashboard/onboarding'
+          );
+          return filteredHousekeeping.length > 0 && (
+            <>
+              <div className="my-4 px-4">
+                <div className="h-px bg-border" />
+              </div>
+              <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
+                Housekeeping
+              </p>
+              <div className="space-y-1">
+                {filteredHousekeeping.map((item) => (
+                  <NavLink key={item.href} {...item} />
+                ))}
+              </div>
+            </>
+          );
+        })()}
 
         {/* Manager Section */}
         {effectiveIsCoach && filterNavItems(managerNavItems).length > 0 && (
