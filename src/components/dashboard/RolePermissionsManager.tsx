@@ -136,7 +136,7 @@ export function RolePermissionsManager() {
       <CardContent>
         {/* Role Tabs - Dynamic from database */}
         <Tabs value={selectedRole} onValueChange={setSelectedRole}>
-          <TabsList className="flex flex-wrap h-auto gap-1 mb-6 p-1">
+          <TabsList className="flex flex-wrap h-auto gap-1 mb-6 p-2 rounded-lg">
             {allRolesWithSuper.map(role => {
               const Icon = getIconComponent(role.icon);
               const isSuperAdmin = role.name === 'super_admin';
