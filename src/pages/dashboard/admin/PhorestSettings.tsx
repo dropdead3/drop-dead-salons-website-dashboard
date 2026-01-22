@@ -294,7 +294,7 @@ export default function PhorestSettings() {
                 disabled={triggerSync.isPending}
                 size="sm"
                 variant="outline"
-                className="w-full"
+                className="w-full px-3 whitespace-nowrap"
               >
                 {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Staff'}
               </Button>
@@ -308,7 +308,7 @@ export default function PhorestSettings() {
                 disabled={triggerSync.isPending}
                 size="sm"
                 variant="outline"
-                className="w-full"
+                className="w-full px-2 text-xs whitespace-nowrap"
               >
                 {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Appointments'}
               </Button>
@@ -322,7 +322,7 @@ export default function PhorestSettings() {
                 disabled={triggerSync.isPending}
                 size="sm"
                 variant="outline"
-                className="w-full"
+                className="w-full px-3 whitespace-nowrap"
               >
                 {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Sales'}
               </Button>
@@ -336,7 +336,7 @@ export default function PhorestSettings() {
                 disabled={triggerSync.isPending}
                 size="sm"
                 variant="outline"
-                className="w-full"
+                className="w-full px-3 whitespace-nowrap"
               >
                 {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Reports'}
               </Button>
@@ -349,7 +349,7 @@ export default function PhorestSettings() {
                 onClick={() => triggerSync.mutate('all')}
                 disabled={triggerSync.isPending}
                 size="sm"
-                className="w-full"
+                className="w-full px-3 whitespace-nowrap"
               >
                 {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync All'}
               </Button>
