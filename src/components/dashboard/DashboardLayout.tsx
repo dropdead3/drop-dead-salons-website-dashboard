@@ -884,7 +884,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         "hidden lg:block sticky top-0 z-30 transition-[padding-left] duration-200 ease-in-out",
         sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
       )}>
-        <div className="flex items-center justify-end gap-3 h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
+          {/* Left side - Collapse toggle */}
+          <div className="flex items-center">
+            {!sidebarCollapsed && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={toggleSidebarCollapsed}
+                  >
+                    <PanelLeftClose className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Collapse sidebar</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          
+          {/* Right side - User controls */}
+          <div className="flex items-center gap-3">
           <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
             <AccessIcon className="w-3 h-3" />
             {getAccessLabel()}
@@ -913,6 +934,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
       </div>
 
