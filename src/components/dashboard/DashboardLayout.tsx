@@ -29,7 +29,7 @@ import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
-import { ROLE_LABELS } from '@/hooks/useUserRoles';
+import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { isTestAccount } from '@/utils/testAccounts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -85,18 +85,7 @@ import {
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
-const ALL_ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
-
-const roleColors: Record<AppRole, string> = {
-  admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  manager: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-  stylist: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  receptionist: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  assistant: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400', // Legacy
-  stylist_assistant: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-  admin_assistant: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
-  operations_assistant: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
-};
+// Role colors/icons now come from useRoleUtils hook
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -184,6 +173,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
+  const { roleNames: ALL_ROLES, roleLabels: ROLE_LABELS, getRoleBadgeClasses, getRoleIcon, getRoleDescription } = useRoleUtils();
 
   // Close mobile sidebar on navigation
   const handleNavClick = () => {
@@ -344,27 +334,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const ViewAsToggle = () => {
     if (!isAdmin) return null;
 
-    const roleIcons: Record<AppRole, React.ComponentType<{ className?: string }>> = {
-      admin: Crown,
-      manager: Shield,
-      stylist: Scissors,
-      receptionist: Headset,
-      assistant: HandHelping, // Legacy
-      stylist_assistant: HandHelping,
-      admin_assistant: UserCheck,
-      operations_assistant: ClipboardList,
-    };
-
-    const roleDescriptions: Record<AppRole, string> = {
-      admin: 'Full system access',
-      manager: 'Team management access',
-      stylist: 'Stylist dashboard view',
-      receptionist: 'Front desk access',
-      assistant: 'Legacy assistant', // Legacy
-      stylist_assistant: 'Stylist assistant view',
-      admin_assistant: 'Admin assistant view',
-      operations_assistant: 'Operations assistant view',
-    };
+    // roleIcons and roleDescriptions now come from useRoleUtils
 
     // Separate test accounts from real users using the utility
     const testAccounts = teamMembers
@@ -419,7 +389,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {viewAsRole && !isViewingAsUser && (
               <Badge 
                 variant="secondary" 
-                className={cn("text-xs px-1.5 py-0 ml-1", roleColors[viewAsRole])}
+                className={cn("text-xs px-1.5 py-0 ml-1", getRoleBadgeClasses(viewAsRole))}
               >
                 {ROLE_LABELS[viewAsRole]?.charAt(0)}
               </Badge>
@@ -485,7 +455,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <TabsContent value="roles" className="flex-1 overflow-y-auto m-0 p-2">
                 <div className="space-y-1">
                   {ALL_ROLES.map(role => {
-                    const RoleIcon = roleIcons[role];
+                    const RoleIcon = getRoleIcon(role);
                     const isSelected = viewAsRole === role && !isViewingAsUser;
                     return (
                       <DropdownMenuItem
@@ -498,7 +468,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       >
                         <div className={cn(
                           "p-1.5 transition-all border border-transparent group-hover:border-foreground/30",
-                          roleColors[role]
+                          getRoleBadgeClasses(role)
                         )}>
                           <RoleIcon className="w-3.5 h-3.5" />
                         </div>

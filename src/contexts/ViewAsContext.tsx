@@ -1,21 +1,11 @@
-import { createContext, useContext, useState, ReactNode, useCallback, useRef, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useRef, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRoles, getRoleLabel } from '@/hooks/useRoles';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
-
-const ROLE_LABELS: Record<AppRole, string> = {
-  admin: 'Admin',
-  manager: 'Manager',
-  stylist: 'Stylist',
-  receptionist: 'Receptionist',
-  assistant: 'Assistant', // Legacy
-  stylist_assistant: 'Stylist Assistant',
-  admin_assistant: 'Admin Assistant',
-  operations_assistant: 'Operations Assistant',
-};
 
 // Represents a user being impersonated
 export interface ViewAsUser {
@@ -85,9 +75,17 @@ async function logImpersonationAction(
 
 export function ViewAsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { data: roles = [] } = useRoles();
   const [viewAsRole, setViewAsRoleState] = useState<AppRole | null>(null);
   const [viewAsUser, setViewAsUserState] = useState<ViewAsUser | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  
+  // Memoize role labels lookup
+  const roleLabels = useMemo(() => {
+    const labels: Record<string, string> = {};
+    roles.forEach(r => { labels[r.name] = r.display_name; });
+    return labels;
+  }, [roles]);
   
   // Track previous state for comparison
   const prevStateRef = useRef<{ role: AppRole | null; user: ViewAsUser | null }>({
@@ -114,7 +112,7 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
         setSessionId(newSessionId);
         logImpersonationAction(user.id, 'start_role', newSessionId, role);
         
-        toast.success(`Now viewing as ${ROLE_LABELS[role]}`, {
+        toast.success(`Now viewing as ${roleLabels[role] || role}`, {
           description: 'Dashboard navigation updated to match role permissions',
           icon: '👁️',
           duration: 3000,
@@ -125,7 +123,7 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
         if (!sessionId) setSessionId(currentSessionId);
         logImpersonationAction(user.id, 'switch_role', currentSessionId, role);
         
-        toast.info(`Switched to ${ROLE_LABELS[role]}`, {
+        toast.info(`Switched to ${roleLabels[role] || role}`, {
           icon: '🔄',
           duration: 2000,
         });

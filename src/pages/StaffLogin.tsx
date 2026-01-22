@@ -18,22 +18,13 @@ import Logo from '@/assets/drop-dead-logo.svg';
 import { z } from 'zod';
 import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useRoleUtils } from '@/hooks/useRoleUtils';
 
 const emailSchema = z.string().trim().email({ message: 'Please enter a valid email address' });
 
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
-
-const roleOptions: { value: AppRole; label: string; description: string }[] = [
-  { value: 'stylist', label: 'Stylist', description: 'Hair stylist or extension specialist' },
-  { value: 'stylist_assistant', label: 'Stylist Assistant', description: 'Assists stylists with client services' },
-  { value: 'admin_assistant', label: 'Admin Assistant', description: 'Provides administrative support' },
-  { value: 'operations_assistant', label: 'Operations Assistant', description: 'Supports daily salon operations' },
-  { value: 'receptionist', label: 'Receptionist', description: 'Front desk staff' },
-  { value: 'manager', label: 'Manager', description: 'Salon manager or coach' },
-  { value: 'admin', label: 'Admin', description: 'Full system access' },
-];
 
 export default function StaffLogin() {
   const [isLogin, setIsLogin] = useState(true);
@@ -55,6 +46,7 @@ export default function StaffLogin() {
   const location = useLocation();
   const { toast } = useToast();
   const acceptInvitation = useAcceptInvitation();
+  const { roleOptions } = useRoleUtils();
 
   // Debounce email for invitation check
   const debouncedEmail = useDebounce(email, 500);
