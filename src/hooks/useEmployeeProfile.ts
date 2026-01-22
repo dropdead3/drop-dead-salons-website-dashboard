@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
+import { isTestAccount } from '@/utils/testAccounts';
 
 type EmployeeProfile = Database['public']['Tables']['employee_profiles']['Row'];
 type EmployeeProfileUpdate = Database['public']['Tables']['employee_profiles']['Update'];
@@ -61,9 +62,15 @@ export function useUpdateEmployeeProfile() {
   });
 }
 
-export function useTeamDirectory(locationFilter?: string) {
+export function useTeamDirectory(locationFilter?: string, options?: { includeTestAccounts?: boolean }) {
+  const { roles } = useAuth();
+  const isAdminOrSuperAdmin = roles.includes('admin');
+  
+  // Only admins can see test accounts, and only when explicitly requested
+  const shouldIncludeTestAccounts = options?.includeTestAccounts && isAdminOrSuperAdmin;
+
   return useQuery({
-    queryKey: ['team-directory', locationFilter],
+    queryKey: ['team-directory', locationFilter, shouldIncludeTestAccounts],
     queryFn: async () => {
       let query = supabase
         .from('employee_profiles')
@@ -79,8 +86,13 @@ export function useTeamDirectory(locationFilter?: string) {
 
       if (error) throw error;
 
+      // Filter out test accounts for non-admin users
+      const filteredData = shouldIncludeTestAccounts 
+        ? data 
+        : (data || []).filter(profile => !isTestAccount(profile));
+
       // Fetch roles for each user
-      const userIds = data?.map(p => p.user_id) || [];
+      const userIds = filteredData?.map(p => p.user_id) || [];
       const { data: rolesData } = await supabase
         .from('user_roles')
         .select('user_id, role')
@@ -105,7 +117,7 @@ export function useTeamDirectory(locationFilter?: string) {
         schedulesMap.set(s.user_id, existing);
       });
 
-      return (data || []).map(profile => ({
+      return (filteredData || []).map(profile => ({
         ...profile,
         roles: rolesMap.get(profile.user_id) || [],
         location_schedules: schedulesMap.get(profile.user_id) || {},

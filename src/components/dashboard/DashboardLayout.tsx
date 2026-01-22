@@ -31,6 +31,7 @@ import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationH
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
+import { isTestAccount } from '@/utils/testAccounts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -190,8 +191,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     setSidebarOpen(false);
   };
   
-  // Fetch team members for user impersonation picker
-  const { data: teamMembers = [] } = useTeamDirectory();
+  // Fetch team members for user impersonation picker - include test accounts for admin View As feature
+  const { data: teamMembers = [] } = useTeamDirectory(undefined, { includeTestAccounts: true });
 
   // Use simulated role if viewing as a role, or the impersonated user's roles
   const roles = isViewingAsUser && viewAsUser 
@@ -366,11 +367,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       operations_assistant: 'Operations assistant view',
     };
 
-    // Separate test accounts from real users
-    const isTestAccount = (member: typeof teamMembers[0]) => 
-      member.email?.toLowerCase().includes('test') || 
-      member.full_name?.toLowerCase().includes('test');
-
+    // Separate test accounts from real users using the utility
     const testAccounts = teamMembers
       .filter(member => member.user_id !== user?.id && isTestAccount(member))
       .filter(member => 
