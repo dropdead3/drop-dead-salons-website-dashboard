@@ -190,7 +190,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isAdmin = actualRoles.includes('admin') || actualRoles.includes('super_admin');
   // isCoach should use simulated roles for nav visibility
   const effectiveIsCoach = isViewingAs 
-    ? (viewAsRole === 'admin' || viewAsRole === 'manager' || viewAsUser?.roles.some(r => r === 'admin' || r === 'manager')) 
+    ? (viewAsRole === 'admin' || viewAsRole === 'manager' || viewAsRole === 'super_admin' || viewAsUser?.roles.some(r => r === 'admin' || r === 'manager' || r === 'super_admin')) 
     : isCoach;
 
   // Permission checking that respects View As mode
@@ -264,7 +264,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Compute dynamic nav items based on effective role
   const isStylistRole = roles.includes('stylist');
   const isStylistAssistantRole = roles.includes('stylist_assistant') || roles.includes('assistant');
-  const isAdminOrManager = roles.includes('admin') || roles.includes('manager');
+  const isAdminOrManager = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   
   // Filter and transform Get Help nav items - exclude assistant schedule for admins/managers
   const getHelpNavItems: NavItem[] = baseGetHelpNavItems
@@ -289,7 +289,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Get the user's primary access level for display
   const getAccessLabel = () => {
-    if (actualRoles.includes('admin')) return 'Super Admin';
+    if (actualRoles.includes('super_admin')) return 'Super Admin';
+    if (actualRoles.includes('admin')) return 'General Manager';
     if (actualRoles.includes('manager')) return 'Manager';
     if (actualRoles.includes('stylist')) return 'Stylist';
     if (actualRoles.includes('receptionist')) return 'Receptionist';
@@ -298,6 +299,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const getAccessIcon = () => {
+    if (actualRoles.includes('super_admin')) return Crown;
     if (actualRoles.includes('admin')) return Crown;
     if (actualRoles.includes('manager')) return Shield;
     if (actualRoles.includes('stylist')) return Scissors;
@@ -307,6 +309,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const getAccessBadgeColor = () => {
+    if (actualRoles.includes('super_admin')) return 'bg-gradient-to-r from-yellow-200 via-amber-100 to-yellow-200 text-yellow-900 border-yellow-400 dark:from-yellow-800/50 dark:via-amber-700/30 dark:to-yellow-800/50 dark:text-yellow-200 dark:border-yellow-600 bg-[length:200%_100%] animate-shine';
     if (actualRoles.includes('admin')) return 'bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-400 dark:from-amber-800/50 dark:via-orange-700/30 dark:to-amber-800/50 dark:text-amber-200 dark:border-amber-600 bg-[length:200%_100%] animate-shine';
     if (actualRoles.includes('manager')) return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800';
     if (actualRoles.includes('stylist')) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800';

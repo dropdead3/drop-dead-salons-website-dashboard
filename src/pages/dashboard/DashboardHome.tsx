@@ -84,7 +84,7 @@ export default function DashboardHome() {
   useBirthdayNotifications();
   
   // Leadership team: super admins, admins, and managers
-  const isLeadership = profile?.is_super_admin || roles.includes('admin') || roles.includes('manager');
+  const isLeadership = profile?.is_super_admin || roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   
   // Check if user has stylist or stylist_assistant roles (for Quick Actions visibility)
   const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
