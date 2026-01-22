@@ -8,6 +8,7 @@ import { ExternalLink, Rocket } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 
 interface NavItem {
   href: string;
@@ -64,6 +65,15 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const location = useLocation();
   const { resolvedTheme } = useTheme();
   const internalRef = useRef<HTMLElement>(null);
+  const { data: businessSettings } = useBusinessSettings();
+  
+  // Get the appropriate logo based on theme and settings
+  const getLogo = () => {
+    const isDark = resolvedTheme === 'dark';
+    const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
+    const fallbackLogo = isDark ? LogoWhite : Logo;
+    return customLogo || fallbackLogo;
+  };
   
   // Expose the internal ref
   useImperativeHandle(ref, () => internalRef.current!, []);
@@ -147,8 +157,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       <div className="p-6 border-b border-border">
         <Link to="/dashboard" className="block">
           <img 
-            src={resolvedTheme === 'dark' ? LogoWhite : Logo} 
-            alt="Drop Dead" 
+            src={getLogo()} 
+            alt={businessSettings?.business_name || 'Drop Dead'} 
             className="h-5 w-auto" 
           />
         </Link>

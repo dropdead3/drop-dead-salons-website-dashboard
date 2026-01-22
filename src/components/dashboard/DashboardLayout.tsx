@@ -87,6 +87,9 @@ import {
   DollarSign,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
+import LogoWhite from '@/assets/drop-dead-logo-white.svg';
+import { useTheme } from 'next-themes';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 
 // Role colors/icons now come from useRoleUtils hook
 
@@ -171,10 +174,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
+  const { resolvedTheme } = useTheme();
+  const { data: businessSettings } = useBusinessSettings();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
   const { isComplete: isOnboardingComplete, percentage: onboardingPercentage, tasksCompleted, tasksTotal, handbooksCompleted, handbooksTotal, hasBusinessCard, hasHeadshot } = useOnboardingProgress();
   
+  // Get the appropriate logo based on theme and settings
+  const getLogo = () => {
+    const isDark = resolvedTheme === 'dark';
+    const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
+    const fallbackLogo = isDark ? LogoWhite : Logo;
+    return customLogo || fallbackLogo;
+  };
   // Calculate total items for progress display
   const onboardingTotalItems = tasksTotal + handbooksTotal + 2; // +2 for business card and headshot
   const onboardingCompletedItems = tasksCompleted + handbooksCompleted + (hasBusinessCard ? 1 : 0) + (hasHeadshot ? 1 : 0);
@@ -704,7 +716,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </Sheet>
 
         <Link to="/dashboard">
-          <img src={Logo} alt="Drop Dead" className="h-4 w-auto" />
+          <img src={getLogo()} alt={businessSettings?.business_name || 'Drop Dead'} className="h-4 w-auto" />
         </Link>
 
         <div className="flex items-center gap-2">
