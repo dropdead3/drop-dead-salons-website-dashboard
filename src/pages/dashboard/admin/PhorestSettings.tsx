@@ -238,38 +238,44 @@ export default function PhorestSettings() {
         </div>
 
         {/* Connection Status */}
-        <Card className="p-6">
+        <Card className="p-6 bg-card">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {connectionLoading ? (
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
               ) : connection?.connected ? (
-                <CheckCircle2 className="w-8 h-8 text-green-500" />
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-primary" />
+                </div>
               ) : (
-                <XCircle className="w-8 h-8 text-red-500" />
+                <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <XCircle className="w-6 h-6 text-destructive" />
+                </div>
               )}
               <div>
-                <h2 className="font-display text-xl">
+                <h2 className="font-display text-lg tracking-wide">
                   {connectionLoading 
-                    ? 'Checking connection...' 
+                    ? 'CHECKING CONNECTION...' 
                     : connection?.connected 
-                      ? 'Connected to Phorest' 
-                      : 'Not Connected'}
+                      ? 'CONNECTED TO PHOREST' 
+                      : 'NOT CONNECTED'}
                 </h2>
                 {connection?.connected && connection.business && (
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {connection.business.name} • {connection.staff_count || 0} staff members
                   </p>
                 )}
                 {!connection?.connected && connection?.error && (
-                  <p className="text-red-500 text-sm">{connection.error}</p>
+                  <p className="text-destructive text-sm">{connection.error}</p>
                 )}
               </div>
             </div>
             {lastSync && (
-              <div className="text-right text-sm text-muted-foreground">
-                <p>Last synced</p>
-                <p className="font-medium text-foreground">
+              <div className="text-right text-sm">
+                <p className="text-muted-foreground">Last synced</p>
+                <p className="font-medium">
                   {formatDistanceToNow(new Date(lastSync.completed_at!), { addSuffix: true })}
                 </p>
               </div>
@@ -279,12 +285,10 @@ export default function PhorestSettings() {
 
         {/* Quick Sync Actions */}
         {connection?.connected && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <Card className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <Users className="w-5 h-5 text-primary" />
-                <h3 className="font-display text-sm">Staff</h3>
-              </div>
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            <Card className="p-5 flex flex-col items-center text-center gap-3">
+              <Users className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-display text-xs tracking-wide">STAFF</h3>
               <Button
                 onClick={() => triggerSync.mutate('staff')}
                 disabled={triggerSync.isPending}
@@ -296,11 +300,9 @@ export default function PhorestSettings() {
               </Button>
             </Card>
 
-            <Card className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <Calendar className="w-5 h-5 text-primary" />
-                <h3 className="font-display text-sm">Appointments</h3>
-              </div>
+            <Card className="p-5 flex flex-col items-center text-center gap-3">
+              <Calendar className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-display text-xs tracking-wide">APPOINTMENTS</h3>
               <Button
                 onClick={() => triggerSync.mutate('appointments')}
                 disabled={triggerSync.isPending}
@@ -312,11 +314,9 @@ export default function PhorestSettings() {
               </Button>
             </Card>
 
-            <Card className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <DollarSign className="w-5 h-5 text-primary" />
-                <h3 className="font-display text-sm">Sales</h3>
-              </div>
+            <Card className="p-5 flex flex-col items-center text-center gap-3">
+              <DollarSign className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-display text-xs tracking-wide">SALES</h3>
               <Button
                 onClick={() => triggerSync.mutate('sales')}
                 disabled={triggerSync.isPending}
@@ -328,11 +328,9 @@ export default function PhorestSettings() {
               </Button>
             </Card>
 
-            <Card className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <BarChart3 className="w-5 h-5 text-primary" />
-                <h3 className="font-display text-sm">Reports</h3>
-              </div>
+            <Card className="p-5 flex flex-col items-center text-center gap-3">
+              <BarChart3 className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-display text-xs tracking-wide">REPORTS</h3>
               <Button
                 onClick={() => triggerSync.mutate('reports')}
                 disabled={triggerSync.isPending}
@@ -344,11 +342,9 @@ export default function PhorestSettings() {
               </Button>
             </Card>
 
-            <Card className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <RefreshCw className="w-5 h-5 text-primary" />
-                <h3 className="font-display text-sm">Full Sync</h3>
-              </div>
+            <Card className="p-5 flex flex-col items-center text-center gap-3 col-span-2 md:col-span-1">
+              <RefreshCw className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-display text-xs tracking-wide">FULL SYNC</h3>
               <Button
                 onClick={() => triggerSync.mutate('all')}
                 disabled={triggerSync.isPending}
