@@ -183,20 +183,25 @@ export function RolePermissionsManager() {
                 <div 
                   className={cn(
                     "flex items-center gap-3 p-4 rounded-lg border",
-                    isSuperAdmin && "bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 text-amber-900 dark:from-amber-900/30 dark:via-orange-900/20 dark:to-amber-900/30 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+                    isSuperAdmin 
+                      ? "bg-gradient-to-r from-amber-100 via-orange-50 to-amber-100 text-amber-900 dark:from-amber-900/30 dark:via-orange-900/20 dark:to-amber-900/30 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+                      : "bg-muted/50 border-border"
                   )}
-                  style={!isSuperAdmin && role.color ? {
-                    backgroundColor: `${role.color}15`,
-                    borderColor: `${role.color}40`,
-                    color: role.color,
-                  } : undefined}
                 >
-                  <CurrentRoleIcon className="w-8 h-8" />
+                  <span style={!isSuperAdmin && role.color ? { color: role.color } : undefined}>
+                    <CurrentRoleIcon className="w-8 h-8" />
+                  </span>
                   <div>
-                    <h3 className="font-display font-medium text-lg">
+                    <h3 className={cn(
+                      "font-display font-medium text-lg",
+                      !isSuperAdmin && "text-foreground"
+                    )}>
                       {role.display_name} Permissions
                     </h3>
-                    <p className="text-sm opacity-80">
+                    <p className={cn(
+                      "text-sm",
+                      isSuperAdmin ? "opacity-80" : "text-muted-foreground"
+                    )}>
                       {isSuperAdmin 
                         ? 'All permissions granted (locked) - Full system access'
                         : `${getPermissionCountForRole(role.name)} permissions granted`
