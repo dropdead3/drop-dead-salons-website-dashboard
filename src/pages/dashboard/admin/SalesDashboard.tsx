@@ -61,6 +61,11 @@ import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard'
 import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap';
 import { CommissionCalculator } from '@/components/dashboard/sales/CommissionCalculator';
 import { SalesReportPDF } from '@/components/dashboard/sales/SalesReportPDF';
+import { CommissionTiersEditor } from '@/components/dashboard/sales/CommissionTiersEditor';
+import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
+import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
+import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
+import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
 
 type DateRange = '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
@@ -240,7 +245,17 @@ export default function SalesDashboard() {
             <Button variant="outline" size="icon" onClick={handleExportCSV} className="shrink-0">
               <Download className="w-4 h-4" />
             </Button>
-            <SalesReportPDF 
+            <GoogleSheetsExport 
+              data={{
+                stylistData,
+                locationData,
+                dailyData: chartData,
+                metrics,
+              }}
+              dateFrom={dateFilters.dateFrom}
+              dateTo={dateFilters.dateTo}
+            />
+            <SalesReportPDF
               dateFrom={dateFilters.dateFrom}
               dateTo={dateFilters.dateTo}
               metrics={metrics}
