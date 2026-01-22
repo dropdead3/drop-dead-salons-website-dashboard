@@ -191,14 +191,14 @@ async function syncClients(
   username: string,
   password: string
 ) {
-  console.log("Syncing client data...");
+  console.log("Syncing client data with branch/location info...");
 
   try {
-    // Fetch recently updated clients
-    const clientsData = await phorestRequest("/client?size=500", businessId, username, password);
-    const clients = clientsData._embedded?.clients || clientsData.clients || [];
-    
-    console.log(`Found ${clients.length} clients`);
+    // Get branches first to fetch clients per-branch for location tracking
+    const branchData = await phorestRequest("/branch", businessId, username, password);
+    const branches = branchData._embedded?.branches || branchData.branches || 
+                     (Array.isArray(branchData) ? branchData : []);
+    console.log(`Found ${branches.length} branches for client sync`);
 
     // Get staff mappings for preferred stylist
     const { data: staffMappings } = await supabase
@@ -207,14 +207,96 @@ async function syncClients(
 
     const staffMap = new Map(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
 
+    // Fetch locations to map branch IDs to our location IDs
+    const { data: locations } = await supabase
+      .from("locations")
+      .select("id, name");
+    
+    // Create a map of branch names to location IDs (case-insensitive matching)
+    const locationMap = new Map<string, string>();
+    locations?.forEach((loc: any) => {
+      locationMap.set(loc.name.toLowerCase(), loc.id);
+    });
+
+    // Track all clients across branches (client may visit multiple branches)
+    const clientDataMap = new Map<string, any>();
+
+    // Fetch clients from each branch to get branch-specific data
+    for (const branch of branches) {
+      const branchId = branch.branchId || branch.id;
+      const branchName = branch.name || 'Unknown';
+      
+      // Try to match branch to our locations table
+      const locationId = locationMap.get(branchName.toLowerCase()) || null;
+      
+      console.log(`Fetching clients for branch: ${branchName} (${branchId}), mapped location: ${locationId}`);
+
+      try {
+        // Fetch clients for this branch
+        const clientsData = await phorestRequest(
+          `/branch/${branchId}/client?size=500`, 
+          businessId, 
+          username, 
+          password
+        );
+        const clients = clientsData._embedded?.clients || clientsData.clients || [];
+        
+        console.log(`Found ${clients.length} clients in branch ${branchName}`);
+
+        for (const client of clients) {
+          const clientId = client.clientId || client.id;
+          
+          // If we've seen this client before, update only if this is more recent
+          if (clientDataMap.has(clientId)) {
+            const existing = clientDataMap.get(clientId);
+            const existingLastVisit = existing.lastAppointmentDate ? new Date(existing.lastAppointmentDate) : null;
+            const newLastVisit = client.lastAppointmentDate ? new Date(client.lastAppointmentDate) : null;
+            
+            // Keep the record with the most recent visit (this determines their "home" location)
+            if (newLastVisit && (!existingLastVisit || newLastVisit > existingLastVisit)) {
+              clientDataMap.set(clientId, {
+                ...client,
+                _branchId: branchId,
+                _branchName: branchName,
+                _locationId: locationId,
+              });
+            }
+          } else {
+            clientDataMap.set(clientId, {
+              ...client,
+              _branchId: branchId,
+              _branchName: branchName,
+              _locationId: locationId,
+            });
+          }
+        }
+      } catch (e: any) {
+        console.log(`Failed to fetch clients for branch ${branchId}:`, e.message);
+        // Fall back to global client endpoint if branch-specific fails
+      }
+    }
+
+    // If no clients found via branch endpoints, fall back to global endpoint
+    if (clientDataMap.size === 0) {
+      console.log("Falling back to global client endpoint...");
+      const clientsData = await phorestRequest("/client?size=500", businessId, username, password);
+      const clients = clientsData._embedded?.clients || clientsData.clients || [];
+      
+      for (const client of clients) {
+        clientDataMap.set(client.clientId || client.id, client);
+      }
+    }
+
+    console.log(`Total unique clients to sync: ${clientDataMap.size}`);
+
     let synced = 0;
-    for (const client of clients) {
+    for (const [clientId, client] of clientDataMap) {
       const preferredStylistId = client.preferredStaffId 
         ? staffMap.get(client.preferredStaffId) 
         : null;
 
       const clientRecord = {
-        phorest_client_id: client.clientId,
+        phorest_client_id: clientId,
         name: `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Unknown',
         email: client.email || null,
         phone: client.mobile || client.phone || null,
@@ -225,6 +307,10 @@ async function syncClients(
         total_spend: client.totalSpend || 0,
         is_vip: client.isVip || client.vipStatus === 'VIP' || false,
         notes: client.notes || null,
+        // New location fields
+        location_id: client._locationId || null,
+        phorest_branch_id: client._branchId || null,
+        branch_name: client._branchName || null,
       };
 
       const { error } = await supabase
@@ -232,9 +318,10 @@ async function syncClients(
         .upsert(clientRecord, { onConflict: 'phorest_client_id' });
 
       if (!error) synced++;
+      else console.log(`Failed to upsert client ${clientId}:`, error.message);
     }
 
-    return { total: clients.length, synced };
+    return { total: clientDataMap.size, synced };
   } catch (error) {
     console.error("Clients sync error:", error);
     throw error;
