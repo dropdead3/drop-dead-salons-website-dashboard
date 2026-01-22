@@ -1,15 +1,23 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 export function CustomCursor() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const location = useLocation();
+
+  // Disable custom cursor on dashboard routes
+  const isDashboard = location.pathname.startsWith("/dashboard");
 
   useEffect(() => {
-    // Only enable on devices with fine pointer (desktop)
+    // Only enable on devices with fine pointer (desktop) and not on dashboard
     const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
-    if (!hasFinePointer) return;
+    if (!hasFinePointer || isDashboard) {
+      setIsVisible(false);
+      return;
+    }
 
     setIsVisible(true);
 
