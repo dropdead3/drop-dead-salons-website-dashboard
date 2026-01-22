@@ -863,6 +863,9 @@ export default function MyProfile() {
                       const specialty = option.name;
                       const isSelected = formData.specialties.includes(specialty);
                       const isDisabled = !isSelected && formData.specialties.length >= 3;
+                      const isExtensions = specialty.toLowerCase() === 'extensions';
+                      const displayName = specialty.charAt(0).toUpperCase() + specialty.slice(1).toLowerCase();
+                      
                       return (
                         <button
                           key={specialty}
@@ -874,13 +877,16 @@ export default function MyProfile() {
                             }
                           }}
                           className={cn(
-                            "px-3 py-1.5 rounded-full border-2 text-sm transition-all",
-                            isSelected && "border-primary bg-primary/10 text-primary font-medium",
-                            !isSelected && !isDisabled && "border-border hover:border-primary/50 text-foreground",
+                            "px-3 py-1.5 rounded-full border-2 text-sm transition-all flex items-center gap-1.5",
+                            isExtensions && isSelected && "border-[hsl(35,30%,70%)] bg-[hsl(38,35%,85%)] text-[hsl(30,15%,25%)] font-medium",
+                            isExtensions && !isSelected && !isDisabled && "border-[hsl(35,30%,75%)] bg-[hsl(38,35%,92%)] hover:bg-[hsl(38,35%,85%)] text-[hsl(30,15%,35%)]",
+                            !isExtensions && isSelected && "border-primary bg-primary/10 text-primary font-medium",
+                            !isExtensions && !isSelected && !isDisabled && "border-border hover:border-primary/50 text-foreground",
                             isDisabled && "border-muted bg-muted/30 text-muted-foreground/50 cursor-not-allowed opacity-50"
                           )}
                         >
-                          {specialty}
+                          {isExtensions && <Star className="w-3 h-3 fill-current" />}
+                          {displayName}
                         </button>
                       );
                     })}
