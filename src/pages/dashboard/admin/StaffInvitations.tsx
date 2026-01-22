@@ -286,27 +286,34 @@ function QRCodeCard() {
 
         {/* Preview thumbnail */}
         <div className="flex justify-center p-4 bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden w-32">
-            <div className="bg-foreground py-1 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden w-36">
+            <div className="bg-foreground py-1.5 flex items-center justify-center">
               <span className="text-[5px] text-background font-display tracking-wider">DROP DEAD®</span>
             </div>
-            <div className="p-3">
+            <div className="p-3 pt-2">
+              {/* Welcome message */}
+              <div className="text-center mb-2">
+                <p className="text-[5px] font-medium text-foreground">Welcome to the team!</p>
+                <p className="text-[4px] text-muted-foreground leading-tight">
+                  You need to create your profile on our software system.
+                </p>
+              </div>
               <div className="flex justify-center mb-2">
                 <QRCodeCanvas 
                   value={staffLoginUrl} 
-                  size={60}
+                  size={55}
                   level="H"
                   marginSize={0}
                   fgColor="#141414"
                 />
               </div>
               <div className="text-center">
-                <p className="text-[6px] font-medium">Create Your Account</p>
-                <p className="text-[5px] text-muted-foreground">Scan to get started</p>
+                <p className="text-[5px] font-medium">Create Your Account</p>
+                <p className="text-[4px] text-muted-foreground">Scan to get started</p>
               </div>
             </div>
-            <div className="bg-foreground py-1 flex items-center justify-center">
-              <span className="text-[4px] text-[hsl(40,30%,60%)]">Powered by Drop Dead Salon Software</span>
+            <div className="bg-foreground py-0.5 flex items-center justify-center">
+              <span className="text-[3px] text-[hsl(40,30%,55%)]">Powered by Drop Dead Salon Software</span>
             </div>
           </div>
         </div>
