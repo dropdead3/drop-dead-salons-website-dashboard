@@ -8,6 +8,8 @@ export interface BusinessSettings {
   legal_name: string | null;
   logo_light_url: string | null;
   logo_dark_url: string | null;
+  icon_light_url: string | null;
+  icon_dark_url: string | null;
   mailing_address: string | null;
   city: string | null;
   state: string | null;
