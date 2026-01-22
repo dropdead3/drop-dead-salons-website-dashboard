@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Star, X, ChevronDown, Check } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Star, X, ChevronDown, Check, Lock, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
@@ -434,45 +434,89 @@ export default function MyProfile() {
           {/* Photo Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Profile Photo</CardTitle>
-              <CardDescription>Your photo will be visible to the team.</CardDescription>
+              <CardTitle className="text-lg flex items-center gap-2">
+                Profile Photo
+                {isStylistRole && <Lock className="w-4 h-4 text-muted-foreground" />}
+              </CardTitle>
+              <CardDescription>
+                {isStylistRole 
+                  ? 'Your headshot is managed by admin and displayed on the website.'
+                  : 'Your photo will be visible to the team.'
+                }
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-6">
-                <div className="relative group">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src={profile?.photo_url || undefined} alt={profile?.full_name} />
-                    <AvatarFallback className="text-2xl bg-muted">
-                      {formData.full_name?.charAt(0) || <User className="w-8 h-8" />}
-                    </AvatarFallback>
-                  </Avatar>
-                  <button
-                    type="button"
-                    onClick={handlePhotoClick}
-                    disabled={uploadPhoto.isPending}
-                    className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                  >
-                    {uploadPhoto.isPending ? (
-                      <Loader2 className="w-6 h-6 text-white animate-spin" />
-                    ) : (
-                      <Camera className="w-6 h-6 text-white" />
-                    )}
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoChange}
-                    className="hidden"
-                  />
+              {isStylistRole ? (
+                // Locked state for stylists/stylist assistants
+                <div className="space-y-4">
+                  <div className="flex items-center gap-6">
+                    <Avatar className="w-24 h-24 ring-2 ring-muted">
+                      <AvatarImage src={profile?.photo_url || undefined} alt={profile?.full_name} />
+                      <AvatarFallback className="text-2xl bg-muted">
+                        {formData.full_name?.charAt(0) || <User className="w-8 h-8" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Lock className="w-4 h-4" />
+                        <span className="text-sm font-medium">Admin Managed</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Your headshot is uploaded by admin after your professional photo session.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 border border-border">
+                    <div className="flex items-start gap-2">
+                      <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <p className="font-medium text-foreground">Photo Requirements</p>
+                        <p>Your profile photo appears on the website stylist directory and must be a professional headshot.</p>
+                        <p><span className="font-medium">Recommended:</span> 800×1000px (4:5 portrait ratio)</p>
+                        <p><span className="font-medium">Minimum:</span> 400×500px, JPG or PNG format</p>
+                        <p className="text-muted-foreground/80 italic">Contact your manager to schedule a headshot session or to update your photo.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Button type="button" variant="outline" onClick={handlePhotoClick} disabled={uploadPhoto.isPending}>
-                    {uploadPhoto.isPending ? 'Uploading...' : 'Change Photo'}
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">JPG, PNG. Max 5MB.</p>
+              ) : (
+                // Normal upload state for other roles
+                <div className="flex items-center gap-6">
+                  <div className="relative group">
+                    <Avatar className="w-24 h-24">
+                      <AvatarImage src={profile?.photo_url || undefined} alt={profile?.full_name} />
+                      <AvatarFallback className="text-2xl bg-muted">
+                        {formData.full_name?.charAt(0) || <User className="w-8 h-8" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      type="button"
+                      onClick={handlePhotoClick}
+                      disabled={uploadPhoto.isPending}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                    >
+                      {uploadPhoto.isPending ? (
+                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                      ) : (
+                        <Camera className="w-6 h-6 text-white" />
+                      )}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                  </div>
+                  <div>
+                    <Button type="button" variant="outline" onClick={handlePhotoClick} disabled={uploadPhoto.isPending}>
+                      {uploadPhoto.isPending ? 'Uploading...' : 'Change Photo'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">JPG, PNG. Max 5MB.</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
