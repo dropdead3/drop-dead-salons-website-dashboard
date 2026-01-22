@@ -172,8 +172,8 @@ function QRCodeCard() {
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
 
-    // Header background (dark) - small header
-    const headerHeight = 200;
+    // Header background (dark) - small header (6% of height)
+    const headerHeight = Math.round(height * 0.06);
     const headerGradient = ctx.createLinearGradient(0, 0, width, 0);
     headerGradient.addColorStop(0, '#141414');
     headerGradient.addColorStop(1, '#262626');
@@ -182,39 +182,40 @@ function QRCodeCard() {
 
     // Header text - small logo
     ctx.fillStyle = '#f8f6f1';
-    ctx.font = 'bold 72px Termina, sans-serif';
+    ctx.font = 'bold 60px Termina, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('DROP DEAD®', width / 2, 110);
-    ctx.font = '36px sans-serif';
-    ctx.letterSpacing = '0.2em';
+    ctx.fillText('DROP DEAD®', width / 2, headerHeight * 0.5 + 10);
+    ctx.font = '28px sans-serif';
     ctx.fillStyle = '#a8a090';
-    ctx.fillText('STAFF PORTAL', width / 2, 165);
+    ctx.fillText('STAFF PORTAL', width / 2, headerHeight * 0.5 + 50);
 
-    // Welcome message - constrained width
-    const welcomeY = headerHeight + 180;
+    // Content area starts after header
+    const contentStartY = headerHeight + 120;
+    
+    // Welcome message
     ctx.fillStyle = '#141414';
-    ctx.font = '500 84px Termina, sans-serif';
+    ctx.font = '500 72px Termina, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('WELCOME TO THE TEAM!', width / 2, welcomeY);
+    ctx.fillText('WELCOME TO THE TEAM!', width / 2, contentStartY);
     
     // Subtitle - narrower (simulating max-width)
     ctx.fillStyle = '#666666';
-    ctx.font = '48px sans-serif';
-    ctx.fillText('You need to create your profile on', width / 2, welcomeY + 80);
-    ctx.fillText('our software system.', width / 2, welcomeY + 140);
+    ctx.font = '42px sans-serif';
+    ctx.fillText('You need to create your profile on', width / 2, contentStartY + 70);
+    ctx.fillText('our software system.', width / 2, contentStartY + 120);
 
     // QR Code container
-    const qrSize = 800;
+    const qrSize = 750;
     const qrX = (width - qrSize) / 2;
-    const qrY = welcomeY + 220;
+    const qrY = contentStartY + 200;
     
     // QR border with shadow
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
-    ctx.shadowBlur = 60;
-    ctx.shadowOffsetY = 15;
+    ctx.shadowBlur = 50;
+    ctx.shadowOffsetY = 12;
     ctx.beginPath();
-    ctx.roundRect(qrX - 60, qrY - 60, qrSize + 120, qrSize + 120, 48);
+    ctx.roundRect(qrX - 50, qrY - 50, qrSize + 100, qrSize + 100, 40);
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
@@ -223,34 +224,34 @@ function QRCodeCard() {
     ctx.drawImage(canvas, qrX, qrY, qrSize, qrSize);
 
     // Title text
-    const titleY = qrY + qrSize + 200;
+    const titleY = qrY + qrSize + 140;
     ctx.fillStyle = '#141414';
-    ctx.font = '500 72px Termina, sans-serif';
+    ctx.font = '500 60px Termina, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('CREATE YOUR ACCOUNT', width / 2, titleY);
 
     // Subtitle
     ctx.fillStyle = '#666666';
-    ctx.font = '48px sans-serif';
-    ctx.fillText('Scan this QR code to get started', width / 2, titleY + 80);
+    ctx.font = '40px sans-serif';
+    ctx.fillText('Scan this QR code to get started', width / 2, titleY + 65);
 
-    // URL text - smaller and narrower
-    const urlY = titleY + 180;
+    // URL text - smaller
+    const urlY = titleY + 150;
     ctx.fillStyle = '#888888';
-    ctx.font = '36px sans-serif';
+    ctx.font = '32px sans-serif';
     ctx.fillText('Or visit:', width / 2, urlY);
     ctx.fillStyle = '#141414';
     const urlText = staffLoginUrl.replace('https://', '').replace('http://', '');
-    ctx.fillText(urlText, width / 2, urlY + 50);
+    ctx.fillText(urlText, width / 2, urlY + 45);
 
-    // Powered by footer (dark bar at bottom) - small
-    const footerHeight = 100;
+    // Powered by footer (dark bar at bottom) - small (3% of height)
+    const footerHeight = Math.round(height * 0.03);
     ctx.fillStyle = '#141414';
     ctx.fillRect(0, height - footerHeight, width, footerHeight);
     
     ctx.fillStyle = '#8a8070';
-    ctx.font = '32px sans-serif';
-    ctx.fillText('Powered by Drop Dead Salon Software', width / 2, height - 35);
+    ctx.font = '28px sans-serif';
+    ctx.fillText('Powered by Drop Dead Salon Software', width / 2, height - footerHeight / 2 + 10);
 
     // Download
     const link = document.createElement('a');
