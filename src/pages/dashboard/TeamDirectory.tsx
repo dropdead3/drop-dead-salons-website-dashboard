@@ -6,11 +6,12 @@ import { Input } from '@/components/ui/input';
 import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
-import { useLocations } from '@/hooks/useLocations';
+import { useLocations, formatHoursForDisplay, getClosedDays, type Location } from '@/hooks/useLocations';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { differenceInYears, differenceInMonths, parseISO, format, setYear, isSameDay, differenceInDays, isBefore } from 'date-fns';
@@ -107,6 +108,7 @@ function getAnniversaryInfo(hireDate: string | null): { isToday: boolean; isUpco
 
 export default function TeamDirectory() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('team');
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -200,170 +202,287 @@ export default function TeamDirectory() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-display font-medium mb-2">Team Directory</h1>
+          <h1 className="text-2xl font-display font-medium mb-2">Directory</h1>
           <p className="text-muted-foreground">
-            View all team members across salon locations.
+            View team members and salon locations.
           </p>
         </div>
 
-        {/* Today's Anniversaries Banner */}
-        {todaysAnniversaries.length > 0 && (
-          <Card className="mb-6 border-2 border-amber-400/50 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-full">
-                  <PartyPopper className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-amber-800 dark:text-amber-200">
-                    🎉 Work Anniversary Today!
-                  </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
-                    {todaysAnniversaries.map((a, i) => (
-                      <span 
-                        key={a.id}
-                        className={cn(
-                          isViewingAsUser && a.isCurrentUser && "bg-primary/20 px-1.5 py-0.5 rounded ring-1 ring-primary/30"
-                        )}
-                      >
-                        {i > 0 && (i === todaysAnniversaries.length - 1 ? ' and ' : ', ')}
-                        <strong className="inline-flex items-center gap-1">
-                          {a.display_name || a.full_name}
-                          {isViewingAsUser && a.isCurrentUser && <Eye className="w-3 h-3 text-primary" />}
-                        </strong> ({a.years} year{a.years > 1 ? 's' : ''})
-                      </span>
-                    ))}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList>
+            <TabsTrigger value="team" className="gap-2">
+              <User className="w-4 h-4" />
+              Team
+            </TabsTrigger>
+            <TabsTrigger value="locations" className="gap-2">
+              <Building2 className="w-4 h-4" />
+              Locations
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Upcoming Anniversaries */}
-        {upcomingAnniversaries.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-500" />
-                Upcoming Work Anniversaries
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-3">
-                {upcomingAnniversaries.slice(0, 5).map(anniversary => {
-                  const isMilestone = MILESTONE_YEARS.includes(anniversary.years);
-                  const isImpersonatedUser = isViewingAsUser && anniversary.isCurrentUser;
+          <TabsContent value="team" className="mt-6">
+            {/* Today's Anniversaries Banner */}
+            {todaysAnniversaries.length > 0 && (
+              <Card className="mb-6 border-2 border-amber-400/50 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30">
+                <CardContent className="py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-full">
+                      <PartyPopper className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-amber-800 dark:text-amber-200">
+                        🎉 Work Anniversary Today!
+                      </p>
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        {todaysAnniversaries.map((a, i) => (
+                          <span 
+                            key={a.id}
+                            className={cn(
+                              isViewingAsUser && a.isCurrentUser && "bg-primary/20 px-1.5 py-0.5 rounded ring-1 ring-primary/30"
+                            )}
+                          >
+                            {i > 0 && (i === todaysAnniversaries.length - 1 ? ' and ' : ', ')}
+                            <strong className="inline-flex items-center gap-1">
+                              {a.display_name || a.full_name}
+                              {isViewingAsUser && a.isCurrentUser && <Eye className="w-3 h-3 text-primary" />}
+                            </strong> ({a.years} year{a.years > 1 ? 's' : ''})
+                          </span>
+                        ))}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Upcoming Anniversaries */}
+            {upcomingAnniversaries.length > 0 && (
+              <Card className="mb-6">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-500" />
+                    Upcoming Work Anniversaries
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-3">
+                    {upcomingAnniversaries.slice(0, 5).map(anniversary => {
+                      const isMilestone = MILESTONE_YEARS.includes(anniversary.years);
+                      const isImpersonatedUser = isViewingAsUser && anniversary.isCurrentUser;
+                      return (
+                        <div
+                          key={anniversary.id}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 rounded-lg border",
+                            isImpersonatedUser 
+                              ? "bg-primary/10 border-primary/30 ring-1 ring-primary/30"
+                              : isMilestone
+                                ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800"
+                                : "bg-muted/50 border-border"
+                          )}
+                        >
+                          <Avatar className={cn(
+                            "w-8 h-8",
+                            isImpersonatedUser && "ring-2 ring-primary"
+                          )}>
+                            <AvatarImage src={anniversary.photo_url || undefined} />
+                            <AvatarFallback className="text-xs">
+                              {anniversary.full_name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="text-sm">
+                            <p className="font-medium leading-tight flex items-center gap-1">
+                              {anniversary.display_name || anniversary.full_name}
+                              {isImpersonatedUser && <Eye className="w-3 h-3 text-primary" />}
+                            </p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              {isMilestone && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
+                              {anniversary.years} year{anniversary.years > 1 ? 's' : ''} • {format(anniversary.anniversaryDate, 'MMM d')}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, email, or specialty..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  {allRoles.map(role => (
+                    <SelectItem key={role} value={role}>
+                      {roleLabels[role] || role}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <LocationSelect
+                value={locationFilter}
+                onValueChange={setLocationFilter}
+                triggerClassName="w-full sm:w-48"
+              />
+            </div>
+
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredTeam.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  No team members found.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-8">
+                {sortedLocationIds.map(locationId => {
+                  const members = teamByLocation[locationId];
                   return (
-                    <div
-                      key={anniversary.id}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-lg border",
-                        isImpersonatedUser 
-                          ? "bg-primary/10 border-primary/30 ring-1 ring-primary/30"
-                          : isMilestone
-                            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800"
-                            : "bg-muted/50 border-border"
-                      )}
-                    >
-                      <Avatar className={cn(
-                        "w-8 h-8",
-                        isImpersonatedUser && "ring-2 ring-primary"
-                      )}>
-                        <AvatarImage src={anniversary.photo_url || undefined} />
-                        <AvatarFallback className="text-xs">
-                          {anniversary.full_name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="text-sm">
-                        <p className="font-medium leading-tight flex items-center gap-1">
-                          {anniversary.display_name || anniversary.full_name}
-                          {isImpersonatedUser && <Eye className="w-3 h-3 text-primary" />}
-                        </p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          {isMilestone && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
-                          {anniversary.years} year{anniversary.years > 1 ? 's' : ''} • {format(anniversary.anniversaryDate, 'MMM d')}
-                        </p>
+                    <div key={locationId}>
+                      <h2 className="text-lg font-display font-medium mb-3 flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        {locationId === 'unassigned' ? 'No Location Assigned' : getLocationName(locationId)}
+                        <Badge variant="secondary" className="ml-2">{members.length}</Badge>
+                      </h2>
+                      <div className="ml-6 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+                        {members.map(member => (
+                          <TeamMemberCard 
+                            key={member.id} 
+                            member={member} 
+                            locations={locations}
+                            isSuperAdmin={isSuperAdmin}
+                            canViewStrikes={canViewStrikes}
+                            strikeCount={strikeCounts[member.user_id] || 0}
+                            onViewProfile={() => navigate(`/dashboard/profile/${member.user_id}`)}
+                          />
+                        ))}
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </TabsContent>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, email, or specialty..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
-              {allRoles.map(role => (
-                <SelectItem key={role} value={role}>
-                  {roleLabels[role] || role}
-                </SelectItem>
+          <TabsContent value="locations" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {locations.filter(loc => loc.is_active).map(location => (
+                <LocationCard key={location.id} location={location} />
               ))}
-            </SelectContent>
-          </Select>
-          <LocationSelect
-            value={locationFilter}
-            onValueChange={setLocationFilter}
-            triggerClassName="w-full sm:w-48"
-          />
-        </div>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : filteredTeam.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center text-muted-foreground">
-              No team members found.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-8">
-            {sortedLocationIds.map(locationId => {
-              const members = teamByLocation[locationId];
-              return (
-                <div key={locationId}>
-                  <h2 className="text-lg font-display font-medium mb-3 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    {locationId === 'unassigned' ? 'No Location Assigned' : getLocationName(locationId)}
-                    <Badge variant="secondary" className="ml-2">{members.length}</Badge>
-                  </h2>
-                  <div className="ml-6 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
-                    {members.map(member => (
-                      <TeamMemberCard 
-                        key={member.id} 
-                        member={member} 
-                        locations={locations}
-                        isSuperAdmin={isSuperAdmin}
-                        canViewStrikes={canViewStrikes}
-                        strikeCount={strikeCounts[member.user_id] || 0}
-                        onViewProfile={() => navigate(`/dashboard/profile/${member.user_id}`)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+            </div>
+            {locations.filter(loc => loc.is_active).length === 0 && (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  No locations found.
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
+  );
+}
+
+// Location Card Component
+interface LocationCardProps {
+  location: Location;
+}
+
+function LocationCard({ location }: LocationCardProps) {
+  const hoursDisplay = formatHoursForDisplay(location.hours_json);
+  const closedDays = getClosedDays(location.hours_json);
+
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Building2 className="w-5 h-5 text-primary" />
+          {location.name}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Address */}
+        <div className="flex items-start gap-3">
+          <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p>{location.address}</p>
+            <p className="text-muted-foreground">{location.city}</p>
+          </div>
+        </div>
+
+        {/* Phone */}
+        {location.phone && (
+          <div className="flex items-center gap-3">
+            <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+            <a 
+              href={`tel:${location.phone}`} 
+              className="text-sm hover:text-primary transition-colors"
+            >
+              {location.phone}
+            </a>
+          </div>
+        )}
+
+        {/* Hours */}
+        <div className="flex items-start gap-3">
+          <Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+          <div className="text-sm space-y-1">
+            {hoursDisplay ? (
+              <p>{hoursDisplay}</p>
+            ) : location.hours ? (
+              <p>{location.hours}</p>
+            ) : (
+              <p className="text-muted-foreground">Hours not set</p>
+            )}
+            {closedDays && (
+              <p className="text-muted-foreground text-xs">{closedDays}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Action Links */}
+        <div className="flex gap-2 pt-2">
+          {location.google_maps_url && (
+            <a
+              href={location.google_maps_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              Directions
+            </a>
+          )}
+          {location.booking_url && (
+            <a
+              href={location.booking_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Book Here
+            </a>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
