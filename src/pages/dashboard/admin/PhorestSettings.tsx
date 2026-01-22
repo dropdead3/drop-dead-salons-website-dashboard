@@ -49,6 +49,8 @@ import {
   MapPin,
   Building2,
   DollarSign,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -57,6 +59,19 @@ export default function PhorestSettings() {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedPhorestStaff, setSelectedPhorestStaff] = useState<PhorestStaffMember | null>(null);
   const [branchFilter, setBranchFilter] = useState<string>('all');
+  const [visibleMappings, setVisibleMappings] = useState<Set<string>>(new Set());
+
+  const toggleMappingVisibility = (mappingId: string) => {
+    setVisibleMappings(prev => {
+      const next = new Set(prev);
+      if (next.has(mappingId)) {
+        next.delete(mappingId);
+      } else {
+        next.add(mappingId);
+      }
+      return next;
+    });
+  };
 
   const { data: connection, isLoading: connectionLoading, refetch: refetchConnection } = usePhorestConnection();
   const { data: syncLogs, isLoading: logsLoading } = usePhorestSyncLogs();
@@ -532,11 +547,31 @@ export default function PhorestSettings() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div>
-                            <p className="font-medium">{mapping.phorest_staff_name || '-'}</p>
-                            <p className="text-xs text-muted-foreground font-mono">
-                              {mapping.phorest_staff_id}
-                            </p>
+                          <div className="flex items-center gap-2">
+                            {visibleMappings.has(mapping.id) ? (
+                              <div>
+                                <p className="font-medium">{mapping.phorest_staff_name || '-'}</p>
+                                <p className="text-xs text-muted-foreground font-mono">
+                                  {mapping.phorest_staff_id}
+                                </p>
+                              </div>
+                            ) : (
+                              <Badge variant="default" className="bg-primary/10 text-primary">
+                                Matched
+                              </Badge>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleMappingVisibility(mapping.id)}
+                              className="h-7 w-7 p-0"
+                            >
+                              {visibleMappings.has(mapping.id) ? (
+                                <EyeOff className="w-4 h-4 text-muted-foreground" />
+                              ) : (
+                                <Eye className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </Button>
                           </div>
                         </TableCell>
                         <TableCell>
