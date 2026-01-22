@@ -1,12 +1,19 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Loader2, MapPin } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subWeeks, startOfWeek, endOfWeek, parseISO } from 'date-fns';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface PerformanceTrendChartProps {
   userId: string;
@@ -21,8 +28,15 @@ interface WeeklyData {
   products: number;
 }
 
+interface LocationOption {
+  id: string;
+  name: string;
+}
+
 export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendChartProps) {
-  // Fetch weekly performance data
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+
+  // Fetch weekly performance data with location info
   const { data, isLoading } = useQuery({
     queryKey: ['stylist-weekly-trend', userId, weeks],
     queryFn: async () => {
@@ -40,10 +54,15 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
         });
       }
 
-      // Fetch all summaries in date range
+      // Fetch locations for mapping
+      const { data: locations } = await supabase
+        .from('locations')
+        .select('id, name');
+
+      // Fetch all summaries in date range with location info
       const { data: summaries, error } = await supabase
         .from('phorest_daily_sales_summary')
-        .select('*')
+        .select('*, location_id, branch_name')
         .eq('user_id', userId)
         .gte('summary_date', weekRanges[0].start)
         .lte('summary_date', weekRanges[weekRanges.length - 1].end)
@@ -51,32 +70,63 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
 
       if (error) throw error;
 
-      // Aggregate by week
-      const weeklyData: WeeklyData[] = weekRanges.map(range => {
-        const weekSummaries = (summaries || []).filter(s => 
-          s.summary_date >= range.start && s.summary_date <= range.end
-        );
-        
-        return {
-          weekLabel: range.label,
-          weekStart: range.start,
-          revenue: weekSummaries.reduce((sum, s) => sum + (Number(s.total_revenue) || 0), 0),
-          services: weekSummaries.reduce((sum, s) => sum + (s.total_services || 0), 0),
-          products: weekSummaries.reduce((sum, s) => sum + (s.total_products || 0), 0),
-        };
+      // Extract unique locations from the data
+      const locationMap = new Map<string, LocationOption>();
+      summaries?.forEach(s => {
+        const key = s.location_id || s.branch_name;
+        if (key && !locationMap.has(key)) {
+          const loc = locations?.find(l => l.id === s.location_id);
+          locationMap.set(key, {
+            id: key,
+            name: loc?.name || s.branch_name || 'Unknown',
+          });
+        }
       });
 
-      return weeklyData;
+      return {
+        summaries: summaries || [],
+        weekRanges,
+        locations: Array.from(locationMap.values()),
+      };
     },
     enabled: !!userId,
   });
 
+  // Filter and aggregate data based on selected location
+  const chartData = useMemo(() => {
+    if (!data) return [];
+
+    const { summaries, weekRanges } = data;
+
+    // Filter by location if selected
+    const filteredSummaries = selectedLocation === 'all' 
+      ? summaries 
+      : summaries.filter(s => 
+          s.location_id === selectedLocation || s.branch_name === selectedLocation
+        );
+
+    // Aggregate by week
+    return weekRanges.map(range => {
+      const weekSummaries = filteredSummaries.filter(s => 
+        s.summary_date >= range.start && s.summary_date <= range.end
+      );
+      
+      return {
+        weekLabel: range.label,
+        weekStart: range.start,
+        revenue: weekSummaries.reduce((sum, s) => sum + (Number(s.total_revenue) || 0), 0),
+        services: weekSummaries.reduce((sum, s) => sum + (s.total_services || 0), 0),
+        products: weekSummaries.reduce((sum, s) => sum + (s.total_products || 0), 0),
+      };
+    });
+  }, [data, selectedLocation]);
+
   // Calculate trend
   const trend = useMemo(() => {
-    if (!data || data.length < 2) return { direction: 'neutral' as const, percentage: 0 };
+    if (!chartData || chartData.length < 2) return { direction: 'neutral' as const, percentage: 0 };
     
-    const currentWeek = data[data.length - 1]?.revenue || 0;
-    const previousWeek = data[data.length - 2]?.revenue || 0;
+    const currentWeek = chartData[chartData.length - 1]?.revenue || 0;
+    const previousWeek = chartData[chartData.length - 2]?.revenue || 0;
     
     if (previousWeek === 0) return { direction: 'up' as const, percentage: currentWeek > 0 ? 100 : 0 };
     
@@ -85,11 +135,13 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
       direction: change > 0 ? 'up' as const : change < 0 ? 'down' as const : 'neutral' as const,
       percentage: Math.abs(change),
     };
-  }, [data]);
+  }, [chartData]);
 
   const totalRevenue = useMemo(() => 
-    data?.reduce((sum, d) => sum + d.revenue, 0) || 0
-  , [data]);
+    chartData?.reduce((sum, d) => sum + d.revenue, 0) || 0
+  , [chartData]);
+
+  const hasMultipleLocations = (data?.locations?.length || 0) > 1;
 
   if (isLoading) {
     return (
@@ -104,28 +156,47 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
             <CardTitle className="font-display text-lg">Revenue Trend</CardTitle>
             <p className="text-sm text-muted-foreground">Last {weeks} weeks performance</p>
           </div>
-          <div className="text-right">
-            <p className="font-display text-2xl">${totalRevenue.toLocaleString()}</p>
-            <div className="flex items-center gap-1 justify-end">
-              {trend.direction === 'up' ? (
-                <TrendingUp className="w-4 h-4 text-green-600" />
-              ) : trend.direction === 'down' ? (
-                <TrendingDown className="w-4 h-4 text-red-600" />
-              ) : (
-                <Minus className="w-4 h-4 text-muted-foreground" />
-              )}
-              <span className={cn(
-                "text-sm font-medium",
-                trend.direction === 'up' && "text-green-600",
-                trend.direction === 'down' && "text-red-600"
-              )}>
-                {trend.percentage.toFixed(1)}% vs last week
-              </span>
+          <div className="flex items-center gap-3">
+            {/* Location Switcher */}
+            {hasMultipleLocations && (
+              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <SelectTrigger className="w-[160px] h-8 text-xs">
+                  <MapPin className="w-3 h-3 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="All Locations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {data?.locations.map(loc => (
+                    <SelectItem key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <div className="text-right">
+              <p className="font-display text-2xl">${totalRevenue.toLocaleString()}</p>
+              <div className="flex items-center gap-1 justify-end">
+                {trend.direction === 'up' ? (
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                ) : trend.direction === 'down' ? (
+                  <TrendingDown className="w-4 h-4 text-red-600" />
+                ) : (
+                  <Minus className="w-4 h-4 text-muted-foreground" />
+                )}
+                <span className={cn(
+                  "text-sm font-medium",
+                  trend.direction === 'up' && "text-green-600",
+                  trend.direction === 'down' && "text-red-600"
+                )}>
+                  {trend.percentage.toFixed(1)}% vs last week
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -133,7 +204,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
       <CardContent>
         <div className="h-[180px] mt-4">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data || []}>
+            <AreaChart data={chartData || []}>
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
@@ -174,11 +245,17 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
         {/* Weekly breakdown badges */}
         <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
           <Badge variant="outline" className="text-xs">
-            {data?.[data.length - 1]?.services || 0} services this week
+            {chartData?.[chartData.length - 1]?.services || 0} services this week
           </Badge>
           <Badge variant="outline" className="text-xs">
-            {data?.[data.length - 1]?.products || 0} products sold
+            {chartData?.[chartData.length - 1]?.products || 0} products sold
           </Badge>
+          {selectedLocation !== 'all' && (
+            <Badge variant="secondary" className="text-xs">
+              <MapPin className="w-3 h-3 mr-1" />
+              {data?.locations.find(l => l.id === selectedLocation)?.name}
+            </Badge>
+          )}
         </div>
       </CardContent>
     </Card>
