@@ -16,8 +16,14 @@ interface SyncRequest {
 const PHOREST_BASE_URL = "https://platform.phorest.com/third-party-api-server/api";
 
 async function phorestRequest(endpoint: string, businessId: string, username: string, password: string) {
-  const basicAuth = btoa(`${username}:${password}`);
-  const response = await fetch(`${PHOREST_BASE_URL}/business/${businessId}${endpoint}`, {
+  // Ensure username has global/ prefix
+  const formattedUsername = username.startsWith('global/') ? username : `global/${username}`;
+  const basicAuth = btoa(`${formattedUsername}:${password}`);
+  
+  const url = `${PHOREST_BASE_URL}/business/${businessId}${endpoint}`;
+  console.log(`Phorest request: ${url}`);
+  
+  const response = await fetch(url, {
     headers: {
       "Authorization": `Basic ${basicAuth}`,
       "Content-Type": "application/json",
