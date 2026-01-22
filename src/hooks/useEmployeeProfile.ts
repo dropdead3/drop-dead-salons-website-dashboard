@@ -69,10 +69,14 @@ export function useTeamDirectory(locationFilter?: string, options?: { includeTes
   // Only admins/super admins can see test accounts, and only when explicitly requested
   const shouldIncludeTestAccounts = options?.includeTestAccounts && isAdminOrSuperAdmin;
 
+  // When requesting test accounts, wait for roles to be loaded before running query
+  // This prevents the query from running with shouldIncludeTestAccounts=false before roles load
+  const shouldWaitForRoles = options?.includeTestAccounts && roles.length === 0 && !authLoading === false;
+
   return useQuery({
-    queryKey: ['team-directory', locationFilter, shouldIncludeTestAccounts, roles],
-    // Don't run query until auth is loaded to ensure correct role check
-    enabled: !authLoading,
+    queryKey: ['team-directory', locationFilter, shouldIncludeTestAccounts, roles.join(',')],
+    // Don't run query until auth is loaded AND roles are available (when needed for test accounts)
+    enabled: !authLoading && !(options?.includeTestAccounts && roles.length === 0),
     queryFn: async () => {
       let query = supabase
         .from('employee_profiles')
