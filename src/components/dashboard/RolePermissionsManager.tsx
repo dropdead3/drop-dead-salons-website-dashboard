@@ -236,7 +236,7 @@ export function RolePermissionsManager() {
                                 key={permission.id}
                                 className={cn(
                                   "flex items-center justify-between px-4 py-3 transition-colors",
-                                  has ? "bg-green-50/50 dark:bg-green-950/10" : "bg-background",
+                                  has ? "bg-primary/5 dark:bg-primary/10" : "bg-background",
                                   isLocked && "opacity-75"
                                 )}
                               >
