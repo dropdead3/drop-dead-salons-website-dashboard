@@ -602,7 +602,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
   return (
     <Card 
       className={cn(
-        "group overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 relative",
+        "group transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 relative",
         anniversaryInfo?.isToday && "ring-2 ring-amber-400",
         isSuperAdmin && "cursor-pointer"
       )}
@@ -748,7 +748,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                         <Calendar className="w-4 h-4" />
                       </button>
                     </HoverCardTrigger>
-                    <HoverCardContent side="left" align="start" className="w-56 p-3">
+                    <HoverCardContent side="left" align="start" className="w-56 p-3 z-50">
                       <p className="text-xs font-semibold mb-2">Schedule</p>
                       <div className="space-y-2">
                         {memberLocations.map(locId => {
