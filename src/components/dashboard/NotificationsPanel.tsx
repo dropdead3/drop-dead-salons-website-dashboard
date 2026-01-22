@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Check, ExternalLink, Megaphone, Hand } from 'lucide-react';
+import { Bell, Check, ExternalLink, Megaphone, Hand, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -127,7 +127,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
 
   const isLoading = loadingAnnouncements || loadingNotifications;
 
-  // Mark announcement as read
+  // Mark announcement as read (manual clear only)
   const markAnnouncementAsReadMutation = useMutation({
     mutationFn: async (announcementId: string) => {
       const { error } = await supabase
@@ -147,7 +147,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
     },
   });
 
-  // Mark user notification as read
+  // Mark user notification as read (manual clear only)
   const markNotificationAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
@@ -209,6 +209,25 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
     }
   };
 
+  // Handle notification click - navigate without marking as read
+  const handleNotificationClick = (notification: UserNotification) => {
+    if (notification.link) {
+      navigate(notification.link);
+    }
+  };
+
+  // Handle dismiss button click - mark as read
+  const handleDismissNotification = (e: React.MouseEvent, notificationId: string) => {
+    e.stopPropagation();
+    markNotificationAsReadMutation.mutate(notificationId);
+  };
+
+  // Handle dismiss announcement
+  const handleDismissAnnouncement = (e: React.MouseEvent, announcementId: string) => {
+    e.stopPropagation();
+    markAnnouncementAsReadMutation.mutate(announcementId);
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -233,7 +252,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
               disabled={markAllAsReadMutation.isPending}
             >
               <Check className="w-3 h-3 mr-1" />
-              Mark all read
+              Clear all
             </Button>
           )}
         </div>
@@ -256,20 +275,13 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                 <div
                   key={notification.id}
                   className={cn(
-                    "p-3 transition-colors hover:bg-muted/50 cursor-pointer",
+                    "p-3 transition-colors hover:bg-muted/50 cursor-pointer group",
                     !notification.is_read && "bg-primary/5"
                   )}
-                  onClick={() => {
-                    if (!notification.is_read) {
-                      markNotificationAsReadMutation.mutate(notification.id);
-                    }
-                    if (notification.link) {
-                      navigate(notification.link);
-                    }
-                  }}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start gap-2">
-                    <div className="p-1.5 rounded-full border shrink-0 mt-0.5 bg-amber-500/10 border-amber-500/30 text-amber-600">
+                    <div className="p-1.5 rounded-full border shrink-0 mt-0.5 bg-accent/50 border-accent text-accent-foreground">
                       <Hand className="w-3 h-3" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -287,7 +299,15 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                       </p>
                     </div>
                     {!notification.is_read && (
-                      <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => handleDismissNotification(e, notification.id)}
+                        title="Mark as read"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -298,14 +318,9 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                 <div
                   key={announcement.id}
                   className={cn(
-                    "p-3 transition-colors hover:bg-muted/50 cursor-pointer",
+                    "p-3 transition-colors hover:bg-muted/50 group",
                     !announcement.isRead && "bg-primary/5"
                   )}
-                  onClick={() => {
-                    if (!announcement.isRead) {
-                      markAnnouncementAsReadMutation.mutate(announcement.id);
-                    }
-                  }}
                 >
                   <div className="flex items-start gap-2">
                     <div className={cn(
@@ -336,7 +351,15 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                       </p>
                     </div>
                     {!announcement.isRead && (
-                      <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => handleDismissAnnouncement(e, announcement.id)}
+                        title="Mark as read"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
                     )}
                   </div>
                 </div>
