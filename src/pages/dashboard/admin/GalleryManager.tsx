@@ -138,7 +138,7 @@ export default function GalleryManager() {
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-display font-bold flex items-center gap-2">
+            <h1 className="text-2xl font-display flex items-center gap-2">
               <Images className="w-6 h-6" />
               Gallery Manager
             </h1>

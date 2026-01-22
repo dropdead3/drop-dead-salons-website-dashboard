@@ -234,7 +234,7 @@ export default function ProgramAnalytics() {
               <Target className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-display font-bold">PROGRAM ANALYTICS</h1>
+              <h1 className="text-xl md:text-2xl font-display">PROGRAM ANALYTICS</h1>
               <p className="text-muted-foreground text-sm">75-Day Client Engine performance insights</p>
             </div>
           </div>

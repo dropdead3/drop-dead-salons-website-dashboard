@@ -130,7 +130,7 @@ export default function RecruitingPipeline() {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-display font-semibold">Recruiting Pipeline</h1>
+            <h1 className="text-2xl font-display">Recruiting Pipeline</h1>
             <p className="text-muted-foreground text-sm mt-1">
               Track and manage job applicants
             </p>

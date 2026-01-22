@@ -143,7 +143,7 @@ export function ProgramPreviewModal({ weeks = [] }: ProgramPreviewModalProps) {
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-foreground text-background rounded-lg flex flex-col items-center justify-center">
                           <span className="text-[10px] font-display tracking-wide opacity-70">WEEK</span>
-                          <span className="text-lg font-display font-bold -mt-1">{currentWeek.week_number}</span>
+                          <span className="text-lg font-display -mt-1">{currentWeek.week_number}</span>
                         </div>
                         <div>
                           <h3 className="font-display">{currentWeek.title}</h3>

@@ -98,7 +98,7 @@ export function ApplicationFormDialog({ open, onOpenChange }: ApplicationFormDia
           )}
         >
           <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-            <DialogPrimitive.Title className="text-2xl font-display font-semibold leading-none tracking-tight">
+            <DialogPrimitive.Title className="text-2xl font-display leading-none tracking-tight">
               Join Our Team
             </DialogPrimitive.Title>
             <DialogPrimitive.Description className="text-sm text-muted-foreground">

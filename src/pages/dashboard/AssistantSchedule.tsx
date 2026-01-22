@@ -316,7 +316,7 @@ export default function AssistantSchedule() {
       <div className="p-6 max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-display font-bold">
+            <h1 className="text-2xl font-display">
               {isStylist ? 'Request An Assistant' : isStylistAssistant ? 'Assisting Requests' : 'Assistant Schedule'}
             </h1>
             <p className="text-muted-foreground">

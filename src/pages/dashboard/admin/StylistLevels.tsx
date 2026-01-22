@@ -268,7 +268,7 @@ export default function StylistLevels() {
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm -mx-6 px-6 py-4 -mt-6 mb-2 border-b border-transparent transition-all duration-200" style={{ borderColor: 'transparent' }}>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-display font-bold">Stylist Levels</h1>
+              <h1 className="text-2xl font-display">Stylist Levels</h1>
               <p className="text-muted-foreground text-sm mt-1">
                 Manage experience levels and pricing tiers
               </p>

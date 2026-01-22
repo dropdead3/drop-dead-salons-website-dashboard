@@ -45,7 +45,7 @@ export function StylistsOverviewCard() {
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-3 border-b">
           <span className="text-sm text-muted-foreground">Total Assigned</span>
-          <span className="text-2xl font-display font-bold">{totalAssigned}</span>
+          <span className="text-2xl font-display">{totalAssigned}</span>
         </div>
         
         <div className="space-y-2">
@@ -137,7 +137,7 @@ export function StaffOverviewCard() {
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-3 border-b">
           <span className="text-sm text-muted-foreground">Total Staff</span>
-          <span className="text-2xl font-display font-bold">{totalStaff}</span>
+          <span className="text-2xl font-display">{totalStaff}</span>
         </div>
         
         <div className="space-y-2">
