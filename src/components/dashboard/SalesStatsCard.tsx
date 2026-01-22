@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { PhorestSyncButton } from './PhorestSyncButton';
 
 interface SalesStatsCardProps {
   userId: string | undefined;
@@ -73,11 +74,12 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
   if (!data) {
     return (
       <Card className="p-4 bg-muted/50 border-dashed mb-6">
-        <p className="text-sm text-muted-foreground text-center">
-          No sales data available yet. Go to{' '}
-          <Link to="/dashboard/admin/phorest" className="text-primary underline">Phorest Settings</Link>{' '}
-          and click "Sync Sales" to pull in your data.
-        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <p className="text-sm text-muted-foreground text-center">
+            No sales data available yet.
+          </p>
+          <PhorestSyncButton syncType="sales" />
+        </div>
       </Card>
     );
   }
@@ -98,6 +100,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
           <h2 className="font-display text-sm tracking-wide">MY SALES DATA</h2>
         </div>
         <div className="flex items-center gap-2">
+          <PhorestSyncButton syncType="sales" size="sm" />
           <Select value={dateRange} onValueChange={(v: DateRange) => setDateRange(v)}>
             <SelectTrigger className="w-[130px] h-8 text-xs">
               <SelectValue />
