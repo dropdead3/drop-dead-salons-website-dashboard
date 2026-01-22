@@ -152,7 +152,7 @@ export default function ManageRoles() {
           </p>
         </div>
 
-        {/* Role Statistics Overview */}
+        {/* Role Statistics Overview - dynamic from database */}
         <div className="flex flex-wrap gap-3 mb-6">
           <Card className="bg-muted/30 min-w-[100px]">
             <CardContent className="p-4 text-center">
@@ -160,25 +160,36 @@ export default function ManageRoles() {
               <p className="text-xs text-muted-foreground">Total Users</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800 min-w-[100px]">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-display font-medium text-amber-700 dark:text-amber-400">{roleStats.super_admin}</p>
-              <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center justify-center gap-1">
-                <Crown className="w-3 h-3" />
-                Super Admin
-              </p>
-            </CardContent>
-          </Card>
-          {roles.map(role => (
-            <Card key={role.name} className={cn("border min-w-[100px]", getRoleBorderBgClasses(role.color))}>
-              <CardContent className="p-4 text-center">
-                <p className={cn("text-2xl font-display font-medium", getRoleTextClasses(role.color))}>
-                  {roleStats[role.name] || 0}
-                </p>
-                <p className="text-xs text-muted-foreground">{role.display_name}s</p>
-              </CardContent>
-            </Card>
-          ))}
+          {roles.map(role => {
+            const isSuperAdminRole = role.name === 'super_admin';
+            return (
+              <Card 
+                key={role.name} 
+                className={cn(
+                  "border min-w-[100px]",
+                  isSuperAdminRole 
+                    ? "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800"
+                    : getRoleBorderBgClasses(role.color)
+                )}
+              >
+                <CardContent className="p-4 text-center">
+                  <p className={cn(
+                    "text-2xl font-display font-medium",
+                    isSuperAdminRole ? "text-amber-700 dark:text-amber-400" : getRoleTextClasses(role.color)
+                  )}>
+                    {isSuperAdminRole ? roleStats.super_admin : (roleStats[role.name] || 0)}
+                  </p>
+                  <p className={cn(
+                    "text-xs flex items-center justify-center gap-1",
+                    isSuperAdminRole ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground"
+                  )}>
+                    {isSuperAdminRole && <Crown className="w-3 h-3" />}
+                    {role.display_name}{!isSuperAdminRole && 's'}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Admin Role Warning */}
