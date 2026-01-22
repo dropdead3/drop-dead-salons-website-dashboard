@@ -822,10 +822,9 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
       onClick={isSuperAdmin ? onViewProfile : undefined}
     >
     <CardContent className="p-5">
-        {/* Bottom-right action icons - appear on hover */}
-        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-1.5">
-          {/* Strike indicator for admins/managers - links to Staff Strikes page */}
-          {canViewStrikes && (
+        {/* Bottom-left strike indicator - appears on hover */}
+        {canViewStrikes && (
+          <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -851,10 +850,12 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )}
-          
-          {/* Super admin edit indicator */}
-          {isSuperAdmin && (
+          </div>
+        )}
+        
+        {/* Bottom-right edit indicator - appears on hover */}
+        {isSuperAdmin && (
+          <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -865,8 +866,8 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                 <TooltipContent side="left" className="text-xs">View/Edit Profile</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )}
-        </div>
+          </div>
+        )}
         
         {/* Main content - horizontal layout */}
         <div className="flex gap-4">
