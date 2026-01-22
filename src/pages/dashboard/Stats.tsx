@@ -227,8 +227,58 @@ export default function Stats() {
           </div>
         )}
 
+        {/* Conversion Dashboard - Powered by Phorest */}
+        <Card className="p-6 mt-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <h2 className="font-display text-sm tracking-wide">CONVERSION DASHBOARD</h2>
+            </div>
+            {isLinkedToPhorest && (
+              <Badge variant="outline" className="text-xs">
+                <Link2 className="w-3 h-3 mr-1" />
+                Phorest Data
+              </Badge>
+            )}
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Rebooking Rate"
+              value={myPhorestMetrics?.rebooking_rate 
+                ? `${Number(myPhorestMetrics.rebooking_rate).toFixed(0)}%` 
+                : '0%'
+              }
+            />
+            <StatCard
+              label="Retention Rate"
+              value={myPhorestMetrics?.retention_rate 
+                ? `${Number(myPhorestMetrics.retention_rate).toFixed(0)}%` 
+                : '0%'
+              }
+            />
+            <StatCard
+              label="Avg Ticket Value"
+              value={myPhorestMetrics?.average_ticket 
+                ? `$${Number(myPhorestMetrics.average_ticket).toLocaleString()}` 
+                : (userWeeklySales?.averageTicket 
+                  ? `$${userWeeklySales.averageTicket.toLocaleString()}` 
+                  : '$0')
+              }
+            />
+            <StatCard
+              label="New Clients"
+              value={myPhorestMetrics?.new_clients?.toString() || '0'}
+            />
+          </div>
+          {!isLinkedToPhorest && (
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Link your Phorest account to see live conversion metrics
+            </p>
+          )}
+        </Card>
+
         <Tabs defaultValue="visibility" className="space-y-6 mt-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
             <TabsTrigger value="visibility" className="font-display text-xs tracking-wide">
               <Eye className="w-4 h-4 mr-2 hidden lg:block" />
               Visibility
@@ -240,10 +290,6 @@ export default function Stats() {
             <TabsTrigger value="bookings" className="font-display text-xs tracking-wide">
               <Calendar className="w-4 h-4 mr-2 hidden lg:block" />
               Bookings
-            </TabsTrigger>
-            <TabsTrigger value="conversion" className="font-display text-xs tracking-wide">
-              <TrendingUp className="w-4 h-4 mr-2 hidden lg:block" />
-              Conversion
             </TabsTrigger>
           </TabsList>
 
@@ -354,39 +400,6 @@ export default function Stats() {
                   label="New Clients"
                   value={metrics.new_clients}
                   onChange={(v) => handleChange('new_clients', v)}
-                />
-              </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="conversion">
-            <Card className="p-6">
-              <h2 className="font-display text-sm tracking-wide mb-6">CONVERSION DASHBOARD</h2>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                  label="Inquiry → Consult"
-                  value={totalLeads > 0 
-                    ? `${Math.round((metrics.consults_booked / totalLeads) * 100)}%` 
-                    : '0%'
-                  }
-                />
-                <StatCard
-                  label="Consult → Booking"
-                  value={metrics.consults_completed > 0 
-                    ? `${Math.round((metrics.services_booked / metrics.consults_completed) * 100)}%` 
-                    : '0%'
-                  }
-                />
-                <StatCard
-                  label="Avg Ticket Value"
-                  value={metrics.services_booked > 0 
-                    ? `$${Math.round(metrics.revenue_booked / metrics.services_booked)}` 
-                    : '$0'
-                  }
-                />
-                <StatCard
-                  label="New Clients"
-                  value={metrics.new_clients.toString()}
                 />
               </div>
             </Card>
