@@ -69,11 +69,26 @@ export function useHomepageStylists() {
   return useQuery({
     queryKey: ['homepage-stylists'],
     queryFn: async () => {
+      // First, get user_ids that have stylist or stylist_assistant roles
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['stylist', 'stylist_assistant']);
+
+      if (roleError) throw roleError;
+      
+      const stylistUserIds = roleData?.map(r => r.user_id) || [];
+      
+      if (stylistUserIds.length === 0) {
+        return [] as HomepageStylist[];
+      }
+
       const { data, error } = await supabase
         .from('employee_profiles')
         .select('id, user_id, full_name, display_name, photo_url, instagram, tiktok, stylist_level, specialties, highlighted_services, location_id, location_ids, is_booking, bio, homepage_order')
         .eq('is_active', true)
-        .eq('homepage_visible', true);
+        .eq('homepage_visible', true)
+        .in('user_id', stylistUserIds);
 
       if (error) throw error;
       
