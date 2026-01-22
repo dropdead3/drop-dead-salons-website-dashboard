@@ -76,6 +76,7 @@ export default function Stats() {
   const [metrics, setMetrics] = useState<DailyMetrics>(initialMetrics);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [clientInsightsLocation, setClientInsightsLocation] = useState<string>('all');
 
   // Date ranges for sales data
   const today = new Date();
@@ -221,7 +222,12 @@ export default function Stats() {
             <div className="lg:col-span-2">
               <PerformanceTrendChart userId={user.id} weeks={8} />
             </div>
-            <ClientInsightsCard userId={user.id} />
+            <ClientInsightsCard 
+              userId={user.id} 
+              locationId={clientInsightsLocation}
+              onLocationChange={setClientInsightsLocation}
+              showLocationFilter={true}
+            />
           </div>
         )}
 
