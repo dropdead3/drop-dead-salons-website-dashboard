@@ -885,23 +885,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
       )}>
         <div className="flex items-center justify-between h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
-          {/* Left side - Collapse toggle */}
+          {/* Left side - Sidebar toggle */}
           <div className="flex items-center">
-            {!sidebarCollapsed && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    onClick={toggleSidebarCollapsed}
-                  >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={toggleSidebarCollapsed}
+                >
+                  {sidebarCollapsed ? (
+                    <PanelLeft className="w-4 h-4" />
+                  ) : (
                     <PanelLeftClose className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Collapse sidebar</TooltipContent>
-              </Tooltip>
-            )}
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              </TooltipContent>
+            </Tooltip>
           </div>
           
           {/* Right side - User controls */}
