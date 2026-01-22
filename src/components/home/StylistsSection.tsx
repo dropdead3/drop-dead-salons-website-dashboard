@@ -426,6 +426,7 @@ export function StylistsSection() {
       displayName: s.display_name || null, // Pass nickname separately
       instagram: s.instagram || "",
       tiktok: s.tiktok || undefined,
+      preferred_social_handle: s.preferred_social_handle || undefined,
       level: s.stylist_level || "LEVEL 1 STYLIST",
       specialties: s.specialties || [],
       highlighted_services: s.highlighted_services || undefined,
