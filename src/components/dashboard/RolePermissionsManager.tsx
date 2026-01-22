@@ -24,6 +24,7 @@ import {
   Sparkles,
   CircleDot,
   AlertTriangle,
+  Info,
 } from 'lucide-react';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -291,26 +292,20 @@ export function RolePermissionsManager() {
                                       {permission.display_name}
                                     </p>
                                     {isDeviation && (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Badge 
-                                            variant="outline" 
-                                            className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-0.5 cursor-help"
-                                          >
-                                            <AlertTriangle className="w-2.5 h-2.5" />
-                                            Custom Change
-                                          </Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs">
-                                          <p className="font-medium">Deviation from Default</p>
-                                          <p className="text-xs text-muted-foreground mt-1">
-                                            {has 
-                                              ? `This permission is enabled but is NOT in the system defaults for ${role.display_name}.`
-                                              : `This permission is disabled but IS in the system defaults for ${role.display_name}.`
-                                            }
-                                          </p>
-                                        </TooltipContent>
-                                      </Tooltip>
+                                      <Badge 
+                                        variant="outline" 
+                                        className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-1"
+                                      >
+                                        Custom Change
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Info className="w-2.5 h-2.5 cursor-help" />
+                                          </TooltipTrigger>
+                                          <TooltipContent className="max-w-xs">
+                                            This is a permission that has been toggled on that is a deviation from the default role permissions
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </Badge>
                                     )}
                                   </div>
                                   {permission.description && (
