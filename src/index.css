@@ -14,21 +14,10 @@
     cursor: none !important;
   }
   
-  /* Dashboard: restore normal cursor behavior with proper inheritance */
+  /* Dashboard: restore normal cursor behavior - all elements use auto (arrow) */
   body.dashboard-cursor,
   body.dashboard-cursor * {
-    cursor: inherit;
-  }
-  
-  body.dashboard-cursor {
     cursor: auto;
-  }
-  
-  body.dashboard-cursor a,
-  body.dashboard-cursor button:not([class*="cursor-grab"]),
-  body.dashboard-cursor [role="button"]:not([class*="cursor-grab"]),
-  body.dashboard-cursor .cursor-pointer {
-    cursor: pointer;
   }
   
   /* Grab cursor for drag handles - highest specificity */
