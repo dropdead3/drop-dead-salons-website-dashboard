@@ -217,21 +217,21 @@ export default function ManageRoles() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {/* Full Access Admin - Special status */}
-                  <div className="flex items-start gap-2">
-                    <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300 text-xs shrink-0 gap-1">
-                      <Crown className="w-3 h-3" />
-                      Super Admin
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      Super user with ability to approve admin roles
-                    </span>
-                  </div>
                   {roles.map(role => {
                     const colorClasses = getRoleColorClasses(role.color);
+                    const isSuperAdminRole = role.name === 'super_admin';
                     return (
                       <div key={role.name} className="flex items-start gap-2">
-                        <Badge variant="outline" className={cn("text-xs shrink-0", colorClasses.bg, colorClasses.text)}>
+                        <Badge 
+                          variant={isSuperAdminRole ? "default" : "outline"} 
+                          className={cn(
+                            "text-xs shrink-0",
+                            isSuperAdminRole 
+                              ? "bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300 gap-1" 
+                              : cn(colorClasses.bg, colorClasses.text)
+                          )}
+                        >
+                          {isSuperAdminRole && <Crown className="w-3 h-3" />}
                           {role.display_name}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
