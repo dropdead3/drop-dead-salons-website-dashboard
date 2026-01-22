@@ -22,6 +22,7 @@ import { locations as staticLocations } from '@/data/stylists';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { StylistCardPreview } from '@/components/dashboard/StylistCardPreview';
 
 const DAYS_OF_WEEK = [
   { key: 'Mon', label: 'Monday' },
@@ -1019,6 +1020,39 @@ export default function MyProfile() {
                     />
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Stylist Card Preview - For stylists and stylist assistants */}
+          {(roles.includes('stylist') || roles.includes('stylist_assistant')) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Website Card Preview
+                </CardTitle>
+                <CardDescription>
+                  See how your stylist card will appear on the website homepage as you fill in your information.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StylistCardPreview
+                  name={formData.full_name}
+                  displayName={formData.display_name}
+                  level={formData.stylist_level}
+                  photoUrl={profile?.photo_url || undefined}
+                  instagram={formData.instagram}
+                  tiktok={formData.tiktok}
+                  highlightedServices={formData.highlighted_services}
+                  specialties={formData.specialties}
+                  bio={formData.bio}
+                  isBooking={profile?.is_booking !== false}
+                  locations={formData.location_ids.map(id => {
+                    const loc = locations.find(l => l.id === id);
+                    return loc ? { id: loc.id, name: loc.name } : null;
+                  }).filter(Boolean) as { id: string; name: string }[]}
+                />
               </CardContent>
             </Card>
           )}
