@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Sparkles, Instagram, MapPin, X, ArrowRight, Info } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatDisplayName } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
@@ -11,25 +11,6 @@ import {
 // Helper to convert text to title case
 const toTitleCase = (str: string) => {
   return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
-};
-
-// Format stylist name for card display: nickname or first name + last initial
-const formatCardName = (fullName: string, displayName?: string | null) => {
-  // If nickname/display name exists, use that
-  if (displayName && displayName.trim()) {
-    const nickname = displayName.trim().split(' ')[0]; // Get first word of nickname
-    // Get last initial from full name
-    const nameParts = fullName.trim().split(' ');
-    const lastInitial = nameParts.length > 1 ? ` ${nameParts[nameParts.length - 1].charAt(0).toUpperCase()}.` : '';
-    return nickname + lastInitial;
-  }
-  
-  // If no display name, use first name + last initial from full name
-  const nameParts = fullName.trim().split(' ');
-  if (nameParts.length === 0 || !fullName.trim()) return 'Your Name';
-  const firstName = nameParts[0];
-  const lastInitial = nameParts.length > 1 ? ` ${nameParts[nameParts.length - 1].charAt(0).toUpperCase()}.` : '';
-  return firstName + lastInitial;
 };
 
 interface StylistCardPreviewProps {
@@ -72,7 +53,7 @@ export function StylistCardPreview({
         return 0;
       }).slice(0, 3);
 
-  const showName = formatCardName(name || '', displayName);
+  const showName = formatDisplayName(name || '', displayName) || 'Your Name';
   const hasBio = !!bio;
 
   const handleFlip = () => {
