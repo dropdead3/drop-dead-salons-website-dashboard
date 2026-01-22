@@ -311,6 +311,34 @@ export function useDeleteRole() {
   });
 }
 
+// Toggle system lock status (super admin only)
+export function useToggleSystemRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, isSystem }: { id: string; isSystem: boolean }) => {
+      const { data, error } = await supabase
+        .from('roles')
+        .update({ is_system: isSystem })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Role;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      queryClient.invalidateQueries({ queryKey: ['all-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['role', data.name] });
+      toast.success(data.is_system ? 'Role marked as system role' : 'System lock removed');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to update role', { description: error.message });
+    },
+  });
+}
+
 // Helper functions for role metadata
 export function getRoleColor(roleName: string, roles: Role[]): string {
   const role = roles.find(r => r.name === roleName);
