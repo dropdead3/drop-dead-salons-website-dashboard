@@ -189,7 +189,7 @@ export default function DashboardHome() {
         {showQuickActions && isVisible('quick_actions') && (
           <div>
             <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               {isVisible('ring_the_bell_action') && (
                 <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
                   <Link to="/dashboard/ring-the-bell">
@@ -206,6 +206,12 @@ export default function DashboardHome() {
                   </Link>
                 </Button>
               )}
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+                <Link to="/dashboard/my-clients">
+                  <Users className="w-5 h-5" />
+                  <span className="text-xs">My Clients</span>
+                </Link>
+              </Button>
               {isVisible('training_action') && (
                 <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
                   <Link to="/dashboard/training">
