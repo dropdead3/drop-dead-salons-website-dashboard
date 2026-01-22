@@ -85,14 +85,14 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
     <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-8 shadow-inner">
       {/* Premium PDF Preview */}
       <div className="bg-white rounded-lg shadow-xl overflow-hidden max-w-sm mx-auto">
-        {/* Header with gradient */}
-        <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] p-6 text-center">
+        {/* Header with gradient - smaller logo */}
+        <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
           <img 
             src={DropDeadLogo} 
             alt="Drop Dead" 
-            className="h-6 mx-auto invert"
+            className="h-3 mx-auto invert"
           />
-          <p className="text-[hsl(40,30%,85%)] text-xs mt-2 tracking-widest uppercase">
+          <p className="text-[hsl(40,30%,85%)] text-[10px] mt-1 tracking-widest uppercase">
             Staff Portal
           </p>
         </div>
@@ -119,10 +119,17 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="bg-[hsl(40,30%,96%)] px-6 py-4 text-center border-t border-[hsl(35,25%,90%)]">
+        {/* URL Footer */}
+        <div className="bg-[hsl(40,30%,96%)] px-6 py-3 text-center border-t border-[hsl(35,25%,90%)]">
           <p className="text-xs text-muted-foreground">
             Or visit: <span className="font-medium text-foreground">{staffLoginUrl.replace('https://', '')}</span>
+          </p>
+        </div>
+
+        {/* Powered By Footer */}
+        <div className="bg-[hsl(0,0%,8%)] px-6 py-2 text-center">
+          <p className="text-[10px] text-[hsl(40,30%,60%)]">
+            Powered by Drop Dead Salon Software
           </p>
         </div>
       </div>
@@ -146,7 +153,7 @@ function QRCodeCard() {
     if (!ctx) return;
 
     const width = 400;
-    const height = 550;
+    const height = 580;
     pdfCanvas.width = width;
     pdfCanvas.height = height;
 
@@ -157,22 +164,22 @@ function QRCodeCard() {
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
 
-    // Header background (dark)
-    const headerHeight = 80;
+    // Header background (dark) - smaller
+    const headerHeight = 50;
     const headerGradient = ctx.createLinearGradient(0, 0, width, 0);
     headerGradient.addColorStop(0, '#141414');
     headerGradient.addColorStop(1, '#262626');
     ctx.fillStyle = headerGradient;
     ctx.fillRect(0, 0, width, headerHeight);
 
-    // Header text
+    // Header text - smaller logo
     ctx.fillStyle = '#f8f6f1';
-    ctx.font = 'bold 22px Termina, sans-serif';
+    ctx.font = 'bold 14px Termina, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('DROP DEAD®', width / 2, 40);
-    ctx.font = '10px sans-serif';
+    ctx.fillText('DROP DEAD®', width / 2, 25);
+    ctx.font = '8px sans-serif';
     ctx.fillStyle = '#a8a090';
-    ctx.fillText('STAFF PORTAL', width / 2, 60);
+    ctx.fillText('STAFF PORTAL', width / 2, 40);
 
     // QR Code container
     const qrSize = 180;
@@ -204,20 +211,29 @@ function QRCodeCard() {
     ctx.font = '14px sans-serif';
     ctx.fillText('Scan this QR code to get started', width / 2, qrY + qrSize + 85);
 
-    // Footer divider
-    const footerY = height - 60;
+    // URL divider
+    const urlY = height - 80;
     ctx.strokeStyle = '#d4d0c8';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(40, footerY);
-    ctx.lineTo(width - 40, footerY);
+    ctx.moveTo(40, urlY);
+    ctx.lineTo(width - 40, urlY);
     ctx.stroke();
 
     // URL text
     ctx.fillStyle = '#888888';
     ctx.font = '11px sans-serif';
     const urlText = staffLoginUrl.replace('https://', '').replace('http://', '');
-    ctx.fillText(urlText, width / 2, height - 30);
+    ctx.fillText(urlText, width / 2, urlY + 25);
+
+    // Powered by footer (dark bar at bottom)
+    const footerHeight = 30;
+    ctx.fillStyle = '#141414';
+    ctx.fillRect(0, height - footerHeight, width, footerHeight);
+    
+    ctx.fillStyle = '#8a8070';
+    ctx.font = '10px sans-serif';
+    ctx.fillText('Powered by Drop Dead Salon Software', width / 2, height - 10);
 
     // Download
     const link = document.createElement('a');
@@ -252,22 +268,27 @@ function QRCodeCard() {
 
         {/* Preview thumbnail */}
         <div className="flex justify-center p-4 bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl">
-          <div className="bg-white rounded-lg shadow-lg p-4 w-32">
-            <div className="bg-foreground rounded h-6 mb-3 flex items-center justify-center">
-              <span className="text-[6px] text-background font-display tracking-wider">DROP DEAD®</span>
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden w-32">
+            <div className="bg-foreground py-1 flex items-center justify-center">
+              <span className="text-[5px] text-background font-display tracking-wider">DROP DEAD®</span>
             </div>
-            <div className="flex justify-center mb-3">
-              <QRCodeCanvas 
-                value={staffLoginUrl} 
-                size={60}
-                level="H"
-                marginSize={0}
-                fgColor="#141414"
-              />
+            <div className="p-3">
+              <div className="flex justify-center mb-2">
+                <QRCodeCanvas 
+                  value={staffLoginUrl} 
+                  size={60}
+                  level="H"
+                  marginSize={0}
+                  fgColor="#141414"
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-[6px] font-medium">Create Your Account</p>
+                <p className="text-[5px] text-muted-foreground">Scan to get started</p>
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-[6px] font-medium">Create Your Account</p>
-              <p className="text-[5px] text-muted-foreground">Scan to get started</p>
+            <div className="bg-foreground py-1 flex items-center justify-center">
+              <span className="text-[4px] text-[hsl(40,30%,60%)]">Powered by Drop Dead Salon Software</span>
             </div>
           </div>
         </div>
