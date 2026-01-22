@@ -2,6 +2,12 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface HideNumbersContextType {
   hideNumbers: boolean;
@@ -78,7 +84,7 @@ export function useHideNumbers() {
   return context;
 }
 
-// Utility component for blurring dollar amounts
+// Utility component for blurring dollar amounts with tooltip hint
 interface BlurredAmountProps {
   children: ReactNode;
   className?: string;
@@ -92,10 +98,23 @@ export function BlurredAmount({
 }: BlurredAmountProps) {
   const { hideNumbers } = useHideNumbers();
   
+  if (!hideNumbers) {
+    return <Component className={className}>{children}</Component>;
+  }
+  
   return (
-    <Component className={cn(className, hideNumbers && 'blur-md select-none')}>
-      {children}
-    </Component>
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Component className={cn(className, 'blur-md select-none cursor-help')}>
+            {children}
+          </Component>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Click the eye icon in the top menu to reveal
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
