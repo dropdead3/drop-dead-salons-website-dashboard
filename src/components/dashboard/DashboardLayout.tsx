@@ -187,7 +187,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const roles = isViewingAsUser && viewAsUser 
     ? viewAsUser.roles 
     : (isViewingAs && viewAsRole ? [viewAsRole] : actualRoles);
-  const isAdmin = actualRoles.includes('admin');
+  const isAdmin = actualRoles.includes('admin') || actualRoles.includes('super_admin');
   // isCoach should use simulated roles for nav visibility
   const effectiveIsCoach = isViewingAs 
     ? (viewAsRole === 'admin' || viewAsRole === 'manager' || viewAsUser?.roles.some(r => r === 'admin' || r === 'manager')) 
