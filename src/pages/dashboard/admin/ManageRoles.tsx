@@ -386,8 +386,8 @@ export default function ManageRoles() {
                         </div>
                       )}
                       
-                      {/* Regular Role Toggles */}
-                      {roles.map(role => {
+                      {/* Regular Role Toggles - exclude super_admin which is handled separately */}
+                      {roles.filter(r => r.name !== 'super_admin').map(role => {
                         const hasRole = user.roles.includes(role.name as AppRole);
                         const isAdminRole = role.name === 'admin';
                         const isLockedByPermission = isAdminRole && !canApproveAdmin;
