@@ -190,7 +190,7 @@ export default function DashboardHome() {
         {showQuickActions && isVisible('quick_actions') && (
           <div>
             <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               {isVisible('ring_the_bell_action') && (
                 <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
                   <Link to="/dashboard/ring-the-bell">
@@ -227,14 +227,6 @@ export default function DashboardHome() {
                   <Link to="/dashboard/training">
                     <Target className="w-5 h-5" />
                     <span className="text-xs">Training</span>
-                  </Link>
-                </Button>
-              )}
-              {isVisible('handbooks_action') && (
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-                  <Link to="/dashboard/handbooks">
-                    <CheckSquare className="w-5 h-5" />
-                    <span className="text-xs">Handbooks</span>
                   </Link>
                 </Button>
               )}
