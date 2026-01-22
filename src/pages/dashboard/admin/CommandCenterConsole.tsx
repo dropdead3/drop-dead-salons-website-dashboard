@@ -111,7 +111,7 @@ export default function CommandCenterConsole() {
             <LayoutDashboard className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-display font-bold">Command Center Console</h1>
+            <h1 className="text-xl md:text-2xl font-display">Command Center Console</h1>
             <p className="text-muted-foreground text-sm">
               Control what each role sees on their dashboard
             </p>

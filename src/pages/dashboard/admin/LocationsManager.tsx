@@ -229,7 +229,7 @@ export default function LocationsManager() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-display font-bold">Locations</h1>
+            <h1 className="text-2xl font-display">Locations</h1>
             <p className="text-muted-foreground text-sm mt-1">
               Manage salon locations displayed across the website
             </p>

@@ -304,7 +304,7 @@ export default function ClientEngineTracker() {
             <Target className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-display font-bold">CLIENT ENGINE TRACKER</h1>
+            <h1 className="text-xl md:text-2xl font-display">CLIENT ENGINE TRACKER</h1>
             <p className="text-muted-foreground text-sm">
               Monitor team progress through the 75-day program
             </p>

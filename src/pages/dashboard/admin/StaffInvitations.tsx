@@ -299,7 +299,7 @@ export default function StaffInvitations() {
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-display font-bold">Staff Invitations</h1>
+            <h1 className="text-2xl font-display">Staff Invitations</h1>
             <p className="text-muted-foreground">
               Invite new team members to create their accounts
             </p>

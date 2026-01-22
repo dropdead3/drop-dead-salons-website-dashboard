@@ -645,7 +645,7 @@ export default function Program() {
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-foreground text-background rounded-lg flex flex-col items-center justify-center">
                         <span className="text-[10px] font-display tracking-wide opacity-70">WEEK</span>
-                        <span className="text-lg font-display font-bold -mt-1">{currentWeek.week_number}</span>
+                        <span className="text-lg font-display -mt-1">{currentWeek.week_number}</span>
                       </div>
                       <div>
                         <h2 className="font-display text-lg">{currentWeek.title}</h2>

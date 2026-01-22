@@ -503,7 +503,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
             {/* Name and actions row */}
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="font-display font-semibold text-base leading-tight truncate">
+                <h3 className="font-display text-base leading-tight truncate">
                   {member.display_name || member.full_name}
                 </h3>
                 {/* Meta info */}
