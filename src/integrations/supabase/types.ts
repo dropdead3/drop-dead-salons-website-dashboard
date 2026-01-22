@@ -1299,6 +1299,7 @@ export type Database = {
           hours_json: Json | null
           id: string
           is_active: boolean | null
+          major_crossroads: string | null
           name: string
           phone: string
           updated_at: string | null
@@ -1315,6 +1316,7 @@ export type Database = {
           hours_json?: Json | null
           id: string
           is_active?: boolean | null
+          major_crossroads?: string | null
           name: string
           phone: string
           updated_at?: string | null
@@ -1331,6 +1333,7 @@ export type Database = {
           hours_json?: Json | null
           id?: string
           is_active?: boolean | null
+          major_crossroads?: string | null
           name?: string
           phone?: string
           updated_at?: string | null

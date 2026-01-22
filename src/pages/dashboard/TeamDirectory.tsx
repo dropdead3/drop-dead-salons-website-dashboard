@@ -7,7 +7,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation, CalendarX } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation, CalendarX, Signpost } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -561,6 +561,29 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Map Preview */}
+        {location.google_maps_url && (
+          <a
+            href={location.google_maps_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full h-32 rounded-lg overflow-hidden bg-muted relative group"
+          >
+            <iframe
+              src={`https://www.google.com/maps?q=${encodeURIComponent(location.address + ', ' + location.city)}&output=embed&z=15`}
+              className="w-full h-full border-0 pointer-events-none"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title={`Map of ${location.name}`}
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-medium bg-background/90 px-2 py-1 rounded shadow">
+                Open in Maps
+              </span>
+            </div>
+          </a>
+        )}
+
         {/* Address */}
         <div className="flex items-start gap-3">
           <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -569,6 +592,16 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
             <p className="text-muted-foreground">{location.city}</p>
           </div>
         </div>
+
+        {/* Major Crossroads */}
+        {location.major_crossroads && (
+          <div className="flex items-center gap-3">
+            <Signpost className="w-4 h-4 text-muted-foreground shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Crossroads:</span> {location.major_crossroads}
+            </p>
+          </div>
+        )}
 
         {/* Phone */}
         {location.phone && (

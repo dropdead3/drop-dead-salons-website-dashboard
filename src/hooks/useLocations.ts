@@ -35,6 +35,7 @@ export interface Location {
   hours: string | null;
   hours_json: HoursJson | null;
   holiday_closures: HolidayClosure[] | null;
+  major_crossroads: string | null;
   is_active: boolean;
   display_order: number;
   created_at: string;
