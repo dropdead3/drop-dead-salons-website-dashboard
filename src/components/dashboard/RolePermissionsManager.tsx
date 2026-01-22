@@ -183,9 +183,7 @@ export function RolePermissionsManager() {
                       : "bg-muted/50 border-border"
                   )}
                 >
-                  <span style={!isSuperAdmin && role.color ? { color: role.color } : undefined}>
-                    <CurrentRoleIcon className="w-8 h-8" />
-                  </span>
+                  <CurrentRoleIcon className="w-8 h-8 text-muted-foreground" />
                   <div>
                     <h3 className={cn(
                       "font-display font-medium text-lg",
