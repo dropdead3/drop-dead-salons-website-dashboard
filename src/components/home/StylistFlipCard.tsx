@@ -84,13 +84,20 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
             <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2">
               {/* Display highlighted_services if available, otherwise fall back to specialties */}
               {(() => {
-                const displayItems = (stylist.highlighted_services && stylist.highlighted_services.length > 0)
-                  ? stylist.highlighted_services.slice(0, 3)
-                  : [...stylist.specialties].sort((a, b) => {
+                // Safely handle null/undefined specialties
+                const specialties = stylist.specialties || [];
+                const highlightedServices = stylist.highlighted_services || [];
+                
+                const displayItems = (highlightedServices.length > 0)
+                  ? highlightedServices.slice(0, 3)
+                  : [...specialties].sort((a, b) => {
                       if (a.toUpperCase() === "EXTENSIONS") return -1;
                       if (b.toUpperCase() === "EXTENSIONS") return 1;
                       return 0;
                     }).slice(0, 3);
+                
+                // If no specialties to display, don't render anything
+                if (displayItems.length === 0) return null;
                 
                 return displayItems.map((item) => {
                   const isExtensions = item.toUpperCase() === "EXTENSIONS";
