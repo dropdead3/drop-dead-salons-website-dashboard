@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface SyncRequest {
-  sync_type: 'staff' | 'appointments' | 'clients' | 'reports' | 'all';
+  sync_type: 'staff' | 'appointments' | 'clients' | 'reports' | 'sales' | 'all';
   date_from?: string;
   date_to?: string;
 }
@@ -307,6 +307,194 @@ async function syncPerformanceReports(
   }
 }
 
+async function syncSalesTransactions(
+  supabase: any,
+  businessId: string,
+  username: string,
+  password: string,
+  dateFrom: string,
+  dateTo: string
+) {
+  console.log(`Syncing sales transactions from ${dateFrom} to ${dateTo}...`);
+
+  try {
+    // Get branches first
+    const branchData = await phorestRequest("/branch", businessId, username, password);
+    const branches = branchData._embedded?.branches || branchData.branches || [];
+    
+    // Get staff mappings
+    const { data: staffMappings } = await supabase
+      .from("phorest_staff_mapping")
+      .select("phorest_staff_id, user_id, phorest_branch_id");
+
+    const staffMap = new Map(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
+
+    let totalTransactions = 0;
+    let syncedTransactions = 0;
+    const dailySummaries = new Map<string, any>();
+
+    for (const branch of branches) {
+      const branchId = branch.branchId || branch.id;
+      const branchName = branch.name || 'Unknown';
+      
+      console.log(`Fetching sales for branch: ${branchName} (${branchId})`);
+
+      try {
+        // Try purchase/transaction endpoint
+        const purchaseData = await phorestRequest(
+          `/branch/${branchId}/purchase?startDate=${dateFrom}&endDate=${dateTo}&size=500`,
+          businessId,
+          username,
+          password
+        );
+
+        const purchases = purchaseData._embedded?.purchases || purchaseData.purchases || 
+                         purchaseData._embedded?.transactions || purchaseData.transactions || [];
+        
+        console.log(`Found ${purchases.length} transactions in ${branchName}`);
+        totalTransactions += purchases.length;
+
+        for (const purchase of purchases) {
+          const staffId = purchase.staffId || purchase.staff?.staffId;
+          const stylistUserId = staffId ? staffMap.get(staffId) : null;
+          const transactionDate = purchase.purchaseDate?.split('T')[0] || purchase.createdAt?.split('T')[0];
+          const transactionTime = purchase.purchaseDate?.split('T')[1]?.substring(0, 8) || null;
+
+          // Process line items
+          const items = purchase.items || purchase.lineItems || purchase.services || [];
+          
+          for (const item of items) {
+            const itemType = item.type?.toLowerCase() || 
+                           (item.productId ? 'product' : 'service');
+            const itemName = item.name || item.description || 'Unknown Item';
+            const transactionId = `${purchase.purchaseId || purchase.id}-${item.itemId || item.id || itemName}`;
+
+            const transactionRecord = {
+              phorest_transaction_id: transactionId,
+              stylist_user_id: stylistUserId,
+              phorest_staff_id: staffId,
+              location_id: branchId,
+              branch_name: branchName,
+              transaction_date: transactionDate,
+              transaction_time: transactionTime,
+              client_name: purchase.clientName || `${purchase.client?.firstName || ''} ${purchase.client?.lastName || ''}`.trim() || null,
+              client_phone: purchase.client?.mobile || purchase.client?.phone || null,
+              item_type: itemType,
+              item_name: itemName,
+              item_category: item.category || item.categoryName || null,
+              quantity: item.quantity || 1,
+              unit_price: item.unitPrice || item.price || 0,
+              discount_amount: item.discountAmount || item.discount || 0,
+              tax_amount: item.taxAmount || item.tax || 0,
+              total_amount: item.totalPrice || item.total || item.price || 0,
+              payment_method: purchase.paymentMethod || purchase.payments?.[0]?.type || null,
+            };
+
+            const { error } = await supabase
+              .from("phorest_sales_transactions")
+              .upsert(transactionRecord, { onConflict: 'phorest_transaction_id,item_name' });
+
+            if (!error) syncedTransactions++;
+
+            // Aggregate for daily summary
+            if (stylistUserId && transactionDate) {
+              const summaryKey = `${stylistUserId}:${branchId}:${transactionDate}`;
+              if (!dailySummaries.has(summaryKey)) {
+                dailySummaries.set(summaryKey, {
+                  user_id: stylistUserId,
+                  location_id: branchId,
+                  branch_name: branchName,
+                  summary_date: transactionDate,
+                  total_services: 0,
+                  total_products: 0,
+                  service_revenue: 0,
+                  product_revenue: 0,
+                  total_revenue: 0,
+                  total_transactions: 0,
+                  total_discounts: 0,
+                });
+              }
+              
+              const summary = dailySummaries.get(summaryKey);
+              const amount = parseFloat(transactionRecord.total_amount) || 0;
+              const discount = parseFloat(transactionRecord.discount_amount as any) || 0;
+              
+              if (itemType === 'product') {
+                summary.total_products += transactionRecord.quantity;
+                summary.product_revenue += amount;
+              } else {
+                summary.total_services += transactionRecord.quantity;
+                summary.service_revenue += amount;
+              }
+              summary.total_revenue += amount;
+              summary.total_transactions += 1;
+              summary.total_discounts += discount;
+            }
+          }
+
+          // If no line items, create a single transaction record
+          if (items.length === 0) {
+            const transactionRecord = {
+              phorest_transaction_id: purchase.purchaseId || purchase.id,
+              stylist_user_id: stylistUserId,
+              phorest_staff_id: staffId,
+              location_id: branchId,
+              branch_name: branchName,
+              transaction_date: transactionDate,
+              transaction_time: transactionTime,
+              client_name: purchase.clientName || null,
+              client_phone: null,
+              item_type: 'service',
+              item_name: purchase.description || 'Transaction',
+              item_category: null,
+              quantity: 1,
+              unit_price: purchase.total || purchase.amount || 0,
+              discount_amount: purchase.discountAmount || 0,
+              tax_amount: purchase.taxAmount || 0,
+              total_amount: purchase.total || purchase.amount || 0,
+              payment_method: purchase.paymentMethod || null,
+            };
+
+            const { error } = await supabase
+              .from("phorest_sales_transactions")
+              .upsert(transactionRecord, { onConflict: 'phorest_transaction_id,item_name' });
+
+            if (!error) syncedTransactions++;
+          }
+        }
+      } catch (e: any) {
+        console.log(`Sales fetch failed for branch ${branchId}:`, e.message);
+      }
+    }
+
+    // Upsert daily summaries
+    let summariesSynced = 0;
+    for (const summary of dailySummaries.values()) {
+      // Calculate average ticket
+      summary.average_ticket = summary.total_transactions > 0 
+        ? summary.total_revenue / summary.total_transactions 
+        : 0;
+
+      const { error } = await supabase
+        .from("phorest_daily_sales_summary")
+        .upsert(summary, { onConflict: 'user_id,location_id,summary_date' });
+
+      if (!error) summariesSynced++;
+    }
+
+    console.log(`Synced ${syncedTransactions} transaction items, ${summariesSynced} daily summaries`);
+
+    return { 
+      total_transactions: totalTransactions, 
+      synced_items: syncedTransactions,
+      daily_summaries: summariesSynced 
+    };
+  } catch (error) {
+    console.error("Sales sync error:", error);
+    throw error;
+  }
+}
+
 async function logSync(
   supabase: any,
   syncType: string,
@@ -398,6 +586,22 @@ serve(async (req: Request) => {
       } catch (error: any) {
         results.reports = { error: error.message };
         await logSync(supabase, 'reports', 'failed', 0, error.message);
+      }
+    }
+
+    if (sync_type === 'sales' || sync_type === 'all') {
+      try {
+        // Default: last 30 days for sales
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const salesFrom = date_from || thirtyDaysAgo.toISOString().split('T')[0];
+        const salesTo = date_to || new Date().toISOString().split('T')[0];
+        
+        results.sales = await syncSalesTransactions(supabase, businessId, username, password, salesFrom, salesTo);
+        await logSync(supabase, 'sales', 'success', results.sales.synced_items);
+      } catch (error: any) {
+        results.sales = { error: error.message };
+        await logSync(supabase, 'sales', 'failed', 0, error.message);
       }
     }
 
