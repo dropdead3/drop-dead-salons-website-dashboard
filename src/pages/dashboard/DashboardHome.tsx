@@ -93,11 +93,12 @@ export default function DashboardHome() {
     roles.includes('super_admin') || 
     roles.includes('manager');
   
-  // Top-level access: account owner (primary owner), super admin, and DOO only
+  // Top-level access: account owner (primary owner), super admin, and DOO (admin role) only
   // Used for sensitive analytics like Website Traffic
   const isTopLeadership = profile?.is_primary_owner || 
     profile?.is_super_admin || 
-    roles.includes('super_admin');
+    roles.includes('super_admin') ||
+    roles.includes('admin');
   
   // Check if user has stylist or stylist_assistant roles (for Quick Actions visibility)
   const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
