@@ -103,11 +103,11 @@ export default function AccountApprovals() {
                     <TooltipTrigger>
                       <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white gap-1">
                         <Crown className="w-3 h-3" />
-                        Super Admin
+                        {account.is_primary_owner ? 'Primary Owner' : 'Super Admin'}
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
-                      Can approve other admins
+                      {account.is_primary_owner ? 'Account owner - cannot be revoked' : 'Can approve other admins'}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -181,47 +181,64 @@ export default function AccountApprovals() {
                 </div>
               )}
 
-              {/* Super Admin Toggle (only visible to super admins) */}
+              {/* Super Admin Toggle (only visible to super admins, disabled for primary owner) */}
               {canApproveAdmin && account.is_approved && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant={account.is_super_admin ? "default" : "outline"}
-                      size="sm"
-                      className={cn(
-                        "gap-1",
-                        account.is_super_admin && "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                      )}
-                    >
-                      <Crown className="w-3 h-3" />
-                      {account.is_super_admin ? 'Super Admin' : 'Grant Super Admin'}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {account.is_super_admin ? 'Revoke Super Admin Status?' : 'Grant Super Admin Status?'}
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {account.is_super_admin 
-                          ? `${account.full_name} will no longer be able to approve other admin accounts.`
-                          : `${account.full_name} will be able to approve other admin accounts and grant super admin status to others.`
-                        }
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => toggleSuperAdmin.mutate({ 
-                          userId: account.user_id, 
-                          grant: !account.is_super_admin 
-                        })}
+                account.is_primary_owner ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        disabled
+                        className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 opacity-100 cursor-not-allowed"
                       >
-                        {account.is_super_admin ? 'Revoke' : 'Grant'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                        <Crown className="w-3 h-3" />
+                        Primary Owner
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Account owner - cannot be revoked</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant={account.is_super_admin ? "default" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "gap-1",
+                          account.is_super_admin && "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                        )}
+                      >
+                        <Crown className="w-3 h-3" />
+                        {account.is_super_admin ? 'Super Admin' : 'Grant Super Admin'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {account.is_super_admin ? 'Revoke Super Admin Status?' : 'Grant Super Admin Status?'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {account.is_super_admin 
+                            ? `${account.full_name} will no longer be able to approve other admin accounts.`
+                            : `${account.full_name} will be able to approve other admin accounts and grant super admin status to others.`
+                          }
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => toggleSuperAdmin.mutate({ 
+                            userId: account.user_id, 
+                            grant: !account.is_super_admin 
+                          })}
+                        >
+                          {account.is_super_admin ? 'Revoke' : 'Grant'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )
               )}
             </div>
           </div>
