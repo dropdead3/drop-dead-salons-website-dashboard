@@ -17,6 +17,15 @@
   body.dashboard-cursor * {
     cursor: auto !important;
   }
+  
+  body.dashboard-cursor .cursor-grab {
+    cursor: grab !important;
+  }
+  
+  body.dashboard-cursor .cursor-grab:active,
+  body.dashboard-cursor .cursor-grabbing {
+    cursor: grabbing !important;
+  }
 }
 
 /* Custom Font Faces */
