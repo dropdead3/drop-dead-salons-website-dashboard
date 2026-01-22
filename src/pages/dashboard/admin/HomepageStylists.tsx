@@ -43,12 +43,27 @@ function useHomepagePendingRequests() {
   return useQuery({
     queryKey: ['homepage-pending-requests'],
     queryFn: async () => {
+      // First, get user_ids that have stylist or stylist_assistant roles
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['stylist', 'stylist_assistant']);
+
+      if (roleError) throw roleError;
+      
+      const stylistUserIds = roleData?.map(r => r.user_id) || [];
+      
+      if (stylistUserIds.length === 0) {
+        return [] as StylistProfile[];
+      }
+
       const { data, error } = await supabase
         .from('employee_profiles')
         .select('*')
         .eq('is_active', true)
         .eq('homepage_requested', true)
         .eq('homepage_visible', false)
+        .in('user_id', stylistUserIds)
         .order('homepage_requested_at', { ascending: true });
 
       if (error) throw error;
@@ -132,11 +147,26 @@ function useHomepageVisibleStylists() {
   return useQuery({
     queryKey: ['homepage-visible-stylists'],
     queryFn: async () => {
+      // First, get user_ids that have stylist or stylist_assistant roles
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['stylist', 'stylist_assistant']);
+
+      if (roleError) throw roleError;
+      
+      const stylistUserIds = roleData?.map(r => r.user_id) || [];
+      
+      if (stylistUserIds.length === 0) {
+        return [] as StylistProfile[];
+      }
+
       const { data, error } = await supabase
         .from('employee_profiles')
         .select('*')
         .eq('is_active', true)
-        .eq('homepage_visible', true);
+        .eq('homepage_visible', true)
+        .in('user_id', stylistUserIds);
 
       if (error) throw error;
       return sortVisibleStylists(data as StylistProfile[]);
