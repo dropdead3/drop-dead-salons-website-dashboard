@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { ThemeProvider } from "next-themes";
 import ScrollToTop from "./components/ScrollToTop";
 import { CustomCursor } from "./components/ui/CustomCursor";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -71,12 +72,13 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ViewAsProvider>
-          <TooltipProvider>
-          <Toaster />
-          <Sonner />
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ViewAsProvider>
+            <TooltipProvider>
+            <Toaster />
+            <Sonner />
           <BrowserRouter>
             <CustomCursor />
             <ScrollToTop />
@@ -142,10 +144,11 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-          </TooltipProvider>
-        </ViewAsProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+            </TooltipProvider>
+          </ViewAsProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   </HelmetProvider>
 );
 
