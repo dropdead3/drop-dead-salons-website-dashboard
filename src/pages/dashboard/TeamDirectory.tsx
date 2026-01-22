@@ -7,7 +7,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation, CalendarX } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -429,6 +429,19 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
     m.roles.includes('general_manager') || m.roles.includes('manager')
   );
 
+  // Get upcoming holiday closures (next 60 days)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const upcomingHolidays = (location.holiday_closures || [])
+    .filter(h => {
+      const holidayDate = new Date(h.date);
+      holidayDate.setHours(0, 0, 0, 0);
+      const daysUntil = Math.ceil((holidayDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return daysUntil >= 0 && daysUntil <= 60;
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 3); // Show max 3 upcoming
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
@@ -510,6 +523,21 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
             )}
           </div>
         </div>
+
+        {/* Upcoming Holiday Closures */}
+        {upcomingHolidays.length > 0 && (
+          <div className="flex items-start gap-3">
+            <CalendarX className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+            <div className="text-sm space-y-1">
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Upcoming Closures</p>
+              {upcomingHolidays.map((holiday, idx) => (
+                <p key={idx} className="text-xs text-muted-foreground">
+                  {format(new Date(holiday.date), 'MMM d')} — {holiday.name}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Action Links */}
         <div className="flex gap-2 pt-2">
