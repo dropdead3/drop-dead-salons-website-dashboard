@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { usePermissionsByCategory, useRolePermissions, useToggleRolePermission } from '@/hooks/usePermissions';
+import { useRolePermissionDefaults } from '@/hooks/useRolePermissionDefaults';
 import { useRoles } from '@/hooks/useRoles';
 import type { Database } from '@/integrations/supabase/types';
 import * as LucideIcons from 'lucide-react';
@@ -22,6 +23,7 @@ import {
   Settings,
   Sparkles,
   CircleDot,
+  AlertTriangle,
 } from 'lucide-react';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -50,10 +52,11 @@ export function RolePermissionsManager() {
   const [selectedRole, setSelectedRole] = useState<string>('super_admin');
   const { data: permissionsByCategory, isLoading: permissionsLoading } = usePermissionsByCategory();
   const { data: rolePermissions, isLoading: rolePermissionsLoading } = useRolePermissions();
+  const { data: defaults, isLoading: defaultsLoading } = useRolePermissionDefaults();
   const { data: dynamicRoles, isLoading: rolesLoading } = useRoles();
   const togglePermission = useToggleRolePermission();
 
-  const isLoading = permissionsLoading || rolePermissionsLoading || rolesLoading;
+  const isLoading = permissionsLoading || rolePermissionsLoading || rolesLoading || defaultsLoading;
 
   // Build roles list dynamically from database, with Super Admin always first
   const allRolesWithSuper = useMemo(() => {
@@ -83,9 +86,29 @@ export function RolePermissionsManager() {
     return rolePermissions?.some(rp => rp.role === roleName && rp.permission_id === permissionId) ?? false;
   };
 
+  const hasDefaultPermission = (roleName: string, permissionId: string) => {
+    // Super Admin always has all permissions by default
+    if (roleName === 'super_admin') return true;
+    return defaults?.some(d => d.role === roleName && d.permission_id === permissionId) ?? false;
+  };
+
+  const isDeviatingFromDefault = (roleName: string, permissionId: string) => {
+    // Super Admin can't deviate
+    if (roleName === 'super_admin') return false;
+    const has = hasPermission(roleName, permissionId);
+    const hasDefault = hasDefaultPermission(roleName, permissionId);
+    return has !== hasDefault;
+  };
+
   const getPermissionCountForRole = (roleName: string) => {
     if (roleName === 'super_admin') return totalPermissions;
     return rolePermissions?.filter(rp => rp.role === roleName).length ?? 0;
+  };
+
+  const getDeviationCountForRole = (roleName: string) => {
+    if (roleName === 'super_admin') return 0;
+    const allPermissions = Object.values(permissionsByCategory || {}).flat();
+    return allPermissions.filter(p => isDeviatingFromDefault(roleName, p.id)).length;
   };
 
   const handleToggle = (permissionId: string, currentlyHas: boolean) => {
@@ -163,6 +186,22 @@ export function RolePermissionsManager() {
                   >
                     {getPermissionCountForRole(role.name)}
                   </Badge>
+                  {!isSuperAdmin && getDeviationCountForRole(role.name) > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge 
+                          variant="outline" 
+                          className="ml-0.5 text-[9px] px-1 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-0.5"
+                        >
+                          <AlertTriangle className="w-2.5 h-2.5" />
+                          {getDeviationCountForRole(role.name)}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {getDeviationCountForRole(role.name)} custom permission(s) deviating from defaults
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </TabsTrigger>
               );
             })}
@@ -230,6 +269,8 @@ export function RolePermissionsManager() {
                           {permissions.map(permission => {
                             const has = hasPermission(role.name, permission.id);
                             const isLocked = isSuperAdmin;
+                            const isDeviation = isDeviatingFromDefault(role.name, permission.id);
+                            const hasDefault = hasDefaultPermission(role.name, permission.id);
 
                             return (
                               <div 
@@ -237,16 +278,41 @@ export function RolePermissionsManager() {
                                 className={cn(
                                   "flex items-center justify-between px-4 py-3 transition-colors",
                                   has ? "bg-background" : "bg-muted/50",
-                                  isLocked && "opacity-75"
+                                  isLocked && "opacity-75",
+                                  isDeviation && "border-l-2 border-l-amber-400"
                                 )}
                               >
                                 <div className={cn(
                                   "flex-1 min-w-0 mr-4 transition-opacity",
                                   !has && !isLocked && "opacity-50"
                                 )}>
-                                  <p className="font-medium text-sm">
-                                    {permission.display_name}
-                                  </p>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-medium text-sm">
+                                      {permission.display_name}
+                                    </p>
+                                    {isDeviation && (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge 
+                                            variant="outline" 
+                                            className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-0.5 cursor-help"
+                                          >
+                                            <AlertTriangle className="w-2.5 h-2.5" />
+                                            {has ? 'Custom Added' : 'Custom Removed'}
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <p className="font-medium">Deviation from Default</p>
+                                          <p className="text-xs text-muted-foreground mt-1">
+                                            {has 
+                                              ? `This permission is enabled but is NOT in the system defaults for ${role.display_name}.`
+                                              : `This permission is disabled but IS in the system defaults for ${role.display_name}.`
+                                            }
+                                          </p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    )}
+                                  </div>
                                   {permission.description && (
                                     <p className="text-xs text-muted-foreground truncate">
                                       {permission.description}
