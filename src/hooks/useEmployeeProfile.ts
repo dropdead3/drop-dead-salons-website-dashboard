@@ -64,7 +64,7 @@ export function useUpdateEmployeeProfile() {
 
 export function useTeamDirectory(locationFilter?: string, options?: { includeTestAccounts?: boolean }) {
   const { roles } = useAuth();
-  const isAdminOrSuperAdmin = roles.includes('admin');
+  const isAdminOrSuperAdmin = roles.includes('admin') || roles.includes('super_admin');
   
   // Only admins can see test accounts, and only when explicitly requested
   const shouldIncludeTestAccounts = options?.includeTestAccounts && isAdminOrSuperAdmin;
