@@ -28,3 +28,23 @@ export function formatDisplayName(fullName: string, displayName?: string | null)
   const firstName = nameParts[0];
   return firstName + lastInitial;
 }
+
+/**
+ * Formats a full display name where the first name is replaced by nickname if provided.
+ * "Eric Day" with nickname "Johnny" becomes "Johnny Day"
+ * "Eric Day" with no nickname stays "Eric Day"
+ */
+export function formatFullDisplayName(fullName: string, displayName?: string | null): string {
+  if (!fullName?.trim()) return displayName?.trim() || '';
+  
+  const nameParts = fullName.trim().split(' ');
+  
+  // If nickname exists, use it as the first name
+  if (displayName && displayName.trim()) {
+    const nickname = displayName.trim().split(' ')[0];
+    // Replace first name with nickname, keep the rest
+    return [nickname, ...nameParts.slice(1)].join(' ');
+  }
+  
+  return fullName;
+}

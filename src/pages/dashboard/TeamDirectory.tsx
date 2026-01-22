@@ -15,7 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { differenceInYears, differenceInMonths, parseISO, format, setYear, isSameDay, differenceInDays, isBefore } from 'date-fns';
 import { useUpcomingAnniversaries, useTodaysAnniversaries, MILESTONE_YEARS, getAnniversaryMilestone } from '@/hooks/useAnniversaries';
-import { cn } from '@/lib/utils';
+import { cn, formatFullDisplayName } from '@/lib/utils';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStrikeCounts } from '@/hooks/useStaffStrikes';
@@ -504,7 +504,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <h3 className="font-display text-base leading-tight truncate">
-                  {member.display_name || member.full_name}
+                  {formatFullDisplayName(member.full_name, member.display_name)}
                 </h3>
                 {/* Meta info */}
                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
