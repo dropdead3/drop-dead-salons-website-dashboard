@@ -680,20 +680,27 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
 
         {/* Phone */}
         {location.phone && (
-          <div className="flex items-center gap-3">
-            <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+          <CopyableField 
+            icon={<Phone className="w-4 h-4 text-muted-foreground shrink-0" />}
+            value={location.phone}
+            label="phone"
+          >
             <a 
               href={`tel:${location.phone}`} 
               className="text-sm hover:text-primary transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
               {location.phone}
             </a>
-          </div>
+          </CopyableField>
         )}
 
         {/* Hours */}
-        <div className="flex items-start gap-3">
-          <Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+        <CopyableField 
+          icon={<Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
+          value={`${hoursDisplay || location.hours || 'Hours not set'}${closedDays ? ` (${closedDays})` : ''}`}
+          label="hours"
+        >
           <div className="text-sm space-y-1">
             {hoursDisplay ? (
               <p>{hoursDisplay}</p>
@@ -706,7 +713,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
               <p className="text-muted-foreground text-xs">{closedDays}</p>
             )}
           </div>
-        </div>
+        </CopyableField>
 
         {/* Upcoming Holiday Closures */}
         {upcomingHolidays.length > 0 && (
