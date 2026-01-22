@@ -1,0 +1,166 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { 
+  Megaphone, 
+  Pin, 
+  Pencil, 
+  ChevronDown,
+  ExternalLink,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
+type Priority = 'low' | 'normal' | 'high' | 'urgent';
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  priority: Priority;
+  is_pinned: boolean;
+  created_at: string;
+  link_url: string | null;
+  link_label: string | null;
+}
+
+interface AnnouncementsBentoProps {
+  announcements: Announcement[] | undefined;
+  isLeadership: boolean;
+}
+
+const priorityColors: Record<Priority, string> = {
+  low: 'border-muted-foreground',
+  normal: 'border-blue-500',
+  high: 'border-orange-500',
+  urgent: 'border-red-500',
+};
+
+const normalizeUrl = (url: string): string => {
+  if (!url) return url;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return `https://${url}`;
+};
+
+export function AnnouncementsBento({ announcements, isLeadership }: AnnouncementsBentoProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  
+  const hasAnnouncements = announcements && announcements.length > 0;
+  const displayedAnnouncements = announcements?.slice(0, 3) || [];
+  const totalCount = announcements?.length || 0;
+
+  return (
+    <Card className="p-6">
+      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <div className="flex items-center justify-between mb-4">
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
+              <ChevronDown 
+                className={cn(
+                  "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                  isExpanded && "rotate-180"
+                )} 
+              />
+            </button>
+          </CollapsibleTrigger>
+          
+          <div className="flex items-center gap-3">
+            {isLeadership && (
+              <Link 
+                to="/dashboard/admin/announcements" 
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Pencil className="w-4 h-4" />
+              </Link>
+            )}
+            <Megaphone className="w-4 h-4 text-muted-foreground" />
+            {totalCount > 3 && (
+              <Button variant="ghost" size="sm" asChild className="text-xs h-7">
+                <Link to="/dashboard/admin/announcements">
+                  View All ({totalCount})
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
+          {hasAnnouncements ? (
+            <div className="grid gap-4 md:grid-cols-3">
+              {displayedAnnouncements.map((announcement) => (
+                <div 
+                  key={announcement.id}
+                  className={cn(
+                    "group relative p-4 bg-muted/50 border-l-4 rounded-r-lg transition-all hover:bg-muted/70",
+                    priorityColors[announcement.priority]
+                  )}
+                >
+                  {isLeadership && (
+                    <Link 
+                      to={`/dashboard/admin/announcements?edit=${announcement.id}`}
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                  
+                  <div className="flex items-center gap-2 mb-2">
+                    {announcement.is_pinned && <Pin className="w-3.5 h-3.5 text-primary" />}
+                    <p className="text-sm font-sans font-medium line-clamp-1">{announcement.title}</p>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground line-clamp-3 mb-3">
+                    {announcement.content}
+                  </p>
+                  
+                  <div className="flex items-center justify-between mt-auto">
+                    <p className="text-xs text-muted-foreground/60">
+                      {format(new Date(announcement.created_at), 'MMM d')}
+                    </p>
+                    
+                    {announcement.link_url && announcement.link_label && (
+                      <a 
+                        href={normalizeUrl(announcement.link_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity"
+                      >
+                        {announcement.link_label}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-4 bg-muted/50 border-l-4 border-foreground rounded-r-lg">
+              <p className="text-sm font-sans font-medium">Welcome to Drop Dead!</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Complete your onboarding to get started
+              </p>
+            </div>
+          )}
+        </CollapsibleContent>
+        
+        {/* Collapsed state preview */}
+        {!isExpanded && hasAnnouncements && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{totalCount} announcement{totalCount !== 1 ? 's' : ''}</span>
+            {displayedAnnouncements.some(a => a.is_pinned) && (
+              <span className="flex items-center gap-1 text-xs">
+                <Pin className="w-3 h-3" />
+                Pinned
+              </span>
+            )}
+          </div>
+        )}
+      </Collapsible>
+    </Card>
+  );
+}
