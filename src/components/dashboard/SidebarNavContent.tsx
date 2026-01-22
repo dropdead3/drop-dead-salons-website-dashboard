@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Rocket, ChevronRight } from 'lucide-react';
+import { ExternalLink, Rocket } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
@@ -220,25 +220,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           </p>
         )}
       </div>
-
-      {/* Expand button when collapsed */}
-      {isCollapsed && onToggleCollapse && (
-        <div className="p-2 border-b border-border">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="w-full h-8 text-muted-foreground hover:text-foreground"
-                onClick={onToggleCollapse}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar</TooltipContent>
-          </Tooltip>
-        </div>
-      )}
 
       {/* Announcements Widget - at the very top (hide when collapsed) */}
       {!isCollapsed && <SidebarAnnouncementsWidget onNavClick={onNavClick} />}
