@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useHideNumbers } from '@/contexts/HideNumbersContext';
+import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { 
@@ -212,12 +212,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <DollarSign className="w-4 h-4 text-primary" />
-                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
+                <BlurredAmount className="text-2xl font-display">
                   ${displayMetrics.totalRevenue.toLocaleString()}
-                </p>
+                </BlurredAmount>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Total Revenue</p>
-              {comparison && !hideNumbers && (
+              {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalRevenue}
                   previous={comparison.previous.totalRevenue} 
@@ -227,12 +227,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Scissors className="w-4 h-4 text-primary" />
-                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
+                <BlurredAmount className="text-2xl font-display">
                   ${displayMetrics.serviceRevenue.toLocaleString()}
-                </p>
+                </BlurredAmount>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Services</p>
-              {comparison && !hideNumbers && (
+              {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.serviceRevenue} 
                   previous={comparison.previous.serviceRevenue} 
@@ -242,12 +242,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <ShoppingBag className="w-4 h-4 text-chart-2" />
-                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
+                <BlurredAmount className="text-2xl font-display">
                   ${displayMetrics.productRevenue.toLocaleString()}
-                </p>
+                </BlurredAmount>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Products</p>
-              {comparison && !hideNumbers && (
+              {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.productRevenue} 
                   previous={comparison.previous.productRevenue} 
@@ -257,12 +257,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Receipt className="w-4 h-4 text-chart-3" />
-                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
+                <BlurredAmount className="text-2xl font-display">
                   {displayMetrics.totalTransactions}
-                </p>
+                </BlurredAmount>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Transactions</p>
-              {comparison && !hideNumbers && (
+              {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalTransactions} 
                   previous={comparison.previous.totalTransactions} 
@@ -272,12 +272,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <TrendingUp className="w-4 h-4 text-chart-4" />
-                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
+                <BlurredAmount className="text-2xl font-display">
                   ${isFinite(displayMetrics.averageTicket) ? Math.round(displayMetrics.averageTicket) : 0}
-                </p>
+                </BlurredAmount>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Avg Ticket</p>
-              {comparison && !hideNumbers && (
+              {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.averageTicket} 
                   previous={comparison.previous.averageTicket} 
@@ -355,8 +355,8 @@ export function AggregateSalesCard() {
                           <span className="truncate">{location.name}</span>
                         </div>
                       </TableCell>
-                      <TableCell className={`text-right font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
-                        ${location.totalRevenue.toLocaleString()}
+                      <TableCell className="text-right font-display">
+                        <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         {!hideNumbers && (
@@ -366,17 +366,17 @@ export function AggregateSalesCard() {
                           />
                         )}
                       </TableCell>
-                      <TableCell className={`text-right hidden sm:table-cell ${hideNumbers ? 'blur-md select-none' : ''}`}>
-                        ${location.serviceRevenue.toLocaleString()}
+                      <TableCell className="text-right hidden sm:table-cell">
+                        <BlurredAmount>${location.serviceRevenue.toLocaleString()}</BlurredAmount>
                       </TableCell>
-                      <TableCell className={`text-right hidden sm:table-cell ${hideNumbers ? 'blur-md select-none' : ''}`}>
-                        ${location.productRevenue.toLocaleString()}
+                      <TableCell className="text-right hidden sm:table-cell">
+                        <BlurredAmount>${location.productRevenue.toLocaleString()}</BlurredAmount>
                       </TableCell>
-                      <TableCell className={`text-right hidden md:table-cell ${hideNumbers ? 'blur-md select-none' : ''}`}>
-                        {location.totalTransactions}
+                      <TableCell className="text-right hidden md:table-cell">
+                        <BlurredAmount>{location.totalTransactions}</BlurredAmount>
                       </TableCell>
-                      <TableCell className={`text-right font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
-                        ${isFinite(avgTicket) ? Math.round(avgTicket) : 0}
+                      <TableCell className="text-right font-display">
+                        <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
                       </TableCell>
                       <TableCell>
                         <ChevronRight className="w-4 h-4 text-muted-foreground" />
