@@ -7,7 +7,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation, CalendarX, Signpost } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown, Navigation, CalendarX, Signpost, Sparkles } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -705,6 +705,7 @@ interface TeamMemberCardProps {
     tiktok: string | null;
     stylist_level: string | null;
     specialties: string[] | null;
+    highlighted_services: string[] | null;
     roles: string[];
     work_days: string[] | null;
     hire_date: string | null;
@@ -982,6 +983,41 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                 </TooltipProvider>
               )}
             </div>
+            
+            {/* Specialty Badges */}
+            {member.specialties && member.specialties.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2.5 pt-2.5 border-t border-border/50">
+                {member.specialties.slice(0, 4).map((specialty) => {
+                  const isHighlighted = member.highlighted_services?.includes(specialty);
+                  const isExtensions = specialty.toLowerCase() === 'extensions';
+                  
+                  return (
+                    <Badge
+                      key={specialty}
+                      variant="outline"
+                      className={cn(
+                        "text-[10px] font-medium h-5 px-1.5 gap-0.5",
+                        isExtensions
+                          ? "bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300 dark:from-amber-950/40 dark:to-yellow-950/40 dark:text-amber-300 dark:border-amber-700"
+                          : isHighlighted
+                            ? "bg-primary/5 text-primary border-primary/30"
+                            : "bg-muted/50 text-muted-foreground border-border"
+                      )}
+                    >
+                      {(isHighlighted || isExtensions) && (
+                        <Sparkles className="w-2.5 h-2.5" />
+                      )}
+                      {specialty}
+                    </Badge>
+                  );
+                })}
+                {member.specialties.length > 4 && (
+                  <Badge variant="outline" className="text-[10px] font-medium h-5 px-1.5 bg-muted/30 text-muted-foreground">
+                    +{member.specialties.length - 4}
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
