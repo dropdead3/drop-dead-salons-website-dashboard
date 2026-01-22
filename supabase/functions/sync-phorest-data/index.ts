@@ -18,7 +18,7 @@ const PHOREST_BASE_URL = "https://api-gateway-eu.phorest.com/third-party-api-ser
 async function phorestRequest(endpoint: string, businessId: string, apiKey: string) {
   const response = await fetch(`${PHOREST_BASE_URL}/business/${businessId}${endpoint}`, {
     headers: {
-      "Authorization": `Basic ${btoa(`${businessId}:${apiKey}`)}`,
+      "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       "Accept": "application/json",
     },

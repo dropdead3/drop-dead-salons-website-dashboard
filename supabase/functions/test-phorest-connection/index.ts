@@ -30,10 +30,10 @@ serve(async (req: Request) => {
       );
     }
 
-    // Test connection by fetching business info
+    // Test connection by fetching business info using Bearer token auth
     const response = await fetch(`${PHOREST_BASE_URL}/business/${businessId}`, {
       headers: {
-        "Authorization": `Basic ${btoa(`${businessId}:${apiKey}`)}`,
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
@@ -61,7 +61,7 @@ serve(async (req: Request) => {
     try {
       const staffResponse = await fetch(`${PHOREST_BASE_URL}/business/${businessId}/staff`, {
         headers: {
-          "Authorization": `Basic ${btoa(`${businessId}:${apiKey}`)}`,
+          "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
