@@ -44,6 +44,7 @@ import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsW
 import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
+import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -183,6 +184,11 @@ export default function DashboardHome() {
             Here's what's happening today
           </p>
         </div>
+
+        {/* Aggregate Sales Overview - Leadership Only */}
+        {isLeadership && isVisible('sales_overview') && (
+          <AggregateSalesCard />
+        )}
 
         {/* Quick Stats */}
         {isVisible('quick_stats') && (
