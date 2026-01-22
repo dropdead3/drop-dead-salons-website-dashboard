@@ -910,6 +910,9 @@ export default function MyProfile() {
                   <p className="text-xs text-muted-foreground">
                     These will appear as badges on your stylist card on the website homepage. Choose from your specialties above.
                   </p>
+                  <p className="text-xs text-muted-foreground/80 italic">
+                    Note: Extensions is the only badge displayed with a <Star className="w-3 h-3 inline fill-current text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services.
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {formData.specialties.map(specialty => {
                       const isSelected = formData.highlighted_services.includes(specialty);
