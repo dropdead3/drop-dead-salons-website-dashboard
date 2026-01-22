@@ -104,48 +104,67 @@ serve(async (req: Request) => {
       );
     }
 
-    // We already have staff data if that endpoint worked, otherwise fetch it
+    // Staff must be fetched per-branch according to API docs
     let staffList: Array<{ id: string; name: string; email?: string }> = [];
     let staffCount = 0;
     
-    // Check if responseData is staff list
-    const rawStaff = responseData?._embedded?.staff || responseData?.staff || responseData?.data || 
-                     (Array.isArray(responseData) ? responseData : null);
-    
-    if (rawStaff && Array.isArray(rawStaff)) {
-      staffCount = rawStaff.length;
-      staffList = rawStaff.map((s: any) => ({
-        id: s.staffId || s.id,
-        name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
-        email: s.email,
-      }));
-    } else {
-      // Try to fetch staff separately
-      try {
-        const basicAuth = btoa(`${successfulConfig.username}:${password}`);
-        const staffResponse = await fetch(`${successfulConfig.baseUrl}/business/${businessId}/staff`, {
-          headers: {
-            "Authorization": `Basic ${basicAuth}`,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-          },
-        });
+    try {
+      const basicAuth = btoa(`${successfulConfig.username}:${password}`);
+      
+      // First get branches
+      const branchResponse = await fetch(`${successfulConfig.baseUrl}/business/${businessId}/branch`, {
+        headers: {
+          "Authorization": `Basic ${basicAuth}`,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+      });
+      
+      if (branchResponse.ok) {
+        const branchData = await branchResponse.json();
+        const branches = branchData._embedded?.branches || branchData.branches || [];
         
-        if (staffResponse.ok) {
-          const staffData = await staffResponse.json();
-          const staffArray = staffData._embedded?.staff || staffData.staff || staffData.data || [];
-          if (Array.isArray(staffArray)) {
-            staffCount = staffArray.length;
-            staffList = staffArray.map((s: any) => ({
-              id: s.staffId || s.id,
-              name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
-              email: s.email,
-            }));
+        const allStaff = new Map<string, any>();
+        
+        // Fetch staff for each branch
+        for (const branch of branches) {
+          const branchId = branch.branchId || branch.id;
+          try {
+            const staffResponse = await fetch(`${successfulConfig.baseUrl}/business/${businessId}/branch/${branchId}/staff`, {
+              headers: {
+                "Authorization": `Basic ${basicAuth}`,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+              },
+            });
+            
+            if (staffResponse.ok) {
+              const staffData = await staffResponse.json();
+              // API returns "staffs" (plural) in _embedded
+              const staffArray = staffData._embedded?.staffs || staffData._embedded?.staff || 
+                                staffData.staffs || staffData.staff || [];
+              
+              for (const s of staffArray) {
+                const staffId = s.staffId || s.id;
+                if (!allStaff.has(staffId)) {
+                  allStaff.set(staffId, {
+                    id: staffId,
+                    name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
+                    email: s.email,
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            console.log(`Could not fetch staff for branch ${branchId}:`, e);
           }
         }
-      } catch (e) {
-        console.log("Could not fetch staff:", e);
+        
+        staffList = Array.from(allStaff.values());
+        staffCount = staffList.length;
       }
+    } catch (e) {
+      console.log("Could not fetch staff:", e);
     }
 
     return new Response(
