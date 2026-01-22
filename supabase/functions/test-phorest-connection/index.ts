@@ -55,8 +55,9 @@ serve(async (req: Request) => {
 
     const businessData = await response.json();
 
-    // Also try to fetch staff count
+    // Fetch full staff list
     let staffCount = 0;
+    let staffList: Array<{ id: string; name: string; email?: string }> = [];
     try {
       const staffResponse = await fetch(`${PHOREST_BASE_URL}/business/${businessId}/staff`, {
         headers: {
@@ -68,10 +69,18 @@ serve(async (req: Request) => {
       
       if (staffResponse.ok) {
         const staffData = await staffResponse.json();
-        staffCount = staffData._embedded?.staff?.length || staffData.staff?.length || 0;
+        const rawStaff = staffData._embedded?.staff || staffData.staff || [];
+        staffCount = rawStaff.length;
+        
+        // Map to simplified structure
+        staffList = rawStaff.map((s: any) => ({
+          id: s.staffId || s.id,
+          name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
+          email: s.email,
+        }));
       }
     } catch (e) {
-      console.log("Could not fetch staff count:", e);
+      console.log("Could not fetch staff list:", e);
     }
 
     return new Response(
@@ -82,6 +91,7 @@ serve(async (req: Request) => {
           id: businessId,
         },
         staff_count: staffCount,
+        staff_list: staffList,
         api_version: "v1",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
