@@ -12,8 +12,8 @@ interface SyncRequest {
   date_to?: string;
 }
 
-// Phorest API configuration
-const PHOREST_BASE_URL = "https://api-gateway-eu.phorest.com/third-party-api-server/api";
+// Phorest API configuration - Global endpoint works
+const PHOREST_BASE_URL = "https://platform.phorest.com/third-party-api-server/api";
 
 async function phorestRequest(endpoint: string, businessId: string, username: string, password: string) {
   const basicAuth = btoa(`${username}:${password}`);
