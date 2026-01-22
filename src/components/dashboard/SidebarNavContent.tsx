@@ -67,6 +67,13 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const internalRef = useRef<HTMLElement>(null);
   const { data: businessSettings } = useBusinessSettings();
   
+  // Check if custom logos are uploaded
+  const hasCustomLogo = () => {
+    const isDark = resolvedTheme === 'dark';
+    const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
+    return !!customLogo;
+  };
+  
   // Get the appropriate logo based on theme and settings
   const getLogo = () => {
     const isDark = resolvedTheme === 'dark';
@@ -156,11 +163,17 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Logo */}
       <div className="p-6 border-b border-border">
         <Link to="/dashboard" className="block">
-          <img 
-            src={getLogo()} 
-            alt={businessSettings?.business_name || 'Drop Dead'} 
-            className="h-5 w-auto" 
-          />
+          {hasCustomLogo() ? (
+            <img 
+              src={getLogo()} 
+              alt={businessSettings?.business_name || 'Drop Dead'} 
+              className="h-5 w-auto" 
+            />
+          ) : (
+            <span className="font-display text-lg uppercase tracking-wider text-foreground">
+              {businessSettings?.business_name || 'Drop Dead'}
+            </span>
+          )}
         </Link>
         <p className="text-xs text-muted-foreground mt-2 font-sans">
           Staff Dashboard

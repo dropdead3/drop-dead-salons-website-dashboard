@@ -180,6 +180,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { percentage: profileCompletion } = useProfileCompletion();
   const { isComplete: isOnboardingComplete, percentage: onboardingPercentage, tasksCompleted, tasksTotal, handbooksCompleted, handbooksTotal, hasBusinessCard, hasHeadshot } = useOnboardingProgress();
   
+  // Check if custom logos are uploaded
+  const hasCustomLogo = () => {
+    const isDark = resolvedTheme === 'dark';
+    const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
+    return !!customLogo;
+  };
+  
   // Get the appropriate logo based on theme and settings
   const getLogo = () => {
     const isDark = resolvedTheme === 'dark';
@@ -716,7 +723,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </Sheet>
 
         <Link to="/dashboard">
-          <img src={getLogo()} alt={businessSettings?.business_name || 'Drop Dead'} className="h-4 w-auto" />
+          {hasCustomLogo() ? (
+            <img src={getLogo()} alt={businessSettings?.business_name || 'Drop Dead'} className="h-4 w-auto" />
+          ) : (
+            <span className="font-display text-sm uppercase tracking-wider text-foreground">
+              {businessSettings?.business_name || 'Drop Dead'}
+            </span>
+          )}
         </Link>
 
         <div className="flex items-center gap-2">
