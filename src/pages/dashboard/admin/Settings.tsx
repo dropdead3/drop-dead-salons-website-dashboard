@@ -10,7 +10,9 @@ import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -550,11 +552,36 @@ export default function Settings() {
                               )}
                             </SelectTrigger>
                             <SelectContent>
-                              {dynamicRoleOptions.map(role => (
-                                <SelectItem key={role.value} value={role.value}>
-                                  {role.label}
-                                </SelectItem>
-                              ))}
+                              <SelectGroup>
+                                <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leadership</SelectLabel>
+                                {dynamicRoleOptions
+                                  .filter(role => ['super_admin', 'admin', 'manager'].includes(role.value))
+                                  .map(role => (
+                                    <SelectItem key={role.value} value={role.value}>
+                                      {role.label}
+                                    </SelectItem>
+                                  ))}
+                              </SelectGroup>
+                              <SelectGroup>
+                                <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Operations</SelectLabel>
+                                {dynamicRoleOptions
+                                  .filter(role => ['director_of_operations', 'operations_assistant', 'receptionist', 'front_desk'].includes(role.value))
+                                  .map(role => (
+                                    <SelectItem key={role.value} value={role.value}>
+                                      {role.label}
+                                    </SelectItem>
+                                  ))}
+                              </SelectGroup>
+                              <SelectGroup>
+                                <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stylists</SelectLabel>
+                                {dynamicRoleOptions
+                                  .filter(role => ['stylist', 'stylist_assistant'].includes(role.value))
+                                  .map(role => (
+                                    <SelectItem key={role.value} value={role.value}>
+                                      {role.label}
+                                    </SelectItem>
+                                  ))}
+                              </SelectGroup>
                             </SelectContent>
                           </Select>
                           <Button
