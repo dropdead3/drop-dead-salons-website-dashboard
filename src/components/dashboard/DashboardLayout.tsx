@@ -172,7 +172,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
-  const { isComplete: isOnboardingComplete } = useOnboardingProgress();
+  const { isComplete: isOnboardingComplete, percentage: onboardingPercentage, tasksCompleted, tasksTotal, handbooksCompleted, handbooksTotal, hasBusinessCard, hasHeadshot } = useOnboardingProgress();
+  
+  // Calculate total items for progress display
+  const onboardingTotalItems = tasksTotal + handbooksTotal + 2; // +2 for business card and headshot
+  const onboardingCompletedItems = tasksCompleted + handbooksCompleted + (hasBusinessCard ? 1 : 0) + (hasHeadshot ? 1 : 0);
+  const onboardingProgress = {
+    completedCount: onboardingCompletedItems,
+    totalCount: onboardingTotalItems,
+    percentage: onboardingPercentage,
+  };
   const { roleNames: ALL_ROLES, roleLabels: ROLE_LABELS, getRoleBadgeClasses, getRoleIcon, getRoleDescription } = useRoleUtils();
 
   // Close mobile sidebar on navigation
@@ -660,6 +669,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           filterNavItems={filterNavItems}
           onNavClick={handleNavClick}
           isOnboardingComplete={isOnboardingComplete}
+          onboardingProgress={onboardingProgress}
         />
       </aside>
 
@@ -687,6 +697,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               filterNavItems={filterNavItems}
               onNavClick={handleNavClick}
               isOnboardingComplete={isOnboardingComplete}
+              onboardingProgress={onboardingProgress}
             />
           </SheetContent>
         </Sheet>
