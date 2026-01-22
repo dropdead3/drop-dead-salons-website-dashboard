@@ -294,7 +294,7 @@ export function RolePermissionsManager() {
                                     {isDeviation && (
                                       <TooltipProvider delayDuration={100}>
                                         <Tooltip>
-                                          <TooltipTrigger asChild>
+                                          <TooltipTrigger>
                                             <Badge 
                                               variant="outline" 
                                               className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-1 cursor-help"
@@ -303,7 +303,7 @@ export function RolePermissionsManager() {
                                               <Info className="w-2.5 h-2.5" />
                                             </Badge>
                                           </TooltipTrigger>
-                                          <TooltipContent side="top" align="center" className="max-w-xs z-50">
+                                          <TooltipContent side="top" align="center" className="max-w-xs">
                                             This is a permission that has been toggled on that is a deviation from the default role permissions
                                           </TooltipContent>
                                         </Tooltip>
