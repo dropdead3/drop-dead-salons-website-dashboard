@@ -185,6 +185,47 @@ export default function DashboardHome() {
           </p>
         </div>
 
+        {/* Quick Actions - FIRST for stylists/assistants */}
+        {showQuickActions && isVisible('quick_actions') && (
+          <div>
+            <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {isVisible('ring_the_bell_action') && (
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+                  <Link to="/dashboard/ring-the-bell">
+                    <Bell className="w-5 h-5" />
+                    <span className="text-xs">Ring the Bell</span>
+                  </Link>
+                </Button>
+              )}
+              {isVisible('log_metrics_action') && (
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+                  <Link to="/dashboard/stats">
+                    <TrendingUp className="w-5 h-5" />
+                    <span className="text-xs">Log Metrics</span>
+                  </Link>
+                </Button>
+              )}
+              {isVisible('training_action') && (
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+                  <Link to="/dashboard/training">
+                    <Target className="w-5 h-5" />
+                    <span className="text-xs">Training</span>
+                  </Link>
+                </Button>
+              )}
+              {isVisible('handbooks_action') && (
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+                  <Link to="/dashboard/handbooks">
+                    <CheckSquare className="w-5 h-5" />
+                    <span className="text-xs">Handbooks</span>
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Aggregate Sales Overview - Leadership Only */}
         {isLeadership && isVisible('sales_overview') && (
           <AggregateSalesCard />
@@ -403,46 +444,6 @@ export default function DashboardHome() {
         )}
 
 
-        {/* Quick Actions - only show for stylists/assistants, or leadership with stylist roles */}
-        {showQuickActions && isVisible('quick_actions') && (
-          <div>
-            <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {isVisible('ring_the_bell_action') && (
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-                  <Link to="/dashboard/ring-the-bell">
-                    <Bell className="w-5 h-5" />
-                    <span className="text-xs">Ring the Bell</span>
-                  </Link>
-                </Button>
-              )}
-              {isVisible('log_metrics_action') && (
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-                  <Link to="/dashboard/stats">
-                    <TrendingUp className="w-5 h-5" />
-                    <span className="text-xs">Log Metrics</span>
-                  </Link>
-                </Button>
-              )}
-              {isVisible('training_action') && (
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-                  <Link to="/dashboard/training">
-                    <Target className="w-5 h-5" />
-                    <span className="text-xs">Training</span>
-                  </Link>
-                </Button>
-              )}
-              {isVisible('handbooks_action') && (
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
-                  <Link to="/dashboard/handbooks">
-                    <CheckSquare className="w-5 h-5" />
-                    <span className="text-xs">Handbooks</span>
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );
