@@ -101,7 +101,12 @@ export default function AccountApprovals() {
                 {account.is_super_admin && (
                   <Tooltip>
                     <TooltipTrigger>
-                      <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white gap-1">
+                      <Badge className={cn(
+                        "gap-1 border",
+                        account.is_primary_owner 
+                          ? "bg-stone-700/90 text-amber-100 border-amber-400/30 backdrop-blur-sm" 
+                          : "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-transparent"
+                      )}>
                         <Crown className="w-3 h-3" />
                         {account.is_primary_owner ? 'Account Owner' : 'Super Admin'}
                       </Badge>
@@ -190,7 +195,7 @@ export default function AccountApprovals() {
                         variant="default"
                         size="sm"
                         disabled
-                        className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 opacity-100 cursor-not-allowed"
+                        className="gap-1 bg-stone-700/90 text-amber-100 border border-amber-400/30 backdrop-blur-sm opacity-100 cursor-not-allowed hover:bg-stone-700/90"
                       >
                         <Crown className="w-3 h-3" />
                         Account Owner
