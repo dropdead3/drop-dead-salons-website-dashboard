@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -174,15 +174,34 @@ const websiteNavItems: NavItem[] = [
   { href: '/dashboard/admin/locations', label: 'Locations', icon: MapPin, permission: 'manage_settings' },
 ];
 
+// Store sidebar scroll position outside component to persist across re-renders
+let sidebarScrollPosition = 0;
+
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userSearch, setUserSearch] = useState('');
+  const sidebarNavRef = useRef<HTMLElement>(null);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
+
+  // Restore sidebar scroll position after navigation
+  useEffect(() => {
+    if (sidebarNavRef.current && sidebarScrollPosition > 0) {
+      sidebarNavRef.current.scrollTop = sidebarScrollPosition;
+    }
+  }, [location.pathname]);
+
+  // Save sidebar scroll position before navigation
+  const handleNavClick = () => {
+    if (sidebarNavRef.current) {
+      sidebarScrollPosition = sidebarNavRef.current.scrollTop;
+    }
+    setSidebarOpen(false);
+  };
   
   // Fetch team members for user impersonation picker
   const { data: teamMembers = [] } = useTeamDirectory();
@@ -337,7 +356,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return (
       <Link
         to={href}
-        onClick={() => setSidebarOpen(false)}
+        onClick={handleNavClick}
         className={cn(
           "flex items-center gap-3 px-4 py-3 text-sm font-sans transition-colors",
           isActive 
@@ -369,7 +388,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 overflow-y-auto">
+      <nav ref={sidebarNavRef} className="flex-1 py-4 overflow-y-auto">
         <div className="space-y-1">
           {filterNavItems(mainNavItems).map((item) => (
             <NavLink 
