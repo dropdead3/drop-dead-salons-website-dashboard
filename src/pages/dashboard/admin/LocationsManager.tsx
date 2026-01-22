@@ -84,6 +84,7 @@ type LocationFormData = {
   hours: string;
   hours_json: HoursJson;
   holiday_closures: HolidayClosure[];
+  major_crossroads: string;
   is_active: boolean;
   display_order: number;
 };
@@ -99,6 +100,7 @@ const emptyForm: LocationFormData = {
   hours: '',
   hours_json: defaultHours,
   holiday_closures: [],
+  major_crossroads: '',
   is_active: true,
   display_order: 0,
 };
@@ -137,6 +139,7 @@ export default function LocationsManager() {
       hours: location.hours || '',
       hours_json: location.hours_json || defaultHours,
       holiday_closures: location.holiday_closures || [],
+      major_crossroads: location.major_crossroads || '',
       is_active: location.is_active,
       display_order: location.display_order,
     });
@@ -155,6 +158,7 @@ export default function LocationsManager() {
       hours: formatHoursForDisplay(formData.hours_json),
       hours_json: formData.hours_json,
       holiday_closures: formData.holiday_closures,
+      major_crossroads: formData.major_crossroads || null,
       is_active: formData.is_active,
       display_order: formData.display_order,
     };
@@ -436,6 +440,19 @@ export default function LocationsManager() {
                       onChange={(e) => setFormData(f => ({ ...f, google_maps_url: e.target.value }))}
                       placeholder="https://maps.google.com/..."
                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="major_crossroads">Major Crossroads (for receptionist reference)</Label>
+                    <Input
+                      id="major_crossroads"
+                      value={formData.major_crossroads}
+                      onChange={(e) => setFormData(f => ({ ...f, major_crossroads: e.target.value }))}
+                      placeholder="e.g., Gilbert Rd & McKellips"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Helps receptionists give directions over the phone
+                    </p>
                   </div>
                   
                   <div className="flex items-center justify-between">
