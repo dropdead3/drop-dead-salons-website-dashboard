@@ -353,41 +353,48 @@ export default function ManageRoles() {
                       </div>
                     </div>
 
-                    {/* Role Toggles */}
+                    {/* Role Toggles - ordered by sort_order from database */}
                     <div className="mt-4 pt-4 border-t flex flex-wrap gap-x-8 gap-y-3">
-                      {/* Super Admin Toggle - Shown for super admins (locked) or editable by other super admins */}
-                      {(isSuperAdmin || canApproveAdmin) && (
-                        <div className="flex items-center gap-2">
-                          <label 
-                            htmlFor={`${user.user_id}-super-admin`}
-                            className={cn(
-                              "text-sm font-medium flex items-center gap-1",
-                              isSuperAdmin && !canApproveAdmin ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"
-                            )}
-                          >
-                            <Crown className="w-3 h-3 text-amber-600" />
-                            Super Admin
-                          </label>
-                          {isSuperAdmin && !canApproveAdmin && (
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Lock className="w-3 h-3 text-muted-foreground" />
-                              </TooltipTrigger>
-                              <TooltipContent>Inherent to Super Admin status</TooltipContent>
-                            </Tooltip>
-                          )}
-                          <Switch
-                            id={`${user.user_id}-super-admin`}
-                            checked={isSuperAdmin || false}
-                            onCheckedChange={() => handleToggleSuperAdmin(user.user_id, user.display_name || user.full_name, isSuperAdmin || false)}
-                            disabled={toggleSuperAdmin.isPending || !canApproveAdmin}
-                            className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-400 data-[state=checked]:to-orange-400"
-                          />
-                        </div>
-                      )}
-                      
-                      {/* Regular Role Toggles - exclude super_admin which is handled separately */}
-                      {roles.filter(r => r.name !== 'super_admin').map(role => {
+                      {roles.map(role => {
+                        const isSuperAdminRole = role.name === 'super_admin';
+                        
+                        // Super Admin role - special handling
+                        if (isSuperAdminRole) {
+                          // Only show super admin toggle for super admins or those who can approve admins
+                          if (!isSuperAdmin && !canApproveAdmin) return null;
+                          
+                          return (
+                            <div key={role.name} className="flex items-center gap-2">
+                              <label 
+                                htmlFor={`${user.user_id}-super-admin`}
+                                className={cn(
+                                  "text-sm font-medium flex items-center gap-1",
+                                  isSuperAdmin && !canApproveAdmin ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"
+                                )}
+                              >
+                                <Crown className="w-3 h-3 text-amber-600" />
+                                {role.display_name}
+                              </label>
+                              {isSuperAdmin && !canApproveAdmin && (
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Lock className="w-3 h-3 text-muted-foreground" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>Inherent to Super Admin status</TooltipContent>
+                                </Tooltip>
+                              )}
+                              <Switch
+                                id={`${user.user_id}-super-admin`}
+                                checked={isSuperAdmin || false}
+                                onCheckedChange={() => handleToggleSuperAdmin(user.user_id, user.display_name || user.full_name, isSuperAdmin || false)}
+                                disabled={toggleSuperAdmin.isPending || !canApproveAdmin}
+                                className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-400 data-[state=checked]:to-orange-400"
+                              />
+                            </div>
+                          );
+                        }
+                        
+                        // Regular roles
                         const hasRole = user.roles.includes(role.name as AppRole);
                         const isAdminRole = role.name === 'admin';
                         const isLockedByPermission = isAdminRole && !canApproveAdmin;
