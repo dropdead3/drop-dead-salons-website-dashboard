@@ -460,7 +460,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     return (
                       <DropdownMenuItem
                         key={role}
-                        onClick={() => setViewAsRole(role)}
+                        onClick={() => setViewAsRole(role as AppRole)}
                         className={cn(
                           "flex items-center gap-3 px-3 py-2 cursor-pointer transition-all group",
                           isSelected && "bg-accent"

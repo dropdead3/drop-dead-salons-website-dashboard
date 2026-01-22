@@ -169,29 +169,26 @@ export function useRoleUtils() {
     return map;
   }, [roles]);
 
-  // Get role names array (for compatibility)
-  const roleNames = useMemo(() => roles.map(r => r.name as AppRole), [roles]);
+  // Get role names array - roles already includes super_admin from database, ordered by sort_order
+  const roleNames = useMemo(() => roles.map(r => r.name), [roles]);
 
-  // Include super_admin in full list
-  const allRoleNames = useMemo(() => ['super_admin' as const, ...roleNames] as Array<'super_admin' | AppRole>, [roleNames]);
+  // allRoleNames is same as roleNames since super_admin is now in database
+  const allRoleNames = useMemo(() => roleNames, [roleNames]);
 
-  // Get role label (display name)
+  // Get role label (display name) - now fully dynamic from database
   const getRoleLabel = (roleName: string): string => {
-    if (roleName === 'super_admin') return 'Super Admin';
     const role = roleMap.get(roleName);
     return role?.display_name || roleName;
   };
 
-  // Get role description
+  // Get role description - now fully dynamic from database
   const getRoleDescription = (roleName: string): string => {
-    if (roleName === 'super_admin') return 'Complete system access and user management';
     const role = roleMap.get(roleName);
     return role?.description || '';
   };
 
-  // Get role color name
+  // Get role color name - now fully dynamic from database
   const getRoleColor = (roleName: string): string => {
-    if (roleName === 'super_admin') return 'slate';
     const role = roleMap.get(roleName);
     return role?.color || 'gray';
   };
@@ -227,9 +224,8 @@ export function useRoleUtils() {
     return COLOR_CLASSES[color]?.icon || DEFAULT_CLASSES.icon;
   };
 
-  // Get icon name
+  // Get icon name - now fully dynamic from database
   const getRoleIconName = (roleName: string): string => {
-    if (roleName === 'super_admin') return 'ShieldCheck';
     const role = roleMap.get(roleName);
     return role?.icon || 'User';
   };
@@ -249,26 +245,21 @@ export function useRoleUtils() {
     }));
   }, [roles]);
 
-  // Get role options including super admin
-  const roleOptionsWithSuper = useMemo(() => {
-    return [
-      { value: 'super_admin' as const, label: 'Super Admin', description: 'Complete system access and user management' },
-      ...roleOptions,
-    ];
-  }, [roleOptions]);
+  // Get role options including super admin - now same as roleOptions since super_admin is in database
+  const roleOptionsWithSuper = useMemo(() => roleOptions, [roleOptions]);
 
-  // Labels map for backward compatibility
+  // Labels map for backward compatibility - now fully dynamic
   const roleLabels = useMemo(() => {
-    const labels: Record<string, string> = { super_admin: 'Super Admin' };
+    const labels: Record<string, string> = {};
     roles.forEach(role => {
       labels[role.name] = role.display_name;
     });
     return labels;
   }, [roles]);
 
-  // Descriptions map for backward compatibility
+  // Descriptions map for backward compatibility - now fully dynamic
   const roleDescriptions = useMemo(() => {
-    const descriptions: Record<string, string> = { super_admin: 'Complete system access and user management' };
+    const descriptions: Record<string, string> = {};
     roles.forEach(role => {
       descriptions[role.name] = role.description || '';
     });
