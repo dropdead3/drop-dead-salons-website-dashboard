@@ -37,8 +37,7 @@ import AdminSettings from "./pages/dashboard/admin/Settings";
 import AdminAnnouncements from "./pages/dashboard/admin/Announcements";
 import HomepageStylists from "./pages/dashboard/admin/HomepageStylists";
 import ManageRoles from "./pages/dashboard/admin/ManageRoles";
-import AccountApprovals from "./pages/dashboard/admin/AccountApprovals";
-import StaffInvitations from "./pages/dashboard/admin/StaffInvitations";
+import AccountManagement from "./pages/dashboard/admin/AccountManagement";
 import TestimonialsManager from "./pages/dashboard/admin/TestimonialsManager";
 import GalleryManager from "./pages/dashboard/admin/GalleryManager";
 import ServicesManager from "./pages/dashboard/admin/ServicesManager";
@@ -127,8 +126,7 @@ const App = () => (
               <Route path="/dashboard/admin/gallery" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><GalleryManager /></ProtectedRoute>} />
               <Route path="/dashboard/admin/services" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><ServicesManager /></ProtectedRoute>} />
               <Route path="/dashboard/admin/roles" element={<ProtectedRoute requiredPermission="manage_user_roles"><ManageRoles /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/approvals" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountApprovals /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/invitations" element={<ProtectedRoute requiredPermission="approve_accounts"><StaffInvitations /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/accounts" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountManagement /></ProtectedRoute>} />
               <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
               <Route path="/dashboard/admin/locations" element={<ProtectedRoute requiredPermission="manage_settings"><LocationsManager /></ProtectedRoute>} />
               <Route path="/dashboard/admin/command-center-console" element={<ProtectedRoute requiredPermission="manage_visibility_console"><CommandCenterConsole /></ProtectedRoute>} />
