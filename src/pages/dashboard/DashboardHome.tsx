@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Calendar, 
   TrendingUp, 
@@ -13,6 +14,7 @@ import {
   CheckSquare, 
   Target,
   ChevronRight,
+  ChevronDown,
   Users,
   DollarSign,
   Clock,
@@ -41,6 +43,7 @@ import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
 import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
 import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
+import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -231,7 +234,7 @@ export default function DashboardHome() {
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-2">
           {/* Schedule & Appointments */}
           {isVisible('todays_schedule') && (
             <Card className="p-6">
@@ -293,70 +296,15 @@ export default function DashboardHome() {
               )}
             </Card>
           )}
-
-          {/* Announcements */}
-          {isVisible('announcements') && (
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
-                <div className="flex items-center gap-2">
-                  {isLeadership && (
-                    <Link to="/dashboard/admin/announcements" className="text-muted-foreground hover:text-foreground transition-colors">
-                      <Pencil className="w-4 h-4" />
-                    </Link>
-                  )}
-                  <Megaphone className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-              <div className="space-y-3">
-                {announcements && announcements.length > 0 ? (
-                  announcements.map((announcement) => (
-                    <div 
-                      key={announcement.id}
-                      className={`group relative p-3 bg-muted/50 border-l-2 ${priorityColors[announcement.priority]}`}
-                    >
-                      {isLeadership && (
-                        <Link 
-                          to={`/dashboard/admin/announcements?edit=${announcement.id}`}
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Link>
-                      )}
-                      <div className="flex items-center gap-2 mb-1">
-                        {announcement.is_pinned && <Pin className="w-3 h-3" />}
-                        <p className="text-sm font-sans font-medium">{announcement.title}</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {announcement.content}
-                      </p>
-                      {announcement.link_url && announcement.link_label && (
-                        <a 
-                          href={normalizeUrl(announcement.link_url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block mt-2 px-3 py-1.5 text-xs font-medium bg-foreground text-background rounded hover:opacity-90 transition-opacity"
-                        >
-                          {announcement.link_label}
-                        </a>
-                      )}
-                      <p className="text-xs text-muted-foreground/60 mt-1">
-                        {format(new Date(announcement.created_at), 'MMM d')}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-3 bg-muted/50 border-l-2 border-foreground">
-                    <p className="text-sm font-sans font-medium">Welcome to Drop Dead!</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Complete your onboarding to get started
-                    </p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
         </div>
+
+        {/* Announcements - Full Width Bento */}
+        {isVisible('announcements') && (
+          <AnnouncementsBento 
+            announcements={announcements} 
+            isLeadership={isLeadership} 
+          />
+        )}
 
         {/* Drop Dead 75 Program Section */}
         {/* Client Engine - only show for stylists/assistants */}
