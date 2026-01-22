@@ -255,10 +255,13 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
               </button>
             </div>
           ) : (
-            <div className={cn("flex flex-col items-center gap-2", textClass)}>
+            <div className={cn("flex flex-col items-center gap-1 text-center", textClass)}>
               <Upload className="w-8 h-8 opacity-50" />
               <span className="text-sm opacity-70">Click to upload</span>
               <span className="text-xs opacity-50">SVG or PNG only</span>
+              <span className="text-xs opacity-40 mt-1">
+                {isLight ? 'Use a dark/black logo' : 'Use a white/light logo'}
+              </span>
             </div>
           )}
         </div>
@@ -327,10 +330,13 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
               </button>
             </div>
           ) : (
-            <div className={cn("flex flex-col items-center gap-1", textClass)}>
+            <div className={cn("flex flex-col items-center gap-1 text-center", textClass)}>
               <Upload className="w-6 h-6 opacity-50" />
               <span className="text-xs opacity-70">Click to upload</span>
               <span className="text-xs opacity-50">SVG or PNG</span>
+              <span className="text-xs opacity-40">
+                {isLight ? 'Dark/black icon' : 'White/light icon'}
+              </span>
             </div>
           )}
         </div>
