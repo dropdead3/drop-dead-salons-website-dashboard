@@ -178,30 +178,33 @@ export function RolePermissionsManager() {
                 >
                   <Icon className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="hidden sm:inline">{role.display_name}</span>
-                  <Badge 
-                    variant="secondary" 
-                    className={cn(
-                      "ml-1 text-[10px] px-1.5 py-0",
-                      isSuperAdmin && "bg-amber-200/50 text-amber-800 dark:bg-amber-800/30 dark:text-amber-300"
-                    )}
-                  >
-                    {getPermissionCountForRole(role.name)}
-                  </Badge>
-                  {!isSuperAdmin && getDeviationCountForRole(role.name) > 0 && (
+                  {!isSuperAdmin && getDeviationCountForRole(role.name) > 0 ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Badge 
-                          variant="outline" 
-                          className="ml-0.5 text-[9px] px-1 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-0.5"
+                          variant="secondary" 
+                          className="ml-1 text-[10px] px-1.5 py-0 gap-1 inline-flex items-center"
                         >
-                          <AlertTriangle className="w-2.5 h-2.5" />
-                          {getDeviationCountForRole(role.name)}
+                          {getPermissionCountForRole(role.name)}
+                          <span className="w-px h-3 bg-border" />
+                          <AlertTriangle className="w-2.5 h-2.5 text-amber-500" />
+                          <span className="text-amber-600 dark:text-amber-400">{getDeviationCountForRole(role.name)}</span>
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
                         {getDeviationCountForRole(role.name)} custom permission(s) deviating from defaults
                       </TooltipContent>
                     </Tooltip>
+                  ) : (
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "ml-1 text-[10px] px-1.5 py-0",
+                        isSuperAdmin && "bg-amber-200/50 text-amber-800 dark:bg-amber-800/30 dark:text-amber-300"
+                      )}
+                    >
+                      {getPermissionCountForRole(role.name)}
+                    </Badge>
                   )}
                 </TabsTrigger>
               );
