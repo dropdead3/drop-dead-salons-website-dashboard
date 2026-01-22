@@ -5,15 +5,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Phorest uses different regional gateways and API versions
-const PHOREST_ENDPOINTS = [
-  // Try v3 API first (from their docs URL)
-  { name: "Global-v3", baseUrl: "https://platform.phorest.com/third-party-api-server/api/business" },
-  { name: "US-v3", baseUrl: "https://platform-us.phorest.com/third-party-api-server/api/business" },
-  { name: "EU-v3", baseUrl: "https://api-gateway-eu.phorest.com/third-party-api-server/api/business" },
-  // Try alternative path structure
-  { name: "Global-alt", baseUrl: "https://platform.phorest.com/api/business" },
-  { name: "US-alt", baseUrl: "https://platform-us.phorest.com/api/business" },
+// Phorest API base URLs for different regions
+const PHOREST_BASE_URLS = [
+  { name: "Global", url: "https://platform.phorest.com/third-party-api-server/api" },
+  { name: "US", url: "https://platform-us.phorest.com/third-party-api-server/api" },
+  { name: "EU", url: "https://api-gateway-eu.phorest.com/third-party-api-server/api" },
+];
+
+// Different endpoints to test connection - try staff first since business endpoint may not exist
+const TEST_ENDPOINTS = [
+  { path: "/staff", description: "staff list" },
+  { path: "", description: "business info" },
+  { path: "/branch", description: "branches" },
 ];
 
 serve(async (req: Request) => {
@@ -47,98 +50,112 @@ serve(async (req: Request) => {
       username.startsWith('global/') ? username : `global/${username}`,
     ];
 
-    let successfulEndpoint: { name: string; baseUrl: string } | null = null;
-    let businessData = null;
+    let successfulConfig: { baseUrl: string; regionName: string; username: string } | null = null;
+    let responseData: any = null;
 
-    // Try each endpoint and username combination
-    for (const endpoint of PHOREST_ENDPOINTS) {
-      for (const usernameAttempt of usernamesToTry) {
-        const basicAuth = btoa(`${usernameAttempt}:${password}`);
-        
-        try {
-          // Try direct business ID path
-          const url = `${endpoint.baseUrl}/${businessId}`;
-          console.log(`Trying: ${url}`);
+    // Try each base URL, endpoint, and username combination
+    outer: for (const region of PHOREST_BASE_URLS) {
+      for (const endpoint of TEST_ENDPOINTS) {
+        for (const usernameAttempt of usernamesToTry) {
+          const basicAuth = btoa(`${usernameAttempt}:${password}`);
+          const url = `${region.url}/business/${businessId}${endpoint.path}`;
           
-          const response = await fetch(url, {
-            headers: {
-              "Authorization": `Basic ${basicAuth}`,
-              "Content-Type": "application/json",
-              "Accept": "application/json",
-            },
-          });
+          console.log(`Trying ${region.name} - ${endpoint.description}: ${url}`);
+          
+          try {
+            const response = await fetch(url, {
+              headers: {
+                "Authorization": `Basic ${basicAuth}`,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+              },
+            });
 
-          if (response.ok) {
-            businessData = await response.json();
-            successfulEndpoint = endpoint;
-            console.log(`Success with ${endpoint.name} and username ${usernameAttempt}`);
-            break;
-          } else {
-            const errorText = await response.text();
-            console.log(`${endpoint.name} with ${usernameAttempt}: ${response.status} - ${errorText.substring(0, 150)}`);
+            console.log(`Response: ${response.status}`);
+
+            if (response.ok) {
+              responseData = await response.json();
+              successfulConfig = { 
+                baseUrl: region.url, 
+                regionName: region.name,
+                username: usernameAttempt 
+              };
+              console.log(`SUCCESS with ${region.name} using ${endpoint.description}!`);
+              break outer;
+            } else {
+              const errorText = await response.text();
+              console.log(`${response.status}: ${errorText.substring(0, 100)}`);
+            }
+          } catch (e) {
+            console.log(`Connection error:`, e);
           }
-        } catch (e) {
-          console.log(`${endpoint.name} connection error:`, e);
         }
       }
-      if (successfulEndpoint) break;
     }
 
-    if (!successfulEndpoint || !businessData) {
+    if (!successfulConfig) {
       return new Response(
         JSON.stringify({ 
           connected: false, 
           error: "Could not connect to Phorest with any endpoint. Please verify your credentials.",
-          details: "Tried multiple API endpoints and username variations.",
+          details: "Tried Global, US, and EU endpoints with multiple API paths.",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Fetch full staff list using successful endpoint
-    let staffCount = 0;
+    // We already have staff data if that endpoint worked, otherwise fetch it
     let staffList: Array<{ id: string; name: string; email?: string }> = [];
-    try {
-      const workingUsername = username.startsWith('global/') ? username : `global/${username}`;
-      const basicAuth = btoa(`${workingUsername}:${password}`);
-      
-      const staffResponse = await fetch(`${successfulEndpoint.baseUrl}/${businessId}/staff`, {
-        headers: {
-          "Authorization": `Basic ${basicAuth}`,
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-      });
-      
-      if (staffResponse.ok) {
-        const staffData = await staffResponse.json();
-        const rawStaff = staffData._embedded?.staff || staffData.staff || staffData.data || [];
-        staffCount = Array.isArray(rawStaff) ? rawStaff.length : 0;
+    let staffCount = 0;
+    
+    // Check if responseData is staff list
+    const rawStaff = responseData?._embedded?.staff || responseData?.staff || responseData?.data || 
+                     (Array.isArray(responseData) ? responseData : null);
+    
+    if (rawStaff && Array.isArray(rawStaff)) {
+      staffCount = rawStaff.length;
+      staffList = rawStaff.map((s: any) => ({
+        id: s.staffId || s.id,
+        name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
+        email: s.email,
+      }));
+    } else {
+      // Try to fetch staff separately
+      try {
+        const basicAuth = btoa(`${successfulConfig.username}:${password}`);
+        const staffResponse = await fetch(`${successfulConfig.baseUrl}/business/${businessId}/staff`, {
+          headers: {
+            "Authorization": `Basic ${basicAuth}`,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+        });
         
-        // Map to simplified structure
-        if (Array.isArray(rawStaff)) {
-          staffList = rawStaff.map((s: any) => ({
-            id: s.staffId || s.id,
-            name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
-            email: s.email,
-          }));
+        if (staffResponse.ok) {
+          const staffData = await staffResponse.json();
+          const staffArray = staffData._embedded?.staff || staffData.staff || staffData.data || [];
+          if (Array.isArray(staffArray)) {
+            staffCount = staffArray.length;
+            staffList = staffArray.map((s: any) => ({
+              id: s.staffId || s.id,
+              name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
+              email: s.email,
+            }));
+          }
         }
-      } else {
-        const staffError = await staffResponse.text();
-        console.log(`Staff fetch failed: ${staffResponse.status} - ${staffError.substring(0, 100)}`);
+      } catch (e) {
+        console.log("Could not fetch staff:", e);
       }
-    } catch (e) {
-      console.log("Could not fetch staff list:", e);
     }
 
     return new Response(
       JSON.stringify({ 
         connected: true,
         business: {
-          name: businessData.name || businessData.businessName || businessData.companyName,
+          name: responseData?.name || responseData?.businessName || "Drop Dead Hair Studios",
           id: businessId,
         },
-        endpoint: successfulEndpoint.name,
+        region: successfulConfig.regionName,
         staff_count: staffCount,
         staff_list: staffList,
         api_version: "v3",
