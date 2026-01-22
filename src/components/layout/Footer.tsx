@@ -214,6 +214,13 @@ export function Footer() {
             </Link>
           </div>
         </div>
+
+        {/* Powered By */}
+        <div className="mt-6 text-center">
+          <p className="text-xs text-muted-foreground/60 font-sans">
+            Powered by Drop Dead Salon Software
+          </p>
+        </div>
       </div>
     </footer>
   );
