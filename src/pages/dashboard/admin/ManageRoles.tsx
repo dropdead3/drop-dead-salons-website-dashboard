@@ -327,7 +327,7 @@ export default function ManageRoles() {
                               <TooltipTrigger>
                                 <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 gap-1 text-xs border border-amber-300">
                                   <Crown className="w-3 h-3" />
-                                  {isPrimaryOwner ? 'Primary Owner' : 'Super Admin'}
+                                  {isPrimaryOwner ? 'Account Owner' : 'Super Admin'}
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -395,7 +395,7 @@ export default function ManageRoles() {
                                   <TooltipTrigger>
                                     <Lock className="w-3 h-3 text-amber-600" />
                                   </TooltipTrigger>
-                                  <TooltipContent>Primary Owner - cannot be revoked</TooltipContent>
+                                  <TooltipContent>Account Owner - cannot be revoked</TooltipContent>
                                 </Tooltip>
                               )}
                               {isSuperAdmin && !canApproveAdmin && !isPrimaryOwner && (

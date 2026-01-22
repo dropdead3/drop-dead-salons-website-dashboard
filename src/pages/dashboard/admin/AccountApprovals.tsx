@@ -103,7 +103,7 @@ export default function AccountApprovals() {
                     <TooltipTrigger>
                       <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white gap-1">
                         <Crown className="w-3 h-3" />
-                        {account.is_primary_owner ? 'Primary Owner' : 'Super Admin'}
+                        {account.is_primary_owner ? 'Account Owner' : 'Super Admin'}
                       </Badge>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -193,7 +193,7 @@ export default function AccountApprovals() {
                         className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 opacity-100 cursor-not-allowed"
                       >
                         <Crown className="w-3 h-3" />
-                        Primary Owner
+                        Account Owner
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Account owner - cannot be revoked</TooltipContent>
