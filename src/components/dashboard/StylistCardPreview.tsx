@@ -154,8 +154,8 @@ export function StylistCardPreview({
               {/* Bottom content */}
               <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <p className="text-xs tracking-[0.2em] text-white/70">
-                    {level || "LEVEL"}
+                  <p className="text-xs tracking-[0.2em] text-white/70 uppercase">
+                    {level || "LEVEL 1 STYLIST"}
                   </p>
                   <TooltipProvider delayDuration={100}>
                     <Tooltip>
@@ -238,8 +238,8 @@ export function StylistCardPreview({
             <div className="relative w-full h-full bg-foreground overflow-hidden rounded-2xl shadow-md flex flex-col items-center justify-center p-6 text-center">
               {/* Name */}
               <h3 className="text-2xl font-display text-background mb-1">{showName}</h3>
-              <p className="text-xs tracking-[0.2em] text-background/60 mb-5">
-                {level || "LEVEL"}
+              <p className="text-xs tracking-[0.2em] text-background/60 mb-5 uppercase">
+                {level || "LEVEL 1 STYLIST"}
               </p>
 
               {/* Bio */}
