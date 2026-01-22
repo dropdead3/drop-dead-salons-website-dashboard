@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
@@ -14,6 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { 
   Users, 
   Bell, 
@@ -34,6 +39,11 @@ import {
   BookOpen,
   Layers,
   LayoutDashboard,
+  GripVertical,
+  Pencil,
+  X,
+  Save,
+  RotateCcw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -46,7 +56,25 @@ import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLev
 import { HandbooksContent } from '@/components/dashboard/settings/HandbooksContent';
 import { CommandCenterContent } from '@/components/dashboard/settings/CommandCenterContent';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
+import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER } from '@/hooks/useSettingsLayout';
 import { cn } from '@/lib/utils';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface UserWithRole {
   user_id: string;
@@ -65,6 +93,120 @@ const roleOptions = [
 
 type SettingsCategory = 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | null;
 
+// Preset colors for icon customization
+const PRESET_COLORS = [
+  '#8B5CF6', '#7C3AED', '#6366F1', '#4F46E5', // Purples
+  '#3B82F6', '#2563EB', '#0EA5E9', '#06B6D4', // Blues
+  '#14B8A6', '#10B981', '#22C55E', '#84CC16', // Greens
+  '#EAB308', '#F59E0B', '#F97316', '#EF4444', // Warm
+  '#EC4899', '#D946EF', '#A855F7', '#6B7280', // Pinks/Gray
+];
+
+interface SortableCardProps {
+  category: {
+    id: string;
+    label: string;
+    description: string;
+    icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  };
+  isEditMode: boolean;
+  iconColor: string;
+  onColorChange: (color: string) => void;
+  onClick: () => void;
+}
+
+function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick }: SortableCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const Icon = category.icon;
+
+  return (
+    <Card 
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "transition-all group relative",
+        isDragging && "opacity-50 ring-2 ring-primary",
+        !isEditMode && "cursor-pointer hover:border-primary/50"
+      )}
+      onClick={!isEditMode ? onClick : undefined}
+    >
+      {isEditMode && (
+        <div 
+          {...attributes}
+          {...listeners}
+          className="absolute top-3 right-3 p-1.5 rounded-md bg-muted hover:bg-muted/80 cursor-grab active:cursor-grabbing"
+        >
+          <GripVertical className="w-4 h-4 text-muted-foreground" />
+        </div>
+      )}
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div 
+              className="w-10 h-10 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: `${iconColor}20` }}
+            >
+              <Icon className="w-5 h-5" style={{ color: iconColor }} />
+            </div>
+            {isEditMode && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button 
+                    className="w-6 h-6 rounded-full border-2 border-border hover:scale-110 transition-transform"
+                    style={{ backgroundColor: iconColor }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3" align="start">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">Icon Color</p>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {PRESET_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          className={cn(
+                            "w-7 h-7 rounded-full transition-all hover:scale-110",
+                            iconColor === color && "ring-2 ring-offset-2 ring-primary"
+                          )}
+                          style={{ backgroundColor: color }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onColorChange(color);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
+          {!isEditMode && (
+            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
+        <CardDescription>{category.description}</CardDescription>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -75,6 +217,27 @@ export default function Settings() {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>(null);
   const [mounted, setMounted] = useState(false);
+  
+  // Layout editing state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const { data: layoutPrefs } = useSettingsLayout();
+  const updateLayout = useUpdateSettingsLayout();
+  const [localOrder, setLocalOrder] = useState<string[]>(DEFAULT_ORDER);
+  const [localColors, setLocalColors] = useState<Record<string, string>>(DEFAULT_ICON_COLORS);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Sync with stored preferences
+  useEffect(() => {
+    if (layoutPrefs) {
+      setLocalOrder(layoutPrefs.order);
+      setLocalColors(layoutPrefs.iconColors);
+    }
+  }, [layoutPrefs]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -186,62 +349,115 @@ export default function Settings() {
     }
   };
 
-  const categories = [
-    {
-      id: 'email' as const,
+  const categoriesMap: Record<string, { id: string; label: string; description: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }> }> = {
+    email: {
+      id: 'email',
       label: 'Email',
       description: 'Templates, variables & signatures',
       icon: Mail,
     },
-    {
-      id: 'users' as const,
+    users: {
+      id: 'users',
       label: 'Users',
       description: 'Team members & roles',
       icon: Users,
     },
-    {
-      id: 'onboarding' as const,
+    onboarding: {
+      id: 'onboarding',
       label: 'Onboarding',
       description: 'Tasks & leaderboard scoring',
       icon: Rocket,
     },
-    {
-      id: 'integrations' as const,
+    integrations: {
+      id: 'integrations',
       label: 'Integrations',
       description: 'Third-party connections',
       icon: Plug,
     },
-    {
-      id: 'system' as const,
+    system: {
+      id: 'system',
       label: 'System',
       description: 'Appearance, notifications & security',
       icon: Cog,
     },
-    {
-      id: 'program' as const,
+    program: {
+      id: 'program',
       label: 'Program Editor',
       description: 'Client Engine course configuration',
       icon: GraduationCap,
     },
-    {
-      id: 'levels' as const,
+    levels: {
+      id: 'levels',
       label: 'Stylist Levels',
       description: 'Experience tiers & pricing',
       icon: Layers,
     },
-    {
-      id: 'handbooks' as const,
+    handbooks: {
+      id: 'handbooks',
       label: 'Handbooks',
       description: 'Team documents & training',
       icon: BookOpen,
     },
-    {
-      id: 'visibility' as const,
+    visibility: {
+      id: 'visibility',
       label: 'Visibility Console',
       description: 'Control dashboard element visibility by role',
       icon: LayoutDashboard,
     },
-  ];
+  };
+
+  const orderedCategories = useMemo(() => {
+    return localOrder.map(id => categoriesMap[id]).filter(Boolean);
+  }, [localOrder]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setLocalOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+      setHasChanges(true);
+    }
+  };
+
+  const handleColorChange = (categoryId: string, color: string) => {
+    setLocalColors(prev => ({ ...prev, [categoryId]: color }));
+    setHasChanges(true);
+  };
+
+  const handleSaveLayout = () => {
+    updateLayout.mutate(
+      { order: localOrder, iconColors: localColors },
+      {
+        onSuccess: () => {
+          toast({ title: 'Layout saved', description: 'Your settings layout has been saved.' });
+          setIsEditMode(false);
+          setHasChanges(false);
+        },
+        onError: () => {
+          toast({ variant: 'destructive', title: 'Error', description: 'Failed to save layout.' });
+        },
+      }
+    );
+  };
+
+  const handleResetLayout = () => {
+    setLocalOrder(DEFAULT_ORDER);
+    setLocalColors(DEFAULT_ICON_COLORS);
+    setHasChanges(true);
+  };
+
+  const handleCancelEdit = () => {
+    if (layoutPrefs) {
+      setLocalOrder(layoutPrefs.order);
+      setLocalColors(layoutPrefs.iconColors);
+    }
+    setIsEditMode(false);
+    setHasChanges(false);
+  };
 
   // If a category is selected, show detailed view
   if (activeCategory) {
@@ -258,7 +474,7 @@ export default function Settings() {
               ← Back to Settings
             </Button>
             <h1 className="font-display text-2xl lg:text-3xl">
-              {categories.find(c => c.id === activeCategory)?.label.toUpperCase()}
+              {categoriesMap[activeCategory]?.label.toUpperCase()}
             </h1>
           </div>
 
@@ -609,39 +825,90 @@ export default function Settings() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl lg:text-4xl mb-2">SETTINGS</h1>
-          <p className="text-muted-foreground font-sans">
-            Manage system configuration, users, and communications.
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl lg:text-4xl mb-2">SETTINGS</h1>
+            <p className="text-muted-foreground font-sans">
+              Manage system configuration, users, and communications.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {isEditMode ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetLayout}
+                  className="gap-1.5"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Reset
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  className="gap-1.5"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveLayout}
+                  disabled={!hasChanges || updateLayout.isPending}
+                  className="gap-1.5"
+                >
+                  {updateLayout.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Save Layout
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditMode(true)}
+                className="gap-1.5"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit Layout
+              </Button>
+            )}
+          </div>
         </div>
 
+        {isEditMode && (
+          <div className="mb-4 p-3 bg-muted/50 border rounded-lg flex items-center gap-2 text-sm text-muted-foreground">
+            <GripVertical className="w-4 h-4" />
+            <span>Drag cards to reorder. Click the color dot next to each icon to change its color.</span>
+          </div>
+        )}
+
         {/* Category Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            return (
-              <Card 
-                key={category.id}
-                className="cursor-pointer hover:border-primary/50 transition-all group"
-                onClick={() => setActiveCategory(category.id)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
-                  <CardDescription>{category.description}</CardDescription>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={localOrder} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {orderedCategories.map((category) => (
+                <SortableCard
+                  key={category.id}
+                  category={category}
+                  isEditMode={isEditMode}
+                  iconColor={localColors[category.id] || DEFAULT_ICON_COLORS[category.id]}
+                  onColorChange={(color) => handleColorChange(category.id, color)}
+                  onClick={() => setActiveCategory(category.id as SettingsCategory)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
     </DashboardLayout>
   );
