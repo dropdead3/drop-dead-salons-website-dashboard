@@ -104,9 +104,11 @@ serve(async (req: Request) => {
       );
     }
 
-    // Staff must be fetched per-branch according to API docs
-    let staffList: Array<{ id: string; name: string; email?: string }> = [];
+    // Staff must be fetched per-branch - return each staff with their branch info
+    // so users can map the same person at multiple branches
+    let staffList: Array<{ id: string; name: string; email?: string; branchId?: string; branchName?: string }> = [];
     let staffCount = 0;
+    let branchList: Array<{ id: string; name: string }> = [];
     
     try {
       const basicAuth = btoa(`${successfulConfig.username}:${password}`);
@@ -124,11 +126,18 @@ serve(async (req: Request) => {
         const branchData = await branchResponse.json();
         const branches = branchData._embedded?.branches || branchData.branches || [];
         
-        const allStaff = new Map<string, any>();
+        // Store branch list for reference
+        branchList = branches.map((b: any) => ({
+          id: b.branchId || b.id,
+          name: b.name || b.branchName || 'Unknown Branch',
+        }));
         
-        // Fetch staff for each branch
+        // Fetch staff for each branch - include branch info with each staff
+        // Same person at different branches = separate entries for mapping
         for (const branch of branches) {
           const branchId = branch.branchId || branch.id;
+          const branchName = branch.name || branch.branchName || 'Unknown Branch';
+          
           try {
             const staffResponse = await fetch(`${successfulConfig.baseUrl}/business/${businessId}/branch/${branchId}/staff`, {
               headers: {
@@ -146,13 +155,14 @@ serve(async (req: Request) => {
               
               for (const s of staffArray) {
                 const staffId = s.staffId || s.id;
-                if (!allStaff.has(staffId)) {
-                  allStaff.set(staffId, {
-                    id: staffId,
-                    name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
-                    email: s.email,
-                  });
-                }
+                // Include branch info - same staff at different branches are separate entries
+                staffList.push({
+                  id: staffId,
+                  name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Unknown',
+                  email: s.email,
+                  branchId: branchId,
+                  branchName: branchName,
+                });
               }
             }
           } catch (e) {
@@ -160,7 +170,6 @@ serve(async (req: Request) => {
           }
         }
         
-        staffList = Array.from(allStaff.values());
         staffCount = staffList.length;
       }
     } catch (e) {
@@ -177,6 +186,7 @@ serve(async (req: Request) => {
         region: successfulConfig.regionName,
         staff_count: staffCount,
         staff_list: staffList,
+        branch_list: branchList,
         api_version: "v3",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
