@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -292,20 +292,22 @@ export function RolePermissionsManager() {
                                       {permission.display_name}
                                     </p>
                                     {isDeviation && (
-                                      <Tooltip delayDuration={100}>
-                                        <TooltipTrigger asChild>
-                                          <Badge 
-                                            variant="outline" 
-                                            className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-1 cursor-help"
-                                          >
-                                            Custom Change
-                                            <Info className="w-2.5 h-2.5" />
-                                          </Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" align="center" className="max-w-xs z-50">
-                                          This is a permission that has been toggled on that is a deviation from the default role permissions
-                                        </TooltipContent>
-                                      </Tooltip>
+                                      <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Badge 
+                                              variant="outline" 
+                                              className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-1 cursor-help"
+                                            >
+                                              Custom Change
+                                              <Info className="w-2.5 h-2.5" />
+                                            </Badge>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" align="center" className="max-w-xs z-50">
+                                            This is a permission that has been toggled on that is a deviation from the default role permissions
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
                                     )}
                                   </div>
                                   {permission.description && (
