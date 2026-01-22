@@ -552,11 +552,42 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Building2 className="w-5 h-5 text-primary" />
-              {location.name}
-            </CardTitle>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Building2 className="w-5 h-5 text-primary" />
+            {location.name}
+          </CardTitle>
+          
+          <div className="flex items-center gap-2">
+            {/* Manager Avatars */}
+            {managers.length > 0 && (
+              <div className="flex -space-x-2">
+                {managers.map((manager, index) => (
+                  <TooltipProvider key={manager.id}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => navigate(`/dashboard/profile/${manager.user_id}`)}
+                          className="relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full transition-transform hover:scale-110 hover:z-10"
+                          style={{ zIndex: managers.length - index }}
+                        >
+                          <Avatar className="w-8 h-8 border-2 border-background">
+                            <AvatarImage src={manager.photo_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-muted">
+                              {(manager.display_name || manager.full_name).charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">
+                        <p className="font-medium">{manager.display_name || manager.full_name}</p>
+                        <p className="text-muted-foreground">{getManagerRole(manager)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
+              </div>
+            )}
+            
             {/* Open/Closed Status */}
             <Badge 
               variant="outline" 
@@ -580,36 +611,6 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
               {openStatus.label}
             </Badge>
           </div>
-          
-          {/* Manager Avatars */}
-          {managers.length > 0 && (
-            <div className="flex -space-x-2">
-              {managers.map((manager, index) => (
-                <TooltipProvider key={manager.id}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => navigate(`/dashboard/profile/${manager.user_id}`)}
-                        className="relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full transition-transform hover:scale-110 hover:z-10"
-                        style={{ zIndex: managers.length - index }}
-                      >
-                        <Avatar className="w-8 h-8 border-2 border-background">
-                          <AvatarImage src={manager.photo_url || undefined} />
-                          <AvatarFallback className="text-[10px] bg-muted">
-                            {(manager.display_name || manager.full_name).charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                      <p className="font-medium">{manager.display_name || manager.full_name}</p>
-                      <p className="text-muted-foreground">{getManagerRole(manager)}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ))}
-            </div>
-          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
