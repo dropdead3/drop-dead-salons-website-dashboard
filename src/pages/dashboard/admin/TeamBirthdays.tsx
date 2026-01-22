@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { Award, Cake, Calendar, ChevronLeft, ChevronRight, PartyPopper, Star, Users } from 'lucide-react';
+import { Award, Cake, Calendar, ChevronLeft, ChevronRight, Info, PartyPopper, Star, Users } from 'lucide-react';
 import { useMonthlyBirthdays, useUpcomingBirthdays, useTodaysBirthdays } from '@/hooks/useBirthdays';
 import { useTodaysAnniversaries, useUpcomingAnniversaries, MILESTONE_YEARS } from '@/hooks/useAnniversaries';
 import { format, addMonths, subMonths, getMonth, getDate, parseISO } from 'date-fns';
@@ -233,6 +233,14 @@ export default function TeamBirthdays() {
               <CardTitle className="font-display tracking-wide text-sm flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-500" />
                 UPCOMING WORK ANNIVERSARIES
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[220px] text-center">
+                    Work anniversaries are to celebrate the length of time a stylist has worked at Drop Dead
+                  </TooltipContent>
+                </Tooltip>
               </CardTitle>
             </CardHeader>
             <CardContent>
