@@ -38,6 +38,7 @@ import {
   Download,
   Target,
   GitCompare,
+  BarChart3,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation } from '@/hooks/useSalesData';
@@ -54,6 +55,12 @@ import { HistoricalComparison } from '@/components/dashboard/sales/HistoricalCom
 import { StylistSalesRow } from '@/components/dashboard/sales/StylistSalesRow';
 import { SalesTrendIndicator } from '@/components/dashboard/sales/SalesTrendIndicator';
 import { LastSyncIndicator } from '@/components/dashboard/sales/LastSyncIndicator';
+import { ProductCategoryChart } from '@/components/dashboard/sales/ProductCategoryChart';
+import { ServicePopularityChart } from '@/components/dashboard/sales/ServicePopularityChart';
+import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
+import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap';
+import { CommissionCalculator } from '@/components/dashboard/sales/CommissionCalculator';
+import { SalesReportPDF } from '@/components/dashboard/sales/SalesReportPDF';
 
 type DateRange = '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
@@ -233,6 +240,13 @@ export default function SalesDashboard() {
             <Button variant="outline" size="icon" onClick={handleExportCSV} className="shrink-0">
               <Download className="w-4 h-4" />
             </Button>
+            <SalesReportPDF 
+              dateFrom={dateFilters.dateFrom}
+              dateTo={dateFilters.dateTo}
+              metrics={metrics}
+              stylistData={stylistData}
+              locationData={locationData}
+            />
           </div>
 
           {/* Sync indicator */}
@@ -331,6 +345,10 @@ export default function SalesDashboard() {
             <TabsTrigger value="compare" className="flex-1 md:flex-none">
               <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
               Compare
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex-1 md:flex-none">
+              <BarChart3 className="w-4 h-4 mr-1 hidden sm:inline" />
+              Analytics
             </TabsTrigger>
           </TabsList>
 
@@ -566,6 +584,40 @@ export default function SalesDashboard() {
               locations={locationData || []} 
               isLoading={locationLoading}
             />
+          </TabsContent>
+
+          {/* Analytics Tab - New! */}
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              <ProductCategoryChart 
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationFilter !== 'all' ? locationFilter : undefined}
+              />
+              <ClientFunnelCard 
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationFilter !== 'all' ? locationFilter : undefined}
+              />
+            </div>
+            
+            <ServicePopularityChart 
+              dateFrom={dateFilters.dateFrom}
+              dateTo={dateFilters.dateTo}
+              locationId={locationFilter !== 'all' ? locationFilter : undefined}
+            />
+            
+            <div className="grid lg:grid-cols-2 gap-6">
+              <PeakHoursHeatmap 
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationFilter !== 'all' ? locationFilter : undefined}
+              />
+              <CommissionCalculator 
+                serviceRevenue={metrics?.serviceRevenue || 0}
+                productRevenue={metrics?.productRevenue || 0}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>

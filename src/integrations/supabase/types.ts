@@ -347,6 +347,42 @@ export type Database = {
           },
         ]
       }
+      commission_tiers: {
+        Row: {
+          applies_to: string
+          commission_rate: number
+          created_at: string
+          id: string
+          is_active: boolean
+          max_revenue: number | null
+          min_revenue: number
+          tier_name: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          commission_rate: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_revenue?: number | null
+          min_revenue: number
+          tier_name: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_revenue?: number | null
+          min_revenue?: number
+          tier_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_completions: {
         Row: {
           all_tasks_done: boolean
@@ -2846,6 +2882,36 @@ export type Database = {
           label?: string
           slug?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      stylist_personal_goals: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_target: number
+          notes: string | null
+          updated_at: string
+          user_id: string
+          weekly_target: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_target?: number
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+          weekly_target?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_target?: number
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+          weekly_target?: number
         }
         Relationships: []
       }
