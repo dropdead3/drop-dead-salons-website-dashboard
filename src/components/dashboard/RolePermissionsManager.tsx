@@ -69,7 +69,8 @@ export function RolePermissionsManager() {
       category: 'leadership',
     };
     
-    const activeRoles = dynamicRoles?.filter(r => r.is_active) || [];
+    // Filter out any super_admin from database to avoid duplication (we use the hardcoded one above)
+    const activeRoles = dynamicRoles?.filter(r => r.is_active && r.name !== 'super_admin') || [];
     return [superAdminRole, ...activeRoles];
   }, [dynamicRoles]);
 
