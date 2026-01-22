@@ -2110,6 +2110,48 @@ export type Database = {
           },
         ]
       }
+      roles: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          display_name: string
+          icon: string
+          id: string
+          is_active: boolean
+          is_system: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          display_name: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       salon_services: {
         Row: {
           category: string | null
