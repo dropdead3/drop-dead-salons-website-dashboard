@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, Scissors, ShoppingBag, TrendingUp, Receipt } from 'lucide-react';
 import { useUserSalesSummary } from '@/hooks/useSalesData';
+import { useUserPhorestMapping } from '@/hooks/usePhorestSync';
 import { format, subDays, startOfWeek } from 'date-fns';
 import {
   Select,
@@ -12,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 interface SalesStatsCardProps {
   userId: string | undefined;
@@ -41,8 +43,9 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
   })();
 
   const { data, isLoading } = useUserSalesSummary(userId, dateFilters.dateFrom, dateFilters.dateTo);
+  const { data: userMapping, isLoading: mappingLoading } = useUserPhorestMapping(userId);
 
-  if (isLoading) {
+  if (isLoading || mappingLoading) {
     return (
       <Card className="p-6 bg-chart-2/5 border-chart-2/20 mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -61,11 +64,18 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
     );
   }
 
+  // User not linked to Phorest - don't show anything (the Stats page shows linking prompt)
+  if (!userMapping) {
+    return null;
+  }
+
+  // User is linked but no data yet
   if (!data) {
     return (
       <Card className="p-4 bg-muted/50 border-dashed mb-6">
         <p className="text-sm text-muted-foreground text-center">
-          No sales data available yet. Make sure your account is linked in Phorest settings 
+          No sales data available yet. Go to{' '}
+          <Link to="/dashboard/admin/phorest" className="text-primary underline">Phorest Settings</Link>{' '}
           and click "Sync Sales" to pull in your data.
         </p>
       </Card>

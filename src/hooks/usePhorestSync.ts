@@ -114,6 +114,26 @@ export function usePhorestStaffMappings() {
   });
 }
 
+export function useUserPhorestMapping(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['phorest-user-mapping', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from('phorest_staff_mapping')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
+}
+
 export function usePhorestPerformanceMetrics(weekStart?: string) {
   return useQuery({
     queryKey: ['phorest-performance', weekStart],
