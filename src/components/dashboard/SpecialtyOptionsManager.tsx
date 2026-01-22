@@ -80,7 +80,10 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
     setIsEditing(false);
   };
 
-  const isExtensions = option.name === 'EXTENSIONS';
+  const isExtensions = option.name.toLowerCase() === 'extensions';
+  const displayName = option.name.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
 
   return (
     <>
@@ -130,7 +133,7 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
                 )}
               >
                 {isExtensions && <Sparkles className="w-3 h-3 mr-1" />}
-                {option.name}
+                {displayName}
               </Badge>
               {!option.is_active && (
                 <span className="text-xs text-muted-foreground">(hidden)</span>
