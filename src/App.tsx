@@ -43,7 +43,7 @@ import GalleryManager from "./pages/dashboard/admin/GalleryManager";
 import ServicesManager from "./pages/dashboard/admin/ServicesManager";
 import StylistLevels from "./pages/dashboard/admin/StylistLevels";
 import LocationsManager from "./pages/dashboard/admin/LocationsManager";
-import CommandCenterConsole from "./pages/dashboard/admin/CommandCenterConsole";
+
 import TeamBirthdays from "./pages/dashboard/admin/TeamBirthdays";
 import StaffStrikes from "./pages/dashboard/admin/StaffStrikes";
 import BusinessCardRequests from "./pages/dashboard/admin/BusinessCardRequests";
@@ -129,7 +129,7 @@ const App = () => (
               <Route path="/dashboard/admin/accounts" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountManagement /></ProtectedRoute>} />
               <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
               <Route path="/dashboard/admin/locations" element={<ProtectedRoute requiredPermission="manage_settings"><LocationsManager /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/command-center-console" element={<ProtectedRoute requiredPermission="manage_visibility_console"><CommandCenterConsole /></ProtectedRoute>} />
+              
               <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
               <Route path="/dashboard/admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
               <Route path="/dashboard/admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
