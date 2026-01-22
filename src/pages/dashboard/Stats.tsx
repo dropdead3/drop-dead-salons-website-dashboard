@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { usePhorestPerformanceMetrics, usePhorestConnection } from '@/hooks/usePhorestSync';
+import { usePhorestPerformanceMetrics, usePhorestConnection, useUserPhorestMapping } from '@/hooks/usePhorestSync';
 import { format, startOfWeek } from 'date-fns';
 import { 
   Eye, 
@@ -73,12 +73,16 @@ export default function Stats() {
   const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
   const { data: phorestConnection } = usePhorestConnection();
   const { data: phorestMetrics, isLoading: phorestLoading } = usePhorestPerformanceMetrics(weekStart);
+  const { data: userPhorestMapping } = useUserPhorestMapping(user?.id);
 
   // Find current user's Phorest metrics
   const myPhorestMetrics = useMemo(() => {
     if (!phorestMetrics || !user) return null;
     return phorestMetrics.find((m: any) => m.user_id === user.id);
   }, [phorestMetrics, user]);
+  
+  // Check if user is linked to Phorest (has active mapping)
+  const isLinkedToPhorest = !!userPhorestMapping;
 
   const handleChange = (field: keyof DailyMetrics, value: string) => {
     setMetrics(prev => ({
@@ -168,8 +172,8 @@ export default function Stats() {
           </Card>
         )}
 
-        {/* Show connection prompt if not connected */}
-        {!myPhorestMetrics && phorestConnection?.connected && (
+        {/* Show connection prompt if not linked to Phorest */}
+        {!isLinkedToPhorest && phorestConnection?.connected && (
           <Card className="p-4 bg-muted/50 border-dashed mb-6">
             <p className="text-sm text-muted-foreground text-center">
               Your account isn't linked to Phorest yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
