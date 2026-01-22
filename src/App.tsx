@@ -95,7 +95,7 @@ const App = () => (
               <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
               <Route path="/dashboard/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
               <Route path="/dashboard/notifications" element={<ProtectedRoute><NotificationPreferences /></ProtectedRoute>} />
-              <Route path="/dashboard/profile/:userId" element={<ProtectedRoute requireSuperAdmin><ViewProfile /></ProtectedRoute>} />
+              <Route path="/dashboard/profile/:userId" element={<ProtectedRoute requiredPermission="view_any_profile"><ViewProfile /></ProtectedRoute>} />
               <Route path="/dashboard/directory" element={<ProtectedRoute requiredPermission="view_team_directory"><TeamDirectory /></ProtectedRoute>} />
               <Route path="/dashboard/program" element={<ProtectedRoute requiredPermission="access_client_engine"><Program /></ProtectedRoute>} />
               <Route path="/dashboard/progress" element={<ProtectedRoute requiredPermission="access_client_engine"><Progress /></ProtectedRoute>} />
@@ -108,7 +108,7 @@ const App = () => (
               <Route path="/dashboard/onboarding" element={<ProtectedRoute requiredPermission="view_onboarding"><Onboarding /></ProtectedRoute>} />
               <Route path="/dashboard/assistant-schedule" element={<ProtectedRoute requiredPermission="view_assistant_schedule"><AssistantSchedule /></ProtectedRoute>} />
               <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
-              <Route path="/dashboard/my-graduation" element={<ProtectedRoute><MyGraduation /></ProtectedRoute>} />
+              <Route path="/dashboard/my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
               
               {/* Admin routes */}
               <Route path="/dashboard/admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />
@@ -128,15 +128,15 @@ const App = () => (
               <Route path="/dashboard/admin/invitations" element={<ProtectedRoute requiredPermission="approve_accounts"><StaffInvitations /></ProtectedRoute>} />
               <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
               <Route path="/dashboard/admin/locations" element={<ProtectedRoute requiredPermission="manage_settings"><LocationsManager /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/command-center-console" element={<ProtectedRoute requireSuperAdmin><CommandCenterConsole /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/command-center-console" element={<ProtectedRoute requiredPermission="manage_visibility_console"><CommandCenterConsole /></ProtectedRoute>} />
               <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
               <Route path="/dashboard/admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
               <Route path="/dashboard/admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/build" element={<ProtectedRoute requireSuperAdmin><DashboardBuild /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/build" element={<ProtectedRoute requiredPermission="view_dashboard_build"><DashboardBuild /></ProtectedRoute>} />
               <Route path="/dashboard/admin/recruiting" element={<ProtectedRoute requiredPermission="manage_user_roles"><RecruitingPipeline /></ProtectedRoute>} />
               <Route path="/dashboard/admin/graduation-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><GraduationTracker /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/program-editor" element={<ProtectedRoute requireSuperAdmin><ProgramEditor /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/program-analytics" element={<ProtectedRoute requireSuperAdmin><ProgramAnalytics /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/program-editor" element={<ProtectedRoute requiredPermission="manage_program_editor"><ProgramEditor /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/program-analytics" element={<ProtectedRoute requiredPermission="view_program_analytics"><ProgramAnalytics /></ProtectedRoute>} />
               
 
               <Route path="*" element={<NotFound />} />
