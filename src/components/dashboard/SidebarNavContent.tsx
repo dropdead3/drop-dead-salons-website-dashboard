@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Rocket, PanelLeftClose, ChevronRight } from 'lucide-react';
+import { ExternalLink, Rocket, ChevronRight } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
@@ -213,21 +213,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               </span>
             )}
           </Link>
-          {!isCollapsed && onToggleCollapse && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                  onClick={onToggleCollapse}
-                >
-                  <PanelLeftClose className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Collapse sidebar</TooltipContent>
-            </Tooltip>
-          )}
         </div>
         {!isCollapsed && (
           <p className="text-xs text-muted-foreground mt-2 font-sans">
