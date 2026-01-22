@@ -11,10 +11,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { RoleColorPicker } from './RoleColorPicker';
 import { RoleIconPicker } from './RoleIconPicker';
-import { Role, useCreateRole, useUpdateRole } from '@/hooks/useRoles';
+import { Role, useCreateRole, useUpdateRole, ROLE_CATEGORIES } from '@/hooks/useRoles';
 
 interface CreateRoleDialogProps {
   open: boolean;
@@ -28,6 +35,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('blue');
   const [icon, setIcon] = useState('User');
+  const [category, setCategory] = useState('other');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createRole = useCreateRole();
@@ -43,6 +51,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
       setDescription(editRole.description || '');
       setColor(editRole.color);
       setIcon(editRole.icon);
+      setCategory(editRole.category || 'other');
     } else {
       resetForm();
     }
@@ -54,6 +63,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
     setDescription('');
     setColor('blue');
     setIcon('User');
+    setCategory('other');
     setErrors({});
   };
 
@@ -102,6 +112,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
           description: description || undefined,
           color,
           icon,
+          category,
         },
       });
     } else {
@@ -111,6 +122,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
         description: description || undefined,
         color,
         icon,
+        category,
       });
     }
 
@@ -176,6 +188,25 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
               disabled={isPending}
               rows={2}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Select value={category} onValueChange={setCategory} disabled={isPending}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                {ROLE_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Groups roles for easier management
+            </p>
           </div>
 
           <div className="space-y-2">
