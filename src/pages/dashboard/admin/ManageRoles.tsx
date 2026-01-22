@@ -154,10 +154,15 @@ export default function ManageRoles() {
               Assign and manage user roles across your team.
             </p>
           </div>
-          <Card className="bg-muted/30 min-w-[100px]">
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-display font-medium">{roleStats.total}</p>
-              <p className="text-xs text-muted-foreground">Total Users</p>
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 min-w-[180px]">
+            <CardContent className="px-6 py-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-3xl font-display font-semibold text-primary">{roleStats.total}</p>
+                <p className="text-sm text-muted-foreground">Total Team Members</p>
+              </div>
             </CardContent>
           </Card>
         </div>
