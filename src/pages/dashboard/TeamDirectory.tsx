@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { LocationSelect } from '@/components/ui/location-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle } from 'lucide-react';
+import { Loader2, Search, MapPin, Phone, Mail, Instagram, User, Calendar, Clock, Award, PartyPopper, Star, Building2, ExternalLink, Eye, AlertTriangle, Crown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -386,6 +386,7 @@ interface TeamMemberCardProps {
     location_ids: string[] | null;
     location_schedules: Record<string, string[]>;
     is_super_admin: boolean | null;
+    is_primary_owner: boolean | null;
   };
   locations: Array<{ id: string; name: string }>;
   isSuperAdmin?: boolean;
@@ -534,7 +535,28 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
               
               {/* Role badge + Calendar on right side */}
               <div className="flex items-center gap-2 shrink-0">
-                {primaryRole && (
+                {/* Account Owner badge */}
+                {member.is_primary_owner && (
+                  <Badge 
+                    variant="outline" 
+                    className="text-[10px] font-medium h-5 px-2 gap-1 bg-stone-700/90 text-amber-100 border-amber-400/30 backdrop-blur-sm"
+                  >
+                    <Crown className="w-3 h-3" />
+                    Account Owner
+                  </Badge>
+                )}
+                {/* Super Admin badge (only if not primary owner, to avoid duplicate crown badges) */}
+                {member.is_super_admin && !member.is_primary_owner && (
+                  <Badge 
+                    variant="outline" 
+                    className="text-[10px] font-medium h-5 px-2 gap-1 bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300"
+                  >
+                    <Crown className="w-3 h-3" />
+                    Super Admin
+                  </Badge>
+                )}
+                {/* Other role badges */}
+                {primaryRole && !member.is_super_admin && (
                   <Badge 
                     variant="outline" 
                     className={cn("text-[10px] font-medium h-5 px-2", primaryRole.color)}
