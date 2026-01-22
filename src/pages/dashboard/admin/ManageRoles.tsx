@@ -20,11 +20,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key, UserPlus } from 'lucide-react';
+import { Loader2, Search, User, Shield, Crown, AlertTriangle, Lock, ArrowRight, Users, Key, UserPlus, Settings2 } from 'lucide-react';
 import { useAllUsersWithRoles, useToggleUserRole, ALL_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from '@/hooks/useUserRoles';
 import { useCanApproveAdmin, useAccountApprovals, useToggleSuperAdmin } from '@/hooks/useAccountApproval';
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
 import { RolePermissionsManager } from '@/components/dashboard/RolePermissionsManager';
+import { RoleEditor } from '@/components/dashboard/RoleEditor';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -184,16 +185,20 @@ export default function ManageRoles() {
           </Alert>
         )}
 
-        {/* Main Tabs: User Roles vs Role Permissions */}
+        {/* Main Tabs: User Roles vs Role Permissions vs Manage Roles */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="users" className="gap-2">
               <Users className="w-4 h-4" />
               User Roles
             </TabsTrigger>
             <TabsTrigger value="permissions" className="gap-2">
               <Key className="w-4 h-4" />
-              Role Permissions
+              Permissions
+            </TabsTrigger>
+            <TabsTrigger value="manage" className="gap-2">
+              <Settings2 className="w-4 h-4" />
+              Manage Roles
             </TabsTrigger>
           </TabsList>
 
@@ -433,6 +438,10 @@ export default function ManageRoles() {
 
           <TabsContent value="permissions">
             <RolePermissionsManager />
+          </TabsContent>
+
+          <TabsContent value="manage">
+            <RoleEditor />
           </TabsContent>
         </Tabs>
       </div>
