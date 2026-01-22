@@ -840,6 +840,9 @@ export default function MyProfile() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="stylist_level">Stylist Level <span className="text-destructive">*</span></Label>
+                  <p className="text-xs text-muted-foreground">
+                    Select the level found in your offer letter extended at hiring.
+                  </p>
                   <Select
                     value={formData.stylist_level}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, stylist_level: value }))}
@@ -855,9 +858,6 @@ export default function MyProfile() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Select the level found in your offer letter extended at hiring.
-                  </p>
                 </div>
 
                 <div className="space-y-2">
