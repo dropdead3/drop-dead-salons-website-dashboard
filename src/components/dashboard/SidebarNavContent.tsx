@@ -79,12 +79,25 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     return !!customLogo;
   };
   
+  // Check if custom icons are uploaded
+  const hasCustomIcon = () => {
+    const isDark = resolvedTheme === 'dark';
+    const customIcon = isDark ? businessSettings?.icon_dark_url : businessSettings?.icon_light_url;
+    return !!customIcon;
+  };
+  
   // Get the appropriate logo based on theme and settings
   const getLogo = () => {
     const isDark = resolvedTheme === 'dark';
     const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
     const fallbackLogo = isDark ? LogoWhite : Logo;
     return customLogo || fallbackLogo;
+  };
+  
+  // Get the appropriate icon based on theme and settings
+  const getIcon = () => {
+    const isDark = resolvedTheme === 'dark';
+    return isDark ? businessSettings?.icon_dark_url : businessSettings?.icon_light_url;
   };
   
   // Expose the internal ref
@@ -195,9 +208,17 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             {isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="w-8 h-8 rounded bg-foreground text-background flex items-center justify-center font-display text-sm font-bold">
-                    {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
-                  </div>
+                  {hasCustomIcon() ? (
+                    <img 
+                      src={getIcon()} 
+                      alt={businessSettings?.business_name || 'Drop Dead'} 
+                      className="w-8 h-8 object-contain"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded bg-foreground text-background flex items-center justify-center font-display text-sm font-bold">
+                      {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
                 </TooltipTrigger>
                 <TooltipContent side="right">{businessSettings?.business_name || 'Drop Dead'}</TooltipContent>
               </Tooltip>
