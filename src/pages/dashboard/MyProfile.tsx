@@ -9,12 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Sparkles, X, ChevronDown, Check, Lock, Info } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Sparkles, X, ChevronDown, Check, Lock, Info, Eye } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
+import { useEffectiveRoles, useEffectiveUserContext } from '@/hooks/useEffectiveUser';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { useLocationSchedules, useUpsertLocationSchedule } from '@/hooks/useLocationSchedules';
 import { useSpecialtyOptions } from '@/hooks/useSpecialtyOptions';
@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StylistCardPreview } from '@/components/dashboard/StylistCardPreview';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const DAYS_OF_WEEK = [
   { key: 'Mon', label: 'Monday' },
@@ -69,6 +70,7 @@ const formatSocialHandle = (value: string) => {
 export default function MyProfile() {
   const { user } = useAuth();
   const roles = useEffectiveRoles();
+  const { isImpersonating, impersonatedUser } = useEffectiveUserContext();
   
   const { data: profile, isLoading } = useEmployeeProfile();
   const { data: locations = [] } = useLocations();
@@ -81,6 +83,9 @@ export default function MyProfile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedToast, setShowUnsavedToast] = useState(false);
+  
+  // When impersonating, the page is read-only
+  const isReadOnly = isImpersonating;
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -154,8 +159,10 @@ export default function MyProfile() {
     }
   }, [profile, existingSchedules]);
 
-  // Track changes and show toast
+  // Track changes and show toast (only when not in read-only mode)
   useEffect(() => {
+    if (isReadOnly) return; // Don't track changes when impersonating
+    
     const isChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
     setHasUnsavedChanges(isChanged);
     
@@ -167,7 +174,7 @@ export default function MyProfile() {
         id: 'unsaved-changes',
       });
     }
-  }, [formData, initialFormData, showUnsavedToast]);
+  }, [formData, initialFormData, showUnsavedToast, isReadOnly]);
 
   // Calculate profile completion
   const profileFields = useMemo(() => {
@@ -356,11 +363,30 @@ export default function MyProfile() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-3xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-2xl font-display font-medium mb-2">My Profile</h1>
+          <h1 className="text-2xl font-display font-medium mb-2">
+            {isReadOnly ? `${impersonatedUser?.full_name}'s Profile` : 'My Profile'}
+          </h1>
           <p className="text-muted-foreground">
-            Manage your contact information and profile details.
+            {isReadOnly 
+              ? 'You are viewing this profile in read-only mode.'
+              : 'Manage your contact information and profile details.'
+            }
           </p>
         </div>
+
+        {/* Read-only warning when impersonating */}
+        {isReadOnly && (
+          <Alert className="mb-6 border-primary/50 bg-primary/5">
+            <Eye className="h-4 w-4" />
+            <AlertDescription>
+              You are viewing {impersonatedUser?.full_name}'s profile. To edit a team member's profile, use the{' '}
+              <a href={`/dashboard/admin/team/${impersonatedUser?.id}`} className="underline font-medium">
+                View Profile
+              </a>{' '}
+              page from Team Overview.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Profile Completion Card */}
         <Card className={cn(
@@ -434,7 +460,7 @@ export default function MyProfile() {
           </CardContent>
         </Card>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <fieldset disabled={isReadOnly} className="space-y-6">
           {/* Photo Section */}
           <Card>
             <CardHeader>
@@ -1232,11 +1258,11 @@ export default function MyProfile() {
             </CardContent>
           </Card>
 
-        </form>
+        </fieldset>
 
         {/* Sticky Save Bar */}
         <AnimatePresence>
-          {hasUnsavedChanges && (
+          {hasUnsavedChanges && !isReadOnly && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
