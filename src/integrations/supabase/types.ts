@@ -313,6 +313,8 @@ export type Database = {
           created_at: string
           ein: string | null
           email: string | null
+          icon_dark_url: string | null
+          icon_light_url: string | null
           id: string
           legal_name: string | null
           logo_dark_url: string | null
@@ -330,6 +332,8 @@ export type Database = {
           created_at?: string
           ein?: string | null
           email?: string | null
+          icon_dark_url?: string | null
+          icon_light_url?: string | null
           id?: string
           legal_name?: string | null
           logo_dark_url?: string | null
@@ -347,6 +351,8 @@ export type Database = {
           created_at?: string
           ein?: string | null
           email?: string | null
+          icon_dark_url?: string | null
+          icon_light_url?: string | null
           id?: string
           legal_name?: string | null
           logo_dark_url?: string | null

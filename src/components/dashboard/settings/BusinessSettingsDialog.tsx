@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Building2, MapPin, Phone, Upload, X, Sun, Moon, AlertCircle } from 'lucide-react';
+import { Loader2, Building2, MapPin, Phone, Upload, X, Sun, Moon, AlertCircle, Sparkles } from 'lucide-react';
 import { useBusinessSettings, useUpdateBusinessSettings } from '@/hooks/useBusinessSettings';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,12 +26,16 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
 
   const lightLogoInputRef = useRef<HTMLInputElement>(null);
   const darkLogoInputRef = useRef<HTMLInputElement>(null);
+  const lightIconInputRef = useRef<HTMLInputElement>(null);
+  const darkIconInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     business_name: '',
     legal_name: '',
     logo_light_url: '',
     logo_dark_url: '',
+    icon_light_url: '',
+    icon_dark_url: '',
     mailing_address: '',
     city: '',
     state: '',
@@ -44,6 +48,8 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
 
   const [uploadingLight, setUploadingLight] = useState(false);
   const [uploadingDark, setUploadingDark] = useState(false);
+  const [uploadingLightIcon, setUploadingLightIcon] = useState(false);
+  const [uploadingDarkIcon, setUploadingDarkIcon] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -52,6 +58,8 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
         legal_name: settings.legal_name || '',
         logo_light_url: settings.logo_light_url || '',
         logo_dark_url: settings.logo_dark_url || '',
+        icon_light_url: settings.icon_light_url || '',
+        icon_dark_url: settings.icon_dark_url || '',
         mailing_address: settings.mailing_address || '',
         city: settings.city || '',
         state: settings.state || '',
@@ -113,6 +121,45 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
     }
   };
 
+  const uploadIcon = async (file: File, type: 'light' | 'dark') => {
+    const error = validateFile(file);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
+    const setUploading = type === 'light' ? setUploadingLightIcon : setUploadingDarkIcon;
+    setUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `icon-${type}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('business-logos')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('business-logos')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({
+        ...prev,
+        [type === 'light' ? 'icon_light_url' : 'icon_dark_url']: publicUrl,
+      }));
+
+      toast.success(`${type === 'light' ? 'Light' : 'Dark'} mode icon uploaded`);
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('Failed to upload icon');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'light' | 'dark') => {
     const file = e.target.files?.[0];
     if (file) {
@@ -122,10 +169,25 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
     e.target.value = '';
   };
 
+  const handleIconFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'light' | 'dark') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadIcon(file, type);
+    }
+    e.target.value = '';
+  };
+
   const removeLogo = (type: 'light' | 'dark') => {
     setFormData(prev => ({
       ...prev,
       [type === 'light' ? 'logo_light_url' : 'logo_dark_url']: '',
+    }));
+  };
+
+  const removeIcon = (type: 'light' | 'dark') => {
+    setFormData(prev => ({
+      ...prev,
+      [type === 'light' ? 'icon_light_url' : 'icon_dark_url']: '',
     }));
   };
 
@@ -206,6 +268,78 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
           accept=".svg,.png,image/svg+xml,image/png"
           className="hidden"
           onChange={(e) => handleFileChange(e, type)}
+        />
+      </div>
+    );
+  };
+
+  const IconUploadCard = ({ 
+    type, 
+    url, 
+    uploading, 
+    inputRef 
+  }: { 
+    type: 'light' | 'dark'; 
+    url: string; 
+    uploading: boolean;
+    inputRef: React.RefObject<HTMLInputElement>;
+  }) => {
+    const isLight = type === 'light';
+    const Icon = isLight ? Sun : Moon;
+    const bgClass = isLight ? 'bg-white border-border' : 'bg-zinc-900 border-zinc-700';
+    const textClass = isLight ? 'text-zinc-900' : 'text-white';
+
+    return (
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Icon className="w-4 h-4" />
+          {isLight ? 'Light Mode Icon' : 'Dark Mode Icon'}
+        </Label>
+        <div 
+          className={cn(
+            "relative border-2 border-dashed rounded-lg p-4 transition-colors min-h-[100px] flex items-center justify-center",
+            bgClass,
+            !url && "hover:border-primary/50 cursor-pointer"
+          )}
+          onClick={() => !url && !uploading && inputRef.current?.click()}
+        >
+          {uploading ? (
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className={cn("w-6 h-6 animate-spin", textClass)} />
+              <span className={cn("text-xs", textClass)}>Uploading...</span>
+            </div>
+          ) : url ? (
+            <div className="relative w-full flex items-center justify-center">
+              <img 
+                src={url} 
+                alt={`${type} mode icon`} 
+                className="max-h-[60px] max-w-full object-contain"
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeIcon(type);
+                }}
+                className="absolute -top-2 -right-2 p-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <div className={cn("flex flex-col items-center gap-1", textClass)}>
+              <Upload className="w-6 h-6 opacity-50" />
+              <span className="text-xs opacity-70">Click to upload</span>
+              <span className="text-xs opacity-50">SVG or PNG</span>
+            </div>
+          )}
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".svg,.png,image/svg+xml,image/png"
+          className="hidden"
+          onChange={(e) => handleIconFileChange(e, type)}
         />
       </div>
     );
@@ -304,6 +438,33 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
                   url={formData.logo_dark_url}
                   uploading={uploadingDark}
                   inputRef={darkLogoInputRef}
+                />
+              </div>
+            </div>
+
+            {/* Secondary Icons */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Sparkles className="w-4 h-4" />
+                Secondary Icons
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                Optional icons for use in program assets, invoices, email signatures, and other branded materials.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <IconUploadCard
+                  type="light"
+                  url={formData.icon_light_url}
+                  uploading={uploadingLightIcon}
+                  inputRef={lightIconInputRef}
+                />
+                <IconUploadCard
+                  type="dark"
+                  url={formData.icon_dark_url}
+                  uploading={uploadingDarkIcon}
+                  inputRef={darkIconInputRef}
                 />
               </div>
             </div>
