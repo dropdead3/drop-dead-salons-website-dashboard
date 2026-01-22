@@ -56,55 +56,26 @@ export function Header() {
     { href: "/gallery", label: "Gallery", priority: 5, type: "link" as const },
   ];
 
-  // Calculate which items should be hidden based on container width
+  // Calculate which items should be hidden based on window width
+  // Using fixed breakpoints for more reliable behavior
   const calculateHiddenItems = useCallback(() => {
-    const container = navContainerRef.current;
-    if (!container) return;
-
-    const parent = container.parentElement;
-    if (!parent) return;
-
-    // Get the available width for nav items
-    // Total header width minus logo, right side buttons, and gaps
-    const headerWidth = parent.offsetWidth;
-    const logoWidth = 224; // w-56 = 14rem = 224px approx
-    const rightSideWidth = 280; // Contact + Book + More button
-    const safetyMargin = 40;
+    const windowWidth = window.innerWidth;
     
-    const availableWidth = headerWidth - logoWidth - rightSideWidth - safetyMargin;
-    
-    // Measure actual nav items width
-    const navItems = container.querySelectorAll('[data-nav-item]');
-    let totalWidth = 0;
-    const itemWidths: { priority: number; width: number }[] = [];
-    const gap = 40; // gap-10 = 2.5rem = 40px
-
-    navItems.forEach((item, index) => {
-      const width = (item as HTMLElement).offsetWidth;
-      const priority = parseInt((item as HTMLElement).dataset.priority || '0');
-      itemWidths.push({ priority, width: width + (index > 0 ? gap : 0) });
-      totalWidth += width + (index > 0 ? gap : 0);
-    });
-
-    // If everything fits, show all
-    if (totalWidth <= availableWidth) {
-      setHiddenNavItems([]);
-      return;
+    // Define breakpoints where items start hiding (from right to left by priority)
+    // These are tuned to prevent any overlap
+    if (windowWidth >= 1400) {
+      setHiddenNavItems([]); // Show all
+    } else if (windowWidth >= 1280) {
+      setHiddenNavItems([5]); // Hide Gallery
+    } else if (windowWidth >= 1180) {
+      setHiddenNavItems([5, 4]); // Hide Gallery, Join The Team
+    } else if (windowWidth >= 1100) {
+      setHiddenNavItems([5, 4, 3]); // Hide Gallery, Join The Team, Hair Extensions
+    } else if (windowWidth >= 1024) {
+      setHiddenNavItems([5, 4, 3, 2]); // Hide all except Services
+    } else {
+      setHiddenNavItems([5, 4, 3, 2, 1]); // Below lg breakpoint, mobile takes over
     }
-
-    // Otherwise, hide items from highest priority number (least important) first
-    const sortedByPriority = [...itemWidths].sort((a, b) => b.priority - a.priority);
-    const hidden: number[] = [];
-    let currentTotal = totalWidth;
-    const overflowButtonWidth = 60; // Space for overflow dropdown
-
-    for (const item of sortedByPriority) {
-      if (currentTotal <= availableWidth - overflowButtonWidth) break;
-      hidden.push(item.priority);
-      currentTotal -= item.width;
-    }
-
-    setHiddenNavItems(hidden);
   }, []);
 
   // ResizeObserver for responsive nav
@@ -258,9 +229,9 @@ export function Header() {
             "container mx-auto px-6 lg:px-8 transition-colors duration-300",
             isOverDark ? "text-white [&_svg]:text-white" : "text-foreground"
           )}>
-            <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logo with scroll transition - fixed width container to prevent layout shift */}
-            <div className="w-40 lg:w-56 flex items-center">
+            <div className="flex items-center justify-between h-16 lg:h-20 gap-4">
+            {/* Logo with scroll transition - responsive width to give nav more room */}
+            <div className="w-32 lg:w-40 xl:w-56 shrink-0 flex items-center">
               <Link
                 to="/"
                 className="flex items-center hover:opacity-70 transition-opacity relative h-10"
@@ -275,7 +246,7 @@ export function Header() {
                     transition: "opacity 0.5s ease-out, transform 0.5s ease-out"
                   }}
                   className={cn(
-                    "h-10 w-auto",
+                    "h-8 lg:h-10 w-auto",
                     isOverDark && "invert"
                   )}
                 />
@@ -299,7 +270,7 @@ export function Header() {
             {/* Desktop Navigation - Center with Responsive Hiding */}
             <motion.nav 
               ref={navContainerRef}
-              className="hidden lg:flex items-center gap-6 xl:gap-10 flex-1 justify-center min-w-0"
+              className="hidden lg:flex items-center gap-4 xl:gap-8 shrink-0"
               animate={{ 
                 opacity: isStaffMenuOpen ? 0 : 1,
                 pointerEvents: isStaffMenuOpen ? "none" : "auto"
@@ -472,7 +443,7 @@ export function Header() {
                 pointerEvents: isStaffMenuOpen ? "none" : "auto"
               }}
               transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-              className="hidden md:flex items-center gap-6"
+              className="hidden lg:flex items-center gap-3 xl:gap-6 shrink-0"
             >
               <Link
                 to="/contact"
