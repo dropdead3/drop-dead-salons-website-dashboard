@@ -22,6 +22,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SalesStatsCard } from '@/components/dashboard/SalesStatsCard';
 
 interface DailyMetrics {
   posts_published: number;
@@ -175,6 +176,9 @@ export default function Stats() {
             </p>
           </Card>
         )}
+
+        {/* Sales Data Card */}
+        <SalesStatsCard userId={user?.id} />
 
         <Tabs defaultValue="visibility" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
