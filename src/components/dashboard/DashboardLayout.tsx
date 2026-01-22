@@ -83,6 +83,7 @@ import {
   Pause,
   FlaskConical,
   Link2,
+  DollarSign,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -128,6 +129,7 @@ const baseGetHelpNavItems: NavItem[] = [
 const statsNavItems: NavItem[] = [
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats' },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
+  { href: '/dashboard/admin/sales', label: 'Sales Dashboard', icon: DollarSign, permission: 'view_team_overview' },
 ];
 
 // Manager-accessible admin items
