@@ -855,6 +855,9 @@ export default function MyProfile() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Select the level found in your offer letter extended at hiring.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
