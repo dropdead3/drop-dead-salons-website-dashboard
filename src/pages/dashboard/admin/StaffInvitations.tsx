@@ -126,8 +126,8 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
             </p>
           </div>
 
-          {/* URL Section - smaller */}
-          <div className="pt-3 w-full text-center">
+          {/* URL Section - smaller and narrower */}
+          <div className="pt-3 text-center max-w-[180px]">
             <p className="text-[8px] text-muted-foreground">
               Or visit: <span className="text-foreground break-all">{staffLoginUrl.replace('https://', '')}</span>
             </p>
