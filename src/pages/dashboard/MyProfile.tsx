@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Star, X, ChevronDown, Check, Lock, Info } from 'lucide-react';
+import { Camera, Loader2, Save, User, Phone, Mail, Instagram, MapPin, AlertCircle, CheckCircle2, Circle, Globe, Clock, FileText, Calendar, Undo2, Cake, Sparkles, X, ChevronDown, Check, Lock, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
@@ -892,7 +892,7 @@ export default function MyProfile() {
                             isDisabled && "border-muted bg-muted/30 text-muted-foreground/50 cursor-not-allowed opacity-50"
                           )}
                         >
-                          {isExtensions && <Star className="w-3 h-3 fill-current" />}
+                          {isExtensions && <Sparkles className="w-3 h-3 fill-current" />}
                           {displayName}
                         </button>
                       );
@@ -910,7 +910,7 @@ export default function MyProfile() {
                 {/* Highlighted Services for Website Card - uses specialty options */}
                 <div className="space-y-2 pt-4 border-t">
                   <Label className="flex items-center gap-2">
-                    <Star className="w-4 h-4" />
+                    <Sparkles className="w-4 h-4" />
                     Highlighted Services
                     <span className="text-muted-foreground text-xs font-normal">(select 2-3 from your specialties)</span>
                   </Label>
@@ -918,7 +918,7 @@ export default function MyProfile() {
                     These will appear as badges on your stylist card on the website homepage. Choose from your specialties above.
                   </p>
                   <p className="text-xs text-muted-foreground/80 italic">
-                    Note: Extensions is the only badge displayed with a <Star className="w-3 h-3 inline fill-current text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services.
+                    Note: Extensions is the only badge displayed with a <Sparkles className="w-3 h-3 inline fill-current text-[hsl(35,30%,50%)]" /> and gold accent color to attract our highest-ticket services.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {formData.specialties.map(specialty => {
@@ -934,7 +934,7 @@ export default function MyProfile() {
                           )}
                           onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                         >
-                          {isSelected && <Star className="w-3 h-3 mr-1 fill-current" />}
+                          {isSelected && <Sparkles className="w-3 h-3 mr-1 fill-current" />}
                           {specialty.charAt(0).toUpperCase() + specialty.slice(1).toLowerCase()}
                         </Badge>
                       );

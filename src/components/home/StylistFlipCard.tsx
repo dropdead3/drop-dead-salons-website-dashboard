@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Star, Info, X, Instagram, MapPin } from "lucide-react";
+import { ArrowRight, Sparkles, Info, X, Instagram, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import {
@@ -87,7 +87,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                           : "bg-background/70 text-foreground border border-border/30"
                       )}
                     >
-                      {isExtensions && <Star className="w-3 h-3 fill-current" />}
+                      {isExtensions && <Sparkles className="w-3 h-3 fill-current" />}
                       {toTitleCase(item)}
                     </span>
                   );

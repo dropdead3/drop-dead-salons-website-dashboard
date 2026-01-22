@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, Instagram, MapPin, X, ArrowRight, Info } from "lucide-react";
+import { Sparkles, Instagram, MapPin, X, ArrowRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -121,7 +121,7 @@ export function StylistCardPreview({
                           : "bg-background/70 text-foreground border border-border/30"
                       )}
                     >
-                      {isExtensions && <Star className="w-3 h-3 fill-current" />}
+                      {isExtensions && <Sparkles className="w-3 h-3 fill-current" />}
                       {toTitleCase(item)}
                     </span>
                   );
