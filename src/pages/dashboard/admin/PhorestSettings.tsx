@@ -48,6 +48,7 @@ import {
   Wand2,
   MapPin,
   Building2,
+  DollarSign,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -278,7 +279,7 @@ export default function PhorestSettings() {
 
         {/* Quick Sync Actions */}
         {connection?.connected && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <Card className="p-4">
               <div className="flex items-center gap-3 mb-3">
                 <Users className="w-5 h-5 text-primary" />
@@ -308,6 +309,22 @@ export default function PhorestSettings() {
                 className="w-full"
               >
                 {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Appointments'}
+              </Button>
+            </Card>
+
+            <Card className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <DollarSign className="w-5 h-5 text-primary" />
+                <h3 className="font-display text-sm">Sales</h3>
+              </div>
+              <Button
+                onClick={() => triggerSync.mutate('sales')}
+                disabled={triggerSync.isPending}
+                size="sm"
+                variant="outline"
+                className="w-full"
+              >
+                {triggerSync.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sync Sales'}
               </Button>
             </Card>
 

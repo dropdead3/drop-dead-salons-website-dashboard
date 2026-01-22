@@ -1734,6 +1734,68 @@ export type Database = {
           },
         ]
       }
+      phorest_daily_sales_summary: {
+        Row: {
+          average_ticket: number | null
+          branch_name: string | null
+          created_at: string
+          id: string
+          location_id: string | null
+          product_revenue: number | null
+          service_revenue: number | null
+          summary_date: string
+          total_discounts: number | null
+          total_products: number | null
+          total_revenue: number | null
+          total_services: number | null
+          total_transactions: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          average_ticket?: number | null
+          branch_name?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          product_revenue?: number | null
+          service_revenue?: number | null
+          summary_date: string
+          total_discounts?: number | null
+          total_products?: number | null
+          total_revenue?: number | null
+          total_services?: number | null
+          total_transactions?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          average_ticket?: number | null
+          branch_name?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          product_revenue?: number | null
+          service_revenue?: number | null
+          summary_date?: string
+          total_discounts?: number | null
+          total_products?: number | null
+          total_revenue?: number | null
+          total_services?: number | null
+          total_transactions?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phorest_daily_sales_summary_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       phorest_performance_metrics: {
         Row: {
           average_ticket: number | null
@@ -1784,6 +1846,86 @@ export type Database = {
           {
             foreignKeyName: "phorest_performance_metrics_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      phorest_sales_transactions: {
+        Row: {
+          branch_name: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string
+          discount_amount: number | null
+          id: string
+          item_category: string | null
+          item_name: string
+          item_type: string
+          location_id: string | null
+          payment_method: string | null
+          phorest_staff_id: string | null
+          phorest_transaction_id: string
+          quantity: number | null
+          stylist_user_id: string | null
+          tax_amount: number | null
+          total_amount: number
+          transaction_date: string
+          transaction_time: string | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          branch_name?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          discount_amount?: number | null
+          id?: string
+          item_category?: string | null
+          item_name: string
+          item_type: string
+          location_id?: string | null
+          payment_method?: string | null
+          phorest_staff_id?: string | null
+          phorest_transaction_id: string
+          quantity?: number | null
+          stylist_user_id?: string | null
+          tax_amount?: number | null
+          total_amount: number
+          transaction_date: string
+          transaction_time?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          branch_name?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          discount_amount?: number | null
+          id?: string
+          item_category?: string | null
+          item_name?: string
+          item_type?: string
+          location_id?: string | null
+          payment_method?: string | null
+          phorest_staff_id?: string | null
+          phorest_transaction_id?: string
+          quantity?: number | null
+          stylist_user_id?: string | null
+          tax_amount?: number | null
+          total_amount?: number
+          transaction_date?: string
+          transaction_time?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phorest_sales_transactions_stylist_user_id_fkey"
+            columns: ["stylist_user_id"]
             isOneToOne: false
             referencedRelation: "employee_profiles"
             referencedColumns: ["user_id"]

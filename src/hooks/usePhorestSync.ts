@@ -177,7 +177,7 @@ export function useTriggerPhorestSync() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (syncType: 'staff' | 'appointments' | 'clients' | 'reports' | 'all') => {
+    mutationFn: async (syncType: 'staff' | 'appointments' | 'clients' | 'reports' | 'sales' | 'all') => {
       const { data, error } = await supabase.functions.invoke('sync-phorest-data', {
         body: { sync_type: syncType },
       });
