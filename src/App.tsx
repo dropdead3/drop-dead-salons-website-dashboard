@@ -75,10 +75,10 @@ const App = () => (
       <AuthProvider>
         <ViewAsProvider>
           <TooltipProvider>
-          <CustomCursor />
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <CustomCursor />
             <ScrollToTop />
             <Routes>
               {/* Public routes */}
