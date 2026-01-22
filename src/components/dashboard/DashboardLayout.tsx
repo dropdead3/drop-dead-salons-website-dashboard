@@ -599,9 +599,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <ChevronDown className="w-3.5 h-3.5 opacity-60" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80 p-0 bg-card border border-border shadow-lg max-h-[70vh] overflow-y-auto">
-            <div className="p-2">
-              <div className="flex items-center gap-3 px-2 py-3 mb-2">
+        <DropdownMenuContent align="end" className="w-80 p-0 bg-card border border-border shadow-lg max-h-[70vh] overflow-hidden flex flex-col">
+            {/* Sticky header */}
+            <div className="sticky top-0 z-10 bg-card p-2 border-b border-border">
+              <div className="flex items-center gap-3 px-2 py-3">
                 <div className="p-2 bg-muted">
                   <Eye className="w-5 h-5 text-foreground" />
                 </div>
@@ -610,7 +611,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <p className="text-xs text-muted-foreground">Preview how roles or team members see the app</p>
                 </div>
               </div>
-              <DropdownMenuSeparator className="my-2" />
+            </div>
+            
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto p-2">
               
               {/* Exit button when viewing */}
               {isViewingAs && (
