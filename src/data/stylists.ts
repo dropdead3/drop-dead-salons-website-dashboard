@@ -5,6 +5,7 @@ export type Location = "north-mesa" | "val-vista-lakes";
 export interface Stylist {
   id: string;
   name: string;
+  displayName?: string | null; // Nickname for card display
   instagram: string;
   tiktok?: string;
   level: string;

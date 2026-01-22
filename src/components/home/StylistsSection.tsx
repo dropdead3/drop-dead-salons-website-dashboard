@@ -422,7 +422,8 @@ export function StylistsSection() {
     if (!dbStylists) return [];
     return dbStylists.map(s => ({
       id: s.id,
-      name: s.display_name || s.full_name,
+      name: s.full_name, // Always use full_name as the base name
+      displayName: s.display_name || null, // Pass nickname separately
       instagram: s.instagram || "",
       tiktok: s.tiktok || undefined,
       level: s.stylist_level || "LEVEL 1 STYLIST",

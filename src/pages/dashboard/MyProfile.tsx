@@ -174,7 +174,6 @@ export default function MyProfile() {
     const fields = [
       { key: 'photo', label: 'Profile Photo', filled: !!profile?.photo_url },
       { key: 'full_name', label: 'Full Name', filled: !!formData.full_name },
-      { key: 'display_name', label: 'Display Name', filled: !!formData.display_name },
       { key: 'email', label: 'Email', filled: !!formData.email },
       { key: 'phone', label: 'Phone', filled: !!formData.phone },
       { key: 'instagram', label: 'Instagram', filled: !!formData.instagram },
@@ -208,7 +207,6 @@ export default function MyProfile() {
     const errors: string[] = [];
     
     if (!formData.full_name.trim()) errors.push('Full Name is required');
-    if (!formData.display_name.trim()) errors.push('Display Name is required');
     if (!formData.email.trim()) errors.push('Email is required');
     if (!formData.phone.trim()) errors.push('Phone is required');
     if (!formData.instagram.trim()) errors.push('Instagram is required');
@@ -555,14 +553,14 @@ export default function MyProfile() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="display_name">Display Name <span className="text-destructive">*</span></Label>
+                  <Label htmlFor="display_name" className="leading-tight">
+                    Nickname <span className="text-muted-foreground text-xs font-normal">(optional)</span>
+                  </Label>
                   <Input
                     id="display_name"
                     value={formData.display_name}
                     onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
-                    className={cn(!formData.display_name.trim() && "border-destructive/50")}
-                    placeholder="How you'd like to be called"
-                    required
+                    placeholder="If you don't go by your legal first name"
                   />
                 </div>
               </div>

@@ -17,6 +17,24 @@ const toTitleCase = (str: string) => {
   return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+// Format stylist name for card display: nickname or first name + last initial
+const formatCardName = (fullName: string, displayName?: string | null) => {
+  // If nickname/display name exists, use that
+  if (displayName && displayName.trim()) {
+    const nickname = displayName.trim().split(' ')[0]; // Get first word of nickname
+    // Get last initial from full name
+    const nameParts = fullName.trim().split(' ');
+    const lastInitial = nameParts.length > 1 ? ` ${nameParts[nameParts.length - 1].charAt(0).toUpperCase()}.` : '';
+    return nickname + lastInitial;
+  }
+  
+  // Otherwise use first name + last initial from full name
+  const nameParts = fullName.trim().split(' ');
+  const firstName = nameParts[0];
+  const lastInitial = nameParts.length > 1 ? ` ${nameParts[nameParts.length - 1].charAt(0).toUpperCase()}.` : '';
+  return firstName + lastInitial;
+};
+
 interface StylistFlipCardProps {
   stylist: Stylist;
   index: number;
@@ -121,7 +139,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <h3 className="text-xl font-display mb-1">{stylist.name}</h3>
+              <h3 className="text-xl font-display mb-1">{formatCardName(stylist.name, stylist.displayName)}</h3>
               
               {/* Social Links */}
               <div className="flex items-center gap-3 mb-4">
@@ -193,7 +211,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
         >
           <div className="relative w-full h-full bg-foreground overflow-hidden rounded-2xl shadow-md flex flex-col items-center justify-center p-6 text-center">
             {/* Name */}
-            <h3 className="text-2xl font-display text-background mb-1">{stylist.name}</h3>
+            <h3 className="text-2xl font-display text-background mb-1">{formatCardName(stylist.name, stylist.displayName)}</h3>
             <p className="text-xs tracking-[0.2em] text-background/60 mb-5">{stylist.level}</p>
 
             {/* Bio */}
