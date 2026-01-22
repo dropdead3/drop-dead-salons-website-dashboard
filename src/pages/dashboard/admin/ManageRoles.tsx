@@ -300,6 +300,7 @@ export default function ManageRoles() {
             {filteredUsers.map(user => {
               const accountInfo = getAccountInfo(user.user_id);
               const isSuperAdmin = accountInfo?.is_super_admin;
+              const isPrimaryOwner = accountInfo?.is_primary_owner;
               const isApproved = accountInfo?.is_approved;
               const hasAdminApproval = !!accountInfo?.admin_approved_by;
               
@@ -326,10 +327,12 @@ export default function ManageRoles() {
                               <TooltipTrigger>
                                 <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 gap-1 text-xs border border-amber-300">
                                   <Crown className="w-3 h-3" />
-                                  Super Admin
+                                  {isPrimaryOwner ? 'Primary Owner' : 'Super Admin'}
                                 </Badge>
                               </TooltipTrigger>
-                              <TooltipContent>Can approve admin roles</TooltipContent>
+                              <TooltipContent>
+                                {isPrimaryOwner ? 'Account owner - cannot be revoked' : 'Can approve admin roles'}
+                              </TooltipContent>
                             </Tooltip>
                           )}
                           {!isApproved && (
@@ -381,13 +384,21 @@ export default function ManageRoles() {
                                 htmlFor={`${user.user_id}-super-admin`}
                                 className={cn(
                                   "text-sm font-medium flex items-center gap-1",
-                                  isSuperAdmin && !canApproveAdmin ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"
+                                  (isSuperAdmin && !canApproveAdmin) || isPrimaryOwner ? "text-muted-foreground cursor-not-allowed" : "cursor-pointer"
                                 )}
                               >
                                 <Crown className="w-3 h-3 text-amber-600" />
                                 {role.display_name}
                               </label>
-                              {isSuperAdmin && !canApproveAdmin && (
+                              {isPrimaryOwner && (
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Lock className="w-3 h-3 text-amber-600" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>Primary Owner - cannot be revoked</TooltipContent>
+                                </Tooltip>
+                              )}
+                              {isSuperAdmin && !canApproveAdmin && !isPrimaryOwner && (
                                 <Tooltip>
                                   <TooltipTrigger>
                                     <Lock className="w-3 h-3 text-muted-foreground" />
@@ -399,7 +410,7 @@ export default function ManageRoles() {
                                 id={`${user.user_id}-super-admin`}
                                 checked={isSuperAdmin || false}
                                 onCheckedChange={() => handleToggleSuperAdmin(user.user_id, user.display_name || user.full_name, isSuperAdmin || false)}
-                                disabled={toggleSuperAdmin.isPending || !canApproveAdmin}
+                                disabled={toggleSuperAdmin.isPending || !canApproveAdmin || isPrimaryOwner}
                                 className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-amber-400 data-[state=checked]:to-orange-400"
                               />
                             </div>

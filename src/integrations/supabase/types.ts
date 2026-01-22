@@ -695,6 +695,7 @@ export type Database = {
           is_active: boolean | null
           is_approved: boolean | null
           is_booking: boolean | null
+          is_primary_owner: boolean | null
           is_super_admin: boolean | null
           location_id: string | null
           location_ids: string[] | null
@@ -734,6 +735,7 @@ export type Database = {
           is_active?: boolean | null
           is_approved?: boolean | null
           is_booking?: boolean | null
+          is_primary_owner?: boolean | null
           is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null
@@ -773,6 +775,7 @@ export type Database = {
           is_active?: boolean | null
           is_approved?: boolean | null
           is_booking?: boolean | null
+          is_primary_owner?: boolean | null
           is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null

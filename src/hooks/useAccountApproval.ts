@@ -12,6 +12,7 @@ export interface PendingAccount {
   created_at: string;
   is_approved: boolean;
   is_super_admin: boolean;
+  is_primary_owner: boolean;
   approved_by: string | null;
   approved_at: string | null;
   admin_approved_by: string | null;
@@ -24,7 +25,7 @@ export function useAccountApprovals() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employee_profiles')
-        .select('user_id, full_name, display_name, email, photo_url, created_at, is_approved, is_super_admin, approved_by, approved_at, admin_approved_by, admin_approved_at')
+        .select('user_id, full_name, display_name, email, photo_url, created_at, is_approved, is_super_admin, is_primary_owner, approved_by, approved_at, admin_approved_by, admin_approved_at')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -178,6 +179,20 @@ export function useToggleSuperAdmin() {
 
       if (checkError) throw checkError;
       if (!canApprove) throw new Error('You do not have permission to grant super admin status');
+
+      // Check if target is primary owner - cannot revoke from them
+      if (!grant) {
+        const { data: targetProfile, error: profileError } = await supabase
+          .from('employee_profiles')
+          .select('is_primary_owner')
+          .eq('user_id', userId)
+          .single();
+        
+        if (profileError) throw profileError;
+        if (targetProfile?.is_primary_owner) {
+          throw new Error('Cannot revoke Super Admin from the Primary Owner');
+        }
+      }
 
       const { error: updateError } = await supabase
         .from('employee_profiles')
