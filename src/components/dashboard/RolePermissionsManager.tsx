@@ -291,24 +291,6 @@ export function RolePermissionsManager() {
                                     <p className="font-medium text-sm">
                                       {permission.display_name}
                                     </p>
-                                    {isDeviation && (
-                                      <TooltipProvider delayDuration={100}>
-                                        <Tooltip>
-                                          <TooltipTrigger>
-                                            <Badge 
-                                              variant="outline" 
-                                              className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-1 cursor-help"
-                                            >
-                                              Custom Change
-                                              <Info className="w-2.5 h-2.5" />
-                                            </Badge>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top" align="center" className="max-w-xs">
-                                            This is a permission that has been toggled on that is a deviation from the default role permissions
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    )}
                                   </div>
                                   {permission.description && (
                                     <p className="text-xs text-muted-foreground truncate">
@@ -316,7 +298,25 @@ export function RolePermissionsManager() {
                                     </p>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-3">
+                                  {isDeviation && (
+                                    <TooltipProvider delayDuration={100}>
+                                      <Tooltip>
+                                        <TooltipTrigger>
+                                          <Badge 
+                                            variant="outline" 
+                                            className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-1 cursor-help"
+                                          >
+                                            Custom Change
+                                            <Info className="w-2.5 h-2.5" />
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" align="center" className="max-w-xs">
+                                          This is a permission that has been toggled on that is a deviation from the default role permissions
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
                                   {isLocked ? (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
