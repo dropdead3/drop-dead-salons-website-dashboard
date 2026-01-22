@@ -75,7 +75,8 @@ export default function AccountApprovals() {
   const AccountCard = ({ account }: { account: typeof allAccounts extends (infer T)[] | undefined ? T : never }) => {
     const roles = getUserRoles(account.user_id);
     const hasAdminRole = roles.includes('admin') || roles.includes('super_admin');
-    const needsAdminApproval = hasAdminRole && !account.admin_approved_by;
+    // Super Admins don't need admin approval - they inherently have it
+    const needsAdminApproval = hasAdminRole && !account.admin_approved_by && !account.is_super_admin;
 
     return (
       <Card className={cn(
