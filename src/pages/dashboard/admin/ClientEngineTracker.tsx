@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -24,6 +26,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { 
   Loader2, 
   Search, 
@@ -46,10 +55,15 @@ import {
   Calendar,
   TrendingUp,
   Shield,
+  User,
+  Check,
+  X,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAllPauseRequests } from '@/hooks/usePauseRequests';
 import { cn } from '@/lib/utils';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, formatDistanceToNow } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 import { CoachNotesSection } from '@/components/dashboard/CoachNotesSection';
 
@@ -109,15 +123,42 @@ const STATUS_CONFIG: Record<ProgramStatus, { label: string; color: string; icon:
 
 export default function ClientEngineTracker() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  
+  // Pause requests state
+  const { requests: pauseRequests, loading: pauseLoading, reviewRequest } = useAllPauseRequests();
+  const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [pauseDays, setPauseDays] = useState(7);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'day' | 'streak' | 'revenue' | 'name'>('day');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const handlePauseReview = async (decision: 'approved' | 'denied') => {
+    if (!selectedRequest || !user) return;
+    
+    setIsProcessing(true);
+    await reviewRequest(
+      selectedRequest,
+      decision,
+      user.id,
+      reviewNotes || undefined,
+      decision === 'approved' ? pauseDays : undefined
+    );
+    setIsProcessing(false);
+    setSelectedRequest(null);
+    setReviewNotes('');
+    setPauseDays(7);
+  };
+
+  const selectedRequestData = pauseRequests.find(r => r.id === selectedRequest);
 
   useEffect(() => {
     fetchAllData();
@@ -593,6 +634,167 @@ export default function ClientEngineTracker() {
             </Card>
           )}
         </div>
+
+        {/* Pause Requests Section */}
+        <div className="mt-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-yellow-500/20 text-yellow-600 flex items-center justify-center rounded-lg shrink-0">
+              <Pause className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-lg font-display">PAUSE REQUESTS</h2>
+              <p className="text-muted-foreground text-xs">
+                Review and manage emergency pause requests
+              </p>
+            </div>
+            {pauseRequests.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {pauseRequests.length} pending
+              </Badge>
+            )}
+          </div>
+
+          {pauseLoading ? (
+            <Card className="p-6 flex items-center justify-center">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </Card>
+          ) : pauseRequests.length === 0 ? (
+            <Card className="p-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                <Pause className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <h3 className="font-display text-base mb-1">No Pending Requests</h3>
+              <p className="text-sm text-muted-foreground">
+                There are no pause requests waiting for review.
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {pauseRequests.map((request) => (
+                <Card key={request.id} className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-sm">{request.user_name}</h3>
+                          <p className="text-xs text-muted-foreground">{request.user_email}</p>
+                        </div>
+                        <Badge variant="secondary" className="ml-2 text-[10px]">
+                          Day {request.current_day || '?'}
+                        </Badge>
+                      </div>
+
+                      <div className="bg-muted/50 rounded-md p-3">
+                        <p className="text-xs font-medium mb-0.5">Reason for pause:</p>
+                        <p className="text-xs text-muted-foreground">{request.reason}</p>
+                      </div>
+
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>Requested {formatDistanceToNow(new Date(request.requested_at), { addSuffix: true })}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>Requesting {request.requested_duration_days} days</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedRequest(request.id);
+                        setPauseDays(request.requested_duration_days);
+                      }}
+                    >
+                      Review
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Review Dialog */}
+        <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Review Pause Request</DialogTitle>
+            </DialogHeader>
+
+            {selectedRequestData && (
+              <div className="space-y-4">
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <p className="text-sm font-medium mb-1">From: {selectedRequestData.user_name}</p>
+                  <p className="text-sm text-muted-foreground">Day {selectedRequestData.current_day} of the program</p>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <p className="text-sm font-medium mb-1">Reason:</p>
+                  <p className="text-sm text-muted-foreground">{selectedRequestData.reason}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="pauseDays">Pause Duration (days)</Label>
+                  <Input
+                    id="pauseDays"
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={pauseDays}
+                    onChange={(e) => setPauseDays(parseInt(e.target.value) || 7)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    They requested {selectedRequestData.requested_duration_days} days
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes (optional)</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Add any notes about your decision..."
+                    value={reviewNotes}
+                    onChange={(e) => setReviewNotes(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    Approving will pause their program and preserve their progress.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handlePauseReview('denied')}
+                disabled={isProcessing}
+                className="text-destructive hover:text-destructive"
+              >
+                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4 mr-1" />}
+                Deny
+              </Button>
+              <Button
+                onClick={() => handlePauseReview('approved')}
+                disabled={isProcessing}
+              >
+                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+                Approve Pause
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
