@@ -87,7 +87,7 @@ import {
   Link2,
   DollarSign,
   PanelLeftClose,
-  PanelLeft,
+  ChevronRight,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -924,7 +924,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   onClick={toggleSidebarCollapsed}
                 >
                   {sidebarCollapsed ? (
-                    <PanelLeft className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4" />
                   ) : (
                     <PanelLeftClose className="w-4 h-4" />
                   )}
