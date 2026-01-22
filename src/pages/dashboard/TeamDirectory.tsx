@@ -420,20 +420,55 @@ interface LocationCardProps {
 }
 
 function LocationCard({ location, teamMembers }: LocationCardProps) {
+  const navigate = useNavigate();
   const hoursDisplay = formatHoursForDisplay(location.hours_json);
   const closedDays = getClosedDays(location.hours_json);
+
+  // Find the General Manager for this location
+  const generalManager = teamMembers.find(m => 
+    m.roles.includes('general_manager') || m.roles.includes('manager')
+  );
 
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Building2 className="w-5 h-5 text-primary" />
-            {location.name}
-          </CardTitle>
-          <Badge variant="secondary" className="text-xs">
-            {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
-          </Badge>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Building2 className="w-5 h-5 text-primary" />
+              {location.name}
+            </CardTitle>
+            <Badge variant="secondary" className="text-xs">
+              {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
+            </Badge>
+          </div>
+          
+          {/* General Manager Avatar */}
+          {generalManager && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => navigate(`/dashboard/profile/${generalManager.user_id}`)}
+                    className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full transition-transform hover:scale-110"
+                  >
+                    <Avatar className="w-9 h-9 border-2 border-background">
+                      <AvatarImage src={generalManager.photo_url || undefined} />
+                      <AvatarFallback className="text-xs bg-muted">
+                        {(generalManager.display_name || generalManager.full_name).charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  <p className="font-medium">{generalManager.display_name || generalManager.full_name}</p>
+                  <p className="text-muted-foreground">
+                    {generalManager.roles.includes('general_manager') ? 'General Manager' : 'Manager'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
