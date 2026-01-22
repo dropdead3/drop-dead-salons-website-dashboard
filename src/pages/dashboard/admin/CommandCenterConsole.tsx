@@ -48,9 +48,10 @@ import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
-const ROLES: AppRole[] = ['admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
+const ROLES: AppRole[] = ['super_admin', 'admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant'];
 
 const ROLE_CONFIG: Record<AppRole, { label: string; shortLabel: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
+  super_admin: { label: 'Super Admin', shortLabel: 'SA', icon: Crown, color: 'text-yellow-600' },
   admin: { label: 'Admin', shortLabel: 'Admin', icon: Crown, color: 'text-amber-600' },
   manager: { label: 'Manager', shortLabel: 'Mgr', icon: Shield, color: 'text-purple-600' },
   stylist: { label: 'Stylist', shortLabel: 'Styl', icon: Scissors, color: 'text-blue-600' },

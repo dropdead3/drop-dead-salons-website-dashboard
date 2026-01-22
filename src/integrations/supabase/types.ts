@@ -2915,6 +2915,7 @@ export type Database = {
         | "stylist_assistant"
         | "admin_assistant"
         | "operations_assistant"
+        | "super_admin"
       lead_source:
         | "content"
         | "ads"
@@ -3062,6 +3063,7 @@ export const Constants = {
         "stylist_assistant",
         "admin_assistant",
         "operations_assistant",
+        "super_admin",
       ],
       lead_source: [
         "content",
