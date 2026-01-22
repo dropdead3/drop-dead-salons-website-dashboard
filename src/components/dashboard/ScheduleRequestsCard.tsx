@@ -60,7 +60,7 @@ export function ScheduleRequestsCard() {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Schedule Requests
+            Schedule Change Requests
           </CardTitle>
           <CardDescription>No pending schedule change requests</CardDescription>
         </CardHeader>
@@ -80,7 +80,7 @@ export function ScheduleRequestsCard() {
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
-                Schedule Requests
+                Schedule Change Requests
               </CardTitle>
               <CardDescription>
                 {requests.length} pending request{requests.length !== 1 ? 's' : ''}
