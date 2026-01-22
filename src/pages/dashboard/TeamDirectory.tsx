@@ -1007,7 +1007,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                       {(isHighlighted || isExtensions) && (
                         <Sparkles className="w-2.5 h-2.5" />
                       )}
-                      {specialty}
+                      {specialty.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
                     </Badge>
                   );
                 })}
