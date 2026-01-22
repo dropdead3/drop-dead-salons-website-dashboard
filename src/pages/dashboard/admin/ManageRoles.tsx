@@ -325,7 +325,12 @@ export default function ManageRoles() {
                           {isSuperAdmin && (
                             <Tooltip>
                               <TooltipTrigger>
-                                <Badge className="bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 gap-1 text-xs border border-amber-300">
+                                <Badge className={cn(
+                                  "gap-1 text-xs border",
+                                  isPrimaryOwner 
+                                    ? "bg-stone-700/90 text-amber-100 border-amber-400/30 backdrop-blur-sm" 
+                                    : "bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300"
+                                )}>
                                   <Crown className="w-3 h-3" />
                                   {isPrimaryOwner ? 'Account Owner' : 'Super Admin'}
                                 </Badge>
