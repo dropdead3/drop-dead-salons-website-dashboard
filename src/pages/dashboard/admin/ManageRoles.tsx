@@ -144,24 +144,26 @@ export default function ManageRoles() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-display font-medium mb-2 flex items-center gap-2">
-            <Shield className="w-6 h-6" />
-            Manage Users & Roles
-          </h1>
-          <p className="text-muted-foreground">
-            Assign and manage user roles across your team.
-          </p>
-        </div>
-
-        {/* Role Statistics Overview - dynamic from database */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-display font-medium mb-2 flex items-center gap-2">
+              <Shield className="w-6 h-6" />
+              Manage Users & Roles
+            </h1>
+            <p className="text-muted-foreground">
+              Assign and manage user roles across your team.
+            </p>
+          </div>
           <Card className="bg-muted/30 min-w-[100px]">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-display font-medium">{roleStats.total}</p>
               <p className="text-xs text-muted-foreground">Total Users</p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Role Statistics Overview - dynamic from database */}
+        <div className="flex flex-wrap gap-3 mb-6">
           {roles.map(role => {
             const isSuperAdminRole = role.name === 'super_admin';
             return (
