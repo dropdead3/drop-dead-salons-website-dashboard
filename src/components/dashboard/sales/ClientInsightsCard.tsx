@@ -1,43 +1,30 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, Star, AlertTriangle, TrendingUp, ChevronRight, Loader2 } from 'lucide-react';
+import { Users, Star, AlertTriangle, ChevronRight, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subDays, subMonths } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 
 interface ClientInsightsCardProps {
   userId: string;
 }
 
-interface ClientData {
-  name: string;
-  totalSpend: number;
-  visitCount: number;
-  lastVisit: string;
-  isVip: boolean;
-  isAtRisk: boolean;
-}
-
 export function ClientInsightsCard({ userId }: ClientInsightsCardProps) {
   const today = new Date();
   const sixtyDaysAgo = format(subDays(today, 60), 'yyyy-MM-dd');
-  const ninetyDaysAgo = format(subDays(today, 90), 'yyyy-MM-dd');
 
-  // Fetch client transactions for this stylist
-  const { data: transactions, isLoading } = useQuery({
-    queryKey: ['stylist-clients', userId],
+  // Fetch clients from the dedicated phorest_clients table
+  const { data: clients, isLoading } = useQuery({
+    queryKey: ['stylist-clients-insights', userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_sales_transactions')
-        .select('client_name, total_amount, transaction_date')
-        .eq('stylist_user_id', userId)
-        .not('client_name', 'is', null)
-        .order('transaction_date', { ascending: false });
+        .from('phorest_clients')
+        .select('*')
+        .eq('preferred_stylist_id', userId)
+        .order('total_spend', { ascending: false });
 
       if (error) throw error;
       return data;
@@ -47,52 +34,35 @@ export function ClientInsightsCard({ userId }: ClientInsightsCardProps) {
 
   // Process client data
   const clientData = useMemo(() => {
-    if (!transactions) return { topClients: [], atRiskClients: [], totalClients: 0, vipCount: 0 };
+    if (!clients || clients.length === 0) {
+      return { topClients: [], atRiskClients: [], totalClients: 0, vipCount: 0 };
+    }
 
-    const clientMap: Record<string, ClientData> = {};
-
-    transactions.forEach(tx => {
-      const name = tx.client_name || 'Unknown';
-      if (!clientMap[name]) {
-        clientMap[name] = {
-          name,
-          totalSpend: 0,
-          visitCount: 0,
-          lastVisit: tx.transaction_date,
-          isVip: false,
-          isAtRisk: false,
-        };
-      }
-      clientMap[name].totalSpend += Number(tx.total_amount) || 0;
-      clientMap[name].visitCount += 1;
-      // Update last visit if this transaction is more recent
-      if (tx.transaction_date > clientMap[name].lastVisit) {
-        clientMap[name].lastVisit = tx.transaction_date;
-      }
-    });
-
-    // Determine VIP and at-risk status
-    const allClients = Object.values(clientMap);
-    const avgSpend = allClients.reduce((s, c) => s + c.totalSpend, 0) / allClients.length || 0;
+    const today = new Date();
     
-    allClients.forEach(client => {
-      // VIP: Top 20% by spend or 3+ visits
-      client.isVip = client.totalSpend > avgSpend * 1.5 || client.visitCount >= 3;
-      // At-risk: Has visited before but not in 60+ days
-      client.isAtRisk = client.visitCount >= 2 && client.lastVisit < sixtyDaysAgo;
-    });
-
-    // Sort by spend
-    const sorted = allClients.sort((a, b) => b.totalSpend - a.totalSpend);
-    const topClients = sorted.slice(0, 5);
-    const atRiskClients = allClients
-      .filter(c => c.isAtRisk)
-      .sort((a, b) => b.totalSpend - a.totalSpend)
+    // Identify at-risk clients (no visit in 60+ days with 2+ visits)
+    const atRiskClients = clients
+      .filter(c => {
+        if (!c.last_visit || c.visit_count < 2) return false;
+        const lastVisit = new Date(c.last_visit);
+        const daysSince = Math.floor((today.getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24));
+        return daysSince >= 60;
+      })
       .slice(0, 3);
-    const vipCount = allClients.filter(c => c.isVip).length;
 
-    return { topClients, atRiskClients, totalClients: allClients.length, vipCount };
-  }, [transactions, sixtyDaysAgo]);
+    // Top clients by spend
+    const topClients = clients.slice(0, 5);
+    
+    // VIP count from Phorest's own VIP flag
+    const vipCount = clients.filter(c => c.is_vip).length;
+
+    return { 
+      topClients, 
+      atRiskClients, 
+      totalClients: clients.length, 
+      vipCount 
+    };
+  }, [clients]);
 
   if (isLoading) {
     return (
@@ -142,20 +112,20 @@ export function ClientInsightsCard({ userId }: ClientInsightsCardProps) {
             <p className="text-xs font-display tracking-wide text-muted-foreground mb-2">TOP CLIENTS</p>
             <div className="space-y-2">
               {clientData.topClients.map((client, idx) => (
-                <div key={client.name} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <div key={client.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-display">
                     {idx + 1}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium truncate">{client.name}</p>
-                      {client.isVip && (
+                      {client.is_vip && (
                         <Star className="w-3 h-3 text-amber-500 flex-shrink-0" />
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">{client.visitCount} visits</p>
+                    <p className="text-xs text-muted-foreground">{client.visit_count} visits</p>
                   </div>
-                  <p className="font-display text-sm">${client.totalSpend.toLocaleString()}</p>
+                  <p className="font-display text-sm">${Number(client.total_spend || 0).toLocaleString()}</p>
                 </div>
               ))}
             </div>
@@ -173,10 +143,10 @@ export function ClientInsightsCard({ userId }: ClientInsightsCardProps) {
             </div>
             <div className="space-y-1">
               {clientData.atRiskClients.map(client => (
-                <div key={client.name} className="flex items-center justify-between text-xs">
+                <div key={client.id} className="flex items-center justify-between text-xs">
                   <span className="text-red-700 dark:text-red-400">{client.name}</span>
                   <span className="text-red-600 dark:text-red-500">
-                    Last visit: {format(new Date(client.lastVisit), 'MMM d')}
+                    Last visit: {client.last_visit ? format(new Date(client.last_visit), 'MMM d') : 'Unknown'}
                   </span>
                 </div>
               ))}

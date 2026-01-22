@@ -5,63 +5,47 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Users, 
   Search, 
   Star, 
   AlertTriangle, 
-  TrendingUp,
   Calendar,
   DollarSign,
   ArrowUpDown,
   Loader2,
   UserCheck,
-  Clock
+  Clock,
+  Mail,
+  Phone
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subDays, differenceInDays } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 
-interface ClientData {
-  name: string;
-  totalSpend: number;
-  visitCount: number;
-  lastVisit: string;
-  firstVisit: string;
-  averageSpend: number;
-  isVip: boolean;
-  isAtRisk: boolean;
-  daysSinceVisit: number;
-  topServices: string[];
-}
-
-type SortField = 'totalSpend' | 'visitCount' | 'lastVisit' | 'name';
+type SortField = 'total_spend' | 'visit_count' | 'last_visit' | 'name';
 type SortDirection = 'asc' | 'desc';
 
 export default function MyClients() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState<SortField>('totalSpend');
+  const [sortField, setSortField] = useState<SortField>('total_spend');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [activeTab, setActiveTab] = useState('all');
 
-  const today = new Date();
-  const sixtyDaysAgo = format(subDays(today, 60), 'yyyy-MM-dd');
-
-  // Fetch all transactions for this stylist
-  const { data: transactions, isLoading } = useQuery({
+  // Fetch clients from the dedicated phorest_clients table
+  const { data: clients, isLoading } = useQuery({
     queryKey: ['my-clients-full', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('phorest_sales_transactions')
-        .select('client_name, total_amount, transaction_date, item_name, item_type')
-        .eq('stylist_user_id', user?.id)
-        .not('client_name', 'is', null)
-        .order('transaction_date', { ascending: false });
+        .from('phorest_clients')
+        .select('*')
+        .eq('preferred_stylist_id', user?.id)
+        .order('total_spend', { ascending: false });
 
       if (error) throw error;
       return data;
@@ -69,79 +53,52 @@ export default function MyClients() {
     enabled: !!user?.id,
   });
 
-  // Process client data
-  const clients = useMemo(() => {
-    if (!transactions) return [];
-
-    const clientMap: Record<string, ClientData> = {};
-
-    transactions.forEach(tx => {
-      const name = tx.client_name || 'Unknown';
-      if (!clientMap[name]) {
-        clientMap[name] = {
-          name,
-          totalSpend: 0,
-          visitCount: 0,
-          lastVisit: tx.transaction_date,
-          firstVisit: tx.transaction_date,
-          averageSpend: 0,
-          isVip: false,
-          isAtRisk: false,
-          daysSinceVisit: 0,
-          topServices: [],
-        };
-      }
-      
-      clientMap[name].totalSpend += Number(tx.total_amount) || 0;
-      clientMap[name].visitCount += 1;
-      
-      if (tx.transaction_date > clientMap[name].lastVisit) {
-        clientMap[name].lastVisit = tx.transaction_date;
-      }
-      if (tx.transaction_date < clientMap[name].firstVisit) {
-        clientMap[name].firstVisit = tx.transaction_date;
-      }
-      
-      // Track services
-      if (tx.item_type === 'service' && tx.item_name) {
-        if (!clientMap[name].topServices.includes(tx.item_name)) {
-          clientMap[name].topServices.push(tx.item_name);
-        }
-      }
-    });
-
-    // Calculate stats and status
-    const allClients = Object.values(clientMap);
-    const avgSpend = allClients.reduce((s, c) => s + c.totalSpend, 0) / allClients.length || 0;
+  // Process clients with derived fields
+  const processedClients = useMemo(() => {
+    if (!clients) return [];
     
-    allClients.forEach(client => {
-      client.averageSpend = client.visitCount > 0 ? client.totalSpend / client.visitCount : 0;
-      client.daysSinceVisit = differenceInDays(today, new Date(client.lastVisit));
-      client.isVip = client.totalSpend > avgSpend * 1.5 || client.visitCount >= 4;
-      client.isAtRisk = client.visitCount >= 2 && client.lastVisit < sixtyDaysAgo;
-      client.topServices = client.topServices.slice(0, 3);
+    const today = new Date();
+    
+    return clients.map(client => {
+      const daysSinceVisit = client.last_visit 
+        ? differenceInDays(today, new Date(client.last_visit))
+        : null;
+      
+      // At-risk: 2+ visits but no visit in 60+ days
+      const isAtRisk = (client.visit_count >= 2) && daysSinceVisit !== null && daysSinceVisit >= 60;
+      
+      // New client: only 1 visit
+      const isNew = client.visit_count === 1;
+      
+      return {
+        ...client,
+        daysSinceVisit,
+        isAtRisk,
+        isNew,
+      };
     });
-
-    return allClients;
-  }, [transactions, sixtyDaysAgo, today]);
+  }, [clients]);
 
   // Filter and sort clients
   const filteredClients = useMemo(() => {
-    let filtered = clients;
+    let filtered = processedClients;
 
     // Tab filter
     if (activeTab === 'vip') {
-      filtered = filtered.filter(c => c.isVip);
+      filtered = filtered.filter(c => c.is_vip);
     } else if (activeTab === 'at-risk') {
       filtered = filtered.filter(c => c.isAtRisk);
     } else if (activeTab === 'new') {
-      filtered = filtered.filter(c => c.visitCount === 1);
+      filtered = filtered.filter(c => c.isNew);
     }
 
     // Search filter
     if (searchQuery) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(c => 
-        c.name.toLowerCase().includes(searchQuery.toLowerCase())
+        c.name.toLowerCase().includes(query) ||
+        c.email?.toLowerCase().includes(query) ||
+        c.phone?.includes(query)
       );
     }
 
@@ -149,14 +106,16 @@ export default function MyClients() {
     filtered.sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
-        case 'totalSpend':
-          comparison = a.totalSpend - b.totalSpend;
+        case 'total_spend':
+          comparison = Number(a.total_spend || 0) - Number(b.total_spend || 0);
           break;
-        case 'visitCount':
-          comparison = a.visitCount - b.visitCount;
+        case 'visit_count':
+          comparison = (a.visit_count || 0) - (b.visit_count || 0);
           break;
-        case 'lastVisit':
-          comparison = new Date(a.lastVisit).getTime() - new Date(b.lastVisit).getTime();
+        case 'last_visit':
+          const aTime = a.last_visit ? new Date(a.last_visit).getTime() : 0;
+          const bTime = b.last_visit ? new Date(b.last_visit).getTime() : 0;
+          comparison = aTime - bTime;
           break;
         case 'name':
           comparison = a.name.localeCompare(b.name);
@@ -166,7 +125,7 @@ export default function MyClients() {
     });
 
     return filtered;
-  }, [clients, activeTab, searchQuery, sortField, sortDirection]);
+  }, [processedClients, activeTab, searchQuery, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -179,12 +138,12 @@ export default function MyClients() {
 
   // Stats
   const stats = useMemo(() => ({
-    total: clients.length,
-    vip: clients.filter(c => c.isVip).length,
-    atRisk: clients.filter(c => c.isAtRisk).length,
-    newClients: clients.filter(c => c.visitCount === 1).length,
-    totalRevenue: clients.reduce((s, c) => s + c.totalSpend, 0),
-  }), [clients]);
+    total: processedClients.length,
+    vip: processedClients.filter(c => c.is_vip).length,
+    atRisk: processedClients.filter(c => c.isAtRisk).length,
+    newClients: processedClients.filter(c => c.isNew).length,
+    totalRevenue: processedClients.reduce((s, c) => s + Number(c.total_spend || 0), 0),
+  }), [processedClients]);
 
   return (
     <DashboardLayout>
@@ -197,7 +156,7 @@ export default function MyClients() {
               Track your client relationships and identify opportunities.
             </p>
           </div>
-          <PhorestSyncButton syncType="sales" />
+          <PhorestSyncButton syncType="clients" />
         </div>
 
         {/* Stats Cards */}
@@ -234,7 +193,7 @@ export default function MyClients() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search clients..."
+              placeholder="Search by name, email, or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -265,8 +224,8 @@ export default function MyClients() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleSort('totalSpend')}
-                  className={cn("text-xs", sortField === 'totalSpend' && "bg-muted")}
+                  onClick={() => handleSort('total_spend')}
+                  className={cn("text-xs", sortField === 'total_spend' && "bg-muted")}
                 >
                   <DollarSign className="w-3 h-3 mr-1" />
                   Spend
@@ -275,8 +234,8 @@ export default function MyClients() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleSort('visitCount')}
-                  className={cn("text-xs", sortField === 'visitCount' && "bg-muted")}
+                  onClick={() => handleSort('visit_count')}
+                  className={cn("text-xs", sortField === 'visit_count' && "bg-muted")}
                 >
                   <Calendar className="w-3 h-3 mr-1" />
                   Visits
@@ -285,8 +244,8 @@ export default function MyClients() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleSort('lastVisit')}
-                  className={cn("text-xs", sortField === 'lastVisit' && "bg-muted")}
+                  onClick={() => handleSort('last_visit')}
+                  className={cn("text-xs", sortField === 'last_visit' && "bg-muted")}
                 >
                   <Clock className="w-3 h-3 mr-1" />
                   Recent
@@ -304,13 +263,13 @@ export default function MyClients() {
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  {searchQuery ? 'No clients match your search.' : 'No client data available yet.'}
+                  {searchQuery ? 'No clients match your search.' : 'No client data available yet. Sync with Phorest to populate.'}
                 </p>
               </div>
             ) : (
               <div className="divide-y">
-                {filteredClients.map((client, idx) => (
-                  <div key={client.name} className="py-4 flex items-center gap-4">
+                {filteredClients.map((client) => (
+                  <div key={client.id} className="py-4 flex items-center gap-4">
                     <Avatar className="w-12 h-12">
                       <AvatarFallback className="font-display text-sm bg-primary/10">
                         {client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -320,7 +279,7 @@ export default function MyClients() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <p className="font-medium truncate">{client.name}</p>
-                        {client.isVip && (
+                        {client.is_vip && (
                           <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 text-xs">
                             <Star className="w-3 h-3 mr-1" /> VIP
                           </Badge>
@@ -330,19 +289,21 @@ export default function MyClients() {
                             <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
                           </Badge>
                         )}
-                        {client.visitCount === 1 && (
+                        {client.isNew && (
                           <Badge variant="outline" className="text-xs text-green-600 border-green-300">
                             New
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>{client.visitCount} visits</span>
-                        <span>•</span>
-                        <span>Avg ${client.averageSpend.toLocaleString()}</span>
-                        <span>•</span>
-                        <span>Last: {format(new Date(client.lastVisit), 'MMM d, yyyy')}</span>
-                        {client.daysSinceVisit > 30 && (
+                        <span>{client.visit_count} visits</span>
+                        {client.last_visit && (
+                          <>
+                            <span>•</span>
+                            <span>Last: {format(new Date(client.last_visit), 'MMM d, yyyy')}</span>
+                          </>
+                        )}
+                        {client.daysSinceVisit !== null && client.daysSinceVisit > 30 && (
                           <>
                             <span>•</span>
                             <span className={cn(
@@ -353,9 +314,22 @@ export default function MyClients() {
                           </>
                         )}
                       </div>
-                      {client.topServices.length > 0 && (
+                      {/* Contact info & preferred services */}
+                      <div className="flex items-center gap-3 mt-1.5">
+                        {client.email && (
+                          <a href={`mailto:${client.email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                            <Mail className="w-3 h-3" /> {client.email}
+                          </a>
+                        )}
+                        {client.phone && (
+                          <a href={`tel:${client.phone}`} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
+                            <Phone className="w-3 h-3" /> {client.phone}
+                          </a>
+                        )}
+                      </div>
+                      {client.preferred_services && client.preferred_services.length > 0 && (
                         <div className="flex gap-1 mt-2">
-                          {client.topServices.map(service => (
+                          {client.preferred_services.slice(0, 3).map(service => (
                             <Badge key={service} variant="secondary" className="text-xs">
                               {service}
                             </Badge>
@@ -365,7 +339,7 @@ export default function MyClients() {
                     </div>
                     
                     <div className="text-right">
-                      <p className="font-display text-lg">${client.totalSpend.toLocaleString()}</p>
+                      <p className="font-display text-lg">${Number(client.total_spend || 0).toLocaleString()}</p>
                       <p className="text-xs text-muted-foreground">lifetime</p>
                     </div>
                   </div>
