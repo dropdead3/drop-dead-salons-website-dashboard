@@ -122,7 +122,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
             
             <div className="absolute bottom-0 left-0 right-0 p-5 text-white transform translate-y-6 transition-transform duration-500 ease-out group-hover:translate-y-0">
               <div className="flex items-center gap-1.5 mb-1">
-                <p className="text-xs tracking-[0.2em] text-white/70">{stylist.level}</p>
+                <p className="text-xs tracking-[0.2em] text-white/70 uppercase">{stylist.level}</p>
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -219,7 +219,7 @@ export function StylistFlipCard({ stylist, index, selectedLocation }: StylistFli
           <div className="relative w-full h-full bg-foreground overflow-hidden rounded-2xl shadow-md flex flex-col items-center justify-center p-6 text-center">
             {/* Name */}
             <h3 className="text-2xl font-display text-background mb-1">{formatCardName(stylist.name, stylist.displayName)}</h3>
-            <p className="text-xs tracking-[0.2em] text-background/60 mb-5">{stylist.level}</p>
+            <p className="text-xs tracking-[0.2em] text-background/60 mb-5 uppercase">{stylist.level}</p>
 
             {/* Bio */}
             <p className="text-sm text-background/80 leading-relaxed max-w-[90%] mb-6">
