@@ -61,7 +61,9 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
         const staffResponse = await phorestRequest(`/branch/${branchId}/staff`, businessId, username, password);
         console.log(`Staff response for ${branchId}:`, JSON.stringify(staffResponse).substring(0, 300));
         
-        const staffList = staffResponse._embedded?.staff || staffResponse.staff || 
+        // API returns "staffs" (plural) in _embedded
+        const staffList = staffResponse._embedded?.staffs || staffResponse._embedded?.staff || 
+                         staffResponse.staffs || staffResponse.staff || 
                          staffResponse.page?.content || (Array.isArray(staffResponse) ? staffResponse : []);
         
         if (staffList.length > 0) {
