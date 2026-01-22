@@ -602,44 +602,49 @@ export default function MyProfile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="instagram">Instagram <span className="text-destructive">*</span></Label>
-                  <div className="relative">
-                    <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <div className={cn(
+                    "flex items-center rounded-md border bg-background",
+                    !formData.instagram.trim() ? "border-destructive/50" : "border-input"
+                  )}>
+                    <div className="flex items-center gap-1.5 pl-3 pr-2 text-muted-foreground border-r border-input bg-muted/30">
+                      <Instagram className="w-4 h-4" />
+                      <span className="text-sm font-medium">@</span>
+                    </div>
                     <Input
                       id="instagram"
-                      value={formData.instagram}
-                      onChange={(e) => setFormData(prev => ({ ...prev, instagram: formatSocialHandle(e.target.value) }))}
-                      onBlur={(e) => {
-                        if (e.target.value && !e.target.value.startsWith('@')) {
-                          setFormData(prev => ({ ...prev, instagram: formatSocialHandle(prev.instagram) }));
-                        }
+                      value={formData.instagram.replace(/^@/, '')}
+                      onChange={(e) => {
+                        const clean = e.target.value.replace(/[^a-zA-Z0-9._]/g, '');
+                        setFormData(prev => ({ ...prev, instagram: clean ? `@${clean}` : '' }));
                       }}
-                      className={cn("pl-10", !formData.instagram.trim() && "border-destructive/50")}
-                      placeholder="@yourhandle"
+                      className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      placeholder="yourhandle"
                       required
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tiktok">TikTok <span className="text-muted-foreground text-xs font-normal">(optional)</span></Label>
-                  <div className="relative">
-                    <svg 
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
-                      viewBox="0 0 24 24" 
-                      fill="currentColor"
-                    >
-                      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                    </svg>
+                  <div className="flex items-center rounded-md border border-input bg-background">
+                    <div className="flex items-center gap-1.5 pl-3 pr-2 text-muted-foreground border-r border-input bg-muted/30">
+                      <svg 
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24" 
+                        fill="currentColor"
+                      >
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                      </svg>
+                      <span className="text-sm font-medium">@</span>
+                    </div>
                     <Input
                       id="tiktok"
-                      value={formData.tiktok}
-                      onChange={(e) => setFormData(prev => ({ ...prev, tiktok: formatSocialHandle(e.target.value) }))}
-                      onBlur={(e) => {
-                        if (e.target.value && !e.target.value.startsWith('@')) {
-                          setFormData(prev => ({ ...prev, tiktok: formatSocialHandle(prev.tiktok) }));
-                        }
+                      value={formData.tiktok.replace(/^@/, '')}
+                      onChange={(e) => {
+                        const clean = e.target.value.replace(/[^a-zA-Z0-9._]/g, '');
+                        setFormData(prev => ({ ...prev, tiktok: clean ? `@${clean}` : '' }));
                       }}
-                      className="pl-10"
-                      placeholder="@yourhandle"
+                      className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      placeholder="yourhandle"
                     />
                   </div>
                 </div>
