@@ -298,7 +298,7 @@ export function RolePermissionsManager() {
                                             className="text-[9px] px-1.5 py-0 border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400 gap-0.5 cursor-help"
                                           >
                                             <AlertTriangle className="w-2.5 h-2.5" />
-                                            {has ? 'Custom Added' : 'Custom Removed'}
+                                            Custom Change
                                           </Badge>
                                         </TooltipTrigger>
                                         <TooltipContent className="max-w-xs">
