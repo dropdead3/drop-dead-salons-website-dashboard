@@ -1067,8 +1067,8 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
               )}
             </div>
             
-            {/* Specialty Badges */}
-            {member.specialties && member.specialties.length > 0 && (
+            {/* Specialty Badges - Only for stylists and stylist assistants */}
+            {isStylistOrAssistant && member.specialties && member.specialties.length > 0 && (
               <div className="flex flex-wrap justify-center gap-1 mt-2.5 pt-2.5 border-t border-border/50">
                 {member.specialties.slice(0, 4).map((specialty) => {
                   const isHighlighted = member.highlighted_services?.includes(specialty);
