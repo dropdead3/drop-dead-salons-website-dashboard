@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -687,6 +688,33 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   };
 
+  // Hide Numbers Toggle Component
+  const HideNumbersToggle = () => {
+    const { hideNumbers, toggleHideNumbers } = useHideNumbers();
+    
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={toggleHideNumbers}
+          >
+            {hideNumbers ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {hideNumbers ? 'Show numbers' : 'Hide numbers'}
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
@@ -910,6 +938,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           
           {/* Right side - User controls */}
           <div className="flex items-center gap-3">
+          {/* Hide Numbers Toggle */}
+          <HideNumbersToggle />
           <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
             <AccessIcon className="w-3 h-3" />
             {getAccessLabel()}

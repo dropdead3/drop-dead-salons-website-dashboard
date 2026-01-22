@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { 
@@ -48,6 +49,7 @@ type DateRange = '7d' | '30d' | 'thisWeek' | 'thisMonth';
 export function AggregateSalesCard() {
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState<DateRange>('7d');
+  const { hideNumbers } = useHideNumbers();
 
   const dateFilters = (() => {
     const now = new Date();
@@ -210,10 +212,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <DollarSign className="w-4 h-4 text-primary" />
-                <p className="text-2xl font-display">${displayMetrics.totalRevenue.toLocaleString()}</p>
+                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
+                  ${displayMetrics.totalRevenue.toLocaleString()}
+                </p>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Total Revenue</p>
-              {comparison && (
+              {comparison && !hideNumbers && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalRevenue}
                   previous={comparison.previous.totalRevenue} 
@@ -223,10 +227,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Scissors className="w-4 h-4 text-primary" />
-                <p className="text-2xl font-display">${displayMetrics.serviceRevenue.toLocaleString()}</p>
+                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
+                  ${displayMetrics.serviceRevenue.toLocaleString()}
+                </p>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Services</p>
-              {comparison && (
+              {comparison && !hideNumbers && (
                 <SalesTrendIndicator 
                   current={comparison.current.serviceRevenue} 
                   previous={comparison.previous.serviceRevenue} 
@@ -236,10 +242,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <ShoppingBag className="w-4 h-4 text-chart-2" />
-                <p className="text-2xl font-display">${displayMetrics.productRevenue.toLocaleString()}</p>
+                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
+                  ${displayMetrics.productRevenue.toLocaleString()}
+                </p>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Products</p>
-              {comparison && (
+              {comparison && !hideNumbers && (
                 <SalesTrendIndicator 
                   current={comparison.current.productRevenue} 
                   previous={comparison.previous.productRevenue} 
@@ -249,10 +257,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Receipt className="w-4 h-4 text-chart-3" />
-                <p className="text-2xl font-display">{displayMetrics.totalTransactions}</p>
+                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
+                  {displayMetrics.totalTransactions}
+                </p>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Transactions</p>
-              {comparison && (
+              {comparison && !hideNumbers && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalTransactions} 
                   previous={comparison.previous.totalTransactions} 
@@ -262,12 +272,12 @@ export function AggregateSalesCard() {
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <TrendingUp className="w-4 h-4 text-chart-4" />
-                <p className="text-2xl font-display">
+                <p className={`text-2xl font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
                   ${isFinite(displayMetrics.averageTicket) ? Math.round(displayMetrics.averageTicket) : 0}
                 </p>
               </div>
               <p className="text-xs text-muted-foreground mb-1">Avg Ticket</p>
-              {comparison && (
+              {comparison && !hideNumbers && (
                 <SalesTrendIndicator 
                   current={comparison.current.averageTicket} 
                   previous={comparison.previous.averageTicket} 
@@ -345,25 +355,27 @@ export function AggregateSalesCard() {
                           <span className="truncate">{location.name}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-display">
+                      <TableCell className={`text-right font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
                         ${location.totalRevenue.toLocaleString()}
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <SalesSparkline 
-                          data={getLocationTrend(location.location_id)} 
-                          height={24}
-                        />
+                        {!hideNumbers && (
+                          <SalesSparkline 
+                            data={getLocationTrend(location.location_id)} 
+                            height={24}
+                          />
+                        )}
                       </TableCell>
-                      <TableCell className="text-right hidden sm:table-cell">
+                      <TableCell className={`text-right hidden sm:table-cell ${hideNumbers ? 'blur-md select-none' : ''}`}>
                         ${location.serviceRevenue.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right hidden sm:table-cell">
+                      <TableCell className={`text-right hidden sm:table-cell ${hideNumbers ? 'blur-md select-none' : ''}`}>
                         ${location.productRevenue.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right hidden md:table-cell">
+                      <TableCell className={`text-right hidden md:table-cell ${hideNumbers ? 'blur-md select-none' : ''}`}>
                         {location.totalTransactions}
                       </TableCell>
-                      <TableCell className="text-right font-display">
+                      <TableCell className={`text-right font-display ${hideNumbers ? 'blur-md select-none' : ''}`}>
                         ${isFinite(avgTicket) ? Math.round(avgTicket) : 0}
                       </TableCell>
                       <TableCell>

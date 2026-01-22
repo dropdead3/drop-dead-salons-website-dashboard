@@ -780,6 +780,7 @@ export type Database = {
           emergency_contact: string | null
           emergency_phone: string | null
           full_name: string
+          hide_numbers: boolean
           highlighted_services: string[] | null
           hire_date: string | null
           homepage_order: number | null
@@ -820,6 +821,7 @@ export type Database = {
           emergency_contact?: string | null
           emergency_phone?: string | null
           full_name: string
+          hide_numbers?: boolean
           highlighted_services?: string[] | null
           hire_date?: string | null
           homepage_order?: number | null
@@ -860,6 +862,7 @@ export type Database = {
           emergency_contact?: string | null
           emergency_phone?: string | null
           full_name?: string
+          hide_numbers?: boolean
           highlighted_services?: string[] | null
           hire_date?: string | null
           homepage_order?: number | null
