@@ -9,10 +9,11 @@ const capitalizeFirst = (value: string): string => {
 };
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, onChange, ...props }, ref) => {
+  ({ className, type, onChange, autoCapitalize, ...props }, ref) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       // Only apply capitalization to text inputs (not email, password, number, etc.)
-      if (type === 'text' || type === undefined) {
+      // Skip if autoCapitalize is explicitly set to "none" or "off"
+      if ((type === 'text' || type === undefined) && autoCapitalize !== 'none' && autoCapitalize !== 'off') {
         const cursorPosition = e.target.selectionStart;
         e.target.value = capitalizeFirst(e.target.value);
         // Restore cursor position
