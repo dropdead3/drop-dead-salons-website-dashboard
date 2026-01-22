@@ -352,10 +352,19 @@ export default function ManageRoles() {
                         )}
                         
                         {/* Current Roles - ordered by database sort_order */}
-                        {user.roles.length > 0 && (
+                        {(user.roles.length > 0 || isSuperAdmin) && (
                           <div className="flex flex-wrap gap-1 mt-2">
+                            {/* Show Super Admin role badge if user is super admin */}
+                            {isSuperAdmin && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs bg-gradient-to-r from-amber-200 via-orange-100 to-amber-200 text-amber-900 border-amber-300"
+                              >
+                                Super Admin
+                              </Badge>
+                            )}
                             {roles
-                              .filter(role => user.roles.includes(role.name as AppRole))
+                              .filter(role => user.roles.includes(role.name as AppRole) && role.name !== 'super_admin')
                               .map(role => {
                                 const colorClasses = getRoleColorClasses(role.color);
                                 return (
