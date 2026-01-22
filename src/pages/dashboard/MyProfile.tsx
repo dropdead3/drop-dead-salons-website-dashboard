@@ -858,77 +858,33 @@ export default function MyProfile() {
                     Specialties <span className="text-destructive">*</span>
                     <span className="text-muted-foreground text-xs font-normal ml-1">(select 2-3 required)</span>
                   </Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className={cn(
-                          "w-full justify-between h-auto min-h-10 py-2",
-                          formData.specialties.length < 2 && "border-destructive/50"
-                        )}
-                      >
-                        <div className="flex flex-wrap gap-1 flex-1">
-                          {formData.specialties.length > 0 ? (
-                            formData.specialties.map(specialty => (
-                              <Badge key={specialty} variant="secondary" className="mr-1 mb-1">
-                                {specialty}
-                                <button
-                                  type="button"
-                                  className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleSpecialty(specialty);
-                                  }}
-                                >
-                                  <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                                </button>
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-muted-foreground">Select specialties...</span>
+                  <div className="flex flex-wrap gap-2">
+                    {specialtyOptions.map(option => {
+                      const specialty = option.name;
+                      const isSelected = formData.specialties.includes(specialty);
+                      const isDisabled = !isSelected && formData.specialties.length >= 3;
+                      return (
+                        <button
+                          key={specialty}
+                          type="button"
+                          disabled={isDisabled}
+                          onClick={() => {
+                            if (!isDisabled) {
+                              toggleSpecialty(specialty);
+                            }
+                          }}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full border-2 text-sm transition-all",
+                            isSelected && "border-primary bg-primary/10 text-primary font-medium",
+                            !isSelected && !isDisabled && "border-border hover:border-primary/50 text-foreground",
+                            isDisabled && "border-muted bg-muted/30 text-muted-foreground/50 cursor-not-allowed opacity-50"
                           )}
-                        </div>
-                        <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search specialties..." />
-                        <CommandList>
-                          <CommandEmpty>No specialty found.</CommandEmpty>
-                          <CommandGroup>
-                            {specialtyOptions.map(option => {
-                              const specialty = option.name;
-                              const isSelected = formData.specialties.includes(specialty);
-                              const isDisabled = !isSelected && formData.specialties.length >= 3;
-                              return (
-                                <CommandItem
-                                  key={specialty}
-                                  value={specialty}
-                                  disabled={isDisabled}
-                                  onSelect={() => {
-                                    if (!isDisabled) {
-                                      toggleSpecialty(specialty);
-                                    }
-                                  }}
-                                  className={cn(isDisabled && "opacity-50")}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      isSelected ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  {specialty}
-                                </CommandItem>
-                              );
-                            })}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                        >
+                          {specialty}
+                        </button>
+                      );
+                    })}
+                  </div>
                   <p className={cn(
                     "text-xs",
                     formData.specialties.length < 2 ? "text-destructive" : "text-muted-foreground"
