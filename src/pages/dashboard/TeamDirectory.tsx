@@ -424,10 +424,16 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
   const hoursDisplay = formatHoursForDisplay(location.hours_json);
   const closedDays = getClosedDays(location.hours_json);
 
-  // Find the General Manager for this location
-  const generalManager = teamMembers.find(m => 
-    m.roles.includes('general_manager') || m.roles.includes('manager')
-  );
+  // Find managers and general managers for this location
+  const managers = teamMembers
+    .filter(m => m.roles.includes('general_manager') || m.roles.includes('manager'))
+    .sort((a, b) => {
+      // General managers first
+      const aIsGM = a.roles.includes('general_manager') ? 0 : 1;
+      const bIsGM = b.roles.includes('general_manager') ? 0 : 1;
+      return aIsGM - bIsGM;
+    })
+    .slice(0, 4); // Max 4 manager avatars
 
   // Get upcoming holiday closures (next 60 days)
   const today = new Date();
@@ -441,6 +447,10 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3); // Show max 3 upcoming
+
+  const getManagerRole = (member: typeof managers[0]) => {
+    return member.roles.includes('general_manager') ? 'General Manager' : 'Manager';
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -456,31 +466,34 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
             </Badge>
           </div>
           
-          {/* General Manager Avatar */}
-          {generalManager && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => navigate(`/dashboard/profile/${generalManager.user_id}`)}
-                    className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full transition-transform hover:scale-110"
-                  >
-                    <Avatar className="w-9 h-9 border-2 border-background">
-                      <AvatarImage src={generalManager.photo_url || undefined} />
-                      <AvatarFallback className="text-xs bg-muted">
-                        {(generalManager.display_name || generalManager.full_name).charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  <p className="font-medium">{generalManager.display_name || generalManager.full_name}</p>
-                  <p className="text-muted-foreground">
-                    {generalManager.roles.includes('general_manager') ? 'General Manager' : 'Manager'}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          {/* Manager Avatars */}
+          {managers.length > 0 && (
+            <div className="flex -space-x-2">
+              {managers.map((manager, index) => (
+                <TooltipProvider key={manager.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => navigate(`/dashboard/profile/${manager.user_id}`)}
+                        className="relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full transition-transform hover:scale-110 hover:z-10"
+                        style={{ zIndex: managers.length - index }}
+                      >
+                        <Avatar className="w-8 h-8 border-2 border-background">
+                          <AvatarImage src={manager.photo_url || undefined} />
+                          <AvatarFallback className="text-[10px] bg-muted">
+                            {(manager.display_name || manager.full_name).charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      <p className="font-medium">{manager.display_name || manager.full_name}</p>
+                      <p className="text-muted-foreground">{getManagerRole(manager)}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
           )}
         </div>
       </CardHeader>
