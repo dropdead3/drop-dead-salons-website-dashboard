@@ -619,6 +619,7 @@ export default function MyProfile() {
                       }}
                       className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-1"
                       placeholder="yourhandle"
+                      autoCapitalize="none"
                       required
                     />
                   </div>
@@ -645,6 +646,7 @@ export default function MyProfile() {
                       }}
                       className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-1"
                       placeholder="yourhandle"
+                      autoCapitalize="none"
                     />
                   </div>
                 </div>
