@@ -250,3 +250,73 @@ export function useDeleteStaffMapping() {
     },
   });
 }
+
+// Check for Phorest appointment conflicts for a given stylist, date, and time range
+export function usePhorestConflicts(
+  stylistUserId?: string,
+  date?: string,
+  startTime?: string,
+  endTime?: string
+) {
+  return useQuery({
+    queryKey: ['phorest-conflicts', stylistUserId, date, startTime, endTime],
+    queryFn: async () => {
+      if (!stylistUserId || !date || !startTime) return [];
+
+      // Query for overlapping appointments
+      const { data, error } = await supabase
+        .from('phorest_appointments')
+        .select('*')
+        .eq('stylist_user_id', stylistUserId)
+        .eq('appointment_date', date)
+        .neq('status', 'cancelled');
+
+      if (error) throw error;
+
+      // Filter for time overlaps
+      const conflicts = (data || []).filter(apt => {
+        const aptStart = apt.start_time;
+        const aptEnd = apt.end_time;
+        
+        // Check if there's any overlap
+        // Overlap exists if: startTime < aptEnd AND endTime > aptStart
+        const requestEnd = endTime || startTime; // If no end time, assume 1 hour
+        return startTime < aptEnd && requestEnd > aptStart;
+      });
+
+      return conflicts;
+    },
+    enabled: !!stylistUserId && !!date && !!startTime,
+  });
+}
+
+// Get upcoming Phorest appointments for a stylist
+export function useStylistPhorestAppointments(stylistUserId?: string, date?: string) {
+  return useQuery({
+    queryKey: ['phorest-stylist-appointments', stylistUserId, date],
+    queryFn: async () => {
+      if (!stylistUserId) return [];
+
+      let query = supabase
+        .from('phorest_appointments')
+        .select('*')
+        .eq('stylist_user_id', stylistUserId)
+        .neq('status', 'cancelled')
+        .order('appointment_date', { ascending: true })
+        .order('start_time', { ascending: true });
+
+      if (date) {
+        query = query.eq('appointment_date', date);
+      } else {
+        // Default to today onwards
+        const today = new Date().toISOString().split('T')[0];
+        query = query.gte('appointment_date', today);
+      }
+
+      const { data, error } = await query.limit(20);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!stylistUserId,
+  });
+}

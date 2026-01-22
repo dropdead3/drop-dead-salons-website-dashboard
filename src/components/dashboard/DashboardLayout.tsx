@@ -82,6 +82,7 @@ import {
   GraduationCap,
   Pause,
   FlaskConical,
+  Link2,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -152,6 +153,7 @@ const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText, permission: 'manage_handbooks' },
   { href: '/dashboard/admin/command-center-console', label: 'Command Center Console', icon: LayoutDashboard, permission: 'manage_visibility_console' },
   { href: '/dashboard/admin/program-editor', label: 'Program Editor', icon: Target, permission: 'manage_program_editor' },
+  { href: '/dashboard/admin/phorest', label: 'Phorest Integration', icon: Link2, permission: 'manage_settings' },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 

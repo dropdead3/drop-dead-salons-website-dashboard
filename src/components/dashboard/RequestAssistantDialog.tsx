@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { format, addWeeks, getDay } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, User, MapPin, Repeat, AlertCircle } from 'lucide-react';
+import { format, addWeeks, getDay, addMinutes, parse } from 'date-fns';
+import { Calendar as CalendarIcon, Clock, User, MapPin, Repeat, AlertCircle, AlertTriangle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,12 +23,14 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useSalonServices, useCreateAssistantRequest, RecurrenceType } from '@/hooks/useAssistantRequests';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useActiveAssistants, useLocationsWithAssistants, useAssistantsAtLocation } from '@/hooks/useAssistantAvailability';
+import { useStylistPhorestAppointments } from '@/hooks/usePhorestSync';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface RequestAssistantDialogProps {
   children: React.ReactNode;
@@ -37,6 +39,7 @@ interface RequestAssistantDialogProps {
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function RequestAssistantDialog({ children }: RequestAssistantDialogProps) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState<Date>();
   const [serviceId, setServiceId] = useState('');
@@ -54,7 +57,30 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
   const { data: assistants = [] } = useActiveAssistants();
   const createRequest = useCreateAssistantRequest();
 
+  // Fetch Phorest appointments for conflict detection
+  const dateStr = date ? format(date, 'yyyy-MM-dd') : undefined;
+  const { data: phorestAppointments = [] } = useStylistPhorestAppointments(user?.id, dateStr);
+
   const selectedService = services.find(s => s.id === serviceId);
+
+  // Check for Phorest appointment conflicts
+  const phorestConflict = useMemo(() => {
+    if (!startTime || !selectedService || phorestAppointments.length === 0) return null;
+    
+    const serviceDuration = selectedService.duration_minutes || 60;
+    const requestStart = startTime;
+    const requestEndDate = addMinutes(parse(startTime, 'HH:mm', new Date()), serviceDuration);
+    const requestEnd = format(requestEndDate, 'HH:mm');
+
+    const conflict = phorestAppointments.find(apt => {
+      const aptStart = apt.start_time;
+      const aptEnd = apt.end_time;
+      // Overlap: requestStart < aptEnd AND requestEnd > aptStart
+      return requestStart < aptEnd && requestEnd > aptStart;
+    });
+
+    return conflict;
+  }, [startTime, selectedService, phorestAppointments]);
 
   // Get user's assigned locations
   const userLocationIds = profile?.location_ids || [];
@@ -271,6 +297,19 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
                 ))}
               </SelectContent>
             </Select>
+            
+            {/* Phorest Conflict Warning */}
+            {phorestConflict && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="text-sm font-medium">Booking Conflict Detected</AlertTitle>
+                <AlertDescription className="text-xs">
+                  You have a Phorest appointment ({phorestConflict.service_name || 'Service'}) 
+                  with {phorestConflict.client_name || 'a client'} from {phorestConflict.start_time?.slice(0, 5)} - {phorestConflict.end_time?.slice(0, 5)}.
+                  Consider choosing a different time.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
 

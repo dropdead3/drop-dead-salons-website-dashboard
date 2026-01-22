@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -7,15 +7,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { usePhorestPerformanceMetrics, usePhorestConnection } from '@/hooks/usePhorestSync';
+import { format, startOfWeek } from 'date-fns';
 import { 
   Eye, 
   MessageCircle, 
   Calendar, 
   TrendingUp,
   Save,
-  Loader2
+  Loader2,
+  Link2,
+  RefreshCw
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface DailyMetrics {
   posts_published: number;
@@ -61,6 +67,17 @@ export default function Stats() {
   const [metrics, setMetrics] = useState<DailyMetrics>(initialMetrics);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Phorest data
+  const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const { data: phorestConnection } = usePhorestConnection();
+  const { data: phorestMetrics, isLoading: phorestLoading } = usePhorestPerformanceMetrics(weekStart);
+
+  // Find current user's Phorest metrics
+  const myPhorestMetrics = useMemo(() => {
+    if (!phorestMetrics || !user) return null;
+    return phorestMetrics.find((m: any) => m.user_id === user.id);
+  }, [phorestMetrics, user]);
 
   const handleChange = (field: keyof DailyMetrics, value: string) => {
     setMetrics(prev => ({
@@ -115,6 +132,49 @@ export default function Stats() {
             )}
           </Button>
         </div>
+
+        {/* Phorest Stats Card (if connected) */}
+        {myPhorestMetrics && (
+          <Card className="p-6 bg-primary/5 border-primary/20 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Link2 className="w-5 h-5 text-primary" />
+                <h2 className="font-display text-sm tracking-wide">PHOREST DATA - THIS WEEK</h2>
+              </div>
+              <Badge variant="outline" className="text-primary border-primary">
+                <span className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
+                Live
+              </Badge>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="text-center">
+                <p className="text-2xl font-display">{myPhorestMetrics.new_clients}</p>
+                <p className="text-xs text-muted-foreground">New Clients</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-display">${Number(myPhorestMetrics.total_revenue).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Revenue</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-display">{myPhorestMetrics.service_count}</p>
+                <p className="text-xs text-muted-foreground">Services</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-display">{Number(myPhorestMetrics.retention_rate).toFixed(0)}%</p>
+                <p className="text-xs text-muted-foreground">Retention</p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Show connection prompt if not connected */}
+        {!myPhorestMetrics && phorestConnection?.connected && (
+          <Card className="p-4 bg-muted/50 border-dashed mb-6">
+            <p className="text-sm text-muted-foreground text-center">
+              Your account isn't linked to Phorest yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
+            </p>
+          </Card>
+        )}
 
         <Tabs defaultValue="visibility" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
