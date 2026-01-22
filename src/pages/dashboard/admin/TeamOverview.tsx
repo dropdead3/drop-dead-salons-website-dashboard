@@ -295,7 +295,7 @@ export default function TeamOverview() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="font-display text-3xl lg:text-4xl mb-2">
-            TEAM OVERVIEW
+            NEW-CLIENT ENGINE PROGRAM TEAM OVERVIEW
           </h1>
           <p className="text-muted-foreground font-sans">
             Monitor stylist progress, view Weekly Wins, and add coaching notes.
