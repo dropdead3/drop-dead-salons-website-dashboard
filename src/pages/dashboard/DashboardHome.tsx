@@ -362,65 +362,57 @@ export default function DashboardHome() {
             </div>
             
             <Card className="relative p-6 rounded-2xl bg-gradient-to-br from-[hsl(40,30%,95%)] via-[hsl(45,25%,92%)] to-[hsl(40,20%,85%)] border border-[hsl(45,50%,75%)]/50 backdrop-blur-sm shadow-lg">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[hsl(40,40%,30%)] to-[hsl(35,35%,20%)] text-[hsl(45,50%,85%)] flex items-center justify-center rounded-lg shadow-md">
-                    <Target className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-lg tracking-wide text-[hsl(35,30%,20%)]">CLIENT ENGINE</h2>
-                    <p className="text-sm text-[hsl(35,20%,40%)] font-sans">
-                      75 days of execution. No excuses.
-                    </p>
-                  </div>
-                </div>
-                {enrollment && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Flame className="w-4 h-4 text-orange-500" />
-                    <span className="font-display text-[hsl(35,30%,20%)]">{enrollment.streak_count} DAY STREAK</span>
-                  </div>
-                )}
-              </div>
-              
-              {enrollment ? (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-full">
-                    <p className="text-sm font-sans text-[hsl(35,20%,40%)] text-center">
-                      You're on <span className="text-[hsl(35,30%,20%)] font-medium">Day {enrollment.current_day}</span> of 75
-                    </p>
-                    <div className="w-full max-w-xs mx-auto h-2 bg-[hsl(40,20%,80%)] mt-2 overflow-hidden rounded-full">
-                      <div 
-                        className="h-full bg-gradient-to-r from-[hsl(40,50%,45%)] to-[hsl(45,60%,55%)] transition-all rounded-full" 
-                        style={{ width: `${(enrollment.current_day / 75) * 100}%` }}
-                      />
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[hsl(40,40%,30%)] to-[hsl(35,35%,20%)] text-[hsl(45,50%,85%)] flex items-center justify-center rounded-lg shadow-md">
+                      <Target className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <h2 className="font-display text-lg tracking-wide text-[hsl(35,30%,20%)]">CLIENT ENGINE</h2>
+                        {enrollment && (
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <Flame className="w-4 h-4 text-orange-500" />
+                            <span className="font-display text-[hsl(35,30%,20%)]">{enrollment.streak_count} DAY STREAK</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-[hsl(35,20%,40%)] font-sans">
+                        75 days of execution. No excuses.
+                      </p>
                     </div>
                   </div>
-                  <Button 
-                    asChild
-                    className="bg-gradient-to-r from-[hsl(40,40%,25%)] to-[hsl(35,35%,15%)] hover:from-[hsl(40,45%,30%)] hover:to-[hsl(35,40%,20%)] text-[hsl(45,50%,90%)] border border-[hsl(45,50%,60%)]/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] px-8"
-                  >
-                    <Link to="/dashboard/program">
-                      Continue Today
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Link>
-                  </Button>
+                  
+                  {enrollment ? (
+                    <div className="mt-3">
+                      <p className="text-sm font-sans text-[hsl(35,20%,40%)]">
+                        You're on <span className="text-[hsl(35,30%,20%)] font-medium">Day {enrollment.current_day}</span> of 75
+                      </p>
+                      <div className="w-full max-w-xs h-2 bg-[hsl(40,20%,80%)] mt-2 overflow-hidden rounded-full">
+                        <div 
+                          className="h-full bg-gradient-to-r from-[hsl(40,50%,45%)] to-[hsl(45,60%,55%)] transition-all rounded-full" 
+                          style={{ width: `${(enrollment.current_day / 75) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm font-sans text-[hsl(35,20%,40%)] mt-1">
+                      Ready to transform your book? Start the challenge today.
+                    </p>
+                  )}
                 </div>
-              ) : (
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm font-sans text-[hsl(35,20%,40%)]">
-                    Ready to transform your book? Start the challenge today.
-                  </p>
-                  <Button 
-                    asChild
-                    className="bg-gradient-to-r from-[hsl(40,40%,25%)] to-[hsl(35,35%,15%)] hover:from-[hsl(40,45%,30%)] hover:to-[hsl(35,40%,20%)] text-[hsl(45,50%,90%)] border border-[hsl(45,50%,60%)]/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] px-8 shrink-0"
-                  >
-                    <Link to="/dashboard/program">
-                      Start Program
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-              )}
+                
+                <Button 
+                  asChild
+                  className="bg-gradient-to-r from-[hsl(40,40%,25%)] to-[hsl(35,35%,15%)] hover:from-[hsl(40,45%,30%)] hover:to-[hsl(35,40%,20%)] text-[hsl(45,50%,90%)] border border-[hsl(45,50%,60%)]/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] px-8 shrink-0"
+                >
+                  <Link to="/dashboard/program">
+                    {enrollment ? 'Continue Today' : 'Start Program'}
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
             </Card>
           </div>
         )}
