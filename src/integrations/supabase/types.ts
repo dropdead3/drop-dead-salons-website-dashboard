@@ -1710,15 +1710,18 @@ export type Database = {
       }
       phorest_clients: {
         Row: {
+          branch_name: string | null
           created_at: string
           email: string | null
           first_visit: string | null
           id: string
           is_vip: boolean | null
           last_visit: string | null
+          location_id: string | null
           name: string
           notes: string | null
           phone: string | null
+          phorest_branch_id: string | null
           phorest_client_id: string
           preferred_services: string[] | null
           preferred_stylist_id: string | null
@@ -1727,15 +1730,18 @@ export type Database = {
           visit_count: number
         }
         Insert: {
+          branch_name?: string | null
           created_at?: string
           email?: string | null
           first_visit?: string | null
           id?: string
           is_vip?: boolean | null
           last_visit?: string | null
+          location_id?: string | null
           name: string
           notes?: string | null
           phone?: string | null
+          phorest_branch_id?: string | null
           phorest_client_id: string
           preferred_services?: string[] | null
           preferred_stylist_id?: string | null
@@ -1744,15 +1750,18 @@ export type Database = {
           visit_count?: number
         }
         Update: {
+          branch_name?: string | null
           created_at?: string
           email?: string | null
           first_visit?: string | null
           id?: string
           is_vip?: boolean | null
           last_visit?: string | null
+          location_id?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
+          phorest_branch_id?: string | null
           phorest_client_id?: string
           preferred_services?: string[] | null
           preferred_stylist_id?: string | null
@@ -1761,6 +1770,13 @@ export type Database = {
           visit_count?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "phorest_clients_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "phorest_clients_preferred_stylist_id_fkey"
             columns: ["preferred_stylist_id"]
