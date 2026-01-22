@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -108,7 +109,8 @@ const BUSINESS_CARD_STYLES = [
 ];
 
 export default function Onboarding() {
-  const { roles, user } = useAuth();
+  const { user } = useAuth();
+  const roles = useEffectiveRoles();
   const { toast } = useToast();
   const navigate = useNavigate();
   

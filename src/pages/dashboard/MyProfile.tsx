@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { useAuth } from '@/contexts/AuthContext';
-import { useViewAs } from '@/contexts/ViewAsContext';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { useLocationSchedules, useUpsertLocationSchedule } from '@/hooks/useLocationSchedules';
 import { useSpecialtyOptions } from '@/hooks/useSpecialtyOptions';
@@ -65,11 +65,8 @@ const formatSocialHandle = (value: string) => {
 };
 
 export default function MyProfile() {
-  const { user, roles: authRoles } = useAuth();
-  const { viewAsUser, isViewingAsUser } = useViewAs();
-  
-  // Use effective roles: if impersonating a user, use their roles; otherwise use the logged-in user's roles
-  const roles = isViewingAsUser && viewAsUser?.roles ? viewAsUser.roles : authRoles;
+  const { user } = useAuth();
+  const roles = useEffectiveRoles();
   
   const { data: profile, isLoading } = useEmployeeProfile();
   const { data: locations = [] } = useLocations();

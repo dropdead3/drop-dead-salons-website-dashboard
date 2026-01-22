@@ -1,5 +1,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 /**
  * Returns the effective user ID for data fetching.
@@ -25,6 +28,29 @@ export function useEffectiveUserId(): string | undefined {
 export function useActualUserId(): string | undefined {
   const { user } = useAuth();
   return user?.id;
+}
+
+/**
+ * Returns the effective roles for the current view context.
+ * - When impersonating a specific user: returns that user's roles
+ * - When viewing as a role: returns just that role
+ * - Otherwise: returns the actual logged-in user's roles
+ */
+export function useEffectiveRoles(): AppRole[] {
+  const { roles: authRoles } = useAuth();
+  const { viewAsUser, isViewingAsUser, viewAsRole, isViewingAs } = useViewAs();
+  
+  // User-specific impersonation takes priority
+  if (isViewingAsUser && viewAsUser?.roles) {
+    return viewAsUser.roles;
+  }
+  
+  // Role-based impersonation
+  if (isViewingAs && viewAsRole) {
+    return [viewAsRole];
+  }
+  
+  return authRoles;
 }
 
 /**
