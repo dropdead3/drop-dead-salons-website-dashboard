@@ -228,11 +228,7 @@ export default function PhorestSettings() {
             variant="outline"
             disabled={connectionLoading}
           >
-            {connectionLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
+            <RefreshCw className={`w-4 h-4 ${connectionLoading ? 'animate-spin' : ''}`} />
             <span className="ml-2">Test Connection</span>
           </Button>
         </div>
