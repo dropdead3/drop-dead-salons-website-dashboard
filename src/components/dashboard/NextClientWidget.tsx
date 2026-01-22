@@ -83,7 +83,21 @@ export function NextClientWidget({ userId }: NextClientWidgetProps) {
   }
   
   if (!nextAppointment) {
-    return null; // Don't show the widget if no upcoming appointments
+    return (
+      <Card className="p-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+            <User className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground font-sans uppercase tracking-wide">
+              Next Client
+            </p>
+            <p className="font-display text-sm">No upcoming clients today</p>
+          </div>
+        </div>
+      </Card>
+    );
   }
   
   const formattedTime = format(nextAppointment.dateTime, 'h:mm a');
