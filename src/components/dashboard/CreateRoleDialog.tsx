@@ -18,10 +18,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Loader2, ChevronDown, Files } from 'lucide-react';
 import { RoleColorPicker } from './RoleColorPicker';
 import { RoleIconPicker } from './RoleIconPicker';
+import { RoleTemplateSelector } from './RoleTemplateSelector';
 import { Role, useCreateRole, useUpdateRole, ROLE_CATEGORIES } from '@/hooks/useRoles';
+import { RoleTemplate, useCreateRoleFromTemplate } from '@/hooks/useRoleTemplates';
+import { cn } from '@/lib/utils';
 
 interface CreateRoleDialogProps {
   open: boolean;
@@ -37,11 +45,14 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
   const [icon, setIcon] = useState('User');
   const [category, setCategory] = useState('other');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedTemplate, setSelectedTemplate] = useState<RoleTemplate | null>(null);
+  const [templateSectionOpen, setTemplateSectionOpen] = useState(true);
 
   const createRole = useCreateRole();
   const updateRole = useUpdateRole();
+  const createFromTemplate = useCreateRoleFromTemplate();
   const isEditing = !!editRole;
-  const isPending = createRole.isPending || updateRole.isPending;
+  const isPending = createRole.isPending || updateRole.isPending || createFromTemplate.isPending;
 
   // Populate form when editing
   useEffect(() => {
@@ -52,10 +63,22 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
       setColor(editRole.color);
       setIcon(editRole.icon);
       setCategory(editRole.category || 'other');
+      setSelectedTemplate(null);
+      setTemplateSectionOpen(false);
     } else {
       resetForm();
     }
   }, [editRole, open]);
+
+  // When template is selected, apply its settings
+  useEffect(() => {
+    if (selectedTemplate && !isEditing) {
+      setDescription(selectedTemplate.description || '');
+      setColor(selectedTemplate.color);
+      setIcon(selectedTemplate.icon);
+      setCategory(selectedTemplate.category);
+    }
+  }, [selectedTemplate, isEditing]);
 
   const resetForm = () => {
     setName('');
@@ -65,6 +88,8 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
     setIcon('User');
     setCategory('other');
     setErrors({});
+    setSelectedTemplate(null);
+    setTemplateSectionOpen(true);
   };
 
   // Auto-generate name from display name
@@ -115,7 +140,15 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
           category,
         },
       });
+    } else if (selectedTemplate) {
+      // Create role from template (includes permissions)
+      await createFromTemplate.mutateAsync({
+        template: selectedTemplate,
+        roleName: name,
+        displayName,
+      });
     } else {
+      // Create role without template
       await createRole.mutateAsync({
         name,
         display_name: displayName,
@@ -140,11 +173,53 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
           <DialogDescription>
             {isEditing
               ? 'Update the role details. System roles can have their display properties changed but not their internal name.'
-              : 'Define a new role for your team. The internal name cannot be changed after creation.'}
+              : 'Define a new role for your team. Choose a template to start with pre-configured permissions.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Template Selection - Only for new roles */}
+          {!isEditing && (
+            <Collapsible open={templateSectionOpen} onOpenChange={setTemplateSectionOpen}>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full justify-between p-3 h-auto border rounded-lg hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-2">
+                    <Files className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-medium text-sm">
+                      {selectedTemplate ? `Template: ${selectedTemplate.display_name}` : 'Choose Template'}
+                    </span>
+                    {selectedTemplate && (
+                      <span className="text-xs text-muted-foreground">
+                        ({selectedTemplate.permission_ids?.length || 0} permissions)
+                      </span>
+                    )}
+                  </div>
+                  <ChevronDown className={cn(
+                    "w-4 h-4 text-muted-foreground transition-transform",
+                    templateSectionOpen && "rotate-180"
+                  )} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3">
+                <div className="border rounded-lg p-3 bg-muted/20 max-h-64 overflow-y-auto">
+                  <RoleTemplateSelector
+                    selectedTemplate={selectedTemplate}
+                    onSelect={(template) => {
+                      setSelectedTemplate(template);
+                      if (template) {
+                        setTemplateSectionOpen(false);
+                      }
+                    }}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="displayName">Display Name *</Label>
             <Input
@@ -235,7 +310,7 @@ export function CreateRoleDialog({ open, onOpenChange, editRole }: CreateRoleDia
                   {isEditing ? 'Saving...' : 'Creating...'}
                 </>
               ) : (
-                isEditing ? 'Save Changes' : 'Create Role'
+                isEditing ? 'Save Changes' : selectedTemplate ? 'Create with Template' : 'Create Role'
               )}
             </Button>
           </DialogFooter>

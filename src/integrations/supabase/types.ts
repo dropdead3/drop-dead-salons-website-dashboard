@@ -2612,6 +2612,51 @@ export type Database = {
           },
         ]
       }
+      role_templates: {
+        Row: {
+          category: string
+          color: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_name: string
+          icon: string
+          id: string
+          is_system: boolean
+          name: string
+          permission_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_name: string
+          icon?: string
+          id?: string
+          is_system?: boolean
+          name: string
+          permission_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_name?: string
+          icon?: string
+          id?: string
+          is_system?: boolean
+          name?: string
+          permission_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       roles: {
         Row: {
           category: string
