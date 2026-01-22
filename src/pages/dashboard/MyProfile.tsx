@@ -218,7 +218,6 @@ export default function MyProfile() {
     if (!formData.full_name.trim()) errors.push('Full Name is required');
     if (!formData.email.trim()) errors.push('Email is required');
     if (!formData.phone.trim()) errors.push('Phone is required');
-    if (!formData.instagram.trim()) errors.push('Instagram is required');
     if (formData.location_ids.length === 0) errors.push('At least one location is required');
     if (!formData.emergency_contact.trim()) errors.push('Emergency Contact is required');
     if (!formData.emergency_phone.trim()) errors.push('Emergency Phone is required');

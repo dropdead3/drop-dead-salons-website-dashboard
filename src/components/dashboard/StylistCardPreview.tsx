@@ -184,8 +184,8 @@ export function StylistCardPreview({
                 </div>
                 <h3 className="text-xl font-display mb-1">{showName}</h3>
                 
-                {/* Social Link - Show preferred handle only */}
-                <div className="flex flex-col gap-1 mb-4">
+                {/* Social Link - Show preferred handle only, maintain consistent height */}
+                <div className="min-h-[24px] mb-4">
                   {(() => {
                     const showInstagram = preferredSocialHandle === 'instagram' && instagram;
                     const showTiktok = preferredSocialHandle === 'tiktok' && tiktok;
