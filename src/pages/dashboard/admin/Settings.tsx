@@ -46,6 +46,7 @@ import {
   X,
   Save,
   RotateCcw,
+  Building2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -57,6 +58,7 @@ import { IntegrationsTab } from '@/components/dashboard/IntegrationsTab';
 import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLevelsContent';
 import { HandbooksContent } from '@/components/dashboard/settings/HandbooksContent';
 import { CommandCenterContent } from '@/components/dashboard/settings/CommandCenterContent';
+import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER } from '@/hooks/useSettingsLayout';
@@ -87,7 +89,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | null;
+type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -317,6 +319,7 @@ export default function Settings() {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>(null);
   const [mounted, setMounted] = useState(false);
+  const [businessDialogOpen, setBusinessDialogOpen] = useState(false);
   
   // Layout editing state
   const [isEditMode, setIsEditMode] = useState(false);
@@ -450,6 +453,12 @@ export default function Settings() {
   };
 
   const categoriesMap: Record<string, { id: string; label: string; description: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }> }> = {
+    business: {
+      id: 'business',
+      label: 'Business',
+      description: 'Name, logo, address & EIN',
+      icon: Building2,
+    },
     email: {
       id: 'email',
       label: 'Email',
@@ -1070,12 +1079,24 @@ export default function Settings() {
                   isEditMode={isEditMode}
                   iconColor={localColors[category.id] || DEFAULT_ICON_COLORS[category.id]}
                   onColorChange={(color) => handleColorChange(category.id, color)}
-                  onClick={() => setActiveCategory(category.id as SettingsCategory)}
+                  onClick={() => {
+                    if (category.id === 'business') {
+                      setBusinessDialogOpen(true);
+                    } else {
+                      setActiveCategory(category.id as SettingsCategory);
+                    }
+                  }}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
+
+        {/* Business Settings Dialog */}
+        <BusinessSettingsDialog 
+          open={businessDialogOpen} 
+          onOpenChange={setBusinessDialogOpen} 
+        />
       </div>
     </DashboardLayout>
   );

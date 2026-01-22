@@ -306,6 +306,60 @@ export type Database = {
         }
         Relationships: []
       }
+      business_settings: {
+        Row: {
+          business_name: string
+          city: string | null
+          created_at: string
+          ein: string | null
+          email: string | null
+          id: string
+          legal_name: string | null
+          logo_url: string | null
+          mailing_address: string | null
+          phone: string | null
+          secondary_logo_url: string | null
+          state: string | null
+          updated_at: string
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          business_name?: string
+          city?: string | null
+          created_at?: string
+          ein?: string | null
+          email?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          mailing_address?: string | null
+          phone?: string | null
+          secondary_logo_url?: string | null
+          state?: string | null
+          updated_at?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          business_name?: string
+          city?: string | null
+          created_at?: string
+          ein?: string | null
+          email?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          mailing_address?: string | null
+          phone?: string | null
+          secondary_logo_url?: string | null
+          state?: string | null
+          updated_at?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       coach_notes: {
         Row: {
           coach_user_id: string

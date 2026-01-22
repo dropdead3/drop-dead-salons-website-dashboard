@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 // Default icon colors for each category
 export const DEFAULT_ICON_COLORS: Record<string, string> = {
+  business: '#D946EF',   // Fuchsia
   email: '#8B5CF6',      // Purple
   users: '#3B82F6',      // Blue
   onboarding: '#F97316', // Orange
@@ -17,6 +18,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
 
 // Default order
 export const DEFAULT_ORDER = [
+  'business',
   'email',
   'users',
   'onboarding',
