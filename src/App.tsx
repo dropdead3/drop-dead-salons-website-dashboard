@@ -68,6 +68,7 @@ import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
 import ProgramAnalytics from "./pages/dashboard/admin/ProgramAnalytics";
 import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 import SalesDashboard from "./pages/dashboard/admin/SalesDashboard";
+import Integrations from "./pages/dashboard/admin/Integrations";
 
 const queryClient = new QueryClient();
 
@@ -140,7 +141,8 @@ const App = () => (
               <Route path="/dashboard/admin/graduation-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><GraduationTracker /></ProtectedRoute>} />
               <Route path="/dashboard/admin/program-editor" element={<ProtectedRoute requiredPermission="manage_program_editor"><ProgramEditor /></ProtectedRoute>} />
               <Route path="/dashboard/admin/program-analytics" element={<ProtectedRoute requiredPermission="view_program_analytics"><ProgramAnalytics /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/phorest" element={<ProtectedRoute requiredPermission="manage_settings"><PhorestSettings /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/phorest" element={<ProtectedRoute requiredPermission="manage_integrations"><PhorestSettings /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/integrations" element={<ProtectedRoute requiredPermission="manage_integrations"><Integrations /></ProtectedRoute>} />
               <Route path="/dashboard/admin/sales" element={<ProtectedRoute requiredPermission="view_team_overview"><SalesDashboard /></ProtectedRoute>} />
 
 
