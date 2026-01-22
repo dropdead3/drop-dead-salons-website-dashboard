@@ -128,11 +128,11 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
       )}
 
       <motion.div 
-        className="flex-1 flex items-center justify-center pt-32 pb-24 lg:pt-40 lg:pb-32 relative z-0"
+        className="flex-1 flex items-start justify-center pt-28 pb-32 lg:pt-36 lg:pb-48 relative z-0"
         style={{ opacity }}
       >
         <div className="container mx-auto px-6 lg:px-12">
-          <div className="max-w-5xl mx-auto text-center">
+          <div className="max-w-4xl mx-auto text-center">
             {/* Tagline */}
             <motion.div
               initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
@@ -140,14 +140,14 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               transition={{ ...springTransition, delay: 2.0 }}
               style={{ y: taglineY }}
             >
-              <Eyebrow className="text-muted-foreground mb-8">
+              <Eyebrow className="text-muted-foreground mb-6">
                 Hair • Color • Artistry
               </Eyebrow>
             </motion.div>
 
             {/* Main headline - Always two lines: "Drop Dead" on first, rotating word on second */}
             <motion.h1
-              className="font-display text-[clamp(2.5rem,10vw,7rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center"
+              className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center"
               style={{ y: headlineY, filter: headingBlurFilter }}
             >
               <motion.span 
@@ -182,7 +182,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ ...springTransition, delay: 3.6 }}
-              className="mt-10 text-base md:text-lg text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
+              className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
               style={{ y: subheadlineY }}
             >
               Where technical talent meets artistry.
@@ -192,10 +192,10 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
 
             {/* CTAs */}
             <motion.div
-              className="mt-12 flex flex-col items-center gap-4"
+              className="mt-10 flex flex-col items-center gap-3"
               style={{ y: ctaY }}
             >
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <motion.div
                   initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -203,7 +203,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 >
                   <button
                     onClick={() => setConsultationOpen(true)}
-                    className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
+                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
                   >
                     <span className="relative z-10">I am a new client</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
@@ -216,7 +216,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 >
                   <Link
                     to="/booking"
-                    className="group w-full sm:w-auto px-10 py-6 text-lg font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-8"
+                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
                   >
                     <span className="relative z-10">I am a returning client</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
