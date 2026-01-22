@@ -103,18 +103,16 @@ export function BlurredAmount({
   }
   
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Component className={cn(className, 'blur-md select-none cursor-help')}>
-            {children}
-          </Component>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="text-xs">
-          Click the eye icon in the top menu to reveal
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={300}>
+      <TooltipTrigger asChild>
+        <Component className={cn(className, 'blur-md select-none cursor-help')} tabIndex={0}>
+          {children}
+        </Component>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs z-[100]">
+        Click the eye icon in the top menu to reveal
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
