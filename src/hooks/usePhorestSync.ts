@@ -7,6 +7,13 @@ export interface PhorestStaffMember {
   id: string;
   name: string;
   email?: string;
+  branchId?: string;
+  branchName?: string;
+}
+
+export interface PhorestBranch {
+  id: string;
+  name: string;
 }
 
 export interface PhorestConnectionStatus {
@@ -17,6 +24,7 @@ export interface PhorestConnectionStatus {
   };
   staff_count?: number;
   staff_list?: PhorestStaffMember[];
+  branch_list?: PhorestBranch[];
   error?: string;
 }
 
@@ -25,6 +33,8 @@ export interface PhorestStaffMapping {
   user_id: string;
   phorest_staff_id: string;
   phorest_staff_name: string | null;
+  phorest_branch_id: string | null;
+  phorest_branch_name: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -201,7 +211,13 @@ export function useCreateStaffMapping() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (mapping: { user_id: string; phorest_staff_id: string; phorest_staff_name?: string }) => {
+    mutationFn: async (mapping: { 
+      user_id: string; 
+      phorest_staff_id: string; 
+      phorest_staff_name?: string;
+      phorest_branch_id?: string;
+      phorest_branch_name?: string;
+    }) => {
       const { data, error } = await supabase
         .from('phorest_staff_mapping')
         .insert(mapping)

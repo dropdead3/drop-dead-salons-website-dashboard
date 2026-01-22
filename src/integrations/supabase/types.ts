@@ -1795,6 +1795,8 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          phorest_branch_id: string | null
+          phorest_branch_name: string | null
           phorest_staff_id: string
           phorest_staff_name: string | null
           updated_at: string
@@ -1804,6 +1806,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          phorest_branch_id?: string | null
+          phorest_branch_name?: string | null
           phorest_staff_id: string
           phorest_staff_name?: string | null
           updated_at?: string
@@ -1813,6 +1817,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          phorest_branch_id?: string | null
+          phorest_branch_name?: string | null
           phorest_staff_id?: string
           phorest_staff_name?: string | null
           updated_at?: string
@@ -1822,7 +1828,7 @@ export type Database = {
           {
             foreignKeyName: "phorest_staff_mapping_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "employee_profiles"
             referencedColumns: ["user_id"]
           },

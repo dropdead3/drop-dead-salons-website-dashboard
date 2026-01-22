@@ -28,6 +28,7 @@ import {
   useCreateStaffMapping,
   useDeleteStaffMapping,
   PhorestStaffMember,
+  PhorestBranch,
 } from '@/hooks/usePhorestSync';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -45,6 +46,8 @@ import {
   Loader2,
   Trash2,
   Wand2,
+  MapPin,
+  Building2,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -52,7 +55,7 @@ export default function PhorestSettings() {
   const { toast } = useToast();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedPhorestStaff, setSelectedPhorestStaff] = useState<PhorestStaffMember | null>(null);
-  
+  const [branchFilter, setBranchFilter] = useState<string>('all');
 
   const { data: connection, isLoading: connectionLoading, refetch: refetchConnection } = usePhorestConnection();
   const { data: syncLogs, isLoading: logsLoading } = usePhorestSyncLogs();
@@ -76,24 +79,51 @@ export default function PhorestSettings() {
     },
   });
 
-  // Get employees not yet mapped
-  const mappedUserIds = new Set(staffMappings?.map((m: any) => m.user_id) || []);
-  const unmappedEmployees = employees?.filter(e => !mappedUserIds.has(e.user_id)) || [];
-
-  // Get Phorest staff not yet mapped
-  const mappedPhorestIds = new Set(staffMappings?.map((m: any) => m.phorest_staff_id) || []);
+  // Get employees - now we allow the same employee to be mapped to multiple branches
+  const mappedCombos = new Set(
+    staffMappings?.map((m: any) => `${m.user_id}:${m.phorest_staff_id}`) || []
+  );
+  
+  // Get Phorest staff not yet mapped (checking staff_id + branch combo)
   const phorestStaffList = connection?.staff_list || [];
-  const unmappedPhorestStaff = phorestStaffList.filter(s => !mappedPhorestIds.has(s.id));
+  const branchList = connection?.branch_list || [];
+  
+  // Filter Phorest staff that aren't already mapped
+  const unmappedPhorestStaff = phorestStaffList.filter(s => {
+    // Check if this specific staff-branch combo is already mapped
+    return !staffMappings?.some((m: any) => 
+      m.phorest_staff_id === s.id && m.phorest_branch_id === s.branchId
+    );
+  });
+  
+  // Filter by branch if selected
+  const filteredPhorestStaff = branchFilter === 'all' 
+    ? unmappedPhorestStaff 
+    : unmappedPhorestStaff.filter(s => s.branchId === branchFilter);
 
-  // Auto-match suggestions based on name similarity
+  // Auto-match suggestions based on name similarity - now for each branch
   const getAutoMatchSuggestions = () => {
-    const suggestions: Array<{ employee: typeof employees[0]; phorestStaff: PhorestStaffMember; confidence: 'high' | 'medium' }> = [];
+    const suggestions: Array<{ 
+      employee: typeof employees[0]; 
+      phorestStaff: PhorestStaffMember; 
+      confidence: 'high' | 'medium' 
+    }> = [];
     
-    unmappedEmployees.forEach(emp => {
+    // All employees can be mapped (they can have multiple mappings now)
+    employees?.forEach(emp => {
       const empName = (emp.display_name || emp.full_name || '').toLowerCase().trim();
       
-      unmappedPhorestStaff.forEach(staff => {
+      filteredPhorestStaff.forEach(staff => {
         const staffName = staff.name.toLowerCase().trim();
+        
+        // Skip if this combo is already mapped
+        if (staffMappings?.some((m: any) => 
+          m.user_id === emp.user_id && 
+          m.phorest_staff_id === staff.id && 
+          m.phorest_branch_id === staff.branchId
+        )) {
+          return;
+        }
         
         // Exact match
         if (empName === staffName) {
@@ -135,6 +165,8 @@ export default function PhorestSettings() {
       user_id: selectedUserId,
       phorest_staff_id: selectedPhorestStaff.id,
       phorest_staff_name: selectedPhorestStaff.name,
+      phorest_branch_id: selectedPhorestStaff.branchId,
+      phorest_branch_name: selectedPhorestStaff.branchName,
     });
 
     setSelectedUserId('');
@@ -146,6 +178,8 @@ export default function PhorestSettings() {
       user_id: employee.user_id,
       phorest_staff_id: phorestStaff.id,
       phorest_staff_name: phorestStaff.name,
+      phorest_branch_id: phorestStaff.branchId,
+      phorest_branch_name: phorestStaff.branchName,
     });
   };
 
@@ -325,10 +359,32 @@ export default function PhorestSettings() {
 
           <TabsContent value="mapping">
             <Card className="p-6">
-              <h3 className="font-display text-lg mb-4">Link Team Members to Phorest Staff</h3>
-              <p className="text-muted-foreground text-sm mb-6">
-                Map your dashboard team members to their Phorest staff profiles to sync their performance data.
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-display text-lg">Link Team Members to Phorest Staff</h3>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Map your dashboard team members to their Phorest staff profiles. Staff at multiple locations can have multiple mappings.
+                  </p>
+                </div>
+                
+                {/* Branch Filter */}
+                {branchList.length > 1 && (
+                  <Select value={branchFilter} onValueChange={setBranchFilter}>
+                    <SelectTrigger className="w-48">
+                      <Building2 className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="Filter by location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Locations</SelectItem>
+                      {branchList.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
 
               {/* Auto-Match Suggestions */}
               {autoMatchSuggestions.length > 0 && (
@@ -339,14 +395,20 @@ export default function PhorestSettings() {
                     <Badge variant="secondary">{autoMatchSuggestions.length} found</Badge>
                   </div>
                   <div className="space-y-2">
-                    {autoMatchSuggestions.slice(0, 5).map((suggestion, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-background rounded-md">
-                        <div className="flex items-center gap-4">
+                    {autoMatchSuggestions.slice(0, 8).map((suggestion, idx) => (
+                      <div key={`${suggestion.employee.user_id}-${suggestion.phorestStaff.id}-${suggestion.phorestStaff.branchId}`} className="flex items-center justify-between p-3 bg-background rounded-md">
+                        <div className="flex items-center gap-4 flex-wrap">
                           <span className="font-medium">
                             {suggestion.employee.display_name || suggestion.employee.full_name}
                           </span>
                           <span className="text-muted-foreground">→</span>
                           <span>{suggestion.phorestStaff.name}</span>
+                          {suggestion.phorestStaff.branchName && (
+                            <Badge variant="outline" className="gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {suggestion.phorestStaff.branchName}
+                            </Badge>
+                          )}
                           <Badge variant={suggestion.confidence === 'high' ? 'default' : 'secondary'}>
                             {suggestion.confidence === 'high' ? 'Exact Match' : 'Partial Match'}
                           </Badge>
@@ -376,7 +438,7 @@ export default function PhorestSettings() {
                     <SelectValue placeholder="Select team member" />
                   </SelectTrigger>
                   <SelectContent>
-                    {unmappedEmployees.map((emp) => (
+                    {employees?.map((emp) => (
                       <SelectItem key={emp.user_id} value={emp.user_id}>
                         {emp.display_name || emp.full_name}
                       </SelectItem>
@@ -385,26 +447,27 @@ export default function PhorestSettings() {
                 </Select>
 
                 <Select 
-                  value={selectedPhorestStaff?.id || ''} 
-                  onValueChange={(id) => {
-                    const staff = unmappedPhorestStaff.find(s => s.id === id);
+                  value={selectedPhorestStaff ? `${selectedPhorestStaff.id}:${selectedPhorestStaff.branchId}` : ''} 
+                  onValueChange={(value) => {
+                    const [staffId, branchId] = value.split(':');
+                    const staff = filteredPhorestStaff.find(s => s.id === staffId && s.branchId === branchId);
                     setSelectedPhorestStaff(staff || null);
                   }}
                 >
-                  <SelectTrigger className="w-full md:w-64">
+                  <SelectTrigger className="w-full md:w-80">
                     <SelectValue placeholder="Select Phorest staff" />
                   </SelectTrigger>
                   <SelectContent>
-                    {unmappedPhorestStaff.length === 0 ? (
+                    {filteredPhorestStaff.length === 0 ? (
                       <SelectItem value="_none" disabled>
                         {phorestStaffList.length === 0 
                           ? 'Test connection to load staff' 
                           : 'All staff are mapped'}
                       </SelectItem>
                     ) : (
-                      unmappedPhorestStaff.map((staff) => (
-                        <SelectItem key={staff.id} value={staff.id}>
-                          {staff.name} ({staff.id})
+                      filteredPhorestStaff.map((staff) => (
+                        <SelectItem key={`${staff.id}:${staff.branchId}`} value={`${staff.id}:${staff.branchId}`}>
+                          {staff.name} {staff.branchName && `(${staff.branchName})`}
                         </SelectItem>
                       ))
                     )}
@@ -439,8 +502,8 @@ export default function PhorestSettings() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Team Member</TableHead>
-                      <TableHead>Phorest Staff ID</TableHead>
                       <TableHead>Phorest Name</TableHead>
+                      <TableHead>Location</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -458,11 +521,23 @@ export default function PhorestSettings() {
                             </p>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {mapping.phorest_staff_id}
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{mapping.phorest_staff_name || '-'}</p>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              {mapping.phorest_staff_id}
+                            </p>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          {mapping.phorest_staff_name || '-'}
+                          {mapping.phorest_branch_name ? (
+                            <Badge variant="outline" className="gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {mapping.phorest_branch_name}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant={mapping.is_active ? 'default' : 'secondary'}>
