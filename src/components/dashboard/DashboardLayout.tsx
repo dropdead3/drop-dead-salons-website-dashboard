@@ -84,7 +84,6 @@ import {
   FlaskConical,
   Link2,
   DollarSign,
-  Plug,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 
@@ -156,7 +155,6 @@ const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/handbooks', label: 'Handbooks', icon: FileText, permission: 'manage_handbooks' },
   { href: '/dashboard/admin/command-center-console', label: 'Command Center Console', icon: LayoutDashboard, permission: 'manage_visibility_console' },
   { href: '/dashboard/admin/program-editor', label: 'Program Editor', icon: Target, permission: 'manage_program_editor' },
-  { href: '/dashboard/admin/integrations', label: 'Integrations', icon: Plug, permission: 'manage_integrations' },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 
