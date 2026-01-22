@@ -925,7 +925,7 @@ export default function MyProfile() {
                           onClick={() => !isDisabled && toggleHighlightedService(specialty)}
                         >
                           {isSelected && <Star className="w-3 h-3 mr-1 fill-current" />}
-                          {specialty}
+                          {specialty.charAt(0).toUpperCase() + specialty.slice(1).toLowerCase()}
                         </Badge>
                       );
                     })}
