@@ -315,10 +315,10 @@ export type Database = {
           email: string | null
           id: string
           legal_name: string | null
-          logo_url: string | null
+          logo_dark_url: string | null
+          logo_light_url: string | null
           mailing_address: string | null
           phone: string | null
-          secondary_logo_url: string | null
           state: string | null
           updated_at: string
           website: string | null
@@ -332,10 +332,10 @@ export type Database = {
           email?: string | null
           id?: string
           legal_name?: string | null
-          logo_url?: string | null
+          logo_dark_url?: string | null
+          logo_light_url?: string | null
           mailing_address?: string | null
           phone?: string | null
-          secondary_logo_url?: string | null
           state?: string | null
           updated_at?: string
           website?: string | null
@@ -349,10 +349,10 @@ export type Database = {
           email?: string | null
           id?: string
           legal_name?: string | null
-          logo_url?: string | null
+          logo_dark_url?: string | null
+          logo_light_url?: string | null
           mailing_address?: string | null
           phone?: string | null
-          secondary_logo_url?: string | null
           state?: string | null
           updated_at?: string
           website?: string | null
