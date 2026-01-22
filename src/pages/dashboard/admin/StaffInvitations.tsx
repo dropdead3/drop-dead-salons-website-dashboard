@@ -102,7 +102,7 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
           {/* Welcome message */}
           <div className="text-center mb-3">
             <p className="text-base text-foreground font-display tracking-wide">Welcome to the team!</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5 max-w-[200px] mx-auto">
               You need to create your profile on our software system.
             </p>
           </div>
