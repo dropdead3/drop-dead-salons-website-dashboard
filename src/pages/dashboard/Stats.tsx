@@ -152,9 +152,12 @@ export default function Stats() {
           </Button>
         </div>
 
+        {/* Sales Data Card - Top Priority */}
+        <SalesStatsCard userId={user?.id} />
+
         {/* Phorest Stats Card (if connected) */}
         {myPhorestMetrics && (
-          <Card className="p-6 bg-primary/5 border-primary/20 mb-6">
+          <Card className="p-6 bg-primary/5 border-primary/20 mt-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Link2 className="w-5 h-5 text-primary" />
@@ -191,7 +194,7 @@ export default function Stats() {
 
         {/* Show connection prompt if not linked to Phorest */}
         {!isLinkedToPhorest && phorestConnection?.connected && (
-          <Card className="p-4 bg-muted/50 border-dashed mb-6">
+          <Card className="p-4 bg-muted/50 border-dashed mt-6">
             <p className="text-sm text-muted-foreground text-center">
               Your account isn't linked to Phorest yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
             </p>
@@ -200,7 +203,7 @@ export default function Stats() {
 
         {/* Personal Goals & Progress Section */}
         {user && (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 mt-6">
             <PersonalGoalsCard 
               userId={user.id}
               currentMonthlyRevenue={userMonthlySales?.totalRevenue || 0}
@@ -214,18 +217,17 @@ export default function Stats() {
 
         {/* Sales Achievements */}
         {user && (userMonthlySales?.totalRevenue || 0) > 0 && (
-          <SalesAchievements
-            totalRevenue={userMonthlySales?.totalRevenue || 0}
-            serviceRevenue={userMonthlySales?.serviceRevenue || 0}
-            productRevenue={userMonthlySales?.productRevenue || 0}
-            totalTransactions={userMonthlySales?.totalTransactions || 0}
-          />
+          <div className="mt-6">
+            <SalesAchievements
+              totalRevenue={userMonthlySales?.totalRevenue || 0}
+              serviceRevenue={userMonthlySales?.serviceRevenue || 0}
+              productRevenue={userMonthlySales?.productRevenue || 0}
+              totalTransactions={userMonthlySales?.totalTransactions || 0}
+            />
+          </div>
         )}
 
-        {/* Sales Data Card */}
-        <SalesStatsCard userId={user?.id} />
-
-        <Tabs defaultValue="visibility" className="space-y-6">
+        <Tabs defaultValue="visibility" className="space-y-6 mt-6">
           <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
             <TabsTrigger value="visibility" className="font-display text-xs tracking-wide">
               <Eye className="w-4 h-4 mr-2 hidden lg:block" />
