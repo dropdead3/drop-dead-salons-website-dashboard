@@ -343,22 +343,23 @@ export default function ManageRoles() {
                           <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                         )}
                         
-                        {/* Current Roles */}
+                        {/* Current Roles - ordered by database sort_order */}
                         {user.roles.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {user.roles.map(roleName => {
-                              const roleInfo = getRoleInfo(roleName);
-                              const colorClasses = roleInfo ? getRoleColorClasses(roleInfo.color) : getRoleColorClasses('gray');
-                              return (
-                                <Badge 
-                                  key={roleName} 
-                                  variant="outline" 
-                                  className={cn("text-xs", colorClasses.bg, colorClasses.text)}
-                                >
-                                  {roleInfo?.display_name || roleName}
-                                </Badge>
-                              );
-                            })}
+                            {roles
+                              .filter(role => user.roles.includes(role.name as AppRole))
+                              .map(role => {
+                                const colorClasses = getRoleColorClasses(role.color);
+                                return (
+                                  <Badge 
+                                    key={role.name} 
+                                    variant="outline" 
+                                    className={cn("text-xs", colorClasses.bg, colorClasses.text)}
+                                  >
+                                    {role.display_name}
+                                  </Badge>
+                                );
+                              })}
                           </div>
                         )}
                       </div>
