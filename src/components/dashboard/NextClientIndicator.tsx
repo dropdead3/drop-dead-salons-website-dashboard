@@ -70,8 +70,17 @@ export function NextClientIndicator({ userId }: NextClientIndicatorProps) {
     return () => clearInterval(interval);
   }, [nextAppointment?.dateTime]);
   
-  if (isLoading || !nextAppointment) {
+  if (isLoading) {
     return null;
+  }
+  
+  if (!nextAppointment) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Clock className="w-3.5 h-3.5" />
+        <span>No upcoming clients today</span>
+      </div>
+    );
   }
   
   return (
