@@ -9,6 +9,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { CustomCursor } from "./components/ui/CustomCursor";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ViewAsProvider } from "./contexts/ViewAsContext";
+import { HideNumbersProvider } from "./contexts/HideNumbersContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 // Public pages
@@ -77,6 +78,7 @@ const App = () => (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ViewAsProvider>
+            <HideNumbersProvider>
             <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -148,6 +150,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
             </TooltipProvider>
+            </HideNumbersProvider>
           </ViewAsProvider>
         </AuthProvider>
       </QueryClientProvider>
