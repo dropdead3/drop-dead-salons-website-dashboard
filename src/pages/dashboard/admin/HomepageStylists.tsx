@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Globe, Check, X, Loader2, User, MapPin, Clock, Eye, EyeOff, Users, Settings, ExternalLink, Sparkles } from 'lucide-react';
+import { Globe, Check, X, Loader2, User, MapPin, Clock, Eye, EyeOff, Users, Settings, ExternalLink, Sparkles, AlertCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -457,9 +457,12 @@ export default function HomepageStylists() {
               </div>
             </div>
             {showSampleCards && visibleStylists.length > 0 && (
-              <p className="text-xs text-muted-foreground mt-3 p-2 bg-muted rounded">
-                Note: Sample cards won't appear because you have {visibleStylists.length} real stylist(s) visible. Sample cards only show when no real stylists are visible.
-              </p>
+              <div className="flex items-start gap-2 mt-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive">
+                  <span className="font-medium">Sample cards hidden:</span> You have {visibleStylists.length} real stylist(s) visible on the homepage. Sample cards only appear when no real stylists are visible.
+                </p>
+              </div>
             )}
             <div className="mt-4 pt-4 border-t">
               <Button
