@@ -56,6 +56,7 @@ import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLev
 import { HandbooksContent } from '@/components/dashboard/settings/HandbooksContent';
 import { CommandCenterContent } from '@/components/dashboard/settings/CommandCenterContent';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
+import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER } from '@/hooks/useSettingsLayout';
 import { cn } from '@/lib/utils';
 import {
@@ -83,13 +84,6 @@ interface UserWithRole {
   role: string;
 }
 
-const roleOptions = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'stylist', label: 'Stylist' },
-  { value: 'receptionist', label: 'Receptionist' },
-  { value: 'assistant', label: 'Assistant' },
-];
 
 type SettingsCategory = 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | null;
 
@@ -212,6 +206,7 @@ export default function Settings() {
   const { toast } = useToast();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { colorTheme, setColorTheme, mounted: colorMounted } = useColorTheme();
+  const { roleOptions: dynamicRoleOptions, isLoading: rolesLoading } = useRoleUtils();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
@@ -555,7 +550,7 @@ export default function Settings() {
                               )}
                             </SelectTrigger>
                             <SelectContent>
-                              {roleOptions.map(role => (
+                              {dynamicRoleOptions.map(role => (
                                 <SelectItem key={role.value} value={role.value}>
                                   {role.label}
                                 </SelectItem>
