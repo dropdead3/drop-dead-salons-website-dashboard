@@ -51,17 +51,16 @@ export function NextClientIndicator({ userId }: NextClientIndicatorProps) {
         return;
       }
       
-      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
       
-      if (hours > 0) {
-        setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
-      } else if (minutes > 0) {
-        setTimeRemaining(`${minutes}m ${seconds}s`);
-      } else {
-        setTimeRemaining(`${seconds}s`);
-      }
+      const parts = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hours > 0) parts.push(`${hours}h`);
+      if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+      
+      setTimeRemaining(parts.join(' '));
     };
     
     updateCountdown();
@@ -85,12 +84,9 @@ export function NextClientIndicator({ userId }: NextClientIndicatorProps) {
   
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <Clock className="w-3.5 h-3.5" />
       <span>
-        Your next client is <span className="font-medium text-foreground">{nextAppointment.client_name || 'Unknown'}</span>
-      </span>
-      <span className="flex items-center gap-1 text-primary font-medium">
-        <Clock className="w-3.5 h-3.5" />
-        {timeRemaining}
+        Your next client is <span className="font-medium text-foreground">{nextAppointment.client_name || 'Unknown'}</span> in <span className="text-primary font-medium">{timeRemaining}</span>
       </span>
     </div>
   );
