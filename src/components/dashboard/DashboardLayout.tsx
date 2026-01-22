@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -188,11 +188,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
 
-  // Restore sidebar scroll position after navigation
-  useEffect(() => {
-    if (sidebarNavRef.current && sidebarScrollPosition > 0) {
-      sidebarNavRef.current.scrollTop = sidebarScrollPosition;
-    }
+  // Restore sidebar scroll position after navigation - use multiple attempts to ensure content is ready
+  useLayoutEffect(() => {
+    const restoreScroll = () => {
+      if (sidebarNavRef.current && sidebarScrollPosition > 0) {
+        sidebarNavRef.current.scrollTop = sidebarScrollPosition;
+      }
+    };
+    
+    // Try immediately
+    restoreScroll();
+    
+    // Also try after a short delay to handle async rendering
+    const timer1 = requestAnimationFrame(restoreScroll);
+    const timer2 = setTimeout(restoreScroll, 50);
+    const timer3 = setTimeout(restoreScroll, 150);
+    
+    return () => {
+      cancelAnimationFrame(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
   }, [location.pathname]);
 
   // Save sidebar scroll position before navigation
