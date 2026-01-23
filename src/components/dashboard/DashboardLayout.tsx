@@ -727,8 +727,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   };
 
-  // Theme Mode Toggle Component - Pill style
+  // Theme Mode Toggle Component - Pill style (Light/Dark only)
   const ThemeModeToggle = () => {
+    const isLight = resolvedTheme === 'light';
+    
     return (
       <div className="flex items-center h-8 rounded-full bg-muted/50 border border-border/50 p-0.5">
         <Tooltip>
@@ -737,7 +739,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={() => setTheme('light')}
               className={cn(
                 "flex items-center justify-center w-7 h-7 rounded-full transition-all",
-                theme === 'light' 
+                isLight 
                   ? "bg-background shadow-sm text-foreground" 
                   : "text-muted-foreground hover:text-foreground"
               )}
@@ -754,7 +756,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={() => setTheme('dark')}
               className={cn(
                 "flex items-center justify-center w-7 h-7 rounded-full transition-all",
-                theme === 'dark' 
+                !isLight 
                   ? "bg-background shadow-sm text-foreground" 
                   : "text-muted-foreground hover:text-foreground"
               )}
@@ -763,23 +765,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">Dark mode</TooltipContent>
-        </Tooltip>
-        
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setTheme('system')}
-              className={cn(
-                "flex items-center justify-center w-7 h-7 rounded-full transition-all",
-                theme === 'system' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Monitor className="w-3.5 h-3.5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">System preference</TooltipContent>
         </Tooltip>
       </div>
     );
