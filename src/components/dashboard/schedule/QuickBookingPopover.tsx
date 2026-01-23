@@ -34,6 +34,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useServicesByCategory } from '@/hooks/usePhorestServices';
 import { useLocations } from '@/hooks/useLocations';
 import { NewClientDialog } from './NewClientDialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface QuickBookingPopoverProps {
   date: Date;
@@ -61,6 +62,7 @@ export function QuickBookingPopover({
   children,
 }: QuickBookingPopoverProps) {
   const queryClient = useQueryClient();
+  const { user, roles } = useAuth();
   const [step, setStep] = useState<Step>('client');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   
@@ -74,15 +76,23 @@ export function QuickBookingPopover({
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [] } = useServicesByCategory(selectedLocation || undefined);
 
-  // Fetch clients
+  // Check if user can view all clients (admins, managers, super_admin)
+  const canViewAllClients = roles.some(r => ['admin', 'manager', 'super_admin'].includes(r));
+
+  // Fetch clients - stylists only see their own clients via RLS + preferred_stylist_id filter
   const { data: clients = [] } = useQuery({
-    queryKey: ['phorest-clients', clientSearch],
+    queryKey: ['phorest-clients-booking', clientSearch, user?.id, canViewAllClients],
     queryFn: async () => {
       let query = supabase
         .from('phorest_clients')
-        .select('id, phorest_client_id, name, email, phone')
+        .select('id, phorest_client_id, name, email, phone, preferred_stylist_id')
         .order('name')
-        .limit(10);
+        .limit(20);
+      
+      // Stylists only see their own clients
+      if (!canViewAllClients && user?.id) {
+        query = query.eq('preferred_stylist_id', user.id);
+      }
       
       if (clientSearch) {
         query = query.or(`name.ilike.%${clientSearch}%,phone.ilike.%${clientSearch}%,email.ilike.%${clientSearch}%`);
@@ -91,6 +101,7 @@ export function QuickBookingPopover({
       const { data } = await query;
       return data as PhorestClient[];
     },
+    enabled: !!user?.id,
   });
 
   // Fetch stylists
