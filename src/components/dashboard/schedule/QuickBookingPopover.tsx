@@ -422,7 +422,7 @@ export function QuickBookingPopover({
               {/* Services list with category quick nav */}
               <div className="flex flex-1 overflow-hidden">
                 <ScrollArea className="flex-1">
-                  <div className="p-3 space-y-4 pr-10">
+                  <div className="p-3 space-y-4">
                     {!selectedLocation ? (
                       <div className="text-center py-6 text-muted-foreground text-sm">
                         Select a location first
@@ -504,7 +504,7 @@ export function QuickBookingPopover({
 
                 {/* Category quick nav - right side icons */}
                 {servicesByCategory && Object.keys(servicesByCategory).length > 0 && selectedLocation && (
-                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card via-card to-transparent flex flex-col items-center justify-center gap-1 py-2">
+                  <div className="w-10 shrink-0 border-l border-border bg-card flex flex-col items-center justify-start gap-0.5 py-2 overflow-y-auto">
                     <TooltipProvider delayDuration={0}>
                       {Object.keys(servicesByCategory).map((category) => {
                         const CategoryIcon = getCategoryIcon(category);
