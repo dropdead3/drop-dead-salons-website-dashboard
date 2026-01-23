@@ -10,13 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { 
   Search, 
   Clock, 
@@ -34,7 +27,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useServicesByCategory } from '@/hooks/usePhorestServices';
+import { useAllServicesByCategory } from '@/hooks/usePhorestServices';
 import { useLocations } from '@/hooks/useLocations';
 import { NewClientDialog } from './NewClientDialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,9 +48,9 @@ interface PhorestClient {
   phone: string | null;
 }
 
-type Step = 'service' | 'client' | 'stylist' | 'confirm';
+type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
 
-const STEPS: Step[] = ['service', 'client', 'stylist', 'confirm'];
+const STEPS: Step[] = ['service', 'location', 'client', 'stylist', 'confirm'];
 
 // Map category names to colors and abbreviations
 const getCategoryStyle = (category: string): { bg: string; abbr: string } => {
@@ -98,7 +91,12 @@ export function QuickBookingPopover({
   const [serviceSearch, setServiceSearch] = useState('');
 
   const { data: locations = [] } = useLocations();
-  const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
+  const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useAllServicesByCategory();
+
+  // Get selected service details (for totals calculation)
+  const selectedServiceDetails = useMemo(() => {
+    return services.filter(s => selectedServices.includes(s.phorest_service_id));
+  }, [services, selectedServices]);
 
   const canViewAllClients = roles.some(r => ['admin', 'manager', 'super_admin', 'receptionist'].includes(r));
 
@@ -147,10 +145,7 @@ export function QuickBookingPopover({
     enabled: open,
   });
 
-  // Calculate totals
-  const selectedServiceDetails = useMemo(() => {
-    return services.filter(s => selectedServices.includes(s.phorest_service_id));
-  }, [services, selectedServices]);
+  // totalDuration and totalPrice use selectedServiceDetails defined above
 
   const totalDuration = useMemo(() => {
     return selectedServiceDetails.reduce((sum, s) => sum + s.duration_minutes, 0);
@@ -211,13 +206,16 @@ export function QuickBookingPopover({
   };
 
   const handleServicesComplete = () => {
-    setStep('client');
+    setStep('location');
   };
 
   const handleBack = () => {
     switch (step) {
-      case 'client':
+      case 'location':
         setStep('service');
+        break;
+      case 'client':
+        setStep('location');
         break;
       case 'stylist':
         setStep('client');
@@ -395,38 +393,13 @@ export function QuickBookingPopover({
             </div>
           )}
 
-          {/* Step 2: Service Selection */}
+          {/* Step 1: Service Selection (Category → Services) */}
           {step === 'service' && (
             <div className="flex flex-col" style={{ height: '400px' }}>
-              {/* Location selector */}
-              <div className="p-3 border-b border-border">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Location</span>
-                </div>
-                <Select value={selectedLocation} onValueChange={(val) => {
-                  setSelectedLocation(val);
-                  setSelectedCategory(null);
-                }}>
-                  <SelectTrigger className="h-9 bg-muted/50 border-0">
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((loc) => (
-                      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Category or Services View */}
               <ScrollArea className="flex-1">
                 <div className="p-3">
-                  {!selectedLocation ? (
-                    <div className="text-center py-6 text-muted-foreground text-sm">
-                      Select a location first
-                    </div>
-                  ) : isLoadingServices ? (
+                  {isLoadingServices ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                     </div>
@@ -622,10 +595,80 @@ export function QuickBookingPopover({
                 )}
                 <Button
                   className="w-full h-9"
-                  disabled={!selectedLocation}
-                  onClick={() => setStep('stylist')}
+                  onClick={() => setStep('location')}
                 >
                   {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Location Selection */}
+          {step === 'location' && (
+            <div className="flex flex-col" style={{ height: '400px' }}>
+              <ScrollArea className="flex-1">
+                <div className="p-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Select Location</span>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    {locations.map((loc) => {
+                      const isSelected = selectedLocation === loc.id;
+                      return (
+                        <button
+                          key={loc.id}
+                          className={cn(
+                            'w-full flex items-center justify-between p-3 rounded-lg text-left transition-all',
+                            isSelected
+                              ? 'bg-primary/10 ring-1 ring-primary/30'
+                              : 'hover:bg-muted/70'
+                          )}
+                          onClick={() => setSelectedLocation(loc.id)}
+                        >
+                          <div className="flex-1 min-w-0 mr-2">
+                            <div className="font-medium text-sm">{loc.name}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {loc.city}
+                            </div>
+                          </div>
+                          <div
+                            className={cn(
+                              'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                              isSelected
+                                ? 'bg-primary border-primary text-primary-foreground'
+                                : 'border-muted-foreground/30'
+                            )}
+                          >
+                            {isSelected && <Check className="h-3 w-3" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </ScrollArea>
+
+              {/* Footer */}
+              <div className="p-3 border-t border-border bg-card space-y-2">
+                {selectedServices.length > 0 && (
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                      </Badge>
+                      <span className="text-muted-foreground">{totalDuration}m</span>
+                    </div>
+                    <span className="font-semibold">${totalPrice.toFixed(0)}</span>
+                  </div>
+                )}
+                <Button
+                  className="w-full h-9"
+                  disabled={!selectedLocation}
+                  onClick={() => setStep('client')}
+                >
+                  Continue
                 </Button>
               </div>
             </div>
