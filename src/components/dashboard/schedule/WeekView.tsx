@@ -314,12 +314,12 @@ export function WeekView({
                       >
                         <div 
                           className={cn(
-                            'h-[20px] border-b hover:bg-primary/10 cursor-pointer transition-colors',
+                            'h-[20px] hover:bg-primary/10 cursor-pointer transition-colors',
                             slot.isHour 
-                              ? 'border-border/60' 
+                              ? 'border-t border-border/60' 
                               : slot.isHalf 
-                                ? 'border-dotted border-border/40'
-                                : 'border-dotted border-border/20'
+                                ? 'border-t border-dotted border-border/40'
+                                : 'border-t border-dotted border-border/20'
                           )}
                         />
                       </QuickBookingPopover>
