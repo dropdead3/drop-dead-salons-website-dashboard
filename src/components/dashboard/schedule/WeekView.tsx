@@ -17,6 +17,7 @@ import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCa
 import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColors, getServiceColor } from '@/hooks/useServiceCategoryColors';
 import type { ServiceCategoryColor } from '@/hooks/useServiceCategoryColors';
+import { useCalendarTheme } from '@/hooks/useCalendarTheme';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -173,6 +174,7 @@ export function WeekView({
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { data: serviceCategoryColors } = useServiceCategoryColors();
+  const { theme } = useCalendarTheme();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   
   const weekDays = useMemo(() => 
@@ -226,10 +228,22 @@ export function WeekView({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto border border-border rounded-lg bg-card">
+      <div 
+        className="flex-1 overflow-auto border rounded-lg"
+        style={{ 
+          backgroundColor: theme.calendar_bg_color,
+          borderColor: theme.cell_border_color
+        }}
+      >
         <div className="min-w-[800px]">
           {/* Day Headers */}
-          <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border bg-muted/40 sticky top-0 z-10">
+          <div 
+            className="grid grid-cols-[70px_repeat(7,1fr)] sticky top-0 z-10"
+            style={{ 
+              backgroundColor: theme.days_row_bg_color,
+              borderBottom: `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}`
+            }}
+          >
             <div className="p-2" /> {/* Time column spacer */}
             {weekDays.map((day) => {
               const dayIsToday = isToday(day);
@@ -239,31 +253,36 @@ export function WeekView({
               return (
                 <div 
                   key={day.toISOString()} 
-                  className={cn(
-                    'py-3 px-2 text-center border-l border-border',
-                    dayIsToday && 'bg-primary/5'
-                  )}
+                  className="py-3 px-2 text-center"
+                  style={{ 
+                    borderLeft: `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}`,
+                    backgroundColor: dayIsToday ? `${theme.today_highlight_color}15` : 'transparent'
+                  }}
                 >
-                  <div className={cn(
-                    'text-[10px] uppercase tracking-wider font-medium',
-                    dayIsToday ? 'text-primary' : 'text-muted-foreground'
-                  )}>
+                  <div 
+                    className="text-[10px] uppercase tracking-wider font-medium"
+                    style={{ color: dayIsToday ? theme.today_highlight_color : theme.days_row_text_color }}
+                  >
                     {format(day, 'EEE')}
                   </div>
                   <div className="flex items-center justify-center mt-1">
-                    <span className={cn(
-                      'text-xl font-semibold flex items-center justify-center transition-colors',
-                      dayIsToday 
-                        ? 'bg-foreground text-background w-8 h-8 rounded-full' 
-                        : 'text-foreground'
-                    )}>
+                    <span 
+                      className="text-xl font-semibold flex items-center justify-center transition-colors w-8 h-8 rounded-full"
+                      style={dayIsToday ? { 
+                        backgroundColor: theme.today_badge_bg_color, 
+                        color: theme.today_badge_text_color 
+                      } : { color: theme.days_row_text_color }}
+                    >
                       {format(day, 'd')}
                     </span>
                   </div>
-                  <div className={cn(
-                    'text-[10px] mt-1',
-                    dayIsToday ? 'text-primary font-medium' : 'text-muted-foreground'
-                  )}>
+                  <div 
+                    className="text-[10px] mt-1"
+                    style={{ 
+                      color: dayIsToday ? theme.today_highlight_color : theme.days_row_text_color,
+                      fontWeight: dayIsToday ? 500 : 400
+                    }}
+                  >
                     {dayIsToday ? 'Today' : `${apptCount} appts`}
                   </div>
                 </div>
@@ -274,19 +293,20 @@ export function WeekView({
           {/* Time Grid */}
           <div className="grid grid-cols-[70px_repeat(7,1fr)] relative">
             {/* Time Labels Column */}
-            <div className="relative bg-muted/10">
+            <div className="relative" style={{ backgroundColor: theme.days_row_bg_color }}>
               {timeSlots.map((slot, index) => (
                 <div 
                   key={`${slot.hour}-${slot.minute}`}
                   className={cn(
-                    'h-[20px] text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
+                    'h-[20px] text-xs pr-2 text-right flex items-center justify-end',
                     slot.isHour && 'font-medium'
                   )}
+                  style={{ color: theme.days_row_text_color }}
                 >
                   {slot.label && (
-                    <span className={cn(
-                      slot.isHour ? 'text-foreground' : 'text-muted-foreground/60'
-                    )}>
+                    <span style={{ 
+                      color: slot.isHour ? theme.days_row_text_color : `${theme.days_row_text_color}80` 
+                    }}>
                       {slot.label}
                     </span>
                   )}
@@ -303,10 +323,11 @@ export function WeekView({
               return (
                 <div 
                   key={day.toISOString()} 
-                  className={cn(
-                    'relative border-l border-border',
-                    isCurrentDay && 'bg-primary/5'
-                  )}
+                  className="relative"
+                  style={{ 
+                    borderLeft: `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}`,
+                    backgroundColor: isCurrentDay ? `${theme.today_highlight_color}08` : theme.calendar_bg_color
+                  }}
                 >
                   {/* Time slot rows */}
                   {timeSlots.map((slot) => {
@@ -328,14 +349,22 @@ export function WeekView({
                         }}
                       >
                         <div 
-                          className={cn(
-                            'h-[20px] hover:bg-primary/10 cursor-pointer transition-colors',
-                            slot.isHour 
-                              ? 'border-t border-border/60' 
-                              : slot.isHalf 
-                                ? 'border-t border-dotted border-border/40'
-                                : 'border-t border-dotted border-border/20'
-                          )}
+                          className="h-[20px] cursor-pointer transition-colors"
+                          style={{ 
+                            borderTop: `1px ${slot.isHour ? theme.cell_border_style : 'dotted'} ${
+                              slot.isHour 
+                                ? theme.hour_line_color 
+                                : slot.isHalf 
+                                  ? theme.half_hour_line_color 
+                                  : theme.quarter_hour_line_color
+                            }`
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.target as HTMLElement).style.backgroundColor = `${theme.today_highlight_color}20`;
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.target as HTMLElement).style.backgroundColor = 'transparent';
+                          }}
                         />
                       </QuickBookingPopover>
                     );
@@ -362,9 +391,18 @@ export function WeekView({
                       style={{ top: `${currentTimeOffset}px` }}
                     >
                       <div className="relative">
-                        <div className="absolute left-0 right-0 border-t-2 border-blue-500" />
-                        <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-blue-500 rounded-full shadow" />
-                        <div className="absolute left-3 -top-2.5 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow">
+                        <div 
+                          className="absolute left-0 right-0 border-t-2"
+                          style={{ borderColor: theme.current_time_color }}
+                        />
+                        <div 
+                          className="absolute -left-1 -top-1.5 w-3 h-3 rounded-full shadow"
+                          style={{ backgroundColor: theme.current_time_color }}
+                        />
+                        <div 
+                          className="absolute left-3 -top-2.5 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow"
+                          style={{ backgroundColor: theme.current_time_color }}
+                        >
                           {format(now, 'h:mm a')}
                         </div>
                       </div>
