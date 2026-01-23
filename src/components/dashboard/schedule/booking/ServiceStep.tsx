@@ -89,8 +89,8 @@ export function ServiceStep({
           ) : hasServices ? (
             Object.entries(servicesByCategory).map(([category, services]) => (
               <div key={category}>
-                <div className="bg-oat -mx-4 px-4 py-2 mb-2 border-y border-border/40">
-                  <h3 className="text-xs font-semibold text-oat-foreground uppercase tracking-wider">
+                <div className="bg-muted -mx-4 px-4 py-2 mb-2 border-y border-border/40">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     {category}
                   </h3>
                 </div>
