@@ -86,6 +86,7 @@ import {
   FlaskConical,
   Link2,
   DollarSign,
+  CalendarDays,
   PanelLeftClose,
   ChevronRight,
 } from 'lucide-react';
@@ -111,6 +112,7 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
+  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar' },
   { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
 ];
 
@@ -252,7 +254,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         'request_assistant', 'manage_assistant_schedule', 'schedule_meetings', 'view_onboarding',
         'view_handbooks', 'view_team_overview', 'manage_announcements', 'view_all_stats',
         'approve_accounts', 'manage_user_roles', 'manage_handbooks', 'manage_homepage_stylists',
-        'manage_settings', 'grant_super_admin'
+        'manage_settings', 'grant_super_admin', 'view_booking_calendar', 'view_all_locations_calendar',
+        'view_team_appointments', 'create_appointments', 'add_appointment_notes'
       ],
       admin: [
         'view_command_center', 'view_team_directory', 'view_training', 'access_client_engine',
@@ -260,41 +263,46 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         'request_assistant', 'manage_assistant_schedule', 'schedule_meetings', 'view_onboarding',
         'view_handbooks', 'view_team_overview', 'manage_announcements', 'view_all_stats',
         'approve_accounts', 'manage_user_roles', 'manage_handbooks', 'manage_homepage_stylists',
-        'manage_settings', 'grant_super_admin'
+        'manage_settings', 'grant_super_admin', 'view_booking_calendar', 'view_all_locations_calendar',
+        'view_team_appointments', 'create_appointments', 'add_appointment_notes'
       ],
       manager: [
         'view_command_center', 'view_team_directory', 'view_training', 'access_client_engine',
         'ring_the_bell', 'view_leaderboard', 'view_own_stats', 'view_assistant_schedule',
         'request_assistant', 'schedule_meetings', 'view_onboarding', 'view_handbooks',
-        'view_team_overview', 'manage_announcements', 'view_all_stats'
+        'view_team_overview', 'manage_announcements', 'view_all_stats', 'view_booking_calendar',
+        'view_all_locations_calendar', 'view_team_appointments', 'create_appointments', 'add_appointment_notes'
       ],
       stylist: [
         'view_command_center', 'view_team_directory', 'view_training', 'access_client_engine',
         'ring_the_bell', 'view_leaderboard', 'view_own_stats', 'view_assistant_schedule',
-        'request_assistant', 'schedule_meetings', 'view_onboarding', 'view_handbooks'
+        'request_assistant', 'schedule_meetings', 'view_onboarding', 'view_handbooks',
+        'view_booking_calendar', 'view_own_appointments'
       ],
       receptionist: [
         'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
-        'schedule_meetings', 'view_onboarding', 'view_handbooks'
+        'schedule_meetings', 'view_onboarding', 'view_handbooks', 'view_booking_calendar',
+        'view_all_locations_calendar', 'view_team_appointments', 'create_appointments', 'add_appointment_notes'
       ],
       assistant: [ // Legacy
         'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
         'view_assistant_schedule', 'manage_assistant_schedule', 'schedule_meetings',
-        'view_onboarding', 'view_handbooks'
+        'view_onboarding', 'view_handbooks', 'view_booking_calendar', 'view_own_appointments'
       ],
       stylist_assistant: [
         'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
         'view_assistant_schedule', 'manage_assistant_schedule', 'schedule_meetings',
-        'view_onboarding', 'view_handbooks'
+        'view_onboarding', 'view_handbooks', 'view_booking_calendar', 'view_own_appointments'
       ],
       admin_assistant: [
         'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
-        'schedule_meetings', 'view_onboarding', 'view_handbooks', 'view_team_overview'
+        'schedule_meetings', 'view_onboarding', 'view_handbooks', 'view_team_overview',
+        'view_booking_calendar', 'view_team_appointments'
       ],
       operations_assistant: [
         'view_command_center', 'view_team_directory', 'view_training', 'view_leaderboard',
         'view_assistant_schedule', 'manage_assistant_schedule', 'schedule_meetings',
-        'view_onboarding', 'view_handbooks'
+        'view_onboarding', 'view_handbooks', 'view_booking_calendar', 'view_own_appointments'
       ],
     };
     return rolePermissionMap[role] || [];

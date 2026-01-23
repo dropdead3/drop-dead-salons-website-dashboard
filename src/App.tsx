@@ -69,6 +69,7 @@ import ProgramAnalytics from "./pages/dashboard/admin/ProgramAnalytics";
 import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 import SalesDashboard from "./pages/dashboard/admin/SalesDashboard";
 import MyClients from "./pages/dashboard/MyClients";
+import Schedule from "./pages/dashboard/Schedule";
 
 const queryClient = new QueryClient();
 
@@ -115,6 +116,7 @@ const App = () => (
               <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
               <Route path="/dashboard/my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
               <Route path="/dashboard/my-clients" element={<ProtectedRoute requiredPermission="view_own_stats"><MyClients /></ProtectedRoute>} />
+              <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
               
               {/* Admin routes */}
               <Route path="/dashboard/admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />
