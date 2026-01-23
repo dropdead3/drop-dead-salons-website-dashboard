@@ -2273,6 +2273,7 @@ export type Database = {
           is_active: boolean
           phorest_branch_id: string | null
           phorest_branch_name: string | null
+          phorest_staff_email: string | null
           phorest_staff_id: string
           phorest_staff_name: string | null
           show_on_calendar: boolean | null
@@ -2285,6 +2286,7 @@ export type Database = {
           is_active?: boolean
           phorest_branch_id?: string | null
           phorest_branch_name?: string | null
+          phorest_staff_email?: string | null
           phorest_staff_id: string
           phorest_staff_name?: string | null
           show_on_calendar?: boolean | null
@@ -2297,6 +2299,7 @@ export type Database = {
           is_active?: boolean
           phorest_branch_id?: string | null
           phorest_branch_name?: string | null
+          phorest_staff_email?: string | null
           phorest_staff_id?: string
           phorest_staff_name?: string | null
           show_on_calendar?: boolean | null

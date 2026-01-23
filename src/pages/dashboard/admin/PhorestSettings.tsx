@@ -248,6 +248,7 @@ export default function PhorestSettings() {
       user_id: selectedUserId,
       phorest_staff_id: selectedPhorestStaff.id,
       phorest_staff_name: selectedPhorestStaff.name,
+      phorest_staff_email: selectedPhorestStaff.email,
       phorest_branch_id: selectedPhorestStaff.branchId,
       phorest_branch_name: selectedPhorestStaff.branchName,
     });
@@ -261,6 +262,7 @@ export default function PhorestSettings() {
       user_id: employee.user_id,
       phorest_staff_id: phorestStaff.id,
       phorest_staff_name: phorestStaff.name,
+      phorest_staff_email: phorestStaff.email,
       phorest_branch_id: phorestStaff.branchId,
       phorest_branch_name: phorestStaff.branchName,
     });
@@ -640,7 +642,7 @@ export default function PhorestSettings() {
                                       <p className="font-medium">{displayName}</p>
                                       <p className="text-sm text-muted-foreground">{email}</p>
                                       <p className="text-xs text-muted-foreground/70 italic">
-                                        Phorest: {firstMapping.phorest_staff_name}
+                                        Phorest: {firstMapping.phorest_staff_email || firstMapping.phorest_staff_name}
                                       </p>
                                     </div>
                                     <Badge variant="outline" className="gap-1">
@@ -751,7 +753,7 @@ export default function PhorestSettings() {
                               <p className="font-medium">{displayName}</p>
                               <p className="text-sm text-muted-foreground">{email}</p>
                               <p className="text-xs text-muted-foreground/70 italic">
-                                Phorest: {mapping.phorest_staff_name}
+                                Phorest: {mapping.phorest_staff_email || mapping.phorest_staff_name}
                               </p>
                             </div>
                           </TableCell>

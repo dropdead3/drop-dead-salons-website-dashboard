@@ -33,6 +33,7 @@ export interface PhorestStaffMapping {
   user_id: string;
   phorest_staff_id: string;
   phorest_staff_name: string | null;
+  phorest_staff_email: string | null;
   phorest_branch_id: string | null;
   phorest_branch_name: string | null;
   is_active: boolean;
@@ -246,6 +247,7 @@ export function useCreateStaffMapping() {
       user_id: string; 
       phorest_staff_id: string; 
       phorest_staff_name?: string;
+      phorest_staff_email?: string;
       phorest_branch_id?: string;
       phorest_branch_name?: string;
     }) => {
