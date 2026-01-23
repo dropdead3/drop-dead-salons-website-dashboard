@@ -33,6 +33,7 @@ import { NewClientDialog } from './NewClientDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor } from '@/utils/categoryColors';
+import { getLevelSlug, getLevelNumber, findLevelBasedPrice } from '@/utils/levelPricing';
 
 interface QuickBookingPopoverProps {
   date: Date;
@@ -152,7 +153,8 @@ export function QuickBookingPopover({
           employee_profiles!phorest_staff_mapping_user_id_fkey(
             display_name,
             full_name,
-            photo_url
+            photo_url,
+            stylist_level
           )
         `)
         .eq('is_active', true)
@@ -172,6 +174,28 @@ export function QuickBookingPopover({
   const totalPrice = useMemo(() => {
     return selectedServiceDetails.reduce((sum, s) => sum + (s.price || 0), 0);
   }, [selectedServiceDetails]);
+
+  // Calculate level-based pricing when a stylist is selected
+  const selectedStylistData = useMemo(() => {
+    return stylists.find(s => s.user_id === selectedStylist);
+  }, [stylists, selectedStylist]);
+
+  const selectedLevelSlug = useMemo(() => {
+    return getLevelSlug(selectedStylistData?.employee_profiles?.stylist_level);
+  }, [selectedStylistData]);
+
+  const selectedLevelNumber = useMemo(() => {
+    return getLevelNumber(selectedStylistData?.employee_profiles?.stylist_level);
+  }, [selectedStylistData]);
+
+  const levelBasedTotalPrice = useMemo(() => {
+    if (!selectedLevelSlug) return totalPrice;
+    
+    return selectedServiceDetails.reduce((sum, service) => {
+      const levelPrice = findLevelBasedPrice(service.name, selectedLevelSlug);
+      return sum + (levelPrice ?? service.price ?? 0);
+    }, 0);
+  }, [selectedServiceDetails, selectedLevelSlug, totalPrice]);
 
   // Create booking mutation
   const createBooking = useMutation({
@@ -743,6 +767,17 @@ export function QuickBookingPopover({
                       const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0) + '.' : '';
                       const displayName = `${firstName} ${lastInitial}`.trim();
                       const isSelected = selectedStylist === stylist.user_id;
+                      const stylistLevelNum = getLevelNumber(stylist.employee_profiles?.stylist_level);
+                      const stylistLevelSlug = getLevelSlug(stylist.employee_profiles?.stylist_level);
+                      
+                      // Calculate this stylist's total price
+                      const stylistTotalPrice = stylistLevelSlug 
+                        ? selectedServiceDetails.reduce((sum, service) => {
+                            const levelPrice = findLevelBasedPrice(service.name, stylistLevelSlug);
+                            return sum + (levelPrice ?? service.price ?? 0);
+                          }, 0)
+                        : totalPrice;
+                      
                       return (
                         <button
                           key={stylist.user_id}
@@ -767,9 +802,23 @@ export function QuickBookingPopover({
                               </div>
                             )}
                           </div>
-                          <span className="text-sm font-medium text-foreground">
-                            {displayName}
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium text-foreground block">
+                              {displayName}
+                            </span>
+                            {stylistLevelNum && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 mt-0.5 font-normal">
+                                Level {stylistLevelNum}
+                              </Badge>
+                            )}
+                          </div>
+                          {selectedServices.length > 0 && (
+                            <div className="text-right shrink-0">
+                              <span className="text-sm font-semibold text-foreground">
+                                ${stylistTotalPrice.toFixed(0)}
+                              </span>
+                            </div>
+                          )}
                         </button>
                       );
                     })}
@@ -778,7 +827,21 @@ export function QuickBookingPopover({
               </ScrollArea>
 
               {/* Footer */}
-              <div className="p-3 border-t border-border bg-card">
+              <div className="p-3 border-t border-border bg-card space-y-2">
+                {selectedServices.length > 0 && selectedStylist && selectedLevelNumber && (
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                      </Badge>
+                      <span className="text-muted-foreground">{totalDuration}m</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-semibold">${levelBasedTotalPrice.toFixed(0)}</span>
+                      <span className="text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
+                    </div>
+                  </div>
+                )}
                 <Button
                   className="w-full h-10"
                   disabled={!selectedStylist}
