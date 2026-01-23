@@ -837,22 +837,22 @@ export function QuickBookingPopover({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-foreground block">
+                            <span className="text-sm font-medium text-foreground block truncate">
                               {displayName}
                             </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 pr-2 justify-end">
                             {stylistLevelNum && (
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 mt-0.5 font-normal">
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal whitespace-nowrap">
                                 Level {stylistLevelNum}
                               </Badge>
                             )}
-                          </div>
-                          {selectedServices.length > 0 && (
-                            <div className="text-right shrink-0 pr-2">
-                              <span className="text-sm font-semibold text-foreground">
-                                ${stylistTotalPrice.toFixed(0)}
+                            {selectedServices.length > 0 && (
+                              <span className="text-sm font-semibold text-foreground tabular-nums min-w-[70px] text-right">
+                                ${stylistTotalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </span>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </button>
                       );
                     })}
