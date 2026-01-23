@@ -709,7 +709,7 @@ export function QuickBookingPopover({
                   disabled={!selectedLocation}
                   onClick={() => setStep('client')}
                 >
-                  Continue
+                  Confirm location
                 </Button>
               </div>
             </div>
