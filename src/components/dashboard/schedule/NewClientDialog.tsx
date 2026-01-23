@@ -52,6 +52,7 @@ export function NewClientDialog({
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [locationId, setLocationId] = useState(defaultLocationId || '');
+  const [showLocationSelector, setShowLocationSelector] = useState(!defaultLocationId);
 
   const resetForm = () => {
     setFirstName('');
@@ -143,12 +144,23 @@ export function NewClientDialog({
             </div>
           </div>
 
-          {defaultLocationId ? (
-            <div className="rounded-md bg-muted px-3 py-2 text-sm">
-              <span className="text-muted-foreground">Location: </span>
-              <span className="font-medium">
-                {locations.find(l => l.id === defaultLocationId)?.name || 'Selected location'}
-              </span>
+          {defaultLocationId && !showLocationSelector ? (
+            <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Location: </span>
+                <span className="font-medium">
+                  {locations.find(l => l.id === locationId)?.name || 'Selected location'}
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-auto px-2 py-1 text-xs"
+                onClick={() => setShowLocationSelector(true)}
+              >
+                Change
+              </Button>
             </div>
           ) : (
             <div className="space-y-2">
