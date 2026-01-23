@@ -186,6 +186,9 @@ export function WeekView({
             <div className="p-3" /> {/* Time column spacer */}
             {weekDays.map((day) => {
               const dayIsToday = isToday(day);
+              const dateKey = format(day, 'yyyy-MM-dd');
+              const apptCount = appointmentsByDate.get(dateKey)?.length || 0;
+              
               return (
                 <div 
                   key={day.toISOString()} 
@@ -201,20 +204,27 @@ export function WeekView({
                     {format(day, 'EEE')}
                   </div>
                   <div className="flex items-center justify-center mt-1">
-                    <span className={cn(
-                      'text-lg font-semibold flex items-center justify-center transition-colors',
-                      dayIsToday 
-                        ? 'bg-primary text-primary-foreground w-7 h-7 rounded-full text-sm' 
-                        : 'text-foreground'
-                    )}>
-                      {format(day, 'd')}
-                    </span>
+                    <div className="relative">
+                      <span className={cn(
+                        'text-lg font-semibold flex items-center justify-center transition-colors',
+                        dayIsToday 
+                          ? 'bg-primary text-primary-foreground w-7 h-7 rounded-full text-sm' 
+                          : 'text-foreground'
+                      )}>
+                        {format(day, 'd')}
+                      </span>
+                      {dayIsToday && apptCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                          {apptCount > 9 ? '9+' : apptCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className={cn(
                     'text-[10px] mt-1',
                     dayIsToday ? 'text-primary font-medium' : 'text-muted-foreground'
                   )}>
-                    {dayIsToday ? 'Today' : `${appointmentsByDate.get(format(day, 'yyyy-MM-dd'))?.length || 0} appts`}
+                    {dayIsToday ? 'Today' : `${apptCount} appts`}
                   </div>
                 </div>
               );
