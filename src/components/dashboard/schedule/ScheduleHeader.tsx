@@ -52,9 +52,9 @@ export function ScheduleHeader({
 }: ScheduleHeaderProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
-  // Get quick day buttons (next 7 days starting from current week)
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  // Get quick day buttons - today followed by next 6 days
+  const today = new Date();
+  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(today, i));
 
   const goToToday = () => setCurrentDate(new Date());
   
