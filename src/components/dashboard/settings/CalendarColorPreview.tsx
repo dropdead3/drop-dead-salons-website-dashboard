@@ -142,20 +142,30 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                       color: colors.text,
                     }}
                   >
-                    {/* Hatched pattern for blocked entries */}
+                    {/* X pattern for blocked entries */}
                     {BLOCKED_CATEGORIES.includes(apt.category) && (
-                      <div 
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          backgroundImage: `repeating-linear-gradient(
-                            -45deg,
-                            transparent,
-                            transparent 3px,
-                            ${colors.text}20 3px,
-                            ${colors.text}20 4px
-                          )`,
-                        }}
-                      />
+                      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                        <div 
+                          className="absolute inset-0"
+                          style={{
+                            background: `linear-gradient(to bottom right, 
+                              transparent calc(50% - 0.5px), 
+                              ${colors.text}30 calc(50% - 0.5px), 
+                              ${colors.text}30 calc(50% + 0.5px), 
+                              transparent calc(50% + 0.5px))`,
+                          }}
+                        />
+                        <div 
+                          className="absolute inset-0"
+                          style={{
+                            background: `linear-gradient(to bottom left, 
+                              transparent calc(50% - 0.5px), 
+                              ${colors.text}30 calc(50% - 0.5px), 
+                              ${colors.text}30 calc(50% + 0.5px), 
+                              transparent calc(50% + 0.5px))`,
+                          }}
+                        />
+                      </div>
                     )}
                     <div className="p-1 h-full flex flex-col relative z-10">
                       <div className="flex items-center gap-1">
