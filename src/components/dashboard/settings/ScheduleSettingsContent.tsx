@@ -150,36 +150,106 @@ export function ScheduleSettingsContent() {
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold relative"
+                  style={isConsultationCategory(category.category_name) ? {
+                    background: CONSULTATION_GRADIENT.background,
+                    color: CONSULTATION_GRADIENT.textColor,
+                  } : {
                     backgroundColor: category.color_hex,
                     color: category.text_color_hex,
                   }}
                 >
+                  {isConsultationCategory(category.category_name) && (
+                    <span 
+                      className="absolute inset-0 rounded-full pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
+                        mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                        maskComposite: 'xor',
+                        WebkitMaskComposite: 'xor',
+                        padding: '2px',
+                      }}
+                    />
+                  )}
                   {abbr}
                 </div>
                 <div>
                   <p className="text-sm font-medium">{category.category_name}</p>
-                  <p className="text-xs text-muted-foreground uppercase">{category.color_hex}</p>
+                  <p className="text-xs text-muted-foreground uppercase">
+                    {isConsultationCategory(category.category_name) ? 'Gradient Style' : category.color_hex}
+                  </p>
                 </div>
               </div>
               
               <div className="h-px bg-border" />
+
+              {/* Special Styles Section */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Special Styles
+                </p>
+                <div className="flex gap-2">
+                  {/* Teal-Lime Gradient Swatch */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className={cn(
+                          'w-10 h-10 rounded-full transition-transform hover:scale-110 relative shadow-md',
+                          isConsultationCategory(category.category_name) && 'ring-2 ring-offset-2 ring-primary'
+                        )}
+                        style={{
+                          background: CONSULTATION_GRADIENT.background,
+                        }}
+                        onClick={() => {
+                          // For consultation categories, this is already applied
+                          toast.info('Premium gradient style applied to consultation categories');
+                        }}
+                        disabled={updateColor.isPending}
+                      >
+                        {/* Glass stroke overlay */}
+                        <span 
+                          className="absolute inset-0 rounded-full pointer-events-none"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
+                            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                            maskComposite: 'xor',
+                            WebkitMaskComposite: 'xor',
+                            padding: '2px',
+                          }}
+                        />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[180px]">
+                      <p className="text-xs font-medium">Premium Consultation Style</p>
+                      <p className="text-[10px] text-muted-foreground">Teal-lime gradient with glass stroke & shimmer effect</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+
+              <div className="h-px bg-border" />
               
-              <div className="grid grid-cols-6 gap-1.5">
-                {CATEGORY_PALETTE.map((color) => (
-                  <button
-                    key={color}
-                    className={cn(
-                      'w-8 h-8 rounded-full transition-transform hover:scale-110',
-                      category.color_hex.toLowerCase() === color.toLowerCase() &&
-                        'ring-2 ring-offset-2 ring-primary'
-                    )}
-                    style={{ backgroundColor: color }}
-                    onClick={() => handleColorChange(category.id, color)}
-                    disabled={updateColor.isPending}
-                  />
-                ))}
+              {/* Solid Colors Section */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Solid Colors
+                </p>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {CATEGORY_PALETTE.map((color) => (
+                    <button
+                      key={color}
+                      className={cn(
+                        'w-8 h-8 rounded-full transition-transform hover:scale-110',
+                        category.color_hex.toLowerCase() === color.toLowerCase() &&
+                          !isConsultationCategory(category.category_name) &&
+                          'ring-2 ring-offset-2 ring-primary'
+                      )}
+                      style={{ backgroundColor: color }}
+                      onClick={() => handleColorChange(category.id, color)}
+                      disabled={updateColor.isPending}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </PopoverContent>
