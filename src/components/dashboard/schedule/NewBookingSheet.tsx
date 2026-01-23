@@ -46,8 +46,10 @@ import {
   Check,
   Loader2,
   Calendar as CalendarIcon,
-  Plus
+  Plus,
+  UserPlus
 } from 'lucide-react';
+import { NewClientDialog } from './NewClientDialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -83,6 +85,7 @@ export function NewBookingSheet({
 }: NewBookingSheetProps) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>('client');
+  const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   
   // Form state
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
@@ -292,15 +295,35 @@ export function NewBookingSheet({
           {/* Step 1: Client Selection */}
           {step === 'client' && (
             <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, phone, or email..."
-                  value={clientSearch}
-                  onChange={(e) => setClientSearch(e.target.value)}
-                  className="pl-9"
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, phone, or email..."
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => setShowNewClientDialog(true)}
+                  title="Add new client"
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
               </div>
+
+              {/* Add New Client Button */}
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2 text-primary hover:text-primary hover:bg-primary/5"
+                onClick={() => setShowNewClientDialog(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Add New Client
+              </Button>
 
               <div className="space-y-2">
                 {clients.map((client) => (
@@ -337,9 +360,32 @@ export function NewBookingSheet({
                   <div className="text-center py-8 text-muted-foreground">
                     <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p>No clients found</p>
+                    <Button
+                      variant="link"
+                      className="mt-2"
+                      onClick={() => setShowNewClientDialog(true)}
+                    >
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Create this client
+                    </Button>
                   </div>
                 )}
               </div>
+
+              {/* New Client Dialog */}
+              <NewClientDialog
+                open={showNewClientDialog}
+                onOpenChange={setShowNewClientDialog}
+                onClientCreated={(client) => {
+                  setSelectedClient({
+                    id: client.id,
+                    phorest_client_id: client.phorest_client_id,
+                    name: client.name,
+                    email: client.email,
+                    phone: client.phone,
+                  });
+                }}
+              />
             </div>
           )}
 
