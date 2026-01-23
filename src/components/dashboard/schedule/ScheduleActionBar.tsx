@@ -5,11 +5,8 @@ import {
   StickyNote, 
   CheckCircle,
   Undo2,
-  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 
@@ -21,8 +18,6 @@ interface ScheduleActionBarProps {
   onNotes?: () => void;
   onConfirm?: () => void;
   onUndo?: () => void;
-  showAllStaff: boolean;
-  onShowAllStaffChange: (show: boolean) => void;
   isUpdating?: boolean;
 }
 
@@ -34,8 +29,6 @@ export function ScheduleActionBar({
   onNotes,
   onConfirm,
   onUndo,
-  showAllStaff,
-  onShowAllStaffChange,
   isUpdating = false,
 }: ScheduleActionBarProps) {
   const hasSelection = !!selectedAppointment;
@@ -49,7 +42,7 @@ export function ScheduleActionBar({
 
   return (
     <div className="bg-card border-t border-border px-4 py-2.5 flex items-center justify-between">
-      {/* Left: Undo & Staff Toggle */}
+      {/* Left: Undo */}
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -61,17 +54,6 @@ export function ScheduleActionBar({
           <Undo2 className="h-4 w-4" />
           Undo
         </Button>
-
-        <div className="flex items-center gap-2">
-          <Label htmlFor="show-all-staff" className="text-sm text-muted-foreground">
-            See all Staff
-          </Label>
-          <Switch
-            id="show-all-staff"
-            checked={showAllStaff}
-            onCheckedChange={onShowAllStaffChange}
-          />
-        </div>
       </div>
 
       {/* Right: Action Buttons */}
