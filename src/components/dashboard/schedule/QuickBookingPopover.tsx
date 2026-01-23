@@ -53,7 +53,7 @@ interface PhorestClient {
 
 type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
 
-const STEPS: Step[] = ['service', 'location', 'client', 'stylist', 'confirm'];
+const STEPS: Step[] = ['service', 'location', 'stylist', 'client', 'confirm'];
 
 // Sort categories with consultation first
 const sortCategories = (categories: string[]): string[] => {
@@ -208,7 +208,7 @@ export function QuickBookingPopover({
 
   const handleSelectClient = (client: PhorestClient) => {
     setSelectedClient(client);
-    setStep('stylist');
+    setStep('confirm');
   };
 
   const handleServicesComplete = () => {
@@ -220,14 +220,14 @@ export function QuickBookingPopover({
       case 'location':
         setStep('service');
         break;
-      case 'client':
+      case 'stylist':
         setStep('location');
         break;
-      case 'stylist':
-        setStep('client');
+      case 'client':
+        setStep('stylist');
         break;
       case 'confirm':
-        setStep('stylist');
+        setStep('client');
         break;
     }
   };
@@ -707,7 +707,7 @@ export function QuickBookingPopover({
                 <Button
                   className="w-full h-9"
                   disabled={!selectedLocation}
-                  onClick={() => setStep('client')}
+                  onClick={() => setStep('stylist')}
                 >
                   Confirm location
                 </Button>
@@ -766,7 +766,7 @@ export function QuickBookingPopover({
                 <Button
                   className="w-full h-9"
                   disabled={!selectedStylist}
-                  onClick={() => setStep('confirm')}
+                  onClick={() => setStep('client')}
                 >
                   Continue
                 </Button>
