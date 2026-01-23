@@ -92,19 +92,17 @@ export function ScheduleHeader({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <LayoutGrid className="h-4 w-4 text-background/60" />
-            <div className="relative flex rounded-full overflow-hidden border border-background/40 p-0.5">
+            <div className="relative flex rounded-full overflow-hidden border border-background/40 p-[2px]">
               {/* Animated sliding pill */}
               <div 
                 className={cn(
-                  "absolute top-0.5 bottom-0.5 bg-background rounded-full transition-all duration-300 ease-out",
-                  view === 'week' ? 'left-0.5 w-[calc(50%-2px)]' : 'left-[50%] w-[calc(50%-2px)]'
+                  "absolute top-[2px] bottom-[2px] bg-background rounded-full transition-all duration-300 ease-out",
+                  view === 'week' ? 'left-[2px] w-[calc(50%-2px)]' : 'left-[50%] w-[calc(50%-2px)]'
                 )}
               />
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 className={cn(
-                  'relative z-10 px-6 py-1.5 rounded-full transition-colors duration-300 hover:bg-transparent',
+                  'relative z-10 px-3 py-0.5 text-xs rounded-full transition-colors duration-300',
                   view === 'week' 
                     ? 'text-foreground font-medium' 
                     : 'text-background/50 hover:text-background/80'
@@ -112,12 +110,10 @@ export function ScheduleHeader({
                 onClick={() => setView('week')}
               >
                 Week
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
+              </button>
+              <button
                 className={cn(
-                  'relative z-10 px-6 py-1.5 rounded-full transition-colors duration-300 hover:bg-transparent',
+                  'relative z-10 px-3 py-0.5 text-xs rounded-full transition-colors duration-300',
                   view === 'day' 
                     ? 'text-foreground font-medium' 
                     : 'text-background/50 hover:text-background/80'
@@ -125,7 +121,7 @@ export function ScheduleHeader({
                 onClick={() => setView('day')}
               >
                 Day
-              </Button>
+              </button>
             </div>
           </div>
 
