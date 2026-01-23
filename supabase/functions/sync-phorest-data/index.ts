@@ -188,7 +188,7 @@ async function syncAppointments(
       
       try {
         const appointmentsData = await phorestRequest(
-          `/branch/${branchId}/appointment?startDate=${dateFrom}&endDate=${dateTo}`,
+          `/branch/${branchId}/appointment?from_date=${dateFrom}&to_date=${dateTo}`,
           businessId,
           username,
           password
@@ -223,32 +223,138 @@ async function syncAppointments(
 
     const staffMap = new Map(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
 
+    // Get locations to map branch names to location IDs
+    const { data: locations } = await supabase
+      .from("locations")
+      .select("id, name");
+    
+    const locationMap = new Map<string, string>();
+    locations?.forEach((loc: any) => {
+      // Map various name formats to location ID
+      locationMap.set(loc.name.toLowerCase(), loc.id);
+      // Also try extracting location from Phorest branch name format: "Drop Dead Hair Studio (North Mesa)"
+      if (loc.name.toLowerCase().includes('mesa')) {
+        locationMap.set('north mesa', loc.id);
+        locationMap.set('mesa', loc.id);
+      }
+      if (loc.name.toLowerCase().includes('val vista') || loc.name.toLowerCase().includes('lakes')) {
+        locationMap.set('val vista lakes', loc.id);
+        locationMap.set('val vista', loc.id);
+        locationMap.set('lakes', loc.id);
+      }
+    });
+
     let synced = 0;
     for (const apt of allAppointments) {
       const stylistUserId = staffMap.get(apt.staffId) || null;
       
-      const appointmentRecord = {
-        phorest_id: apt.appointmentId,
+      // Try different field names for appointment ID
+      const phorestId = apt.appointmentId || apt.id || apt.appointmentid;
+      
+      if (!phorestId) {
+        console.log(`Skipping appointment with no ID:`, JSON.stringify(apt).substring(0, 200));
+        continue;
+      }
+      
+      // Parse date - can come from various fields
+      let appointmentDate = apt.date || apt.appointmentDate;
+      if (!appointmentDate && apt.startTime) {
+        // Check if startTime includes date (ISO format)
+        if (apt.startTime.includes('T')) {
+          appointmentDate = apt.startTime.split('T')[0];
+        }
+      }
+      
+      // Parse time - handle both ISO datetime and plain time formats
+      let startTime = '09:00';
+      let endTime = '10:00';
+      
+      if (apt.startTime) {
+        if (apt.startTime.includes('T')) {
+          startTime = apt.startTime.split('T')[1]?.substring(0, 5) || '09:00';
+        } else if (apt.startTime.includes(':')) {
+          startTime = apt.startTime.substring(0, 5);
+        }
+      }
+      
+      if (apt.endTime) {
+        if (apt.endTime.includes('T')) {
+          endTime = apt.endTime.split('T')[1]?.substring(0, 5) || '10:00';
+        } else if (apt.endTime.includes(':')) {
+          endTime = apt.endTime.substring(0, 5);
+        }
+      }
+      
+      if (!appointmentDate) {
+        console.log(`Skipping appointment ${phorestId} - no date found`);
+        continue;
+      }
+      
+      // Map Phorest branch name to location ID
+      let locationId: string | null = null;
+      if (apt.branchName) {
+        // Try to extract location from branch name like "Drop Dead Hair Studio (North Mesa)"
+        const match = apt.branchName.match(/\(([^)]+)\)/);
+        if (match) {
+          const extractedName = match[1].toLowerCase();
+          locationId = locationMap.get(extractedName) || null;
+        }
+        if (!locationId) {
+          locationId = locationMap.get(apt.branchName.toLowerCase()) || null;
+        }
+      }
+      
+      const appointmentRecord: any = {
+        phorest_id: phorestId,
         stylist_user_id: stylistUserId,
-        phorest_staff_id: apt.staffId,
-        branch_id: apt.branchId,
-        client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim(),
+        phorest_staff_id: apt.staffId || apt.staff?.staffId,
+        location_id: locationId,
+        client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() || null,
         client_phone: apt.client?.mobile || apt.client?.phone || null,
-        appointment_date: apt.startTime?.split('T')[0],
-        start_time: apt.startTime?.split('T')[1]?.substring(0, 5) || '09:00',
-        end_time: apt.endTime?.split('T')[1]?.substring(0, 5) || '10:00',
+        appointment_date: appointmentDate,
+        start_time: startTime,
+        end_time: endTime,
         service_name: apt.services?.[0]?.name || apt.serviceName || 'Unknown Service',
         service_category: apt.services?.[0]?.category || null,
         status: mapPhorestStatus(apt.status),
         total_price: apt.totalPrice || apt.price || null,
         notes: apt.notes || null,
+        // Don't set phorest_client_id due to FK constraint - store client name/phone instead
+        is_new_client: apt.isNewClient || false,
       };
 
-      const { error } = await supabase
+      let { error } = await supabase
         .from("phorest_appointments")
         .upsert(appointmentRecord, { onConflict: 'phorest_id' });
 
-      if (!error) synced++;
+      // If FK error on phorest_client_id, retry with client info only (no FK field)
+      if (error && error.message.includes('phorest_client_id_fkey')) {
+        // Try to lookup client in phorest_clients table first
+        const clientId = apt.clientId || apt.client?.clientId;
+        if (clientId) {
+          const { data: existingClient } = await supabase
+            .from("phorest_clients")
+            .select("phorest_client_id")
+            .eq("phorest_client_id", clientId)
+            .single();
+          
+          if (existingClient) {
+            appointmentRecord.phorest_client_id = clientId;
+          }
+        }
+        
+        // Retry upsert (phorest_client_id will be null if client doesn't exist)
+        const retry = await supabase
+          .from("phorest_appointments")
+          .upsert(appointmentRecord, { onConflict: 'phorest_id' });
+        error = retry.error;
+      }
+
+      if (error) {
+        console.log(`Failed to upsert appointment ${phorestId}:`, error.message);
+      } else {
+        synced++;
+      }
     }
 
     return { total: allAppointments.length, synced };
@@ -444,7 +550,7 @@ async function syncPerformanceReports(
 
       try {
         const reportData = await phorestRequest(
-          `/branch/${branchId}/report/staff-performance?startDate=${weekStart}&endDate=${weekEnd}`,
+          `/branch/${branchId}/report/staff-performance?from_date=${weekStart}&to_date=${weekEnd}`,
           businessId,
           username,
           password
@@ -567,7 +673,7 @@ async function syncSalesTransactions(
       try {
         console.log(`Trying /transaction endpoint for branch ${branchId}...`);
         const transactionData = await phorestRequest(
-          `/branch/${branchId}/transaction?startDate=${dateFrom}&endDate=${dateTo}&size=500`,
+          `/branch/${branchId}/transaction?from_date=${dateFrom}&to_date=${dateTo}&size=500`,
           businessId,
           username,
           password
@@ -582,7 +688,7 @@ async function syncSalesTransactions(
         try {
           console.log(`Trying /sale endpoint for branch ${branchId}...`);
           const saleData = await phorestRequest(
-            `/branch/${branchId}/sale?startDate=${dateFrom}&endDate=${dateTo}&size=500`,
+            `/branch/${branchId}/sale?from_date=${dateFrom}&to_date=${dateTo}&size=500`,
             businessId,
             username,
             password
@@ -605,7 +711,7 @@ async function syncSalesTransactions(
             try {
               console.log(`Trying /report/sales endpoint for branch ${branchId}...`);
               const reportData = await phorestRequest(
-                `/branch/${branchId}/report/sales?startDate=${dateFrom}&endDate=${dateTo}`,
+                `/branch/${branchId}/report/sales?from_date=${dateFrom}&to_date=${dateTo}`,
                 businessId,
                 username,
                 password
