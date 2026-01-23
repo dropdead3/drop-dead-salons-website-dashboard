@@ -11,10 +11,10 @@ const isConsultationCategory = (category: string) => {
   return category.toLowerCase().includes('consult');
 };
 
-// Consultation gradient styles
+// Consultation gradient styles - light teal to lavender purple
 const CONSULTATION_GRADIENT = {
-  background: 'linear-gradient(135deg, hsl(35,35%,82%) 0%, hsl(32,55%,45%) 50%, hsl(30,60%,35%) 100%)',
-  textColor: '#1f2937',
+  background: 'linear-gradient(135deg, hsl(175,60%,85%) 0%, hsl(200,55%,75%) 50%, hsl(270,50%,85%) 100%)',
+  textColor: '#374151',
 };
 
 // Sample appointments to showcase different categories
@@ -168,7 +168,7 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                       <div 
                         className="absolute inset-0 rounded-sm pointer-events-none"
                         style={{
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(212,165,116,0.4) 100%)',
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(180,140,220,0.45) 100%)',
                           mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                           maskComposite: 'xor',
                           WebkitMaskComposite: 'xor',
