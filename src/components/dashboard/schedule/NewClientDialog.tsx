@@ -24,6 +24,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocations } from '@/hooks/useLocations';
 
+const formatPhoneNumber = (value: string): string => {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length === 0) return '';
+  if (digits.length <= 3) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+};
+
 interface NewClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -76,7 +84,7 @@ export function NewClientDialog({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           email: email.trim() || undefined,
-          phone: phone.trim() || undefined,
+          phone: phone.replace(/\D/g, '').trim() || undefined,
           notes: notes.trim() || undefined,
         },
       });
@@ -197,7 +205,7 @@ export function NewClientDialog({
               id="phone"
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
               placeholder="(555) 123-4567"
             />
           </div>
