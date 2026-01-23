@@ -92,7 +92,7 @@ export function ScheduleHeader({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <LayoutGrid className="h-4 w-4 text-background/60" />
-            <div className="relative flex rounded-full overflow-hidden border border-background/40 p-[2px]">
+            <div className="relative flex rounded-full overflow-hidden bg-background/10 p-[2px]">
               {/* Animated sliding pill */}
               <div 
                 className={cn(
