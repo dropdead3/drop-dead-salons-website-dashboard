@@ -35,6 +35,9 @@ interface ScheduleHeaderProps {
   selectedStaff: string;
   onStaffChange: (staff: string) => void;
   stylists: Array<{ user_id: string; display_name: string | null; full_name: string }>;
+  selectedLocation: string;
+  onLocationChange: (locationId: string) => void;
+  locations: Array<{ id: string; name: string }>;
   onNewBooking: () => void;
   canCreate?: boolean;
 }
@@ -47,6 +50,9 @@ export function ScheduleHeader({
   selectedStaff,
   onStaffChange,
   stylists,
+  selectedLocation,
+  onLocationChange,
+  locations,
   onNewBooking,
   canCreate = false,
 }: ScheduleHeaderProps) {
@@ -145,7 +151,7 @@ export function ScheduleHeader({
           )}
         </div>
 
-        {/* Right: Staff Selector */}
+        {/* Right: Location & Staff Selectors */}
         <div className="flex items-center gap-3">
           <Button 
             variant="ghost" 
@@ -154,6 +160,22 @@ export function ScheduleHeader({
           >
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
+          
+          {/* Location Selector */}
+          <Select value={selectedLocation} onValueChange={onLocationChange}>
+            <SelectTrigger className="w-[140px] bg-background/10 border-background/20 text-background hover:bg-background/20">
+              <SelectValue placeholder="Select Location" />
+            </SelectTrigger>
+            <SelectContent>
+              {locations.map((loc) => (
+                <SelectItem key={loc.id} value={loc.id}>
+                  {loc.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {/* Staff Selector */}
           <Select value={selectedStaff} onValueChange={onStaffChange}>
             <SelectTrigger className="w-[160px] bg-background/10 border-background/20 text-background hover:bg-background/20">
               <SelectValue placeholder="All Staff" />

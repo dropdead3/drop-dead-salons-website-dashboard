@@ -19,6 +19,7 @@ export interface PhorestAppointment {
   service_name: string;
   service_category: string | null;
   status: AppointmentStatus;
+  location_id: string | null;
   total_price: number | null;
   notes: string | null;
   created_at: string;
