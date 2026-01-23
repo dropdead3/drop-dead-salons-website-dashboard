@@ -210,12 +210,13 @@ export function WeekView({
           <div className="grid grid-cols-[60px_repeat(7,1fr)] relative">
             {/* Time Labels */}
             <div className="relative bg-muted/20">
-              {hours.map((hour) => (
+              {hours.map((hour, index) => (
                 <div 
                   key={hour} 
-                  className="h-[60px] border-b border-border/50 text-xs text-muted-foreground pr-3 text-right pt-0 -mt-2 font-medium"
+                  className="h-[60px] border-b border-border/50 text-xs text-muted-foreground pr-3 text-right flex items-start justify-end font-medium"
+                  style={{ paddingTop: index === 0 ? '4px' : '0' }}
                 >
-                  {formatHour(hour)}
+                  <span className="relative -top-2">{formatHour(hour)}</span>
                 </div>
               ))}
             </div>
