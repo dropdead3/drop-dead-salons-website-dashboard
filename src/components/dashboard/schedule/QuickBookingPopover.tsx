@@ -55,9 +55,9 @@ interface PhorestClient {
   phone: string | null;
 }
 
-type Step = 'client' | 'service' | 'stylist' | 'confirm';
+type Step = 'service' | 'client' | 'stylist' | 'confirm';
 
-const STEPS: Step[] = ['client', 'service', 'stylist', 'confirm'];
+const STEPS: Step[] = ['service', 'client', 'stylist', 'confirm'];
 
 export function QuickBookingPopover({
   date,
@@ -68,7 +68,7 @@ export function QuickBookingPopover({
 }: QuickBookingPopoverProps) {
   const queryClient = useQueryClient();
   const { user, roles } = useAuth();
-  const [step, setStep] = useState<Step>('client');
+  const [step, setStep] = useState<Step>('service');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   
   // Form state
@@ -175,7 +175,7 @@ export function QuickBookingPopover({
   });
 
   const handleClose = () => {
-    setStep('client');
+    setStep('service');
     setSelectedClient(null);
     setClientSearch('');
     setSelectedServices([]);
@@ -186,16 +186,20 @@ export function QuickBookingPopover({
 
   const handleSelectClient = (client: PhorestClient) => {
     setSelectedClient(client);
-    setStep('service');
+    setStep('stylist');
+  };
+
+  const handleServicesComplete = () => {
+    setStep('client');
   };
 
   const handleBack = () => {
     switch (step) {
-      case 'service':
-        setStep('client');
+      case 'client':
+        setStep('service');
         break;
       case 'stylist':
-        setStep('service');
+        setStep('client');
         break;
       case 'confirm':
         setStep('stylist');
@@ -255,7 +259,7 @@ export function QuickBookingPopover({
           <div className="bg-card border-b border-border">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2">
-                {step !== 'client' ? (
+                {step !== 'service' ? (
                   <Button
                     variant="ghost"
                     size="icon"
