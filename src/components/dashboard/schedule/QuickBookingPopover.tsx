@@ -315,21 +315,17 @@ export function QuickBookingPopover({
         />
       )}
       
+      {/* Hidden popover just for trigger logic */}
       <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
           {children}
         </PopoverTrigger>
-        <PopoverContent 
-          side="bottom" 
-          align="center" 
-          className="w-[380px] p-0 shadow-xl border-border rounded-xl overflow-hidden z-50 animate-enter"
-          sideOffset={0}
-          style={{
-            position: 'fixed',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)'
-          }}
+      </Popover>
+
+      {/* Centered modal content - rendered independently */}
+      {open && (
+        <div 
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[380px] p-0 shadow-xl border border-border rounded-xl overflow-hidden bg-popover animate-enter"
         >
           {/* Header */}
           <div className="bg-card border-b border-border">
@@ -989,8 +985,8 @@ export function QuickBookingPopover({
               </div>
             </div>
           )}
-        </PopoverContent>
-      </Popover>
+        </div>
+      )}
 
       <NewClientDialog
         open={showNewClientDialog}
