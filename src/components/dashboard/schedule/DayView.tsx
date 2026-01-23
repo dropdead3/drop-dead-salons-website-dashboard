@@ -10,7 +10,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Phone, Clock } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
-import { useServiceCategoryColors, getServiceColor } from '@/hooks/useServiceCategoryColors';
 
 interface DayViewProps {
   date: Date;
@@ -78,7 +77,6 @@ interface AppointmentCardProps {
   isSelected?: boolean;
   columnIndex?: number;
   totalOverlapping?: number;
-  serviceColor?: { bg: string; text: string };
 }
 
 function AppointmentCard({ 
@@ -88,7 +86,6 @@ function AppointmentCard({
   isSelected = false,
   columnIndex = 0,
   totalOverlapping = 1,
-  serviceColor,
 }: AppointmentCardProps) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const statusColors = STATUS_COLORS[appointment.status];
@@ -99,18 +96,15 @@ function AppointmentCard({
   const widthPercent = 100 / totalOverlapping;
   const leftPercent = columnIndex * widthPercent;
 
-  // Use service color if available, otherwise fall back to status colors
-  const useServiceColors = serviceColor && appointment.status !== 'cancelled';
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
           className={cn(
             'absolute rounded-sm cursor-pointer transition-all overflow-hidden border-l-4',
-            !useServiceColors && statusColors.bg,
-            !useServiceColors && statusColors.border,
-            !useServiceColors && statusColors.text,
+            statusColors.bg,
+            statusColors.border,
+            statusColors.text,
             appointment.status === 'cancelled' && 'opacity-60 line-through',
             isSelected && 'ring-2 ring-primary ring-offset-1'
           )}
@@ -118,11 +112,6 @@ function AppointmentCard({
             ...style,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
-            ...(useServiceColors ? {
-              backgroundColor: serviceColor.bg,
-              color: serviceColor.text,
-              borderLeftColor: serviceColor.bg,
-            } : {}),
           }}
           onClick={onClick}
         >
@@ -196,7 +185,6 @@ export function DayView({
   selectedAppointmentId,
 }: DayViewProps) {
   const ROW_HEIGHT = 16; // 16px per 15-min slot
-  const { data: serviceCategoryColors } = useServiceCategoryColors();
   
   // Generate time labels for each hour with 15-min intervals
   const timeSlots = useMemo(() => {
@@ -259,7 +247,7 @@ export function DayView({
   };
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden">
+    <div className="flex flex-col h-full bg-card rounded-lg border border-border overflow-hidden">
       {/* Calendar Grid */}
       <div className="flex-1 overflow-auto">
         <div className="min-w-[600px]">
@@ -347,7 +335,6 @@ export function DayView({
                   {/* Appointments */}
                   {stylistAppointments.map((apt) => {
                     const { columnIndex, totalOverlapping } = getOverlapInfo(stylistAppointments, apt);
-                    const serviceColor = getServiceColor(serviceCategoryColors, apt.service_category || apt.service_name);
                     return (
                       <AppointmentCard
                         key={apt.id}
@@ -357,7 +344,6 @@ export function DayView({
                         isSelected={apt.id === selectedAppointmentId}
                         columnIndex={columnIndex}
                         totalOverlapping={totalOverlapping}
-                        serviceColor={serviceColor}
                       />
                     );
                   })}

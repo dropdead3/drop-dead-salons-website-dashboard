@@ -14,7 +14,6 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   levels: '#14B8A6',     // Teal
   handbooks: '#EAB308',  // Yellow
   visibility: '#6366F1', // Indigo
-  calendar: '#22C55E',   // Green
 };
 
 // Default order
@@ -29,7 +28,6 @@ export const DEFAULT_ORDER = [
   'levels',
   'handbooks',
   'visibility',
-  'calendar',
 ];
 
 interface SettingsLayoutPreferences {

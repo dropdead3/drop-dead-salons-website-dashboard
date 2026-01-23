@@ -12,7 +12,6 @@ import { AppointmentDetailSheet } from '@/components/dashboard/schedule/Appointm
 import { BookingWizard } from '@/components/dashboard/schedule/booking';
 import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '@/hooks/usePhorestCalendar';
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
-import { useActiveLocations } from '@/hooks/useLocations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -20,17 +19,6 @@ import { toast } from 'sonner';
 export default function Schedule() {
   const isMobile = useIsMobile();
   const { preferences } = useCalendarPreferences();
-  const { data: locations = [] } = useActiveLocations();
-  
-  // Location state - default to first location when loaded
-  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
-  
-  // Set default location when locations load
-  useEffect(() => {
-    if (locations.length > 0 && !selectedLocationId) {
-      setSelectedLocationId(locations[0].id);
-    }
-  }, [locations, selectedLocationId]);
   
   const {
     currentDate,
@@ -48,11 +36,6 @@ export default function Schedule() {
     isUpdating,
   } = usePhorestCalendar();
 
-  // Filter appointments by selected location
-  const filteredAppointments = appointments.filter(apt => 
-    !selectedLocationId || apt.location_id === selectedLocationId
-  );
-
   // State for selections and sheets
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
   const [selectedStaff, setSelectedStaff] = useState('all');
@@ -61,9 +44,9 @@ export default function Schedule() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
 
-  // Fetch stylists for DayView - filtered by location
+  // Fetch stylists for DayView
   const { data: stylists = [] } = useQuery({
-    queryKey: ['schedule-stylists-with-mapping', selectedLocationId],
+    queryKey: ['schedule-stylists-with-mapping'],
     queryFn: async () => {
       const { data } = await supabase
         .from('phorest_staff_mapping')
@@ -73,27 +56,18 @@ export default function Schedule() {
             user_id,
             display_name,
             full_name,
-            photo_url,
-            location_ids
+            photo_url
           )
         `)
         .eq('is_active', true);
       
-      // Filter to stylists at the selected location
-      return (data || [])
-        .filter(d => {
-          if (!selectedLocationId) return true;
-          const locationIds = d.employee_profiles?.location_ids || [];
-          return locationIds.includes(selectedLocationId);
-        })
-        .map(d => ({
-          user_id: d.user_id,
-          display_name: d.employee_profiles?.display_name || null,
-          full_name: d.employee_profiles?.full_name || 'Unknown',
-          photo_url: d.employee_profiles?.photo_url || null,
-        }));
+      return (data || []).map(d => ({
+        user_id: d.user_id,
+        display_name: d.employee_profiles?.display_name || null,
+        full_name: d.employee_profiles?.full_name || 'Unknown',
+        photo_url: d.employee_profiles?.photo_url || null,
+      }));
     },
-    enabled: !!selectedLocationId,
   });
 
   // Filter stylists based on selection
@@ -170,9 +144,6 @@ export default function Schedule() {
             selectedStaff={selectedStaff}
             onStaffChange={setSelectedStaff}
             stylists={stylists}
-            selectedLocationId={selectedLocationId}
-            onLocationChange={setSelectedLocationId}
-            locations={locations}
             onNewBooking={handleNewBooking}
             canCreate={canCreate}
           />
@@ -184,16 +155,12 @@ export default function Schedule() {
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : !selectedLocationId ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              Please select a location to view the schedule
-            </div>
           ) : (
             <>
               {view === 'day' && (
                 <DayView
                   date={currentDate}
-                  appointments={filteredAppointments}
+                  appointments={appointments}
                   stylists={displayedStylists}
                   hoursStart={preferences.hours_start}
                   hoursEnd={preferences.hours_end}
@@ -206,7 +173,7 @@ export default function Schedule() {
               {view === 'week' && (
                 <WeekView
                   currentDate={currentDate}
-                  appointments={filteredAppointments}
+                  appointments={appointments}
                   hoursStart={preferences.hours_start}
                   hoursEnd={preferences.hours_end}
                   onAppointmentClick={handleAppointmentClick}
@@ -217,7 +184,7 @@ export default function Schedule() {
               {view === 'month' && (
                 <MonthView
                   currentDate={currentDate}
-                  appointments={filteredAppointments}
+                  appointments={appointments}
                   onDayClick={handleDayClick}
                   onAppointmentClick={handleAppointmentClick}
                 />
@@ -226,7 +193,7 @@ export default function Schedule() {
               {view === 'agenda' && (
                 <AgendaView
                   currentDate={currentDate}
-                  appointments={filteredAppointments}
+                  appointments={appointments}
                   onAppointmentClick={handleAppointmentClick}
                 />
               )}

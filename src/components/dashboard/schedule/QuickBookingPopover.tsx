@@ -31,7 +31,6 @@ import { useAllServicesByCategory } from '@/hooks/usePhorestServices';
 import { useLocations } from '@/hooks/useLocations';
 import { NewClientDialog } from './NewClientDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { useServiceCategoryColors, getServiceColor, type ServiceCategoryColor } from '@/hooks/useServiceCategoryColors';
 
 interface QuickBookingPopoverProps {
   date: Date;
@@ -53,22 +52,21 @@ type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
 
 const STEPS: Step[] = ['service', 'location', 'client', 'stylist', 'confirm'];
 
-// Map category names to colors and abbreviations - now uses database colors
-const getCategoryStyle = (category: string, colors?: ServiceCategoryColor[]): { bg: string; text: string; abbr: string; isSpecial?: boolean; hexColor?: string } => {
+// Map category names to colors and abbreviations
+const getCategoryStyle = (category: string): { bg: string; abbr: string; isSpecial?: boolean } => {
   const lower = category.toLowerCase();
   const getAbbr = (cat: string) => cat.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  const isConsult = lower.includes('consult');
   
-  // Get color from database
-  const dbColor = getServiceColor(colors, category);
-  
-  return { 
-    bg: '', // Not using Tailwind classes anymore
-    text: dbColor.text,
-    abbr: isConsult ? 'NC' : getAbbr(category), 
-    isSpecial: isConsult,
-    hexColor: dbColor.bg
-  };
+  if (lower.includes('extension')) return { bg: 'bg-emerald-100 text-emerald-700', abbr: 'EX' };
+  if (lower.includes('consult')) return { bg: 'bg-gradient-to-br from-[hsl(38,30%,78%)] via-[hsl(38,35%,70%)] to-[hsl(38,28%,62%)] text-[hsl(38,30%,25%)]', abbr: 'NC', isSpecial: true };
+  if (lower.includes('blond') || lower.includes('highlight') || lower.includes('balayage')) return { bg: 'bg-rose-300 text-rose-800', abbr: 'BL' };
+  if (lower.includes('color') || lower.includes('colour')) return { bg: 'bg-rose-400 text-white', abbr: 'CO' };
+  if (lower.includes('cut') || lower.includes('haircut')) return { bg: 'bg-blue-400 text-white', abbr: 'HA' };
+  if (lower.includes('blow') || lower.includes('style') || lower.includes('styling')) return { bg: 'bg-blue-500 text-white', abbr: 'ST' };
+  if (lower.includes('treatment') || lower.includes('condition') || lower.includes('keratin')) return { bg: 'bg-teal-400 text-white', abbr: 'TR' };
+  if (lower.includes('bridal') || lower.includes('wedding') || lower.includes('special')) return { bg: 'bg-pink-300 text-pink-800', abbr: 'SP' };
+  if (lower.includes('extra')) return { bg: 'bg-gray-300 text-gray-600', abbr: 'EX' };
+  return { bg: 'bg-gray-400 text-white', abbr: getAbbr(category) };
 };
 
 // Sort categories with consultation first
@@ -105,7 +103,6 @@ export function QuickBookingPopover({
 
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useAllServicesByCategory();
-  const { data: categoryColors = [] } = useServiceCategoryColors();
 
   // Get selected service details (for totals calculation)
   const selectedServiceDetails = useMemo(() => {
@@ -494,7 +491,7 @@ export function QuickBookingPopover({
                         // Category list
                         <div className="space-y-1">
                           {sortCategories(Object.keys(servicesByCategory)).map((category) => {
-                            const style = getCategoryStyle(category, categoryColors);
+                            const style = getCategoryStyle(category);
                             return (
                               <button
                                 key={category}
@@ -506,16 +503,11 @@ export function QuickBookingPopover({
                                 )}
                                 onClick={() => setSelectedCategory(category)}
                               >
-                                <div 
-                                  className={cn(
-                                    'w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0',
-                                    style.isSpecial && 'shadow-sm ring-2 ring-[hsl(38,28%,85%)]'
-                                  )}
-                                  style={{ 
-                                    backgroundColor: style.hexColor, 
-                                    color: style.text 
-                                  }}
-                                >
+                                <div className={cn(
+                                  'w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0',
+                                  style.bg,
+                                  style.isSpecial && 'shadow-sm ring-2 ring-[hsl(38,28%,85%)]'
+                                )}>
                                   {style.abbr}
                                 </div>
                                 <div className="flex flex-col min-w-0">

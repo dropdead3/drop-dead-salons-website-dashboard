@@ -9,7 +9,6 @@ import {
   SlidersHorizontal,
   Plus,
   LayoutGrid,
-  MapPin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +26,6 @@ import {
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import type { CalendarView } from '@/hooks/usePhorestCalendar';
-import type { Location } from '@/hooks/useLocations';
 
 interface ScheduleHeaderProps {
   currentDate: Date;
@@ -37,9 +35,6 @@ interface ScheduleHeaderProps {
   selectedStaff: string;
   onStaffChange: (staff: string) => void;
   stylists: Array<{ user_id: string; display_name: string | null; full_name: string }>;
-  selectedLocationId: string;
-  onLocationChange: (locationId: string) => void;
-  locations: Location[];
   onNewBooking: () => void;
   canCreate?: boolean;
 }
@@ -52,9 +47,6 @@ export function ScheduleHeader({
   selectedStaff,
   onStaffChange,
   stylists,
-  selectedLocationId,
-  onLocationChange,
-  locations,
   onNewBooking,
   canCreate = false,
 }: ScheduleHeaderProps) {
@@ -142,24 +134,15 @@ export function ScheduleHeader({
           )}
         </div>
 
-        {/* Right: Location & Staff Selectors */}
+        {/* Right: Staff Selector */}
         <div className="flex items-center gap-3">
-          {/* Location Selector - Required */}
-          <Select value={selectedLocationId} onValueChange={onLocationChange}>
-            <SelectTrigger className="w-[180px] bg-background/10 border-background/20 text-background hover:bg-background/20">
-              <MapPin className="h-3.5 w-3.5 mr-1.5 opacity-70" />
-              <SelectValue placeholder="Select location" />
-            </SelectTrigger>
-            <SelectContent>
-              {locations.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id}>
-                  {loc.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {/* Staff Selector */}
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="text-background/70 hover:text-background hover:bg-background/10"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </Button>
           <Select value={selectedStaff} onValueChange={onStaffChange}>
             <SelectTrigger className="w-[160px] bg-background/10 border-background/20 text-background hover:bg-background/20">
               <SelectValue placeholder="All Staff" />

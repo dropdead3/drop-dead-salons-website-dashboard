@@ -89,9 +89,6 @@ import {
   CalendarDays,
   PanelLeftClose,
   ChevronRight,
-  Sun,
-  Moon,
-  Monitor,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -198,7 +195,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
-  const { resolvedTheme, theme, setTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const { data: businessSettings } = useBusinessSettings();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
@@ -727,49 +724,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   };
 
-  // Theme Mode Toggle Component - Pill style (Light/Dark only)
-  const ThemeModeToggle = () => {
-    const isLight = resolvedTheme === 'light';
-    
-    return (
-      <div className="flex items-center h-8 rounded-full bg-muted/50 border border-border/50 p-0.5">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setTheme('light')}
-              className={cn(
-                "flex items-center justify-center w-7 h-7 rounded-full transition-all",
-                isLight 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Sun className="w-3.5 h-3.5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Light mode</TooltipContent>
-        </Tooltip>
-        
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setTheme('dark')}
-              className={cn(
-                "flex items-center justify-center w-7 h-7 rounded-full transition-all",
-                !isLight 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Moon className="w-3.5 h-3.5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Dark mode</TooltipContent>
-        </Tooltip>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
@@ -968,8 +922,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
       )}>
         <div className="flex items-center justify-between h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
-          {/* Left side - Sidebar toggle & Theme toggle */}
-          <div className="flex items-center gap-2">
+          {/* Left side - Sidebar toggle */}
+          <div className="flex items-center">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
@@ -989,8 +943,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               </TooltipContent>
             </Tooltip>
-            
-            <ThemeModeToggle />
           </div>
 
           {/* Next Client Indicator - Stylists and Assistants only */}
