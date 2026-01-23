@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { ScheduleToolbar } from '@/components/dashboard/schedule/ScheduleToolbar';
+import { ScheduleHeader } from '@/components/dashboard/schedule/ScheduleHeader';
+import { ScheduleActionBar } from '@/components/dashboard/schedule/ScheduleActionBar';
 import { DayView } from '@/components/dashboard/schedule/DayView';
 import { WeekView } from '@/components/dashboard/schedule/WeekView';
 import { MonthView } from '@/components/dashboard/schedule/MonthView';
@@ -13,6 +14,7 @@ import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Schedule() {
   const isMobile = useIsMobile();
@@ -34,8 +36,10 @@ export default function Schedule() {
     isUpdating,
   } = usePhorestCalendar();
 
-  // State for sheets
+  // State for selections and sheets
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState('all');
+  const [showAllStaff, setShowAllStaff] = useState(true);
   const [detailOpen, setDetailOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
@@ -66,6 +70,11 @@ export default function Schedule() {
     },
   });
 
+  // Filter stylists based on selection
+  const displayedStylists = selectedStaff === 'all' 
+    ? stylists 
+    : stylists.filter(s => s.user_id === selectedStaff);
+
   // Auto-switch to agenda view on mobile
   useEffect(() => {
     if (isMobile && view !== 'agenda') {
@@ -75,7 +84,7 @@ export default function Schedule() {
 
   const handleAppointmentClick = (apt: PhorestAppointment) => {
     setSelectedAppointment(apt);
-    setDetailOpen(true);
+    // Don't auto-open detail sheet - just select it
   };
 
   const handleSlotClick = (dateOrStylistId: Date | string, time: string) => {
@@ -99,27 +108,49 @@ export default function Schedule() {
     setBookingOpen(true);
   };
 
-  const handleStatusChange = (appointmentId: string, status: any) => {
-    updateStatus({ appointmentId, status });
+  const handleStatusChange = (status: any) => {
+    if (selectedAppointment) {
+      updateStatus({ appointmentId: selectedAppointment.id, status });
+    }
+  };
+
+  // Action bar handlers
+  const handleCheckIn = () => handleStatusChange('checked_in');
+  const handleConfirm = () => handleStatusChange('confirmed');
+  const handlePay = () => handleStatusChange('completed');
+  const handleRemove = () => {
+    if (selectedAppointment) {
+      // For now, cancel the appointment
+      handleStatusChange('cancelled');
+      toast.success('Appointment cancelled');
+    }
+  };
+  const handleNotes = () => {
+    if (selectedAppointment) {
+      setDetailOpen(true);
+    }
   };
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-8rem)] p-4 md:p-6">
-        <ScheduleToolbar
-          currentDate={currentDate}
-          setCurrentDate={setCurrentDate}
-          view={view}
-          setView={setView}
-          filters={filters}
-          setFilters={setFilters}
-          onSync={triggerSync}
-          onNewBooking={handleNewBooking}
-          lastSync={lastSync}
-          canCreate={canCreate}
-        />
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        {/* Header */}
+        <div className="px-4 pt-4">
+          <ScheduleHeader
+            currentDate={currentDate}
+            setCurrentDate={setCurrentDate}
+            view={view}
+            setView={setView}
+            selectedStaff={selectedStaff}
+            onStaffChange={setSelectedStaff}
+            stylists={stylists}
+            onNewBooking={handleNewBooking}
+            canCreate={canCreate}
+          />
+        </div>
 
-        <div className="flex-1 mt-6 overflow-hidden">
+        {/* Calendar View */}
+        <div className="flex-1 p-4 overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -130,11 +161,12 @@ export default function Schedule() {
                 <DayView
                   date={currentDate}
                   appointments={appointments}
-                  stylists={stylists}
+                  stylists={displayedStylists}
                   hoursStart={preferences.hours_start}
                   hoursEnd={preferences.hours_end}
                   onAppointmentClick={handleAppointmentClick}
                   onSlotClick={handleSlotClick}
+                  selectedAppointmentId={selectedAppointment?.id}
                 />
               )}
               
@@ -168,13 +200,28 @@ export default function Schedule() {
             </>
           )}
         </div>
+
+        {/* Action Bar */}
+        {(view === 'day' || view === 'week') && (
+          <ScheduleActionBar
+            selectedAppointment={selectedAppointment}
+            onCheckIn={handleCheckIn}
+            onPay={handlePay}
+            onRemove={handleRemove}
+            onNotes={handleNotes}
+            onConfirm={handleConfirm}
+            showAllStaff={showAllStaff}
+            onShowAllStaffChange={setShowAllStaff}
+            isUpdating={isUpdating}
+          />
+        )}
       </div>
 
       <AppointmentDetailSheet
         appointment={selectedAppointment}
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        onStatusChange={handleStatusChange}
+        onStatusChange={(_, status) => handleStatusChange(status)}
         isUpdating={isUpdating}
       />
 
