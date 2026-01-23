@@ -8,7 +8,7 @@ import { WeekView } from '@/components/dashboard/schedule/WeekView';
 import { MonthView } from '@/components/dashboard/schedule/MonthView';
 import { AgendaView } from '@/components/dashboard/schedule/AgendaView';
 import { AppointmentDetailSheet } from '@/components/dashboard/schedule/AppointmentDetailSheet';
-import { NewBookingSheet } from '@/components/dashboard/schedule/NewBookingSheet';
+import { BookingWizard } from '@/components/dashboard/schedule/booking';
 import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '@/hooks/usePhorestCalendar';
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -178,7 +178,7 @@ export default function Schedule() {
         isUpdating={isUpdating}
       />
 
-      <NewBookingSheet
+      <BookingWizard
         open={bookingOpen}
         onOpenChange={setBookingOpen}
         defaultDate={bookingDefaults.date}
