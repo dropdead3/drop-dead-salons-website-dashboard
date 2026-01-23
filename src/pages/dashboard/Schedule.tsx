@@ -155,7 +155,8 @@ export default function Schedule() {
             photo_url
           )
         `)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('show_on_calendar', true);
       
       // Filter by branch if selected
       if (selectedBranchId) {

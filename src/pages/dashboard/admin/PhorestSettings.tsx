@@ -31,7 +31,8 @@ import {
   PhorestBranch,
 } from '@/hooks/usePhorestSync';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Switch } from '@/components/ui/switch';
 import { 
   RefreshCw, 
   CheckCircle2, 
@@ -56,10 +57,36 @@ import { formatDistanceToNow, format } from 'date-fns';
 
 export default function PhorestSettings() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedPhorestStaff, setSelectedPhorestStaff] = useState<PhorestStaffMember | null>(null);
   const [branchFilter, setBranchFilter] = useState<string>('all');
   const [visibleMappings, setVisibleMappings] = useState<Set<string>>(new Set());
+
+  // Mutation for toggling calendar visibility
+  const toggleCalendarVisibility = useMutation({
+    mutationFn: async ({ mappingId, show }: { mappingId: string; show: boolean }) => {
+      const { error } = await supabase
+        .from('phorest_staff_mapping')
+        .update({ show_on_calendar: show })
+        .eq('id', mappingId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phorest-staff-mappings'] });
+      toast({
+        title: 'Updated',
+        description: 'Calendar visibility updated successfully.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update calendar visibility',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const toggleMappingVisibility = (mappingId: string) => {
     setVisibleMappings(prev => {
@@ -530,6 +557,7 @@ export default function PhorestSettings() {
                       <TableHead>Team Member</TableHead>
                       <TableHead>Phorest Name</TableHead>
                       <TableHead>Location</TableHead>
+                      <TableHead>Calendar</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -584,6 +612,15 @@ export default function PhorestSettings() {
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={mapping.show_on_calendar ?? true}
+                            onCheckedChange={(checked) => 
+                              toggleCalendarVisibility.mutate({ mappingId: mapping.id, show: checked })
+                            }
+                            disabled={toggleCalendarVisibility.isPending}
+                          />
                         </TableCell>
                         <TableCell>
                           <Badge variant={mapping.is_active ? 'default' : 'secondary'}>
