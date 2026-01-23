@@ -147,14 +147,14 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                     key={aptIndex}
                     className={cn(
                       'absolute left-0.5 right-0.5 rounded-sm overflow-hidden',
-                      'border-l-2 shadow-sm',
+                      !isConsultation && 'border-l-2',
+                      'shadow-sm',
                       isConsultation && 'shadow-lg'
                     )}
                     style={{
                       ...style,
                       ...(isConsultation ? {
                         background: CONSULTATION_GRADIENT.background,
-                        borderLeftColor: 'hsl(30,60%,35%)',
                         color: CONSULTATION_GRADIENT.textColor,
                       } : {
                         backgroundColor: colors.bg,

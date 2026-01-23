@@ -127,7 +127,8 @@ function AppointmentCard({
       <TooltipTrigger asChild>
         <div
           className={cn(
-            'absolute rounded-sm cursor-pointer transition-all overflow-hidden border-l-4',
+            'absolute rounded-sm cursor-pointer transition-all overflow-hidden',
+            !isConsultation && 'border-l-4',
             !useCategoryColor && !isConsultation && statusColors.bg,
             !useCategoryColor && !isConsultation && statusColors.border,
             !useCategoryColor && !isConsultation && statusColors.text,
@@ -139,11 +140,10 @@ function AppointmentCard({
             ...style,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
-            ...(isConsultation ? {
-              background: CONSULTATION_GRADIENT.background,
-              color: CONSULTATION_GRADIENT.textColor,
-              borderLeftColor: CONSULTATION_GRADIENT.borderColor,
-            } : useCategoryColor && {
+          ...(isConsultation ? {
+            background: CONSULTATION_GRADIENT.background,
+            color: CONSULTATION_GRADIENT.textColor,
+          } : useCategoryColor && {
               backgroundColor: catColor.bg,
               color: catColor.text,
               borderLeftColor: catColor.bg,
