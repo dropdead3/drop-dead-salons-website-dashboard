@@ -166,75 +166,78 @@ export function ScheduleHeader({
           )}
         </div>
 
-        {/* Right: Filters, Location, Staff Selectors & Settings */}
+        {/* Right: Filters & Settings */}
         <div className="flex items-center gap-3">
           <CalendarFiltersPopover 
             filters={calendarFilters}
             onFiltersChange={onCalendarFiltersChange}
           />
           
-          {/* Location Selector */}
-          <Select value={selectedLocation} onValueChange={onLocationChange}>
-            <SelectTrigger className="w-[140px] bg-background/10 border-background/20 text-background hover:bg-background/20">
-              <SelectValue placeholder="Select Location" />
-            </SelectTrigger>
-            <SelectContent>
-              {locations.map((loc) => (
-                <SelectItem key={loc.id} value={loc.id}>
-                  {loc.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {/* Staff Multi-Select */}
-          <Popover open={staffPopoverOpen} onOpenChange={setStaffPopoverOpen}>
-            <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="w-[180px] justify-between bg-background/10 border-background/20 text-background hover:bg-background/20 hover:text-background"
-              >
-                {selectedStaffIds.length === 0 
-                  ? 'All Staff' 
-                  : selectedStaffIds.length === 1
-                    ? stylists.find(s => s.user_id === selectedStaffIds[0])?.display_name || 
-                      stylists.find(s => s.user_id === selectedStaffIds[0])?.full_name || 
-                      '1 selected'
-                    : `${selectedStaffIds.length} selected`
-                }
-                <ChevronRight className="h-4 w-4 rotate-90 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[220px] p-2 bg-popover" align="end">
-              <div className="space-y-1">
-                <button
-                  onClick={() => onStaffToggle('all')}
-                  className={cn(
-                    'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
-                    selectedStaffIds.length === 0 && 'bg-accent'
-                  )}
-                >
-                  {selectedStaffIds.length === 0 && <Check className="h-4 w-4" />}
-                  {selectedStaffIds.length !== 0 && <div className="w-4" />}
-                  All Staff
-                </button>
-                <div className="h-px bg-border my-1" />
-                {stylists.map((s) => (
-                  <button
-                    key={s.user_id}
-                    onClick={() => onStaffToggle(s.user_id)}
-                    className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
-                  >
-                    <Checkbox 
-                      checked={selectedStaffIds.includes(s.user_id)}
-                      className="pointer-events-none"
-                    />
-                    {s.display_name || s.full_name}
-                  </button>
+          {/* Stacked Location & Staff Selectors */}
+          <div className="flex flex-col gap-1.5">
+            {/* Location Selector */}
+            <Select value={selectedLocation} onValueChange={onLocationChange}>
+              <SelectTrigger className="h-7 w-[160px] text-xs bg-background/10 border-background/20 text-background hover:bg-background/20">
+                <SelectValue placeholder="Select Location" />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </SelectItem>
                 ))}
-              </div>
-            </PopoverContent>
-          </Popover>
+              </SelectContent>
+            </Select>
+            
+            {/* Staff Multi-Select */}
+            <Popover open={staffPopoverOpen} onOpenChange={setStaffPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="h-7 w-[160px] text-xs justify-between bg-background/10 border-background/20 text-background hover:bg-background/20 hover:text-background"
+                >
+                  {selectedStaffIds.length === 0 
+                    ? 'All Staff' 
+                    : selectedStaffIds.length === 1
+                      ? stylists.find(s => s.user_id === selectedStaffIds[0])?.display_name || 
+                        stylists.find(s => s.user_id === selectedStaffIds[0])?.full_name || 
+                        '1 selected'
+                      : `${selectedStaffIds.length} selected`
+                  }
+                  <ChevronRight className="h-3 w-3 rotate-90 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[220px] p-2 bg-popover" align="end">
+                <div className="space-y-1">
+                  <button
+                    onClick={() => onStaffToggle('all')}
+                    className={cn(
+                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors',
+                      selectedStaffIds.length === 0 && 'bg-accent'
+                    )}
+                  >
+                    {selectedStaffIds.length === 0 && <Check className="h-4 w-4" />}
+                    {selectedStaffIds.length !== 0 && <div className="w-4" />}
+                    All Staff
+                  </button>
+                  <div className="h-px bg-border my-1" />
+                  {stylists.map((s) => (
+                    <button
+                      key={s.user_id}
+                      onClick={() => onStaffToggle(s.user_id)}
+                      className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
+                    >
+                      <Checkbox 
+                        checked={selectedStaffIds.includes(s.user_id)}
+                        className="pointer-events-none"
+                      />
+                      {s.display_name || s.full_name}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Settings Icon */}
           <Tooltip>
