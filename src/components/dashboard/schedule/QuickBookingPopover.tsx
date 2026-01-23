@@ -723,7 +723,7 @@ export function QuickBookingPopover({
                   <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
                     Choose Stylist
                   </h4>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-3">
                     {stylists.map((stylist) => {
                       const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
                       const nameParts = fullName.split(' ');
