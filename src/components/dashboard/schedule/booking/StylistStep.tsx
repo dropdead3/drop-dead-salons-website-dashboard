@@ -70,7 +70,7 @@ export function StylistStep({
           {/* Stylist Selection */}
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Choose Stylist
+              Available Stylists
             </h3>
             <div className="grid grid-cols-3 gap-2">
               {stylists.map((stylist) => {

@@ -769,7 +769,7 @@ export function QuickBookingPopover({
               <ScrollArea className="flex-1">
                 <div className="p-4">
                   <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
-                    Choose Stylist
+                    Available Stylists
                   </h4>
                   <div className="flex flex-col gap-3">
                     {stylists.map((stylist) => {
