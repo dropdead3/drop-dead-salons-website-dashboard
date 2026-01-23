@@ -15,6 +15,8 @@ import { Badge } from '@/components/ui/badge';
 import { Phone, User, Heart, Smartphone } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
+import { useServiceCategoryColors, getServiceColor } from '@/hooks/useServiceCategoryColors';
+import type { ServiceCategoryColor } from '@/hooks/useServiceCategoryColors';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -64,11 +66,13 @@ function formatTime12h(time: string): string {
 function AppointmentCard({ 
   appointment, 
   hoursStart,
-  onClick 
+  onClick,
+  serviceColor,
 }: { 
   appointment: PhorestAppointment; 
   hoursStart: number;
   onClick: () => void;
+  serviceColor?: { bg: string; text: string };
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const statusColors = STATUS_COLORS[appointment.status];
@@ -76,18 +80,28 @@ function AppointmentCard({
   const isCompact = duration <= 30;
   const isMedium = duration <= 60;
 
+  // Use service color if available, otherwise fall back to status colors
+  const useServiceColors = serviceColor && appointment.status !== 'cancelled';
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
           className={cn(
             'absolute left-1 right-1 rounded-sm border-l-4 px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
-            statusColors.bg,
-            statusColors.border,
-            statusColors.text,
+            !useServiceColors && statusColors.bg,
+            !useServiceColors && statusColors.border,
+            !useServiceColors && statusColors.text,
             appointment.status === 'cancelled' && 'opacity-50 line-through'
           )}
-          style={style}
+          style={{
+            ...style,
+            ...(useServiceColors ? {
+              backgroundColor: serviceColor.bg,
+              color: serviceColor.text,
+              borderLeftColor: serviceColor.bg,
+            } : {}),
+          }}
           onClick={onClick}
         >
           {isCompact ? (
@@ -158,6 +172,7 @@ export function WeekView({
   onAppointmentClick,
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
+  const { data: serviceCategoryColors } = useServiceCategoryColors();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   
   const weekDays = useMemo(() => 
@@ -327,14 +342,18 @@ export function WeekView({
                   })}
                   
                   {/* Appointments */}
-                  {dayAppointments.map((apt) => (
-                    <AppointmentCard
-                      key={apt.id}
-                      appointment={apt}
-                      hoursStart={hoursStart}
-                      onClick={() => onAppointmentClick(apt)}
-                    />
-                  ))}
+                  {dayAppointments.map((apt) => {
+                    const serviceColor = getServiceColor(serviceCategoryColors, apt.service_category || apt.service_name);
+                    return (
+                      <AppointmentCard
+                        key={apt.id}
+                        appointment={apt}
+                        hoursStart={hoursStart}
+                        onClick={() => onAppointmentClick(apt)}
+                        serviceColor={serviceColor}
+                      />
+                    );
+                  })}
 
                   {/* Current time indicator */}
                   {isCurrentDay && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (

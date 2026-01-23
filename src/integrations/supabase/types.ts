@@ -2974,6 +2974,33 @@ export type Database = {
         }
         Relationships: []
       }
+      service_category_colors: {
+        Row: {
+          category_name: string
+          color_hex: string
+          created_at: string
+          id: string
+          text_color_hex: string
+          updated_at: string
+        }
+        Insert: {
+          category_name: string
+          color_hex?: string
+          created_at?: string
+          id?: string
+          text_color_hex?: string
+          updated_at?: string
+        }
+        Update: {
+          category_name?: string
+          color_hex?: string
+          created_at?: string
+          id?: string
+          text_color_hex?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       signature_presets: {
         Row: {
           config: Json
