@@ -5,6 +5,7 @@ import {
   StickyNote, 
   CheckCircle,
   Undo2,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,7 @@ interface ScheduleActionBarProps {
   onConfirm?: () => void;
   onUndo?: () => void;
   isUpdating?: boolean;
+  todayAppointmentCount?: number;
 }
 
 export function ScheduleActionBar({
@@ -30,6 +32,7 @@ export function ScheduleActionBar({
   onConfirm,
   onUndo,
   isUpdating = false,
+  todayAppointmentCount = 0,
 }: ScheduleActionBarProps) {
   const hasSelection = !!selectedAppointment;
   const status = selectedAppointment?.status;
@@ -54,6 +57,15 @@ export function ScheduleActionBar({
           <Undo2 className="h-4 w-4" />
           Undo
         </Button>
+      </div>
+
+      {/* Center: Today's Appointment Count */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Calendar className="h-4 w-4" />
+        <span>
+          <span className="font-semibold text-foreground">{todayAppointmentCount}</span>
+          {' '}appointment{todayAppointmentCount !== 1 ? 's' : ''} today
+        </span>
       </div>
 
       {/* Right: Action Buttons */}
