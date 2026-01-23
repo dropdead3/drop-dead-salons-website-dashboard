@@ -320,10 +320,16 @@ export function QuickBookingPopover({
           {children}
         </PopoverTrigger>
         <PopoverContent 
-          side="right" 
+          side="bottom" 
           align="center" 
-          className="!fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 w-[380px] p-0 shadow-xl border-border rounded-xl overflow-hidden z-50 animate-enter"
+          className="w-[380px] p-0 shadow-xl border-border rounded-xl overflow-hidden z-50 animate-enter"
           sideOffset={0}
+          style={{
+            position: 'fixed',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)'
+          }}
         >
           {/* Header */}
           <div className="bg-card border-b border-border">
