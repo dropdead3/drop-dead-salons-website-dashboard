@@ -40,6 +40,9 @@ const STATUS_COLORS: Record<AppointmentStatus, { bg: string; border: string; tex
 const ROW_HEIGHT = 20; // Height per 15-minute slot
 const SLOTS_PER_HOUR = 4;
 
+// Categories that display the X pattern overlay
+const BLOCKED_CATEGORIES = ['Block', 'Break'];
+
 function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
@@ -106,26 +109,53 @@ function AppointmentCard({
           }}
           onClick={onClick}
         >
-          {isCompact ? (
-            <div className="text-xs font-semibold truncate">{appointment.client_name}</div>
-          ) : isMedium ? (
-            <>
-              <div className="text-xs font-bold truncate">
-                {appointment.client_name} {appointment.client_phone}
-              </div>
-              <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
-            </>
-          ) : (
-            <>
-              <div className="text-xs font-bold truncate">
-                {appointment.client_name} {appointment.client_phone}
-              </div>
-              <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
-              <div className="text-[10px] opacity-80">
-                {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
-              </div>
-            </>
+          {/* X pattern overlay for Block/Break entries */}
+          {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div 
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(to bottom right, 
+                    transparent calc(50% - 1px), 
+                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), 
+                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), 
+                    transparent calc(50% + 1px))`,
+                }}
+              />
+              <div 
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(to bottom left, 
+                    transparent calc(50% - 1px), 
+                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), 
+                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), 
+                    transparent calc(50% + 1px))`,
+                }}
+              />
+            </div>
           )}
+          <div className="relative z-10">
+            {isCompact ? (
+              <div className="text-xs font-semibold truncate">{appointment.client_name}</div>
+            ) : isMedium ? (
+              <>
+                <div className="text-xs font-bold truncate">
+                  {appointment.client_name} {appointment.client_phone}
+                </div>
+                <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
+              </>
+            ) : (
+              <>
+                <div className="text-xs font-bold truncate">
+                  {appointment.client_name} {appointment.client_phone}
+                </div>
+                <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
+                <div className="text-[10px] opacity-80">
+                  {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
+                </div>
+              </>
+            )}
+          </div>
           
           {/* Action icons in bottom right */}
           {!isCompact && (

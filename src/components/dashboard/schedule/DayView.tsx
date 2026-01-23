@@ -72,6 +72,9 @@ function formatPhone(phone: string | null): string {
   return phone;
 }
 
+// Categories that display the X pattern overlay
+const BLOCKED_CATEGORIES = ['Block', 'Break'];
+
 interface AppointmentCardProps {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -129,7 +132,32 @@ function AppointmentCard({
           }}
           onClick={onClick}
         >
-          <div className="px-1.5 py-0.5">
+          {/* X pattern overlay for Block/Break entries */}
+          {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div 
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(to bottom right, 
+                    transparent calc(50% - 1px), 
+                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), 
+                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), 
+                    transparent calc(50% + 1px))`,
+                }}
+              />
+              <div 
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(to bottom left, 
+                    transparent calc(50% - 1px), 
+                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% - 1px), 
+                    ${useCategoryColor ? catColor.text : 'currentColor'}19 calc(50% + 1px), 
+                    transparent calc(50% + 1px))`,
+                }}
+              />
+            </div>
+          )}
+          <div className="px-1.5 py-0.5 relative z-10">
             {isCompact ? (
               <div className="text-xs font-medium truncate">
                 {appointment.client_name}
