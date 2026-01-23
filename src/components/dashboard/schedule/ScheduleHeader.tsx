@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format, addDays, isToday } from 'date-fns';
 import { 
   ChevronLeft, 
@@ -9,6 +10,7 @@ import {
   Plus,
   LayoutGrid,
   Check,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +30,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { CalendarView } from '@/hooks/usePhorestCalendar';
 import { CalendarFiltersPopover, type CalendarFilterState } from './CalendarFiltersPopover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface ScheduleHeaderProps {
   currentDate: Date;
@@ -62,6 +69,7 @@ export function ScheduleHeader({
   calendarFilters,
   onCalendarFiltersChange,
 }: ScheduleHeaderProps) {
+  const navigate = useNavigate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
 
@@ -158,7 +166,7 @@ export function ScheduleHeader({
           )}
         </div>
 
-        {/* Right: Filters, Location & Staff Selectors */}
+        {/* Right: Filters, Location, Staff Selectors & Settings */}
         <div className="flex items-center gap-3">
           <CalendarFiltersPopover 
             filters={calendarFilters}
@@ -227,6 +235,23 @@ export function ScheduleHeader({
               </div>
             </PopoverContent>
           </Popover>
+
+          {/* Settings Icon */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-background/70 hover:text-background hover:bg-background/10"
+                onClick={() => navigate('/dashboard/admin/settings?category=schedule')}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>Schedule Settings</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

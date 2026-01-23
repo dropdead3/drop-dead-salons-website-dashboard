@@ -31,6 +31,8 @@ import { useAllServicesByCategory } from '@/hooks/usePhorestServices';
 import { useLocations } from '@/hooks/useLocations';
 import { NewClientDialog } from './NewClientDialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+import { getCategoryColor } from '@/utils/categoryColors';
 
 interface QuickBookingPopoverProps {
   date: Date;
@@ -51,23 +53,6 @@ interface PhorestClient {
 type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
 
 const STEPS: Step[] = ['service', 'location', 'client', 'stylist', 'confirm'];
-
-// Map category names to colors and abbreviations
-const getCategoryStyle = (category: string): { bg: string; abbr: string; isSpecial?: boolean } => {
-  const lower = category.toLowerCase();
-  const getAbbr = (cat: string) => cat.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  
-  if (lower.includes('extension')) return { bg: 'bg-emerald-100 text-emerald-700', abbr: 'EX' };
-  if (lower.includes('consult')) return { bg: 'bg-gradient-to-br from-[hsl(38,30%,78%)] via-[hsl(38,35%,70%)] to-[hsl(38,28%,62%)] text-[hsl(38,30%,25%)]', abbr: 'NC', isSpecial: true };
-  if (lower.includes('blond') || lower.includes('highlight') || lower.includes('balayage')) return { bg: 'bg-rose-300 text-rose-800', abbr: 'BL' };
-  if (lower.includes('color') || lower.includes('colour')) return { bg: 'bg-rose-400 text-white', abbr: 'CO' };
-  if (lower.includes('cut') || lower.includes('haircut')) return { bg: 'bg-blue-400 text-white', abbr: 'HA' };
-  if (lower.includes('blow') || lower.includes('style') || lower.includes('styling')) return { bg: 'bg-blue-500 text-white', abbr: 'ST' };
-  if (lower.includes('treatment') || lower.includes('condition') || lower.includes('keratin')) return { bg: 'bg-teal-400 text-white', abbr: 'TR' };
-  if (lower.includes('bridal') || lower.includes('wedding') || lower.includes('special')) return { bg: 'bg-pink-300 text-pink-800', abbr: 'SP' };
-  if (lower.includes('extra')) return { bg: 'bg-gray-300 text-gray-600', abbr: 'EX' };
-  return { bg: 'bg-gray-400 text-white', abbr: getAbbr(category) };
-};
 
 // Sort categories with consultation first
 const sortCategories = (categories: string[]): string[] => {
@@ -103,6 +88,7 @@ export function QuickBookingPopover({
 
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useAllServicesByCategory();
+  const { colorMap: categoryColors } = useServiceCategoryColorsMap();
 
   // Get selected service details (for totals calculation)
   const selectedServiceDetails = useMemo(() => {
@@ -491,31 +477,37 @@ export function QuickBookingPopover({
                         // Category list
                         <div className="space-y-1">
                           {sortCategories(Object.keys(servicesByCategory)).map((category) => {
-                            const style = getCategoryStyle(category);
+                            const catColor = getCategoryColor(category, categoryColors);
+                            const isConsultation = category.toLowerCase().includes('consult');
                             return (
                               <button
                                 key={category}
                                 className={cn(
                                   "w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4",
-                                  style.isSpecial 
+                                  isConsultation 
                                     ? "group relative overflow-hidden py-3.5 bg-gradient-to-r from-[hsl(38,25%,91%)] via-[hsl(38,22%,94%)] to-[hsl(38,25%,91%)] border-y border-[hsl(38,30%,82%)] hover:from-[hsl(38,28%,89%)] hover:to-[hsl(38,28%,89%)] mb-1"
                                     : "py-3 hover:bg-muted/60"
                                 )}
                                 onClick={() => setSelectedCategory(category)}
                               >
-                                <div className={cn(
-                                  'w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0',
-                                  style.bg,
-                                  style.isSpecial && 'shadow-sm ring-2 ring-[hsl(38,28%,85%)]'
-                                )}>
-                                  {style.abbr}
+                                <div 
+                                  className={cn(
+                                    'w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0',
+                                    isConsultation && 'shadow-sm ring-2 ring-[hsl(38,28%,85%)]'
+                                  )}
+                                  style={{
+                                    backgroundColor: catColor.bg,
+                                    color: catColor.text,
+                                  }}
+                                >
+                                  {catColor.abbr}
                                 </div>
                                 <div className="flex flex-col min-w-0">
                                   <span className={cn(
                                     "text-sm truncate",
-                                    style.isSpecial ? "font-medium text-[hsl(38,15%,25%)]" : "font-medium"
+                                    isConsultation ? "font-medium text-[hsl(38,15%,25%)]" : "font-medium"
                                   )}>{category}</span>
-                                  {style.isSpecial && (
+                                  {isConsultation && (
                                     <span className="text-[10px] text-[hsl(38,15%,50%)] tracking-wide uppercase">
                                       Required for new guests
                                     </span>
