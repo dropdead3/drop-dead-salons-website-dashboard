@@ -81,11 +81,11 @@ const isConsultationCategory = (category: string | null | undefined) => {
   return category.toLowerCase().includes('consult');
 };
 
-// Consultation gradient styles - light teal to lavender purple
+// Consultation gradient styles - teal to lime
 const CONSULTATION_GRADIENT = {
-  background: 'linear-gradient(135deg, hsl(175,60%,85%) 0%, hsl(200,55%,75%) 50%, hsl(270,50%,85%) 100%)',
-  textColor: '#374151',
-  borderColor: 'hsl(270,50%,75%)',
+  background: 'linear-gradient(135deg, #43c6ac 0%, #f8ffae 100%)',
+  textColor: '#1a3a32',
+  borderColor: '#43c6ac',
 };
 
 interface AppointmentCardProps {
@@ -156,7 +156,7 @@ function AppointmentCard({
             <div 
               className="absolute inset-0 rounded-sm pointer-events-none"
               style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(180,140,220,0.4) 100%)',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
                 mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                 maskComposite: 'xor',
                 WebkitMaskComposite: 'xor',
