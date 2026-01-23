@@ -489,37 +489,34 @@ export function QuickBookingPopover({
                         </div>
                       ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
                         // Category list
-                        <div className="divide-y divide-border">
+                        <div className="space-y-1">
                           {sortCategories(Object.keys(servicesByCategory)).map((category) => {
                             const style = getCategoryStyle(category);
                             return (
                               <button
                                 key={category}
                                 className={cn(
-                                  "w-full flex items-center gap-3 py-3 text-left transition-colors first:pt-0 last:pb-0",
+                                  "w-full flex items-center gap-3 text-left transition-all",
                                   style.isSpecial 
-                                    ? "group relative overflow-hidden -mx-3 px-4 py-4 bg-gradient-to-r from-[hsl(38,25%,92%)] via-[hsl(38,20%,96%)] to-[hsl(38,25%,92%)] border-y border-[hsl(38,30%,80%)]/60 shadow-[0_2px_12px_-2px_hsl(38,30%,70%,0.25),inset_0_1px_0_0_hsl(38,40%,95%)] hover:shadow-[0_4px_20px_-4px_hsl(38,30%,60%,0.35),inset_0_1px_0_0_hsl(38,40%,95%)] transition-all duration-300"
-                                    : "hover:bg-muted/50"
+                                    ? "group relative overflow-hidden -mx-3 px-3 py-3.5 bg-gradient-to-r from-[hsl(38,25%,91%)] via-[hsl(38,22%,94%)] to-[hsl(38,25%,91%)] border-y border-[hsl(38,30%,82%)] hover:from-[hsl(38,28%,89%)] hover:to-[hsl(38,28%,89%)] mb-1"
+                                    : "py-2.5 hover:bg-muted/50 rounded-lg px-1"
                                 )}
                                 onClick={() => setSelectedCategory(category)}
                               >
-                                {style.isSpecial && (
-                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(38,40%,85%,0.15)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                )}
                                 <div className={cn(
-                                  'w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium shrink-0 relative',
+                                  'w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0',
                                   style.bg,
-                                  style.isSpecial && 'shadow-[0_4px_12px_-2px_hsl(38,30%,50%,0.4)] ring-[3px] ring-[hsl(38,25%,88%)]/80'
+                                  style.isSpecial && 'shadow-sm ring-2 ring-[hsl(38,28%,85%)]'
                                 )}>
                                   {style.abbr}
                                 </div>
-                                <div className="flex flex-col">
+                                <div className="flex flex-col min-w-0">
                                   <span className={cn(
-                                    "text-sm tracking-wide",
-                                    style.isSpecial ? "font-medium text-[hsl(38,20%,20%)]" : "font-medium"
+                                    "text-sm truncate",
+                                    style.isSpecial ? "font-medium text-[hsl(38,15%,25%)]" : "font-medium"
                                   )}>{category}</span>
                                   {style.isSpecial && (
-                                    <span className="text-[10px] text-[hsl(38,20%,45%)] tracking-wider uppercase mt-0.5">
+                                    <span className="text-[10px] text-[hsl(38,15%,50%)] tracking-wide uppercase">
                                       Required for new guests
                                     </span>
                                   )}
