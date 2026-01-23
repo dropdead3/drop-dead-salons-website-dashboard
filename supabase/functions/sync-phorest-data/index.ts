@@ -10,6 +10,7 @@ interface SyncRequest {
   sync_type: 'staff' | 'appointments' | 'clients' | 'reports' | 'sales' | 'all';
   date_from?: string;
   date_to?: string;
+  quick?: boolean; // For lightweight syncs (e.g., appointments for next 7 days only)
 }
 
 // Phorest API configuration - Global endpoint works
@@ -620,14 +621,30 @@ serve(async (req: Request) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { sync_type, date_from, date_to }: SyncRequest = await req.json();
+    const { sync_type, date_from, date_to, quick }: SyncRequest = await req.json();
 
-    console.log(`Starting Phorest sync: ${sync_type}`);
+    console.log(`Starting Phorest sync: ${sync_type}${quick ? ' (quick mode)' : ''}`);
 
-    // Default date range: today + next 7 days for appointments
+    // Default date range for appointments
     const today = new Date();
-    const defaultFrom = date_from || today.toISOString().split('T')[0];
-    const defaultTo = date_to || new Date(today.setDate(today.getDate() + 7)).toISOString().split('T')[0];
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Quick mode: only sync today + 7 days for appointments (for frequent syncs)
+    // Full mode: use provided dates or default range
+    let defaultFrom: string;
+    let defaultTo: string;
+    
+    if (quick) {
+      defaultFrom = todayStr;
+      const weekFromNow = new Date(today);
+      weekFromNow.setDate(weekFromNow.getDate() + 7);
+      defaultTo = weekFromNow.toISOString().split('T')[0];
+    } else {
+      defaultFrom = date_from || todayStr;
+      const defaultToDate = new Date(today);
+      defaultToDate.setDate(defaultToDate.getDate() + 7);
+      defaultTo = date_to || defaultToDate.toISOString().split('T')[0];
+    }
 
     // Get the Monday of this week for performance reports
     const thisMonday = new Date();
@@ -678,14 +695,23 @@ serve(async (req: Request) => {
 
     if (sync_type === 'sales' || sync_type === 'all') {
       try {
-        // Default: last 30 days for sales
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const salesFrom = date_from || thirtyDaysAgo.toISOString().split('T')[0];
-        const salesTo = date_to || new Date().toISOString().split('T')[0];
+        // Quick mode: just today's sales
+        // Full mode: last 30 days for sales
+        let salesFrom: string;
+        let salesTo: string;
+        
+        if (quick) {
+          salesFrom = todayStr;
+          salesTo = todayStr;
+        } else {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          salesFrom = date_from || thirtyDaysAgo.toISOString().split('T')[0];
+          salesTo = date_to || new Date().toISOString().split('T')[0];
+        }
         
         results.sales = await syncSalesTransactions(supabase, businessId, username, password, salesFrom, salesTo);
-        await logSync(supabase, 'sales', 'success', results.sales.synced_items);
+        await logSync(supabase, 'sales', 'success', results.sales.synced_items, undefined, { quick });
       } catch (error: any) {
         results.sales = { error: error.message };
         await logSync(supabase, 'sales', 'failed', 0, error.message);

@@ -435,6 +435,48 @@ export default function PhorestSettings() {
                 </Button>
               </Card>
             </div>
+
+            {/* Scheduled Syncs Status Card */}
+            <Card className="p-6 bg-muted/30">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="w-5 h-5 text-primary" />
+                <h3 className="font-display text-lg">Automatic Syncing</h3>
+                <Badge variant="secondary" className="ml-auto">Active</Badge>
+              </div>
+              <p className="text-muted-foreground text-sm mb-4">
+                Phorest data is automatically synchronized on a schedule to keep your dashboard up-to-date.
+              </p>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                <div className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Appointments</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Every 5 min</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Sales</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Every hour</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Full Sync</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Daily 6 AM</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Services</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Daily 6:05 AM</Badge>
+                </div>
+              </div>
+            </Card>
           </div>
         )}
 
