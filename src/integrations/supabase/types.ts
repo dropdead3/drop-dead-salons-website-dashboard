@@ -2275,6 +2275,7 @@ export type Database = {
           phorest_branch_name: string | null
           phorest_staff_id: string
           phorest_staff_name: string | null
+          show_on_calendar: boolean | null
           updated_at: string
           user_id: string
         }
@@ -2286,6 +2287,7 @@ export type Database = {
           phorest_branch_name?: string | null
           phorest_staff_id: string
           phorest_staff_name?: string | null
+          show_on_calendar?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -2297,6 +2299,7 @@ export type Database = {
           phorest_branch_name?: string | null
           phorest_staff_id?: string
           phorest_staff_name?: string | null
+          show_on_calendar?: boolean | null
           updated_at?: string
           user_id?: string
         }

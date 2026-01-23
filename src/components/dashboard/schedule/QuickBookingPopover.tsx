@@ -158,6 +158,7 @@ export function QuickBookingPopover({
           )
         `)
         .eq('is_active', true)
+        .eq('show_on_calendar', true)
         .eq('phorest_branch_id', locationData.phorest_branch_id);
       
       return data || [];
