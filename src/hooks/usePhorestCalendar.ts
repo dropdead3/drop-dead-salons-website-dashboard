@@ -11,6 +11,7 @@ export interface PhorestAppointment {
   phorest_id: string;
   stylist_user_id: string | null;
   phorest_staff_id: string | null;
+  location_id: string | null;
   client_name: string;
   client_phone: string | null;
   appointment_date: string;
