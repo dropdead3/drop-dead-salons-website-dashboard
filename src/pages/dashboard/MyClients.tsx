@@ -21,7 +21,8 @@ import {
   Clock,
   Mail,
   Phone,
-  MapPin
+  MapPin,
+  ChevronRight
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +30,7 @@ import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { useLocations } from '@/hooks/useLocations';
+import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
 
 type SortField = 'total_spend' | 'visit_count' | 'last_visit' | 'name';
 type SortDirection = 'asc' | 'desc';
@@ -40,6 +42,8 @@ export default function MyClients() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [activeTab, setActiveTab] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const [selectedClient, setSelectedClient] = useState<any | null>(null);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
 
   // Fetch locations for the filter dropdown
   const { data: locations } = useLocations();
@@ -341,8 +345,17 @@ export default function MyClients() {
                 {filteredClients.map((client) => {
                   const locationName = locations?.find(l => l.id === client.location_id)?.name || client.branch_name;
                   
+                  const handleClientClick = () => {
+                    setSelectedClient({ ...client });
+                    setDetailSheetOpen(true);
+                  };
+
                   return (
-                    <div key={client.id} className="py-4 flex items-center gap-4">
+                    <div 
+                      key={client.id} 
+                      className="py-4 flex items-center gap-4 cursor-pointer hover:bg-muted/50 -mx-6 px-6 transition-colors"
+                      onClick={handleClientClick}
+                    >
                       <Avatar className="w-12 h-12">
                         <AvatarFallback className="font-display text-sm bg-primary/10">
                           {client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -419,9 +432,12 @@ export default function MyClients() {
                         )}
                       </div>
                       
-                      <div className="text-right">
-                        <p className="font-display text-lg">${Number(client.total_spend || 0).toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground">lifetime</p>
+                      <div className="text-right flex items-center gap-2">
+                        <div>
+                          <p className="font-display text-lg">${Number(client.total_spend || 0).toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">lifetime</p>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
                       </div>
                     </div>
                   );
@@ -430,6 +446,14 @@ export default function MyClients() {
             )}
           </CardContent>
         </Card>
+
+        {/* Client Detail Sheet */}
+        <ClientDetailSheet
+          client={selectedClient}
+          open={detailSheetOpen}
+          onOpenChange={setDetailSheetOpen}
+          locationName={locations?.find(l => l.id === selectedClient?.location_id)?.name}
+        />
       </div>
     </DashboardLayout>
   );
