@@ -831,8 +831,8 @@ export function QuickBookingPopover({
                               </AvatarFallback>
                             </Avatar>
                             {isSelected && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center ring-2 ring-background">
-                                <Check className="h-3 w-3 text-primary-foreground" />
+                              <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-success flex items-center justify-center ring-2 ring-background">
+                                <Check className="h-3 w-3 text-success-foreground" />
                               </div>
                             )}
                           </div>
