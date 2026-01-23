@@ -75,6 +75,19 @@ function formatPhone(phone: string | null): string {
 // Categories that display the X pattern overlay
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
 
+// Helper to detect consultation category
+const isConsultationCategory = (category: string | null | undefined) => {
+  if (!category) return false;
+  return category.toLowerCase().includes('consult');
+};
+
+// Consultation gradient styles
+const CONSULTATION_GRADIENT = {
+  background: 'linear-gradient(135deg, hsl(35,35%,82%) 0%, hsl(32,55%,45%) 50%, hsl(30,60%,35%) 100%)',
+  textColor: '#1f2937',
+  borderColor: 'hsl(30,60%,35%)',
+};
+
 interface AppointmentCardProps {
   appointment: PhorestAppointment;
   hoursStart: number;
@@ -103,6 +116,7 @@ function AppointmentCard({
   const serviceCategory = appointment.service_category;
   const catColor = getCategoryColor(serviceCategory, categoryColors);
   const useCategoryColor = appointment.status === 'booked';
+  const isConsultation = isConsultationCategory(serviceCategory);
 
   // Calculate width and offset for overlapping appointments
   const widthPercent = 100 / totalOverlapping;
@@ -114,17 +128,22 @@ function AppointmentCard({
         <div
           className={cn(
             'absolute rounded-sm cursor-pointer transition-all overflow-hidden border-l-4',
-            !useCategoryColor && statusColors.bg,
-            !useCategoryColor && statusColors.border,
-            !useCategoryColor && statusColors.text,
+            !useCategoryColor && !isConsultation && statusColors.bg,
+            !useCategoryColor && !isConsultation && statusColors.border,
+            !useCategoryColor && !isConsultation && statusColors.text,
             appointment.status === 'cancelled' && 'opacity-60 line-through',
-            isSelected && 'ring-2 ring-primary ring-offset-1'
+            isSelected && 'ring-2 ring-primary ring-offset-1',
+            isConsultation && 'shadow-lg'
           )}
           style={{
             ...style,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
-            ...(useCategoryColor && {
+            ...(isConsultation ? {
+              background: CONSULTATION_GRADIENT.background,
+              color: CONSULTATION_GRADIENT.textColor,
+              borderLeftColor: CONSULTATION_GRADIENT.borderColor,
+            } : useCategoryColor && {
               backgroundColor: catColor.bg,
               color: catColor.text,
               borderLeftColor: catColor.bg,
@@ -132,6 +151,19 @@ function AppointmentCard({
           }}
           onClick={onClick}
         >
+          {/* Glass stroke overlay for consultation */}
+          {isConsultation && (
+            <div 
+              className="absolute inset-0 rounded-sm pointer-events-none"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(212,165,116,0.35) 100%)',
+                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                maskComposite: 'xor',
+                WebkitMaskComposite: 'xor',
+                padding: '1px',
+              }}
+            />
+          )}
           {/* X pattern overlay for Block/Break entries */}
           {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">

@@ -6,6 +6,17 @@ interface CalendarColorPreviewProps {
   colorMap: Record<string, { bg: string; text: string; abbr: string }>;
 }
 
+// Helper to detect consultation category
+const isConsultationCategory = (category: string) => {
+  return category.toLowerCase().includes('consult');
+};
+
+// Consultation gradient styles
+const CONSULTATION_GRADIENT = {
+  background: 'linear-gradient(135deg, hsl(35,35%,82%) 0%, hsl(32,55%,45%) 50%, hsl(30,60%,35%) 100%)',
+  textColor: '#1f2937',
+};
+
 // Sample appointments to showcase different categories
 const SAMPLE_APPOINTMENTS = [
   // Monday
@@ -15,10 +26,11 @@ const SAMPLE_APPOINTMENTS = [
   { day: 0, start: '14:00', end: '16:30', category: 'Extensions', client: 'Olivia K.' },
   
   // Tuesday  
-  { day: 1, start: '09:30', end: '10:30', category: 'Color', client: 'Ava R.' },
-  { day: 1, start: '11:00', end: '12:00', category: 'Treatment', client: 'Mia L.' },
-  { day: 1, start: '13:00', end: '15:00', category: 'Blonding', client: 'Lily W.' },
-  { day: 1, start: '15:30', end: '16:30', category: 'Styling', client: 'Chloe B.' },
+  { day: 1, start: '09:00', end: '09:30', category: 'New Client Consultation', client: 'New Guest' },
+  { day: 1, start: '10:00', end: '11:00', category: 'Color', client: 'Ava R.' },
+  { day: 1, start: '11:30', end: '12:30', category: 'Treatment', client: 'Mia L.' },
+  { day: 1, start: '13:30', end: '15:30', category: 'Blonding', client: 'Lily W.' },
+  { day: 1, start: '16:00', end: '17:00', category: 'Styling', client: 'Chloe B.' },
   
   // Wednesday
   { day: 2, start: '09:00', end: '10:00', category: 'Haircuts', client: 'Grace H.' },
@@ -128,20 +140,42 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                 const duration = parseTimeToMinutes(apt.end) - parseTimeToMinutes(apt.start);
                 const isShort = duration <= 60;
 
+                const isConsultation = isConsultationCategory(apt.category);
+
                 return (
                   <div
                     key={aptIndex}
                     className={cn(
                       'absolute left-0.5 right-0.5 rounded-sm overflow-hidden',
-                      'border-l-2 shadow-sm'
+                      'border-l-2 shadow-sm',
+                      isConsultation && 'shadow-lg'
                     )}
                     style={{
                       ...style,
-                      backgroundColor: colors.bg,
-                      borderLeftColor: colors.bg,
-                      color: colors.text,
+                      ...(isConsultation ? {
+                        background: CONSULTATION_GRADIENT.background,
+                        borderLeftColor: 'hsl(30,60%,35%)',
+                        color: CONSULTATION_GRADIENT.textColor,
+                      } : {
+                        backgroundColor: colors.bg,
+                        borderLeftColor: colors.bg,
+                        color: colors.text,
+                      }),
                     }}
                   >
+                    {/* Glass stroke overlay for consultation */}
+                    {isConsultation && (
+                      <div 
+                        className="absolute inset-0 rounded-sm pointer-events-none"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(212,165,116,0.4) 100%)',
+                          mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                          maskComposite: 'xor',
+                          WebkitMaskComposite: 'xor',
+                          padding: '1px',
+                        }}
+                      />
+                    )}
                     {/* X pattern for blocked entries */}
                     {BLOCKED_CATEGORIES.includes(apt.category) && (
                       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -172,10 +206,12 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                         <span
                           className="text-[9px] font-bold px-1 py-0.5 rounded"
                           style={{
-                            backgroundColor: `${colors.text}15`,
+                            backgroundColor: isConsultation 
+                              ? 'rgba(31, 41, 55, 0.15)' 
+                              : `${colors.text}15`,
                           }}
                         >
-                          {colors.abbr}
+                          {isConsultation ? 'NC' : colors.abbr}
                         </span>
                         {!isShort && (
                           <span className="text-[10px] font-medium truncate">

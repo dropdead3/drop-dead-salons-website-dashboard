@@ -43,6 +43,19 @@ const SLOTS_PER_HOUR = 4;
 // Categories that display the X pattern overlay
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
 
+// Helper to detect consultation category
+const isConsultationCategory = (category: string | null | undefined) => {
+  if (!category) return false;
+  return category.toLowerCase().includes('consult');
+};
+
+// Consultation gradient styles
+const CONSULTATION_GRADIENT = {
+  background: 'linear-gradient(135deg, hsl(35,35%,82%) 0%, hsl(32,55%,45%) 50%, hsl(30,60%,35%) 100%)',
+  textColor: '#1f2937',
+  borderColor: 'hsl(30,60%,35%)',
+};
+
 function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
@@ -87,6 +100,7 @@ function AppointmentCard({
   const serviceCategory = appointment.service_category;
   const catColor = getCategoryColor(serviceCategory, categoryColors);
   const useCategoryColor = appointment.status === 'booked';
+  const isConsultation = isConsultationCategory(serviceCategory);
 
   return (
     <Tooltip>
@@ -94,14 +108,19 @@ function AppointmentCard({
         <div
           className={cn(
             'absolute left-1 right-1 rounded-sm border-l-4 px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
-            !useCategoryColor && statusColors.bg,
-            !useCategoryColor && statusColors.border,
-            !useCategoryColor && statusColors.text,
-            appointment.status === 'cancelled' && 'opacity-50 line-through'
+            !useCategoryColor && !isConsultation && statusColors.bg,
+            !useCategoryColor && !isConsultation && statusColors.border,
+            !useCategoryColor && !isConsultation && statusColors.text,
+            appointment.status === 'cancelled' && 'opacity-50 line-through',
+            isConsultation && 'shadow-lg'
           )}
           style={{
             ...style,
-            ...(useCategoryColor && {
+            ...(isConsultation ? {
+              background: CONSULTATION_GRADIENT.background,
+              color: CONSULTATION_GRADIENT.textColor,
+              borderLeftColor: CONSULTATION_GRADIENT.borderColor,
+            } : useCategoryColor && {
               backgroundColor: catColor.bg,
               color: catColor.text,
               borderLeftColor: catColor.bg,
@@ -109,6 +128,19 @@ function AppointmentCard({
           }}
           onClick={onClick}
         >
+          {/* Glass stroke overlay for consultation */}
+          {isConsultation && (
+            <div 
+              className="absolute inset-0 rounded-sm pointer-events-none"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(212,165,116,0.35) 100%)',
+                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                maskComposite: 'xor',
+                WebkitMaskComposite: 'xor',
+                padding: '1px',
+              }}
+            />
+          )}
           {/* X pattern overlay for Block/Break entries */}
           {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">

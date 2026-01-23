@@ -24,6 +24,17 @@ const CATEGORY_EXPLANATIONS: Record<string, string> = {
   'Break': 'Scheduled breaks (e.g., lunch)',
 };
 
+// Helper to detect consultation category
+const isConsultationCategory = (categoryName: string) => {
+  return categoryName.toLowerCase().includes('consult');
+};
+
+// Consultation gradient styles
+const CONSULTATION_GRADIENT = {
+  background: 'linear-gradient(135deg, hsl(35,35%,82%) 0%, hsl(32,55%,45%) 50%, hsl(30,60%,35%) 100%)',
+  textColor: '#1f2937',
+};
+
 // Curated luxury color palette - 36 colors organized by family
 const CATEGORY_PALETTE = [
   // Row 1: Neutrals & Blacks
@@ -106,15 +117,32 @@ export function ScheduleSettingsContent() {
           <PopoverTrigger asChild>
             <button
               className={cn(
-                'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0',
+                'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0 relative',
                 'transition-transform hover:scale-105 active:scale-95',
-                'ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50'
+                'ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50',
+                isConsultationCategory(category.category_name) && 'shadow-lg'
               )}
-              style={{
+              style={isConsultationCategory(category.category_name) ? {
+                background: CONSULTATION_GRADIENT.background,
+                color: CONSULTATION_GRADIENT.textColor,
+              } : {
                 backgroundColor: category.color_hex,
                 color: category.text_color_hex,
               }}
             >
+              {/* Glass stroke for consultation badge */}
+              {isConsultationCategory(category.category_name) && (
+                <span 
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(212,165,116,0.45) 100%)',
+                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    maskComposite: 'xor',
+                    WebkitMaskComposite: 'xor',
+                    padding: '2px',
+                  }}
+                />
+              )}
               {abbr}
             </button>
           </PopoverTrigger>
