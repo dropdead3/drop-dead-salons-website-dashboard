@@ -2033,6 +2033,7 @@ export type Database = {
           created_at: string
           id: string
           location_id: string | null
+          phorest_staff_id: string | null
           product_revenue: number | null
           service_revenue: number | null
           summary_date: string
@@ -2050,6 +2051,7 @@ export type Database = {
           created_at?: string
           id?: string
           location_id?: string | null
+          phorest_staff_id?: string | null
           product_revenue?: number | null
           service_revenue?: number | null
           summary_date: string
@@ -2067,6 +2069,7 @@ export type Database = {
           created_at?: string
           id?: string
           location_id?: string | null
+          phorest_staff_id?: string | null
           product_revenue?: number | null
           service_revenue?: number | null
           summary_date?: string
@@ -2095,13 +2098,14 @@ export type Database = {
           extension_clients: number
           id: string
           new_clients: number
+          phorest_staff_id: string | null
           rebooking_rate: number | null
           retail_sales: number
           retention_rate: number | null
           service_count: number
           total_revenue: number
           updated_at: string
-          user_id: string
+          user_id: string | null
           week_start: string
         }
         Insert: {
@@ -2110,13 +2114,14 @@ export type Database = {
           extension_clients?: number
           id?: string
           new_clients?: number
+          phorest_staff_id?: string | null
           rebooking_rate?: number | null
           retail_sales?: number
           retention_rate?: number | null
           service_count?: number
           total_revenue?: number
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           week_start: string
         }
         Update: {
@@ -2125,13 +2130,14 @@ export type Database = {
           extension_clients?: number
           id?: string
           new_clients?: number
+          phorest_staff_id?: string | null
           rebooking_rate?: number | null
           retail_sales?: number
           retention_rate?: number | null
           service_count?: number
           total_revenue?: number
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           week_start?: string
         }
         Relationships: [
