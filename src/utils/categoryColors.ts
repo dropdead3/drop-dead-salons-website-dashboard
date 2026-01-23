@@ -34,6 +34,13 @@ export const SPECIAL_GRADIENTS: Record<string, {
     textColor: '#3d2a5c',
     glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(192,132,252,0.3) 100%)',
   },
+  'champagne': {
+    id: 'champagne',
+    name: 'Champagne',
+    background: 'linear-gradient(135deg, #e8e4d9 0%, #c9c2b5 100%)',
+    textColor: '#4a453d',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(201,194,181,0.35) 100%)',
+  },
 };
 
 // Check if a color_hex value is a gradient marker
