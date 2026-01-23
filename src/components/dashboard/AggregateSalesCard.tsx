@@ -177,7 +177,7 @@ export function AggregateSalesCard() {
           </div>
           {hasNoData && (
             <Badge variant="outline" className="text-muted-foreground">
-              No data yet
+              NA
             </Badge>
           )}
         </div>
