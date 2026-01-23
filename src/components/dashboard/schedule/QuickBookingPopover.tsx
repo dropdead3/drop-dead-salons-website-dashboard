@@ -496,10 +496,10 @@ export function QuickBookingPopover({
                               <button
                                 key={category}
                                 className={cn(
-                                  "w-full flex items-center gap-3 text-left transition-all",
+                                  "w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4",
                                   style.isSpecial 
-                                    ? "group relative overflow-hidden -mx-3 w-[calc(100%+1.5rem)] px-4 py-3.5 bg-gradient-to-r from-[hsl(38,25%,91%)] via-[hsl(38,22%,94%)] to-[hsl(38,25%,91%)] border-y border-[hsl(38,30%,82%)] hover:from-[hsl(38,28%,89%)] hover:to-[hsl(38,28%,89%)] mb-1"
-                                    : "py-2.5 hover:bg-muted/50 rounded-lg px-1"
+                                    ? "group relative overflow-hidden py-3.5 bg-gradient-to-r from-[hsl(38,25%,91%)] via-[hsl(38,22%,94%)] to-[hsl(38,25%,91%)] border-y border-[hsl(38,30%,82%)] hover:from-[hsl(38,28%,89%)] hover:to-[hsl(38,28%,89%)] mb-1"
+                                    : "py-3 hover:bg-muted/60"
                                 )}
                                 onClick={() => setSelectedCategory(category)}
                               >
