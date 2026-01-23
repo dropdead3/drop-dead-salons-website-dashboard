@@ -1865,8 +1865,10 @@ export type Database = {
           created_at: string
           end_time: string
           id: string
+          is_new_client: boolean | null
           location_id: string | null
           notes: string | null
+          phorest_client_id: string | null
           phorest_id: string
           phorest_staff_id: string | null
           service_category: string | null
@@ -1884,8 +1886,10 @@ export type Database = {
           created_at?: string
           end_time: string
           id?: string
+          is_new_client?: boolean | null
           location_id?: string | null
           notes?: string | null
+          phorest_client_id?: string | null
           phorest_id: string
           phorest_staff_id?: string | null
           service_category?: string | null
@@ -1903,8 +1907,10 @@ export type Database = {
           created_at?: string
           end_time?: string
           id?: string
+          is_new_client?: boolean | null
           location_id?: string | null
           notes?: string | null
+          phorest_client_id?: string | null
           phorest_id?: string
           phorest_staff_id?: string | null
           service_category?: string | null
@@ -1924,6 +1930,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "phorest_appointments_phorest_client_id_fkey"
+            columns: ["phorest_client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["phorest_client_id"]
+          },
+          {
             foreignKeyName: "phorest_appointments_stylist_user_id_fkey"
             columns: ["stylist_user_id"]
             isOneToOne: false
@@ -1941,6 +1954,7 @@ export type Database = {
           id: string
           is_vip: boolean | null
           last_visit: string | null
+          lead_source: string | null
           location_id: string | null
           name: string
           notes: string | null
@@ -1961,6 +1975,7 @@ export type Database = {
           id?: string
           is_vip?: boolean | null
           last_visit?: string | null
+          lead_source?: string | null
           location_id?: string | null
           name: string
           notes?: string | null
@@ -1981,6 +1996,7 @@ export type Database = {
           id?: string
           is_vip?: boolean | null
           last_visit?: string | null
+          lead_source?: string | null
           location_id?: string | null
           name?: string
           notes?: string | null

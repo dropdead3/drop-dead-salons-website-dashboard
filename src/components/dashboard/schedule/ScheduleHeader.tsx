@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { format, addDays, startOfWeek, isToday } from 'date-fns';
+import { format, addDays, isToday } from 'date-fns';
 import { 
   ChevronLeft, 
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   Calendar as CalendarIcon,
-  SlidersHorizontal,
   Plus,
   LayoutGrid,
   Check,
@@ -28,6 +27,7 @@ import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { CalendarView } from '@/hooks/usePhorestCalendar';
+import { CalendarFiltersPopover, type CalendarFilterState } from './CalendarFiltersPopover';
 
 interface ScheduleHeaderProps {
   currentDate: Date;
@@ -42,6 +42,8 @@ interface ScheduleHeaderProps {
   locations: Array<{ id: string; name: string }>;
   onNewBooking: () => void;
   canCreate?: boolean;
+  calendarFilters: CalendarFilterState;
+  onCalendarFiltersChange: (filters: CalendarFilterState) => void;
 }
 
 export function ScheduleHeader({
@@ -57,6 +59,8 @@ export function ScheduleHeader({
   locations,
   onNewBooking,
   canCreate = false,
+  calendarFilters,
+  onCalendarFiltersChange,
 }: ScheduleHeaderProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
@@ -154,15 +158,12 @@ export function ScheduleHeader({
           )}
         </div>
 
-        {/* Right: Location & Staff Selectors */}
+        {/* Right: Filters, Location & Staff Selectors */}
         <div className="flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="text-background/70 hover:text-background hover:bg-background/10"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
+          <CalendarFiltersPopover 
+            filters={calendarFilters}
+            onFiltersChange={onCalendarFiltersChange}
+          />
           
           {/* Location Selector */}
           <Select value={selectedLocation} onValueChange={onLocationChange}>
