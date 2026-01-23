@@ -571,7 +571,7 @@ export default function PhorestSettings() {
                               <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" className="max-w-xs">
-                              <p>Controls whether this staff member appears as a bookable column on the scheduling calendar</p>
+                              <p>Controls whether this staff member appears as a bookable service provider on the scheduling calendar</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
