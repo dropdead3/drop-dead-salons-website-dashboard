@@ -67,41 +67,7 @@ export function ScheduleHeader({
     <div className="flex flex-col">
       {/* Dark Header Bar */}
       <div className="bg-foreground text-background px-4 py-3 flex items-center justify-between rounded-t-lg">
-        {/* Left: Staff Selector */}
-        <div className="flex items-center gap-3">
-          <Select value={selectedStaff} onValueChange={onStaffChange}>
-            <SelectTrigger className="w-[160px] bg-background/10 border-background/20 text-background hover:bg-background/20">
-              <SelectValue placeholder="All Staff" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Staff</SelectItem>
-              {stylists.map((s) => (
-                <SelectItem key={s.user_id} value={s.user_id}>
-                  {s.display_name || s.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="text-background/70 hover:text-background hover:bg-background/10"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Center: Date Display */}
-        <div className="text-center">
-          <div className="text-lg font-semibold">
-            {format(currentDate, 'EEEE, MMMM d, yyyy')}
-          </div>
-          {isToday(currentDate) && (
-            <div className="text-xs text-background/70">Today</div>
-          )}
-        </div>
-
-        {/* Right: View Toggle & Date Picker */}
+        {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <LayoutGrid className="h-4 w-4 text-background/60" />
@@ -142,7 +108,7 @@ export function ScheduleHeader({
                 Date
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
+            <PopoverContent className="w-auto p-0" align="start">
               <CalendarPicker
                 mode="single"
                 selected={currentDate}
@@ -156,6 +122,40 @@ export function ScheduleHeader({
               />
             </PopoverContent>
           </Popover>
+        </div>
+
+        {/* Center: Date Display */}
+        <div className="text-center">
+          <div className="text-lg font-semibold">
+            {format(currentDate, 'EEEE, MMMM d, yyyy')}
+          </div>
+          {isToday(currentDate) && (
+            <div className="text-xs text-background/70">Today</div>
+          )}
+        </div>
+
+        {/* Right: Staff Selector */}
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="text-background/70 hover:text-background hover:bg-background/10"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </Button>
+          <Select value={selectedStaff} onValueChange={onStaffChange}>
+            <SelectTrigger className="w-[160px] bg-background/10 border-background/20 text-background hover:bg-background/20">
+              <SelectValue placeholder="All Staff" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Staff</SelectItem>
+              {stylists.map((s) => (
+                <SelectItem key={s.user_id} value={s.user_id}>
+                  {s.display_name || s.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
