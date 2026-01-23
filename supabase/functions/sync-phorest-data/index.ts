@@ -653,6 +653,26 @@ serve(async (req: Request) => {
 
     const results: any = {};
 
+    // Helper function to notify on failure (called in background, doesn't block)
+    const notifyFailure = async (syncType: string, errorMsg: string) => {
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/notify-sync-failure`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            sync_type: syncType,
+            error_message: errorMsg,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch (e) {
+        console.error('Failed to send failure notification:', e);
+      }
+    };
+
     if (sync_type === 'staff' || sync_type === 'all') {
       try {
         results.staff = await syncStaff(supabase, businessId, username, password);
@@ -660,6 +680,7 @@ serve(async (req: Request) => {
       } catch (error: any) {
         results.staff = { error: error.message };
         await logSync(supabase, 'staff', 'failed', 0, error.message);
+        notifyFailure('staff', error.message);
       }
     }
 
@@ -670,6 +691,7 @@ serve(async (req: Request) => {
       } catch (error: any) {
         results.appointments = { error: error.message };
         await logSync(supabase, 'appointments', 'failed', 0, error.message);
+        notifyFailure('appointments', error.message);
       }
     }
 
@@ -680,6 +702,7 @@ serve(async (req: Request) => {
       } catch (error: any) {
         results.clients = { error: error.message };
         await logSync(supabase, 'clients', 'failed', 0, error.message);
+        notifyFailure('clients', error.message);
       }
     }
 
@@ -690,6 +713,7 @@ serve(async (req: Request) => {
       } catch (error: any) {
         results.reports = { error: error.message };
         await logSync(supabase, 'reports', 'failed', 0, error.message);
+        notifyFailure('reports', error.message);
       }
     }
 
@@ -715,6 +739,7 @@ serve(async (req: Request) => {
       } catch (error: any) {
         results.sales = { error: error.message };
         await logSync(supabase, 'sales', 'failed', 0, error.message);
+        notifyFailure('sales', error.message);
       }
     }
 
