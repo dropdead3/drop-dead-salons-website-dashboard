@@ -14,6 +14,8 @@ import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
+import { useActiveLocations } from '@/hooks/useLocations';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,6 +23,11 @@ export default function Schedule() {
   const isMobile = useIsMobile();
   const { preferences } = useCalendarPreferences();
   const effectiveUserId = useEffectiveUserId();
+  const { roles } = useAuth();
+  const { data: locations = [] } = useActiveLocations();
+  
+  // Check if user is stylist or stylist_assistant (they get full calendar view access)
+  const isStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
   
   const {
     currentDate,
@@ -41,10 +48,18 @@ export default function Schedule() {
   // State for selections and sheets
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
   const [selectedStaff, setSelectedStaff] = useState('all');
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [showAllStaff, setShowAllStaff] = useState(true);
   const [detailOpen, setDetailOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
+
+  // Set default location when locations load
+  useEffect(() => {
+    if (locations.length > 0 && !selectedLocation) {
+      setSelectedLocation(locations[0].id);
+    }
+  }, [locations, selectedLocation]);
 
   // Handle "See all Staff" toggle - syncs with staff dropdown
   const handleShowAllStaffChange = (checked: boolean) => {
@@ -62,23 +77,38 @@ export default function Schedule() {
     setShowAllStaff(staffId === 'all');
   };
 
-  // Filter appointments based on showAllStaff toggle
+  // Filter appointments by location first, then by staff
   const appointments = useMemo(() => {
-    if (showAllStaff) {
-      return allAppointments;
+    let filtered = allAppointments;
+    
+    // Filter by location
+    if (selectedLocation) {
+      filtered = filtered.filter(apt => apt.location_id === selectedLocation);
     }
-    // When toggle is off, only show current user's appointments
-    return allAppointments.filter(apt => apt.stylist_user_id === effectiveUserId);
-  }, [allAppointments, showAllStaff, effectiveUserId]);
+    
+    // Filter by staff if toggle is off
+    if (!showAllStaff && effectiveUserId) {
+      filtered = filtered.filter(apt => apt.stylist_user_id === effectiveUserId);
+    }
+    
+    return filtered;
+  }, [allAppointments, selectedLocation, showAllStaff, effectiveUserId]);
 
-  // Fetch stylists for DayView (deduplicated by user_id since staff can be mapped to multiple locations)
-  const { data: stylists = [] } = useQuery({
-    queryKey: ['schedule-stylists-with-mapping'],
+  // Get the phorest_branch_id for the selected location
+  const selectedBranchId = useMemo(() => {
+    const loc = locations.find(l => l.id === selectedLocation);
+    return loc?.phorest_branch_id || null;
+  }, [locations, selectedLocation]);
+
+  // Fetch stylists for DayView - filter by selected location's branch
+  const { data: allStylists = [] } = useQuery({
+    queryKey: ['schedule-stylists-with-mapping', selectedBranchId],
     queryFn: async () => {
-      const { data } = await supabase
+      let query = supabase
         .from('phorest_staff_mapping')
         .select(`
           user_id,
+          phorest_branch_id,
           employee_profiles!phorest_staff_mapping_user_id_fkey(
             user_id,
             display_name,
@@ -88,10 +118,17 @@ export default function Schedule() {
         `)
         .eq('is_active', true);
       
+      // Filter by branch if selected
+      if (selectedBranchId) {
+        query = query.eq('phorest_branch_id', selectedBranchId);
+      }
+      
+      const { data } = await query;
+      
       // Deduplicate by user_id (staff may be mapped to multiple locations)
       const uniqueStylists = new Map<string, { user_id: string; display_name: string | null; full_name: string; photo_url: string | null }>();
       
-      (data || []).forEach(d => {
+      (data || []).forEach((d: any) => {
         if (!uniqueStylists.has(d.user_id)) {
           uniqueStylists.set(d.user_id, {
             user_id: d.user_id,
@@ -106,10 +143,10 @@ export default function Schedule() {
     },
   });
 
-  // Filter stylists based on selection
+  // Filter stylists based on staff selection
   const displayedStylists = selectedStaff === 'all' 
-    ? stylists 
-    : stylists.filter(s => s.user_id === selectedStaff);
+    ? allStylists 
+    : allStylists.filter(s => s.user_id === selectedStaff);
 
   // Auto-switch to agenda view on mobile
   useEffect(() => {
@@ -179,7 +216,10 @@ export default function Schedule() {
             setView={setView}
             selectedStaff={selectedStaff}
             onStaffChange={handleStaffChange}
-            stylists={stylists}
+            stylists={allStylists}
+            selectedLocation={selectedLocation}
+            onLocationChange={setSelectedLocation}
+            locations={locations}
             onNewBooking={handleNewBooking}
             canCreate={canCreate}
           />
