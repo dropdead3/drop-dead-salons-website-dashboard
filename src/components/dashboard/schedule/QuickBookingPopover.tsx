@@ -539,8 +539,8 @@ export function QuickBookingPopover({
                         <span>Back to categories</span>
                       </button>
 
-                      <div className="bg-oat -mx-3 px-3 py-1.5 mb-2">
-                        <h4 className="text-[10px] font-semibold text-oat-foreground uppercase tracking-wider">
+                      <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
+                        <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                           {selectedCategory}
                         </h4>
                       </div>
