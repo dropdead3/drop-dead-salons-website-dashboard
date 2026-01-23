@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Loader2, Calendar, Palette, Eye } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Loader2, Calendar, Palette, Eye, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   useServiceCategoryColors, 
@@ -12,6 +13,12 @@ import {
 import { toast } from 'sonner';
 import { CalendarColorPreview } from './CalendarColorPreview';
 import { getCategoryAbbreviation as getAbbr } from '@/utils/categoryColors';
+
+// Explanations for non-service category types
+const CATEGORY_EXPLANATIONS: Record<string, string> = {
+  'Block': 'Blocked time slots for stylists (e.g., admin tasks, personal time off)',
+  'Break': 'Scheduled breaks (e.g., lunch)',
+};
 
 // Curated luxury color palette - 36 colors organized by family
 const CATEGORY_PALETTE = [
@@ -92,6 +99,7 @@ export function ScheduleSettingsContent() {
   }
 
   return (
+    <TooltipProvider>
     <div className="space-y-6">
       <Card>
         <CardHeader>
@@ -171,7 +179,19 @@ export function ScheduleSettingsContent() {
 
                   {/* Category name */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{category.category_name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium text-sm truncate">{category.category_name}</p>
+                      {CATEGORY_EXPLANATIONS[category.category_name] && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground cursor-help shrink-0" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[200px]">
+                            <p className="text-xs">{CATEGORY_EXPLANATIONS[category.category_name]}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground uppercase">{category.color_hex}</p>
                   </div>
                 </div>
@@ -209,5 +229,6 @@ export function ScheduleSettingsContent() {
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 }
