@@ -393,6 +393,19 @@ export function QuickBookingPopover({
           {/* Step 1: Service Selection (Category → Services) */}
           {step === 'service' && (
             <div className="flex flex-col" style={{ height: '400px' }}>
+              {/* Sticky Back to Categories Header */}
+              {selectedCategory && (
+                <div className="sticky top-0 z-10 bg-popover border-b border-border px-3 py-2">
+                  <button
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setSelectedCategory(null)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span>Back to categories</span>
+                  </button>
+                </div>
+              )}
+              
               {/* Category or Services View */}
               <ScrollArea className="flex-1">
                 <div className="p-3">
@@ -538,14 +551,6 @@ export function QuickBookingPopover({
                   ) : (
                     // Services within selected category
                     <>
-                      {/* Back to categories header */}
-                      <button
-                        className="flex items-center gap-2 mb-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => setSelectedCategory(null)}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span>Back to categories</span>
-                      </button>
 
                       <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
                         <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
