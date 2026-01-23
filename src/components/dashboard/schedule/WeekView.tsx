@@ -191,30 +191,31 @@ export function WeekView({
                   key={day.toISOString()} 
                   className={cn(
                     'py-3 px-2 text-center border-l border-border relative',
-                    dayIsToday && 'bg-primary/10'
+                    dayIsToday && 'bg-primary/5'
                   )}
                 >
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                  <div className={cn(
+                    'text-[10px] uppercase tracking-wider font-medium',
+                    dayIsToday ? 'text-primary' : 'text-muted-foreground'
+                  )}>
                     {format(day, 'EEE')}
                   </div>
-                  <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                  <div className="flex items-center justify-center mt-1">
                     <span className={cn(
-                      'text-xl font-semibold flex items-center justify-center',
-                      dayIsToday && 'bg-primary text-primary-foreground w-8 h-8 rounded-full'
+                      'text-lg font-semibold flex items-center justify-center transition-colors',
+                      dayIsToday 
+                        ? 'bg-primary text-primary-foreground w-7 h-7 rounded-full text-sm' 
+                        : 'text-foreground'
                     )}>
                       {format(day, 'd')}
                     </span>
                   </div>
-                  {dayIsToday && (
-                    <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4 mt-1">
-                      Today
-                    </Badge>
-                  )}
-                  {!dayIsToday && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {appointmentsByDate.get(format(day, 'yyyy-MM-dd'))?.length || 0} appts
-                    </div>
-                  )}
+                  <div className={cn(
+                    'text-[10px] mt-1',
+                    dayIsToday ? 'text-primary font-medium' : 'text-muted-foreground'
+                  )}>
+                    {dayIsToday ? 'Today' : `${appointmentsByDate.get(format(day, 'yyyy-MM-dd'))?.length || 0} appts`}
+                  </div>
                 </div>
               );
             })}
