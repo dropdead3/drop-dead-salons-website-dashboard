@@ -455,6 +455,75 @@ export type Database = {
           },
         ]
       }
+      calendar_theme_settings: {
+        Row: {
+          calendar_bg_color: string
+          cell_border_color: string
+          cell_border_style: string
+          cell_border_width: number
+          created_at: string
+          current_time_color: string
+          days_row_bg_color: string
+          days_row_text_color: string
+          half_hour_line_color: string
+          header_bg_color: string
+          header_text_color: string
+          hour_line_color: string
+          id: string
+          outside_month_bg_color: string
+          quarter_hour_line_color: string
+          today_badge_bg_color: string
+          today_badge_text_color: string
+          today_highlight_color: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendar_bg_color?: string
+          cell_border_color?: string
+          cell_border_style?: string
+          cell_border_width?: number
+          created_at?: string
+          current_time_color?: string
+          days_row_bg_color?: string
+          days_row_text_color?: string
+          half_hour_line_color?: string
+          header_bg_color?: string
+          header_text_color?: string
+          hour_line_color?: string
+          id?: string
+          outside_month_bg_color?: string
+          quarter_hour_line_color?: string
+          today_badge_bg_color?: string
+          today_badge_text_color?: string
+          today_highlight_color?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendar_bg_color?: string
+          cell_border_color?: string
+          cell_border_style?: string
+          cell_border_width?: number
+          created_at?: string
+          current_time_color?: string
+          days_row_bg_color?: string
+          days_row_text_color?: string
+          half_hour_line_color?: string
+          header_bg_color?: string
+          header_text_color?: string
+          hour_line_color?: string
+          id?: string
+          outside_month_bg_color?: string
+          quarter_hour_line_color?: string
+          today_badge_bg_color?: string
+          today_badge_text_color?: string
+          today_highlight_color?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       coach_notes: {
         Row: {
           coach_user_id: string
