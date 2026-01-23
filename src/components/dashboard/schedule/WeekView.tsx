@@ -158,11 +158,14 @@ export function WeekView({
   onAppointmentClick,
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+  
+  // Week starts with yesterday, today is in second column, followed by 5 future days
+  const today = new Date();
+  const yesterday = addDays(today, -1);
   
   const weekDays = useMemo(() => 
-    Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
-    [weekStart]
+    Array.from({ length: 7 }, (_, i) => addDays(yesterday, i)),
+    [yesterday.toDateString()]
   );
   
   // Generate all 15-minute time slots
