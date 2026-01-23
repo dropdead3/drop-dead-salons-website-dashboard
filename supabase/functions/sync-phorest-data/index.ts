@@ -41,6 +41,57 @@ async function phorestRequest(endpoint: string, businessId: string, username: st
   return response.json();
 }
 
+// POST request helper for CSV export jobs
+async function phorestPostRequest(endpoint: string, businessId: string, username: string, password: string, body: object) {
+  const formattedUsername = username.startsWith('global/') ? username : `global/${username}`;
+  const basicAuth = btoa(`${formattedUsername}:${password}`);
+  
+  const url = `${PHOREST_BASE_URL}/business/${businessId}${endpoint}`;
+  console.log(`Phorest POST request: ${url}`);
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      "Authorization": `Basic ${basicAuth}`,
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`Phorest API POST error (${response.status}):`, errorText);
+    throw new Error(`Phorest API error: ${response.status} - ${errorText}`);
+  }
+
+  return response.json();
+}
+
+// Fetch raw text (for CSV downloads)
+async function phorestRequestText(endpoint: string, businessId: string, username: string, password: string) {
+  const formattedUsername = username.startsWith('global/') ? username : `global/${username}`;
+  const basicAuth = btoa(`${formattedUsername}:${password}`);
+  
+  const url = `${PHOREST_BASE_URL}/business/${businessId}${endpoint}`;
+  console.log(`Phorest request (text): ${url}`);
+  
+  const response = await fetch(url, {
+    headers: {
+      "Authorization": `Basic ${basicAuth}`,
+      "Accept": "text/csv,application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`Phorest API error (${response.status}):`, errorText);
+    throw new Error(`Phorest API error: ${response.status} - ${errorText}`);
+  }
+
+  return response.text();
+}
+
 async function syncStaff(supabase: any, businessId: string, username: string, password: string) {
   console.log("Syncing staff data...");
   
@@ -509,132 +560,215 @@ async function syncSalesTransactions(
       
       console.log(`Fetching sales for branch: ${branchName} (${branchId})`);
 
+      let purchases: any[] = [];
+      
+      // Try multiple endpoints in order of preference
+      // 1. Try /transaction endpoint (some API versions support this)
       try {
-        // Try purchase/transaction endpoint
-        const purchaseData = await phorestRequest(
-          `/branch/${branchId}/purchase?startDate=${dateFrom}&endDate=${dateTo}&size=500`,
+        console.log(`Trying /transaction endpoint for branch ${branchId}...`);
+        const transactionData = await phorestRequest(
+          `/branch/${branchId}/transaction?startDate=${dateFrom}&endDate=${dateTo}&size=500`,
           businessId,
           username,
           password
         );
-
-        const purchases = purchaseData._embedded?.purchases || purchaseData.purchases || 
-                         purchaseData._embedded?.transactions || purchaseData.transactions || [];
+        purchases = transactionData._embedded?.transactions || transactionData.transactions || 
+                   transactionData._embedded?.purchases || transactionData.data || [];
+        console.log(`/transaction endpoint returned ${purchases.length} records`);
+      } catch (e1: any) {
+        console.log(`/transaction endpoint failed: ${e1.message}`);
         
-        console.log(`Found ${purchases.length} transactions in ${branchName}`);
-        totalTransactions += purchases.length;
-
-        for (const purchase of purchases) {
-          const staffId = purchase.staffId || purchase.staff?.staffId;
-          const stylistUserId = staffId ? staffMap.get(staffId) : null;
-          const transactionDate = purchase.purchaseDate?.split('T')[0] || purchase.createdAt?.split('T')[0];
-          const transactionTime = purchase.purchaseDate?.split('T')[1]?.substring(0, 8) || null;
-
-          // Process line items
-          const items = purchase.items || purchase.lineItems || purchase.services || [];
+        // 2. Try /sale endpoint
+        try {
+          console.log(`Trying /sale endpoint for branch ${branchId}...`);
+          const saleData = await phorestRequest(
+            `/branch/${branchId}/sale?startDate=${dateFrom}&endDate=${dateTo}&size=500`,
+            businessId,
+            username,
+            password
+          );
+          purchases = saleData._embedded?.sales || saleData.sales || 
+                     saleData._embedded?.transactions || saleData.data || [];
+          console.log(`/sale endpoint returned ${purchases.length} records`);
+        } catch (e2: any) {
+          console.log(`/sale endpoint failed: ${e2.message}`);
           
-          for (const item of items) {
-            const itemType = item.type?.toLowerCase() || 
-                           (item.productId ? 'product' : 'service');
-            const itemName = item.name || item.description || 'Unknown Item';
-            const transactionId = `${purchase.purchaseId || purchase.id}-${item.itemId || item.id || itemName}`;
-
-            const transactionRecord = {
-              phorest_transaction_id: transactionId,
-              stylist_user_id: stylistUserId,
-              phorest_staff_id: staffId,
-              location_id: branchId,
-              branch_name: branchName,
-              transaction_date: transactionDate,
-              transaction_time: transactionTime,
-              client_name: purchase.clientName || `${purchase.client?.firstName || ''} ${purchase.client?.lastName || ''}`.trim() || null,
-              client_phone: purchase.client?.mobile || purchase.client?.phone || null,
-              item_type: itemType,
-              item_name: itemName,
-              item_category: item.category || item.categoryName || null,
-              quantity: item.quantity || 1,
-              unit_price: item.unitPrice || item.price || 0,
-              discount_amount: item.discountAmount || item.discount || 0,
-              tax_amount: item.taxAmount || item.tax || 0,
-              total_amount: item.totalPrice || item.total || item.price || 0,
-              payment_method: purchase.paymentMethod || purchase.payments?.[0]?.type || null,
-            };
-
-            const { error } = await supabase
-              .from("phorest_sales_transactions")
-              .upsert(transactionRecord, { onConflict: 'phorest_transaction_id,item_name' });
-
-            if (!error) syncedTransactions++;
-
-            // Aggregate for daily summary - store for ALL staff, not just mapped ones
-            if (staffId && transactionDate) {
-              const summaryKey = `${staffId}:${branchId}:${transactionDate}`;
-              if (!dailySummaries.has(summaryKey)) {
-                dailySummaries.set(summaryKey, {
-                  phorest_staff_id: staffId,   // Always store with Phorest ID
-                  user_id: stylistUserId || null, // Optional - linked later if mapped
-                  location_id: branchId,
-                  branch_name: branchName,
-                  summary_date: transactionDate,
-                  total_services: 0,
-                  total_products: 0,
-                  service_revenue: 0,
-                  product_revenue: 0,
-                  total_revenue: 0,
-                  total_transactions: 0,
-                  total_discounts: 0,
-                });
-              }
-              
-              const summary = dailySummaries.get(summaryKey);
-              const amount = parseFloat(transactionRecord.total_amount) || 0;
-              const discount = parseFloat(transactionRecord.discount_amount as any) || 0;
-              
-              if (itemType === 'product') {
-                summary.total_products += transactionRecord.quantity;
-                summary.product_revenue += amount;
-              } else {
-                summary.total_services += transactionRecord.quantity;
-                summary.service_revenue += amount;
-              }
-              summary.total_revenue += amount;
-              summary.total_transactions += 1;
-              summary.total_discounts += discount;
+          // 3. Try CSV export job approach
+          try {
+            console.log(`Trying CSV export job for branch ${branchId}...`);
+            purchases = await fetchSalesViaCsvExport(branchId, businessId, username, password, dateFrom, dateTo);
+            console.log(`CSV export returned ${purchases.length} records`);
+          } catch (e3: any) {
+            console.log(`CSV export failed: ${e3.message}`);
+            
+            // 4. Final fallback: Try /report/sales endpoint
+            try {
+              console.log(`Trying /report/sales endpoint for branch ${branchId}...`);
+              const reportData = await phorestRequest(
+                `/branch/${branchId}/report/sales?startDate=${dateFrom}&endDate=${dateTo}`,
+                businessId,
+                username,
+                password
+              );
+              // Transform report data into transaction-like format
+              const salesItems = reportData.items || reportData.data || reportData._embedded?.items || [];
+              purchases = salesItems.map((item: any) => ({
+                purchaseId: item.id || item.transactionId || `${branchId}-${item.date}-${Math.random()}`,
+                staffId: item.staffId,
+                purchaseDate: item.date || item.saleDate,
+                total: item.total || item.amount || item.revenue,
+                items: [{
+                  type: item.type || 'service',
+                  name: item.name || item.description || 'Sale',
+                  price: item.total || item.amount || item.revenue,
+                  quantity: item.quantity || 1,
+                }]
+              }));
+              console.log(`/report/sales endpoint returned ${purchases.length} records`);
+            } catch (e4: any) {
+              console.log(`All sales endpoints failed for branch ${branchId}. Last error: ${e4.message}`);
             }
           }
+        }
+      }
+      
+      console.log(`Processing ${purchases.length} transactions for ${branchName}`);
+      totalTransactions += purchases.length;
 
-          // If no line items, create a single transaction record
-          if (items.length === 0) {
-            const transactionRecord = {
-              phorest_transaction_id: purchase.purchaseId || purchase.id,
-              stylist_user_id: stylistUserId,
-              phorest_staff_id: staffId,
-              location_id: branchId,
-              branch_name: branchName,
-              transaction_date: transactionDate,
-              transaction_time: transactionTime,
-              client_name: purchase.clientName || null,
-              client_phone: null,
-              item_type: 'service',
-              item_name: purchase.description || 'Transaction',
-              item_category: null,
-              quantity: 1,
-              unit_price: purchase.total || purchase.amount || 0,
-              discount_amount: purchase.discountAmount || 0,
-              tax_amount: purchase.taxAmount || 0,
-              total_amount: purchase.total || purchase.amount || 0,
-              payment_method: purchase.paymentMethod || null,
-            };
+      for (const purchase of purchases) {
+        const staffId = purchase.staffId || purchase.staff?.staffId;
+        const stylistUserId = staffId ? staffMap.get(staffId) : null;
+        const transactionDate = purchase.purchaseDate?.split('T')[0] || purchase.createdAt?.split('T')[0] || purchase.date;
+        const transactionTime = purchase.purchaseDate?.split('T')[1]?.substring(0, 8) || null;
 
-            const { error } = await supabase
-              .from("phorest_sales_transactions")
-              .upsert(transactionRecord, { onConflict: 'phorest_transaction_id,item_name' });
+        // Process line items
+        const items = purchase.items || purchase.lineItems || purchase.services || [];
+        
+        for (const item of items) {
+          const itemType = item.type?.toLowerCase() || 
+                         (item.productId ? 'product' : 'service');
+          const itemName = item.name || item.description || 'Unknown Item';
+          const transactionId = `${purchase.purchaseId || purchase.id}-${item.itemId || item.id || itemName}`;
 
-            if (!error) syncedTransactions++;
+          const transactionRecord = {
+            phorest_transaction_id: transactionId,
+            stylist_user_id: stylistUserId,
+            phorest_staff_id: staffId,
+            location_id: branchId,
+            branch_name: branchName,
+            transaction_date: transactionDate,
+            transaction_time: transactionTime,
+            client_name: purchase.clientName || `${purchase.client?.firstName || ''} ${purchase.client?.lastName || ''}`.trim() || null,
+            client_phone: purchase.client?.mobile || purchase.client?.phone || null,
+            item_type: itemType,
+            item_name: itemName,
+            item_category: item.category || item.categoryName || null,
+            quantity: item.quantity || 1,
+            unit_price: item.unitPrice || item.price || 0,
+            discount_amount: item.discountAmount || item.discount || 0,
+            tax_amount: item.taxAmount || item.tax || 0,
+            total_amount: item.totalPrice || item.total || item.price || 0,
+            payment_method: purchase.paymentMethod || purchase.payments?.[0]?.type || null,
+          };
+
+          const { error } = await supabase
+            .from("phorest_sales_transactions")
+            .upsert(transactionRecord, { onConflict: 'phorest_transaction_id,item_name' });
+
+          if (!error) syncedTransactions++;
+
+          // Aggregate for daily summary - store for ALL staff, not just mapped ones
+          if (staffId && transactionDate) {
+            const summaryKey = `${staffId}:${branchId}:${transactionDate}`;
+            if (!dailySummaries.has(summaryKey)) {
+              dailySummaries.set(summaryKey, {
+                phorest_staff_id: staffId,   // Always store with Phorest ID
+                user_id: stylistUserId || null, // Optional - linked later if mapped
+                location_id: branchId,
+                branch_name: branchName,
+                summary_date: transactionDate,
+                total_services: 0,
+                total_products: 0,
+                service_revenue: 0,
+                product_revenue: 0,
+                total_revenue: 0,
+                total_transactions: 0,
+                total_discounts: 0,
+              });
+            }
+            
+            const summary = dailySummaries.get(summaryKey);
+            const amount = parseFloat(transactionRecord.total_amount) || 0;
+            const discount = parseFloat(transactionRecord.discount_amount as any) || 0;
+            
+            if (itemType === 'product') {
+              summary.total_products += transactionRecord.quantity;
+              summary.product_revenue += amount;
+            } else {
+              summary.total_services += transactionRecord.quantity;
+              summary.service_revenue += amount;
+            }
+            summary.total_revenue += amount;
+            summary.total_transactions += 1;
+            summary.total_discounts += discount;
           }
         }
-      } catch (e: any) {
-        console.log(`Sales fetch failed for branch ${branchId}:`, e.message);
+
+        // If no line items, create a single transaction record
+        if (items.length === 0 && (purchase.total || purchase.amount)) {
+          const transactionRecord = {
+            phorest_transaction_id: purchase.purchaseId || purchase.id,
+            stylist_user_id: stylistUserId,
+            phorest_staff_id: staffId,
+            location_id: branchId,
+            branch_name: branchName,
+            transaction_date: transactionDate,
+            transaction_time: transactionTime,
+            client_name: purchase.clientName || null,
+            client_phone: null,
+            item_type: 'service',
+            item_name: purchase.description || 'Transaction',
+            item_category: null,
+            quantity: 1,
+            unit_price: purchase.total || purchase.amount || 0,
+            discount_amount: purchase.discountAmount || 0,
+            tax_amount: purchase.taxAmount || 0,
+            total_amount: purchase.total || purchase.amount || 0,
+            payment_method: purchase.paymentMethod || null,
+          };
+
+          const { error } = await supabase
+            .from("phorest_sales_transactions")
+            .upsert(transactionRecord, { onConflict: 'phorest_transaction_id,item_name' });
+
+          if (!error) syncedTransactions++;
+          
+          // Also add to daily summary
+          if (staffId && transactionDate) {
+            const summaryKey = `${staffId}:${branchId}:${transactionDate}`;
+            if (!dailySummaries.has(summaryKey)) {
+              dailySummaries.set(summaryKey, {
+                phorest_staff_id: staffId,
+                user_id: stylistUserId || null,
+                location_id: branchId,
+                branch_name: branchName,
+                summary_date: transactionDate,
+                total_services: 0,
+                total_products: 0,
+                service_revenue: 0,
+                product_revenue: 0,
+                total_revenue: 0,
+                total_transactions: 0,
+                total_discounts: 0,
+              });
+            }
+            const summary = dailySummaries.get(summaryKey);
+            summary.total_services += 1;
+            summary.service_revenue += (purchase.total || purchase.amount || 0);
+            summary.total_revenue += (purchase.total || purchase.amount || 0);
+            summary.total_transactions += 1;
+          }
+        }
       }
     }
 
@@ -668,6 +802,149 @@ async function syncSalesTransactions(
     console.error("Sales sync error:", error);
     throw error;
   }
+}
+
+// Helper function to fetch sales via CSV export job
+async function fetchSalesViaCsvExport(
+  branchId: string,
+  businessId: string,
+  username: string,
+  password: string,
+  dateFrom: string,
+  dateTo: string
+): Promise<any[]> {
+  // Step 1: Create CSV export job
+  const exportJob = await phorestPostRequest(
+    `/branch/${branchId}/csvexportjob`,
+    businessId,
+    username,
+    password,
+    { 
+      jobType: "TRANSACTIONS_CSV",
+      startDate: dateFrom,
+      endDate: dateTo
+    }
+  );
+  
+  const jobId = exportJob.jobId || exportJob.id;
+  if (!jobId) {
+    throw new Error("No job ID returned from CSV export request");
+  }
+  
+  console.log(`CSV export job created: ${jobId}`);
+  
+  // Step 2: Poll for completion (max 60 seconds)
+  let status = "PENDING";
+  let attempts = 0;
+  const maxAttempts = 30;
+  
+  while (status !== "DONE" && status !== "COMPLETED" && attempts < maxAttempts) {
+    await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds
+    
+    const jobStatus = await phorestRequest(
+      `/branch/${branchId}/csvexportjob/${jobId}`,
+      businessId,
+      username,
+      password
+    );
+    
+    status = jobStatus.status || jobStatus.state;
+    console.log(`CSV export job status: ${status} (attempt ${attempts + 1}/${maxAttempts})`);
+    
+    if (status === "FAILED" || status === "ERROR") {
+      throw new Error(`CSV export job failed: ${jobStatus.errorMessage || 'Unknown error'}`);
+    }
+    
+    attempts++;
+  }
+  
+  if (status !== "DONE" && status !== "COMPLETED") {
+    throw new Error(`CSV export job timed out after ${maxAttempts * 2} seconds`);
+  }
+  
+  // Step 3: Download and parse CSV
+  const csvText = await phorestRequestText(
+    `/branch/${branchId}/csvexportjob/${jobId}/download`,
+    businessId,
+    username,
+    password
+  );
+  
+  return parseSalesCsv(csvText, branchId);
+}
+
+// Parse CSV text into transaction records
+function parseSalesCsv(csvText: string, branchId: string): any[] {
+  const lines = csvText.split('\n').filter(line => line.trim());
+  if (lines.length < 2) return [];
+  
+  // Parse header to get column indices
+  const headerLine = lines[0];
+  const headers = parseCSVLine(headerLine).map(h => h.toLowerCase().trim());
+  
+  const getIndex = (possibleNames: string[]) => {
+    for (const name of possibleNames) {
+      const idx = headers.findIndex(h => h.includes(name));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+  
+  const idxTransactionId = getIndex(['transaction', 'id', 'purchaseid']);
+  const idxStaffId = getIndex(['staff', 'staffid', 'employee']);
+  const idxDate = getIndex(['date', 'purchasedate', 'transactiondate']);
+  const idxAmount = getIndex(['amount', 'total', 'price', 'revenue']);
+  const idxType = getIndex(['type', 'itemtype', 'category']);
+  const idxName = getIndex(['name', 'description', 'item', 'service', 'product']);
+  const idxClientName = getIndex(['client', 'clientname', 'customer']);
+  
+  const transactions: any[] = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCSVLine(lines[i]);
+    if (values.length < 3) continue;
+    
+    const transaction = {
+      purchaseId: idxTransactionId >= 0 ? values[idxTransactionId] : `csv-${branchId}-${i}`,
+      staffId: idxStaffId >= 0 ? values[idxStaffId] : null,
+      purchaseDate: idxDate >= 0 ? values[idxDate] : null,
+      total: idxAmount >= 0 ? parseFloat(values[idxAmount]) || 0 : 0,
+      clientName: idxClientName >= 0 ? values[idxClientName] : null,
+      items: [{
+        type: idxType >= 0 ? values[idxType] : 'service',
+        name: idxName >= 0 ? values[idxName] : 'Transaction',
+        price: idxAmount >= 0 ? parseFloat(values[idxAmount]) || 0 : 0,
+        quantity: 1,
+      }]
+    };
+    
+    transactions.push(transaction);
+  }
+  
+  return transactions;
+}
+
+// Helper to parse CSV line handling quoted values
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  result.push(current.trim());
+  return result;
 }
 
 async function logSync(
