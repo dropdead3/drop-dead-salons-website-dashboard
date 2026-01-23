@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Check, Clock, DollarSign, MapPin } from 'lucide-react';
+import { Check, Clock, DollarSign, MapPin, Loader2, Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Service {
@@ -35,6 +35,7 @@ interface ServiceStepProps {
   totalPrice: number;
   onContinue: () => void;
   canContinue: boolean;
+  isLoadingServices?: boolean;
 }
 
 export function ServiceStep({
@@ -48,7 +49,10 @@ export function ServiceStep({
   totalPrice,
   onContinue,
   canContinue,
+  isLoadingServices,
 }: ServiceStepProps) {
+  const hasServices = servicesByCategory && Object.keys(servicesByCategory).length > 0;
+
   return (
     <div className="flex flex-col h-full">
       {/* Location selector */}
@@ -78,7 +82,11 @@ export function ServiceStep({
             <div className="text-center py-8 text-muted-foreground text-sm">
               Select a location to view available services
             </div>
-          ) : servicesByCategory ? (
+          ) : isLoadingServices ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : hasServices ? (
             Object.entries(servicesByCategory).map(([category, services]) => (
               <div key={category}>
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -129,7 +137,15 @@ export function ServiceStep({
                 </div>
               </div>
             ))
-          ) : null}
+          ) : (
+            <div className="text-center py-8 space-y-2">
+              <Scissors className="h-10 w-10 mx-auto text-muted-foreground/50" />
+              <p className="text-muted-foreground text-sm">No services synced yet</p>
+              <p className="text-xs text-muted-foreground/70">
+                Services will appear after syncing from Phorest
+              </p>
+            </div>
+          )}
         </div>
       </ScrollArea>
 
@@ -151,7 +167,7 @@ export function ServiceStep({
           disabled={!canContinue}
           onClick={onContinue}
         >
-          Continue
+          {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
         </Button>
       </div>
     </div>

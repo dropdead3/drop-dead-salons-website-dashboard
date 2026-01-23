@@ -79,7 +79,7 @@ export function QuickBookingPopover({
   const [selectedLocation, setSelectedLocation] = useState('');
 
   const { data: locations = [] } = useLocations();
-  const { data: servicesByCategory, services = [] } = useServicesByCategory(selectedLocation || undefined);
+  const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
 
   const canViewAllClients = roles.some(r => ['admin', 'manager', 'super_admin', 'receptionist'].includes(r));
 
@@ -398,7 +398,11 @@ export function QuickBookingPopover({
                     <div className="text-center py-6 text-muted-foreground text-sm">
                       Select a location first
                     </div>
-                  ) : servicesByCategory ? (
+                  ) : isLoadingServices ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
                     Object.entries(servicesByCategory).map(([category, categoryServices]) => (
                       <div key={category}>
                         <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
@@ -455,7 +459,15 @@ export function QuickBookingPopover({
                         </div>
                       </div>
                     ))
-                  ) : null}
+                  ) : (
+                    <div className="text-center py-6 space-y-2">
+                      <Scissors className="h-8 w-8 mx-auto text-muted-foreground/50" />
+                      <p className="text-muted-foreground text-sm">No services synced yet</p>
+                      <p className="text-xs text-muted-foreground/70">
+                        Services will appear after syncing from Phorest
+                      </p>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
 
@@ -474,10 +486,10 @@ export function QuickBookingPopover({
                 )}
                 <Button
                   className="w-full h-9"
-                  disabled={selectedServices.length === 0 || !selectedLocation}
+                  disabled={!selectedLocation}
                   onClick={() => setStep('stylist')}
                 >
-                  Continue
+                  {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
                 </Button>
               </div>
             </div>
