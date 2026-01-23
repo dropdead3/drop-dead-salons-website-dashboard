@@ -378,16 +378,60 @@ async function syncPerformanceReports(
     endDate.setDate(endDate.getDate() + 6);
     const weekEnd = endDate.toISOString().split('T')[0];
 
-    // Fetch staff performance report
-    const reportData = await phorestRequest(
-      `/report/staff-performance?startDate=${weekStart}&endDate=${weekEnd}`,
-      businessId,
-      username,
-      password
-    );
+    // Get branches first - reports require branchId per the API
+    const branchData = await phorestRequest("/branch", businessId, username, password);
+    const branches = branchData._embedded?.branches || branchData.branches || 
+                     (Array.isArray(branchData) ? branchData : []);
+    console.log(`Found ${branches.length} branches for performance report sync`);
 
-    const staffPerformance = reportData._embedded?.staffPerformance || reportData.staffPerformance || [];
-    console.log(`Found performance data for ${staffPerformance.length} staff`);
+    // Aggregate staff performance across all branches
+    const staffPerformanceMap = new Map<string, any>();
+
+    for (const branch of branches) {
+      const branchId = branch.branchId || branch.id;
+      console.log(`Fetching performance report for branch: ${branch.name} (${branchId})`);
+
+      try {
+        const reportData = await phorestRequest(
+          `/branch/${branchId}/report/staff-performance?startDate=${weekStart}&endDate=${weekEnd}`,
+          businessId,
+          username,
+          password
+        );
+
+        const staffPerformance = reportData._embedded?.staffPerformance || 
+                                 reportData.staffPerformance || 
+                                 reportData.data || [];
+
+        console.log(`Found ${staffPerformance.length} staff performance records in branch ${branch.name}`);
+
+        for (const perf of staffPerformance) {
+          const staffId = perf.staffId;
+          if (staffPerformanceMap.has(staffId)) {
+            // Aggregate metrics across branches
+            const existing = staffPerformanceMap.get(staffId);
+            staffPerformanceMap.set(staffId, {
+              staffId,
+              newClientCount: (existing.newClientCount || 0) + (perf.newClientCount || 0),
+              clientRetentionRate: perf.clientRetentionRate || existing.clientRetentionRate || 0,
+              retailSales: (existing.retailSales || 0) + (perf.retailSales || 0),
+              extensionClientCount: (existing.extensionClientCount || 0) + (perf.extensionClientCount || 0),
+              totalRevenue: (existing.totalRevenue || 0) + (perf.totalRevenue || perf.serviceRevenue || 0),
+              appointmentCount: (existing.appointmentCount || 0) + (perf.appointmentCount || perf.serviceCount || 0),
+              averageTicket: perf.averageTicket || existing.averageTicket || 0,
+              rebookingRate: perf.rebookingRate || existing.rebookingRate || 0,
+            });
+          } else {
+            staffPerformanceMap.set(staffId, perf);
+          }
+        }
+      } catch (e: any) {
+        console.log(`Performance report fetch failed for branch ${branchId}:`, e.message);
+        // Continue with other branches
+      }
+    }
+
+    console.log(`Found performance data for ${staffPerformanceMap.size} staff across all branches`);
 
     // Get staff mappings
     const { data: staffMappings } = await supabase
@@ -397,8 +441,8 @@ async function syncPerformanceReports(
     const staffMap = new Map(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
 
     let synced = 0;
-    for (const perf of staffPerformance) {
-      const userId = staffMap.get(perf.staffId);
+    for (const [staffId, perf] of staffPerformanceMap) {
+      const userId = staffMap.get(staffId);
       if (!userId) continue;
 
       const metricsRecord = {
@@ -421,7 +465,7 @@ async function syncPerformanceReports(
       if (!error) synced++;
     }
 
-    return { total: staffPerformance.length, synced };
+    return { total: staffPerformanceMap.size, synced };
   } catch (error) {
     console.error("Performance reports sync error:", error);
     throw error;
