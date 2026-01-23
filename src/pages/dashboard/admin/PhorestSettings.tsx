@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { 
   usePhorestConnection,
@@ -53,6 +58,7 @@ import {
   Eye,
   EyeOff,
   Info,
+  ChevronDown,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -68,6 +74,19 @@ export default function PhorestSettings() {
   const [selectedPhorestStaff, setSelectedPhorestStaff] = useState<PhorestStaffMember | null>(null);
   const [branchFilter, setBranchFilter] = useState<string>('all');
   const [visibleMappings, setVisibleMappings] = useState<Set<string>>(new Set());
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+
+  const toggleUserExpanded = (userId: string) => {
+    setExpandedUsers(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
 
   // Mutation for toggling calendar visibility
   const toggleCalendarVisibility = useMutation({
@@ -200,6 +219,20 @@ export default function PhorestSettings() {
   };
 
   const autoMatchSuggestions = getAutoMatchSuggestions();
+
+  // Group staff mappings by user_id for consolidated multi-location display
+  const groupedMappings = useMemo(() => {
+    if (!staffMappings) return [];
+    
+    const grouped = staffMappings.reduce((acc: Record<string, any[]>, mapping: any) => {
+      const userId = mapping.user_id;
+      if (!acc[userId]) acc[userId] = [];
+      acc[userId].push(mapping);
+      return acc;
+    }, {});
+    
+    return Object.values(grouped) as any[][];
+  }, [staffMappings]);
 
   const handleCreateMapping = async () => {
     if (!selectedUserId || !selectedPhorestStaff) {
@@ -581,82 +614,206 @@ export default function PhorestSettings() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {staffMappings?.map((mapping: any) => (
-                      <TableRow key={mapping.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">
-                              {mapping.employee_profiles?.display_name || mapping.employee_profiles?.full_name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {mapping.employee_profiles?.email}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {visibleMappings.has(mapping.id) ? (
-                              <div>
-                                <p className="font-medium">{mapping.phorest_staff_name || '-'}</p>
-                                <p className="text-xs text-muted-foreground font-mono">
-                                  {mapping.phorest_staff_id}
-                                </p>
-                              </div>
+                    {groupedMappings.map((mappings) => {
+                      const firstMapping = mappings[0];
+                      const isMultiLocation = mappings.length > 1;
+                      const userId = firstMapping.user_id;
+                      const isExpanded = expandedUsers.has(userId);
+                      const displayName = firstMapping.employee_profiles?.display_name || firstMapping.employee_profiles?.full_name;
+                      const email = firstMapping.employee_profiles?.email;
+                      const allActive = mappings.every(m => m.is_active);
+
+                      if (isMultiLocation) {
+                        return (
+                          <Collapsible key={userId} open={isExpanded} onOpenChange={() => toggleUserExpanded(userId)} asChild>
+                            <>
+                              {/* Parent Row */}
+                              <TableRow className="hover:bg-muted/50">
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <CollapsibleTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                      </Button>
+                                    </CollapsibleTrigger>
+                                    <div>
+                                      <p className="font-medium">{displayName}</p>
+                                      <p className="text-sm text-muted-foreground">{email}</p>
+                                    </div>
+                                    <Badge variant="outline" className="gap-1">
+                                      <Building2 className="w-3 h-3" />
+                                      Multi-Location
+                                    </Badge>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="default" className="bg-primary/10 text-primary">
+                                    Matched
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer">
+                                    {mappings.length} Locations
+                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                                  </CollapsibleTrigger>
+                                </TableCell>
+                                <TableCell>
+                                  <span className="text-muted-foreground">-</span>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={allActive ? 'default' : 'secondary'}>
+                                    {allActive ? 'Active' : 'Mixed'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <span className="text-muted-foreground">-</span>
+                                </TableCell>
+                              </TableRow>
+
+                              {/* Child Rows */}
+                              <CollapsibleContent asChild>
+                                <>
+                                  {mappings.map((mapping) => (
+                                    <TableRow key={mapping.id} className="bg-muted/30 hover:bg-muted/50">
+                                      <TableCell className="pl-12">
+                                        {/* Empty - parent shows name */}
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center gap-2">
+                                          {visibleMappings.has(mapping.id) ? (
+                                            <div>
+                                              <p className="text-sm font-medium">{mapping.phorest_staff_name || '-'}</p>
+                                              <p className="text-xs text-muted-foreground font-mono">
+                                                {mapping.phorest_staff_id}
+                                              </p>
+                                            </div>
+                                          ) : null}
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => toggleMappingVisibility(mapping.id)}
+                                            className="h-7 w-7 p-0"
+                                          >
+                                            {visibleMappings.has(mapping.id) ? (
+                                              <EyeOff className="w-4 h-4 text-muted-foreground" />
+                                            ) : (
+                                              <Eye className="w-4 h-4 text-muted-foreground" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
+                                        <span className="flex items-center gap-1 text-sm">
+                                          <MapPin className="w-3 h-3 text-muted-foreground" />
+                                          {mapping.phorest_branch_name || '-'}
+                                        </span>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Switch
+                                          checked={mapping.show_on_calendar ?? true}
+                                          onCheckedChange={(checked) => 
+                                            toggleCalendarVisibility.mutate({ mappingId: mapping.id, show: checked })
+                                          }
+                                          disabled={toggleCalendarVisibility.isPending}
+                                        />
+                                      </TableCell>
+                                      <TableCell>
+                                        {/* Empty - shown on parent */}
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => deleteMapping.mutate(mapping.id)}
+                                          disabled={deleteMapping.isPending}
+                                        >
+                                          <Trash2 className="w-4 h-4 text-destructive" />
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </>
+                              </CollapsibleContent>
+                            </>
+                          </Collapsible>
+                        );
+                      }
+
+                      // Single location - render as before
+                      const mapping = firstMapping;
+                      return (
+                        <TableRow key={mapping.id}>
+                          <TableCell>
+                            <div className="pl-8">
+                              <p className="font-medium">{displayName}</p>
+                              <p className="text-sm text-muted-foreground">{email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {visibleMappings.has(mapping.id) ? (
+                                <div>
+                                  <p className="font-medium">{mapping.phorest_staff_name || '-'}</p>
+                                  <p className="text-xs text-muted-foreground font-mono">
+                                    {mapping.phorest_staff_id}
+                                  </p>
+                                </div>
+                              ) : (
+                                <Badge variant="default" className="bg-primary/10 text-primary">
+                                  Matched
+                                </Badge>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleMappingVisibility(mapping.id)}
+                                className="h-7 w-7 p-0"
+                              >
+                                {visibleMappings.has(mapping.id) ? (
+                                  <EyeOff className="w-4 h-4 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="w-4 h-4 text-muted-foreground" />
+                                )}
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {mapping.phorest_branch_name ? (
+                              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <MapPin className="w-3 h-3" />
+                                {mapping.phorest_branch_name}
+                              </span>
                             ) : (
-                              <Badge variant="default" className="bg-primary/10 text-primary">
-                                Matched
-                              </Badge>
+                              <span className="text-muted-foreground">-</span>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={mapping.show_on_calendar ?? true}
+                              onCheckedChange={(checked) => 
+                                toggleCalendarVisibility.mutate({ mappingId: mapping.id, show: checked })
+                              }
+                              disabled={toggleCalendarVisibility.isPending}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={mapping.is_active ? 'default' : 'secondary'}>
+                              {mapping.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => toggleMappingVisibility(mapping.id)}
-                              className="h-7 w-7 p-0"
+                              onClick={() => deleteMapping.mutate(mapping.id)}
+                              disabled={deleteMapping.isPending}
                             >
-                              {visibleMappings.has(mapping.id) ? (
-                                <EyeOff className="w-4 h-4 text-muted-foreground" />
-                              ) : (
-                                <Eye className="w-4 h-4 text-muted-foreground" />
-                              )}
+                              <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {mapping.phorest_branch_name ? (
-                            <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <MapPin className="w-3 h-3" />
-                              {mapping.phorest_branch_name}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={mapping.show_on_calendar ?? true}
-                            onCheckedChange={(checked) => 
-                              toggleCalendarVisibility.mutate({ mappingId: mapping.id, show: checked })
-                            }
-                            disabled={toggleCalendarVisibility.isPending}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={mapping.is_active ? 'default' : 'secondary'}>
-                            {mapping.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteMapping.mutate(mapping.id)}
-                            disabled={deleteMapping.isPending}
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
