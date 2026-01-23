@@ -252,7 +252,7 @@ export function WeekView({
                       <span className={cn(
                         'text-xl font-semibold flex items-center justify-center transition-colors',
                         dayIsToday 
-                          ? 'bg-foreground text-background w-8 h-8 rounded-full' 
+                          ? 'bg-foreground text-background min-w-[36px] h-9 px-2 rounded-full' 
                           : 'text-foreground'
                       )}>
                         {format(day, 'd')}

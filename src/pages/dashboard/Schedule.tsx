@@ -47,9 +47,8 @@ export default function Schedule() {
 
   // State for selections and sheets
   const [selectedAppointment, setSelectedAppointment] = useState<PhorestAppointment | null>(null);
-  const [selectedStaff, setSelectedStaff] = useState('all');
+  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
-  const [showAllStaff, setShowAllStaff] = useState(true);
   const [detailOpen, setDetailOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
@@ -61,23 +60,20 @@ export default function Schedule() {
     }
   }, [locations, selectedLocation]);
 
-  // Handle "See all Staff" toggle - syncs with staff dropdown
-  const handleShowAllStaffChange = (checked: boolean) => {
-    setShowAllStaff(checked);
-    if (checked) {
-      setSelectedStaff('all');
-    } else if (effectiveUserId) {
-      setSelectedStaff(effectiveUserId);
+  // Handle multi-select staff change
+  const handleStaffToggle = (staffId: string) => {
+    if (staffId === 'all') {
+      setSelectedStaffIds([]);
+    } else {
+      setSelectedStaffIds(prev => 
+        prev.includes(staffId) 
+          ? prev.filter(id => id !== staffId)
+          : [...prev, staffId]
+      );
     }
   };
 
-  // Handle staff dropdown change - syncs with toggle
-  const handleStaffChange = (staffId: string) => {
-    setSelectedStaff(staffId);
-    setShowAllStaff(staffId === 'all');
-  };
-
-  // Filter appointments by location first, then by staff
+  // Filter appointments by location first, then by selected staff
   const appointments = useMemo(() => {
     let filtered = allAppointments;
     
@@ -86,13 +82,15 @@ export default function Schedule() {
       filtered = filtered.filter(apt => apt.location_id === selectedLocation);
     }
     
-    // Filter by staff if toggle is off
-    if (!showAllStaff && effectiveUserId) {
-      filtered = filtered.filter(apt => apt.stylist_user_id === effectiveUserId);
+    // Filter by selected staff (if any are selected)
+    if (selectedStaffIds.length > 0) {
+      filtered = filtered.filter(apt => 
+        apt.stylist_user_id && selectedStaffIds.includes(apt.stylist_user_id)
+      );
     }
     
     return filtered;
-  }, [allAppointments, selectedLocation, showAllStaff, effectiveUserId]);
+  }, [allAppointments, selectedLocation, selectedStaffIds]);
 
   // Get the phorest_branch_id for the selected location
   const selectedBranchId = useMemo(() => {
@@ -143,10 +141,10 @@ export default function Schedule() {
     },
   });
 
-  // Filter stylists based on staff selection
-  const displayedStylists = selectedStaff === 'all' 
+  // Filter stylists based on staff selection (for day view columns)
+  const displayedStylists = selectedStaffIds.length === 0
     ? allStylists 
-    : allStylists.filter(s => s.user_id === selectedStaff);
+    : allStylists.filter(s => selectedStaffIds.includes(s.user_id));
 
   // Auto-switch to agenda view on mobile
   useEffect(() => {
@@ -214,8 +212,8 @@ export default function Schedule() {
             setCurrentDate={setCurrentDate}
             view={view}
             setView={setView}
-            selectedStaff={selectedStaff}
-            onStaffChange={handleStaffChange}
+            selectedStaffIds={selectedStaffIds}
+            onStaffToggle={handleStaffToggle}
             stylists={allStylists}
             selectedLocation={selectedLocation}
             onLocationChange={setSelectedLocation}
@@ -286,8 +284,6 @@ export default function Schedule() {
             onRemove={handleRemove}
             onNotes={handleNotes}
             onConfirm={handleConfirm}
-            showAllStaff={showAllStaff}
-            onShowAllStaffChange={handleShowAllStaffChange}
             isUpdating={isUpdating}
           />
         )}
