@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,7 @@ import {
   DollarSign,
   AlertCircle,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import {
   Popover,
@@ -23,6 +25,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface SyncStatus {
   sync_type: string;
@@ -31,6 +34,9 @@ interface SyncStatus {
 }
 
 export function PhorestSyncPopout() {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const queryClient = useQueryClient();
+
   // Fetch latest sync status for each type
   const { data: syncStatuses } = useQuery({
     queryKey: ['phorest-sync-popout-status'],
@@ -55,6 +61,39 @@ export function PhorestSyncPopout() {
     refetchInterval: 60000,
     staleTime: 30000,
   });
+
+  // Trigger full sync
+  const handleSyncNow = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-phorest-data', {
+        body: { sync_type: 'all', quick: false },
+      });
+
+      if (error) throw error;
+
+      // Check if any syncs failed
+      const results = data?.results || {};
+      const failedSyncs = Object.entries(results)
+        .filter(([_, result]: [string, any]) => result?.error)
+        .map(([type]) => type);
+
+      if (failedSyncs.length > 0) {
+        toast.warning(`Sync completed with errors in: ${failedSyncs.join(', ')}`);
+      } else {
+        toast.success('Full sync completed successfully');
+      }
+
+      // Refresh sync status
+      queryClient.invalidateQueries({ queryKey: ['phorest-sync-popout-status'] });
+      queryClient.invalidateQueries({ queryKey: ['sidebar-sync-status'] });
+    } catch (error: any) {
+      console.error('Sync failed:', error);
+      toast.error(`Sync failed: ${error.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Calculate overall health
   const getOverallHealth = () => {
@@ -118,7 +157,7 @@ export function PhorestSyncPopout() {
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="relative h-8 w-8">
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
               <span 
                 className={cn(
                   "absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background",
@@ -183,6 +222,28 @@ export function PhorestSyncPopout() {
               {getStatusIcon(salesSync?.status)}
             </div>
           </div>
+        </div>
+        
+        {/* Sync Now Button */}
+        <div className="px-4 pb-4">
+          <Button 
+            onClick={handleSyncNow} 
+            disabled={isSyncing}
+            className="w-full"
+            size="sm"
+          >
+            {isSyncing ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Sync Now
+              </>
+            )}
+          </Button>
         </div>
         
         {/* Footer hint */}
