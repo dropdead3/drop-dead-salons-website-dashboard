@@ -29,6 +29,7 @@ import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
+import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
@@ -959,6 +960,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {getAccessLabel()}
           </Badge>
           {isAdmin && <ViewAsToggle />}
+          {/* Phorest Sync Popout - visible to admins/managers */}
+          {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
+            <PhorestSyncPopout />
+          )}
           <NotificationsPanel unreadCount={unreadCount} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
