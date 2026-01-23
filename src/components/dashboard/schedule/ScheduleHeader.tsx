@@ -160,7 +160,7 @@ export function ScheduleHeader({
       </div>
 
       {/* Secondary Navigation Bar */}
-      <div className="bg-card border-x border-b border-border px-4 py-2 flex items-center justify-between">
+      <div className="bg-card border-x border-b border-border px-4 py-2 flex items-center justify-between rounded-b-lg">
         {/* Left: Week/Day Navigation */}
         <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={goToPrevWeek} className="gap-1">
