@@ -226,7 +226,7 @@ export function WeekView({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto border border-border rounded-lg bg-card">
+      <div className="flex-1 overflow-auto border border-border rounded-2xl bg-card">
         <div className="min-w-[800px]">
           {/* Day Headers */}
           <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border bg-muted/40 sticky top-0 z-10">
