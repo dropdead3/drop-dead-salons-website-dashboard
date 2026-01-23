@@ -89,9 +89,11 @@ export function ServiceStep({
           ) : hasServices ? (
             Object.entries(servicesByCategory).map(([category, services]) => (
               <div key={category}>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  {category}
-                </h3>
+                <div className="bg-[hsl(var(--oat))] -mx-4 px-4 py-2 mb-2 border-y border-border/40">
+                  <h3 className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">
+                    {category}
+                  </h3>
+                </div>
                 <div className="space-y-1.5">
                   {services.map((service) => {
                     const isSelected = selectedServices.includes(service.phorest_service_id);
