@@ -4,7 +4,6 @@ import {
   startOfWeek, 
   addDays, 
   isToday,
-  isSameDay 
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { 
@@ -13,7 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, User } from 'lucide-react';
+import { Phone, User, Heart, Smartphone } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
 
@@ -26,14 +25,18 @@ interface WeekViewProps {
   onSlotClick?: (date: Date, time: string) => void;
 }
 
+// Phorest-style status colors
 const STATUS_COLORS: Record<AppointmentStatus, { bg: string; border: string; text: string }> = {
-  booked: { bg: 'bg-slate-100', border: 'border-l-slate-400', text: 'text-slate-700' },
-  confirmed: { bg: 'bg-green-100', border: 'border-l-green-500', text: 'text-green-800' },
-  checked_in: { bg: 'bg-blue-100', border: 'border-l-blue-500', text: 'text-blue-800' },
-  completed: { bg: 'bg-purple-100', border: 'border-l-purple-500', text: 'text-purple-800' },
-  cancelled: { bg: 'bg-gray-50', border: 'border-l-gray-300', text: 'text-gray-500' },
-  no_show: { bg: 'bg-red-100', border: 'border-l-red-500', text: 'text-red-800' },
+  booked: { bg: 'bg-slate-200', border: 'border-slate-400', text: 'text-slate-800' },
+  confirmed: { bg: 'bg-green-500', border: 'border-green-600', text: 'text-white' },
+  checked_in: { bg: 'bg-blue-500', border: 'border-blue-600', text: 'text-white' },
+  completed: { bg: 'bg-purple-500', border: 'border-purple-600', text: 'text-white' },
+  cancelled: { bg: 'bg-gray-300', border: 'border-gray-400', text: 'text-gray-600' },
+  no_show: { bg: 'bg-red-500', border: 'border-red-600', text: 'text-white' },
 };
+
+const ROW_HEIGHT = 20; // Height per 15-minute slot
+const SLOTS_PER_HOUR = 4;
 
 function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
@@ -45,8 +48,8 @@ function getEventStyle(startTime: string, endTime: string, hoursStart: number) {
   const endMinutes = parseTimeToMinutes(endTime);
   const startOffset = startMinutes - (hoursStart * 60);
   const duration = endMinutes - startMinutes;
-  const top = (startOffset / 60) * 60;
-  const height = Math.max((duration / 60) * 60, 24);
+  const top = (startOffset / 15) * ROW_HEIGHT;
+  const height = Math.max((duration / 15) * ROW_HEIGHT, ROW_HEIGHT);
   return { top: `${top}px`, height: `${height}px` };
 }
 
@@ -71,28 +74,49 @@ function AppointmentCard({
   const statusColors = STATUS_COLORS[appointment.status];
   const duration = parseTimeToMinutes(appointment.end_time) - parseTimeToMinutes(appointment.start_time);
   const isCompact = duration <= 30;
+  const isMedium = duration <= 60;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
           className={cn(
-            'absolute left-0.5 right-0.5 rounded-md border-l-4 px-1.5 py-0.5 cursor-pointer transition-all hover:shadow-md hover:z-10 overflow-hidden text-[11px]',
+            'absolute left-1 right-1 rounded-sm border-l-4 px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
             statusColors.bg,
             statusColors.border,
             statusColors.text,
-            appointment.status === 'cancelled' && 'opacity-60'
+            appointment.status === 'cancelled' && 'opacity-50 line-through'
           )}
           style={style}
           onClick={onClick}
         >
           {isCompact ? (
-            <div className="font-medium truncate">{appointment.client_name}</div>
+            <div className="text-xs font-semibold truncate">{appointment.client_name}</div>
+          ) : isMedium ? (
+            <>
+              <div className="text-xs font-bold truncate">
+                {appointment.client_name} {appointment.client_phone}
+              </div>
+              <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
+            </>
           ) : (
             <>
-              <div className="font-semibold truncate">{appointment.client_name}</div>
-              <div className="opacity-80 truncate">{appointment.service_name}</div>
+              <div className="text-xs font-bold truncate">
+                {appointment.client_name} {appointment.client_phone}
+              </div>
+              <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
+              <div className="text-[10px] opacity-80">
+                {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
+              </div>
             </>
+          )}
+          
+          {/* Action icons in bottom right */}
+          {!isCompact && (
+            <div className="absolute bottom-1 right-1 flex items-center gap-0.5">
+              <Heart className="h-3.5 w-3.5 opacity-70" />
+              <Smartphone className="h-3.5 w-3.5 opacity-70" />
+            </div>
           )}
         </div>
       </TooltipTrigger>
@@ -132,7 +156,6 @@ export function WeekView({
   hoursStart = 8,
   hoursEnd = 20,
   onAppointmentClick,
-  onSlotClick,
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
@@ -142,10 +165,26 @@ export function WeekView({
     [weekStart]
   );
   
-  const hours = useMemo(() => 
-    Array.from({ length: hoursEnd - hoursStart }, (_, i) => hoursStart + i),
-    [hoursStart, hoursEnd]
-  );
+  // Generate all 15-minute time slots
+  const timeSlots = useMemo(() => {
+    const slots: { hour: number; minute: number; label: string; isHour: boolean; isHalf: boolean }[] = [];
+    for (let hour = hoursStart; hour < hoursEnd; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const isHour = minute === 0;
+        const isHalf = minute === 30;
+        let label = '';
+        if (isHour) {
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const hour12 = hour % 12 || 12;
+          label = `${hour12} ${ampm}`;
+        } else if (isHalf) {
+          label = '30';
+        }
+        slots.push({ hour, minute, label, isHour, isHalf });
+      }
+    }
+    return slots;
+  }, [hoursStart, hoursEnd]);
 
   // Group appointments by date
   const appointmentsByDate = useMemo(() => {
@@ -162,28 +201,21 @@ export function WeekView({
     return map;
   }, [appointments, weekDays]);
 
-  const formatHour = (hour: number) => {
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12} ${ampm}`;
-  };
-
   // Current time indicator
   const now = new Date();
   const todayInWeek = weekDays.find(d => isToday(d));
   const showCurrentTime = !!todayInWeek;
   const currentTimeOffset = showCurrentTime
-    ? ((now.getHours() * 60 + now.getMinutes()) - (hoursStart * 60)) / 60 * 60
+    ? ((now.getHours() * 60 + now.getMinutes()) - (hoursStart * 60)) / 15 * ROW_HEIGHT
     : 0;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Calendar Grid */}
-      <div className="flex-1 overflow-auto border border-border rounded-xl bg-card shadow-sm">
+      <div className="flex-1 overflow-auto border border-border rounded-lg bg-card">
         <div className="min-w-[800px]">
           {/* Day Headers */}
-          <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-muted/30 sticky top-0 z-10">
-            <div className="p-3" /> {/* Time column spacer */}
+          <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border bg-muted/40 sticky top-0 z-10">
+            <div className="p-2" /> {/* Time column spacer */}
             {weekDays.map((day) => {
               const dayIsToday = isToday(day);
               const dateKey = format(day, 'yyyy-MM-dd');
@@ -193,7 +225,7 @@ export function WeekView({
                 <div 
                   key={day.toISOString()} 
                   className={cn(
-                    'py-3 px-2 text-center border-l border-border relative',
+                    'py-3 px-2 text-center border-l border-border',
                     dayIsToday && 'bg-primary/5'
                   )}
                 >
@@ -204,21 +236,14 @@ export function WeekView({
                     {format(day, 'EEE')}
                   </div>
                   <div className="flex items-center justify-center mt-1">
-                    <div className="relative">
-                      <span className={cn(
-                        'text-lg font-semibold flex items-center justify-center transition-colors',
-                        dayIsToday 
-                          ? 'bg-primary text-primary-foreground w-7 h-7 rounded-full text-sm' 
-                          : 'text-foreground'
-                      )}>
-                        {format(day, 'd')}
-                      </span>
-                      {dayIsToday && apptCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                          {apptCount > 9 ? '9+' : apptCount}
-                        </span>
-                      )}
-                    </div>
+                    <span className={cn(
+                      'text-xl font-semibold flex items-center justify-center transition-colors',
+                      dayIsToday 
+                        ? 'bg-foreground text-background w-8 h-8 rounded-full' 
+                        : 'text-foreground'
+                    )}>
+                      {format(day, 'd')}
+                    </span>
                   </div>
                   <div className={cn(
                     'text-[10px] mt-1',
@@ -232,16 +257,24 @@ export function WeekView({
           </div>
 
           {/* Time Grid */}
-          <div className="grid grid-cols-[60px_repeat(7,1fr)] relative">
-            {/* Time Labels */}
-            <div className="relative bg-muted/20">
-              {hours.map((hour, index) => (
+          <div className="grid grid-cols-[70px_repeat(7,1fr)] relative">
+            {/* Time Labels Column */}
+            <div className="relative bg-muted/10">
+              {timeSlots.map((slot, index) => (
                 <div 
-                  key={hour} 
-                  className="h-[60px] border-b border-border/50 text-xs text-muted-foreground pr-3 text-right flex items-start justify-end font-medium"
-                  style={{ paddingTop: index === 0 ? '4px' : '0' }}
+                  key={`${slot.hour}-${slot.minute}`}
+                  className={cn(
+                    'h-[20px] text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
+                    slot.isHour && 'font-medium'
+                  )}
                 >
-                  <span className="relative -top-2">{formatHour(hour)}</span>
+                  {slot.label && (
+                    <span className={cn(
+                      slot.isHour ? 'text-foreground' : 'text-muted-foreground/60'
+                    )}>
+                      {slot.label}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -260,14 +293,14 @@ export function WeekView({
                     isCurrentDay && 'bg-primary/5'
                   )}
                 >
-                  {/* Hour lines */}
-                  {hours.map((hour) => {
-                    const slotTime = `${hour.toString().padStart(2, '0')}:00`;
+                  {/* Time slot rows */}
+                  {timeSlots.map((slot) => {
+                    const slotTime = `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`;
                     const isActive = activeSlot?.date.getTime() === day.getTime() && activeSlot?.time === slotTime;
                     
                     return (
                       <QuickBookingPopover
-                        key={hour}
+                        key={slotTime}
                         date={day}
                         time={slotTime}
                         open={isActive}
@@ -280,7 +313,14 @@ export function WeekView({
                         }}
                       >
                         <div 
-                          className="h-[60px] border-b border-dashed border-border/40 hover:bg-primary/10 cursor-pointer transition-colors"
+                          className={cn(
+                            'h-[20px] border-b hover:bg-primary/10 cursor-pointer transition-colors',
+                            slot.isHour 
+                              ? 'border-border/60' 
+                              : slot.isHalf 
+                                ? 'border-dotted border-border/40'
+                                : 'border-dotted border-border/20'
+                          )}
                         />
                       </QuickBookingPopover>
                     );
@@ -297,12 +337,18 @@ export function WeekView({
                   ))}
 
                   {/* Current time indicator */}
-                  {isCurrentDay && currentTimeOffset > 0 && currentTimeOffset < hours.length * 60 && (
+                  {isCurrentDay && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
                     <div 
-                      className="absolute left-0 right-0 border-t-2 border-red-500 pointer-events-none z-20"
+                      className="absolute left-0 right-0 pointer-events-none z-30"
                       style={{ top: `${currentTimeOffset}px` }}
                     >
-                      <div className="absolute -left-1.5 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
+                      <div className="relative">
+                        <div className="absolute left-0 right-0 border-t-2 border-blue-500" />
+                        <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-blue-500 rounded-full shadow" />
+                        <div className="absolute left-3 -top-2.5 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow">
+                          {format(now, 'h:mm a')}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
