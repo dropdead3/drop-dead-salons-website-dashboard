@@ -16,7 +16,7 @@ import { Phone, User, Heart, Smartphone } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { getCategoryColor } from '@/utils/categoryColors';
+import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -49,12 +49,8 @@ const isConsultationCategory = (category: string | null | undefined) => {
   return category.toLowerCase().includes('consult');
 };
 
-// Consultation gradient styles - teal to lime
-const CONSULTATION_GRADIENT = {
-  background: 'linear-gradient(135deg, #43c6ac 0%, #f8ffae 100%)',
-  textColor: '#1a3a32',
-  borderColor: '#43c6ac',
-};
+// Default consultation gradient (teal-lime) for fallback
+const DEFAULT_CONSULTATION_GRADIENT = SPECIAL_GRADIENTS['teal-lime'];
 
 function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
@@ -101,6 +97,13 @@ function AppointmentCard({
   const catColor = getCategoryColor(serviceCategory, categoryColors);
   const useCategoryColor = appointment.status === 'booked';
   const isConsultation = isConsultationCategory(serviceCategory);
+  
+  // Check if the category has a gradient marker stored
+  const storedColorHex = categoryColors[serviceCategory?.toLowerCase() || '']?.bg || '';
+  const gradientFromMarker = isGradientMarker(storedColorHex) ? getGradientFromMarker(storedColorHex) : null;
+  
+  // Use gradient if: marker stored, OR consultation category defaults to teal-lime
+  const displayGradient = gradientFromMarker || (isConsultation ? DEFAULT_CONSULTATION_GRADIENT : null);
 
   return (
     <Tooltip>
@@ -108,18 +111,18 @@ function AppointmentCard({
         <div
           className={cn(
             'absolute left-1 right-1 rounded-sm px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
-            !isConsultation && 'border-l-4',
-            !useCategoryColor && !isConsultation && statusColors.bg,
-            !useCategoryColor && !isConsultation && statusColors.border,
-            !useCategoryColor && !isConsultation && statusColors.text,
+            !displayGradient && 'border-l-4',
+            !useCategoryColor && !displayGradient && statusColors.bg,
+            !useCategoryColor && !displayGradient && statusColors.border,
+            !useCategoryColor && !displayGradient && statusColors.text,
             appointment.status === 'cancelled' && 'opacity-50 line-through',
-            isConsultation && 'shadow-lg'
+            displayGradient && 'shadow-lg'
           )}
           style={{
             ...style,
-          ...(isConsultation ? {
-            background: CONSULTATION_GRADIENT.background,
-            color: CONSULTATION_GRADIENT.textColor,
+          ...(displayGradient ? {
+            background: displayGradient.background,
+            color: displayGradient.textColor,
           } : useCategoryColor && {
               backgroundColor: catColor.bg,
               color: catColor.text,
@@ -128,12 +131,12 @@ function AppointmentCard({
           }}
           onClick={onClick}
         >
-          {/* Glass stroke overlay for consultation */}
-          {isConsultation && (
+          {/* Glass stroke overlay for gradient */}
+          {displayGradient && (
             <div 
               className="absolute inset-0 rounded-sm pointer-events-none"
               style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
+                background: displayGradient.glassStroke,
                 mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                 maskComposite: 'xor',
                 WebkitMaskComposite: 'xor',
@@ -141,8 +144,8 @@ function AppointmentCard({
               }}
             />
           )}
-          {/* Shimmer animation for consultation */}
-          {isConsultation && (
+          {/* Shimmer animation for gradient */}
+          {displayGradient && (
             <div 
               className="absolute inset-0 pointer-events-none animate-shimmer"
               style={{

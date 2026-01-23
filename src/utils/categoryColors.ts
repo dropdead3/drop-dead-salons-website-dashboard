@@ -1,3 +1,53 @@
+// Special gradient styles collection - shared across the app
+export const SPECIAL_GRADIENTS: Record<string, {
+  id: string;
+  name: string;
+  background: string;
+  textColor: string;
+  glassStroke: string;
+}> = {
+  'teal-lime': {
+    id: 'teal-lime',
+    name: 'Teal Lime',
+    background: 'linear-gradient(135deg, #43c6ac 0%, #f8ffae 100%)',
+    textColor: '#1a3a32',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
+  },
+  'rose-gold': {
+    id: 'rose-gold',
+    name: 'Rose Gold',
+    background: 'linear-gradient(135deg, #f5af89 0%, #f093a7 50%, #d4a5a5 100%)',
+    textColor: '#4a2c2a',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(240,147,167,0.3) 100%)',
+  },
+  'ocean-blue': {
+    id: 'ocean-blue',
+    name: 'Ocean Blue',
+    background: 'linear-gradient(135deg, #667eea 0%, #64b5f6 50%, #4dd0e1 100%)',
+    textColor: '#1a2a4a',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(100,181,246,0.3) 100%)',
+  },
+  'lavender': {
+    id: 'lavender',
+    name: 'Lavender Dream',
+    background: 'linear-gradient(135deg, #e0c3fc 0%, #c084fc 50%, #a78bfa 100%)',
+    textColor: '#3d2a5c',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(192,132,252,0.3) 100%)',
+  },
+};
+
+// Check if a color_hex value is a gradient marker
+export function isGradientMarker(colorHex: string): boolean {
+  return colorHex.startsWith('gradient:');
+}
+
+// Get gradient style from marker (e.g., "gradient:rose-gold" -> gradient object)
+export function getGradientFromMarker(colorHex: string) {
+  if (!isGradientMarker(colorHex)) return null;
+  const gradientId = colorHex.replace('gradient:', '');
+  return SPECIAL_GRADIENTS[gradientId] || null;
+}
+
 // Default fallback colors for categories not in the database
 const FALLBACK_COLORS: Record<string, { bg: string; text: string; abbr: string }> = {
   blonding: { bg: '#facc15', text: '#1f2937', abbr: 'BL' },

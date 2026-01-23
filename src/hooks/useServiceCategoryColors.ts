@@ -52,6 +52,11 @@ export function useServiceCategoryColors() {
   });
 }
 
+// Check if color is a gradient marker
+export function isGradientMarker(colorHex: string): boolean {
+  return colorHex.startsWith('gradient:');
+}
+
 // Update a single category color
 export function useUpdateCategoryColor() {
   const queryClient = useQueryClient();
@@ -64,7 +69,10 @@ export function useUpdateCategoryColor() {
       categoryId: string; 
       colorHex: string;
     }) => {
-      const textColorHex = getContrastingTextColor(colorHex);
+      // For gradient markers, use a default dark text color
+      const textColorHex = isGradientMarker(colorHex) 
+        ? '#1f2937' 
+        : getContrastingTextColor(colorHex);
       
       const { error } = await supabase
         .from('service_category_colors')

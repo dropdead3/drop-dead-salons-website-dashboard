@@ -13,7 +13,12 @@ import {
 } from '@/hooks/useServiceCategoryColors';
 import { toast } from 'sonner';
 import { CalendarColorPreview } from './CalendarColorPreview';
-import { getCategoryAbbreviation as getAbbr } from '@/utils/categoryColors';
+import { 
+  getCategoryAbbreviation as getAbbr, 
+  SPECIAL_GRADIENTS, 
+  isGradientMarker, 
+  getGradientFromMarker 
+} from '@/utils/categoryColors';
 
 // Non-service category types (scheduling entries)
 const NON_SERVICE_CATEGORIES = ['Block', 'Break'];
@@ -29,47 +34,14 @@ const isConsultationCategory = (categoryName: string) => {
   return categoryName.toLowerCase().includes('consult');
 };
 
-// Consultation gradient styles - teal to lime
-const CONSULTATION_GRADIENT = {
-  background: 'linear-gradient(135deg, #43c6ac 0%, #f8ffae 100%)',
-  textColor: '#1a3a32',
-};
-
-// Special gradient styles collection
-const SPECIAL_GRADIENTS = [
-  {
-    id: 'teal-lime',
-    name: 'Teal Lime',
-    description: 'Fresh & vibrant consultation style',
-    background: 'linear-gradient(135deg, #43c6ac 0%, #f8ffae 100%)',
-    textColor: '#1a3a32',
-    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
-  },
-  {
-    id: 'rose-gold',
-    name: 'Rose Gold',
-    description: 'Elegant warm metallic tones',
-    background: 'linear-gradient(135deg, #f5af89 0%, #f093a7 50%, #d4a5a5 100%)',
-    textColor: '#4a2c2a',
-    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(240,147,167,0.3) 100%)',
-  },
-  {
-    id: 'ocean-blue',
-    name: 'Ocean Blue',
-    description: 'Cool, calming aquatic vibes',
-    background: 'linear-gradient(135deg, #667eea 0%, #64b5f6 50%, #4dd0e1 100%)',
-    textColor: '#1a2a4a',
-    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(100,181,246,0.3) 100%)',
-  },
-  {
-    id: 'lavender',
-    name: 'Lavender Dream',
-    description: 'Soft, luxurious purple tones',
-    background: 'linear-gradient(135deg, #e0c3fc 0%, #c084fc 50%, #a78bfa 100%)',
-    textColor: '#3d2a5c',
-    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(192,132,252,0.3) 100%)',
-  },
-];
+// Convert SPECIAL_GRADIENTS object to array for rendering
+const GRADIENT_OPTIONS = Object.values(SPECIAL_GRADIENTS).map(g => ({
+  ...g,
+  description: g.id === 'teal-lime' ? 'Fresh & vibrant consultation style' :
+               g.id === 'rose-gold' ? 'Elegant warm metallic tones' :
+               g.id === 'ocean-blue' ? 'Cool, calming aquatic vibes' :
+               'Soft, luxurious purple tones',
+}));
 
 // Curated luxury color palette - 36 colors organized by family
 const CATEGORY_PALETTE = [
@@ -143,6 +115,17 @@ export function ScheduleSettingsContent() {
   const renderCategoryCard = (category: ServiceCategoryColor) => {
     const abbr = getCategoryAbbreviation(category.category_name);
     
+    // Check if this category has a gradient applied
+    const hasGradient = isGradientMarker(category.color_hex);
+    const appliedGradient = hasGradient ? getGradientFromMarker(category.color_hex) : null;
+    
+    // For consultation categories, default to teal-lime if no gradient marker
+    const isConsult = isConsultationCategory(category.category_name);
+    const defaultConsultGradient = SPECIAL_GRADIENTS['teal-lime'];
+    
+    // Determine which gradient to display (if any)
+    const displayGradient = appliedGradient || (isConsult ? defaultConsultGradient : null);
+    
     return (
       <div
         key={category.id}
@@ -156,22 +139,22 @@ export function ScheduleSettingsContent() {
                 'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0 relative',
                 'transition-transform hover:scale-105 active:scale-95',
                 'ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50',
-                isConsultationCategory(category.category_name) && 'shadow-lg'
+                displayGradient && 'shadow-lg'
               )}
-              style={isConsultationCategory(category.category_name) ? {
-                background: CONSULTATION_GRADIENT.background,
-                color: CONSULTATION_GRADIENT.textColor,
+              style={displayGradient ? {
+                background: displayGradient.background,
+                color: displayGradient.textColor,
               } : {
                 backgroundColor: category.color_hex,
                 color: category.text_color_hex,
               }}
             >
-              {/* Glass stroke for consultation badge */}
-              {isConsultationCategory(category.category_name) && (
+              {/* Glass stroke for gradient badge */}
+              {displayGradient && (
                 <span 
                   className="absolute inset-0 rounded-full pointer-events-none"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
+                    background: displayGradient.glassStroke,
                     mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                     maskComposite: 'xor',
                     WebkitMaskComposite: 'xor',
@@ -187,19 +170,19 @@ export function ScheduleSettingsContent() {
               <div className="flex items-center gap-2">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold relative"
-                  style={isConsultationCategory(category.category_name) ? {
-                    background: CONSULTATION_GRADIENT.background,
-                    color: CONSULTATION_GRADIENT.textColor,
+                  style={displayGradient ? {
+                    background: displayGradient.background,
+                    color: displayGradient.textColor,
                   } : {
                     backgroundColor: category.color_hex,
                     color: category.text_color_hex,
                   }}
                 >
-                  {isConsultationCategory(category.category_name) && (
+                  {displayGradient && (
                     <span 
                       className="absolute inset-0 rounded-full pointer-events-none"
                       style={{
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
+                        background: displayGradient.glassStroke,
                         mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                         maskComposite: 'xor',
                         WebkitMaskComposite: 'xor',
@@ -212,7 +195,7 @@ export function ScheduleSettingsContent() {
                 <div>
                   <p className="text-sm font-medium">{category.category_name}</p>
                   <p className="text-xs text-muted-foreground uppercase">
-                    {isConsultationCategory(category.category_name) ? 'Gradient Style' : category.color_hex}
+                    {displayGradient ? displayGradient.name : category.color_hex}
                   </p>
                 </div>
               </div>
@@ -225,43 +208,42 @@ export function ScheduleSettingsContent() {
                   Special Styles
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                  {SPECIAL_GRADIENTS.map((gradient) => (
-                    <Tooltip key={gradient.id}>
-                      <TooltipTrigger asChild>
-                        <button
-                          className={cn(
-                            'w-10 h-10 rounded-full transition-transform hover:scale-110 relative shadow-md',
-                            isConsultationCategory(category.category_name) && 
-                              gradient.id === 'teal-lime' && 
-                              'ring-2 ring-offset-2 ring-primary'
-                          )}
-                          style={{
-                            background: gradient.background,
-                          }}
-                          onClick={() => {
-                            toast.info(`${gradient.name} gradient style - available for premium categories`);
-                          }}
-                          disabled={updateColor.isPending}
-                        >
-                          {/* Glass stroke overlay */}
-                          <span 
-                            className="absolute inset-0 rounded-full pointer-events-none"
+                  {GRADIENT_OPTIONS.map((gradient) => {
+                    const isSelected = category.color_hex === `gradient:${gradient.id}`;
+                    return (
+                      <Tooltip key={gradient.id}>
+                        <TooltipTrigger asChild>
+                          <button
+                            className={cn(
+                              'w-10 h-10 rounded-full transition-transform hover:scale-110 relative shadow-md',
+                              isSelected && 'ring-2 ring-offset-2 ring-primary'
+                            )}
                             style={{
-                              background: gradient.glassStroke,
-                              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                              maskComposite: 'xor',
-                              WebkitMaskComposite: 'xor',
-                              padding: '2px',
+                              background: gradient.background,
                             }}
-                          />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[180px]">
-                        <p className="text-xs font-medium">{gradient.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{gradient.description}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
+                            onClick={() => handleColorChange(category.id, `gradient:${gradient.id}`)}
+                            disabled={updateColor.isPending}
+                          >
+                            {/* Glass stroke overlay */}
+                            <span 
+                              className="absolute inset-0 rounded-full pointer-events-none"
+                              style={{
+                                background: gradient.glassStroke,
+                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                                maskComposite: 'xor',
+                                WebkitMaskComposite: 'xor',
+                                padding: '2px',
+                              }}
+                            />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[180px]">
+                          <p className="text-xs font-medium">{gradient.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{gradient.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -279,7 +261,7 @@ export function ScheduleSettingsContent() {
                       className={cn(
                         'w-8 h-8 rounded-full transition-transform hover:scale-110',
                         category.color_hex.toLowerCase() === color.toLowerCase() &&
-                          !isConsultationCategory(category.category_name) &&
+                          !hasGradient &&
                           'ring-2 ring-offset-2 ring-primary'
                       )}
                       style={{ backgroundColor: color }}
