@@ -141,6 +141,16 @@ function AppointmentCard({
               }}
             />
           )}
+          {/* Shimmer animation for consultation */}
+          {isConsultation && (
+            <div 
+              className="absolute inset-0 pointer-events-none animate-shimmer"
+              style={{
+                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                backgroundSize: '200% 100%',
+              }}
+            />
+          )}
           {/* X pattern overlay for Block/Break entries */}
           {BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">

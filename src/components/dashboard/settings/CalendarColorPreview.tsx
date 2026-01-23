@@ -176,6 +176,16 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                         }}
                       />
                     )}
+                    {/* Shimmer animation for consultation */}
+                    {isConsultation && (
+                      <div 
+                        className="absolute inset-0 pointer-events-none animate-shimmer"
+                        style={{
+                          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                          backgroundSize: '200% 100%',
+                        }}
+                      />
+                    )}
                     {/* X pattern for blocked entries */}
                     {BLOCKED_CATEGORIES.includes(apt.category) && (
                       <div className="absolute inset-0 pointer-events-none overflow-hidden">
