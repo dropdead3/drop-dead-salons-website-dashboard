@@ -31,8 +31,8 @@ const isConsultationCategory = (categoryName: string) => {
 
 // Consultation gradient styles
 const CONSULTATION_GRADIENT = {
-  background: 'linear-gradient(135deg, hsl(35,35%,82%) 0%, hsl(32,55%,45%) 50%, hsl(30,60%,35%) 100%)',
-  textColor: '#1f2937',
+  background: 'linear-gradient(135deg, hsl(175,60%,85%) 0%, hsl(200,55%,75%) 50%, hsl(270,50%,85%) 100%)',
+  textColor: '#374151',
 };
 
 // Curated luxury color palette - 36 colors organized by family
@@ -135,7 +135,7 @@ export function ScheduleSettingsContent() {
                 <span 
                   className="absolute inset-0 rounded-full pointer-events-none"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(212,165,116,0.45) 100%)',
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(180,140,220,0.45) 100%)',
                     mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                     maskComposite: 'xor',
                     WebkitMaskComposite: 'xor',
