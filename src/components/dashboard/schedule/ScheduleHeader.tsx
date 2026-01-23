@@ -71,13 +71,22 @@ export function ScheduleHeader({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <LayoutGrid className="h-4 w-4 text-background/60" />
-            <div className="flex rounded-full overflow-hidden border border-background/40">
+            <div className="relative flex rounded-full overflow-hidden border border-background/40 p-0.5">
+              {/* Animated sliding pill */}
+              <div 
+                className={cn(
+                  "absolute top-0.5 bottom-0.5 bg-background rounded-full transition-all duration-300 ease-out",
+                  view === 'week' ? 'left-0.5 w-[calc(50%-2px)]' : 'left-[50%] w-[calc(50%-2px)]'
+                )}
+              />
               <Button
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  'px-6 py-1.5 rounded-full text-background/70 hover:text-background hover:bg-background/10 transition-all',
-                  view === 'week' && 'bg-background text-foreground hover:bg-background hover:text-foreground font-medium'
+                  'relative z-10 px-6 py-1.5 rounded-full transition-colors duration-300',
+                  view === 'week' 
+                    ? 'text-foreground font-medium' 
+                    : 'text-background/70 hover:text-background'
                 )}
                 onClick={() => setView('week')}
               >
@@ -87,8 +96,10 @@ export function ScheduleHeader({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  'px-6 py-1.5 rounded-full text-background/70 hover:text-background hover:bg-background/10 transition-all',
-                  view === 'day' && 'bg-background text-foreground hover:bg-background hover:text-foreground font-medium'
+                  'relative z-10 px-6 py-1.5 rounded-full transition-colors duration-300',
+                  view === 'day' 
+                    ? 'text-foreground font-medium' 
+                    : 'text-background/70 hover:text-background'
                 )}
                 onClick={() => setView('day')}
               >
