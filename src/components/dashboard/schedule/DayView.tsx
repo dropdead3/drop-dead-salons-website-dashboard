@@ -259,7 +259,7 @@ export function DayView({
   };
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-lg border border-border overflow-hidden">
+    <div className="flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden">
       {/* Calendar Grid */}
       <div className="flex-1 overflow-auto">
         <div className="min-w-[600px]">
