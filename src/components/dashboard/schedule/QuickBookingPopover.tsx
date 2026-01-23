@@ -847,7 +847,7 @@ export function QuickBookingPopover({
                             )}
                           </div>
                           {selectedServices.length > 0 && (
-                            <div className="text-right shrink-0">
+                            <div className="text-right shrink-0 pr-2">
                               <span className="text-sm font-semibold text-foreground">
                                 ${stylistTotalPrice.toFixed(0)}
                               </span>
