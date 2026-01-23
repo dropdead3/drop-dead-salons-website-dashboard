@@ -498,7 +498,7 @@ export function QuickBookingPopover({
                                 className={cn(
                                   "w-full flex items-center gap-3 py-3 text-left transition-colors first:pt-0 last:pb-0",
                                   style.isSpecial 
-                                    ? "group relative overflow-hidden rounded-2xl my-3 first:mt-0 px-4 -mx-1 py-4 bg-gradient-to-r from-[hsl(38,25%,92%)] via-[hsl(38,20%,96%)] to-[hsl(38,25%,92%)] border border-[hsl(38,30%,80%)]/60 shadow-[0_2px_12px_-2px_hsl(38,30%,70%,0.25),inset_0_1px_0_0_hsl(38,40%,95%)] hover:shadow-[0_4px_20px_-4px_hsl(38,30%,60%,0.35),inset_0_1px_0_0_hsl(38,40%,95%)] transition-all duration-300"
+                                    ? "group relative overflow-hidden -mx-3 px-4 py-4 bg-gradient-to-r from-[hsl(38,25%,92%)] via-[hsl(38,20%,96%)] to-[hsl(38,25%,92%)] border-y border-[hsl(38,30%,80%)]/60 shadow-[0_2px_12px_-2px_hsl(38,30%,70%,0.25),inset_0_1px_0_0_hsl(38,40%,95%)] hover:shadow-[0_4px_20px_-4px_hsl(38,30%,60%,0.35),inset_0_1px_0_0_hsl(38,40%,95%)] transition-all duration-300"
                                     : "hover:bg-muted/50"
                                 )}
                                 onClick={() => setSelectedCategory(category)}
