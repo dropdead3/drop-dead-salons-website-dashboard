@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, getDay, addMonths, subMonths, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, AlertTriangle, Clock, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, AlertTriangle, Clock, MapPin, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { AssistantRequest } from '@/hooks/useAssistantRequests';
+import { usePhorestRequestConflicts } from '@/hooks/usePhorestConflicts';
 import { cn } from '@/lib/utils';
 
 interface AssistantRequestsCalendarProps {
@@ -40,6 +42,9 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
     });
     return grouped;
   }, [requests]);
+
+  // Detect Phorest appointment conflicts
+  const { conflicts: phorestConflicts, getConflictsForRequest, hasConflicts: hasPhorestConflicts } = usePhorestRequestConflicts(requests);
 
   // Detect conflicts: same assistant, overlapping times on same day
   const conflicts = useMemo<ConflictInfo[]>(() => {
@@ -125,9 +130,9 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
             </CardTitle>
             <CardDescription>
               Visual overview of scheduled requests
-              {conflicts.length > 0 && (
-                <span className="text-amber-600 ml-2">
-                  • {conflicts.length} potential conflict{conflicts.length !== 1 ? 's' : ''}
+              {(conflicts.length > 0 || hasPhorestConflicts) && (
+                <span className="text-destructive ml-2">
+                  • {conflicts.length + phorestConflicts.length} conflict{(conflicts.length + phorestConflicts.length) !== 1 ? 's' : ''} detected
                 </span>
               )}
             </CardDescription>
@@ -172,6 +177,9 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
             const dateKey = format(day, 'yyyy-MM-dd');
             const dayRequests = requestsByDate[dateKey] || [];
             const hasConflict = conflictDates.has(dateKey);
+            // Check for Phorest conflicts on this day
+            const hasPhorestConflictOnDay = phorestConflicts.some(c => c.date === dateKey);
+            const hasAnyConflict = hasConflict || hasPhorestConflictOnDay;
             const isSelected = selectedDate && isSameDay(day, selectedDate);
             const pendingCount = dayRequests.filter(r => r.status === 'pending' || (r.status === 'assigned' && !r.accepted_at)).length;
             
@@ -184,7 +192,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                       "aspect-square p-1 rounded-lg border text-sm relative transition-all hover:bg-muted/50",
                       isToday(day) && "ring-2 ring-primary ring-offset-1",
                       isSelected && "bg-primary/10 border-primary",
-                      hasConflict && "bg-amber-50 dark:bg-amber-950/30 border-amber-300",
+                      hasAnyConflict && "bg-destructive/10 border-destructive/50",
                       dayRequests.length === 0 && "opacity-50"
                     )}
                   >
@@ -212,8 +220,8 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                       </div>
                     )}
                     
-                    {hasConflict && (
-                      <AlertTriangle className="absolute top-0.5 right-0.5 h-3 w-3 text-amber-600" />
+                    {hasAnyConflict && (
+                      <AlertTriangle className="absolute top-0.5 right-0.5 h-3 w-3 text-destructive" />
                     )}
                     
                     {pendingCount > 0 && (
@@ -235,12 +243,17 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                     </p>
                   </div>
                   
-                  {selectedDateConflicts.length > 0 && isSelected && (
-                    <div className="p-2 bg-amber-50 dark:bg-amber-950/30 border-b">
-                      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 text-sm">
+                  {(selectedDateConflicts.length > 0 || (isSelected && phorestConflicts.filter(c => c.date === format(selectedDate!, 'yyyy-MM-dd')).length > 0)) && (
+                    <div className="p-2 bg-destructive/10 border-b">
+                      <div className="flex items-center gap-2 text-destructive text-sm">
                         <AlertTriangle className="h-4 w-4" />
-                        <span>Conflict detected</span>
+                        <span>Scheduling conflict detected</span>
                       </div>
+                      {isSelected && phorestConflicts.filter(c => c.date === format(selectedDate!, 'yyyy-MM-dd')).map(conflict => (
+                        <div key={`${conflict.requestId}-${conflict.appointmentId}`} className="text-xs text-muted-foreground mt-1 ml-6">
+                          Overlaps with Phorest: {conflict.appointmentClientName} ({conflict.appointmentStartTime.slice(0, 5)} - {conflict.appointmentEndTime.slice(0, 5)})
+                        </div>
+                      ))}
                     </div>
                   )}
                   
@@ -251,33 +264,56 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                           No requests
                         </p>
                       ) : (
-                        dayRequests.map(request => (
-                          <button
-                            key={request.id}
-                            onClick={() => onSelectRequest?.(request)}
-                            className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className={cn(
-                                "w-2 h-2 rounded-full",
-                                getStatusColor(request.status, !!request.accepted_at)
-                              )} />
-                              <span className="font-medium text-sm truncate">
-                                {request.client_name}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              <span>{request.start_time.slice(0, 5)} - {request.end_time.slice(0, 5)}</span>
-                              {request.locations?.name && (
-                                <>
-                                  <MapPin className="h-3 w-3 ml-1" />
-                                  <span className="truncate">{request.locations.name}</span>
-                                </>
+                        dayRequests.map(request => {
+                          const requestPhorestConflicts = getConflictsForRequest(request.id);
+                          const hasRequestConflict = requestPhorestConflicts.length > 0;
+                          
+                          return (
+                            <button
+                              key={request.id}
+                              onClick={() => onSelectRequest?.(request)}
+                              className={cn(
+                                "w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors",
+                                hasRequestConflict && "bg-destructive/10 border border-destructive/30"
                               )}
-                            </div>
-                          </button>
-                        ))
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "w-2 h-2 rounded-full",
+                                  getStatusColor(request.status, !!request.accepted_at)
+                                )} />
+                                <span className="font-medium text-sm truncate">
+                                  {request.client_name}
+                                </span>
+                                {hasRequestConflict && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <AlertCircle className="h-3.5 w-3.5 text-destructive ml-auto" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="font-medium">Phorest Conflict</p>
+                                      {requestPhorestConflicts.map(c => (
+                                        <p key={c.appointmentId} className="text-xs">
+                                          {c.appointmentClientName}: {c.appointmentStartTime.slice(0, 5)}-{c.appointmentEndTime.slice(0, 5)}
+                                        </p>
+                                      ))}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span>{request.start_time.slice(0, 5)} - {request.end_time.slice(0, 5)}</span>
+                                {request.locations?.name && (
+                                  <>
+                                    <MapPin className="h-3 w-3 ml-1" />
+                                    <span className="truncate">{request.locations.name}</span>
+                                  </>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })
                       )}
                     </div>
                   </ScrollArea>
@@ -306,8 +342,8 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
             <span>Completed</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <AlertTriangle className="h-3 w-3 text-amber-600" />
-            <span>Conflict (Phorest integration coming soon)</span>
+            <AlertTriangle className="h-3 w-3 text-destructive" />
+            <span>Phorest Conflict</span>
           </div>
         </div>
       </CardContent>

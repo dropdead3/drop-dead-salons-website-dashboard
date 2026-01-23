@@ -9,6 +9,7 @@ import { ExternalLink, Rocket } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
+import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 
 interface NavItem {
@@ -244,6 +245,13 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
 
       {/* Announcements Widget - at the very top (hide when collapsed) */}
       {!isCollapsed && <SidebarAnnouncementsWidget onNavClick={onNavClick} />}
+
+      {/* Phorest Sync Status Widget - show for admins/managers */}
+      {(roles.includes('admin') || roles.includes('super_admin') || roles.includes('manager')) && (
+        <div className="mb-2">
+          <SidebarSyncStatusWidget isCollapsed={isCollapsed} onNavClick={onNavClick} />
+        </div>
+      )}
 
       {/* Navigation */}
       <nav ref={internalRef} className="flex-1 py-4 overflow-y-auto">
