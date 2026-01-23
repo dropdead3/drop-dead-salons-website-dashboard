@@ -60,7 +60,7 @@ export function BookingWizard({
 
   // Data fetching
   const { data: locations = [] } = useLocations();
-  const { data: servicesByCategory, services = [] } = useServicesByCategory(selectedLocation || undefined);
+  const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
 
   const canViewAllClients = roles.some(r => ['admin', 'manager', 'super_admin', 'receptionist'].includes(r));
 
@@ -261,7 +261,8 @@ export function BookingWizard({
                 totalDuration={totalDuration}
                 totalPrice={totalPrice}
                 onContinue={handleServicesComplete}
-                canContinue={selectedServices.length > 0 && !!selectedLocation}
+                canContinue={!!selectedLocation}
+                isLoadingServices={isLoadingServices}
               />
             )}
 

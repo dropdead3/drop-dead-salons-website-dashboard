@@ -13,10 +13,23 @@ export interface PhorestService {
   is_active: boolean;
 }
 
-export function usePhorestServices(branchId?: string) {
+export function usePhorestServices(locationId?: string) {
   return useQuery({
-    queryKey: ['phorest-services', branchId],
+    queryKey: ['phorest-services', locationId],
     queryFn: async () => {
+      // First get the phorest_branch_id for this location if provided
+      let phorestBranchId: string | null = null;
+      
+      if (locationId) {
+        const { data: location } = await supabase
+          .from('locations')
+          .select('phorest_branch_id')
+          .eq('id', locationId)
+          .single();
+        
+        phorestBranchId = location?.phorest_branch_id || null;
+      }
+
       let query = supabase
         .from('phorest_services')
         .select('*')
@@ -24,14 +37,17 @@ export function usePhorestServices(branchId?: string) {
         .order('category')
         .order('name');
       
-      if (branchId) {
-        query = query.eq('phorest_branch_id', branchId);
+      // Only filter by branch if we have a valid phorest_branch_id
+      if (phorestBranchId) {
+        query = query.eq('phorest_branch_id', phorestBranchId);
       }
 
       const { data, error } = await query;
       if (error) throw error;
       return data as PhorestService[];
     },
+    // Enable the query when we have a location selected
+    enabled: !!locationId,
   });
 }
 
