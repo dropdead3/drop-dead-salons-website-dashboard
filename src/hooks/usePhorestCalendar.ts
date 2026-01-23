@@ -24,6 +24,9 @@ export interface PhorestAppointment {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  // New fields for filtering
+  phorest_client_id: string | null;
+  is_new_client: boolean;
   // Joined data
   stylist_profile?: {
     display_name: string | null;
@@ -146,7 +149,7 @@ export function usePhorestCalendar() {
   const canViewOwn = hasPermission('view_own_appointments');
   const canCreate = hasPermission('create_appointments');
 
-  // Fetch appointments
+  // Fetch appointments with client data for filtering
   const { data: appointments = [], isLoading, refetch } = useQuery({
     queryKey: ['phorest-appointments', dateRange, filters, effectiveUserId, canViewAll, canViewTeam],
     queryFn: async () => {

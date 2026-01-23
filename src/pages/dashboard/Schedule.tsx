@@ -18,6 +18,7 @@ import { useActiveLocations } from '@/hooks/useLocations';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
 
 export default function Schedule() {
   const isMobile = useIsMobile();
@@ -52,6 +53,11 @@ export default function Schedule() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
+  const [calendarFilters, setCalendarFilters] = useState<CalendarFilterState>({
+    clientTypes: [],
+    confirmationStatus: [],
+    leadSources: [],
+  });
 
   // Set default location when locations load
   useEffect(() => {
@@ -73,7 +79,7 @@ export default function Schedule() {
     }
   };
 
-  // Filter appointments by location first, then by selected staff
+  // Filter appointments by location, staff, and calendar filters
   const appointments = useMemo(() => {
     let filtered = allAppointments;
     
@@ -88,9 +94,33 @@ export default function Schedule() {
         apt.stylist_user_id && selectedStaffIds.includes(apt.stylist_user_id)
       );
     }
+
+    // Filter by client type (new/returning)
+    if (calendarFilters.clientTypes.length > 0) {
+      filtered = filtered.filter(apt => {
+        const isNew = apt.is_new_client;
+        if (calendarFilters.clientTypes.includes('new') && isNew) return true;
+        if (calendarFilters.clientTypes.includes('returning') && !isNew) return true;
+        return false;
+      });
+    }
+
+    // Filter by confirmation status
+    if (calendarFilters.confirmationStatus.length > 0) {
+      filtered = filtered.filter(apt => {
+        const isConfirmed = apt.status === 'confirmed' || apt.status === 'checked_in' || apt.status === 'completed';
+        if (calendarFilters.confirmationStatus.includes('confirmed') && isConfirmed) return true;
+        if (calendarFilters.confirmationStatus.includes('unconfirmed') && !isConfirmed) return true;
+        return false;
+      });
+    }
+
+    // Note: Lead source filtering requires client data which would need a join query
+    // For now, the infrastructure is in place; actual filtering will work once
+    // appointment sync populates phorest_client_id and client lead_source is set
     
     return filtered;
-  }, [allAppointments, selectedLocation, selectedStaffIds]);
+  }, [allAppointments, selectedLocation, selectedStaffIds, calendarFilters]);
 
   // Get the phorest_branch_id for the selected location
   const selectedBranchId = useMemo(() => {
@@ -220,6 +250,8 @@ export default function Schedule() {
             locations={locations}
             onNewBooking={handleNewBooking}
             canCreate={canCreate}
+            calendarFilters={calendarFilters}
+            onCalendarFiltersChange={setCalendarFilters}
           />
         </div>
 
