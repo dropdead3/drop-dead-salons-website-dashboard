@@ -71,7 +71,7 @@ export default function Schedule() {
     return allAppointments.filter(apt => apt.stylist_user_id === effectiveUserId);
   }, [allAppointments, showAllStaff, effectiveUserId]);
 
-  // Fetch stylists for DayView
+  // Fetch stylists for DayView (deduplicated by user_id since staff can be mapped to multiple locations)
   const { data: stylists = [] } = useQuery({
     queryKey: ['schedule-stylists-with-mapping'],
     queryFn: async () => {
@@ -88,12 +88,21 @@ export default function Schedule() {
         `)
         .eq('is_active', true);
       
-      return (data || []).map(d => ({
-        user_id: d.user_id,
-        display_name: d.employee_profiles?.display_name || null,
-        full_name: d.employee_profiles?.full_name || 'Unknown',
-        photo_url: d.employee_profiles?.photo_url || null,
-      }));
+      // Deduplicate by user_id (staff may be mapped to multiple locations)
+      const uniqueStylists = new Map<string, { user_id: string; display_name: string | null; full_name: string; photo_url: string | null }>();
+      
+      (data || []).forEach(d => {
+        if (!uniqueStylists.has(d.user_id)) {
+          uniqueStylists.set(d.user_id, {
+            user_id: d.user_id,
+            display_name: d.employee_profiles?.display_name || null,
+            full_name: d.employee_profiles?.full_name || 'Unknown',
+            photo_url: d.employee_profiles?.photo_url || null,
+          });
+        }
+      });
+      
+      return Array.from(uniqueStylists.values());
     },
   });
 
