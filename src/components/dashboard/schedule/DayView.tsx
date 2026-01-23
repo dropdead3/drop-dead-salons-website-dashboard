@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { format, isToday } from 'date-fns';
+import { useMemo, useState } from 'react';
+import { format, isToday, getWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -8,8 +8,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone } from 'lucide-react';
-import type { PhorestAppointment, AppointmentStatus, STATUS_CONFIG } from '@/hooks/usePhorestCalendar';
+import { Phone, Clock } from 'lucide-react';
+import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 
 interface DayViewProps {
   date: Date;
@@ -24,15 +24,17 @@ interface DayViewProps {
   hoursEnd?: number;
   onAppointmentClick: (appointment: PhorestAppointment) => void;
   onSlotClick?: (stylistId: string, time: string) => void;
+  selectedAppointmentId?: string | null;
 }
 
+// Phorest-style status colors
 const STATUS_COLORS: Record<AppointmentStatus, { bg: string; border: string; text: string }> = {
-  booked: { bg: 'bg-slate-100', border: 'border-l-slate-400', text: 'text-slate-700' },
-  confirmed: { bg: 'bg-green-100', border: 'border-l-green-500', text: 'text-green-800' },
-  checked_in: { bg: 'bg-blue-100', border: 'border-l-blue-500', text: 'text-blue-800' },
-  completed: { bg: 'bg-purple-100', border: 'border-l-purple-500', text: 'text-purple-800' },
-  cancelled: { bg: 'bg-gray-50', border: 'border-l-gray-300', text: 'text-gray-500' },
-  no_show: { bg: 'bg-red-100', border: 'border-l-red-500', text: 'text-red-800' },
+  booked: { bg: 'bg-muted', border: 'border-muted-foreground/30', text: 'text-foreground' },
+  confirmed: { bg: 'bg-green-500', border: 'border-green-600', text: 'text-white' },
+  checked_in: { bg: 'bg-blue-500', border: 'border-blue-600', text: 'text-white' },
+  completed: { bg: 'bg-purple-500', border: 'border-purple-600', text: 'text-white' },
+  cancelled: { bg: 'bg-muted/50', border: 'border-muted', text: 'text-muted-foreground' },
+  no_show: { bg: 'bg-destructive', border: 'border-destructive', text: 'text-destructive-foreground' },
 };
 
 function parseTimeToMinutes(time: string): number {
@@ -40,13 +42,14 @@ function parseTimeToMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
-function getEventStyle(startTime: string, endTime: string, hoursStart: number) {
+function getEventStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 16) {
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(endTime);
   const startOffset = startMinutes - (hoursStart * 60);
   const duration = endMinutes - startMinutes;
-  const top = (startOffset / 60) * 64; // 64px per hour
-  const height = Math.max((duration / 60) * 64, 24);
+  // 4 rows per hour (15 min intervals), each row is rowHeight px
+  const top = (startOffset / 15) * rowHeight;
+  const height = Math.max((duration / 15) * rowHeight, rowHeight);
   return { top: `${top}px`, height: `${height}px` };
 }
 
@@ -58,47 +61,89 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
+function formatPhone(phone: string | null): string {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return digits; // Display raw for compact view
+  }
+  return phone;
+}
+
+interface AppointmentCardProps {
+  appointment: PhorestAppointment;
+  hoursStart: number;
+  onClick: () => void;
+  isSelected?: boolean;
+  columnIndex?: number;
+  totalOverlapping?: number;
+}
+
 function AppointmentCard({ 
   appointment, 
   hoursStart,
-  onClick 
-}: { 
-  appointment: PhorestAppointment; 
-  hoursStart: number;
-  onClick: () => void;
-}) {
+  onClick,
+  isSelected = false,
+  columnIndex = 0,
+  totalOverlapping = 1,
+}: AppointmentCardProps) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const statusColors = STATUS_COLORS[appointment.status];
   const duration = parseTimeToMinutes(appointment.end_time) - parseTimeToMinutes(appointment.start_time);
   const isCompact = duration <= 30;
+
+  // Calculate width and offset for overlapping appointments
+  const widthPercent = 100 / totalOverlapping;
+  const leftPercent = columnIndex * widthPercent;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
           className={cn(
-            'absolute left-1 right-1 rounded-md border-l-4 px-2 py-1 cursor-pointer transition-all hover:shadow-md overflow-hidden',
+            'absolute rounded-sm cursor-pointer transition-all overflow-hidden border-l-4',
             statusColors.bg,
             statusColors.border,
             statusColors.text,
-            appointment.status === 'cancelled' && 'opacity-60'
+            appointment.status === 'cancelled' && 'opacity-60 line-through',
+            isSelected && 'ring-2 ring-primary ring-offset-1'
           )}
-          style={style}
+          style={{
+            ...style,
+            left: `calc(${leftPercent}% + 2px)`,
+            width: `calc(${widthPercent}% - 4px)`,
+          }}
           onClick={onClick}
         >
-          {isCompact ? (
-            <div className="text-xs font-medium truncate">{appointment.client_name}</div>
-          ) : (
-            <>
-              <div className="text-xs font-semibold truncate">{appointment.client_name}</div>
-              <div className="text-xs opacity-80 truncate">{appointment.service_name}</div>
-              {duration > 45 && (
-                <div className="text-xs opacity-70 mt-0.5">
-                  {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
+          <div className="px-1.5 py-0.5">
+            {isCompact ? (
+              <div className="text-xs font-medium truncate">
+                {appointment.client_name}
+              </div>
+            ) : (
+              <>
+                <div className="text-xs font-semibold truncate flex items-center gap-1">
+                  {appointment.status === 'confirmed' && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/80 shrink-0" />
+                  )}
+                  {appointment.client_name}
+                  {appointment.client_phone && (
+                    <span className="font-normal opacity-80">
+                      {formatPhone(appointment.client_phone)}
+                    </span>
+                  )}
                 </div>
-              )}
-            </>
-          )}
+                <div className="text-xs opacity-90 truncate">
+                  {appointment.service_name}
+                </div>
+                {duration >= 60 && (
+                  <div className="text-xs opacity-80 mt-0.5">
+                    {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-xs">
@@ -113,10 +158,14 @@ function AppointmentCard({
             </div>
           )}
           <div className="text-sm">{appointment.service_name}</div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground flex items-center gap-1">
+            <Clock className="h-3 w-3" />
             {formatTime12h(appointment.start_time)} - {formatTime12h(appointment.end_time)}
           </div>
-          <Badge variant="outline" className={cn('text-xs', statusColors.bg, statusColors.text)}>
+          <Badge 
+            variant="outline" 
+            className={cn('text-xs capitalize', statusColors.bg, statusColors.text)}
+          >
             {appointment.status.replace('_', ' ')}
           </Badge>
         </div>
@@ -129,17 +178,27 @@ export function DayView({
   date,
   appointments,
   stylists,
-  hoursStart = 8,
-  hoursEnd = 20,
+  hoursStart = 7,
+  hoursEnd = 21,
   onAppointmentClick,
   onSlotClick,
+  selectedAppointmentId,
 }: DayViewProps) {
-  const hours = useMemo(() => 
-    Array.from({ length: hoursEnd - hoursStart }, (_, i) => hoursStart + i),
-    [hoursStart, hoursEnd]
-  );
+  const ROW_HEIGHT = 16; // 16px per 15-min slot
+  
+  // Generate time labels for each hour with 15-min intervals
+  const timeSlots = useMemo(() => {
+    const slots: { hour: number; minute: number }[] = [];
+    for (let hour = hoursStart; hour < hoursEnd; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        slots.push({ hour, minute });
+      }
+    }
+    return slots;
+  }, [hoursStart, hoursEnd]);
 
   const dateStr = format(date, 'yyyy-MM-dd');
+  const weekNumber = getWeek(date);
   
   // Group appointments by stylist
   const appointmentsByStylist = useMemo(() => {
@@ -161,7 +220,7 @@ export function DayView({
   const now = new Date();
   const showCurrentTime = isToday(date);
   const currentTimeOffset = showCurrentTime
-    ? ((now.getHours() * 60 + now.getMinutes()) - (hoursStart * 60)) / 60 * 64
+    ? ((now.getHours() * 60 + now.getMinutes()) - (hoursStart * 60)) / 15 * ROW_HEIGHT
     : 0;
 
   const formatHour = (hour: number) => {
@@ -170,43 +229,49 @@ export function DayView({
     return `${hour12} ${ampm}`;
   };
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header with date */}
-      <div className="flex items-center justify-center py-2 border-b bg-muted/30">
-        <div className={cn(
-          'text-center',
-          isToday(date) && 'text-primary font-semibold'
-        )}>
-          <div className="text-sm text-muted-foreground">{format(date, 'EEEE')}</div>
-          <div className="text-2xl">{format(date, 'd')}</div>
-          <div className="text-sm text-muted-foreground">{format(date, 'MMMM yyyy')}</div>
-        </div>
-      </div>
+  // Calculate overlapping appointments for a stylist
+  const getOverlapInfo = (appointments: PhorestAppointment[], targetApt: PhorestAppointment) => {
+    const targetStart = parseTimeToMinutes(targetApt.start_time);
+    const targetEnd = parseTimeToMinutes(targetApt.end_time);
+    
+    const overlapping = appointments.filter(apt => {
+      const aptStart = parseTimeToMinutes(apt.start_time);
+      const aptEnd = parseTimeToMinutes(apt.end_time);
+      return !(aptEnd <= targetStart || aptStart >= targetEnd);
+    });
 
+    overlapping.sort((a, b) => parseTimeToMinutes(a.start_time) - parseTimeToMinutes(b.start_time));
+    const columnIndex = overlapping.findIndex(apt => apt.id === targetApt.id);
+    
+    return { columnIndex, totalOverlapping: overlapping.length };
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-card rounded-lg border border-border overflow-hidden">
       {/* Calendar Grid */}
       <div className="flex-1 overflow-auto">
         <div className="min-w-[600px]">
-          {/* Stylist Headers */}
-          <div className="flex border-b bg-card sticky top-0 z-10">
-            <div className="w-16 shrink-0 border-r" /> {/* Time column spacer */}
+          {/* Stylist Headers - Phorest dark style */}
+          <div className="flex border-b sticky top-0 z-10">
+            {/* Week indicator */}
+            <div className="w-14 shrink-0 bg-muted/50 flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
+              W {weekNumber}
+            </div>
+            
             {stylists.map((stylist) => (
               <div 
                 key={stylist.user_id} 
-                className="flex-1 min-w-[140px] p-2 border-r last:border-r-0 text-center"
+                className="flex-1 min-w-[160px] bg-foreground text-background p-2 flex items-center gap-2 border-r border-foreground/20 last:border-r-0"
               >
-                <Avatar className="h-10 w-10 mx-auto mb-1">
+                <Avatar className="h-8 w-8 border border-background/20">
                   <AvatarImage src={stylist.photo_url || undefined} />
-                  <AvatarFallback className="text-xs">
+                  <AvatarFallback className="text-xs bg-background/20 text-background">
                     {(stylist.display_name || stylist.full_name).slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-sm font-medium truncate">
+                <span className="text-sm font-medium truncate">
                   {stylist.display_name || stylist.full_name.split(' ')[0]}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {appointmentsByStylist.get(stylist.user_id)?.length || 0} appts
-                </div>
+                </span>
               </div>
             ))}
           </div>
@@ -214,13 +279,21 @@ export function DayView({
           {/* Time Grid */}
           <div className="flex relative">
             {/* Time Labels */}
-            <div className="w-16 shrink-0 border-r">
-              {hours.map((hour) => (
+            <div className="w-14 shrink-0 border-r bg-muted/30">
+              {timeSlots.map(({ hour, minute }, idx) => (
                 <div 
-                  key={hour} 
-                  className="h-16 border-b text-xs text-muted-foreground pr-2 text-right pt-0 -mt-2"
+                  key={`${hour}-${minute}`}
+                  className={cn(
+                    'h-4 text-right pr-2 flex items-center justify-end',
+                    minute === 0 && 'border-t border-border',
+                    minute !== 0 && 'border-t border-dashed border-border/30'
+                  )}
                 >
-                  {formatHour(hour)}
+                  {minute === 0 && (
+                    <span className="text-[11px] text-muted-foreground -mt-2">
+                      {formatHour(hour)}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -232,37 +305,59 @@ export function DayView({
               return (
                 <div 
                   key={stylist.user_id} 
-                  className="flex-1 min-w-[140px] relative border-r last:border-r-0"
+                  className="flex-1 min-w-[160px] relative border-r last:border-r-0"
                 >
-                  {/* Hour lines */}
-                  {hours.map((hour) => (
-                    <div 
-                      key={hour} 
-                      className="h-16 border-b border-dashed border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
-                      onClick={() => onSlotClick?.(stylist.user_id, `${hour.toString().padStart(2, '0')}:00`)}
-                    />
-                  ))}
+                  {/* Time slot backgrounds */}
+                  {timeSlots.map(({ hour, minute }, idx) => {
+                    // Alternate available/unavailable (gray for blocked times)
+                    const isAvailable = hour >= 9 && hour < 18; // Example: 9-6 available
+                    
+                    return (
+                      <div 
+                        key={`${hour}-${minute}`}
+                        className={cn(
+                          'h-4',
+                          minute === 0 && 'border-t border-border',
+                          minute !== 0 && 'border-t border-dashed border-border/30',
+                          isAvailable 
+                            ? 'bg-background hover:bg-muted/30 cursor-pointer' 
+                            : 'bg-muted/50'
+                        )}
+                        onClick={() => {
+                          if (isAvailable) {
+                            onSlotClick?.(stylist.user_id, `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+                          }
+                        }}
+                      />
+                    );
+                  })}
                   
                   {/* Appointments */}
-                  {stylistAppointments.map((apt) => (
-                    <AppointmentCard
-                      key={apt.id}
-                      appointment={apt}
-                      hoursStart={hoursStart}
-                      onClick={() => onAppointmentClick(apt)}
-                    />
-                  ))}
+                  {stylistAppointments.map((apt) => {
+                    const { columnIndex, totalOverlapping } = getOverlapInfo(stylistAppointments, apt);
+                    return (
+                      <AppointmentCard
+                        key={apt.id}
+                        appointment={apt}
+                        hoursStart={hoursStart}
+                        onClick={() => onAppointmentClick(apt)}
+                        isSelected={apt.id === selectedAppointmentId}
+                        columnIndex={columnIndex}
+                        totalOverlapping={totalOverlapping}
+                      />
+                    );
+                  })}
                 </div>
               );
             })}
 
             {/* Current Time Indicator */}
-            {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < hours.length * 64 && (
+            {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
               <div 
-                className="absolute left-0 right-0 border-t-2 border-red-500 pointer-events-none z-20"
+                className="absolute left-14 right-0 border-t-2 border-destructive pointer-events-none z-20"
                 style={{ top: `${currentTimeOffset}px` }}
               >
-                <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
+                <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-destructive rounded-full" />
               </div>
             )}
           </div>
