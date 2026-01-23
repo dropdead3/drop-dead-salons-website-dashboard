@@ -409,9 +409,11 @@ export function QuickBookingPopover({
                   ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
                     Object.entries(servicesByCategory).map(([category, categoryServices]) => (
                       <div key={category}>
-                        <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                          {category}
-                        </h4>
+                        <div className="bg-oat -mx-3 px-3 py-1.5 mb-1.5">
+                          <h4 className="text-[10px] font-semibold text-oat-foreground uppercase tracking-wider">
+                            {category}
+                          </h4>
+                        </div>
                         <div className="space-y-1">
                           {categoryServices.map((service) => {
                             const isSelected = selectedServices.includes(service.phorest_service_id);
