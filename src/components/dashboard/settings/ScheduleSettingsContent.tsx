@@ -11,20 +11,20 @@ import {
 } from '@/hooks/useServiceCategoryColors';
 import { toast } from 'sonner';
 
-// Curated luxury color palette
+// Curated luxury color palette - 36 colors organized by family
 const CATEGORY_PALETTE = [
-  // Warm tones
-  '#D4A574', '#C4A77D', '#B5A48C',
-  // Rose tones
-  '#F472B6', '#EC4899', '#DB2777',
-  // Gold tones
-  '#FACC15', '#EAB308', '#CA8A04',
-  // Blue tones
-  '#60A5FA', '#3B82F6', '#2563EB',
-  // Green tones
-  '#10B981', '#059669', '#047857',
-  // Purple tones
-  '#A78BFA', '#8B5CF6', '#7C3AED',
+  // Row 1: Neutrals & Blacks
+  '#1a1a1a', '#2d2d2d', '#4a4a4a', '#6b7280', '#9ca3af', '#d1d5db',
+  // Row 2: Creams & Oats (Brand Aligned)
+  '#f5f5dc', '#e8e4d9', '#d4cfc4', '#c9c2b5', '#b8b0a2', '#a39e93',
+  // Row 3: Warm Pastels
+  '#fde8d7', '#fbd5c4', '#f5c6aa', '#D4A574', '#C4A77D', '#B5A48C',
+  // Row 4: Rose & Blush Pastels
+  '#fce7f3', '#fbcfe8', '#f9a8d4', '#F472B6', '#EC4899', '#DB2777',
+  // Row 5: Cool Pastels (Blues)
+  '#e0f2fe', '#bae6fd', '#7dd3fc', '#60A5FA', '#3B82F6', '#2563EB',
+  // Row 6: Sage, Mint & Lavender
+  '#d1fae5', '#a7f3d0', '#6ee7b7', '#f3e8ff', '#e9d5ff', '#c4b5fd',
 ];
 
 export function ScheduleSettingsContent() {
