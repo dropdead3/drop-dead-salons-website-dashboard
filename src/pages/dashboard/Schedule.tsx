@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ScheduleHeader } from '@/components/dashboard/schedule/ScheduleHeader';
@@ -121,6 +122,16 @@ export default function Schedule() {
     
     return filtered;
   }, [allAppointments, selectedLocation, selectedStaffIds, calendarFilters]);
+
+  // Calculate today's appointment count for the selected location
+  const todayAppointmentCount = useMemo(() => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    return allAppointments.filter(apt => 
+      apt.appointment_date === today && 
+      apt.location_id === selectedLocation &&
+      !['cancelled', 'no_show'].includes(apt.status)
+    ).length;
+  }, [allAppointments, selectedLocation]);
 
   // Get the phorest_branch_id for the selected location
   const selectedBranchId = useMemo(() => {
@@ -317,6 +328,7 @@ export default function Schedule() {
             onNotes={handleNotes}
             onConfirm={handleConfirm}
             isUpdating={isUpdating}
+            todayAppointmentCount={todayAppointmentCount}
           />
         )}
       </div>
