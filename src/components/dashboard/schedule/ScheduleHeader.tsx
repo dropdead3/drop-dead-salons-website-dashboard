@@ -83,10 +83,10 @@ export function ScheduleHeader({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  'relative z-10 px-6 py-1.5 rounded-full transition-colors duration-300',
+                  'relative z-10 px-6 py-1.5 rounded-full transition-colors duration-300 hover:bg-transparent',
                   view === 'week' 
                     ? 'text-foreground font-medium' 
-                    : 'text-background/70 hover:text-background'
+                    : 'text-background/50 hover:text-background/80'
                 )}
                 onClick={() => setView('week')}
               >
@@ -96,10 +96,10 @@ export function ScheduleHeader({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  'relative z-10 px-6 py-1.5 rounded-full transition-colors duration-300',
+                  'relative z-10 px-6 py-1.5 rounded-full transition-colors duration-300 hover:bg-transparent',
                   view === 'day' 
                     ? 'text-foreground font-medium' 
-                    : 'text-background/70 hover:text-background'
+                    : 'text-background/50 hover:text-background/80'
                 )}
                 onClick={() => setView('day')}
               >
