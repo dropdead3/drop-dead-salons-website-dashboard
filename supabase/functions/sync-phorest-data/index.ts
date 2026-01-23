@@ -442,11 +442,12 @@ async function syncPerformanceReports(
 
     let synced = 0;
     for (const [staffId, perf] of staffPerformanceMap) {
-      const userId = staffMap.get(staffId);
-      if (!userId) continue;
+      // Store data for ALL staff, not just mapped ones
+      const userId = staffMap.get(staffId) || null;
 
       const metricsRecord = {
-        user_id: userId,
+        phorest_staff_id: staffId,  // Always store with Phorest ID
+        user_id: userId,            // Optional - linked later if mapped
         week_start: weekStart,
         new_clients: perf.newClientCount || 0,
         retention_rate: perf.clientRetentionRate || 0,
@@ -458,9 +459,13 @@ async function syncPerformanceReports(
         rebooking_rate: perf.rebookingRate || 0,
       };
 
+      // Use phorest_staff_id + week_start as the unique key
       const { error } = await supabase
         .from("phorest_performance_metrics")
-        .upsert(metricsRecord, { onConflict: 'user_id,week_start' });
+        .upsert(metricsRecord, { 
+          onConflict: 'phorest_staff_id,week_start',
+          ignoreDuplicates: false 
+        });
 
       if (!error) synced++;
     }
@@ -561,12 +566,13 @@ async function syncSalesTransactions(
 
             if (!error) syncedTransactions++;
 
-            // Aggregate for daily summary
-            if (stylistUserId && transactionDate) {
-              const summaryKey = `${stylistUserId}:${branchId}:${transactionDate}`;
+            // Aggregate for daily summary - store for ALL staff, not just mapped ones
+            if (staffId && transactionDate) {
+              const summaryKey = `${staffId}:${branchId}:${transactionDate}`;
               if (!dailySummaries.has(summaryKey)) {
                 dailySummaries.set(summaryKey, {
-                  user_id: stylistUserId,
+                  phorest_staff_id: staffId,   // Always store with Phorest ID
+                  user_id: stylistUserId || null, // Optional - linked later if mapped
                   location_id: branchId,
                   branch_name: branchName,
                   summary_date: transactionDate,
@@ -640,9 +646,13 @@ async function syncSalesTransactions(
         ? summary.total_revenue / summary.total_transactions 
         : 0;
 
+      // Use phorest_staff_id + location + date as the unique key
       const { error } = await supabase
         .from("phorest_daily_sales_summary")
-        .upsert(summary, { onConflict: 'user_id,location_id,summary_date' });
+        .upsert(summary, { 
+          onConflict: 'phorest_staff_id,location_id,summary_date',
+          ignoreDuplicates: false 
+        });
 
       if (!error) summariesSynced++;
     }

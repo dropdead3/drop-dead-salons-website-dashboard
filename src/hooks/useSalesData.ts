@@ -180,7 +180,7 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
   });
 }
 
-// Get aggregated sales metrics for dashboard
+// Get aggregated sales metrics for dashboard (includes ALL staff data, not just mapped)
 export function useSalesMetrics(filters: SalesFilters = {}) {
   const { data: summaries, isLoading } = useDailySalesSummary(filters);
 
@@ -196,6 +196,8 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         summaries.reduce((sum, d) => sum + (d.total_transactions || 0), 0)
       : 0,
     totalDiscounts: summaries.reduce((sum, d) => sum + (Number(d.total_discounts) || 0), 0),
+    // Track how many records are from unmapped staff
+    unmappedStaffRecords: summaries.filter(d => !d.user_id).length,
   } : null;
 
   return { data: metrics, isLoading, rawData: summaries };
