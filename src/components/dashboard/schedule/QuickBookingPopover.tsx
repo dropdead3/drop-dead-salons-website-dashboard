@@ -479,6 +479,9 @@ export function QuickBookingPopover({
                           {sortCategories(Object.keys(servicesByCategory)).map((category) => {
                             const catColor = getCategoryColor(category, categoryColors);
                             const isConsultation = category.toLowerCase().includes('consult');
+                            const selectedCount = (servicesByCategory[category] || []).filter(
+                              s => selectedServices.includes(s.phorest_service_id)
+                            ).length;
                             return (
                               <button
                                 key={category}
@@ -502,7 +505,7 @@ export function QuickBookingPopover({
                                 >
                                   {catColor.abbr}
                                 </div>
-                                <div className="flex flex-col min-w-0">
+                                <div className="flex flex-col min-w-0 flex-1">
                                   <span className={cn(
                                     "text-sm truncate",
                                     isConsultation ? "font-medium text-[hsl(38,15%,25%)]" : "font-medium"
@@ -513,6 +516,11 @@ export function QuickBookingPopover({
                                     </span>
                                   )}
                                 </div>
+                                {selectedCount > 0 && (
+                                  <span className="shrink-0 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
+                                    {selectedCount} selected
+                                  </span>
+                                )}
                               </button>
                             );
                           })}
