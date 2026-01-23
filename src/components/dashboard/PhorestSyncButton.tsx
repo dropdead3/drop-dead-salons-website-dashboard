@@ -4,7 +4,7 @@ import { useTriggerPhorestSync } from '@/hooks/usePhorestSync';
 import { cn } from '@/lib/utils';
 
 interface PhorestSyncButtonProps {
-  syncType?: 'appointments' | 'sales' | 'staff' | 'clients' | 'reports' | 'all';
+  syncType?: 'appointments' | 'sales' | 'staff' | 'clients' | 'reports' | 'services' | 'all';
   variant?: 'default' | 'outline' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
