@@ -115,6 +115,41 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_notes: {
+        Row: {
+          author_id: string
+          created_at: string | null
+          id: string
+          is_private: boolean | null
+          note: string
+          phorest_appointment_id: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string | null
+          id?: string
+          is_private?: boolean | null
+          note: string
+          phorest_appointment_id: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string | null
+          id?: string
+          is_private?: boolean | null
+          note?: string
+          phorest_appointment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       assistant_assignments: {
         Row: {
           assistant_id: string
@@ -365,6 +400,60 @@ export type Database = {
           zip?: string | null
         }
         Relationships: []
+      }
+      calendar_preferences: {
+        Row: {
+          color_by: string | null
+          created_at: string | null
+          default_location_id: string | null
+          default_view: string | null
+          hours_end: number | null
+          hours_start: number | null
+          id: string
+          show_cancelled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color_by?: string | null
+          created_at?: string | null
+          default_location_id?: string | null
+          default_view?: string | null
+          hours_end?: number | null
+          hours_start?: number | null
+          id?: string
+          show_cancelled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color_by?: string | null
+          created_at?: string | null
+          default_location_id?: string | null
+          default_view?: string | null
+          hours_end?: number | null
+          hours_start?: number | null
+          id?: string
+          show_cancelled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_preferences_default_location_id_fkey"
+            columns: ["default_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       coach_notes: {
         Row: {
@@ -1401,6 +1490,7 @@ export type Database = {
           major_crossroads: string | null
           name: string
           phone: string
+          phorest_branch_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1418,6 +1508,7 @@ export type Database = {
           major_crossroads?: string | null
           name: string
           phone: string
+          phorest_branch_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1435,6 +1526,7 @@ export type Database = {
           major_crossroads?: string | null
           name?: string
           phone?: string
+          phorest_branch_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -2046,6 +2138,48 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      phorest_services: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean | null
+          name: string
+          phorest_branch_id: string
+          phorest_service_id: string
+          price: number | null
+          requires_qualification: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phorest_branch_id: string
+          phorest_service_id: string
+          price?: number | null
+          requires_qualification?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phorest_branch_id?: string
+          phorest_service_id?: string
+          price?: number | null
+          requires_qualification?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       phorest_staff_mapping: {
         Row: {

@@ -29,3 +29,15 @@ verify_jwt = false
 
 [functions.test-phorest-connection]
 verify_jwt = false
+
+[functions.sync-phorest-services]
+verify_jwt = false
+
+[functions.check-phorest-availability]
+verify_jwt = false
+
+[functions.create-phorest-booking]
+verify_jwt = false
+
+[functions.update-phorest-appointment]
+verify_jwt = false
