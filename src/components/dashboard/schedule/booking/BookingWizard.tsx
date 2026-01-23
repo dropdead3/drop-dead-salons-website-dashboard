@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useServicesByCategory } from '@/hooks/usePhorestServices';
 import { useLocations } from '@/hooks/useLocations';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
 import { toast } from 'sonner';
 
 import { BookingHeader } from './BookingHeader';
@@ -107,6 +108,22 @@ export function BookingWizard({
       return data || [];
     },
   });
+
+  // Fetch qualification data for selected services
+  const { data: qualificationData } = useQualifiedStaffForServices(selectedServices, selectedLocation);
+
+  // Filter stylists by qualification if qualification data exists
+  const filteredStylists = useMemo(() => {
+    if (!qualificationData?.hasQualificationData) {
+      // No qualification data synced yet - show all stylists
+      return stylists;
+    }
+    
+    // Filter to only show qualified stylists
+    return stylists.filter(stylist => 
+      qualificationData.qualifiedStaffIds.includes(stylist.phorest_staff_id)
+    );
+  }, [stylists, qualificationData]);
 
   // Calculate totals
   const selectedServiceDetails = useMemo(() => {
@@ -268,7 +285,7 @@ export function BookingWizard({
 
             {step === 'stylist' && (
               <StylistStep
-                stylists={stylists}
+                stylists={filteredStylists}
                 selectedStylist={selectedStylist}
                 onStylistChange={setSelectedStylist}
                 selectedDate={selectedDate}
@@ -277,6 +294,10 @@ export function BookingWizard({
                 onTimeChange={setSelectedTime}
                 onContinue={handleStylistComplete}
                 canContinue={!!selectedStylist && !!selectedTime}
+                qualificationInfo={qualificationData?.hasQualificationData ? {
+                  totalQualified: filteredStylists.length,
+                  hasData: true
+                } : undefined}
               />
             )}
 
