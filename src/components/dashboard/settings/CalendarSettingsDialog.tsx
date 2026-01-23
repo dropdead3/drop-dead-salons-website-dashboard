@@ -132,10 +132,10 @@ export function CalendarSettingsDialog({ open, onOpenChange }: CalendarSettingsD
 
         <Tabs defaultValue="colors" className="flex-1 flex flex-col min-h-0">
           <div className="px-6 pt-4">
-            <TabsList className="grid w-full grid-cols-2 h-11 bg-muted/40 rounded-xl p-1">
+            <TabsList className="grid w-full grid-cols-2 h-12 bg-muted/30 rounded-full p-1 border border-border/50">
               <TabsTrigger 
                 value="colors" 
-                className="gap-2 rounded-lg text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                className="gap-2 rounded-full text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-border/60 transition-all"
               >
                 <Palette className="h-4 w-4" />
                 Service Colors
@@ -143,10 +143,10 @@ export function CalendarSettingsDialog({ open, onOpenChange }: CalendarSettingsD
               <TabsTrigger 
                 value="display" 
                 disabled 
-                className="gap-2 rounded-lg text-sm opacity-50"
+                className="gap-2 rounded-full text-sm font-medium opacity-50"
               >
                 Display Options
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Soon</Badge>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 rounded-full">Soon</Badge>
               </TabsTrigger>
             </TabsList>
           </div>
