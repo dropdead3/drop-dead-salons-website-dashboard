@@ -46,6 +46,22 @@ export default function Schedule() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
 
+  // Handle "See all Staff" toggle - syncs with staff dropdown
+  const handleShowAllStaffChange = (checked: boolean) => {
+    setShowAllStaff(checked);
+    if (checked) {
+      setSelectedStaff('all');
+    } else if (effectiveUserId) {
+      setSelectedStaff(effectiveUserId);
+    }
+  };
+
+  // Handle staff dropdown change - syncs with toggle
+  const handleStaffChange = (staffId: string) => {
+    setSelectedStaff(staffId);
+    setShowAllStaff(staffId === 'all');
+  };
+
   // Filter appointments based on showAllStaff toggle
   const appointments = useMemo(() => {
     if (showAllStaff) {
@@ -153,7 +169,7 @@ export default function Schedule() {
             view={view}
             setView={setView}
             selectedStaff={selectedStaff}
-            onStaffChange={setSelectedStaff}
+            onStaffChange={handleStaffChange}
             stylists={stylists}
             onNewBooking={handleNewBooking}
             canCreate={canCreate}
@@ -222,7 +238,7 @@ export default function Schedule() {
             onNotes={handleNotes}
             onConfirm={handleConfirm}
             showAllStaff={showAllStaff}
-            onShowAllStaffChange={setShowAllStaff}
+            onShowAllStaffChange={handleShowAllStaffChange}
             isUpdating={isUpdating}
           />
         )}
