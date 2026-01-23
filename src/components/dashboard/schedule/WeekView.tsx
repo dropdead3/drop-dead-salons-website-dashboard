@@ -177,29 +177,29 @@ export function WeekView({
   return (
     <div className="flex flex-col h-full">
       {/* Calendar Grid */}
-      <div className="flex-1 overflow-auto border rounded-lg bg-card">
+      <div className="flex-1 overflow-auto border border-border rounded-xl bg-card shadow-sm">
         <div className="min-w-[800px]">
           {/* Day Headers */}
-          <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b bg-muted/50 sticky top-0 z-10">
-            <div className="p-2" /> {/* Time column spacer */}
+          <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-muted/30 sticky top-0 z-10">
+            <div className="p-3" /> {/* Time column spacer */}
             {weekDays.map((day) => (
               <div 
                 key={day.toISOString()} 
                 className={cn(
-                  'p-2 text-center border-l',
-                  isToday(day) && 'bg-primary/10'
+                  'py-3 px-2 text-center border-l border-border',
+                  isToday(day) && 'bg-primary/5'
                 )}
               >
-                <div className="text-xs text-muted-foreground uppercase">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">
                   {format(day, 'EEE')}
                 </div>
                 <div className={cn(
-                  'text-lg font-semibold',
+                  'text-xl font-semibold mt-0.5',
                   isToday(day) && 'text-primary'
                 )}>
                   {format(day, 'd')}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground mt-0.5">
                   {appointmentsByDate.get(format(day, 'yyyy-MM-dd'))?.length || 0} appts
                 </div>
               </div>
@@ -209,11 +209,11 @@ export function WeekView({
           {/* Time Grid */}
           <div className="grid grid-cols-[60px_repeat(7,1fr)] relative">
             {/* Time Labels */}
-            <div className="relative">
+            <div className="relative bg-muted/20">
               {hours.map((hour) => (
                 <div 
                   key={hour} 
-                  className="h-[60px] border-b text-xs text-muted-foreground pr-2 text-right pt-0 -mt-2"
+                  className="h-[60px] border-b border-border/50 text-xs text-muted-foreground pr-3 text-right pt-0 -mt-2 font-medium"
                 >
                   {formatHour(hour)}
                 </div>
@@ -230,7 +230,7 @@ export function WeekView({
                 <div 
                   key={day.toISOString()} 
                   className={cn(
-                    'relative border-l',
+                    'relative border-l border-border',
                     isCurrentDay && 'bg-primary/5'
                   )}
                 >
@@ -238,7 +238,7 @@ export function WeekView({
                   {hours.map((hour) => (
                     <div 
                       key={hour} 
-                      className="h-[60px] border-b border-dashed border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
+                      className="h-[60px] border-b border-dashed border-border/40 hover:bg-muted/40 cursor-pointer transition-colors"
                       onClick={() => onSlotClick?.(day, `${hour.toString().padStart(2, '0')}:00`)}
                     />
                   ))}

@@ -105,7 +105,7 @@ export default function Schedule() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-8rem)]">
+      <div className="flex flex-col h-[calc(100vh-8rem)] p-4 md:p-6">
         <ScheduleToolbar
           currentDate={currentDate}
           setCurrentDate={setCurrentDate}
@@ -119,7 +119,7 @@ export default function Schedule() {
           canCreate={canCreate}
         />
 
-        <div className="flex-1 mt-4 overflow-hidden">
+        <div className="flex-1 mt-6 overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
