@@ -197,7 +197,14 @@ export function useTriggerPhorestSync() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (syncType: 'staff' | 'appointments' | 'clients' | 'reports' | 'sales' | 'all') => {
+    mutationFn: async (syncType: 'staff' | 'appointments' | 'clients' | 'reports' | 'sales' | 'services' | 'all') => {
+      // For services, use the dedicated edge function
+      if (syncType === 'services') {
+        const { data, error } = await supabase.functions.invoke('sync-phorest-services');
+        if (error) throw error;
+        return data;
+      }
+      
       const { data, error } = await supabase.functions.invoke('sync-phorest-data', {
         body: { sync_type: syncType },
       });
@@ -205,15 +212,19 @@ export function useTriggerPhorestSync() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, syncType) => {
       queryClient.invalidateQueries({ queryKey: ['phorest-sync-logs'] });
       queryClient.invalidateQueries({ queryKey: ['phorest-performance'] });
       queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
       queryClient.invalidateQueries({ queryKey: ['phorest-staff-mappings'] });
+      queryClient.invalidateQueries({ queryKey: ['phorest-services'] });
       
+      const count = data?.synced || data?.total || 0;
       toast({
         title: 'Sync completed',
-        description: 'Phorest data has been synchronized.',
+        description: syncType === 'services' 
+          ? `Synced ${count} services from Phorest.`
+          : 'Phorest data has been synchronized.',
       });
     },
     onError: (error: any) => {
