@@ -15,6 +15,8 @@ import { Badge } from '@/components/ui/badge';
 import { Phone, User, Heart, Smartphone } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { QuickBookingPopover } from './QuickBookingPopover';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+import { getCategoryColor } from '@/utils/categoryColors';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -64,11 +66,13 @@ function formatTime12h(time: string): string {
 function AppointmentCard({ 
   appointment, 
   hoursStart,
-  onClick 
+  onClick,
+  categoryColors,
 }: { 
   appointment: PhorestAppointment; 
   hoursStart: number;
   onClick: () => void;
+  categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const statusColors = STATUS_COLORS[appointment.status];
@@ -76,18 +80,30 @@ function AppointmentCard({
   const isCompact = duration <= 30;
   const isMedium = duration <= 60;
 
+  // Get category-based color for non-status-specific appointments
+  const serviceCategory = appointment.service_category;
+  const catColor = getCategoryColor(serviceCategory, categoryColors);
+  const useCategoryColor = appointment.status === 'booked';
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
           className={cn(
             'absolute left-1 right-1 rounded-sm border-l-4 px-2 py-1 cursor-pointer transition-all hover:shadow-lg hover:z-20 overflow-hidden',
-            statusColors.bg,
-            statusColors.border,
-            statusColors.text,
+            !useCategoryColor && statusColors.bg,
+            !useCategoryColor && statusColors.border,
+            !useCategoryColor && statusColors.text,
             appointment.status === 'cancelled' && 'opacity-50 line-through'
           )}
-          style={style}
+          style={{
+            ...style,
+            ...(useCategoryColor && {
+              backgroundColor: catColor.bg,
+              color: catColor.text,
+              borderLeftColor: catColor.bg,
+            }),
+          }}
           onClick={onClick}
         >
           {isCompact ? (
@@ -158,6 +174,7 @@ export function WeekView({
   onAppointmentClick,
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
+  const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   
   // Week starts with yesterday, today is in second column, followed by 5 future days
   const today = new Date();
@@ -358,6 +375,7 @@ export function WeekView({
                       appointment={apt}
                       hoursStart={hoursStart}
                       onClick={() => onAppointmentClick(apt)}
+                      categoryColors={categoryColors}
                     />
                   ))}
 

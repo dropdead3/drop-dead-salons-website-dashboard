@@ -10,6 +10,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Phone, Clock } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+import { getCategoryColor } from '@/utils/categoryColors';
 
 interface DayViewProps {
   date: Date;
@@ -77,6 +79,7 @@ interface AppointmentCardProps {
   isSelected?: boolean;
   columnIndex?: number;
   totalOverlapping?: number;
+  categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
 }
 
 function AppointmentCard({ 
@@ -86,11 +89,17 @@ function AppointmentCard({
   isSelected = false,
   columnIndex = 0,
   totalOverlapping = 1,
+  categoryColors,
 }: AppointmentCardProps) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const statusColors = STATUS_COLORS[appointment.status];
   const duration = parseTimeToMinutes(appointment.end_time) - parseTimeToMinutes(appointment.start_time);
   const isCompact = duration <= 30;
+
+  // Get category-based color for non-status-specific appointments
+  const serviceCategory = appointment.service_category;
+  const catColor = getCategoryColor(serviceCategory, categoryColors);
+  const useCategoryColor = appointment.status === 'booked';
 
   // Calculate width and offset for overlapping appointments
   const widthPercent = 100 / totalOverlapping;
@@ -102,9 +111,9 @@ function AppointmentCard({
         <div
           className={cn(
             'absolute rounded-sm cursor-pointer transition-all overflow-hidden border-l-4',
-            statusColors.bg,
-            statusColors.border,
-            statusColors.text,
+            !useCategoryColor && statusColors.bg,
+            !useCategoryColor && statusColors.border,
+            !useCategoryColor && statusColors.text,
             appointment.status === 'cancelled' && 'opacity-60 line-through',
             isSelected && 'ring-2 ring-primary ring-offset-1'
           )}
@@ -112,6 +121,11 @@ function AppointmentCard({
             ...style,
             left: `calc(${leftPercent}% + 2px)`,
             width: `calc(${widthPercent}% - 4px)`,
+            ...(useCategoryColor && {
+              backgroundColor: catColor.bg,
+              color: catColor.text,
+              borderLeftColor: catColor.bg,
+            }),
           }}
           onClick={onClick}
         >
@@ -185,6 +199,7 @@ export function DayView({
   selectedAppointmentId,
 }: DayViewProps) {
   const ROW_HEIGHT = 16; // 16px per 15-min slot
+  const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   
   // Generate time labels for each hour with 15-min intervals
   const timeSlots = useMemo(() => {
@@ -344,6 +359,7 @@ export function DayView({
                         isSelected={apt.id === selectedAppointmentId}
                         columnIndex={columnIndex}
                         totalOverlapping={totalOverlapping}
+                        categoryColors={categoryColors}
                       />
                     );
                   })}

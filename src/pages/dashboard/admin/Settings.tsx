@@ -47,6 +47,7 @@ import {
   Save,
   RotateCcw,
   Building2,
+  CalendarDays,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -59,6 +60,7 @@ import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLev
 import { HandbooksContent } from '@/components/dashboard/settings/HandbooksContent';
 import { CommandCenterContent } from '@/components/dashboard/settings/CommandCenterContent';
 import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
+import { ScheduleSettingsContent } from '@/components/dashboard/settings/ScheduleSettingsContent';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER } from '@/hooks/useSettingsLayout';
@@ -89,7 +91,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | null;
+type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -512,6 +514,12 @@ export default function Settings() {
       label: 'Visibility Console',
       description: 'Control dashboard element visibility by role',
       icon: LayoutDashboard,
+    },
+    schedule: {
+      id: 'schedule',
+      label: 'Schedule',
+      description: 'Calendar colors & preferences',
+      icon: CalendarDays,
     },
   };
 
@@ -991,6 +999,8 @@ export default function Settings() {
           {activeCategory === 'handbooks' && <HandbooksContent />}
 
           {activeCategory === 'visibility' && <CommandCenterContent />}
+
+          {activeCategory === 'schedule' && <ScheduleSettingsContent />}
         </div>
       </DashboardLayout>
     );
