@@ -52,7 +52,13 @@ import {
   DollarSign,
   Eye,
   EyeOff,
+  Info,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatDistanceToNow, format } from 'date-fns';
 
 export default function PhorestSettings() {
@@ -557,7 +563,19 @@ export default function PhorestSettings() {
                       <TableHead>Team Member</TableHead>
                       <TableHead>Phorest Name</TableHead>
                       <TableHead>Location</TableHead>
-                      <TableHead>Calendar</TableHead>
+                      <TableHead>
+                        <div className="flex items-center gap-1.5">
+                          Calendar
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p>Controls whether this staff member appears as a bookable column on the scheduling calendar</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
