@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { 
   format, 
-  startOfWeek, 
   addDays, 
   isToday,
+  isYesterday,
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { 
@@ -221,6 +221,7 @@ export function WeekView({
             <div className="p-2" /> {/* Time column spacer */}
             {weekDays.map((day) => {
               const dayIsToday = isToday(day);
+              const dayIsYesterday = isYesterday(day);
               const dateKey = format(day, 'yyyy-MM-dd');
               const apptCount = appointmentsByDate.get(dateKey)?.length || 0;
               
@@ -252,7 +253,7 @@ export function WeekView({
                     'text-[10px] mt-1',
                     dayIsToday ? 'text-primary font-medium' : 'text-muted-foreground'
                   )}>
-                    {dayIsToday ? 'Today' : `${apptCount} appts`}
+                    {dayIsToday ? 'Today' : dayIsYesterday ? 'Yesterday' : `${apptCount} appts`}
                   </div>
                 </div>
               );
