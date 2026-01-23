@@ -58,7 +58,7 @@ const getCategoryStyle = (category: string): { bg: string; abbr: string; isSpeci
   const getAbbr = (cat: string) => cat.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   
   if (lower.includes('extension')) return { bg: 'bg-emerald-100 text-emerald-700', abbr: 'EX' };
-  if (lower.includes('consult')) return { bg: 'bg-gradient-to-br from-oat via-[hsl(38,35%,75%)] to-[hsl(38,40%,60%)] text-oat-foreground', abbr: 'NC', isSpecial: true };
+  if (lower.includes('consult')) return { bg: 'bg-gradient-to-br from-[hsl(38,30%,78%)] via-[hsl(38,35%,70%)] to-[hsl(38,28%,62%)] text-[hsl(38,30%,25%)]', abbr: 'NC', isSpecial: true };
   if (lower.includes('blond') || lower.includes('highlight') || lower.includes('balayage')) return { bg: 'bg-rose-300 text-rose-800', abbr: 'BL' };
   if (lower.includes('color') || lower.includes('colour')) return { bg: 'bg-rose-400 text-white', abbr: 'CO' };
   if (lower.includes('cut') || lower.includes('haircut')) return { bg: 'bg-blue-400 text-white', abbr: 'HA' };
@@ -498,22 +498,32 @@ export function QuickBookingPopover({
                                 className={cn(
                                   "w-full flex items-center gap-3 py-3 text-left transition-colors first:pt-0 last:pb-0",
                                   style.isSpecial 
-                                    ? "hover:bg-oat/30 rounded-xl my-2 first:mt-0 px-3 -mx-3 py-4 bg-gradient-to-r from-oat/20 via-transparent to-oat/10 ring-1 ring-inset ring-[hsl(38,40%,70%)]/50 shadow-[inset_0_1px_0_0_hsl(38,50%,80%)/40]"
+                                    ? "group relative overflow-hidden rounded-2xl my-3 first:mt-0 px-4 -mx-1 py-4 bg-gradient-to-r from-[hsl(38,25%,92%)] via-[hsl(38,20%,96%)] to-[hsl(38,25%,92%)] border border-[hsl(38,30%,80%)]/60 shadow-[0_2px_12px_-2px_hsl(38,30%,70%,0.25),inset_0_1px_0_0_hsl(38,40%,95%)] hover:shadow-[0_4px_20px_-4px_hsl(38,30%,60%,0.35),inset_0_1px_0_0_hsl(38,40%,95%)] transition-all duration-300"
                                     : "hover:bg-muted/50"
                                 )}
                                 onClick={() => setSelectedCategory(category)}
                               >
+                                {style.isSpecial && (
+                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(38,40%,85%,0.15)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                )}
                                 <div className={cn(
-                                  'w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold shrink-0',
+                                  'w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium shrink-0 relative',
                                   style.bg,
-                                  style.isSpecial && 'shadow-md ring-2 ring-[hsl(38,45%,65%)]/60'
+                                  style.isSpecial && 'shadow-[0_4px_12px_-2px_hsl(38,30%,50%,0.4)] ring-[3px] ring-[hsl(38,25%,88%)]/80'
                                 )}>
                                   {style.abbr}
                                 </div>
-                                <span className={cn(
-                                  "font-medium text-sm",
-                                  style.isSpecial && "font-semibold"
-                                )}>{category}</span>
+                                <div className="flex flex-col">
+                                  <span className={cn(
+                                    "text-sm tracking-wide",
+                                    style.isSpecial ? "font-medium text-[hsl(38,20%,20%)]" : "font-medium"
+                                  )}>{category}</span>
+                                  {style.isSpecial && (
+                                    <span className="text-[10px] text-[hsl(38,20%,45%)] tracking-wider uppercase mt-0.5">
+                                      Required for new guests
+                                    </span>
+                                  )}
+                                </div>
                               </button>
                             );
                           })}
