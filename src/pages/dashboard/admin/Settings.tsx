@@ -47,6 +47,7 @@ import {
   Save,
   RotateCcw,
   Building2,
+  CalendarDays,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -59,6 +60,7 @@ import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLev
 import { HandbooksContent } from '@/components/dashboard/settings/HandbooksContent';
 import { CommandCenterContent } from '@/components/dashboard/settings/CommandCenterContent';
 import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
+import { CalendarSettingsDialog } from '@/components/dashboard/settings/CalendarSettingsDialog';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER } from '@/hooks/useSettingsLayout';
@@ -89,7 +91,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | null;
+type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'calendar' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -320,6 +322,7 @@ export default function Settings() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>(null);
   const [mounted, setMounted] = useState(false);
   const [businessDialogOpen, setBusinessDialogOpen] = useState(false);
+  const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
   
   // Layout editing state
   const [isEditMode, setIsEditMode] = useState(false);
@@ -512,6 +515,12 @@ export default function Settings() {
       label: 'Visibility Console',
       description: 'Control dashboard element visibility by role',
       icon: LayoutDashboard,
+    },
+    calendar: {
+      id: 'calendar',
+      label: 'Calendar',
+      description: 'Service colors & display settings',
+      icon: CalendarDays,
     },
   };
 
@@ -1082,6 +1091,8 @@ export default function Settings() {
                   onClick={() => {
                     if (category.id === 'business') {
                       setBusinessDialogOpen(true);
+                    } else if (category.id === 'calendar') {
+                      setCalendarDialogOpen(true);
                     } else {
                       setActiveCategory(category.id as SettingsCategory);
                     }
@@ -1096,6 +1107,12 @@ export default function Settings() {
         <BusinessSettingsDialog 
           open={businessDialogOpen} 
           onOpenChange={setBusinessDialogOpen} 
+        />
+
+        {/* Calendar Settings Dialog */}
+        <CalendarSettingsDialog 
+          open={calendarDialogOpen} 
+          onOpenChange={setCalendarDialogOpen} 
         />
       </div>
     </DashboardLayout>
