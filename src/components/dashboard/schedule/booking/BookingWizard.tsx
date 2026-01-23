@@ -24,7 +24,7 @@ export interface PhorestClient {
   phone: string | null;
 }
 
-export type BookingStep = 'client' | 'service' | 'stylist' | 'confirm';
+export type BookingStep = 'service' | 'client' | 'stylist' | 'confirm';
 
 interface BookingWizardProps {
   open: boolean;
@@ -45,7 +45,7 @@ export function BookingWizard({
   const { user, roles } = useAuth();
 
   // Step state
-  const [step, setStep] = useState<BookingStep>('client');
+  const [step, setStep] = useState<BookingStep>('service');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
 
   // Form state
@@ -156,7 +156,7 @@ export function BookingWizard({
   });
 
   const handleClose = () => {
-    setStep('client');
+    setStep('service');
     setSelectedClient(null);
     setClientSearch('');
     setSelectedLocation('');
@@ -168,12 +168,12 @@ export function BookingWizard({
     onOpenChange(false);
   };
 
-  const handleSelectClient = (client: PhorestClient) => {
-    setSelectedClient(client);
-    setStep('service');
+  const handleServicesComplete = () => {
+    setStep('client');
   };
 
-  const handleServicesComplete = () => {
+  const handleSelectClient = (client: PhorestClient) => {
+    setSelectedClient(client);
     setStep('stylist');
   };
 
@@ -183,11 +183,11 @@ export function BookingWizard({
 
   const handleBack = () => {
     switch (step) {
-      case 'service':
-        setStep('client');
+      case 'client':
+        setStep('service');
         break;
       case 'stylist':
-        setStep('service');
+        setStep('client');
         break;
       case 'confirm':
         setStep('stylist');
@@ -224,12 +224,12 @@ export function BookingWizard({
             step={step}
             title={getStepTitle()}
             subtitle={
-              step !== 'client' && selectedClient 
-                ? `for ${selectedClient.name}` 
+              step !== 'service' && selectedServices.length > 0
+                ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} selected`
                 : format(selectedDate, 'EEEE, MMM d') + ' at ' + formatTime12h(selectedTime)
             }
             onClose={handleClose}
-            onBack={step !== 'client' ? handleBack : undefined}
+            onBack={step !== 'service' ? handleBack : undefined}
           />
 
           <div className="flex-1 overflow-hidden">
