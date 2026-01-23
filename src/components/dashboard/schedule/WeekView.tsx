@@ -218,7 +218,15 @@ export function WeekView({
         <div className="min-w-[800px]">
           {/* Day Headers with luxury blur effect */}
           <div className="sticky top-0 z-10">
-            <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border bg-muted/40">
+            {/* Main header with frosted glass effect */}
+            <div 
+              className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border/50"
+              style={{
+                background: 'hsl(var(--muted) / 0.7)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+              }}
+            >
               <div className="p-2" /> {/* Time column spacer */}
               {weekDays.map((day) => {
                 const dayIsToday = isToday(day);
@@ -230,8 +238,8 @@ export function WeekView({
                   <div 
                     key={day.toISOString()} 
                     className={cn(
-                      'py-3 px-2 text-center border-l border-border',
-                      dayIsToday && 'bg-primary/5'
+                      'py-3 px-2 text-center border-l border-border/50',
+                      dayIsToday && 'bg-primary/10'
                     )}
                   >
                     <div className={cn(
@@ -260,15 +268,15 @@ export function WeekView({
                 );
               })}
             </div>
-            {/* Luxury blur gradient overlay */}
+            {/* Bottom blur fade for smooth transition */}
             <div 
-              className="h-6 w-full pointer-events-none"
+              className="h-4 w-full pointer-events-none -mt-px"
               style={{
-                background: 'linear-gradient(to bottom, hsl(var(--muted) / 0.8), transparent)',
+                background: 'linear-gradient(to bottom, hsl(var(--muted) / 0.5), transparent)',
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
-                maskImage: 'linear-gradient(to bottom, black, transparent)',
-                WebkitMaskImage: 'linear-gradient(to bottom, black, transparent)',
+                maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
               }}
             />
           </div>
