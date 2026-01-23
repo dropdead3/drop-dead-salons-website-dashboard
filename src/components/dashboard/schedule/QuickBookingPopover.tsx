@@ -719,40 +719,44 @@ export function QuickBookingPopover({
           {step === 'stylist' && (
             <div className="flex flex-col" style={{ height: '400px' }}>
               <ScrollArea className="flex-1">
-                <div className="p-3">
-                  <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                <div className="p-4">
+                  <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
                     Choose Stylist
                   </h4>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {stylists.map((stylist) => {
-                      const name = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
+                      const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
+                      const nameParts = fullName.split(' ');
+                      const firstName = nameParts[0];
+                      const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0) + '.' : '';
+                      const displayName = `${firstName} ${lastInitial}`.trim();
                       const isSelected = selectedStylist === stylist.user_id;
                       return (
                         <button
                           key={stylist.user_id}
                           className={cn(
-                            'flex flex-col items-center p-2.5 rounded-lg transition-all',
+                            'flex items-center gap-3 p-3 rounded-xl transition-all text-left',
                             isSelected
-                              ? 'bg-primary/10 ring-1 ring-primary/30'
-                              : 'hover:bg-muted/70'
+                              ? 'bg-primary/10 ring-2 ring-primary shadow-sm'
+                              : 'bg-muted/40 hover:bg-muted/70'
                           )}
                           onClick={() => setSelectedStylist(stylist.user_id)}
                         >
-                          <div className="relative">
-                            <Avatar className="h-10 w-10">
+                          <div className="relative flex-shrink-0">
+                            <Avatar className="h-12 w-12 ring-2 ring-background shadow-md">
                               <AvatarImage src={stylist.employee_profiles?.photo_url || undefined} />
-                              <AvatarFallback className="bg-muted text-xs">
-                                {name.slice(0, 2).toUpperCase()}
+                              <AvatarFallback className="bg-muted text-sm font-medium">
+                                {fullName.slice(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             {isSelected && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                                <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                              <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center ring-2 ring-background">
+                                <Check className="h-3 w-3 text-primary-foreground" />
                               </div>
                             )}
                           </div>
-                          <span className="text-[11px] font-medium mt-1.5 text-center line-clamp-1">
-                            {name.split(' ')[0]}
+                          <span className="text-sm font-medium text-foreground">
+                            {displayName}
                           </span>
                         </button>
                       );
@@ -764,7 +768,7 @@ export function QuickBookingPopover({
               {/* Footer */}
               <div className="p-3 border-t border-border bg-card">
                 <Button
-                  className="w-full h-9"
+                  className="w-full h-10"
                   disabled={!selectedStylist}
                   onClick={() => setStep('client')}
                 >
