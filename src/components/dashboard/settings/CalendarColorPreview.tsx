@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { getCategoryColor, getCategoryAbbreviation } from '@/utils/categoryColors';
+import { getCategoryColor, getCategoryAbbreviation, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 
 interface CalendarColorPreviewProps {
   colorMap: Record<string, { bg: string; text: string; abbr: string }>;
@@ -11,11 +11,8 @@ const isConsultationCategory = (category: string) => {
   return category.toLowerCase().includes('consult');
 };
 
-// Consultation gradient styles - teal to lime
-const CONSULTATION_GRADIENT = {
-  background: 'linear-gradient(135deg, #43c6ac 0%, #f8ffae 100%)',
-  textColor: '#1a3a32',
-};
+// Default consultation gradient (teal-lime) for fallback
+const DEFAULT_CONSULTATION_GRADIENT = SPECIAL_GRADIENTS['teal-lime'];
 
 // Sample appointments to showcase different categories
 const SAMPLE_APPOINTMENTS = [
@@ -141,21 +138,26 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                 const isShort = duration <= 60;
 
                 const isConsultation = isConsultationCategory(apt.category);
+                
+                // Check if this category has a gradient marker
+                const storedColorHex = colorMap[apt.category.toLowerCase()]?.bg || '';
+                const gradientFromMarker = isGradientMarker(storedColorHex) ? getGradientFromMarker(storedColorHex) : null;
+                const displayGradient = gradientFromMarker || (isConsultation ? DEFAULT_CONSULTATION_GRADIENT : null);
 
                 return (
                   <div
                     key={aptIndex}
                     className={cn(
                       'absolute left-0.5 right-0.5 rounded-sm overflow-hidden',
-                      !isConsultation && 'border-l-2',
+                      !displayGradient && 'border-l-2',
                       'shadow-sm',
-                      isConsultation && 'shadow-lg'
+                      displayGradient && 'shadow-lg'
                     )}
                     style={{
                       ...style,
-                      ...(isConsultation ? {
-                        background: CONSULTATION_GRADIENT.background,
-                        color: CONSULTATION_GRADIENT.textColor,
+                      ...(displayGradient ? {
+                        background: displayGradient.background,
+                        color: displayGradient.textColor,
                       } : {
                         backgroundColor: colors.bg,
                         borderLeftColor: colors.bg,
@@ -163,12 +165,12 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                       }),
                     }}
                   >
-                    {/* Glass stroke overlay for consultation */}
-                    {isConsultation && (
+                    {/* Glass stroke overlay for gradient */}
+                    {displayGradient && (
                       <div 
                         className="absolute inset-0 rounded-sm pointer-events-none"
                         style={{
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
+                          background: displayGradient.glassStroke,
                           mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                           maskComposite: 'xor',
                           WebkitMaskComposite: 'xor',
@@ -176,8 +178,8 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                         }}
                       />
                     )}
-                    {/* Shimmer animation for consultation */}
-                    {isConsultation && (
+                    {/* Shimmer animation for gradient */}
+                    {displayGradient && (
                       <div 
                         className="absolute inset-0 pointer-events-none animate-shimmer"
                         style={{
