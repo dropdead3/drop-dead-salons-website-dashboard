@@ -28,8 +28,17 @@ import {
   CalendarPlus,
   ChevronLeft,
   MapPin,
-  Scissors
+  Scissors,
+  Sparkles,
+  Palette,
+  Wind,
+  Droplets,
+  Gem,
+  Heart,
+  Star,
+  Zap
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -58,6 +67,21 @@ interface PhorestClient {
 type Step = 'service' | 'client' | 'stylist' | 'confirm';
 
 const STEPS: Step[] = ['service', 'client', 'stylist', 'confirm'];
+
+// Map category names to icons
+const getCategoryIcon = (category: string) => {
+  const lower = category.toLowerCase();
+  if (lower.includes('blond') || lower.includes('highlight') || lower.includes('balayage')) return Sparkles;
+  if (lower.includes('color') || lower.includes('colour')) return Palette;
+  if (lower.includes('blow') || lower.includes('style') || lower.includes('styling')) return Wind;
+  if (lower.includes('treatment') || lower.includes('condition') || lower.includes('keratin')) return Droplets;
+  if (lower.includes('extension')) return Gem;
+  if (lower.includes('bridal') || lower.includes('wedding') || lower.includes('special')) return Heart;
+  if (lower.includes('cut')) return Scissors;
+  if (lower.includes('premium') || lower.includes('luxury')) return Star;
+  if (lower.includes('express') || lower.includes('quick')) return Zap;
+  return Scissors; // Default
+};
 
 export function QuickBookingPopover({
   date,
@@ -395,87 +419,118 @@ export function QuickBookingPopover({
                 </Select>
               </div>
 
-              {/* Services list */}
-              <ScrollArea className="flex-1">
-                <div className="p-3 space-y-4">
-                  {!selectedLocation ? (
-                    <div className="text-center py-6 text-muted-foreground text-sm">
-                      Select a location first
-                    </div>
-                  ) : isLoadingServices ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
-                    Object.entries(servicesByCategory).map(([category, categoryServices]) => (
-                      <div key={category}>
-                        <div className="bg-oat -mx-3 px-3 py-1.5 mb-1.5">
-                          <h4 className="text-[10px] font-semibold text-oat-foreground uppercase tracking-wider">
-                            {category}
-                          </h4>
+              {/* Services list with category quick nav */}
+              <div className="flex flex-1 overflow-hidden">
+                <ScrollArea className="flex-1">
+                  <div className="p-3 space-y-4 pr-10">
+                    {!selectedLocation ? (
+                      <div className="text-center py-6 text-muted-foreground text-sm">
+                        Select a location first
+                      </div>
+                    ) : isLoadingServices ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
+                      Object.entries(servicesByCategory).map(([category, categoryServices]) => (
+                        <div key={category} id={`category-${category.replace(/\s+/g, '-').toLowerCase()}`}>
+                          <div className="bg-oat -mx-3 px-3 py-1.5 mb-1.5">
+                            <h4 className="text-[10px] font-semibold text-oat-foreground uppercase tracking-wider">
+                              {category}
+                            </h4>
+                          </div>
+                          <div className="space-y-1">
+                            {categoryServices.map((service) => {
+                              const isSelected = selectedServices.includes(service.phorest_service_id);
+                              return (
+                                <button
+                                  key={service.id}
+                                  className={cn(
+                                    'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
+                                    isSelected
+                                      ? 'bg-primary/10 ring-1 ring-primary/30'
+                                      : 'hover:bg-muted/70'
+                                  )}
+                                  onClick={() => {
+                                    setSelectedServices(prev =>
+                                      prev.includes(service.phorest_service_id)
+                                        ? prev.filter(id => id !== service.phorest_service_id)
+                                        : [...prev, service.phorest_service_id]
+                                    );
+                                  }}
+                                >
+                                  <div className="flex-1 min-w-0 mr-2">
+                                    <div className="font-medium text-sm truncate">{service.name}</div>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                        <Clock className="h-3 w-3" />
+                                        {service.duration_minutes}m
+                                      </span>
+                                      {service.price !== null && (
+                                        <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                          <DollarSign className="h-3 w-3" />
+                                          {service.price.toFixed(0)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div
+                                    className={cn(
+                                      'w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                                      isSelected
+                                        ? 'bg-primary border-primary text-primary-foreground'
+                                        : 'border-muted-foreground/30'
+                                    )}
+                                  >
+                                    {isSelected && <Check className="h-2.5 w-2.5" />}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          {categoryServices.map((service) => {
-                            const isSelected = selectedServices.includes(service.phorest_service_id);
-                            return (
+                      ))
+                    ) : (
+                      <div className="text-center py-6 space-y-2">
+                        <Scissors className="h-8 w-8 mx-auto text-muted-foreground/50" />
+                        <p className="text-muted-foreground text-sm">No services synced yet</p>
+                        <p className="text-xs text-muted-foreground/70">
+                          Services will appear after syncing from Phorest
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+
+                {/* Category quick nav - right side icons */}
+                {servicesByCategory && Object.keys(servicesByCategory).length > 0 && selectedLocation && (
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card via-card to-transparent flex flex-col items-center justify-center gap-1 py-2">
+                    <TooltipProvider delayDuration={0}>
+                      {Object.keys(servicesByCategory).map((category) => {
+                        const CategoryIcon = getCategoryIcon(category);
+                        return (
+                          <Tooltip key={category}>
+                            <TooltipTrigger asChild>
                               <button
-                                key={service.id}
-                                className={cn(
-                                  'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
-                                  isSelected
-                                    ? 'bg-primary/10 ring-1 ring-primary/30'
-                                    : 'hover:bg-muted/70'
-                                )}
+                                className="p-1.5 rounded-full hover:bg-muted transition-colors"
                                 onClick={() => {
-                                  setSelectedServices(prev =>
-                                    prev.includes(service.phorest_service_id)
-                                      ? prev.filter(id => id !== service.phorest_service_id)
-                                      : [...prev, service.phorest_service_id]
-                                  );
+                                  const el = document.getElementById(`category-${category.replace(/\s+/g, '-').toLowerCase()}`);
+                                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 }}
                               >
-                                <div className="flex-1 min-w-0 mr-2">
-                                  <div className="font-medium text-sm truncate">{service.name}</div>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                                      <Clock className="h-3 w-3" />
-                                      {service.duration_minutes}m
-                                    </span>
-                                    {service.price !== null && (
-                                      <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                                        <DollarSign className="h-3 w-3" />
-                                        {service.price.toFixed(0)}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div
-                                  className={cn(
-                                    'w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
-                                    isSelected
-                                      ? 'bg-primary border-primary text-primary-foreground'
-                                      : 'border-muted-foreground/30'
-                                  )}
-                                >
-                                  {isSelected && <Check className="h-2.5 w-2.5" />}
-                                </div>
+                                <CategoryIcon className="h-3.5 w-3.5 text-muted-foreground" />
                               </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-6 space-y-2">
-                      <Scissors className="h-8 w-8 mx-auto text-muted-foreground/50" />
-                      <p className="text-muted-foreground text-sm">No services synced yet</p>
-                      <p className="text-xs text-muted-foreground/70">
-                        Services will appear after syncing from Phorest
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-xs">
+                              {category}
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </TooltipProvider>
+                  </div>
+                )}
+              </div>
 
               {/* Footer */}
               <div className="p-3 border-t border-border bg-card space-y-2">
