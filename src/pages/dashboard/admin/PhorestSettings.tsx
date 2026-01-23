@@ -639,6 +639,9 @@ export default function PhorestSettings() {
                                     <div>
                                       <p className="font-medium">{displayName}</p>
                                       <p className="text-sm text-muted-foreground">{email}</p>
+                                      <p className="text-xs text-muted-foreground/70 italic">
+                                        Phorest: {firstMapping.phorest_staff_name}
+                                      </p>
                                     </div>
                                     <Badge variant="outline" className="gap-1">
                                       <Building2 className="w-3 h-3" />
@@ -747,6 +750,9 @@ export default function PhorestSettings() {
                             <div className="pl-8">
                               <p className="font-medium">{displayName}</p>
                               <p className="text-sm text-muted-foreground">{email}</p>
+                              <p className="text-xs text-muted-foreground/70 italic">
+                                Phorest: {mapping.phorest_staff_name}
+                              </p>
                             </div>
                           </TableCell>
                           <TableCell>
