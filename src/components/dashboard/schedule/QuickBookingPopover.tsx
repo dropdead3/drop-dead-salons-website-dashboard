@@ -130,25 +130,37 @@ export function QuickBookingPopover({
     enabled: !!user?.id && open,
   });
 
-  // Fetch stylists
+  // Fetch stylists filtered by selected location
   const { data: stylists = [] } = useQuery({
-    queryKey: ['booking-stylists'],
+    queryKey: ['booking-stylists', selectedLocation],
     queryFn: async () => {
+      // First, get the phorest_branch_id for the selected location
+      const { data: locationData } = await supabase
+        .from('locations')
+        .select('phorest_branch_id')
+        .eq('id', selectedLocation)
+        .maybeSingle();
+      
+      if (!locationData?.phorest_branch_id) return [];
+      
       const { data } = await supabase
         .from('phorest_staff_mapping')
         .select(`
           phorest_staff_id,
           user_id,
+          phorest_branch_id,
           employee_profiles!phorest_staff_mapping_user_id_fkey(
             display_name,
             full_name,
             photo_url
           )
         `)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('phorest_branch_id', locationData.phorest_branch_id);
+      
       return data || [];
     },
-    enabled: open,
+    enabled: open && !!selectedLocation,
   });
 
   // totalDuration and totalPrice use selectedServiceDetails defined above
