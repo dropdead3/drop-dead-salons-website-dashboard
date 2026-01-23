@@ -184,28 +184,40 @@ export function WeekView({
           {/* Day Headers */}
           <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-muted/30 sticky top-0 z-10">
             <div className="p-3" /> {/* Time column spacer */}
-            {weekDays.map((day) => (
-              <div 
-                key={day.toISOString()} 
-                className={cn(
-                  'py-3 px-2 text-center border-l border-border',
-                  isToday(day) && 'bg-primary/5'
-                )}
-              >
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                  {format(day, 'EEE')}
+            {weekDays.map((day) => {
+              const dayIsToday = isToday(day);
+              return (
+                <div 
+                  key={day.toISOString()} 
+                  className={cn(
+                    'py-3 px-2 text-center border-l border-border relative',
+                    dayIsToday && 'bg-primary/10'
+                  )}
+                >
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                    {format(day, 'EEE')}
+                  </div>
+                  <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                    <span className={cn(
+                      'text-xl font-semibold flex items-center justify-center',
+                      dayIsToday && 'bg-primary text-primary-foreground w-8 h-8 rounded-full'
+                    )}>
+                      {format(day, 'd')}
+                    </span>
+                  </div>
+                  {dayIsToday && (
+                    <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4 mt-1">
+                      Today
+                    </Badge>
+                  )}
+                  {!dayIsToday && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {appointmentsByDate.get(format(day, 'yyyy-MM-dd'))?.length || 0} appts
+                    </div>
+                  )}
                 </div>
-                <div className={cn(
-                  'text-xl font-semibold mt-0.5',
-                  isToday(day) && 'text-primary'
-                )}>
-                  {format(day, 'd')}
-                </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {appointmentsByDate.get(format(day, 'yyyy-MM-dd'))?.length || 0} appts
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Time Grid */}
