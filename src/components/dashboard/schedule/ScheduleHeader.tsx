@@ -100,9 +100,9 @@ export function ScheduleHeader({
                   view === 'week' ? 'left-[2px] w-[calc(50%-2px)]' : 'left-[50%] w-[calc(50%-2px)]'
                 )}
               />
-              <button
+            <button
                 className={cn(
-                  'relative z-10 px-3 py-0.5 text-xs rounded-full transition-colors duration-300',
+                  'relative z-10 px-4 py-0.5 text-xs rounded-full transition-colors duration-300 min-w-[52px] text-center',
                   view === 'week' 
                     ? 'text-foreground font-medium' 
                     : 'text-background/50 hover:text-background/80'
@@ -113,7 +113,7 @@ export function ScheduleHeader({
               </button>
               <button
                 className={cn(
-                  'relative z-10 px-3 py-0.5 text-xs rounded-full transition-colors duration-300',
+                  'relative z-10 px-4 py-0.5 text-xs rounded-full transition-colors duration-300 min-w-[52px] text-center',
                   view === 'day' 
                     ? 'text-foreground font-medium' 
                     : 'text-background/50 hover:text-background/80'
