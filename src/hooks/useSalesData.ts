@@ -197,71 +197,122 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
   });
 }
 
-// Get aggregated sales metrics for dashboard (includes ALL staff data, not just mapped)
+// Get aggregated sales metrics for dashboard from appointments (since sales API is not available)
 export function useSalesMetrics(filters: SalesFilters = {}) {
-  const { data: summaries, isLoading } = useDailySalesSummary(filters);
-
-  const metrics = summaries ? {
-    totalRevenue: summaries.reduce((sum, d) => sum + (Number(d.total_revenue) || 0), 0),
-    serviceRevenue: summaries.reduce((sum, d) => sum + (Number(d.service_revenue) || 0), 0),
-    productRevenue: summaries.reduce((sum, d) => sum + (Number(d.product_revenue) || 0), 0),
-    totalServices: summaries.reduce((sum, d) => sum + (d.total_services || 0), 0),
-    totalProducts: summaries.reduce((sum, d) => sum + (d.total_products || 0), 0),
-    totalTransactions: summaries.reduce((sum, d) => sum + (d.total_transactions || 0), 0),
-    averageTicket: summaries.length > 0 
-      ? summaries.reduce((sum, d) => sum + (Number(d.total_revenue) || 0), 0) / 
-        summaries.reduce((sum, d) => sum + (d.total_transactions || 0), 0)
-      : 0,
-    totalDiscounts: summaries.reduce((sum, d) => sum + (Number(d.total_discounts) || 0), 0),
-    // Track how many records are from unmapped staff
-    unmappedStaffRecords: summaries.filter(d => !d.user_id).length,
-  } : null;
-
-  return { data: metrics, isLoading, rawData: summaries };
-}
-
-// Get sales by stylist for leaderboard
-export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
   return useQuery({
-    queryKey: ['sales-by-stylist', dateFrom, dateTo],
+    queryKey: ['sales-metrics-from-appointments', filters],
     queryFn: async () => {
       let query = supabase
-        .from('phorest_daily_sales_summary')
+        .from('phorest_appointments')
+        .select('id, total_price, service_name, phorest_staff_id, location_id, appointment_date')
+        .not('total_price', 'is', null);
+
+      if (filters.dateFrom) {
+        query = query.gte('appointment_date', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        query = query.lte('appointment_date', filters.dateTo);
+      }
+      if (filters.locationId) {
+        query = query.eq('location_id', filters.locationId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        return {
+          totalRevenue: 0,
+          serviceRevenue: 0,
+          productRevenue: 0, // Not available from appointments
+          totalServices: 0,
+          totalProducts: 0, // Not available from appointments
+          totalTransactions: 0,
+          averageTicket: 0,
+          totalDiscounts: 0,
+          unmappedStaffRecords: 0,
+          dataSource: 'appointments' as const,
+        };
+      }
+
+      const totalRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
+      const totalServices = data.length;
+      const uniqueStaff = new Set(data.map(d => d.phorest_staff_id).filter(Boolean));
+
+      return {
+        totalRevenue,
+        serviceRevenue: totalRevenue, // All appointment revenue is service revenue
+        productRevenue: 0, // Product sales not available via appointments API
+        totalServices,
+        totalProducts: 0,
+        totalTransactions: totalServices,
+        averageTicket: totalServices > 0 ? totalRevenue / totalServices : 0,
+        totalDiscounts: 0,
+        unmappedStaffRecords: 0,
+        dataSource: 'appointments' as const,
+      };
+    },
+  });
+}
+
+// Get sales by stylist for leaderboard (from appointments with staff mapping)
+export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
+  return useQuery({
+    queryKey: ['sales-by-stylist-from-appointments', dateFrom, dateTo],
+    queryFn: async () => {
+      // Get staff mappings to link phorest_staff_id to user_id
+      const { data: mappings } = await supabase
+        .from('phorest_staff_mapping')
         .select(`
+          phorest_staff_id,
           user_id,
-          total_revenue,
-          service_revenue,
-          product_revenue,
-          total_services,
-          total_products,
-          total_transactions,
           employee_profiles:user_id (
             full_name,
             display_name,
             photo_url
           )
         `)
-        .not('user_id', 'is', null);
+        .eq('is_active', true);
+
+      const mappingLookup: Record<string, { userId: string; name: string; photo?: string }> = {};
+      mappings?.forEach(m => {
+        const profile = m.employee_profiles as any;
+        mappingLookup[m.phorest_staff_id] = {
+          userId: m.user_id,
+          name: profile?.display_name || profile?.full_name || 'Unknown',
+          photo: profile?.photo_url,
+        };
+      });
+
+      // Fetch appointments
+      let query = supabase
+        .from('phorest_appointments')
+        .select('phorest_staff_id, total_price, service_name')
+        .not('phorest_staff_id', 'is', null)
+        .not('total_price', 'is', null);
 
       if (dateFrom) {
-        query = query.gte('summary_date', dateFrom);
+        query = query.gte('appointment_date', dateFrom);
       }
       if (dateTo) {
-        query = query.lte('summary_date', dateTo);
+        query = query.lte('appointment_date', dateTo);
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      // Aggregate by stylist
+      // Aggregate by user (via phorest_staff_id mapping)
       const byUser: Record<string, any> = {};
-      data?.forEach(row => {
-        if (!row.user_id) return;
-        if (!byUser[row.user_id]) {
-          byUser[row.user_id] = {
-            user_id: row.user_id,
-            name: (row.employee_profiles as any)?.display_name || (row.employee_profiles as any)?.full_name || 'Unknown',
-            photo_url: (row.employee_profiles as any)?.photo_url,
+      data?.forEach(apt => {
+        const mapping = mappingLookup[apt.phorest_staff_id!];
+        if (!mapping) return; // Skip unmapped staff for this view
+        
+        const userId = mapping.userId;
+        if (!byUser[userId]) {
+          byUser[userId] = {
+            user_id: userId,
+            name: mapping.name,
+            photo_url: mapping.photo,
             totalRevenue: 0,
             serviceRevenue: 0,
             productRevenue: 0,
@@ -270,12 +321,10 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
             totalTransactions: 0,
           };
         }
-        byUser[row.user_id].totalRevenue += Number(row.total_revenue) || 0;
-        byUser[row.user_id].serviceRevenue += Number(row.service_revenue) || 0;
-        byUser[row.user_id].productRevenue += Number(row.product_revenue) || 0;
-        byUser[row.user_id].totalServices += row.total_services || 0;
-        byUser[row.user_id].totalProducts += row.total_products || 0;
-        byUser[row.user_id].totalTransactions += row.total_transactions || 0;
+        byUser[userId].totalRevenue += Number(apt.total_price) || 0;
+        byUser[userId].serviceRevenue += Number(apt.total_price) || 0;
+        byUser[userId].totalServices += 1;
+        byUser[userId].totalTransactions += 1;
       });
 
       return Object.values(byUser).sort((a, b) => b.totalRevenue - a.totalRevenue);
@@ -283,10 +332,10 @@ export function useSalesByStylist(dateFrom?: string, dateTo?: string) {
   });
 }
 
-// Get sales by location
+// Get sales by location (from appointments)
 export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
   return useQuery({
-    queryKey: ['sales-by-location', dateFrom, dateTo],
+    queryKey: ['sales-by-location-from-appointments', dateFrom, dateTo],
     queryFn: async () => {
       // First fetch locations to map IDs to names
       const { data: locations } = await supabase
@@ -294,14 +343,15 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
         .select('id, name');
 
       let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select('location_id, branch_name, total_revenue, service_revenue, product_revenue, total_services, total_products, total_transactions');
+        .from('phorest_appointments')
+        .select('location_id, total_price')
+        .not('total_price', 'is', null);
 
       if (dateFrom) {
-        query = query.gte('summary_date', dateFrom);
+        query = query.gte('appointment_date', dateFrom);
       }
       if (dateTo) {
-        query = query.lte('summary_date', dateTo);
+        query = query.lte('appointment_date', dateTo);
       }
 
       const { data, error } = await query;
@@ -309,13 +359,13 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
 
       // Aggregate by location
       const byLocation: Record<string, any> = {};
-      data?.forEach(row => {
-        const key = row.location_id || row.branch_name || 'Unknown';
+      data?.forEach(apt => {
+        const key = apt.location_id || 'Unknown';
         if (!byLocation[key]) {
-          const loc = locations?.find(l => l.id === row.location_id);
+          const loc = locations?.find(l => l.id === apt.location_id);
           byLocation[key] = {
-            location_id: row.location_id,
-            name: loc?.name || row.branch_name || 'Unknown',
+            location_id: apt.location_id,
+            name: loc?.name || 'Unknown Location',
             totalRevenue: 0,
             serviceRevenue: 0,
             productRevenue: 0,
@@ -324,12 +374,10 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
             totalTransactions: 0,
           };
         }
-        byLocation[key].totalRevenue += Number(row.total_revenue) || 0;
-        byLocation[key].serviceRevenue += Number(row.service_revenue) || 0;
-        byLocation[key].productRevenue += Number(row.product_revenue) || 0;
-        byLocation[key].totalServices += row.total_services || 0;
-        byLocation[key].totalProducts += row.total_products || 0;
-        byLocation[key].totalTransactions += row.total_transactions || 0;
+        byLocation[key].totalRevenue += Number(apt.total_price) || 0;
+        byLocation[key].serviceRevenue += Number(apt.total_price) || 0;
+        byLocation[key].totalServices += 1;
+        byLocation[key].totalTransactions += 1;
       });
 
       return Object.values(byLocation).sort((a, b) => b.totalRevenue - a.totalRevenue);
@@ -337,21 +385,22 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
   });
 }
 
-// Get daily trend data for charts
+// Get daily trend data for charts (from appointments)
 export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({
-    queryKey: ['sales-trend', dateFrom, dateTo, locationId],
+    queryKey: ['sales-trend-from-appointments', dateFrom, dateTo, locationId],
     queryFn: async () => {
       let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions, location_id')
-        .order('summary_date', { ascending: true });
+        .from('phorest_appointments')
+        .select('appointment_date, total_price, location_id')
+        .not('total_price', 'is', null)
+        .order('appointment_date', { ascending: true });
 
       if (dateFrom) {
-        query = query.gte('summary_date', dateFrom);
+        query = query.gte('appointment_date', dateFrom);
       }
       if (dateTo) {
-        query = query.lte('summary_date', dateTo);
+        query = query.lte('appointment_date', dateTo);
       }
       if (locationId) {
         query = query.eq('location_id', locationId);
@@ -365,31 +414,32 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
       // Also track by location
       const byLocationDate: Record<string, Record<string, number>> = {};
       
-      data?.forEach(row => {
+      data?.forEach(apt => {
+        const dateKey = apt.appointment_date?.split('T')[0] || apt.appointment_date;
+        
         // Overall aggregation
-        if (!byDate[row.summary_date]) {
-          byDate[row.summary_date] = {
-            date: row.summary_date,
+        if (!byDate[dateKey]) {
+          byDate[dateKey] = {
+            date: dateKey,
             revenue: 0,
             services: 0,
             products: 0,
             transactions: 0,
           };
         }
-        byDate[row.summary_date].revenue += Number(row.total_revenue) || 0;
-        byDate[row.summary_date].services += Number(row.service_revenue) || 0;
-        byDate[row.summary_date].products += Number(row.product_revenue) || 0;
-        byDate[row.summary_date].transactions += row.total_transactions || 0;
+        byDate[dateKey].revenue += Number(apt.total_price) || 0;
+        byDate[dateKey].services += Number(apt.total_price) || 0;
+        byDate[dateKey].transactions += 1;
 
         // Per-location aggregation
-        if (row.location_id) {
-          if (!byLocationDate[row.location_id]) {
-            byLocationDate[row.location_id] = {};
+        if (apt.location_id) {
+          if (!byLocationDate[apt.location_id]) {
+            byLocationDate[apt.location_id] = {};
           }
-          if (!byLocationDate[row.location_id][row.summary_date]) {
-            byLocationDate[row.location_id][row.summary_date] = 0;
+          if (!byLocationDate[apt.location_id][dateKey]) {
+            byLocationDate[apt.location_id][dateKey] = 0;
           }
-          byLocationDate[row.location_id][row.summary_date] += Number(row.total_revenue) || 0;
+          byLocationDate[apt.location_id][dateKey] += Number(apt.total_price) || 0;
         }
       });
 
@@ -409,10 +459,10 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
   });
 }
 
-// Get sales by Phorest staff ID (includes unmapped staff)
+// Get sales by Phorest staff ID (includes unmapped staff) - from appointments
 export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
   return useQuery({
-    queryKey: ['sales-by-phorest-staff', dateFrom, dateTo],
+    queryKey: ['sales-by-phorest-staff-from-appointments', dateFrom, dateTo],
     queryFn: async () => {
       // Fetch staff mappings to know which are linked
       const { data: mappings } = await supabase
@@ -450,34 +500,43 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
         };
       });
 
-      // Fetch all sales data with phorest_staff_id
+      // Fetch appointments with phorest_staff_id
       let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select('phorest_staff_id, user_id, total_revenue, service_revenue, product_revenue, total_services, total_products, total_transactions, branch_name')
-        .not('phorest_staff_id', 'is', null);
+        .from('phorest_appointments')
+        .select('phorest_staff_id, total_price, service_name, location_id')
+        .not('phorest_staff_id', 'is', null)
+        .not('total_price', 'is', null);
 
       if (dateFrom) {
-        query = query.gte('summary_date', dateFrom);
+        query = query.gte('appointment_date', dateFrom);
       }
       if (dateTo) {
-        query = query.lte('summary_date', dateTo);
+        query = query.lte('appointment_date', dateTo);
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
+      // Build staff name lookup from mappings (the staff names come from the mapping table)
+      const staffNameLookup: Record<string, string> = {};
+      mappings?.forEach(m => {
+        if (m.phorest_staff_id && m.phorest_staff_name) {
+          staffNameLookup[m.phorest_staff_id] = m.phorest_staff_name;
+        }
+      });
+
       // Aggregate by phorest_staff_id
       const byStaff: Record<string, PhorestStaffSalesData> = {};
       
-      data?.forEach(row => {
-        const phorestId = row.phorest_staff_id!;
+      data?.forEach(apt => {
+        const phorestId = apt.phorest_staff_id!;
         const mapping = mappingLookup[phorestId];
         
         if (!byStaff[phorestId]) {
           byStaff[phorestId] = {
             phorestStaffId: phorestId,
-            phorestStaffName: mapping?.phorestName || phorestId.substring(0, 8),
-            branchName: mapping?.branchName || row.branch_name || undefined,
+            phorestStaffName: mapping?.phorestName || staffNameLookup[phorestId] || phorestId.substring(0, 8),
+            branchName: mapping?.branchName,
             isMapped: !!mapping,
             linkedUserId: mapping?.userId,
             linkedUserName: mapping?.userName,
@@ -491,12 +550,10 @@ export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
           };
         }
         
-        byStaff[phorestId].totalRevenue += Number(row.total_revenue) || 0;
-        byStaff[phorestId].serviceRevenue += Number(row.service_revenue) || 0;
-        byStaff[phorestId].productRevenue += Number(row.product_revenue) || 0;
-        byStaff[phorestId].totalServices += row.total_services || 0;
-        byStaff[phorestId].totalProducts += row.total_products || 0;
-        byStaff[phorestId].totalTransactions += row.total_transactions || 0;
+        byStaff[phorestId].totalRevenue += Number(apt.total_price) || 0;
+        byStaff[phorestId].serviceRevenue += Number(apt.total_price) || 0;
+        byStaff[phorestId].totalServices += 1;
+        byStaff[phorestId].totalTransactions += 1;
       });
 
       const results = Object.values(byStaff).sort((a, b) => b.totalRevenue - a.totalRevenue);
