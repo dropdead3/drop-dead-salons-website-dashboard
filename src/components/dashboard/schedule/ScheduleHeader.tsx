@@ -102,24 +102,23 @@ export function ScheduleHeader({
 
         {/* Right: View Toggle & Date Picker */}
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg overflow-hidden border border-background/30">
+          <div className="flex rounded-full overflow-hidden border border-background/40">
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                'px-5 py-1.5 rounded-none text-background/70 hover:text-background hover:bg-background/10 transition-all',
+                'px-6 py-1.5 rounded-full text-background/70 hover:text-background hover:bg-background/10 transition-all',
                 view === 'day' && 'bg-background text-foreground hover:bg-background hover:text-foreground font-medium'
               )}
               onClick={() => setView('day')}
             >
               Day
             </Button>
-            <div className="w-px bg-background/30" />
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                'px-5 py-1.5 rounded-none text-background/70 hover:text-background hover:bg-background/10 transition-all',
+                'px-6 py-1.5 rounded-full text-background/70 hover:text-background hover:bg-background/10 transition-all',
                 view === 'week' && 'bg-background text-foreground hover:bg-background hover:text-foreground font-medium'
               )}
               onClick={() => setView('week')}
