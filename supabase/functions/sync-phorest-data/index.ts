@@ -122,16 +122,48 @@ async function syncAppointments(
   console.log(`Syncing appointments from ${dateFrom} to ${dateTo}...`);
 
   try {
-    // Fetch appointments from Phorest
-    const appointmentsData = await phorestRequest(
-      `/appointment?startDate=${dateFrom}&endDate=${dateTo}`,
-      businessId,
-      username,
-      password
-    );
+    let allAppointments: any[] = [];
     
-    const appointments = appointmentsData._embedded?.appointments || appointmentsData.appointments || [];
-    console.log(`Found ${appointments.length} appointments`);
+    // Get branches first - appointments require branchId per the API
+    const branchData = await phorestRequest("/branch", businessId, username, password);
+    const branches = branchData._embedded?.branches || branchData.branches || 
+                     (Array.isArray(branchData) ? branchData : []);
+    console.log(`Found ${branches.length} branches for appointment sync`);
+    
+    // Fetch appointments per branch
+    for (const branch of branches) {
+      const branchId = branch.branchId || branch.id;
+      console.log(`Fetching appointments for branch: ${branch.name} (${branchId})`);
+      
+      try {
+        const appointmentsData = await phorestRequest(
+          `/branch/${branchId}/appointment?startDate=${dateFrom}&endDate=${dateTo}`,
+          businessId,
+          username,
+          password
+        );
+        
+        const appointments = appointmentsData._embedded?.appointments || 
+                            appointmentsData.appointments || 
+                            appointmentsData.page?.content || [];
+        
+        if (appointments.length > 0) {
+          console.log(`Found ${appointments.length} appointments in branch ${branch.name}`);
+          // Add branch info to each appointment
+          const appointmentsWithBranch = appointments.map((apt: any) => ({
+            ...apt,
+            branchId,
+            branchName: branch.name
+          }));
+          allAppointments = [...allAppointments, ...appointmentsWithBranch];
+        }
+      } catch (e: any) {
+        console.log(`Appointments fetch failed for branch ${branchId}:`, e.message);
+        // Continue with other branches even if one fails
+      }
+    }
+    
+    console.log(`Found ${allAppointments.length} total appointments across all branches`);
 
     // Get staff mappings
     const { data: staffMappings } = await supabase
@@ -141,13 +173,14 @@ async function syncAppointments(
     const staffMap = new Map(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
 
     let synced = 0;
-    for (const apt of appointments) {
+    for (const apt of allAppointments) {
       const stylistUserId = staffMap.get(apt.staffId) || null;
       
       const appointmentRecord = {
         phorest_id: apt.appointmentId,
         stylist_user_id: stylistUserId,
         phorest_staff_id: apt.staffId,
+        branch_id: apt.branchId,
         client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim(),
         client_phone: apt.client?.mobile || apt.client?.phone || null,
         appointment_date: apt.startTime?.split('T')[0],
@@ -167,7 +200,7 @@ async function syncAppointments(
       if (!error) synced++;
     }
 
-    return { total: appointments.length, synced };
+    return { total: allAppointments.length, synced };
   } catch (error) {
     console.error("Appointments sync error:", error);
     throw error;
