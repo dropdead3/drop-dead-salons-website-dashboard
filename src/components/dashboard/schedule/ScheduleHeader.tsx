@@ -154,9 +154,9 @@ export function ScheduleHeader({
 
         {/* Center: Date Display */}
         <div className="text-center">
-          <div className="text-lg font-semibold">
-            {format(currentDate, 'EEEE, MMMM d, yyyy')}
-          </div>
+        <div className="text-lg font-display tracking-wide">
+          {format(currentDate, 'EEEE, MMMM d, yyyy')}
+        </div>
           {isToday(currentDate) && (
             <div className="text-xs text-background/70">Today</div>
           )}
