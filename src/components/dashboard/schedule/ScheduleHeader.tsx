@@ -206,7 +206,7 @@ export function ScheduleHeader({
           })}
         </div>
 
-        {/* Right: Forward Navigation + Staff Count */}
+        {/* Right: Forward Navigation + Jump Ahead */}
         <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={goToNextDay} className="gap-1">
             Day
@@ -216,9 +216,39 @@ export function ScheduleHeader({
             Week
             <ChevronsRight className="h-4 w-4" />
           </Button>
-          <div className="ml-2 px-3 py-1.5 text-sm text-muted-foreground border rounded-md">
-            {stylists.length} <Plus className="h-3 w-3 inline" />
-          </div>
+          
+          {/* Jump Ahead Dropdown */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="ml-1 gap-1">
+                {stylists.length} <Plus className="h-3 w-3" />
+                <ChevronRight className="h-3 w-3 rotate-90" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-1" align="end">
+              <div className="flex flex-col">
+                {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((weeks) => {
+                  const targetDate = addDays(new Date(), weeks * 7);
+                  return (
+                    <Button
+                      key={weeks}
+                      variant="ghost"
+                      size="sm"
+                      className="justify-start h-auto py-2 px-3"
+                      onClick={() => setCurrentDate(targetDate)}
+                    >
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">+{weeks} Weeks</span>
+                        <span className="text-xs text-muted-foreground">
+                          {format(targetDate, 'EEE, MMM d, yyyy')}
+                        </span>
+                      </div>
+                    </Button>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </div>
