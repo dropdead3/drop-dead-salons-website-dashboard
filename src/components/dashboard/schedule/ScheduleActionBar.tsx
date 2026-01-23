@@ -112,7 +112,7 @@ export function ScheduleActionBar({
           className="gap-1.5"
         >
           <Trash2 className="h-4 w-4" />
-          Remove
+          Cancel
         </Button>
 
         <Button
