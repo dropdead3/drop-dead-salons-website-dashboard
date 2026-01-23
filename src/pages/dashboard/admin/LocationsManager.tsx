@@ -159,6 +159,7 @@ export default function LocationsManager() {
       hours_json: formData.hours_json,
       holiday_closures: formData.holiday_closures,
       major_crossroads: formData.major_crossroads || null,
+      phorest_branch_id: null,
       is_active: formData.is_active,
       display_order: formData.display_order,
     };
