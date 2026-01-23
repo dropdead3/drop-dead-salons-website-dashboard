@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { 
   format, 
   startOfWeek, 
@@ -15,6 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Phone, User } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
+import { QuickBookingPopover } from './QuickBookingPopover';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -133,6 +134,7 @@ export function WeekView({
   onAppointmentClick,
   onSlotClick,
 }: WeekViewProps) {
+  const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   
   const weekDays = useMemo(() => 
@@ -236,13 +238,30 @@ export function WeekView({
                   )}
                 >
                   {/* Hour lines */}
-                  {hours.map((hour) => (
-                    <div 
-                      key={hour} 
-                      className="h-[60px] border-b border-dashed border-border/40 hover:bg-muted/40 cursor-pointer transition-colors"
-                      onClick={() => onSlotClick?.(day, `${hour.toString().padStart(2, '0')}:00`)}
-                    />
-                  ))}
+                  {hours.map((hour) => {
+                    const slotTime = `${hour.toString().padStart(2, '0')}:00`;
+                    const isActive = activeSlot?.date.getTime() === day.getTime() && activeSlot?.time === slotTime;
+                    
+                    return (
+                      <QuickBookingPopover
+                        key={hour}
+                        date={day}
+                        time={slotTime}
+                        open={isActive}
+                        onOpenChange={(open) => {
+                          if (open) {
+                            setActiveSlot({ date: day, time: slotTime });
+                          } else {
+                            setActiveSlot(null);
+                          }
+                        }}
+                      >
+                        <div 
+                          className="h-[60px] border-b border-dashed border-border/40 hover:bg-primary/10 cursor-pointer transition-colors"
+                        />
+                      </QuickBookingPopover>
+                    );
+                  })}
                   
                   {/* Appointments */}
                   {dayAppointments.map((apt) => (
