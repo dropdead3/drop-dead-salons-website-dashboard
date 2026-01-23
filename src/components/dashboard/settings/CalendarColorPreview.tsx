@@ -18,27 +18,27 @@ const DEFAULT_CONSULTATION_GRADIENT = SPECIAL_GRADIENTS['teal-lime'];
 const SAMPLE_APPOINTMENTS = [
   // Monday
   { day: 0, start: '09:00', end: '11:00', category: 'Blonding', client: 'Sarah M.' },
-  { day: 0, start: '11:30', end: '12:30', category: 'Haircuts', client: 'Emma T.' },
+  { day: 0, start: '11:30', end: '12:30', category: 'Haircut', client: 'Emma T.' },
   { day: 0, start: '12:30', end: '13:00', category: 'Break', client: 'Lunch' },
   { day: 0, start: '14:00', end: '16:30', category: 'Extensions', client: 'Olivia K.' },
   
   // Tuesday  
   { day: 1, start: '09:00', end: '09:30', category: 'New Client Consultation', client: 'New Guest' },
   { day: 1, start: '10:00', end: '11:00', category: 'Color', client: 'Ava R.' },
-  { day: 1, start: '11:30', end: '12:30', category: 'Treatment', client: 'Mia L.' },
+  { day: 1, start: '11:30', end: '12:30', category: 'Extras', client: 'Mia L.' },
   { day: 1, start: '13:30', end: '15:30', category: 'Blonding', client: 'Lily W.' },
   { day: 1, start: '16:00', end: '17:00', category: 'Styling', client: 'Chloe B.' },
   
   // Wednesday
-  { day: 2, start: '09:00', end: '10:00', category: 'Haircuts', client: 'Grace H.' },
+  { day: 2, start: '09:00', end: '10:00', category: 'Haircut', client: 'Grace H.' },
   { day: 2, start: '10:30', end: '13:00', category: 'Extensions', client: 'Zoe P.' },
   { day: 2, start: '14:00', end: '15:00', category: 'Color', client: 'Ella N.' },
-  { day: 2, start: '15:30', end: '17:00', category: 'Treatment', client: 'Aria S.' },
+  { day: 2, start: '15:30', end: '17:00', category: 'Extras', client: 'Aria S.' },
   
   // Thursday
   { day: 3, start: '09:00', end: '10:30', category: 'Block', client: 'Admin Time' },
   { day: 3, start: '11:00', end: '13:30', category: 'Blonding', client: 'Nora J.' },
-  { day: 3, start: '14:00', end: '15:00', category: 'Haircuts', client: 'Ivy M.' },
+  { day: 3, start: '14:00', end: '15:00', category: 'Haircut', client: 'Ivy M.' },
   { day: 3, start: '15:30', end: '17:00', category: 'Color', client: 'Stella V.' },
 ];
 
