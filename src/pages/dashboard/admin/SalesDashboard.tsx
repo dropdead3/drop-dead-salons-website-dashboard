@@ -39,12 +39,15 @@ import {
   Target,
   GitCompare,
   BarChart3,
+  Users,
+  Link2,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation } from '@/hooks/useSalesData';
-import { useTriggerPhorestSync } from '@/hooks/usePhorestSync';
+import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation, useSalesByPhorestStaff } from '@/hooks/useSalesData';
+import { useTriggerPhorestSync, usePhorestConnection, useCreateStaffMapping } from '@/hooks/usePhorestSync';
 import { useLocations } from '@/hooks/useLocations';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { cn } from '@/lib/utils';
 
 // Sub-components
@@ -66,6 +69,8 @@ import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
 import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
+import { PhorestStaffRow, PhorestStaffData } from '@/components/dashboard/sales/PhorestStaffRow';
+import { StaffMatchingSuggestions, MatchSuggestion } from '@/components/dashboard/sales/StaffMatchingSuggestions';
 
 type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
@@ -81,10 +86,15 @@ export default function SalesDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>('30d');
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('overview');
+  const [phorestStaffFilter, setPhorestStaffFilter] = useState<'all' | 'mapped' | 'unmapped'>('all');
+  const [linkingStaffId, setLinkingStaffId] = useState<string | null>(null);
   
   const { data: locations } = useLocations();
   const syncSales = useTriggerPhorestSync();
   const { goals } = useSalesGoals();
+  const { data: phorestConnection } = usePhorestConnection();
+  const createMapping = useCreateStaffMapping();
+  const { data: employees } = useEmployeeProfile();
 
   // Calculate date filters
   const dateFilters = useMemo(() => {
@@ -133,6 +143,7 @@ export default function SalesDashboard() {
   );
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: locationData, isLoading: locationLoading } = useSalesByLocation(dateFilters.dateFrom, dateFilters.dateTo);
+  const { data: phorestStaffData, isLoading: phorestStaffLoading } = useSalesByPhorestStaff(dateFilters.dateFrom, dateFilters.dateTo);
 
   // Calculate goal based on date range
   const currentGoal = useMemo(() => {
@@ -166,6 +177,64 @@ export default function SalesDashboard() {
   const maxStylistRevenue = useMemo(() => {
     return Math.max(...(stylistData || []).map(s => s.totalRevenue), 1);
   }, [stylistData]);
+
+  const maxPhorestStaffRevenue = useMemo(() => {
+    return Math.max(...(phorestStaffData?.allStaff || []).map(s => s.totalRevenue), 1);
+  }, [phorestStaffData]);
+
+  // Filter Phorest staff based on filter selection
+  const filteredPhorestStaff = useMemo(() => {
+    const allStaff = phorestStaffData?.allStaff || [];
+    switch (phorestStaffFilter) {
+      case 'mapped': return allStaff.filter(s => s.isMapped);
+      case 'unmapped': return allStaff.filter(s => !s.isMapped);
+      default: return allStaff;
+    }
+  }, [phorestStaffData, phorestStaffFilter]);
+
+  // Generate matching suggestions
+  const matchingSuggestions = useMemo((): MatchSuggestion[] => {
+    if (!phorestConnection?.staff_list || !phorestStaffData) return [];
+    
+    // Get unmapped phorest staff IDs that have sales data
+    const unmappedStaffWithSales = phorestStaffData.allStaff.filter(s => !s.isMapped);
+    if (unmappedStaffWithSales.length === 0) return [];
+
+    // We need employee data - for now we'll use the connection staff list
+    // In a real implementation, we'd fetch unmapped employees too
+    const suggestions: MatchSuggestion[] = [];
+    
+    // Get phorest staff that aren't mapped
+    const phorestStaff = phorestConnection.staff_list || [];
+    
+    // This would need access to employee_profiles that aren't yet mapped
+    // For now, return empty - the full implementation would query unmapped employees
+    
+    return suggestions.slice(0, 5);
+  }, [phorestConnection, phorestStaffData]);
+
+  // Handle quick link from Phorest Staff tab
+  const handleStaffLink = (staff: PhorestStaffData) => {
+    // Navigate to Phorest settings for manual linking
+    window.location.href = '/dashboard/admin/phorest-settings';
+  };
+
+  // Handle suggestion link
+  const handleSuggestionLink = async (suggestion: MatchSuggestion) => {
+    setLinkingStaffId(suggestion.phorestStaffId);
+    try {
+      await createMapping.mutateAsync({
+        user_id: suggestion.employeeId,
+        phorest_staff_id: suggestion.phorestStaffId,
+        phorest_staff_name: suggestion.phorestStaffName,
+        phorest_staff_email: suggestion.phorestStaffEmail,
+        phorest_branch_id: suggestion.phorestBranchId,
+        phorest_branch_name: suggestion.phorestBranchName,
+      });
+    } finally {
+      setLinkingStaffId(null);
+    }
+  };
 
   const handleExportCSV = () => {
     if (!stylistData) return;
@@ -364,6 +433,15 @@ export default function SalesDashboard() {
             <TabsTrigger value="overview" className="flex-1 md:flex-none">Overview</TabsTrigger>
             <TabsTrigger value="stylists" className="flex-1 md:flex-none">By Stylist</TabsTrigger>
             <TabsTrigger value="locations" className="flex-1 md:flex-none">By Location</TabsTrigger>
+            <TabsTrigger value="phorest-staff" className="flex-1 md:flex-none">
+              <Users className="w-4 h-4 mr-1 hidden sm:inline" />
+              Phorest Staff
+              {(phorestStaffData?.unmappedCount || 0) > 0 && (
+                <Badge variant="secondary" className="ml-1 text-xs h-5 px-1.5">
+                  {phorestStaffData?.unmappedCount}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="compare" className="flex-1 md:flex-none">
               <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
               Compare
@@ -600,6 +678,102 @@ export default function SalesDashboard() {
             </Card>
           </TabsContent>
 
+          {/* Phorest Staff Tab */}
+          <TabsContent value="phorest-staff" className="space-y-4">
+            {/* Staff Matching Suggestions */}
+            {matchingSuggestions.length > 0 && (
+              <StaffMatchingSuggestions 
+                suggestions={matchingSuggestions}
+                onLink={handleSuggestionLink}
+                isLinking={createMapping.isPending}
+                linkingId={linkingStaffId || undefined}
+                unmappedCount={phorestStaffData?.unmappedCount}
+              />
+            )}
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-display text-lg">All Phorest Staff</h2>
+                <p className="text-sm text-muted-foreground">
+                  {phorestStaffData?.mappedCount || 0} linked, {phorestStaffData?.unmappedCount || 0} unlinked
+                </p>
+              </div>
+              <Select value={phorestStaffFilter} onValueChange={(v: 'all' | 'mapped' | 'unmapped') => setPhorestStaffFilter(v)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="All Staff" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Staff</SelectItem>
+                  <SelectItem value="mapped">Linked Only</SelectItem>
+                  <SelectItem value="unmapped">Unlinked Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {phorestStaffLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-muted rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-muted rounded w-1/3" />
+                          <div className="h-2 bg-muted rounded w-full" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredPhorestStaff.map((staff, idx) => (
+                  <PhorestStaffRow 
+                    key={staff.phorestStaffId}
+                    staff={staff}
+                    rank={idx + 1}
+                    maxRevenue={maxPhorestStaffRevenue}
+                    onLinkClick={handleStaffLink}
+                  />
+                ))}
+                {filteredPhorestStaff.length === 0 && (
+                  <Card>
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                      {phorestStaffFilter === 'unmapped' 
+                        ? 'All staff are linked! 🎉'
+                        : phorestStaffFilter === 'mapped'
+                          ? 'No linked staff yet. Link staff to see their data here.'
+                          : 'No Phorest staff data available for this period. Try syncing sales data.'}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* CTA to go to settings */}
+            {(phorestStaffData?.unmappedCount || 0) > 0 && (
+              <Card className="bg-muted/50 border-dashed">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Link remaining staff</p>
+                    <p className="text-sm text-muted-foreground">
+                      Go to Phorest Settings to map remaining team members
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => window.location.href = '/dashboard/admin/phorest-settings'}
+                  >
+                    <Link2 className="w-4 h-4" />
+                    Phorest Settings
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           {/* Compare Tab */}
           <TabsContent value="compare" className="space-y-6">
             <LocationComparison 
@@ -608,7 +782,7 @@ export default function SalesDashboard() {
             />
           </TabsContent>
 
-          {/* Analytics Tab - New! */}
+          {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             <div className="grid lg:grid-cols-2 gap-6">
               <ProductCategoryChart 

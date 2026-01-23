@@ -25,6 +25,7 @@ export interface DailySalesSummary {
   id: string;
   summary_date: string;
   user_id: string | null;
+  phorest_staff_id: string | null;
   location_id: string | null;
   branch_name: string | null;
   total_revenue: number | null;
@@ -43,6 +44,22 @@ export interface SalesFilters {
   userId?: string;
   locationId?: string;
   itemType?: string;
+}
+
+export interface PhorestStaffSalesData {
+  phorestStaffId: string;
+  phorestStaffName: string;
+  branchName?: string;
+  isMapped: boolean;
+  linkedUserId?: string;
+  linkedUserName?: string;
+  linkedUserPhoto?: string;
+  totalRevenue: number;
+  serviceRevenue: number;
+  productRevenue: number;
+  totalServices: number;
+  totalProducts: number;
+  totalTransactions: number;
 }
 
 // Fetch sales transactions with filters
@@ -387,6 +404,107 @@ export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: s
       return {
         overall: Object.values(byDate),
         byLocation: locationTrends,
+      };
+    },
+  });
+}
+
+// Get sales by Phorest staff ID (includes unmapped staff)
+export function useSalesByPhorestStaff(dateFrom?: string, dateTo?: string) {
+  return useQuery({
+    queryKey: ['sales-by-phorest-staff', dateFrom, dateTo],
+    queryFn: async () => {
+      // Fetch staff mappings to know which are linked
+      const { data: mappings } = await supabase
+        .from('phorest_staff_mapping')
+        .select(`
+          phorest_staff_id,
+          phorest_staff_name,
+          phorest_branch_name,
+          user_id,
+          employee_profiles:user_id (
+            full_name,
+            display_name,
+            photo_url
+          )
+        `)
+        .eq('is_active', true);
+
+      // Build mapping lookup
+      const mappingLookup: Record<string, {
+        userId: string;
+        userName: string;
+        userPhoto?: string;
+        phorestName: string;
+        branchName?: string;
+      }> = {};
+      
+      mappings?.forEach(m => {
+        const profile = m.employee_profiles as any;
+        mappingLookup[m.phorest_staff_id] = {
+          userId: m.user_id,
+          userName: profile?.display_name || profile?.full_name || 'Unknown',
+          userPhoto: profile?.photo_url,
+          phorestName: m.phorest_staff_name || 'Unknown',
+          branchName: m.phorest_branch_name || undefined,
+        };
+      });
+
+      // Fetch all sales data with phorest_staff_id
+      let query = supabase
+        .from('phorest_daily_sales_summary')
+        .select('phorest_staff_id, user_id, total_revenue, service_revenue, product_revenue, total_services, total_products, total_transactions, branch_name')
+        .not('phorest_staff_id', 'is', null);
+
+      if (dateFrom) {
+        query = query.gte('summary_date', dateFrom);
+      }
+      if (dateTo) {
+        query = query.lte('summary_date', dateTo);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Aggregate by phorest_staff_id
+      const byStaff: Record<string, PhorestStaffSalesData> = {};
+      
+      data?.forEach(row => {
+        const phorestId = row.phorest_staff_id!;
+        const mapping = mappingLookup[phorestId];
+        
+        if (!byStaff[phorestId]) {
+          byStaff[phorestId] = {
+            phorestStaffId: phorestId,
+            phorestStaffName: mapping?.phorestName || phorestId.substring(0, 8),
+            branchName: mapping?.branchName || row.branch_name || undefined,
+            isMapped: !!mapping,
+            linkedUserId: mapping?.userId,
+            linkedUserName: mapping?.userName,
+            linkedUserPhoto: mapping?.userPhoto,
+            totalRevenue: 0,
+            serviceRevenue: 0,
+            productRevenue: 0,
+            totalServices: 0,
+            totalProducts: 0,
+            totalTransactions: 0,
+          };
+        }
+        
+        byStaff[phorestId].totalRevenue += Number(row.total_revenue) || 0;
+        byStaff[phorestId].serviceRevenue += Number(row.service_revenue) || 0;
+        byStaff[phorestId].productRevenue += Number(row.product_revenue) || 0;
+        byStaff[phorestId].totalServices += row.total_services || 0;
+        byStaff[phorestId].totalProducts += row.total_products || 0;
+        byStaff[phorestId].totalTransactions += row.total_transactions || 0;
+      });
+
+      const results = Object.values(byStaff).sort((a, b) => b.totalRevenue - a.totalRevenue);
+      
+      return {
+        allStaff: results,
+        mappedCount: results.filter(s => s.isMapped).length,
+        unmappedCount: results.filter(s => !s.isMapped).length,
       };
     },
   });
