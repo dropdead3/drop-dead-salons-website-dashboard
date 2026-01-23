@@ -1,5 +1,5 @@
 import { 
-  Check, 
+  UserCheck, 
   CreditCard, 
   Trash2, 
   StickyNote, 
@@ -80,7 +80,7 @@ export function ScheduleActionBar({
             canCheckIn && 'border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950'
           )}
         >
-          <Check className="h-4 w-4" />
+          <UserCheck className="h-4 w-4" />
           Check In
         </Button>
 
