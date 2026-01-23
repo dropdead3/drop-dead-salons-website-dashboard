@@ -324,6 +324,7 @@ export function BookingWizard({
       <NewClientDialog
         open={showNewClientDialog}
         onOpenChange={setShowNewClientDialog}
+        defaultLocationId={selectedLocation}
         onClientCreated={(client) => {
           const newClient: PhorestClient = {
             id: client.id,

@@ -1014,6 +1014,7 @@ export function QuickBookingPopover({
       <NewClientDialog
         open={showNewClientDialog}
         onOpenChange={setShowNewClientDialog}
+        defaultLocationId={selectedLocation}
         onClientCreated={(client) => {
           handleSelectClient({
             id: client.id,
