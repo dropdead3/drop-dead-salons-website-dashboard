@@ -77,22 +77,22 @@ export function ScheduleHeader({
                 size="sm"
                 className={cn(
                   'px-6 py-1.5 rounded-full text-background/70 hover:text-background hover:bg-background/10 transition-all',
-                  view === 'day' && 'bg-background text-foreground hover:bg-background hover:text-foreground font-medium'
+                  view === 'week' && 'bg-background text-foreground hover:bg-background hover:text-foreground font-medium'
                 )}
-                onClick={() => setView('day')}
+                onClick={() => setView('week')}
               >
-                Day
+                Week
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className={cn(
                   'px-6 py-1.5 rounded-full text-background/70 hover:text-background hover:bg-background/10 transition-all',
-                  view === 'week' && 'bg-background text-foreground hover:bg-background hover:text-foreground font-medium'
+                  view === 'day' && 'bg-background text-foreground hover:bg-background hover:text-foreground font-medium'
                 )}
-                onClick={() => setView('week')}
+                onClick={() => setView('day')}
               >
-                Week
+                Day
               </Button>
             </div>
           </div>
