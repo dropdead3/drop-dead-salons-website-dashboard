@@ -28,17 +28,8 @@ import {
   CalendarPlus,
   ChevronLeft,
   MapPin,
-  Scissors,
-  Sparkles,
-  Palette,
-  Wind,
-  Droplets,
-  Gem,
-  Heart,
-  Star,
-  Zap
+  Scissors
 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -68,19 +59,21 @@ type Step = 'service' | 'client' | 'stylist' | 'confirm';
 
 const STEPS: Step[] = ['service', 'client', 'stylist', 'confirm'];
 
-// Map category names to icons
-const getCategoryIcon = (category: string) => {
+// Map category names to colors and abbreviations
+const getCategoryStyle = (category: string): { bg: string; abbr: string } => {
   const lower = category.toLowerCase();
-  if (lower.includes('blond') || lower.includes('highlight') || lower.includes('balayage')) return Sparkles;
-  if (lower.includes('color') || lower.includes('colour')) return Palette;
-  if (lower.includes('blow') || lower.includes('style') || lower.includes('styling')) return Wind;
-  if (lower.includes('treatment') || lower.includes('condition') || lower.includes('keratin')) return Droplets;
-  if (lower.includes('extension')) return Gem;
-  if (lower.includes('bridal') || lower.includes('wedding') || lower.includes('special')) return Heart;
-  if (lower.includes('cut')) return Scissors;
-  if (lower.includes('premium') || lower.includes('luxury')) return Star;
-  if (lower.includes('express') || lower.includes('quick')) return Zap;
-  return Scissors; // Default
+  const getAbbr = (cat: string) => cat.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  
+  if (lower.includes('extension')) return { bg: 'bg-emerald-100 text-emerald-700', abbr: 'EX' };
+  if (lower.includes('consult')) return { bg: 'bg-purple-900 text-white', abbr: 'NC' };
+  if (lower.includes('blond') || lower.includes('highlight') || lower.includes('balayage')) return { bg: 'bg-rose-300 text-rose-800', abbr: 'BL' };
+  if (lower.includes('color') || lower.includes('colour')) return { bg: 'bg-rose-400 text-white', abbr: 'CO' };
+  if (lower.includes('cut') || lower.includes('haircut')) return { bg: 'bg-blue-400 text-white', abbr: 'HA' };
+  if (lower.includes('blow') || lower.includes('style') || lower.includes('styling')) return { bg: 'bg-blue-500 text-white', abbr: 'ST' };
+  if (lower.includes('treatment') || lower.includes('condition') || lower.includes('keratin')) return { bg: 'bg-teal-400 text-white', abbr: 'TR' };
+  if (lower.includes('bridal') || lower.includes('wedding') || lower.includes('special')) return { bg: 'bg-pink-300 text-pink-800', abbr: 'SP' };
+  if (lower.includes('extra')) return { bg: 'bg-gray-300 text-gray-600', abbr: 'EX' };
+  return { bg: 'bg-gray-400 text-white', abbr: getAbbr(category) };
 };
 
 export function QuickBookingPopover({
@@ -101,6 +94,8 @@ export function QuickBookingPopover({
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedStylist, setSelectedStylist] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [serviceSearch, setServiceSearch] = useState('');
 
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useServicesByCategory(selectedLocation || undefined);
@@ -205,6 +200,8 @@ export function QuickBookingPopover({
     setSelectedServices([]);
     setSelectedStylist('');
     setSelectedLocation('');
+    setSelectedCategory(null);
+    setServiceSearch('');
     onOpenChange(false);
   };
 
@@ -407,7 +404,10 @@ export function QuickBookingPopover({
                   <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-xs font-medium text-muted-foreground">Location</span>
                 </div>
-                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <Select value={selectedLocation} onValueChange={(val) => {
+                  setSelectedLocation(val);
+                  setSelectedCategory(null);
+                }}>
                   <SelectTrigger className="h-9 bg-muted/50 border-0">
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
@@ -419,28 +419,38 @@ export function QuickBookingPopover({
                 </Select>
               </div>
 
-              {/* Services list with category quick nav */}
-              <div className="flex flex-1 overflow-hidden">
-                <ScrollArea className="flex-1">
-                  <div className="p-3 space-y-4">
-                    {!selectedLocation ? (
-                      <div className="text-center py-6 text-muted-foreground text-sm">
-                        Select a location first
+              {/* Category or Services View */}
+              <ScrollArea className="flex-1">
+                <div className="p-3">
+                  {!selectedLocation ? (
+                    <div className="text-center py-6 text-muted-foreground text-sm">
+                      Select a location first
+                    </div>
+                  ) : isLoadingServices ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : !selectedCategory ? (
+                    // Category selection view
+                    <>
+                      {/* Search bar */}
+                      <div className="relative mb-3">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search for a service"
+                          value={serviceSearch}
+                          onChange={(e) => setServiceSearch(e.target.value)}
+                          className="pl-9 h-9 bg-muted/50 border border-border"
+                        />
                       </div>
-                    ) : isLoadingServices ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
-                      Object.entries(servicesByCategory).map(([category, categoryServices]) => (
-                        <div key={category} id={`category-${category.replace(/\s+/g, '-').toLowerCase()}`}>
-                          <div className="bg-oat -mx-3 px-3 py-1.5 mb-1.5">
-                            <h4 className="text-[10px] font-semibold text-oat-foreground uppercase tracking-wider">
-                              {category}
-                            </h4>
-                          </div>
-                          <div className="space-y-1">
-                            {categoryServices.map((service) => {
+                      
+                      {serviceSearch ? (
+                        // Show filtered services across all categories
+                        <div className="space-y-1">
+                          {services
+                            .filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase()))
+                            .slice(0, 15)
+                            .map((service) => {
                               const isSelected = selectedServices.includes(service.phorest_service_id);
                               return (
                                 <button
@@ -487,50 +497,115 @@ export function QuickBookingPopover({
                                 </button>
                               );
                             })}
-                          </div>
+                          {services.filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
+                            <div className="text-center py-4 text-muted-foreground text-sm">
+                              No services match "{serviceSearch}"
+                            </div>
+                          )}
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-6 space-y-2">
-                        <Scissors className="h-8 w-8 mx-auto text-muted-foreground/50" />
-                        <p className="text-muted-foreground text-sm">No services synced yet</p>
-                        <p className="text-xs text-muted-foreground/70">
-                          Services will appear after syncing from Phorest
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-
-                {/* Category quick nav - right side icons */}
-                {servicesByCategory && Object.keys(servicesByCategory).length > 0 && selectedLocation && (
-                  <div className="w-10 shrink-0 border-l border-border bg-card flex flex-col items-center justify-start gap-0.5 py-2 overflow-y-auto">
-                    <TooltipProvider delayDuration={0}>
-                      {Object.keys(servicesByCategory).map((category) => {
-                        const CategoryIcon = getCategoryIcon(category);
-                        return (
-                          <Tooltip key={category}>
-                            <TooltipTrigger asChild>
+                      ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
+                        // Category list
+                        <div className="divide-y divide-border">
+                          {Object.keys(servicesByCategory).map((category) => {
+                            const style = getCategoryStyle(category);
+                            return (
                               <button
-                                className="p-1.5 rounded-full hover:bg-muted transition-colors"
-                                onClick={() => {
-                                  const el = document.getElementById(`category-${category.replace(/\s+/g, '-').toLowerCase()}`);
-                                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }}
+                                key={category}
+                                className="w-full flex items-center gap-3 py-3 text-left hover:bg-muted/50 transition-colors first:pt-0 last:pb-0"
+                                onClick={() => setSelectedCategory(category)}
                               >
-                                <CategoryIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                <div className={cn(
+                                  'w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold shrink-0',
+                                  style.bg
+                                )}>
+                                  {style.abbr}
+                                </div>
+                                <span className="font-medium text-sm">{category}</span>
                               </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left" className="text-xs">
-                              {category}
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      })}
-                    </TooltipProvider>
-                  </div>
-                )}
-              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 space-y-2">
+                          <Scissors className="h-8 w-8 mx-auto text-muted-foreground/50" />
+                          <p className="text-muted-foreground text-sm">No services synced yet</p>
+                          <p className="text-xs text-muted-foreground/70">
+                            Services will appear after syncing from Phorest
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    // Services within selected category
+                    <>
+                      {/* Back to categories header */}
+                      <button
+                        className="flex items-center gap-2 mb-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => setSelectedCategory(null)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span>Back to categories</span>
+                      </button>
+
+                      <div className="bg-oat -mx-3 px-3 py-1.5 mb-2">
+                        <h4 className="text-[10px] font-semibold text-oat-foreground uppercase tracking-wider">
+                          {selectedCategory}
+                        </h4>
+                      </div>
+
+                      <div className="space-y-1">
+                        {servicesByCategory?.[selectedCategory]?.map((service) => {
+                          const isSelected = selectedServices.includes(service.phorest_service_id);
+                          return (
+                            <button
+                              key={service.id}
+                              className={cn(
+                                'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
+                                isSelected
+                                  ? 'bg-primary/10 ring-1 ring-primary/30'
+                                  : 'hover:bg-muted/70'
+                              )}
+                              onClick={() => {
+                                setSelectedServices(prev =>
+                                  prev.includes(service.phorest_service_id)
+                                    ? prev.filter(id => id !== service.phorest_service_id)
+                                    : [...prev, service.phorest_service_id]
+                                );
+                              }}
+                            >
+                              <div className="flex-1 min-w-0 mr-2">
+                                <div className="font-medium text-sm truncate">{service.name}</div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                    <Clock className="h-3 w-3" />
+                                    {service.duration_minutes}m
+                                  </span>
+                                  {service.price !== null && (
+                                    <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                      <DollarSign className="h-3 w-3" />
+                                      {service.price.toFixed(0)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div
+                                className={cn(
+                                  'w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                                  isSelected
+                                    ? 'bg-primary border-primary text-primary-foreground'
+                                    : 'border-muted-foreground/30'
+                                )}
+                              >
+                                {isSelected && <Check className="h-2.5 w-2.5" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </ScrollArea>
 
               {/* Footer */}
               <div className="p-3 border-t border-border bg-card space-y-2">
