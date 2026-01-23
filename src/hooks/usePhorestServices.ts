@@ -63,3 +63,70 @@ export function useServicesByCategory(branchId?: string) {
 
   return { data: grouped, services, ...rest };
 }
+
+// Fetch ALL services across ALL locations (for service-first selection flow)
+export function useAllServices() {
+  return useQuery({
+    queryKey: ['phorest-services-all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('phorest_services')
+        .select('*')
+        .eq('is_active', true)
+        .order('category')
+        .order('name');
+      
+      if (error) throw error;
+      return data as PhorestService[];
+    },
+  });
+}
+
+export function useAllServicesByCategory() {
+  const { data: services, ...rest } = useAllServices();
+
+  // Group by category, and for duplicate service names across locations,
+  // keep unique services by name (we'll validate location compatibility later)
+  const grouped = services?.reduce((acc, service) => {
+    const category = service.category || 'Other';
+    if (!acc[category]) acc[category] = [];
+    
+    // Check if we already have this service name in this category
+    const existingService = acc[category].find(s => s.name === service.name);
+    if (!existingService) {
+      acc[category].push(service);
+    }
+    
+    return acc;
+  }, {} as Record<string, PhorestService[]>);
+
+  return { data: grouped, services, ...rest };
+}
+
+// Get which locations offer a specific service (by name)
+export function useServiceAvailability(serviceName: string) {
+  return useQuery({
+    queryKey: ['phorest-service-availability', serviceName],
+    queryFn: async () => {
+      const { data: services, error } = await supabase
+        .from('phorest_services')
+        .select('phorest_branch_id')
+        .eq('is_active', true)
+        .eq('name', serviceName);
+      
+      if (error) throw error;
+      
+      // Get unique branch IDs
+      const branchIds = [...new Set(services?.map(s => s.phorest_branch_id) || [])];
+      
+      // Get locations for these branches
+      const { data: locations } = await supabase
+        .from('locations')
+        .select('id, name, phorest_branch_id')
+        .in('phorest_branch_id', branchIds);
+      
+      return locations || [];
+    },
+    enabled: !!serviceName,
+  });
+}
