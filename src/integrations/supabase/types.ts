@@ -2316,6 +2316,42 @@ export type Database = {
           },
         ]
       }
+      phorest_staff_services: {
+        Row: {
+          created_at: string | null
+          custom_duration_minutes: number | null
+          custom_price: number | null
+          id: string
+          is_qualified: boolean | null
+          phorest_branch_id: string
+          phorest_service_id: string
+          phorest_staff_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_duration_minutes?: number | null
+          custom_price?: number | null
+          id?: string
+          is_qualified?: boolean | null
+          phorest_branch_id: string
+          phorest_service_id: string
+          phorest_staff_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_duration_minutes?: number | null
+          custom_price?: number | null
+          id?: string
+          is_qualified?: boolean | null
+          phorest_branch_id?: string
+          phorest_service_id?: string
+          phorest_staff_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       phorest_sync_log: {
         Row: {
           completed_at: string | null

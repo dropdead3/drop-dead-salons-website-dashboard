@@ -27,6 +27,10 @@ interface StylistStepProps {
   onTimeChange: (time: string) => void;
   onContinue: () => void;
   canContinue: boolean;
+  qualificationInfo?: {
+    totalQualified: number;
+    hasData: boolean;
+  };
 }
 
 // Generate time slots from 8am to 8pm
@@ -49,6 +53,7 @@ export function StylistStep({
   onTimeChange,
   onContinue,
   canContinue,
+  qualificationInfo,
 }: StylistStepProps) {
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -71,6 +76,11 @@ export function StylistStep({
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Available Stylists
+              {qualificationInfo?.hasData && (
+                <span className="text-xs font-normal text-muted-foreground/70 ml-2">
+                  ({qualificationInfo.totalQualified} qualified)
+                </span>
+              )}
             </h3>
             <div className="grid grid-cols-3 gap-2">
               {stylists.map((stylist) => {

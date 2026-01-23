@@ -59,6 +59,8 @@ serve(async (req) => {
 
     let totalServices = 0;
     let syncedServices = 0;
+    let totalQualifications = 0;
+    let syncedQualifications = 0;
 
     for (const branch of branches) {
       const branchId = branch.branchId || branch.id;
@@ -79,8 +81,17 @@ serve(async (req) => {
         console.log(`Found ${services.length} services in branch ${branch.name}`);
         totalServices += services.length;
 
+        // Track which staff-service combinations we've seen for this branch
+        const seenQualifications = new Set<string>();
+
         for (const service of services) {
           const serviceId = service.serviceId || service.id;
+          
+          // Log the first service's full structure to understand available fields
+          if (totalServices === 1) {
+            console.log("Sample service object keys:", Object.keys(service));
+            console.log("Sample service object:", JSON.stringify(service, null, 2));
+          }
           
           const serviceRecord = {
             phorest_service_id: serviceId,
@@ -105,6 +116,78 @@ serve(async (req) => {
           } else {
             console.log(`Failed to upsert service ${serviceId}:`, error.message);
           }
+
+          // Extract staff qualifications from various possible field names
+          const qualifiedStaff = service.qualifiedStaffIds || 
+                                 service.staffIds || 
+                                 service.staffMembers ||
+                                 service.qualifiedStaff ||
+                                 service.assignedStaff ||
+                                 [];
+          
+          // Handle both array of IDs and array of objects
+          const staffIds = Array.isArray(qualifiedStaff) 
+            ? qualifiedStaff.map((s: any) => typeof s === 'string' ? s : (s.staffId || s.id))
+            : [];
+
+          if (staffIds.length > 0) {
+            console.log(`Service "${service.name}" has ${staffIds.length} qualified staff`);
+          }
+
+          for (const staffId of staffIds) {
+            if (!staffId) continue;
+            
+            const qualKey = `${staffId}-${serviceId}-${branchId}`;
+            seenQualifications.add(qualKey);
+            totalQualifications++;
+
+            const qualRecord = {
+              phorest_staff_id: staffId,
+              phorest_service_id: serviceId,
+              phorest_branch_id: branchId,
+              is_qualified: true,
+              updated_at: new Date().toISOString(),
+            };
+
+            const { error: qualError } = await supabase
+              .from("phorest_staff_services")
+              .upsert(qualRecord, { 
+                onConflict: 'phorest_staff_id,phorest_service_id,phorest_branch_id',
+                ignoreDuplicates: false 
+              });
+
+            if (!qualError) {
+              syncedQualifications++;
+            } else {
+              console.log(`Failed to upsert qualification for staff ${staffId}, service ${serviceId}:`, qualError.message);
+            }
+          }
+        }
+
+        // Mark qualifications not in the current sync as unqualified (soft delete)
+        // This handles cases where a staff member's qualification was removed in Phorest
+        if (seenQualifications.size > 0) {
+          // Get existing qualifications for this branch
+          const { data: existingQuals } = await supabase
+            .from("phorest_staff_services")
+            .select("phorest_staff_id, phorest_service_id")
+            .eq("phorest_branch_id", branchId)
+            .eq("is_qualified", true);
+
+          if (existingQuals) {
+            for (const qual of existingQuals) {
+              const qualKey = `${qual.phorest_staff_id}-${qual.phorest_service_id}-${branchId}`;
+              if (!seenQualifications.has(qualKey)) {
+                // This qualification was not in the current sync, mark as unqualified
+                await supabase
+                  .from("phorest_staff_services")
+                  .update({ is_qualified: false, updated_at: new Date().toISOString() })
+                  .eq("phorest_staff_id", qual.phorest_staff_id)
+                  .eq("phorest_service_id", qual.phorest_service_id)
+                  .eq("phorest_branch_id", branchId);
+              }
+            }
+          }
         }
       } catch (e: any) {
         console.log(`Failed to fetch services for branch ${branchId}:`, e.message);
@@ -112,12 +195,17 @@ serve(async (req) => {
     }
 
     console.log(`Services sync complete: ${syncedServices}/${totalServices}`);
+    console.log(`Qualifications sync complete: ${syncedQualifications}/${totalQualifications}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         total: totalServices,
         synced: syncedServices,
+        qualifications: {
+          total: totalQualifications,
+          synced: syncedQualifications,
+        },
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

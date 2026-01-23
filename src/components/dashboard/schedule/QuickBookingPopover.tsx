@@ -34,6 +34,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor } from '@/utils/categoryColors';
 import { getLevelSlug, getLevelNumber, findLevelBasedPrice } from '@/utils/levelPricing';
+import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
 
 interface QuickBookingPopoverProps {
   date: Date;
@@ -165,6 +166,22 @@ export function QuickBookingPopover({
     },
     enabled: open && !!selectedLocation,
   });
+
+  // Fetch qualification data for selected services
+  const { data: qualificationData } = useQualifiedStaffForServices(selectedServices, selectedLocation);
+
+  // Filter stylists by qualification if qualification data exists
+  const filteredStylists = useMemo(() => {
+    if (!qualificationData?.hasQualificationData) {
+      // No qualification data synced yet - show all stylists
+      return stylists;
+    }
+    
+    // Filter to only show qualified stylists
+    return stylists.filter(stylist => 
+      qualificationData.qualifiedStaffIds.includes(stylist.phorest_staff_id)
+    );
+  }, [stylists, qualificationData]);
 
   // totalDuration and totalPrice use selectedServiceDetails defined above
 
@@ -770,9 +787,14 @@ export function QuickBookingPopover({
                 <div className="p-4">
                   <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
                     Available Stylists
+                    {qualificationData?.hasQualificationData && selectedServices.length > 0 && (
+                      <span className="text-xs font-normal text-muted-foreground ml-2">
+                        ({filteredStylists.length} qualified)
+                      </span>
+                    )}
                   </h4>
                   <div className="flex flex-col gap-3">
-                    {stylists.map((stylist) => {
+                    {filteredStylists.map((stylist) => {
                       const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
                       const nameParts = fullName.split(' ');
                       const firstName = nameParts[0];
