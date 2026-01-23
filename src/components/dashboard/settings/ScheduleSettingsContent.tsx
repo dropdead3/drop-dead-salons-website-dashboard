@@ -35,6 +35,42 @@ const CONSULTATION_GRADIENT = {
   textColor: '#1a3a32',
 };
 
+// Special gradient styles collection
+const SPECIAL_GRADIENTS = [
+  {
+    id: 'teal-lime',
+    name: 'Teal Lime',
+    description: 'Fresh & vibrant consultation style',
+    background: 'linear-gradient(135deg, #43c6ac 0%, #f8ffae 100%)',
+    textColor: '#1a3a32',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
+  },
+  {
+    id: 'rose-gold',
+    name: 'Rose Gold',
+    description: 'Elegant warm metallic tones',
+    background: 'linear-gradient(135deg, #f5af89 0%, #f093a7 50%, #d4a5a5 100%)',
+    textColor: '#4a2c2a',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(240,147,167,0.3) 100%)',
+  },
+  {
+    id: 'ocean-blue',
+    name: 'Ocean Blue',
+    description: 'Cool, calming aquatic vibes',
+    background: 'linear-gradient(135deg, #667eea 0%, #64b5f6 50%, #4dd0e1 100%)',
+    textColor: '#1a2a4a',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(100,181,246,0.3) 100%)',
+  },
+  {
+    id: 'lavender',
+    name: 'Lavender Dream',
+    description: 'Soft, luxurious purple tones',
+    background: 'linear-gradient(135deg, #e0c3fc 0%, #c084fc 50%, #a78bfa 100%)',
+    textColor: '#3d2a5c',
+    glassStroke: 'linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(192,132,252,0.3) 100%)',
+  },
+];
+
 // Curated luxury color palette - 36 colors organized by family
 const CATEGORY_PALETTE = [
   // Row 1: Neutrals & Blacks
@@ -188,42 +224,44 @@ export function ScheduleSettingsContent() {
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Special Styles
                 </p>
-                <div className="flex gap-2">
-                  {/* Teal-Lime Gradient Swatch */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        className={cn(
-                          'w-10 h-10 rounded-full transition-transform hover:scale-110 relative shadow-md',
-                          isConsultationCategory(category.category_name) && 'ring-2 ring-offset-2 ring-primary'
-                        )}
-                        style={{
-                          background: CONSULTATION_GRADIENT.background,
-                        }}
-                        onClick={() => {
-                          // For consultation categories, this is already applied
-                          toast.info('Premium gradient style applied to consultation categories');
-                        }}
-                        disabled={updateColor.isPending}
-                      >
-                        {/* Glass stroke overlay */}
-                        <span 
-                          className="absolute inset-0 rounded-full pointer-events-none"
+                <div className="flex gap-2 flex-wrap">
+                  {SPECIAL_GRADIENTS.map((gradient) => (
+                    <Tooltip key={gradient.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          className={cn(
+                            'w-10 h-10 rounded-full transition-transform hover:scale-110 relative shadow-md',
+                            isConsultationCategory(category.category_name) && 
+                              gradient.id === 'teal-lime' && 
+                              'ring-2 ring-offset-2 ring-primary'
+                          )}
                           style={{
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(67,198,172,0.3) 100%)',
-                            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                            maskComposite: 'xor',
-                            WebkitMaskComposite: 'xor',
-                            padding: '2px',
+                            background: gradient.background,
                           }}
-                        />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[180px]">
-                      <p className="text-xs font-medium">Premium Consultation Style</p>
-                      <p className="text-[10px] text-muted-foreground">Teal-lime gradient with glass stroke & shimmer effect</p>
-                    </TooltipContent>
-                  </Tooltip>
+                          onClick={() => {
+                            toast.info(`${gradient.name} gradient style - available for premium categories`);
+                          }}
+                          disabled={updateColor.isPending}
+                        >
+                          {/* Glass stroke overlay */}
+                          <span 
+                            className="absolute inset-0 rounded-full pointer-events-none"
+                            style={{
+                              background: gradient.glassStroke,
+                              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                              maskComposite: 'xor',
+                              WebkitMaskComposite: 'xor',
+                              padding: '2px',
+                            }}
+                          />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[180px]">
+                        <p className="text-xs font-medium">{gradient.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{gradient.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
                 </div>
               </div>
 
