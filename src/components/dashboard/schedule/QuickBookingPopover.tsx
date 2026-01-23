@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import {
   Popover,
@@ -40,6 +40,7 @@ interface QuickBookingPopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
+  defaultLocationId?: string;
 }
 
 interface PhorestClient {
@@ -71,6 +72,7 @@ export function QuickBookingPopover({
   open,
   onOpenChange,
   children,
+  defaultLocationId,
 }: QuickBookingPopoverProps) {
   const queryClient = useQueryClient();
   const { user, roles } = useAuth();
@@ -82,9 +84,16 @@ export function QuickBookingPopover({
   const [clientSearch, setClientSearch] = useState('');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedStylist, setSelectedStylist] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState(defaultLocationId || '');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [serviceSearch, setServiceSearch] = useState('');
+
+  // Sync location when popover opens with a new default
+  useEffect(() => {
+    if (open && defaultLocationId) {
+      setSelectedLocation(defaultLocationId);
+    }
+  }, [open, defaultLocationId]);
 
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useAllServicesByCategory();
