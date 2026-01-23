@@ -49,7 +49,32 @@ export function ScheduleActionBar({
 
   return (
     <div className="bg-card border-t border-border px-4 py-2.5 flex items-center justify-between">
-      {/* Left: Action Buttons */}
+      {/* Left: Undo & Staff Toggle */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onUndo}
+          disabled={isUpdating}
+          className="gap-1.5"
+        >
+          <Undo2 className="h-4 w-4" />
+          Undo
+        </Button>
+
+        <div className="flex items-center gap-2">
+          <Label htmlFor="show-all-staff" className="text-sm text-muted-foreground">
+            See all Staff
+          </Label>
+          <Switch
+            id="show-all-staff"
+            checked={showAllStaff}
+            onCheckedChange={onShowAllStaffChange}
+          />
+        </div>
+      </div>
+
+      {/* Right: Action Buttons */}
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
@@ -114,31 +139,6 @@ export function ScheduleActionBar({
           <CheckCircle className="h-4 w-4" />
           Confirm
         </Button>
-      </div>
-
-      {/* Right: Undo & Staff Toggle */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onUndo}
-          disabled={isUpdating}
-          className="gap-1.5"
-        >
-          <Undo2 className="h-4 w-4" />
-          Undo
-        </Button>
-
-        <div className="flex items-center gap-2">
-          <Label htmlFor="show-all-staff" className="text-sm text-muted-foreground">
-            See all Staff
-          </Label>
-          <Switch
-            id="show-all-staff"
-            checked={showAllStaff}
-            onCheckedChange={onShowAllStaffChange}
-          />
-        </div>
       </div>
     </div>
   );
