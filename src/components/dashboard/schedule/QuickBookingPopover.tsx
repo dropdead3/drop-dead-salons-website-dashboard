@@ -53,12 +53,12 @@ type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
 const STEPS: Step[] = ['service', 'location', 'client', 'stylist', 'confirm'];
 
 // Map category names to colors and abbreviations
-const getCategoryStyle = (category: string): { bg: string; abbr: string } => {
+const getCategoryStyle = (category: string): { bg: string; abbr: string; isSpecial?: boolean } => {
   const lower = category.toLowerCase();
   const getAbbr = (cat: string) => cat.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   
   if (lower.includes('extension')) return { bg: 'bg-emerald-100 text-emerald-700', abbr: 'EX' };
-  if (lower.includes('consult')) return { bg: 'bg-purple-900 text-white', abbr: 'NC' };
+  if (lower.includes('consult')) return { bg: 'bg-gradient-to-br from-oat via-[hsl(38,35%,75%)] to-[hsl(38,40%,60%)] text-oat-foreground', abbr: 'NC', isSpecial: true };
   if (lower.includes('blond') || lower.includes('highlight') || lower.includes('balayage')) return { bg: 'bg-rose-300 text-rose-800', abbr: 'BL' };
   if (lower.includes('color') || lower.includes('colour')) return { bg: 'bg-rose-400 text-white', abbr: 'CO' };
   if (lower.includes('cut') || lower.includes('haircut')) return { bg: 'bg-blue-400 text-white', abbr: 'HA' };
@@ -67,6 +67,17 @@ const getCategoryStyle = (category: string): { bg: string; abbr: string } => {
   if (lower.includes('bridal') || lower.includes('wedding') || lower.includes('special')) return { bg: 'bg-pink-300 text-pink-800', abbr: 'SP' };
   if (lower.includes('extra')) return { bg: 'bg-gray-300 text-gray-600', abbr: 'EX' };
   return { bg: 'bg-gray-400 text-white', abbr: getAbbr(category) };
+};
+
+// Sort categories with consultation first
+const sortCategories = (categories: string[]): string[] => {
+  return [...categories].sort((a, b) => {
+    const aIsConsult = a.toLowerCase().includes('consult');
+    const bIsConsult = b.toLowerCase().includes('consult');
+    if (aIsConsult && !bIsConsult) return -1;
+    if (!aIsConsult && bIsConsult) return 1;
+    return a.localeCompare(b);
+  });
 };
 
 export function QuickBookingPopover({
@@ -479,21 +490,30 @@ export function QuickBookingPopover({
                       ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
                         // Category list
                         <div className="divide-y divide-border">
-                          {Object.keys(servicesByCategory).map((category) => {
+                          {sortCategories(Object.keys(servicesByCategory)).map((category) => {
                             const style = getCategoryStyle(category);
                             return (
                               <button
                                 key={category}
-                                className="w-full flex items-center gap-3 py-3 text-left hover:bg-muted/50 transition-colors first:pt-0 last:pb-0"
+                                className={cn(
+                                  "w-full flex items-center gap-3 py-3 text-left transition-colors first:pt-0 last:pb-0",
+                                  style.isSpecial 
+                                    ? "hover:bg-oat/30 rounded-xl my-2 first:mt-0 px-3 -mx-3 py-4 bg-gradient-to-r from-oat/20 via-transparent to-oat/10 ring-1 ring-inset ring-[hsl(38,40%,70%)]/50 shadow-[inset_0_1px_0_0_hsl(38,50%,80%)/40]"
+                                    : "hover:bg-muted/50"
+                                )}
                                 onClick={() => setSelectedCategory(category)}
                               >
                                 <div className={cn(
                                   'w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold shrink-0',
-                                  style.bg
+                                  style.bg,
+                                  style.isSpecial && 'shadow-md ring-2 ring-[hsl(38,45%,65%)]/60'
                                 )}>
                                   {style.abbr}
                                 </div>
-                                <span className="font-medium text-sm">{category}</span>
+                                <span className={cn(
+                                  "font-medium text-sm",
+                                  style.isSpecial && "font-semibold"
+                                )}>{category}</span>
                               </button>
                             );
                           })}
