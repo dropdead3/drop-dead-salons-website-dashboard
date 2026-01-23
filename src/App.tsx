@@ -68,9 +68,12 @@ import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
 import ProgramAnalytics from "./pages/dashboard/admin/ProgramAnalytics";
 import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 import SalesDashboard from "./pages/dashboard/admin/SalesDashboard";
+import StaffUtilization from "./pages/dashboard/admin/StaffUtilization";
+import OperationalAnalytics from "./pages/dashboard/admin/OperationalAnalytics";
 import MyClients from "./pages/dashboard/MyClients";
 import Schedule from "./pages/dashboard/Schedule";
 import AllNotifications from "./pages/dashboard/AllNotifications";
+import PublicBooking from "./pages/PublicBooking";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +100,7 @@ const App = () => (
               <Route path="/extensions" element={<Extensions />} />
               <Route path="/policies" element={<Policies />} />
               <Route path="/staff-login" element={<StaffLogin />} />
+              <Route path="/book" element={<PublicBooking />} />
 
               {/* Protected dashboard routes */}
               <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
@@ -148,6 +152,8 @@ const App = () => (
               <Route path="/dashboard/admin/program-analytics" element={<ProtectedRoute requiredPermission="view_program_analytics"><ProgramAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/phorest" element={<ProtectedRoute requiredPermission="manage_settings"><PhorestSettings /></ProtectedRoute>} />
               <Route path="/dashboard/admin/sales" element={<ProtectedRoute requiredPermission="view_team_overview"><SalesDashboard /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/staff-utilization" element={<ProtectedRoute requiredPermission="view_team_overview"><StaffUtilization /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/operational-analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><OperationalAnalytics /></ProtectedRoute>} />
 
 
               <Route path="*" element={<NotFound />} />

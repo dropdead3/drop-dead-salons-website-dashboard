@@ -8,10 +8,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Clock } from 'lucide-react';
+import { Phone, Clock, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
+import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 
 interface DayViewProps {
   date: Date;
@@ -125,17 +126,22 @@ function AppointmentCard({
   const widthPercent = 100 / totalOverlapping;
   const leftPercent = columnIndex * widthPercent;
 
+  // No-show and cancelled indicators
+  const isNoShow = appointment.status === 'no_show';
+  const isCancelled = appointment.status === 'cancelled';
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
           className={cn(
-            'absolute rounded-sm cursor-pointer transition-all overflow-hidden',
+            'absolute rounded-sm cursor-pointer transition-all overflow-hidden group',
             !displayGradient && 'border-l-4',
             !useCategoryColor && !displayGradient && statusColors.bg,
             !useCategoryColor && !displayGradient && statusColors.border,
             !useCategoryColor && !displayGradient && statusColors.text,
-            appointment.status === 'cancelled' && 'opacity-60 line-through',
+            isCancelled && 'opacity-60',
+            isNoShow && 'ring-2 ring-destructive ring-inset',
             isSelected && 'ring-2 ring-primary ring-offset-1',
             displayGradient && 'shadow-lg'
           )}
@@ -154,6 +160,21 @@ function AppointmentCard({
           }}
           onClick={onClick}
         >
+          {/* No-show overlay */}
+          {isNoShow && (
+            <div className="absolute inset-0 bg-destructive/20 flex items-center justify-center z-10">
+              <div className="absolute top-1 right-1">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+              </div>
+            </div>
+          )}
+          
+          {/* Cancelled overlay with strikethrough */}
+          {isCancelled && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-y-1/2 left-0 right-0 h-0.5 bg-current opacity-50" />
+            </div>
+          )}
           {/* Glass stroke overlay for gradient */}
           {displayGradient && (
             <div 
@@ -251,8 +272,14 @@ function AppointmentCard({
           </div>
           <Badge 
             variant="outline" 
-            className={cn('text-xs capitalize', statusColors.bg, statusColors.text)}
+            className={cn(
+              'text-xs capitalize', 
+              statusColors.bg, 
+              statusColors.text,
+              appointment.status === 'no_show' && 'border-destructive text-destructive'
+            )}
           >
+            {appointment.status === 'no_show' && <XCircle className="w-3 h-3 mr-1" />}
             {appointment.status.replace('_', ' ')}
           </Badge>
         </div>
