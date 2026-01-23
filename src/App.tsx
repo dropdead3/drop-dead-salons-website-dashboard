@@ -70,6 +70,7 @@ import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 import SalesDashboard from "./pages/dashboard/admin/SalesDashboard";
 import MyClients from "./pages/dashboard/MyClients";
 import Schedule from "./pages/dashboard/Schedule";
+import AllNotifications from "./pages/dashboard/AllNotifications";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,7 @@ const App = () => (
               <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
               <Route path="/dashboard/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
               <Route path="/dashboard/notifications" element={<ProtectedRoute><NotificationPreferences /></ProtectedRoute>} />
+              <Route path="/dashboard/notifications/all" element={<ProtectedRoute><AllNotifications /></ProtectedRoute>} />
               <Route path="/dashboard/profile/:userId" element={<ProtectedRoute requiredPermission="view_any_profile"><ViewProfile /></ProtectedRoute>} />
               <Route path="/dashboard/directory" element={<ProtectedRoute requiredPermission="view_team_directory"><TeamDirectory /></ProtectedRoute>} />
               <Route path="/dashboard/program" element={<ProtectedRoute requiredPermission="access_client_engine"><Program /></ProtectedRoute>} />
