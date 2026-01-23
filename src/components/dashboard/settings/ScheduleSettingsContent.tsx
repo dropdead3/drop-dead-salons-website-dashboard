@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Loader2, Calendar, Palette } from 'lucide-react';
+import { Loader2, Calendar, Palette, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   useServiceCategoryColors, 
@@ -10,6 +10,8 @@ import {
   getCategoryAbbreviation,
 } from '@/hooks/useServiceCategoryColors';
 import { toast } from 'sonner';
+import { CalendarColorPreview } from './CalendarColorPreview';
+import { getCategoryAbbreviation as getAbbr } from '@/utils/categoryColors';
 
 // Curated luxury color palette - 36 colors organized by family
 const CATEGORY_PALETTE = [
@@ -31,6 +33,20 @@ export function ScheduleSettingsContent() {
   const { data: categories, isLoading, error } = useServiceCategoryColors();
   const updateColor = useUpdateCategoryColor();
   const syncCategories = useSyncServiceCategories();
+
+  // Build color map for preview
+  const colorMap = useMemo(() => {
+    if (!categories) return {};
+    const map: Record<string, { bg: string; text: string; abbr: string }> = {};
+    categories.forEach((cat) => {
+      map[cat.category_name.toLowerCase()] = {
+        bg: cat.color_hex,
+        text: cat.text_color_hex,
+        abbr: getAbbr(cat.category_name),
+      };
+    });
+    return map;
+  }, [categories]);
 
   // Auto-sync new categories on mount
   useEffect(() => {
@@ -174,6 +190,24 @@ export function ScheduleSettingsContent() {
           )}
         </CardContent>
       </Card>
+
+      {/* Calendar Preview */}
+      {categories && categories.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" />
+              <CardTitle className="font-display text-lg">CALENDAR PREVIEW</CardTitle>
+            </div>
+            <CardDescription>
+              See how your color choices will look on the schedule. Changes update instantly.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CalendarColorPreview colorMap={colorMap} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
