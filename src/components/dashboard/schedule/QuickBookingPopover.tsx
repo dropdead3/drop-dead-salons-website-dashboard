@@ -306,6 +306,15 @@ export function QuickBookingPopover({
 
   return (
     <>
+      {/* Backdrop overlay with blur */}
+      {open && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+          onClick={() => onOpenChange(false)}
+          aria-hidden="true"
+        />
+      )}
+      
       <Popover open={open} onOpenChange={onOpenChange}>
         <PopoverTrigger asChild>
           {children}
@@ -313,7 +322,7 @@ export function QuickBookingPopover({
         <PopoverContent 
           side="right" 
           align="start" 
-          className="w-[380px] p-0 shadow-xl border-border rounded-xl overflow-hidden"
+          className="w-[380px] p-0 shadow-xl border-border rounded-xl overflow-hidden z-50"
           sideOffset={8}
         >
           {/* Header */}
