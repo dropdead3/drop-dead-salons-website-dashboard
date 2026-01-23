@@ -216,48 +216,61 @@ export function WeekView({
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-auto border border-border rounded-lg bg-card">
         <div className="min-w-[800px]">
-          {/* Day Headers */}
-          <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border bg-muted/40 sticky top-0 z-10">
-            <div className="p-2" /> {/* Time column spacer */}
-            {weekDays.map((day) => {
-              const dayIsToday = isToday(day);
-              const dayIsYesterday = isYesterday(day);
-              const dateKey = format(day, 'yyyy-MM-dd');
-              const apptCount = appointmentsByDate.get(dateKey)?.length || 0;
-              
-              return (
-                <div 
-                  key={day.toISOString()} 
-                  className={cn(
-                    'py-3 px-2 text-center border-l border-border',
-                    dayIsToday && 'bg-primary/5'
-                  )}
-                >
-                  <div className={cn(
-                    'text-[10px] uppercase tracking-wider font-medium',
-                    dayIsToday ? 'text-primary' : 'text-muted-foreground'
-                  )}>
-                    {format(day, 'EEE')}
-                  </div>
-                  <div className="flex items-center justify-center mt-1">
-                    <span className={cn(
-                      'text-xl font-semibold flex items-center justify-center transition-colors',
-                      dayIsToday 
-                        ? 'bg-foreground text-background w-8 h-8 rounded-full' 
-                        : 'text-foreground'
+          {/* Day Headers with luxury blur effect */}
+          <div className="sticky top-0 z-10">
+            <div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border bg-muted/40">
+              <div className="p-2" /> {/* Time column spacer */}
+              {weekDays.map((day) => {
+                const dayIsToday = isToday(day);
+                const dayIsYesterday = isYesterday(day);
+                const dateKey = format(day, 'yyyy-MM-dd');
+                const apptCount = appointmentsByDate.get(dateKey)?.length || 0;
+                
+                return (
+                  <div 
+                    key={day.toISOString()} 
+                    className={cn(
+                      'py-3 px-2 text-center border-l border-border',
+                      dayIsToday && 'bg-primary/5'
+                    )}
+                  >
+                    <div className={cn(
+                      'text-[10px] uppercase tracking-wider font-medium',
+                      dayIsToday ? 'text-primary' : 'text-muted-foreground'
                     )}>
-                      {format(day, 'd')}
-                    </span>
+                      {format(day, 'EEE')}
+                    </div>
+                    <div className="flex items-center justify-center mt-1">
+                      <span className={cn(
+                        'text-xl font-semibold flex items-center justify-center transition-colors',
+                        dayIsToday 
+                          ? 'bg-foreground text-background w-8 h-8 rounded-full' 
+                          : 'text-foreground'
+                      )}>
+                        {format(day, 'd')}
+                      </span>
+                    </div>
+                    <div className={cn(
+                      'text-[10px] mt-1',
+                      dayIsToday ? 'text-primary font-medium' : 'text-muted-foreground'
+                    )}>
+                      {dayIsToday ? 'Today' : dayIsYesterday ? 'Yesterday' : `${apptCount} appts`}
+                    </div>
                   </div>
-                  <div className={cn(
-                    'text-[10px] mt-1',
-                    dayIsToday ? 'text-primary font-medium' : 'text-muted-foreground'
-                  )}>
-                    {dayIsToday ? 'Today' : dayIsYesterday ? 'Yesterday' : `${apptCount} appts`}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+            {/* Luxury blur gradient overlay */}
+            <div 
+              className="h-6 w-full pointer-events-none"
+              style={{
+                background: 'linear-gradient(to bottom, hsl(var(--muted) / 0.8), transparent)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                maskImage: 'linear-gradient(to bottom, black, transparent)',
+                WebkitMaskImage: 'linear-gradient(to bottom, black, transparent)',
+              }}
+            />
           </div>
 
           {/* Time Grid */}
