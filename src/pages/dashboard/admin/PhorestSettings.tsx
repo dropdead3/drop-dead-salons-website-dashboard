@@ -59,6 +59,7 @@ import {
   EyeOff,
   Info,
   ChevronDown,
+  Activity,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -66,6 +67,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatDistanceToNow, format } from 'date-fns';
+import { PhorestApiHealthDashboard } from '@/components/dashboard/PhorestApiHealthDashboard';
 
 export default function PhorestSettings() {
   const { toast } = useToast();
@@ -487,6 +489,10 @@ export default function PhorestSettings() {
               <Link2 className="w-4 h-4 mr-2" />
               Staff Mapping
             </TabsTrigger>
+            <TabsTrigger value="health" className="font-display">
+              <Activity className="w-4 h-4 mr-2" />
+              API Health
+            </TabsTrigger>
             <TabsTrigger value="logs" className="font-display">
               <Clock className="w-4 h-4 mr-2" />
               Sync History
@@ -868,6 +874,10 @@ export default function PhorestSettings() {
                 </Table>
               )}
             </Card>
+          </TabsContent>
+
+          <TabsContent value="health">
+            <PhorestApiHealthDashboard />
           </TabsContent>
 
           <TabsContent value="logs">
