@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -13,12 +13,14 @@ import { BookingWizard } from '@/components/dashboard/schedule/booking';
 import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '@/hooks/usePhorestCalendar';
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Schedule() {
   const isMobile = useIsMobile();
   const { preferences } = useCalendarPreferences();
+  const effectiveUserId = useEffectiveUserId();
   
   const {
     currentDate,
@@ -27,7 +29,7 @@ export default function Schedule() {
     setView,
     filters,
     setFilters,
-    appointments,
+    appointments: allAppointments,
     isLoading,
     lastSync,
     canCreate,
@@ -43,6 +45,15 @@ export default function Schedule() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
+
+  // Filter appointments based on showAllStaff toggle
+  const appointments = useMemo(() => {
+    if (showAllStaff) {
+      return allAppointments;
+    }
+    // When toggle is off, only show current user's appointments
+    return allAppointments.filter(apt => apt.stylist_user_id === effectiveUserId);
+  }, [allAppointments, showAllStaff, effectiveUserId]);
 
   // Fetch stylists for DayView
   const { data: stylists = [] } = useQuery({
