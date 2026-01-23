@@ -375,9 +375,9 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
         </ScrollArea>
 
         <div className="p-2 border-t border-border">
-          <Link to="/dashboard">
+          <Link to="/dashboard/notifications/all">
             <Button variant="ghost" size="sm" className="w-full justify-center text-xs h-8">
-              View all announcements
+              See all notifications
               <ExternalLink className="w-3 h-3 ml-1" />
             </Button>
           </Link>
