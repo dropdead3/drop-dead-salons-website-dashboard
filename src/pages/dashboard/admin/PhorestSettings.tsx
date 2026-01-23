@@ -623,10 +623,10 @@ export default function PhorestSettings() {
                         </TableCell>
                         <TableCell>
                           {mapping.phorest_branch_name ? (
-                            <Badge variant="outline" className="gap-1">
+                            <span className="flex items-center gap-1 text-sm text-muted-foreground">
                               <MapPin className="w-3 h-3" />
                               {mapping.phorest_branch_name}
-                            </Badge>
+                            </span>
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
