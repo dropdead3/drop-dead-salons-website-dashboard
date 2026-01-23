@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { Phone, Clock } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColors, getServiceColor } from '@/hooks/useServiceCategoryColors';
-import { useCalendarTheme } from '@/hooks/useCalendarTheme';
 
 interface DayViewProps {
   date: Date;
@@ -198,7 +197,6 @@ export function DayView({
 }: DayViewProps) {
   const ROW_HEIGHT = 16; // 16px per 15-min slot
   const { data: serviceCategoryColors } = useServiceCategoryColors();
-  const { theme } = useCalendarTheme();
   
   // Generate time labels for each hour with 15-min intervals
   const timeSlots = useMemo(() => {
@@ -261,52 +259,25 @@ export function DayView({
   };
 
   return (
-    <div 
-      className="flex flex-col h-full rounded-lg border overflow-hidden"
-      style={{ 
-        backgroundColor: theme.calendar_bg_color,
-        borderColor: theme.cell_border_color
-      }}
-    >
+    <div className="flex flex-col h-full bg-card rounded-lg border border-border overflow-hidden">
       {/* Calendar Grid */}
       <div className="flex-1 overflow-auto">
         <div className="min-w-[600px]">
-          {/* Stylist Headers */}
-          <div 
-            className="flex sticky top-0 z-10"
-            style={{ borderBottom: `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}` }}
-          >
+          {/* Stylist Headers - Phorest dark style */}
+          <div className="flex border-b sticky top-0 z-10">
             {/* Week indicator */}
-            <div 
-              className="w-14 shrink-0 flex items-center justify-center text-xs font-medium"
-              style={{ 
-                backgroundColor: theme.days_row_bg_color,
-                color: theme.days_row_text_color,
-                borderRight: `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}`
-              }}
-            >
+            <div className="w-14 shrink-0 bg-muted/50 flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
               W {weekNumber}
             </div>
             
-            {stylists.map((stylist, idx) => (
+            {stylists.map((stylist) => (
               <div 
                 key={stylist.user_id} 
-                className="flex-1 min-w-[160px] p-2 flex items-center gap-2"
-                style={{ 
-                  backgroundColor: theme.header_bg_color,
-                  color: theme.header_text_color,
-                  borderRight: idx < stylists.length - 1 ? `1px solid ${theme.header_bg_color}40` : undefined
-                }}
+                className="flex-1 min-w-[160px] bg-foreground text-background p-2 flex items-center gap-2 border-r border-foreground/20 last:border-r-0"
               >
-                <Avatar className="h-8 w-8 border" style={{ borderColor: `${theme.header_text_color}30` }}>
+                <Avatar className="h-8 w-8 border border-background/20">
                   <AvatarImage src={stylist.photo_url || undefined} />
-                  <AvatarFallback 
-                    className="text-xs"
-                    style={{ 
-                      backgroundColor: `${theme.header_text_color}20`,
-                      color: theme.header_text_color
-                    }}
-                  >
+                  <AvatarFallback className="text-xs bg-background/20 text-background">
                     {(stylist.display_name || stylist.full_name).slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -320,28 +291,18 @@ export function DayView({
           {/* Time Grid */}
           <div className="flex relative">
             {/* Time Labels */}
-            <div 
-              className="w-14 shrink-0"
-              style={{ 
-                backgroundColor: theme.days_row_bg_color,
-                borderRight: `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}`
-              }}
-            >
+            <div className="w-14 shrink-0 border-r bg-muted/30">
               {timeSlots.map(({ hour, minute }, idx) => (
                 <div 
                   key={`${hour}-${minute}`}
-                  className="h-4 text-right pr-2 flex items-center justify-end"
-                  style={{ 
-                    borderTop: `1px ${minute === 0 ? theme.cell_border_style : 'dashed'} ${
-                      minute === 0 ? theme.hour_line_color : `${theme.hour_line_color}40`
-                    }`
-                  }}
+                  className={cn(
+                    'h-4 text-right pr-2 flex items-center justify-end',
+                    minute === 0 && 'border-t border-border',
+                    minute !== 0 && 'border-t border-dashed border-border/30'
+                  )}
                 >
                   {minute === 0 && (
-                    <span 
-                      className="text-[11px] -mt-2"
-                      style={{ color: theme.days_row_text_color }}
-                    >
+                    <span className="text-[11px] text-muted-foreground -mt-2">
                       {formatHour(hour)}
                     </span>
                   )}
@@ -350,49 +311,34 @@ export function DayView({
             </div>
 
             {/* Stylist Columns */}
-            {stylists.map((stylist, stylistIdx) => {
+            {stylists.map((stylist) => {
               const stylistAppointments = appointmentsByStylist.get(stylist.user_id) || [];
               
               return (
                 <div 
                   key={stylist.user_id} 
-                  className="flex-1 min-w-[160px] relative"
-                  style={{ 
-                    borderRight: stylistIdx < stylists.length - 1 
-                      ? `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}` 
-                      : undefined
-                  }}
+                  className="flex-1 min-w-[160px] relative border-r last:border-r-0"
                 >
                   {/* Time slot backgrounds */}
                   {timeSlots.map(({ hour, minute }, idx) => {
-                    const isAvailable = hour >= 9 && hour < 18;
+                    // Alternate available/unavailable (gray for blocked times)
+                    const isAvailable = hour >= 9 && hour < 18; // Example: 9-6 available
                     
                     return (
                       <div 
                         key={`${hour}-${minute}`}
-                        className="h-4 cursor-pointer transition-colors"
-                        style={{ 
-                          backgroundColor: isAvailable ? theme.calendar_bg_color : theme.outside_month_bg_color,
-                          borderTop: `1px ${minute === 0 ? theme.cell_border_style : 'dashed'} ${
-                            minute === 0 
-                              ? theme.hour_line_color 
-                              : minute === 30 
-                                ? theme.half_hour_line_color 
-                                : theme.quarter_hour_line_color
-                          }`
-                        }}
+                        className={cn(
+                          'h-4',
+                          minute === 0 && 'border-t border-border',
+                          minute !== 0 && 'border-t border-dashed border-border/30',
+                          isAvailable 
+                            ? 'bg-background hover:bg-muted/30 cursor-pointer' 
+                            : 'bg-muted/50'
+                        )}
                         onClick={() => {
                           if (isAvailable) {
                             onSlotClick?.(stylist.user_id, `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
                           }
-                        }}
-                        onMouseEnter={(e) => {
-                          if (isAvailable) {
-                            (e.target as HTMLElement).style.backgroundColor = `${theme.today_highlight_color}20`;
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.target as HTMLElement).style.backgroundColor = isAvailable ? theme.calendar_bg_color : theme.outside_month_bg_color;
                         }}
                       />
                     );
@@ -422,16 +368,10 @@ export function DayView({
             {/* Current Time Indicator */}
             {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
               <div 
-                className="absolute left-14 right-0 border-t-2 pointer-events-none z-20"
-                style={{ 
-                  top: `${currentTimeOffset}px`,
-                  borderColor: theme.current_time_color
-                }}
+                className="absolute left-14 right-0 border-t-2 border-destructive pointer-events-none z-20"
+                style={{ top: `${currentTimeOffset}px` }}
               >
-                <div 
-                  className="absolute -left-1 -top-1.5 w-3 h-3 rounded-full"
-                  style={{ backgroundColor: theme.current_time_color }}
-                />
+                <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-destructive rounded-full" />
               </div>
             )}
           </div>

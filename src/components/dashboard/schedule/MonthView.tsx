@@ -8,10 +8,10 @@ import {
   addDays,
   isSameMonth,
   isToday,
+  isSameDay
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
-import { useCalendarTheme, type CalendarThemeSettings } from '@/hooks/useCalendarTheme';
 
 interface MonthViewProps {
   currentDate: Date;
@@ -35,8 +35,6 @@ export function MonthView({
   onDayClick,
   onAppointmentClick,
 }: MonthViewProps) {
-  const { theme } = useCalendarTheme();
-  
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -76,54 +74,21 @@ export function MonthView({
   const weekDayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="flex flex-col h-full rounded-lg border overflow-hidden" style={{ backgroundColor: theme.calendar_bg_color }}>
-      {/* Month Header */}
-      <div 
-        className="px-4 py-3 text-center font-medium"
-        style={{ 
-          backgroundColor: theme.header_bg_color, 
-          color: theme.header_text_color 
-        }}
-      >
-        {format(currentDate, 'MMMM yyyy')}
-      </div>
-      
+    <div className="flex flex-col h-full">
       {/* Weekday Headers */}
-      <div 
-        className="grid grid-cols-7"
-        style={{ 
-          backgroundColor: theme.days_row_bg_color,
-          borderBottom: `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}`
-        }}
-      >
-        {weekDayHeaders.map((day, i) => {
-          const dayOfWeek = new Date().getDay();
-          const isCurrentDayOfWeek = i === dayOfWeek;
-          return (
-            <div 
-              key={day} 
-              className="p-2 text-center text-sm font-medium"
-              style={{ 
-                color: isCurrentDayOfWeek ? theme.today_highlight_color : theme.days_row_text_color 
-              }}
-            >
-              {day}
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-7 border-b bg-muted/50">
+        {weekDayHeaders.map((day) => (
+          <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
+            {day}
+          </div>
+        ))}
       </div>
 
       {/* Calendar Grid */}
       <div className="flex-1 grid grid-rows-[repeat(auto-fill,minmax(100px,1fr))]">
         {weeks.map((week, weekIdx) => (
-          <div 
-            key={weekIdx} 
-            className="grid grid-cols-7"
-            style={{
-              borderBottom: weekIdx < weeks.length - 1 ? `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}` : undefined
-            }}
-          >
-            {week.map((day, dayIdx) => {
+          <div key={weekIdx} className="grid grid-cols-7 border-b last:border-b-0">
+            {week.map((day) => {
               const dateKey = format(day, 'yyyy-MM-dd');
               const dayAppointments = appointmentsByDate.get(dateKey) || [];
               const isCurrentMonth = isSameMonth(day, currentDate);
@@ -138,28 +103,18 @@ export function MonthView({
               return (
                 <div
                   key={day.toISOString()}
-                  className="min-h-[100px] p-1.5 cursor-pointer hover:opacity-80 transition-colors"
-                  style={{
-                    backgroundColor: !isCurrentMonth 
-                      ? theme.outside_month_bg_color 
-                      : isCurrentDay 
-                        ? `${theme.today_highlight_color}15` 
-                        : theme.calendar_bg_color,
-                    borderRight: dayIdx < 6 ? `${theme.cell_border_width}px ${theme.cell_border_style} ${theme.cell_border_color}` : undefined,
-                    opacity: !isCurrentMonth ? 0.6 : 1,
-                  }}
+                  className={cn(
+                    'min-h-[100px] p-1.5 border-r last:border-r-0 cursor-pointer hover:bg-muted/50 transition-colors',
+                    !isCurrentMonth && 'bg-muted/30 text-muted-foreground',
+                    isCurrentDay && 'bg-primary/5'
+                  )}
                   onClick={() => onDayClick(day)}
                 >
                   {/* Day Number */}
-                  <div 
-                    className={cn(
-                      'text-sm font-medium mb-1 w-7 h-7 flex items-center justify-center rounded-full'
-                    )}
-                    style={isCurrentDay ? { 
-                      backgroundColor: theme.today_badge_bg_color, 
-                      color: theme.today_badge_text_color 
-                    } : undefined}
-                  >
+                  <div className={cn(
+                    'text-sm font-medium mb-1 w-7 h-7 flex items-center justify-center rounded-full',
+                    isCurrentDay && 'bg-primary text-primary-foreground'
+                  )}>
                     {format(day, 'd')}
                   </div>
 
