@@ -170,18 +170,31 @@ export function QuickBookingPopover({
   // Fetch qualification data for selected services
   const { data: qualificationData } = useQualifiedStaffForServices(selectedServices, selectedLocation);
 
-  // Filter stylists by qualification if qualification data exists
+  // Filter stylists by qualification and sort by level (highest first)
   const filteredStylists = useMemo(() => {
-    if (!qualificationData?.hasQualificationData) {
-      // No qualification data synced yet - show all stylists
-      return stylists;
+    let list = stylists;
+    
+    if (qualificationData?.hasQualificationData) {
+      // Filter to only show qualified stylists
+      list = stylists.filter(stylist => 
+        qualificationData.qualifiedStaffIds.includes(stylist.phorest_staff_id)
+      );
     }
     
-    // Filter to only show qualified stylists
-    return stylists.filter(stylist => 
-      qualificationData.qualifiedStaffIds.includes(stylist.phorest_staff_id)
-    );
+    // Sort by level number descending (highest level first)
+    return [...list].sort((a, b) => {
+      const levelA = getLevelNumber(a.employee_profiles?.stylist_level) ?? 0;
+      const levelB = getLevelNumber(b.employee_profiles?.stylist_level) ?? 0;
+      return levelB - levelA;
+    });
   }, [stylists, qualificationData]);
+
+  // Auto-select highest level stylist when entering stylist step
+  useEffect(() => {
+    if (step === 'stylist' && filteredStylists.length > 0 && !selectedStylist) {
+      setSelectedStylist(filteredStylists[0].user_id);
+    }
+  }, [step, filteredStylists, selectedStylist]);
 
   // totalDuration and totalPrice use selectedServiceDetails defined above
 
