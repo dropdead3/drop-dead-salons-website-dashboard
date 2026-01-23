@@ -246,12 +246,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Announcements Widget - at the very top (hide when collapsed) */}
       {!isCollapsed && <SidebarAnnouncementsWidget onNavClick={onNavClick} />}
 
-      {/* Phorest Sync Status Widget - show for admins/managers */}
-      {(roles.includes('admin') || roles.includes('super_admin') || roles.includes('manager')) && (
-        <div className="mb-2">
-          <SidebarSyncStatusWidget isCollapsed={isCollapsed} onNavClick={onNavClick} />
-        </div>
-      )}
+      {/* Phorest Sync Status Widget moved to header popout */}
 
       {/* Navigation */}
       <nav ref={internalRef} className="flex-1 py-4 overflow-y-auto">
