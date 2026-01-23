@@ -322,7 +322,7 @@ export function QuickBookingPopover({
         <PopoverContent 
           side="right" 
           align="center" 
-          className="!fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 w-[380px] p-0 shadow-xl border-border rounded-xl overflow-hidden z-50"
+          className="!fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 w-[380px] p-0 shadow-xl border-border rounded-xl overflow-hidden z-50 animate-enter"
           sideOffset={0}
         >
           {/* Header */}
