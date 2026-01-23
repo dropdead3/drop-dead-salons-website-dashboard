@@ -35,6 +35,7 @@ const SAMPLE_APPOINTMENTS = [
 
 const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17];
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu'];
+const BLOCKED_CATEGORIES = ['Block', 'Break'];
 const ROW_HEIGHT = 14; // pixels per 15-min slot
 
 function parseTimeToMinutes(time: string): number {
@@ -141,7 +142,32 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                       color: colors.text,
                     }}
                   >
-                    <div className="p-1 h-full flex flex-col">
+                    {/* X pattern for blocked entries */}
+                    {BLOCKED_CATEGORIES.includes(apt.category) && (
+                      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                        <div 
+                          className="absolute inset-0"
+                          style={{
+                            background: `linear-gradient(to bottom right, 
+                              transparent calc(50% - 0.5px), 
+                              ${colors.text}30 calc(50% - 0.5px), 
+                              ${colors.text}30 calc(50% + 0.5px), 
+                              transparent calc(50% + 0.5px))`,
+                          }}
+                        />
+                        <div 
+                          className="absolute inset-0"
+                          style={{
+                            background: `linear-gradient(to bottom left, 
+                              transparent calc(50% - 0.5px), 
+                              ${colors.text}30 calc(50% - 0.5px), 
+                              ${colors.text}30 calc(50% + 0.5px), 
+                              transparent calc(50% + 0.5px))`,
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="p-1 h-full flex flex-col relative z-10">
                       <div className="flex items-center gap-1">
                         <span
                           className="text-[9px] font-bold px-1 py-0.5 rounded"
