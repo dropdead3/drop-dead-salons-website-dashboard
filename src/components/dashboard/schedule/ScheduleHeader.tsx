@@ -193,7 +193,10 @@ export function ScheduleHeader({
                 key={day.toISOString()}
                 variant={isSelected && !isTodayDate ? 'secondary' : 'ghost'}
                 size="sm"
-                onClick={() => setCurrentDate(day)}
+                onClick={() => {
+                  setCurrentDate(day);
+                  setView('day');
+                }}
                 className={cn(
                   'min-w-[50px]',
                   isSelected && 'font-semibold',
