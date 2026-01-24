@@ -999,7 +999,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
       )}>
         <div className={cn("min-h-screen flex flex-col", isAdmin && "lg:pt-0")}>
-          <div className="flex-1">
+          <div className="flex-1 px-4 md:px-6 lg:px-8 py-6">
             {children}
           </div>
           {/* Dashboard Footer */}
