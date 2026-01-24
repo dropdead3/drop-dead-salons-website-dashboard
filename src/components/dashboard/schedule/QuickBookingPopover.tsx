@@ -51,11 +51,12 @@ interface PhorestClient {
   name: string;
   email: string | null;
   phone: string | null;
+  preferred_stylist_id: string | null;
 }
 
 type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
 
-const STEPS: Step[] = ['service', 'location', 'stylist', 'client', 'confirm'];
+const STEPS: Step[] = ['service', 'location', 'client', 'stylist', 'confirm'];
 
 // Sort categories with consultation first
 const sortCategories = (categories: string[]): string[] => {
@@ -89,6 +90,7 @@ export function QuickBookingPopover({
   const [selectedLocation, setSelectedLocation] = useState(defaultLocationId || '');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [serviceSearch, setServiceSearch] = useState('');
+  const [autoSelectReason, setAutoSelectReason] = useState<'previous' | 'self' | 'highest' | null>(null);
 
   // Sync location when popover opens with a new default
   useEffect(() => {
@@ -190,27 +192,37 @@ export function QuickBookingPopover({
   }, [stylists, qualificationData]);
 
   // Auto-select stylist when entering stylist step
-  // Priority: logged-in stylist/stylist_assistant > highest level stylist
+  // Priority: logged-in stylist/stylist_assistant > client's previous stylist > highest level stylist
   useEffect(() => {
     if (step === 'stylist' && filteredStylists.length > 0 && !selectedStylist) {
-      // Check if current user is a stylist or stylist_assistant
+      // Priority 1: If logged-in user is stylist/stylist_assistant, select themselves
       const isStylistRole = roles.some(r => ['stylist', 'stylist_assistant'].includes(r));
-      
       if (isStylistRole && user?.id) {
-        // Try to find the logged-in user in the filtered stylists list
         const selfStylist = filteredStylists.find(s => s.user_id === user.id);
-        
         if (selfStylist) {
-          // Auto-select themselves
           setSelectedStylist(selfStylist.user_id);
+          setAutoSelectReason('self');
           return;
         }
       }
       
-      // Fallback: select highest level stylist (first in sorted list)
+      // Priority 2: If client has a preferred/previous stylist who is qualified
+      if (selectedClient?.preferred_stylist_id) {
+        const preferredStylist = filteredStylists.find(
+          s => s.user_id === selectedClient.preferred_stylist_id
+        );
+        if (preferredStylist) {
+          setSelectedStylist(preferredStylist.user_id);
+          setAutoSelectReason('previous');
+          return;
+        }
+      }
+      
+      // Priority 3: Fallback to highest level stylist (first in sorted list)
       setSelectedStylist(filteredStylists[0].user_id);
+      setAutoSelectReason('highest');
     }
-  }, [step, filteredStylists, selectedStylist, roles, user?.id]);
+  }, [step, filteredStylists, selectedStylist, roles, user?.id, selectedClient]);
 
   // totalDuration and totalPrice use selectedServiceDetails defined above
 
@@ -286,12 +298,16 @@ export function QuickBookingPopover({
     setSelectedLocation('');
     setSelectedCategory(null);
     setServiceSearch('');
+    setAutoSelectReason(null);
     onOpenChange(false);
   };
 
   const handleSelectClient = (client: PhorestClient) => {
     setSelectedClient(client);
-    setStep('confirm');
+    // Reset stylist selection when client changes so auto-select can run
+    setSelectedStylist('');
+    setAutoSelectReason(null);
+    setStep('stylist');
   };
 
   const handleServicesComplete = () => {
@@ -303,14 +319,17 @@ export function QuickBookingPopover({
       case 'location':
         setStep('service');
         break;
-      case 'stylist':
+      case 'client':
         setStep('location');
         break;
-      case 'client':
-        setStep('stylist');
+      case 'stylist':
+        // Reset stylist when going back so auto-select can run again
+        setSelectedStylist('');
+        setAutoSelectReason(null);
+        setStep('client');
         break;
       case 'confirm':
-        setStep('client');
+        setStep('stylist');
         break;
     }
   };
@@ -801,7 +820,7 @@ export function QuickBookingPopover({
                 <Button
                   className="w-full h-9"
                   disabled={!selectedLocation}
-                  onClick={() => setStep('stylist')}
+                  onClick={() => setStep('client')}
                 >
                   Confirm location
                 </Button>
@@ -809,11 +828,19 @@ export function QuickBookingPopover({
             </div>
           )}
 
-          {/* Step 3: Stylist Selection */}
+          {/* Step 4: Stylist Selection */}
           {step === 'stylist' && (
             <div className="flex flex-col" style={{ height: '400px' }}>
               <ScrollArea className="flex-1">
                 <div className="p-4">
+                  {/* Previous stylist notice */}
+                  {autoSelectReason === 'previous' && selectedClient && (
+                    <div className="flex items-center gap-2 p-2.5 mb-3 bg-accent/50 text-accent-foreground rounded-lg text-xs border border-accent">
+                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                      <span>Auto-selected {selectedClient.name.split(' ')[0]}'s previous stylist</span>
+                    </div>
+                  )}
+                  
                   <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
                     Available Stylists
                     {qualificationData?.hasQualificationData && selectedServices.length > 0 && (
@@ -1051,6 +1078,7 @@ export function QuickBookingPopover({
             name: client.name,
             email: client.email,
             phone: client.phone,
+            preferred_stylist_id: null,
           });
           setShowNewClientDialog(false);
         }}
