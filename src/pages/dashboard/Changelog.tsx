@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +27,7 @@ import { MobileChangelogViewer } from '@/components/dashboard/MobileChangelogVie
 import { MobileFeatureRequestViewer } from '@/components/dashboard/MobileFeatureRequestViewer';
 import { ChangelogFAB } from '@/components/dashboard/ChangelogFAB';
 import { MobileSubmitDrawer } from '@/components/dashboard/MobileSubmitDrawer';
+import { ChangelogSearchFilter, filterChangelogEntries, type ChangelogFilters } from '@/components/dashboard/ChangelogSearchFilter';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const ENTRY_TYPE_CONFIG: Record<string, { icon: typeof Sparkles; label: string; color: string }> = {
@@ -271,6 +271,14 @@ export default function Changelog() {
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [newRequest, setNewRequest] = useState({ title: '', description: '', category: 'general' });
   
+  // Search and filter state
+  const [filters, setFilters] = useState<ChangelogFilters>({
+    keyword: '',
+    types: [],
+    dateFrom: undefined,
+    dateTo: undefined,
+  });
+  
   // Mobile viewer states
   const [changelogViewerOpen, setChangelogViewerOpen] = useState(false);
   const [changelogViewerIndex, setChangelogViewerIndex] = useState(0);
@@ -283,15 +291,29 @@ export default function Changelog() {
   const voteRequest = useVoteFeatureRequest();
   const submitRequest = useSubmitFeatureRequest();
 
-  // Split entries
-  const recentUpdates = entries.filter(e => e.entry_type !== 'coming_soon');
-  const comingSoon = entries.filter(e => e.entry_type === 'coming_soon');
+  // Filter entries based on search/filters
+  const filteredEntries = useMemo(() => 
+    filterChangelogEntries(entries, filters), 
+    [entries, filters]
+  );
+
+  // Split filtered entries
+  const recentUpdates = useMemo(() => 
+    filteredEntries.filter(e => e.entry_type !== 'coming_soon'),
+    [filteredEntries]
+  );
+  const comingSoon = useMemo(() => 
+    filteredEntries.filter(e => e.entry_type === 'coming_soon'),
+    [filteredEntries]
+  );
 
   // Top voted requests (not completed/declined)
   const topRequests = [...requests]
     .filter(r => !['completed', 'declined'].includes(r.status))
     .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
     .slice(0, 5);
+  
+  const hasActiveFilters = filters.keyword || filters.types.length > 0 || filters.dateFrom || filters.dateTo;
 
   const handleSubmitRequest = async () => {
     if (!newRequest.title || !newRequest.description) return;
@@ -349,23 +371,36 @@ export default function Changelog() {
 
         {activeTab === 'list' ? (
           <div className="space-y-8">
+            {/* Search and Filter */}
+            <ChangelogSearchFilter
+              filters={filters}
+              onFiltersChange={setFilters}
+              resultCount={filteredEntries.length}
+              totalCount={entries.length}
+            />
+
             {/* Recent Updates */}
             <section>
               <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                Recent Updates
+                {hasActiveFilters ? 'Search Results' : 'Recent Updates'}
+                {hasActiveFilters && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({recentUpdates.length} updates)
+                  </span>
+                )}
               </h2>
               {entriesLoading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading...</div>
               ) : recentUpdates.length === 0 ? (
                 <Card>
                   <CardContent className="py-8 text-center text-muted-foreground">
-                    No updates yet. Check back soon!
+                    {hasActiveFilters ? 'No updates match your filters.' : 'No updates yet. Check back soon!'}
                   </CardContent>
                 </Card>
               ) : isMobile ? (
                 <div className="space-y-3">
-                  {recentUpdates.slice(0, 5).map((entry, index) => (
+                  {recentUpdates.map((entry, index) => (
                     <MobileChangelogCard
                       key={entry.id}
                       entry={entry}
@@ -378,15 +413,15 @@ export default function Changelog() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {recentUpdates.slice(0, 5).map(entry => (
+                  {recentUpdates.map(entry => (
                     <ChangelogEntryCard key={entry.id} entry={entry} />
                   ))}
                 </div>
               )}
             </section>
 
-            {/* Coming Soon */}
-            {comingSoon.length > 0 && (
+            {/* Coming Soon - only show if not filtering by types that exclude coming_soon, or if there are results */}
+            {(comingSoon.length > 0 || (!hasActiveFilters && !entriesLoading)) && comingSoon.length > 0 && (
               <section>
                 <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2">
                   <Clock className="h-5 w-5 text-purple-500" />
@@ -394,6 +429,11 @@ export default function Changelog() {
                   <span className="text-xs sm:text-sm font-normal text-muted-foreground ml-2">
                     Vote to help prioritize!
                   </span>
+                  {hasActiveFilters && (
+                    <span className="text-sm font-normal text-muted-foreground">
+                      ({comingSoon.length})
+                    </span>
+                  )}
                 </h2>
                 {isMobile ? (
                   <div className="space-y-3">
@@ -551,7 +591,7 @@ export default function Changelog() {
 
             {/* Fullscreen changelog viewer */}
             <MobileChangelogViewer
-              entries={[...recentUpdates.slice(0, 5), ...comingSoon]}
+              entries={[...recentUpdates, ...comingSoon]}
               open={changelogViewerOpen}
               initialIndex={changelogViewerIndex}
               onClose={() => setChangelogViewerOpen(false)}
