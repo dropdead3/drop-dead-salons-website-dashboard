@@ -46,7 +46,7 @@ interface ScheduleHeaderProps {
   stylists: Array<{ user_id: string; display_name: string | null; full_name: string }>;
   selectedLocation: string;
   onLocationChange: (locationId: string) => void;
-  locations: Array<{ id: string; name: string }>;
+  locations: Array<{ id: string; name: string; city?: string | null }>;
   onNewBooking: () => void;
   canCreate?: boolean;
   calendarFilters: CalendarFilterState;
@@ -177,11 +177,24 @@ export function ScheduleHeader({
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
               <SelectContent>
-                {locations.map((loc) => (
-                  <SelectItem key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </SelectItem>
-                ))}
+                {locations.map((loc) => {
+                  const cityState = loc.city 
+                    ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
+                    : '';
+                  
+                  return (
+                    <SelectItem key={loc.id} value={loc.id}>
+                      <span className="flex items-center gap-2">
+                        <span>{loc.name}</span>
+                        {cityState && (
+                          <span className="text-xs text-muted-foreground">
+                            {cityState}
+                          </span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             
