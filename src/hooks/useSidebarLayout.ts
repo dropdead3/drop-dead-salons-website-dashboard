@@ -106,7 +106,30 @@ export function isBuiltInSection(sectionId: string): boolean {
   return DEFAULT_SECTION_ORDER.includes(sectionId);
 }
 
+// Check if a role has any visibility overrides configured
+export function hasRoleOverrides(
+  layout: SidebarLayoutConfig | null | undefined,
+  role: string
+): boolean {
+  if (!layout?.roleVisibility) return false;
+  const roleConfig = layout.roleVisibility[role];
+  if (!roleConfig) return false;
+  // Has override if there are any hidden sections or hidden links defined
+  const hasHiddenSections = roleConfig.hiddenSections && roleConfig.hiddenSections.length > 0;
+  const hasHiddenLinks = roleConfig.hiddenLinks && Object.keys(roleConfig.hiddenLinks).length > 0;
+  return hasHiddenSections || hasHiddenLinks;
+}
+
+// Check if ANY of the user's roles have overrides configured
+export function anyRoleHasOverrides(
+  layout: SidebarLayoutConfig | null | undefined,
+  userRoles: string[]
+): boolean {
+  return userRoles.some(role => hasRoleOverrides(layout, role));
+}
+
 // Get effective hidden sections for a user based on their roles
+// Now serves as the PRIMARY visibility control - configurator is source of truth
 export function getEffectiveHiddenSections(
   layout: SidebarLayoutConfig | null | undefined,
   userRoles: string[]
@@ -116,29 +139,34 @@ export function getEffectiveHiddenSections(
   // Start with global hidden sections
   const hidden = new Set(layout.hiddenSections || []);
   
-  // Apply role-specific visibility (if a section is hidden for ANY of user's roles, it's hidden)
-  // But if a section is visible for at least one role, it should be visible
-  // Logic: A section is hidden if it's globally hidden OR hidden for ALL of the user's roles
   const roleVisibility = layout.roleVisibility || {};
   
-  // For each section, check if it's visible for at least one of the user's roles
-  layout.sectionOrder.forEach((sectionId) => {
-    let hiddenForAllRoles = true;
-    let hasRoleOverride = false;
+  // Check if any of the user's roles have overrides configured
+  const rolesWithOverrides = userRoles.filter(role => hasRoleOverrides(layout, role));
+  
+  // If no roles have overrides, only use global hidden sections
+  if (rolesWithOverrides.length === 0) {
+    return Array.from(hidden);
+  }
+  
+  // For each section, check if it's visible for at least one of the user's roles with overrides
+  // A section is shown if ANY role has it visible (not hidden)
+  const sectionOrder = layout.sectionOrder || DEFAULT_SECTION_ORDER;
+  
+  sectionOrder.forEach((sectionId) => {
+    let visibleInAnyRole = false;
     
-    for (const role of userRoles) {
+    for (const role of rolesWithOverrides) {
       const roleConfig = roleVisibility[role];
-      if (roleConfig) {
-        hasRoleOverride = true;
-        if (!roleConfig.hiddenSections?.includes(sectionId)) {
-          hiddenForAllRoles = false;
-          break;
-        }
+      // If the role config doesn't have this section in hiddenSections, it's visible for that role
+      if (!roleConfig?.hiddenSections?.includes(sectionId)) {
+        visibleInAnyRole = true;
+        break;
       }
     }
     
-    // If user has role overrides and section is hidden for all their roles, hide it
-    if (hasRoleOverride && hiddenForAllRoles) {
+    // If hidden for all roles with overrides, add to hidden set
+    if (!visibleInAnyRole) {
       hidden.add(sectionId);
     }
   });
@@ -147,6 +175,7 @@ export function getEffectiveHiddenSections(
 }
 
 // Get effective hidden links for a user based on their roles
+// Now serves as the PRIMARY visibility control - configurator is source of truth
 export function getEffectiveHiddenLinks(
   layout: SidebarLayoutConfig | null | undefined,
   userRoles: string[]
@@ -160,27 +189,38 @@ export function getEffectiveHiddenLinks(
     hidden[sectionId] = new Set(links);
   });
   
-  // Apply role-specific visibility
   const roleVisibility = layout.roleVisibility || {};
   
-  // For each section's links, apply role overrides
-  Object.entries(layout.linkOrder || {}).forEach(([sectionId, links]) => {
+  // Check if any of the user's roles have overrides configured
+  const rolesWithOverrides = userRoles.filter(role => hasRoleOverrides(layout, role));
+  
+  // If no roles have overrides, only use global hidden links
+  if (rolesWithOverrides.length === 0) {
+    const result: Record<string, string[]> = {};
+    Object.entries(hidden).forEach(([sectionId, linkSet]) => {
+      result[sectionId] = Array.from(linkSet);
+    });
+    return result;
+  }
+  
+  // For each link in each section, check if it's visible for at least one role with overrides
+  const linkOrder = layout.linkOrder || DEFAULT_LINK_ORDER;
+  
+  Object.entries(linkOrder).forEach(([sectionId, links]) => {
     links.forEach((href) => {
-      let hiddenForAllRoles = true;
-      let hasRoleOverride = false;
+      let visibleInAnyRole = false;
       
-      for (const role of userRoles) {
+      for (const role of rolesWithOverrides) {
         const roleConfig = roleVisibility[role];
-        if (roleConfig?.hiddenLinks?.[sectionId]) {
-          hasRoleOverride = true;
-          if (!roleConfig.hiddenLinks[sectionId].includes(href)) {
-            hiddenForAllRoles = false;
-            break;
-          }
+        // If the role config doesn't have this link in hiddenLinks for this section, it's visible
+        if (!roleConfig?.hiddenLinks?.[sectionId]?.includes(href)) {
+          visibleInAnyRole = true;
+          break;
         }
       }
       
-      if (hasRoleOverride && hiddenForAllRoles) {
+      // If hidden for all roles with overrides, add to hidden set
+      if (!visibleInAnyRole) {
         if (!hidden[sectionId]) hidden[sectionId] = new Set();
         hidden[sectionId].add(href);
       }

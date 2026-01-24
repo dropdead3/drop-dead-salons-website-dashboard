@@ -11,7 +11,7 @@ import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks } from '@/hooks/useSidebarLayout';
+import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 
 interface NavItem {
   href: string;
@@ -393,12 +393,26 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           // Apply custom link ordering (for built-in sections)
           const orderedItems = isCustom ? sectionItems : getOrderedItems(sectionId, sectionItems);
           
-          // Filter out hidden links for this section
-          const sectionHiddenLinks = hiddenLinks[sectionId] || [];
-          const visibleItems = orderedItems.filter(item => !sectionHiddenLinks.includes(item.href));
+          // First, apply permission-based filtering (security layer)
+          const permissionFilteredItems = filterNavItems(orderedItems);
           
-          // Apply section-specific filtering and conditions
-          let filteredItems = filterNavItems(visibleItems);
+          // Then apply dynamic visibility from the configurator (this is the PRIMARY control)
+          // The configurator overrides permission-based visibility
+          const sectionHiddenLinks = hiddenLinks[sectionId] || [];
+          const hasConfiguratorOverrides = anyRoleHasOverrides(sidebarLayout, roles);
+          
+          // If configurator has overrides for this role, use it as the source of truth
+          // Otherwise fall back to permission filtering only
+          let visibleItems: typeof permissionFilteredItems;
+          if (hasConfiguratorOverrides) {
+            // Configurator controls visibility - filter from ordered items, not permission-filtered
+            visibleItems = orderedItems.filter(item => !sectionHiddenLinks.includes(item.href));
+          } else {
+            // No configurator overrides - use permission filtering, then apply global hidden links
+            visibleItems = permissionFilteredItems.filter(item => !sectionHiddenLinks.includes(item.href));
+          }
+          
+          let filteredItems = visibleItems;
           let shouldShow = filteredItems.length > 0;
           
           // Get section label - use custom name for custom sections
@@ -410,6 +424,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           }
           
           // Section-specific logic (only for built-in sections)
+          // Note: When configurator has overrides, these are informational only
+          // The configurator is the primary control for visibility
           if (sectionId === 'housekeeping') {
             // Filter out onboarding when incomplete (shown at top instead)
             filteredItems = filteredItems.filter(item => 
@@ -418,12 +434,16 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             shouldShow = filteredItems.length > 0;
           }
           
-          if (sectionId === 'manager') {
-            shouldShow = effectiveIsCoach && filteredItems.length > 0;
-          }
-          
-          if (sectionId === 'adminOnly') {
-            shouldShow = (roles.includes('admin') || roles.includes('super_admin')) && filteredItems.length > 0;
+          // For manager and adminOnly sections, only apply hardcoded checks 
+          // when configurator doesn't have role-specific overrides
+          if (!hasConfiguratorOverrides) {
+            if (sectionId === 'manager') {
+              shouldShow = effectiveIsCoach && filteredItems.length > 0;
+            }
+            
+            if (sectionId === 'adminOnly') {
+              shouldShow = (roles.includes('admin') || roles.includes('super_admin')) && filteredItems.length > 0;
+            }
           }
           
           if (!shouldShow) return null;
