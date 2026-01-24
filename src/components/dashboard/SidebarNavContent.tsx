@@ -427,10 +427,17 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           // Note: When configurator has overrides, these are informational only
           // The configurator is the primary control for visibility
           if (sectionId === 'housekeeping') {
-            // Filter out onboarding when incomplete (shown at top instead)
-            filteredItems = filteredItems.filter(item => 
-              isOnboardingComplete || item.href !== '/dashboard/onboarding'
-            );
+            // Only filter out onboarding from housekeeping if:
+            // 1. Onboarding is incomplete AND
+            // 2. User is not an admin (admins always see it in housekeeping) AND
+            // 3. The START HERE section will be showing instead
+            const isAdminViewing = roles.includes('admin') || roles.includes('super_admin');
+            if (!isOnboardingComplete && !isAdminViewing) {
+              // Hide from housekeeping - it shows in START HERE at the top instead
+              filteredItems = filteredItems.filter(item => 
+                item.href !== '/dashboard/onboarding'
+              );
+            }
             shouldShow = filteredItems.length > 0;
           }
           
