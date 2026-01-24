@@ -55,9 +55,9 @@ interface PhorestClient {
   preferred_stylist_id: string | null;
 }
 
-type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
+type Step = 'service' | 'location' | 'stylist' | 'client' | 'confirm';
 
-const STEPS: Step[] = ['service', 'location', 'client', 'stylist', 'confirm'];
+const STEPS: Step[] = ['service', 'location', 'stylist', 'client', 'confirm'];
 
 // Sort categories with consultation first
 const sortCategories = (categories: string[]): string[] => {
@@ -230,7 +230,8 @@ export function QuickBookingPopover({
   }, [stylists, qualificationData]);
 
   // Auto-select stylist when entering stylist step for the first time
-  // Priority: logged-in stylist/stylist_assistant > client's previous stylist > highest level stylist
+  // Priority: logged-in stylist/stylist_assistant > highest level stylist
+  // Note: Client is selected AFTER stylist, so we can't use preferred_stylist_id here
   useEffect(() => {
     const stylistStepIndex = STEPS.indexOf('stylist');
     // Only auto-select on first visit to this step
@@ -250,23 +251,11 @@ export function QuickBookingPopover({
         }
       }
       
-      // Priority 2: If client has a preferred/previous stylist who is qualified
-      if (selectedClient?.preferred_stylist_id) {
-        const preferredStylist = filteredStylists.find(
-          s => s.user_id === selectedClient.preferred_stylist_id
-        );
-        if (preferredStylist) {
-          setSelectedStylist(preferredStylist.user_id);
-          setAutoSelectReason('previous');
-          return;
-        }
-      }
-      
-      // Priority 3: Fallback to highest level stylist (first in sorted list)
+      // Priority 2: Fallback to highest level stylist (first in sorted list)
       setSelectedStylist(filteredStylists[0].user_id);
       setAutoSelectReason('highest');
     }
-  }, [step, filteredStylists, selectedStylist, roles, user?.id, selectedClient, highestStepReached]);
+  }, [step, filteredStylists, selectedStylist, roles, user?.id, highestStepReached]);
 
   // totalDuration and totalPrice use selectedServiceDetails defined above
 
@@ -349,12 +338,7 @@ export function QuickBookingPopover({
 
   const handleSelectClient = (client: PhorestClient) => {
     setSelectedClient(client);
-    // Only reset stylist if this is a different client
-    if (client.id !== selectedClient?.id) {
-      setSelectedStylist('');
-      setAutoSelectReason(null);
-    }
-    navigateToStep('stylist');
+    navigateToStep('confirm');
   };
 
   const handleServicesComplete = () => {
@@ -1033,7 +1017,7 @@ export function QuickBookingPopover({
                 <Button
                   className="w-full h-10"
                   disabled={!selectedStylist}
-                  onClick={() => navigateToStep('confirm')}
+                  onClick={() => navigateToStep('client')}
                 >
                   Continue
                 </Button>
