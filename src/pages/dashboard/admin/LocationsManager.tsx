@@ -79,6 +79,7 @@ type LocationFormData = {
   address: string;
   city: string;
   phone: string;
+  store_number: string;
   booking_url: string;
   google_maps_url: string;
   hours: string;
@@ -95,6 +96,7 @@ const emptyForm: LocationFormData = {
   address: '',
   city: '',
   phone: '',
+  store_number: '',
   booking_url: '',
   google_maps_url: '',
   hours: '',
@@ -134,6 +136,7 @@ export default function LocationsManager() {
       address: location.address,
       city: location.city,
       phone: location.phone,
+      store_number: location.store_number || '',
       booking_url: location.booking_url || '',
       google_maps_url: location.google_maps_url || '',
       hours: location.hours || '',
@@ -153,6 +156,7 @@ export default function LocationsManager() {
       address: formData.address,
       city: formData.city,
       phone: formData.phone,
+      store_number: formData.store_number || null,
       booking_url: formData.booking_url || null,
       google_maps_url: formData.google_maps_url || null,
       hours: formatHoursForDisplay(formData.hours_json),
@@ -383,14 +387,28 @@ export default function LocationsManager() {
               
               <TabsContent value="details" className="space-y-4 py-4">
                 <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Location Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
-                      placeholder="e.g., North Mesa"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Location Name</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
+                        placeholder="e.g., North Mesa"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="store_number">Store Number</Label>
+                      <Input
+                        id="store_number"
+                        value={formData.store_number}
+                        onChange={(e) => setFormData(f => ({ ...f, store_number: e.target.value }))}
+                        placeholder="e.g., 001 or NM-01"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Unique identifier for this store
+                      </p>
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
