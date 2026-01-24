@@ -356,6 +356,7 @@ export type Database = {
           logo_light_url: string | null
           mailing_address: string | null
           phone: string | null
+          sidebar_layout: Json | null
           state: string | null
           updated_at: string
           website: string | null
@@ -375,6 +376,7 @@ export type Database = {
           logo_light_url?: string | null
           mailing_address?: string | null
           phone?: string | null
+          sidebar_layout?: Json | null
           state?: string | null
           updated_at?: string
           website?: string | null
@@ -394,6 +396,7 @@ export type Database = {
           logo_light_url?: string | null
           mailing_address?: string | null
           phone?: string | null
+          sidebar_layout?: Json | null
           state?: string | null
           updated_at?: string
           website?: string | null

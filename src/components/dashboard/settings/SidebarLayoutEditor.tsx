@@ -1,0 +1,391 @@
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
+  GripVertical,
+  ChevronDown,
+  ChevronRight,
+  RotateCcw,
+  Save,
+  Loader2,
+  LayoutDashboard,
+  Target,
+  Trophy,
+  Video,
+  BarChart3,
+  Users,
+  FileText,
+  Settings,
+  Bell,
+  HelpCircle,
+  CalendarClock,
+  Contact,
+  Globe,
+  UserPlus,
+  Shield,
+  Quote,
+  Images,
+  Layers,
+  MapPin,
+  Cake,
+  AlertTriangle,
+  CreditCard,
+  Camera,
+  Briefcase,
+  GraduationCap,
+  HandHelping,
+  CalendarDays,
+  DollarSign,
+  Scissors,
+} from 'lucide-react';
+import {
+  useSidebarLayout,
+  useUpdateSidebarLayout,
+  DEFAULT_SECTION_ORDER,
+  DEFAULT_LINK_ORDER,
+  SECTION_LABELS,
+  type SidebarLayoutConfig,
+} from '@/hooks/useSidebarLayout';
+
+// Map hrefs to their labels and icons
+const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
+  '/dashboard': { label: 'Command Center', icon: LayoutDashboard },
+  '/dashboard/schedule': { label: 'Schedule', icon: CalendarDays },
+  '/dashboard/directory': { label: 'Team Directory', icon: Contact },
+  '/dashboard/training': { label: 'Training', icon: Video },
+  '/dashboard/program': { label: 'New-Client Engine Program', icon: Target },
+  '/dashboard/admin/team': { label: 'Program Team Overview', icon: Users },
+  '/dashboard/ring-the-bell': { label: 'Ring the Bell', icon: Bell },
+  '/dashboard/my-graduation': { label: 'My Graduation', icon: GraduationCap },
+  '/dashboard/stats': { label: 'My Stats', icon: BarChart3 },
+  '/dashboard/my-clients': { label: 'My Clients', icon: Users },
+  '/dashboard/leaderboard': { label: 'Leaderboard', icon: Trophy },
+  '/dashboard/admin/sales': { label: 'Sales Dashboard', icon: DollarSign },
+  '/dashboard/admin/operational-analytics': { label: 'Operational Analytics', icon: BarChart3 },
+  '/dashboard/admin/staff-utilization': { label: 'Staff Utilization', icon: Users },
+  '/dashboard/assistant-schedule': { label: 'Assistant Schedule', icon: Users },
+  '/dashboard/schedule-meeting': { label: 'Schedule 1:1 Meeting', icon: CalendarClock },
+  '/dashboard/onboarding': { label: 'Onboarding', icon: Users },
+  '/dashboard/handbooks': { label: 'Handbooks', icon: FileText },
+  '/dashboard/admin/birthdays': { label: 'Birthdays & Anniversaries', icon: Cake },
+  '/dashboard/admin/onboarding-tracker': { label: 'Onboarding Tracker', icon: Layers },
+  '/dashboard/admin/client-engine-tracker': { label: 'Client Engine Tracker', icon: Target },
+  '/dashboard/admin/recruiting': { label: 'Recruiting Pipeline', icon: Briefcase },
+  '/dashboard/admin/graduation-tracker': { label: 'Graduation Tracker', icon: GraduationCap },
+  '/dashboard/admin/assistant-requests': { label: 'Assistant Requests', icon: HandHelping },
+  '/dashboard/admin/strikes': { label: 'Staff Strikes', icon: AlertTriangle },
+  '/dashboard/admin/business-cards': { label: 'Business Cards', icon: CreditCard },
+  '/dashboard/admin/headshots': { label: 'Headshots', icon: Camera },
+  '/dashboard/admin/announcements': { label: 'Create Announcement', icon: Bell },
+  '/dashboard/admin/homepage-stylists': { label: 'Homepage Stylists', icon: Globe },
+  '/dashboard/admin/testimonials': { label: 'Testimonials', icon: Quote },
+  '/dashboard/admin/gallery': { label: 'Gallery', icon: Images },
+  '/dashboard/admin/services': { label: 'Services', icon: Scissors },
+  '/dashboard/admin/locations': { label: 'Locations', icon: MapPin },
+  '/dashboard/admin/accounts': { label: 'Invitations & Approvals', icon: UserPlus },
+  '/dashboard/admin/roles': { label: 'Manage Users & Roles', icon: Shield },
+  '/dashboard/admin/settings': { label: 'Settings', icon: Settings },
+};
+
+// Sortable Link Component
+function SortableLink({ href }: { href: string }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: href });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const config = LINK_CONFIG[href];
+  if (!config) return null;
+
+  const Icon = config.icon;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2 rounded-md bg-muted/50 border border-border/50",
+        isDragging && "opacity-50 ring-2 ring-primary"
+      )}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-muted rounded"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </div>
+      <Icon className="w-4 h-4 text-muted-foreground" />
+      <span className="text-sm">{config.label}</span>
+    </div>
+  );
+}
+
+// Sortable Section Component
+function SortableSection({
+  sectionId,
+  links,
+  isExpanded,
+  onToggle,
+  onLinksReorder,
+}: {
+  sectionId: string;
+  links: string[];
+  isExpanded: boolean;
+  onToggle: () => void;
+  onLinksReorder: (sectionId: string, links: string[]) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: sectionId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleLinkDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = links.indexOf(active.id as string);
+    const newIndex = links.indexOf(over.id as string);
+    const newLinks = arrayMove(links, oldIndex, newIndex);
+    onLinksReorder(sectionId, newLinks);
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "border border-border rounded-lg overflow-hidden",
+        isDragging && "opacity-50 ring-2 ring-primary"
+      )}
+    >
+      <Collapsible open={isExpanded} onOpenChange={onToggle}>
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between px-4 py-3 bg-card hover:bg-muted/50 cursor-pointer transition-colors">
+            <div className="flex items-center gap-3">
+              <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-muted rounded"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <GripVertical className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <span className="font-display text-sm uppercase tracking-wider">
+                {SECTION_LABELS[sectionId] || sectionId}
+              </span>
+              <Badge variant="secondary" className="text-xs">
+                {links.length}
+              </Badge>
+            </div>
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="p-3 bg-muted/30 border-t border-border space-y-2">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleLinkDragEnd}
+            >
+              <SortableContext items={links} strategy={verticalListSortingStrategy}>
+                {links.map((href) => (
+                  <SortableLink key={href} href={href} />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
+export function SidebarLayoutEditor() {
+  const { data: layout, isLoading } = useSidebarLayout();
+  const updateLayout = useUpdateSidebarLayout();
+
+  // Local state for editing
+  const [localSectionOrder, setLocalSectionOrder] = useState<string[]>([]);
+  const [localLinkOrder, setLocalLinkOrder] = useState<Record<string, string[]>>({});
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Initialize local state when layout loads
+  useMemo(() => {
+    if (layout && localSectionOrder.length === 0) {
+      setLocalSectionOrder(layout.sectionOrder);
+      setLocalLinkOrder(layout.linkOrder);
+    }
+  }, [layout, localSectionOrder.length]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleSectionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = localSectionOrder.indexOf(active.id as string);
+    const newIndex = localSectionOrder.indexOf(over.id as string);
+    setLocalSectionOrder(arrayMove(localSectionOrder, oldIndex, newIndex));
+    setHasChanges(true);
+  };
+
+  const handleLinksReorder = (sectionId: string, newLinks: string[]) => {
+    setLocalLinkOrder((prev) => ({
+      ...prev,
+      [sectionId]: newLinks,
+    }));
+    setHasChanges(true);
+  };
+
+  const handleToggleSection = (sectionId: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
+  };
+
+  const handleSave = () => {
+    updateLayout.mutate({
+      sectionOrder: localSectionOrder,
+      linkOrder: localLinkOrder,
+    });
+    setHasChanges(false);
+  };
+
+  const handleReset = () => {
+    setLocalSectionOrder(DEFAULT_SECTION_ORDER);
+    setLocalLinkOrder(DEFAULT_LINK_ORDER);
+    setHasChanges(true);
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="font-display text-lg">SIDEBAR NAVIGATION</CardTitle>
+            <CardDescription>
+              Drag to reorder sections and links. Changes apply globally to all users.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReset}
+              disabled={updateLayout.isPending}
+              className="gap-1.5"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Reset
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={!hasChanges || updateLayout.isPending}
+              className="gap-1.5"
+            >
+              {updateLayout.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleSectionDragEnd}
+        >
+          <SortableContext items={localSectionOrder} strategy={verticalListSortingStrategy}>
+            {localSectionOrder.map((sectionId) => (
+              <SortableSection
+                key={sectionId}
+                sectionId={sectionId}
+                links={localLinkOrder[sectionId] || []}
+                isExpanded={expandedSections.has(sectionId)}
+                onToggle={() => handleToggleSection(sectionId)}
+                onLinksReorder={handleLinksReorder}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+      </CardContent>
+    </Card>
+  );
+}

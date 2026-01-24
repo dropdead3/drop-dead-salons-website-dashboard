@@ -63,6 +63,7 @@ import { CommandCenterContent } from '@/components/dashboard/settings/CommandCen
 import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
 import { ScheduleSettingsContent } from '@/components/dashboard/settings/ScheduleSettingsContent';
 import { LocationsSettingsContent } from '@/components/dashboard/settings/LocationsSettingsContent';
+import { SidebarLayoutEditor } from '@/components/dashboard/settings/SidebarLayoutEditor';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
@@ -313,7 +314,7 @@ function UserCard({
 }
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const { toast } = useToast();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { colorTheme, setColorTheme, mounted: colorMounted } = useColorTheme();
@@ -985,6 +986,11 @@ export default function Settings() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Sidebar Layout - Super Admin Only */}
+              {roles.includes('super_admin') && (
+                <SidebarLayoutEditor />
+              )}
             </div>
           )}
 
