@@ -65,7 +65,7 @@ import { ScheduleSettingsContent } from '@/components/dashboard/settings/Schedul
 import { LocationsSettingsContent } from '@/components/dashboard/settings/LocationsSettingsContent';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
-import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER } from '@/hooks/useSettingsLayout';
+import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
 import { cn } from '@/lib/utils';
 import {
   DndContext,
@@ -1084,32 +1084,63 @@ export default function Settings() {
           </div>
         )}
 
-        {/* Category Cards Grid */}
+        {/* Category Cards Grid - Grouped by Section */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={localOrder} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {orderedCategories.map((category) => (
-                <SortableCard
-                  key={category.id}
-                  category={category}
-                  isEditMode={isEditMode}
-                  iconColor={localColors[category.id] || DEFAULT_ICON_COLORS[category.id]}
-                  onColorChange={(color) => handleColorChange(category.id, color)}
-                  onClick={() => {
-                    if (category.id === 'business') {
-                      setBusinessDialogOpen(true);
-                    } else {
-                      setActiveCategory(category.id as SettingsCategory);
-                    }
-                  }}
-                />
-              ))}
-            </div>
-          </SortableContext>
+          <div className="space-y-8">
+            {SECTION_GROUPS.map((section) => {
+              // Get categories for this section, respecting user's order within section
+              const sectionCategoryIds = section.categories.filter(id => 
+                localOrder.includes(id) && categoriesMap[id]
+              );
+              
+              // Sort by user's localOrder
+              sectionCategoryIds.sort((a, b) => 
+                localOrder.indexOf(a) - localOrder.indexOf(b)
+              );
+              
+              if (sectionCategoryIds.length === 0) return null;
+              
+              return (
+                <div key={section.id} className="space-y-4">
+                  {/* Section Header */}
+                  <h2 className="font-display text-xs uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">
+                    {section.label}
+                  </h2>
+                  
+                  {/* Section Grid */}
+                  <SortableContext items={sectionCategoryIds} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {sectionCategoryIds.map((categoryId) => {
+                        const category = categoriesMap[categoryId];
+                        if (!category) return null;
+                        
+                        return (
+                          <SortableCard
+                            key={category.id}
+                            category={category}
+                            isEditMode={isEditMode}
+                            iconColor={localColors[category.id] || DEFAULT_ICON_COLORS[category.id]}
+                            onColorChange={(color) => handleColorChange(category.id, color)}
+                            onClick={() => {
+                              if (category.id === 'business') {
+                                setBusinessDialogOpen(true);
+                              } else {
+                                setActiveCategory(category.id as SettingsCategory);
+                              }
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </div>
+              );
+            })}
+          </div>
         </DndContext>
 
         {/* Business Settings Dialog */}
