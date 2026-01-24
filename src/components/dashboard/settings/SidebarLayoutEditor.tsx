@@ -1023,21 +1023,23 @@ export function SidebarLayoutEditor() {
                 return (
                   <Tooltip key={role.id}>
                     <TooltipTrigger asChild>
-                      <TabsTrigger 
-                        value={role.name} 
-                        className={cn(
-                          "gap-1.5 data-[state=active]:bg-background rounded-md",
-                          hasOverrides && "ring-1 ring-primary/50"
-                        )}
-                      >
-                        <RoleIcon className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">{role.display_name}</span>
-                        {hasOverrides && (
-                          <Badge variant="secondary" className="h-4 w-4 p-0 text-[9px] flex items-center justify-center">
-                            ✓
-                          </Badge>
-                        )}
-                      </TabsTrigger>
+                      <span>
+                        <TabsTrigger 
+                          value={role.name} 
+                          className={cn(
+                            "gap-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm",
+                            hasOverrides && "ring-1 ring-primary/50"
+                          )}
+                        >
+                          <RoleIcon className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">{role.display_name}</span>
+                          {hasOverrides && (
+                            <Badge variant="secondary" className="h-4 w-4 p-0 text-[9px] flex items-center justify-center">
+                              ✓
+                            </Badge>
+                          )}
+                        </TabsTrigger>
+                      </span>
                     </TooltipTrigger>
                     <TooltipContent>
                       {role.display_name}
