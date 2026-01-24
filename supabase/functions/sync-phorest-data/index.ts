@@ -304,11 +304,30 @@ async function syncAppointments(
         }
       }
       
+      // Proactively look up if client exists in our database before inserting
+      const phorestClientId = apt.clientId || apt.client?.clientId || null;
+      let localClientId: string | null = null;
+      
+      if (phorestClientId) {
+        const { data: existingClient } = await supabase
+          .from("phorest_clients")
+          .select("phorest_client_id")
+          .eq("phorest_client_id", phorestClientId)
+          .maybeSingle();
+        
+        if (existingClient) {
+          localClientId = phorestClientId;
+        } else {
+          console.log(`Client ${phorestClientId} not found in local DB - appointment will have null client link`);
+        }
+      }
+
       const appointmentRecord: any = {
         phorest_id: phorestId,
         stylist_user_id: stylistUserId,
         phorest_staff_id: apt.staffId || apt.staff?.staffId,
         location_id: locationId,
+        phorest_client_id: localClientId, // Now properly linked if client exists
         client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() || null,
         client_phone: apt.client?.mobile || apt.client?.phone || null,
         appointment_date: appointmentDate,
@@ -319,36 +338,12 @@ async function syncAppointments(
         status: mapPhorestStatus(apt.status),
         total_price: apt.totalPrice || apt.price || null,
         notes: apt.notes || null,
-        // Don't set phorest_client_id due to FK constraint - store client name/phone instead
         is_new_client: apt.isNewClient || false,
       };
 
       let { error } = await supabase
         .from("phorest_appointments")
         .upsert(appointmentRecord, { onConflict: 'phorest_id' });
-
-      // If FK error on phorest_client_id, retry with client info only (no FK field)
-      if (error && error.message.includes('phorest_client_id_fkey')) {
-        // Try to lookup client in phorest_clients table first
-        const clientId = apt.clientId || apt.client?.clientId;
-        if (clientId) {
-          const { data: existingClient } = await supabase
-            .from("phorest_clients")
-            .select("phorest_client_id")
-            .eq("phorest_client_id", clientId)
-            .single();
-          
-          if (existingClient) {
-            appointmentRecord.phorest_client_id = clientId;
-          }
-        }
-        
-        // Retry upsert (phorest_client_id will be null if client doesn't exist)
-        const retry = await supabase
-          .from("phorest_appointments")
-          .upsert(appointmentRecord, { onConflict: 'phorest_id' });
-        error = retry.error;
-      }
 
       if (error) {
         console.log(`Failed to upsert appointment ${phorestId}:`, error.message);
