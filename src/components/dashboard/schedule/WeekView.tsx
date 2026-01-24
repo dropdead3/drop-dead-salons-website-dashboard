@@ -417,6 +417,30 @@ export function WeekView({
                     const slotTime = `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`;
                     const isActive = activeSlot?.date.getTime() === day.getTime() && activeSlot?.time === slotTime;
                     
+                    // Check if this slot is in the past (only for today)
+                    const isPastSlot = isCurrentDay && (() => {
+                      const slotDate = new Date(day);
+                      slotDate.setHours(slot.hour, slot.minute, 0, 0);
+                      return slotDate < now;
+                    })();
+                    
+                    // Past slots on current day are not bookable
+                    if (isPastSlot) {
+                      return (
+                        <div 
+                          key={slotTime}
+                          className={cn(
+                            'h-[20px] bg-muted/40 cursor-not-allowed',
+                            slot.isHour 
+                              ? 'border-t border-border/60' 
+                              : slot.isHalf 
+                                ? 'border-t border-dotted border-border/40'
+                                : 'border-t border-dotted border-border/20'
+                          )}
+                        />
+                      );
+                    }
+                    
                     return (
                       <QuickBookingPopover
                         key={slotTime}

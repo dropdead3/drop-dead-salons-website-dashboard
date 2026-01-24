@@ -424,8 +424,15 @@ export function DayView({
                 >
                   {/* Time slot backgrounds */}
                   {timeSlots.map(({ hour, minute }, idx) => {
-                    // Alternate available/unavailable (gray for blocked times)
-                    const isAvailable = hour >= 9 && hour < 18; // Example: 9-6 available
+                    // Check if slot is in the past (only for today)
+                    const isPastSlot = showCurrentTime && (() => {
+                      const slotDate = new Date(date);
+                      slotDate.setHours(hour, minute, 0, 0);
+                      return slotDate < now;
+                    })();
+                    
+                    // Available if within working hours AND not in the past
+                    const isAvailable = (hour >= 9 && hour < 18) && !isPastSlot;
                     
                     return (
                       <div 
@@ -434,9 +441,11 @@ export function DayView({
                           'h-4',
                           minute === 0 && 'border-t border-border',
                           minute !== 0 && 'border-t border-dashed border-border/30',
-                          isAvailable 
-                            ? 'bg-background hover:bg-muted/30 cursor-pointer' 
-                            : 'bg-muted/50'
+                          isPastSlot
+                            ? 'bg-muted/40 cursor-not-allowed'
+                            : isAvailable 
+                              ? 'bg-background hover:bg-muted/30 cursor-pointer' 
+                              : 'bg-muted/50'
                         )}
                         onClick={() => {
                           if (isAvailable) {
