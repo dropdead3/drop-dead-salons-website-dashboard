@@ -9,6 +9,7 @@ import {
   ShoppingBag, 
   TrendingUp, 
   Receipt,
+  CreditCard,
   MapPin,
   Building2,
   Download,
@@ -263,7 +264,7 @@ export function AggregateSalesCard() {
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-2">
-                <Receipt className="w-5 h-5 text-chart-3" />
+                <CreditCard className="w-5 h-5 text-chart-3" />
               </div>
               <BlurredAmount className="text-2xl font-display">
                 {displayMetrics.totalTransactions}
@@ -278,7 +279,7 @@ export function AggregateSalesCard() {
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-2">
-                <TrendingUp className="w-5 h-5 text-chart-4" />
+                <Receipt className="w-5 h-5 text-chart-4" />
               </div>
               <BlurredAmount className="text-2xl font-display">
                 ${isFinite(displayMetrics.averageTicket) ? Math.round(displayMetrics.averageTicket) : 0}
