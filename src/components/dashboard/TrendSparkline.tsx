@@ -23,15 +23,23 @@ export function TrendSparkline({
     }));
   }, [data]);
 
-  // Stroke color for the line
-  const strokeColor = variant === 'muted' 
-    ? 'hsl(var(--muted-foreground))' 
-    : 'hsl(var(--foreground) / 0.6)';
-  
-  // Dot color (solid foreground)
-  const dotColor = variant === 'muted' 
-    ? 'hsl(var(--muted-foreground))' 
-    : 'hsl(var(--foreground))';
+  // Determine trend direction
+  const isUpward = useMemo(() => {
+    if (data.length < 2) return true;
+    const first = data[0];
+    const last = data[data.length - 1];
+    return last >= first;
+  }, [data]);
+
+  // Color based on trend direction - light green for up, light red for down
+  const trendColor = useMemo(() => {
+    if (variant === 'muted') {
+      return 'hsl(var(--muted-foreground))';
+    }
+    return isUpward 
+      ? 'hsl(145 50% 45%)' // Light green
+      : 'hsl(0 60% 60%)';   // Light red
+  }, [variant, isUpward]);
 
   // Custom dot renderer - only show at first and last points
   const renderDot = (props: any) => {
@@ -46,7 +54,7 @@ export function TrendSparkline({
         cx={cx} 
         cy={cy} 
         r={3} 
-        fill={dotColor}
+        fill={trendColor}
         stroke="none"
       />
     );
@@ -70,7 +78,7 @@ export function TrendSparkline({
           <Line
             type="monotone"
             dataKey="value"
-            stroke={strokeColor}
+            stroke={trendColor}
             strokeWidth={1.5}
             dot={renderDot}
             isAnimationActive={false}
