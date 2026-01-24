@@ -9,6 +9,8 @@ import {
   getCSSVariable, 
   hslStringToHex,
   hexToHslString,
+  themePresets,
+  type ThemePresetKey,
 } from '@/hooks/useCustomTheme';
 import { 
   Palette, 
@@ -19,6 +21,7 @@ import {
   Upload,
   Loader2,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -33,6 +36,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface ThemeEditorProps {
   isEditMode: boolean;
@@ -81,6 +85,35 @@ function ColorSwatch({ tokenKey, label, isEditMode, isModified, onColorChange }:
   );
 }
 
+interface PresetCardProps {
+  presetKey: ThemePresetKey;
+  preset: typeof themePresets[ThemePresetKey];
+  onSelect: (key: ThemePresetKey) => void;
+}
+
+function PresetCard({ presetKey, preset, onSelect }: PresetCardProps) {
+  return (
+    <button
+      onClick={() => onSelect(presetKey)}
+      className="group flex flex-col items-center gap-2 p-3 rounded-lg border border-border hover:border-gold/50 hover:bg-muted/30 transition-all min-w-[100px]"
+    >
+      {/* Color preview circles */}
+      <div className="flex -space-x-2">
+        {preset.preview.map((color, i) => (
+          <div
+            key={i}
+            className="w-6 h-6 rounded-full border-2 border-background shadow-sm"
+            style={{ backgroundColor: `hsl(${color})` }}
+          />
+        ))}
+      </div>
+      <div className="text-center">
+        <p className="text-xs font-medium group-hover:text-gold transition-colors">{preset.name}</p>
+      </div>
+    </button>
+  );
+}
+
 export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) {
   const {
     pendingChanges,
@@ -93,10 +126,11 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
     resetToDefault,
     exportTheme,
     importTheme,
+    applyPreset,
   } = useCustomTheme();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeCategory, setActiveCategory] = useState('core');
+  const [activeCategory, setActiveCategory] = useState('presets');
   
   const handleColorChange = (key: string, hex: string) => {
     if (hex === 'transparent') return;
@@ -133,6 +167,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
   };
   
   const categories = [
+    { id: 'presets', label: 'Presets', tokens: [] },
     { id: 'core', label: 'Core', tokens: editableTokens.core },
     { id: 'brand', label: 'Brand', tokens: editableTokens.brand },
     { id: 'special', label: 'Special', tokens: editableTokens.special },
@@ -257,18 +292,45 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
       <CardContent>
         {isEditMode ? (
           <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 flex-wrap h-auto gap-1">
               {categories.map(cat => (
                 <TabsTrigger key={cat.id} value={cat.id} className="text-xs">
+                  {cat.id === 'presets' && <Sparkles className="w-3 h-3 mr-1" />}
                   {cat.label}
-                  {cat.tokens.some(t => pendingChanges[t.key]) && (
+                  {cat.tokens.length > 0 && cat.tokens.some(t => pendingChanges[t.key]) && (
                     <span className="ml-1 w-1.5 h-1.5 bg-gold rounded-full" />
                   )}
                 </TabsTrigger>
               ))}
             </TabsList>
             
-            {categories.map(cat => (
+            {/* Presets Tab */}
+            <TabsContent value="presets">
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Choose a preset as a starting point, then customize individual colors.
+                </p>
+                <ScrollArea className="w-full">
+                  <div className="flex gap-3 pb-2">
+                    {(Object.keys(themePresets) as ThemePresetKey[]).map(key => (
+                      <PresetCard
+                        key={key}
+                        presetKey={key}
+                        preset={themePresets[key]}
+                        onSelect={applyPreset}
+                      />
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+                <p className="text-xs text-muted-foreground mt-2">
+                  After selecting a preset, switch to the color tabs to fine-tune individual colors.
+                </p>
+              </div>
+            </TabsContent>
+            
+            {/* Color category tabs */}
+            {categories.filter(cat => cat.id !== 'presets').map(cat => (
               <TabsContent key={cat.id} value={cat.id}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
                   {cat.tokens.map(token => (
@@ -287,7 +349,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
           </Tabs>
         ) : (
           <div className="text-sm text-muted-foreground">
-            <p>Click <strong>Edit Theme</strong> to customize colors. Changes will be applied in real-time and can be saved to persist across sessions.</p>
+            <p>Click <strong>Edit Theme</strong> to customize colors or choose from preset themes like Midnight, Sunset, or Forest.</p>
             <p className="mt-2 text-xs">Tip: Use <strong>Export</strong> to backup your theme or share it with others.</p>
           </div>
         )}
