@@ -496,7 +496,8 @@ export function QuickBookingPopover({
                 // Determine background color based on state
                 const getSegmentStyle = () => {
                   if (isCurrent) return 'bg-primary';
-                  if (isVisited && isCompleted) return 'bg-primary';
+                  if (i < currentStepIndex && isCompleted) return 'bg-primary';
+                  if (i > currentStepIndex && isVisited && isCompleted) return 'bg-primary/50';
                   if (isVisited && !isCompleted) return 'bg-primary/30';
                   return 'bg-muted';
                 };
