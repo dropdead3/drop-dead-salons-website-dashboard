@@ -11,6 +11,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ViewAsProvider } from "./contexts/ViewAsContext";
 import { HideNumbersProvider } from "./contexts/HideNumbersContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { ThemeInitializer } from "./components/ThemeInitializer";
 
 // Public pages
 import Index from "./pages/Index";
@@ -83,6 +84,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <ThemeInitializer />
           <ViewAsProvider>
             <HideNumbersProvider>
             <TooltipProvider>

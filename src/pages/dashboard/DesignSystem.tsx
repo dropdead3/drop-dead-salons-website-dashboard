@@ -16,6 +16,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { SPECIAL_GRADIENTS } from "@/utils/categoryColors";
 import { getRoleColorClasses, ROLE_COLORS } from "@/components/dashboard/RoleColorPicker";
+import { ThemeEditor } from "@/components/dashboard/ThemeEditor";
 
 // CopyButton component defined OUTSIDE the DesignSystem component
 interface CopyButtonProps {
@@ -50,6 +51,7 @@ const DesignSystem = () => {
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [openSections, setOpenSections] = useState<string[]>(["playground", "colors", "gradients", "typography"]);
+  const [isThemeEditMode, setIsThemeEditMode] = useState(false);
 
   // Playground state
   const [buttonVariant, setButtonVariant] = useState<"default" | "secondary" | "outline" | "ghost" | "link" | "destructive">("default");
@@ -291,6 +293,12 @@ const DesignSystem = () => {
             <Button variant="link" onClick={() => setSearchQuery("")}>Clear search</Button>
           </Card>
         )}
+
+        {/* Theme Editor */}
+        <ThemeEditor 
+          isEditMode={isThemeEditMode} 
+          onToggleEditMode={() => setIsThemeEditMode(!isThemeEditMode)} 
+        />
 
         <Accordion 
           type="multiple" 
