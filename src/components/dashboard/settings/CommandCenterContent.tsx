@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { 
   LayoutDashboard, 
   Eye,
@@ -14,14 +15,20 @@ import {
   AlertTriangle,
   UserCheck,
   ClipboardList,
+  RefreshCw,
+  Search,
+  Filter,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   useDashboardVisibility, 
   useToggleDashboardVisibility,
   useBulkUpdateVisibility,
+  useSyncVisibilityElements,
   groupVisibilityByElement,
   groupByCategory,
+  getElementCategories,
+  VISIBILITY_ELEMENTS,
 } from '@/hooks/useDashboardVisibility';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,6 +49,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -60,18 +74,52 @@ const ROLE_CONFIG: Record<AppRole, { label: string; shortLabel: string; icon: Re
   operations_assistant: { label: 'Ops Asst', shortLabel: 'OA', icon: ClipboardList, color: 'text-teal-600' },
 };
 
-const CATEGORY_ORDER = ['Dashboard Cards', 'Leadership Cards', 'Program Cards', 'Actions'];
+// Dynamic category order based on registered elements
+const CATEGORY_ORDER = [
+  'Dashboard Home',
+  'Dashboard Cards', 
+  'Leadership Cards', 
+  'Sales Dashboard',
+  'Team Overview',
+  'Client Engine Tracker',
+  'Actions',
+];
 
 export function CommandCenterContent() {
   const { data: visibilityData, isLoading } = useDashboardVisibility();
   const toggleVisibility = useToggleDashboardVisibility();
   const bulkUpdate = useBulkUpdateVisibility();
+  const syncElements = useSyncVisibilityElements();
   const [confirmHideRole, setConfirmHideRole] = useState<AppRole | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   const elements = visibilityData ? groupVisibilityByElement(visibilityData) : [];
-  const categories = groupByCategory(elements);
 
-  const sortedCategories = CATEGORY_ORDER.filter(cat => categories[cat]);
+  // Filter elements by search query and category
+  const filteredCategories = useMemo(() => {
+    let filtered = elements;
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(el => 
+        el.element_name.toLowerCase().includes(query) ||
+        el.element_key.toLowerCase().includes(query) ||
+        el.element_category.toLowerCase().includes(query)
+      );
+    }
+    
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(el => el.element_category === categoryFilter);
+    }
+    
+    return groupByCategory(filtered);
+  }, [elements, searchQuery, categoryFilter]);
+
+  const sortedCategories = CATEGORY_ORDER.filter(cat => filteredCategories[cat]);
+  // Add any categories not in the predefined order
+  const otherCategories = Object.keys(filteredCategories).filter(cat => !CATEGORY_ORDER.includes(cat));
+  const allCategories = [...sortedCategories, ...otherCategories];
 
   const handleToggle = (elementKey: string, role: AppRole, currentValue: boolean) => {
     toggleVisibility.mutate({
@@ -101,8 +149,64 @@ export function CommandCenterContent() {
     }
   };
 
+  // Get all available categories for the filter dropdown
+  const availableCategories = useMemo(() => {
+    const cats = new Set(elements.map(el => el.element_category));
+    return Array.from(cats).sort();
+  }, [elements]);
+
   return (
     <div className="space-y-6">
+      {/* Header with Sync Button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-display">Element Visibility</h2>
+          <p className="text-sm text-muted-foreground">
+            Control which dashboard elements are visible for each role
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => syncElements.mutate()}
+          disabled={syncElements.isPending}
+          className="gap-2"
+        >
+          <RefreshCw className={cn("w-4 h-4", syncElements.isPending && "animate-spin")} />
+          Sync Elements
+        </Button>
+      </div>
+
+      {/* Search and Filter */}
+      <Card className="p-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search elements..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Filter by page" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {availableCategories.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          {elements.length} elements registered • {VISIBILITY_ELEMENTS.length} in code registry
+        </p>
+      </Card>
+
       {/* Bulk Controls */}
       <Card className="p-5">
         <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">Quick Actions</h2>
@@ -191,10 +295,13 @@ export function CommandCenterContent() {
       )}
 
       {/* Visibility Table by Category */}
-      {!isLoading && sortedCategories.map((category) => (
+      {!isLoading && allCategories.map((category) => (
         <Card key={category} className="overflow-hidden">
-          <div className="bg-muted/30 px-4 py-3 border-b">
+          <div className="bg-muted/30 px-4 py-3 border-b flex items-center justify-between">
             <h2 className="font-medium text-sm">{category}</h2>
+            <span className="text-xs text-muted-foreground">
+              {filteredCategories[category]?.length || 0} elements
+            </span>
           </div>
           
           <div className="overflow-x-auto">
@@ -222,10 +329,13 @@ export function CommandCenterContent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categories[category].map((element) => (
+                {filteredCategories[category].map((element) => (
                   <TableRow key={element.element_key} className="hover:bg-muted/30">
                     <TableCell className="font-medium">
-                      <span className="text-sm">{element.element_name}</span>
+                      <div>
+                        <span className="text-sm">{element.element_name}</span>
+                        <p className="text-[10px] text-muted-foreground font-mono">{element.element_key}</p>
+                      </div>
                     </TableCell>
                     {ROLES.map((role) => {
                       const isVisible = element.roles[role] ?? true;
