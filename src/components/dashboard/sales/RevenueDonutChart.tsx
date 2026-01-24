@@ -81,6 +81,14 @@ export function RevenueDonutChart({
           <span className="text-muted-foreground">Products</span>
           <span className="font-medium">{100 - servicePercent}%</span>
         </div>
+        <div className="pt-2 mt-2 border-t border-border/50">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Retail %</span>
+            <span className="font-semibold text-foreground">
+              {100 - servicePercent}%
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
