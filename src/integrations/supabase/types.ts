@@ -575,6 +575,127 @@ export type Database = {
         }
         Relationships: []
       }
+      changelog_entries: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string | null
+          entry_type: string
+          id: string
+          is_major: boolean | null
+          notification_sent: boolean | null
+          published_at: string | null
+          release_date: string | null
+          scheduled_publish_at: string | null
+          send_as_announcement: boolean | null
+          send_as_notification: boolean | null
+          sort_order: number | null
+          status: string
+          target_roles: string[] | null
+          title: string
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string | null
+          entry_type?: string
+          id?: string
+          is_major?: boolean | null
+          notification_sent?: boolean | null
+          published_at?: string | null
+          release_date?: string | null
+          scheduled_publish_at?: string | null
+          send_as_announcement?: boolean | null
+          send_as_notification?: boolean | null
+          sort_order?: number | null
+          status?: string
+          target_roles?: string[] | null
+          title: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string | null
+          entry_type?: string
+          id?: string
+          is_major?: boolean | null
+          notification_sent?: boolean | null
+          published_at?: string | null
+          release_date?: string | null
+          scheduled_publish_at?: string | null
+          send_as_announcement?: boolean | null
+          send_as_notification?: boolean | null
+          sort_order?: number | null
+          status?: string
+          target_roles?: string[] | null
+          title?: string
+          updated_at?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
+      changelog_reads: {
+        Row: {
+          changelog_id: string
+          id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          changelog_id: string
+          id?: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          changelog_id?: string
+          id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changelog_reads_changelog_id_fkey"
+            columns: ["changelog_id"]
+            isOneToOne: false
+            referencedRelation: "changelog_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      changelog_votes: {
+        Row: {
+          changelog_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          changelog_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          changelog_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changelog_votes_changelog_id_fkey"
+            columns: ["changelog_id"]
+            isOneToOne: false
+            referencedRelation: "changelog_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_notes: {
         Row: {
           client_id: string
@@ -856,6 +977,30 @@ export type Database = {
           is_visible?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_digest_log: {
+        Row: {
+          digest_type: string
+          entries_included: string[]
+          id: string
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          digest_type: string
+          entries_included: string[]
+          id?: string
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          digest_type?: string
+          entries_included?: string[]
+          id?: string
+          sent_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1185,6 +1330,91 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      feature_request_votes: {
+        Row: {
+          created_at: string | null
+          feature_request_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          feature_request_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          feature_request_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_request_votes_feature_request_id_fkey"
+            columns: ["feature_request_id"]
+            isOneToOne: false
+            referencedRelation: "feature_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_requests: {
+        Row: {
+          admin_response: string | null
+          category: string | null
+          created_at: string | null
+          description: string
+          id: string
+          linked_changelog_id: string | null
+          priority: string | null
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          submitted_by: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_response?: string | null
+          category?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          linked_changelog_id?: string | null
+          priority?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          submitted_by: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_response?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          linked_changelog_id?: string | null
+          priority?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          submitted_by?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_requests_linked_changelog_id_fkey"
+            columns: ["linked_changelog_id"]
+            isOneToOne: false
+            referencedRelation: "changelog_entries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       graduation_feedback: {
         Row: {
@@ -1750,6 +1980,8 @@ export type Database = {
         Row: {
           announcement_enabled: boolean
           birthday_reminder_enabled: boolean
+          changelog_digest_enabled: boolean | null
+          changelog_digest_frequency: string | null
           created_at: string
           email_notifications_enabled: boolean
           high_five_enabled: boolean
@@ -1765,6 +1997,8 @@ export type Database = {
         Insert: {
           announcement_enabled?: boolean
           birthday_reminder_enabled?: boolean
+          changelog_digest_enabled?: boolean | null
+          changelog_digest_frequency?: string | null
           created_at?: string
           email_notifications_enabled?: boolean
           high_five_enabled?: boolean
@@ -1780,6 +2014,8 @@ export type Database = {
         Update: {
           announcement_enabled?: boolean
           birthday_reminder_enabled?: boolean
+          changelog_digest_enabled?: boolean | null
+          changelog_digest_frequency?: string | null
           created_at?: string
           email_notifications_enabled?: boolean
           high_five_enabled?: boolean

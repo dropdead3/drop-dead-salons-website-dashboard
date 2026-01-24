@@ -91,6 +91,7 @@ import {
   PanelLeftClose,
   ChevronRight,
   Flag,
+  Sparkles,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -121,6 +122,7 @@ const mainNavItems: NavItem[] = [
 const housekeepingNavItems: NavItem[] = [
   { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users, permission: 'view_onboarding' },
   { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText, permission: 'view_handbooks' },
+  { href: '/dashboard/changelog', label: "What's New", icon: Sparkles },
 ];
 
 const growthNavItems: NavItem[] = [
@@ -159,6 +161,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/business-cards', label: 'Business Cards', icon: CreditCard, permission: 'manage_settings' },
   { href: '/dashboard/admin/headshots', label: 'Headshots', icon: Camera, permission: 'manage_settings' },
   { href: '/dashboard/admin/announcements', label: 'Create Announcement', icon: Bell, permission: 'manage_announcements' },
+  { href: '/dashboard/admin/changelog', label: 'Changelog Manager', icon: Sparkles, permission: 'manage_announcements' },
 ];
 
 // Full admin-only items (not visible to managers)
