@@ -94,6 +94,7 @@ import {
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
+import { ColoredLogo } from './ColoredLogo';
 import { useTheme } from 'next-themes';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
@@ -213,12 +214,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return !!customLogo;
   };
   
-  // Get the appropriate logo based on theme and settings
-  const getLogo = () => {
+  // Get the appropriate logo config based on theme and settings
+  const getLogoConfig = () => {
     const isDark = resolvedTheme === 'dark';
     const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
     const fallbackLogo = isDark ? LogoWhite : Logo;
-    return customLogo || fallbackLogo;
+    // In dark mode, apply muted-foreground color for better contrast
+    const color = isDark ? 'hsl(40 10% 60%)' : null;
+    return { url: customLogo || fallbackLogo, color };
   };
   // Calculate total items for progress display
   const onboardingTotalItems = tasksTotal + handbooksTotal + 2; // +2 for business card and headshot
@@ -790,7 +793,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         <Link to="/dashboard">
           {hasCustomLogo() ? (
-            <img src={getLogo()} alt={businessSettings?.business_name || 'Drop Dead'} className="h-4 w-auto" />
+            <ColoredLogo 
+              logoUrl={getLogoConfig().url} 
+              color={getLogoConfig().color}
+              size={16}
+              alt={businessSettings?.business_name || 'Drop Dead'}
+            />
           ) : (
             <span className="font-display text-sm uppercase tracking-wider text-foreground">
               {businessSettings?.business_name || 'Drop Dead'}
