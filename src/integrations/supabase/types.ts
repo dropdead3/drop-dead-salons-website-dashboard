@@ -1598,6 +1598,7 @@ export type Database = {
           name: string
           phone: string
           phorest_branch_id: string | null
+          show_on_website: boolean
           store_number: string | null
           updated_at: string | null
         }
@@ -1617,6 +1618,7 @@ export type Database = {
           name: string
           phone: string
           phorest_branch_id?: string | null
+          show_on_website?: boolean
           store_number?: string | null
           updated_at?: string | null
         }
@@ -1636,6 +1638,7 @@ export type Database = {
           name?: string
           phone?: string
           phorest_branch_id?: string | null
+          show_on_website?: boolean
           store_number?: string | null
           updated_at?: string | null
         }

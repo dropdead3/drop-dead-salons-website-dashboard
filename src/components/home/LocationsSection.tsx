@@ -259,6 +259,8 @@ export function LocationsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const { data: locations = [] } = useActiveLocations();
   
+  // Filter to only show locations marked for website display
+  const websiteLocations = locations.filter(loc => loc.show_on_website);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"]
@@ -294,7 +296,7 @@ export function LocationsSection() {
 
         {/* Location Cards Grid */}
         <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
-          {locations.map((location, index) => (
+          {websiteLocations.map((location, index) => (
             <LocationCard key={location.id} location={location} index={index} />
           ))}
         </div>
