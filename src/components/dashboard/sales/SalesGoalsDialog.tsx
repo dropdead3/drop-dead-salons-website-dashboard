@@ -21,6 +21,8 @@ import { Settings, Target, MapPin, Loader2 } from 'lucide-react';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
 
+const WEEKS_PER_MONTH = 4.333;
+
 interface SalesGoalsDialogProps {
   trigger?: React.ReactNode;
 }
@@ -44,6 +46,12 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
       setLocationTargets(goals.locationTargets || {});
     }
     setOpen(isOpen);
+  };
+
+  // Auto-calculate weekly goal when monthly changes
+  const handleMonthlyChange = (value: number) => {
+    setMonthlyTarget(value);
+    setWeeklyTarget(Math.round(value / WEEKS_PER_MONTH));
   };
 
   const handleSave = () => {
@@ -102,7 +110,7 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                     id="monthly"
                     type="number"
                     value={monthlyTarget}
-                    onChange={(e) => setMonthlyTarget(Number(e.target.value))}
+                    onChange={(e) => handleMonthlyChange(Number(e.target.value))}
                     className="pl-7"
                   />
                 </div>
