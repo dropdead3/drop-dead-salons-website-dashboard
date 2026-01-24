@@ -1090,6 +1090,54 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          enabled_for_roles: string[] | null
+          enabled_for_users: string[] | null
+          flag_key: string
+          flag_name: string
+          id: string
+          is_enabled: boolean | null
+          metadata: Json | null
+          percentage_rollout: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          enabled_for_roles?: string[] | null
+          enabled_for_users?: string[] | null
+          flag_key: string
+          flag_name: string
+          id?: string
+          is_enabled?: boolean | null
+          metadata?: Json | null
+          percentage_rollout?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          enabled_for_roles?: string[] | null
+          enabled_for_users?: string[] | null
+          flag_key?: string
+          flag_name?: string
+          id?: string
+          is_enabled?: boolean | null
+          metadata?: Json | null
+          percentage_rollout?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       graduation_feedback: {
         Row: {
           coach_id: string
