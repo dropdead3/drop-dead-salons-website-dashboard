@@ -37,7 +37,6 @@ import {
   FileText,
   Settings,
   Bell,
-  HelpCircle,
   CalendarClock,
   Contact,
   Globe,
@@ -57,6 +56,8 @@ import {
   CalendarDays,
   DollarSign,
   Scissors,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   useSidebarLayout,
@@ -66,6 +67,7 @@ import {
   SECTION_LABELS,
   type SidebarLayoutConfig,
 } from '@/hooks/useSidebarLayout';
+import { SidebarPreview } from './SidebarPreview';
 
 // Map hrefs to their labels and icons
 const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -108,7 +110,15 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
 };
 
 // Sortable Link Component
-function SortableLink({ href }: { href: string }) {
+function SortableLink({ 
+  href, 
+  isHidden,
+  onToggleVisibility,
+}: { 
+  href: string;
+  isHidden: boolean;
+  onToggleVisibility: () => void;
+}) {
   const {
     attributes,
     listeners,
@@ -133,8 +143,9 @@ function SortableLink({ href }: { href: string }) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-md bg-muted/50 border border-border/50",
-        isDragging && "opacity-50 ring-2 ring-primary"
+        "flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 border border-border/50",
+        isDragging && "opacity-50 ring-2 ring-primary",
+        isHidden && "opacity-50"
       )}
     >
       <div
@@ -144,8 +155,30 @@ function SortableLink({ href }: { href: string }) {
       >
         <GripVertical className="w-4 h-4 text-muted-foreground" />
       </div>
-      <Icon className="w-4 h-4 text-muted-foreground" />
-      <span className="text-sm">{config.label}</span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleVisibility();
+        }}
+      >
+        {isHidden ? (
+          <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+        ) : (
+          <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+        )}
+      </Button>
+      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+      <span className={cn("text-sm flex-1", isHidden && "line-through text-muted-foreground")}>
+        {config.label}
+      </span>
+      {isHidden && (
+        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+          Hidden
+        </Badge>
+      )}
     </div>
   );
 }
@@ -157,12 +190,20 @@ function SortableSection({
   isExpanded,
   onToggle,
   onLinksReorder,
+  isHidden,
+  hiddenLinks,
+  onToggleSectionVisibility,
+  onToggleLinkVisibility,
 }: {
   sectionId: string;
   links: string[];
   isExpanded: boolean;
   onToggle: () => void;
   onLinksReorder: (sectionId: string, links: string[]) => void;
+  isHidden: boolean;
+  hiddenLinks: string[];
+  onToggleSectionVisibility: () => void;
+  onToggleLinkVisibility: (href: string) => void;
 }) {
   const {
     attributes,
@@ -195,19 +236,25 @@ function SortableSection({
     onLinksReorder(sectionId, newLinks);
   };
 
+  const visibleLinksCount = links.filter(l => !hiddenLinks.includes(l)).length;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
         "border border-border rounded-lg overflow-hidden",
-        isDragging && "opacity-50 ring-2 ring-primary"
+        isDragging && "opacity-50 ring-2 ring-primary",
+        isHidden && "opacity-60"
       )}
     >
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between px-4 py-3 bg-card hover:bg-muted/50 cursor-pointer transition-colors">
-            <div className="flex items-center gap-3">
+          <div className={cn(
+            "flex items-center justify-between px-4 py-3 bg-card hover:bg-muted/50 cursor-pointer transition-colors",
+            isHidden && "bg-muted/30"
+          )}>
+            <div className="flex items-center gap-2">
               <div
                 {...attributes}
                 {...listeners}
@@ -216,12 +263,35 @@ function SortableSection({
               >
                 <GripVertical className="w-4 h-4 text-muted-foreground" />
               </div>
-              <span className="font-display text-sm uppercase tracking-wider">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSectionVisibility();
+                }}
+              >
+                {isHidden ? (
+                  <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                ) : (
+                  <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+              </Button>
+              <span className={cn(
+                "font-display text-sm uppercase tracking-wider",
+                isHidden && "line-through text-muted-foreground"
+              )}>
                 {SECTION_LABELS[sectionId] || sectionId}
               </span>
               <Badge variant="secondary" className="text-xs">
-                {links.length}
+                {visibleLinksCount}/{links.length}
               </Badge>
+              {isHidden && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-muted-foreground/50">
+                  Hidden
+                </Badge>
+              )}
             </div>
             {isExpanded ? (
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -239,7 +309,12 @@ function SortableSection({
             >
               <SortableContext items={links} strategy={verticalListSortingStrategy}>
                 {links.map((href) => (
-                  <SortableLink key={href} href={href} />
+                  <SortableLink 
+                    key={href} 
+                    href={href}
+                    isHidden={hiddenLinks.includes(href)}
+                    onToggleVisibility={() => onToggleLinkVisibility(href)}
+                  />
                 ))}
               </SortableContext>
             </DndContext>
@@ -257,6 +332,8 @@ export function SidebarLayoutEditor() {
   // Local state for editing
   const [localSectionOrder, setLocalSectionOrder] = useState<string[]>([]);
   const [localLinkOrder, setLocalLinkOrder] = useState<Record<string, string[]>>({});
+  const [localHiddenSections, setLocalHiddenSections] = useState<string[]>([]);
+  const [localHiddenLinks, setLocalHiddenLinks] = useState<Record<string, string[]>>({});
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -265,6 +342,8 @@ export function SidebarLayoutEditor() {
     if (layout && localSectionOrder.length === 0) {
       setLocalSectionOrder(layout.sectionOrder);
       setLocalLinkOrder(layout.linkOrder);
+      setLocalHiddenSections(layout.hiddenSections || []);
+      setLocalHiddenLinks(layout.hiddenLinks || {});
     }
   }, [layout, localSectionOrder.length]);
 
@@ -305,10 +384,39 @@ export function SidebarLayoutEditor() {
     });
   };
 
+  const handleToggleSectionVisibility = (sectionId: string) => {
+    setLocalHiddenSections((prev) => {
+      if (prev.includes(sectionId)) {
+        return prev.filter(s => s !== sectionId);
+      }
+      return [...prev, sectionId];
+    });
+    setHasChanges(true);
+  };
+
+  const handleToggleLinkVisibility = (sectionId: string, href: string) => {
+    setLocalHiddenLinks((prev) => {
+      const sectionLinks = prev[sectionId] || [];
+      if (sectionLinks.includes(href)) {
+        return {
+          ...prev,
+          [sectionId]: sectionLinks.filter(l => l !== href),
+        };
+      }
+      return {
+        ...prev,
+        [sectionId]: [...sectionLinks, href],
+      };
+    });
+    setHasChanges(true);
+  };
+
   const handleSave = () => {
     updateLayout.mutate({
       sectionOrder: localSectionOrder,
       linkOrder: localLinkOrder,
+      hiddenSections: localHiddenSections,
+      hiddenLinks: localHiddenLinks,
     });
     setHasChanges(false);
   };
@@ -316,6 +424,8 @@ export function SidebarLayoutEditor() {
   const handleReset = () => {
     setLocalSectionOrder(DEFAULT_SECTION_ORDER);
     setLocalLinkOrder(DEFAULT_LINK_ORDER);
+    setLocalHiddenSections([]);
+    setLocalHiddenLinks({});
     setHasChanges(true);
   };
 
@@ -336,7 +446,7 @@ export function SidebarLayoutEditor() {
           <div>
             <CardTitle className="font-display text-lg">SIDEBAR NAVIGATION</CardTitle>
             <CardDescription>
-              Drag to reorder sections and links. Changes apply globally to all users.
+              Drag to reorder sections and links. Click the eye icon to show/hide items.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -366,25 +476,50 @@ export function SidebarLayoutEditor() {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleSectionDragEnd}
-        >
-          <SortableContext items={localSectionOrder} strategy={verticalListSortingStrategy}>
-            {localSectionOrder.map((sectionId) => (
-              <SortableSection
-                key={sectionId}
-                sectionId={sectionId}
-                links={localLinkOrder[sectionId] || []}
-                isExpanded={expandedSections.has(sectionId)}
-                onToggle={() => handleToggleSection(sectionId)}
-                onLinksReorder={handleLinksReorder}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+      <CardContent>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Editor Panel */}
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+              Editor
+            </p>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleSectionDragEnd}
+            >
+              <SortableContext items={localSectionOrder} strategy={verticalListSortingStrategy}>
+                {localSectionOrder.map((sectionId) => (
+                  <SortableSection
+                    key={sectionId}
+                    sectionId={sectionId}
+                    links={localLinkOrder[sectionId] || []}
+                    isExpanded={expandedSections.has(sectionId)}
+                    onToggle={() => handleToggleSection(sectionId)}
+                    onLinksReorder={handleLinksReorder}
+                    isHidden={localHiddenSections.includes(sectionId)}
+                    hiddenLinks={localHiddenLinks[sectionId] || []}
+                    onToggleSectionVisibility={() => handleToggleSectionVisibility(sectionId)}
+                    onToggleLinkVisibility={(href) => handleToggleLinkVisibility(sectionId, href)}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </div>
+
+          {/* Preview Panel */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+              Live Preview
+            </p>
+            <SidebarPreview
+              sectionOrder={localSectionOrder}
+              linkOrder={localLinkOrder}
+              hiddenSections={localHiddenSections}
+              hiddenLinks={localHiddenLinks}
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

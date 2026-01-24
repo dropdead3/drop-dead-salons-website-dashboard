@@ -104,8 +104,15 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     });
   };
 
-  // Get section order from layout or use default
-  const sectionOrder = sidebarLayout?.sectionOrder || DEFAULT_SECTION_ORDER;
+  // Get section order from layout or use default, filtering out hidden sections
+  const sectionOrder = useMemo(() => {
+    const order = sidebarLayout?.sectionOrder || DEFAULT_SECTION_ORDER;
+    const hiddenSections = sidebarLayout?.hiddenSections || [];
+    return order.filter(id => !hiddenSections.includes(id));
+  }, [sidebarLayout]);
+
+  // Get hidden links map
+  const hiddenLinks = sidebarLayout?.hiddenLinks || {};
   
   // Check if custom logos are uploaded
   const hasCustomLogo = () => {
@@ -350,8 +357,12 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           // Apply custom link ordering
           const orderedItems = getOrderedItems(sectionId, sectionItems);
           
+          // Filter out hidden links for this section
+          const sectionHiddenLinks = hiddenLinks[sectionId] || [];
+          const visibleItems = orderedItems.filter(item => !sectionHiddenLinks.includes(item.href));
+          
           // Apply section-specific filtering and conditions
-          let filteredItems = filterNavItems(orderedItems);
+          let filteredItems = filterNavItems(visibleItems);
           let shouldShow = filteredItems.length > 0;
           let sectionLabel = SECTION_LABELS[sectionId] || sectionId;
           

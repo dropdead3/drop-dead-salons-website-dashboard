@@ -85,6 +85,8 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
 export interface SidebarLayoutConfig {
   sectionOrder: string[];
   linkOrder: Record<string, string[]>;
+  hiddenSections: string[];
+  hiddenLinks: Record<string, string[]>;
 }
 
 export function useSidebarLayout() {
@@ -116,7 +118,11 @@ export function useSidebarLayout() {
         });
       }
 
-      return { sectionOrder, linkOrder } as SidebarLayoutConfig;
+      // Hidden sections and links default to empty arrays
+      const hiddenSections = stored?.hiddenSections || [];
+      const hiddenLinks = stored?.hiddenLinks || {};
+
+      return { sectionOrder, linkOrder, hiddenSections, hiddenLinks } as SidebarLayoutConfig;
     },
     staleTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
@@ -141,6 +147,8 @@ export function useUpdateSidebarLayout() {
       const layoutJson = JSON.parse(JSON.stringify({
         sectionOrder: layout.sectionOrder,
         linkOrder: layout.linkOrder,
+        hiddenSections: layout.hiddenSections,
+        hiddenLinks: layout.hiddenLinks,
       }));
 
       const { data, error } = await supabase
