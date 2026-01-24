@@ -484,19 +484,26 @@ export function QuickBookingPopover({
             <div className="flex px-4 pb-3 gap-1">
               {STEPS.map((s, i) => {
                 const isClickable = i <= highestStepReached && i !== currentStepIndex;
+                const stepLabel = s.charAt(0).toUpperCase() + s.slice(1);
                 return (
-                  <button
-                    key={s}
-                    onClick={() => isClickable && setStep(s)}
-                    disabled={!isClickable}
-                    className={cn(
-                      'h-1.5 flex-1 rounded-full transition-all',
-                      i <= currentStepIndex ? 'bg-primary' : 'bg-muted',
-                      isClickable && 'cursor-pointer hover:opacity-70 hover:scale-y-150',
-                      !isClickable && 'cursor-default'
-                    )}
-                    title={isClickable ? `Go to ${s}` : undefined}
-                  />
+                  <div key={s} className="flex-1 group relative">
+                    <button
+                      onClick={() => isClickable && setStep(s)}
+                      disabled={!isClickable}
+                      className={cn(
+                        'w-full h-1.5 rounded-full transition-all',
+                        i <= currentStepIndex ? 'bg-primary' : 'bg-muted',
+                        isClickable && 'cursor-pointer hover:opacity-70 hover:scale-y-150',
+                        !isClickable && 'cursor-default'
+                      )}
+                    />
+                    {/* Hover label */}
+                    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                      <span className="text-[10px] font-medium text-muted-foreground bg-popover px-1.5 py-0.5 rounded shadow-sm border border-border whitespace-nowrap">
+                        {stepLabel}
+                      </span>
+                    </div>
+                  </div>
                 );
               })}
             </div>
