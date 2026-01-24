@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, ResponsiveContainer } from 'recharts';
 
 interface TrendSparklineProps {
   data: number[];
@@ -23,25 +23,34 @@ export function TrendSparkline({
     }));
   }, [data]);
 
-  // Determine trend direction for color
-  const isUpward = useMemo(() => {
-    if (data.length < 2) return true;
-    const first = data[0];
-    const last = data[data.length - 1];
-    return last >= first;
-  }, [data]);
-
-  // Unique gradient ID for each instance
-  const gradientId = useMemo(() => `trend-gradient-${Math.random().toString(36).substr(2, 9)}`, []);
-  
-  // Elegant neutral color matching reference design
+  // Stroke color for the line
   const strokeColor = variant === 'muted' 
     ? 'hsl(var(--muted-foreground))' 
-    : 'hsl(var(--foreground) / 0.7)';
+    : 'hsl(var(--foreground) / 0.6)';
   
-  // More visible gradient like the reference image
-  const gradientStartOpacity = variant === 'muted' ? 0.2 : 0.35;
-  const gradientEndOpacity = 0.02;
+  // Dot color (solid foreground)
+  const dotColor = variant === 'muted' 
+    ? 'hsl(var(--muted-foreground))' 
+    : 'hsl(var(--foreground))';
+
+  // Custom dot renderer - only show at first and last points
+  const renderDot = (props: any) => {
+    const { cx, cy, index } = props;
+    const isEndpoint = index === 0 || index === chartData.length - 1;
+    
+    if (!isEndpoint) return null;
+    
+    return (
+      <circle 
+        key={`dot-${index}`}
+        cx={cx} 
+        cy={cy} 
+        r={3} 
+        fill={dotColor}
+        stroke="none"
+      />
+    );
+  };
 
   if (!chartData.length || data.length < 2) {
     return (
@@ -57,23 +66,16 @@ export function TrendSparkline({
   return (
     <div className={className} style={{ width, height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={strokeColor} stopOpacity={gradientStartOpacity} />
-              <stop offset="100%" stopColor={strokeColor} stopOpacity={gradientEndOpacity} />
-            </linearGradient>
-          </defs>
-          <Area
+        <LineChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
+          <Line
             type="monotone"
             dataKey="value"
             stroke={strokeColor}
-            fill={`url(#${gradientId})`}
             strokeWidth={1.5}
-            dot={false}
+            dot={renderDot}
             isAnimationActive={false}
           />
-        </AreaChart>
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );
