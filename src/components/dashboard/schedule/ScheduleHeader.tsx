@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, addDays, isToday } from 'date-fns';
+import { format, addDays, isToday, startOfWeek } from 'date-fns';
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -73,9 +73,9 @@ export function ScheduleHeader({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
 
-  // Get quick day buttons - next 7 days starting from tomorrow (today is handled by Today button)
-  const today = new Date();
-  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(today, i + 1));
+  // Get quick day buttons - show all 7 days of the currently viewed week (contextual navigation)
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday
+  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const goToToday = () => setCurrentDate(new Date());
   
