@@ -31,17 +31,16 @@ export function TrendSparkline({
     return last >= first;
   }, [data]);
 
-  // Use elegant, subtle colors inspired by reference
+  // Unique gradient ID for each instance
   const gradientId = useMemo(() => `trend-gradient-${Math.random().toString(36).substr(2, 9)}`, []);
   
-  // Neutral dark stroke for upward, muted rose for downward
+  // Elegant neutral color matching reference design
   const strokeColor = variant === 'muted' 
     ? 'hsl(var(--muted-foreground))' 
-    : isUpward 
-      ? 'hsl(var(--foreground))' 
-      : 'hsl(350 40% 70%)';
+    : 'hsl(var(--foreground) / 0.7)';
   
-  const gradientStartOpacity = isUpward ? 0.15 : 0.2;
+  // More visible gradient like the reference image
+  const gradientStartOpacity = variant === 'muted' ? 0.2 : 0.35;
   const gradientEndOpacity = 0.02;
 
   if (!chartData.length || data.length < 2) {

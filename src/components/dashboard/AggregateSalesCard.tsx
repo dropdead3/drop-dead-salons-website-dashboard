@@ -38,7 +38,7 @@ import { useNavigate } from 'react-router-dom';
 
 // Sub-components
 import { SalesTrendIndicator } from './sales/SalesTrendIndicator';
-import { SalesSparkline } from './sales/SalesSparkline';
+import { TrendSparkline } from './TrendSparkline';
 import { TopPerformersCard } from './sales/TopPerformersCard';
 import { RevenueDonutChart } from './sales/RevenueDonutChart';
 import { SalesGoalProgress } from './sales/SalesGoalProgress';
@@ -367,8 +367,9 @@ export function AggregateSalesCard() {
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         {!hideNumbers && (
-                          <SalesSparkline 
-                            data={getLocationTrend(location.location_id)} 
+                          <TrendSparkline 
+                            data={getLocationTrend(location.location_id).map(d => d.value)} 
+                            width={100}
                             height={24}
                           />
                         )}
