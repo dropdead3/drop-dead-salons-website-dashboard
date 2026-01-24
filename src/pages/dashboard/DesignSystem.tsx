@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Check, Copy, Palette, Type, Sparkles, MousePointer, Square, CircleDot, Layers, Sun, Moon, Search, X, Play, Code } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { SPECIAL_GRADIENTS } from "@/utils/categoryColors";
 import { getRoleColorClasses, ROLE_COLORS } from "@/components/dashboard/RoleColorPicker";
@@ -22,7 +22,7 @@ const DesignSystem = () => {
   const { theme, setTheme } = useTheme();
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [openSections, setOpenSections] = useState<string[]>(["colors", "gradients", "typography"]);
+  const [openSections, setOpenSections] = useState<string[]>(["playground", "colors", "gradients", "typography"]);
 
   // Playground state
   const [buttonVariant, setButtonVariant] = useState<"default" | "secondary" | "outline" | "ghost" | "link" | "destructive">("default");
@@ -47,8 +47,12 @@ const DesignSystem = () => {
     setTimeout(() => setCopiedItem(null), 2000);
   };
 
-  const CopyButton = ({ text, label, size = "sm" }: { text: string; label: string; size?: "sm" | "xs" }) => (
+  const CopyButton = React.forwardRef<
+    HTMLButtonElement,
+    { text: string; label: string; size?: "sm" | "xs" }
+  >(({ text, label, size = "sm" }, ref) => (
     <button
+      ref={ref}
       onClick={() => copyToClipboard(text, label)}
       className={`${size === "xs" ? "p-0.5" : "p-1"} rounded hover:bg-accent transition-colors`}
       title="Copy to clipboard"
@@ -59,7 +63,8 @@ const DesignSystem = () => {
         <Copy className={`${size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3"} text-muted-foreground`} />
       )}
     </button>
-  );
+  ));
+  CopyButton.displayName = "CopyButton";
 
   // Semantic color tokens
   const semanticColors = [
