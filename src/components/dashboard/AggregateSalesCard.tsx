@@ -336,12 +336,12 @@ export function AggregateSalesCard() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-display text-xs">Location</TableHead>
-                  <TableHead className="font-display text-xs text-right">Revenue</TableHead>
-                  <TableHead className="font-display text-xs hidden md:table-cell w-[120px]">Trend</TableHead>
-                  <TableHead className="font-display text-xs text-right hidden sm:table-cell">Services</TableHead>
-                  <TableHead className="font-display text-xs text-right hidden sm:table-cell">Products</TableHead>
-                  <TableHead className="font-display text-xs text-right hidden md:table-cell">Transactions</TableHead>
-                  <TableHead className="font-display text-xs text-right">Avg Ticket</TableHead>
+                  <TableHead className="font-display text-xs text-center">Revenue</TableHead>
+                  <TableHead className="font-display text-xs text-center hidden md:table-cell w-[120px]">Trend</TableHead>
+                  <TableHead className="font-display text-xs text-center hidden sm:table-cell">Services</TableHead>
+                  <TableHead className="font-display text-xs text-center hidden sm:table-cell">Products</TableHead>
+                  <TableHead className="font-display text-xs text-center hidden md:table-cell">Transactions</TableHead>
+                  <TableHead className="font-display text-xs text-center">Avg Ticket</TableHead>
                   <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -362,10 +362,10 @@ export function AggregateSalesCard() {
                           <span className="truncate">{location.name}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-display">
+                      <TableCell className="text-center font-display">
                         <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell className="text-center hidden md:table-cell">
                         {!hideNumbers && (
                           <TrendSparkline 
                             data={getLocationTrend(location.location_id).map(d => d.value)} 
@@ -374,16 +374,16 @@ export function AggregateSalesCard() {
                           />
                         )}
                       </TableCell>
-                      <TableCell className="text-right hidden sm:table-cell">
+                      <TableCell className="text-center hidden sm:table-cell">
                         <BlurredAmount>${location.serviceRevenue.toLocaleString()}</BlurredAmount>
                       </TableCell>
-                      <TableCell className="text-right hidden sm:table-cell">
+                      <TableCell className="text-center hidden sm:table-cell">
                         <BlurredAmount>${location.productRevenue.toLocaleString()}</BlurredAmount>
                       </TableCell>
-                      <TableCell className="text-right hidden md:table-cell">
+                      <TableCell className="text-center hidden md:table-cell">
                         <BlurredAmount>{location.totalTransactions}</BlurredAmount>
                       </TableCell>
-                      <TableCell className="text-right font-display">
+                      <TableCell className="text-center font-display">
                         <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
                       </TableCell>
                       <TableCell>
