@@ -10,6 +10,7 @@ import { WeekView } from '@/components/dashboard/schedule/WeekView';
 import { MonthView } from '@/components/dashboard/schedule/MonthView';
 import { AgendaView } from '@/components/dashboard/schedule/AgendaView';
 import { AppointmentDetailSheet } from '@/components/dashboard/schedule/AppointmentDetailSheet';
+import { CheckoutSummarySheet } from '@/components/dashboard/schedule/CheckoutSummarySheet';
 import { BookingWizard } from '@/components/dashboard/schedule/booking';
 import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '@/hooks/usePhorestCalendar';
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
@@ -53,6 +54,7 @@ export default function Schedule() {
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [detailOpen, setDetailOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
   const [calendarFilters, setCalendarFilters] = useState<CalendarFilterState>({
     clientTypes: [],
@@ -230,7 +232,16 @@ export default function Schedule() {
   // Action bar handlers
   const handleCheckIn = () => handleStatusChange('checked_in');
   const handleConfirm = () => handleStatusChange('confirmed');
-  const handlePay = () => handleStatusChange('completed');
+  const handlePay = () => {
+    if (selectedAppointment) {
+      setCheckoutOpen(true);
+    }
+  };
+  const handleCheckoutConfirm = () => {
+    handleStatusChange('completed');
+    setCheckoutOpen(false);
+    setSelectedAppointment(null);
+  };
   const handleRemove = () => {
     if (selectedAppointment) {
       // For now, cancel the appointment
@@ -340,6 +351,14 @@ export default function Schedule() {
         open={detailOpen}
         onOpenChange={setDetailOpen}
         onStatusChange={(_, status) => handleStatusChange(status)}
+        isUpdating={isUpdating}
+      />
+
+      <CheckoutSummarySheet
+        appointment={selectedAppointment}
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        onConfirm={handleCheckoutConfirm}
         isUpdating={isUpdating}
       />
 
