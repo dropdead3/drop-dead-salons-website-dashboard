@@ -201,14 +201,21 @@ const DesignSystem = () => {
   }), [searchQuery, filteredColors, filteredGradients, filteredTypography, filteredRoleColors, filteredBorderRadius, filteredAnimations, filteredEffects, filteredShadows, filteredScrollbars]);
 
   // Auto-expand sections with matches when searching
+  // Only auto-expand sections when search query changes, not on every render
+  const prevSearchQuery = React.useRef(searchQuery);
   useEffect(() => {
-    if (searchQuery) {
-      const sectionsWithMatches = Object.entries(sectionCounts)
-        .filter(([, count]) => count > 0)
-        .map(([key]) => key);
-      setOpenSections(sectionsWithMatches);
-    } else {
-      setOpenSections(["colors", "gradients", "typography"]);
+    // Only run when searchQuery actually changes
+    if (prevSearchQuery.current !== searchQuery) {
+      prevSearchQuery.current = searchQuery;
+      
+      if (searchQuery) {
+        // Expand sections that have matches
+        const sectionsWithMatches = Object.entries(sectionCounts)
+          .filter(([, count]) => count > 0)
+          .map(([key]) => key);
+        setOpenSections(sectionsWithMatches);
+      }
+      // When clearing search, don't reset - keep user's current selection
     }
   }, [searchQuery, sectionCounts]);
 
