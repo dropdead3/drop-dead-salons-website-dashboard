@@ -76,6 +76,8 @@ import FeatureFlags from "./pages/dashboard/admin/FeatureFlags";
 import MyClients from "./pages/dashboard/MyClients";
 import Schedule from "./pages/dashboard/Schedule";
 import AllNotifications from "./pages/dashboard/AllNotifications";
+import Changelog from "./pages/dashboard/Changelog";
+import ChangelogManager from "./pages/dashboard/admin/ChangelogManager";
 import PublicBooking from "./pages/PublicBooking";
 
 const queryClient = new QueryClient();
@@ -127,6 +129,7 @@ const App = () => (
               <Route path="/dashboard/my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
               <Route path="/dashboard/my-clients" element={<ProtectedRoute requiredPermission="view_own_stats"><MyClients /></ProtectedRoute>} />
               <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
+              <Route path="/dashboard/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
               <Route path="/dashboard/design-system" element={<ProtectedRoute requiredPermission="manage_settings"><DesignSystem /></ProtectedRoute>} />
               
               {/* Admin routes */}
@@ -160,6 +163,7 @@ const App = () => (
               <Route path="/dashboard/admin/staff-utilization" element={<ProtectedRoute requiredPermission="view_team_overview"><StaffUtilization /></ProtectedRoute>} />
               <Route path="/dashboard/admin/operational-analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><OperationalAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/feature-flags" element={<ProtectedRoute requiredPermission="manage_settings"><FeatureFlags /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
 
 
               <Route path="*" element={<NotFound />} />
