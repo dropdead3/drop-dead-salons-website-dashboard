@@ -2,6 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface SidebarLayoutConfig {
+  sectionOrder: string[];
+  linkOrder: Record<string, string[]>;
+}
+
 export interface BusinessSettings {
   id: string;
   business_name: string;
@@ -18,6 +23,7 @@ export interface BusinessSettings {
   phone: string | null;
   email: string | null;
   website: string | null;
+  sidebar_layout: SidebarLayoutConfig | null;
   created_at: string;
   updated_at: string;
 }
@@ -32,7 +38,10 @@ export function useBusinessSettings() {
         .single();
 
       if (error) throw error;
-      return data as BusinessSettings;
+      return {
+        ...data,
+        sidebar_layout: data.sidebar_layout as unknown as SidebarLayoutConfig | null,
+      } as BusinessSettings;
     },
     staleTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
@@ -58,15 +67,24 @@ export function useUpdateBusinessSettings() {
         throw new Error('Business settings not found');
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { sidebar_layout, ...restUpdates } = updates;
+      
+      // Build update object - sidebar_layout handled separately via useSidebarLayout
+      const dbUpdates = { ...restUpdates };
+
       const { data, error } = await supabase
         .from('business_settings')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', existing.id)
         .select()
         .single();
 
       if (error) throw error;
-      return data as BusinessSettings;
+      return {
+        ...data,
+        sidebar_layout: data.sidebar_layout as unknown as SidebarLayoutConfig | null,
+      } as BusinessSettings;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['business-settings'] });

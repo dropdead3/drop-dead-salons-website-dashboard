@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useImperativeHandle } from 'react';
+import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER } from '@/hooks/useSidebarLayout';
 
 interface NavItem {
   href: string;
@@ -72,6 +73,39 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { resolvedTheme } = useTheme();
   const internalRef = useRef<HTMLElement>(null);
   const { data: businessSettings } = useBusinessSettings();
+  const { data: sidebarLayout } = useSidebarLayout();
+  
+  // Map section IDs to nav items
+  const sectionItemsMap = useMemo(() => ({
+    main: mainNavItems,
+    growth: growthNavItems,
+    stats: statsNavItems,
+    getHelp: getHelpNavItems,
+    housekeeping: housekeepingNavItems,
+    manager: managerNavItems,
+    website: websiteNavItems,
+    adminOnly: adminOnlyNavItems,
+  }), [mainNavItems, growthNavItems, statsNavItems, getHelpNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems]);
+
+  // Apply custom link ordering to nav items
+  const getOrderedItems = (sectionId: string, items: NavItem[]): NavItem[] => {
+    const linkOrder = sidebarLayout?.linkOrder?.[sectionId];
+    if (!linkOrder || linkOrder.length === 0) return items;
+    
+    // Sort items based on their position in linkOrder
+    return [...items].sort((a, b) => {
+      const aIndex = linkOrder.indexOf(a.href);
+      const bIndex = linkOrder.indexOf(b.href);
+      // Items not in order go to the end
+      if (aIndex === -1 && bIndex === -1) return 0;
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
+  };
+
+  // Get section order from layout or use default
+  const sectionOrder = sidebarLayout?.sectionOrder || DEFAULT_SECTION_ORDER;
   
   // Check if custom logos are uploaded
   const hasCustomLogo = () => {
@@ -307,172 +341,95 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           </div>
         )}
 
-        <div className="space-y-1">
-          {filterNavItems(mainNavItems).map((item) => (
-            <NavLink 
-              key={item.href} 
-              {...item} 
-              badgeCount={item.href === '/dashboard' ? unreadCount : undefined}
-            />
-          ))}
-        </div>
-
-        {/* Growth Section */}
-        {filterNavItems(growthNavItems).length > 0 && (
-          <>
-            <div className={cn("my-4", isCollapsed ? "px-2" : "px-4")}>
-              <div className="h-px bg-border" />
-            </div>
-            {!isCollapsed && (
-              <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-                Growth
-              </p>
-            )}
-            <div className="space-y-1">
-              {filterNavItems(growthNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Stats & Leaderboard Section */}
-        {filterNavItems(statsNavItems).length > 0 && (
-          <>
-            <div className={cn("my-4", isCollapsed ? "px-2" : "px-4")}>
-              <div className="h-px bg-border" />
-            </div>
-            {!isCollapsed && (
-              <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-                Stats & Leaderboard
-              </p>
-            )}
-            <div className="space-y-1">
-              {filterNavItems(statsNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Get Help Section */}
-        {filterNavItems(getHelpNavItems).length > 0 && (
-          <>
-            <div className={cn("my-4", isCollapsed ? "px-2" : "px-4")}>
-              <div className="h-px bg-border" />
-            </div>
-            {!isCollapsed && (
-              <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-                Get Help
-              </p>
-            )}
-            <div className="space-y-1">
-              {filterNavItems(getHelpNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Housekeeping Section - Filter out onboarding when incomplete (shown at top instead) */}
-        {(() => {
-          const filteredHousekeeping = filterNavItems(housekeepingNavItems).filter(item => 
-            isOnboardingComplete || item.href !== '/dashboard/onboarding'
-          );
-          return filteredHousekeeping.length > 0 && (
-            <>
-              <div className={cn("my-4", isCollapsed ? "px-2" : "px-4")}>
-                <div className="h-px bg-border" />
-              </div>
-              {!isCollapsed && (
-                <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-                  Housekeeping
-                </p>
+        {/* Dynamic Section Rendering Based on Custom Layout */}
+        {sectionOrder.map((sectionId, index) => {
+          // Get the items for this section
+          const sectionItems = sectionItemsMap[sectionId as keyof typeof sectionItemsMap];
+          if (!sectionItems) return null;
+          
+          // Apply custom link ordering
+          const orderedItems = getOrderedItems(sectionId, sectionItems);
+          
+          // Apply section-specific filtering and conditions
+          let filteredItems = filterNavItems(orderedItems);
+          let shouldShow = filteredItems.length > 0;
+          let sectionLabel = SECTION_LABELS[sectionId] || sectionId;
+          
+          // Section-specific logic
+          if (sectionId === 'housekeeping') {
+            // Filter out onboarding when incomplete (shown at top instead)
+            filteredItems = filteredItems.filter(item => 
+              isOnboardingComplete || item.href !== '/dashboard/onboarding'
+            );
+            shouldShow = filteredItems.length > 0;
+          }
+          
+          if (sectionId === 'manager') {
+            shouldShow = effectiveIsCoach && filteredItems.length > 0;
+          }
+          
+          if (sectionId === 'adminOnly') {
+            shouldShow = (roles.includes('admin') || roles.includes('super_admin')) && filteredItems.length > 0;
+          }
+          
+          if (!shouldShow) return null;
+          
+          // Get badge count for specific items
+          const getBadgeCount = (href: string) => {
+            if (href === '/dashboard' && sectionId === 'main') return unreadCount;
+            if (href === '/dashboard/admin/announcements' && sectionId === 'manager') return unreadCount;
+            return undefined;
+          };
+          
+          return (
+            <div key={sectionId}>
+              {/* Show divider for all sections except the first one */}
+              {index > 0 && (
+                <div className={cn("my-4", isCollapsed ? "px-2" : "px-4")}>
+                  <div className="h-px bg-border" />
+                </div>
               )}
+              
+              {/* Section header - special case for website with external link */}
+              {!isCollapsed && sectionId !== 'main' && (
+                <div className={cn(
+                  "px-4 mb-2",
+                  sectionId === 'website' && "flex items-center justify-between"
+                )}>
+                  <p className="text-xs uppercase tracking-wider text-foreground font-display font-medium">
+                    {sectionLabel}
+                  </p>
+                  {sectionId === 'website' && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a 
+                          href="/" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-1 rounded hover:bg-muted transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">View Website</TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              )}
+              
+              {/* Links */}
               <div className="space-y-1">
-                {filteredHousekeeping.map((item) => (
-                  <NavLink key={item.href} {...item} />
+                {filteredItems.map((item) => (
+                  <NavLink 
+                    key={item.href} 
+                    {...item} 
+                    badgeCount={getBadgeCount(item.href)}
+                  />
                 ))}
               </div>
-            </>
+            </div>
           );
-        })()}
-
-        {/* Manager Section */}
-        {effectiveIsCoach && filterNavItems(managerNavItems).length > 0 && (
-          <>
-            <div className={cn("my-4", isCollapsed ? "px-2" : "px-4")}>
-              <div className="h-px bg-border" />
-            </div>
-            {!isCollapsed && (
-              <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-                Management
-              </p>
-            )}
-            <div className="space-y-1">
-              {filterNavItems(managerNavItems).map((item) => (
-                <NavLink 
-                  key={item.href} 
-                  {...item} 
-                  badgeCount={item.href === '/dashboard/admin/announcements' ? unreadCount : undefined}
-                />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Website Section */}
-        {filterNavItems(websiteNavItems).length > 0 && (
-          <>
-            <div className={cn("my-4", isCollapsed ? "px-2" : "px-4")}>
-              <div className="h-px bg-border" />
-            </div>
-            {!isCollapsed && (
-              <div className="px-4 mb-2 flex items-center justify-between">
-                <p className="text-xs uppercase tracking-wider text-foreground font-display font-medium">
-                  Website
-                </p>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <a 
-                      href="/" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="p-1 rounded hover:bg-muted transition-colors"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-                    </a>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">View Website</TooltipContent>
-                </Tooltip>
-              </div>
-            )}
-            <div className="space-y-1">
-              {filterNavItems(websiteNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Admin Only Section */}
-        {(roles.includes('admin') || roles.includes('super_admin')) && filterNavItems(adminOnlyNavItems).length > 0 && (
-          <>
-            <div className={cn("my-4", isCollapsed ? "px-2" : "px-4")}>
-              <div className="h-px bg-border" />
-            </div>
-            {!isCollapsed && (
-              <p className="px-4 mb-2 text-xs uppercase tracking-wider text-foreground font-display font-medium">
-                Super Admin
-              </p>
-            )}
-            <div className="space-y-1">
-              {filterNavItems(adminOnlyNavItems).map((item) => (
-                <NavLink key={item.href} {...item} />
-              ))}
-            </div>
-          </>
-        )}
+        })}
       </nav>
     </div>
   );
