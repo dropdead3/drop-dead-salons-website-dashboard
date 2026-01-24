@@ -11,7 +11,7 @@ import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection } from '@/hooks/useSidebarLayout';
+import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks } from '@/hooks/useSidebarLayout';
 
 interface NavItem {
   href: string;
@@ -123,15 +123,18 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     });
   };
 
-  // Get section order from layout or use default, filtering out hidden sections
+  // Get section order from layout or use default, filtering out hidden sections (including role-based)
   const sectionOrder = useMemo(() => {
     const order = sidebarLayout?.sectionOrder || DEFAULT_SECTION_ORDER;
-    const hiddenSections = sidebarLayout?.hiddenSections || [];
-    return order.filter(id => !hiddenSections.includes(id));
-  }, [sidebarLayout]);
+    // Get effective hidden sections based on user's roles
+    const effectiveHiddenSections = getEffectiveHiddenSections(sidebarLayout, roles);
+    return order.filter(id => !effectiveHiddenSections.includes(id));
+  }, [sidebarLayout, roles]);
 
-  // Get hidden links map
-  const hiddenLinks = sidebarLayout?.hiddenLinks || {};
+  // Get hidden links map (including role-based visibility)
+  const hiddenLinks = useMemo(() => {
+    return getEffectiveHiddenLinks(sidebarLayout, roles);
+  }, [sidebarLayout, roles]);
   
   // Check if custom logos are uploaded
   const hasCustomLogo = () => {
