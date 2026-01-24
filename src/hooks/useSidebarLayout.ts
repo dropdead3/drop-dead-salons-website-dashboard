@@ -86,17 +86,114 @@ export interface CustomSectionConfig {
   name: string;
 }
 
+export interface RoleVisibilityConfig {
+  hiddenSections: string[];
+  hiddenLinks: Record<string, string[]>;
+}
+
 export interface SidebarLayoutConfig {
   sectionOrder: string[];
   linkOrder: Record<string, string[]>;
   hiddenSections: string[];
   hiddenLinks: Record<string, string[]>;
   customSections: Record<string, CustomSectionConfig>;
+  // Per-role visibility overrides
+  roleVisibility: Record<string, RoleVisibilityConfig>;
 }
 
 // Check if a section is a built-in section
 export function isBuiltInSection(sectionId: string): boolean {
   return DEFAULT_SECTION_ORDER.includes(sectionId);
+}
+
+// Get effective hidden sections for a user based on their roles
+export function getEffectiveHiddenSections(
+  layout: SidebarLayoutConfig | null | undefined,
+  userRoles: string[]
+): string[] {
+  if (!layout) return [];
+  
+  // Start with global hidden sections
+  const hidden = new Set(layout.hiddenSections || []);
+  
+  // Apply role-specific visibility (if a section is hidden for ANY of user's roles, it's hidden)
+  // But if a section is visible for at least one role, it should be visible
+  // Logic: A section is hidden if it's globally hidden OR hidden for ALL of the user's roles
+  const roleVisibility = layout.roleVisibility || {};
+  
+  // For each section, check if it's visible for at least one of the user's roles
+  layout.sectionOrder.forEach((sectionId) => {
+    let hiddenForAllRoles = true;
+    let hasRoleOverride = false;
+    
+    for (const role of userRoles) {
+      const roleConfig = roleVisibility[role];
+      if (roleConfig) {
+        hasRoleOverride = true;
+        if (!roleConfig.hiddenSections?.includes(sectionId)) {
+          hiddenForAllRoles = false;
+          break;
+        }
+      }
+    }
+    
+    // If user has role overrides and section is hidden for all their roles, hide it
+    if (hasRoleOverride && hiddenForAllRoles) {
+      hidden.add(sectionId);
+    }
+  });
+  
+  return Array.from(hidden);
+}
+
+// Get effective hidden links for a user based on their roles
+export function getEffectiveHiddenLinks(
+  layout: SidebarLayoutConfig | null | undefined,
+  userRoles: string[]
+): Record<string, string[]> {
+  if (!layout) return {};
+  
+  // Start with global hidden links
+  const hidden: Record<string, Set<string>> = {};
+  
+  Object.entries(layout.hiddenLinks || {}).forEach(([sectionId, links]) => {
+    hidden[sectionId] = new Set(links);
+  });
+  
+  // Apply role-specific visibility
+  const roleVisibility = layout.roleVisibility || {};
+  
+  // For each section's links, apply role overrides
+  Object.entries(layout.linkOrder || {}).forEach(([sectionId, links]) => {
+    links.forEach((href) => {
+      let hiddenForAllRoles = true;
+      let hasRoleOverride = false;
+      
+      for (const role of userRoles) {
+        const roleConfig = roleVisibility[role];
+        if (roleConfig?.hiddenLinks?.[sectionId]) {
+          hasRoleOverride = true;
+          if (!roleConfig.hiddenLinks[sectionId].includes(href)) {
+            hiddenForAllRoles = false;
+            break;
+          }
+        }
+      }
+      
+      if (hasRoleOverride && hiddenForAllRoles) {
+        if (!hidden[sectionId]) hidden[sectionId] = new Set();
+        hidden[sectionId].add(href);
+      }
+    });
+  });
+  
+  // Convert Sets back to arrays
+  const result: Record<string, string[]> = {};
+  Object.entries(hidden).forEach(([sectionId, linkSet]) => {
+    result[sectionId] = Array.from(linkSet);
+  });
+  
+  return result;
 }
 
 export function useSidebarLayout() {
@@ -134,8 +231,11 @@ export function useSidebarLayout() {
       
       // Custom sections default to empty object
       const customSections = stored?.customSections || {};
+      
+      // Role visibility default to empty object
+      const roleVisibility = stored?.roleVisibility || {};
 
-      return { sectionOrder, linkOrder, hiddenSections, hiddenLinks, customSections } as SidebarLayoutConfig;
+      return { sectionOrder, linkOrder, hiddenSections, hiddenLinks, customSections, roleVisibility } as SidebarLayoutConfig;
     },
     staleTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
@@ -163,6 +263,7 @@ export function useUpdateSidebarLayout() {
         hiddenSections: layout.hiddenSections,
         hiddenLinks: layout.hiddenLinks,
         customSections: layout.customSections,
+        roleVisibility: layout.roleVisibility,
       }));
 
       const { data, error } = await supabase

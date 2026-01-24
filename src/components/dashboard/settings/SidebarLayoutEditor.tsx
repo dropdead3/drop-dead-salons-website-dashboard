@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import {
   DndContext,
@@ -13,7 +15,6 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  DragOverEvent,
   DragStartEvent,
   DragOverlay,
 } from '@dnd-kit/core';
@@ -62,12 +63,12 @@ import {
   Scissors,
   Eye,
   EyeOff,
-  Plus,
   Pencil,
   Trash2,
   Check,
   X,
   FolderPlus,
+  Crown,
 } from 'lucide-react';
 import {
   useSidebarLayout,
@@ -78,7 +79,10 @@ import {
   isBuiltInSection,
   type SidebarLayoutConfig,
   type CustomSectionConfig,
+  type RoleVisibilityConfig,
 } from '@/hooks/useSidebarLayout';
+import { useRoles, Role } from '@/hooks/useRoles';
+import { getRoleIconComponent } from '@/components/dashboard/RoleIconPicker';
 import { SidebarPreview } from './SidebarPreview';
 
 // Map hrefs to their labels and icons
@@ -223,10 +227,10 @@ function SortableSection({
   hiddenLinks,
   onToggleSectionVisibility,
   onToggleLinkVisibility,
+  onBulkToggleLinks,
   isCustom,
   onRename,
   onDelete,
-  onMoveLinkToSection,
 }: {
   sectionId: string;
   sectionName: string;
@@ -238,10 +242,10 @@ function SortableSection({
   hiddenLinks: string[];
   onToggleSectionVisibility: () => void;
   onToggleLinkVisibility: (href: string) => void;
+  onBulkToggleLinks: (showAll: boolean) => void;
   isCustom: boolean;
   onRename?: (newName: string) => void;
   onDelete?: () => void;
-  onMoveLinkToSection: (href: string, fromSection: string, toSection: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(sectionName);
@@ -300,6 +304,8 @@ function SortableSection({
   };
 
   const visibleLinksCount = links.filter(l => !hiddenLinks.includes(l)).length;
+  const allHidden = links.length > 0 && visibleLinksCount === 0;
+  const allVisible = links.length > 0 && visibleLinksCount === links.length;
 
   return (
     <div
@@ -357,7 +363,7 @@ function SortableSection({
                     }}
                   />
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleSaveRename}>
-                    <Check className="w-3.5 h-3.5 text-green-600" />
+                    <Check className="w-3.5 h-3.5 text-primary" />
                   </Button>
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCancelRename}>
                     <X className="w-3.5 h-3.5 text-destructive" />
@@ -426,6 +432,33 @@ function SortableSection({
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="p-3 bg-muted/30 border-t border-border space-y-2">
+            {/* Bulk toggle buttons */}
+            {links.length > 0 && (
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                <span className="text-xs text-muted-foreground">Bulk:</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs gap-1"
+                  onClick={() => onBulkToggleLinks(true)}
+                  disabled={allVisible}
+                >
+                  <Eye className="w-3 h-3" />
+                  Show All
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs gap-1"
+                  onClick={() => onBulkToggleLinks(false)}
+                  disabled={allHidden}
+                >
+                  <EyeOff className="w-3 h-3" />
+                  Hide All
+                </Button>
+              </div>
+            )}
+            
             {links.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-4">
                 No links in this section. Drag links here from other sections.
@@ -461,6 +494,7 @@ function SortableSection({
 
 export function SidebarLayoutEditor() {
   const { data: layout, isLoading } = useSidebarLayout();
+  const { data: roles = [] } = useRoles();
   const updateLayout = useUpdateSidebarLayout();
 
   // Local state for editing
@@ -469,10 +503,14 @@ export function SidebarLayoutEditor() {
   const [localHiddenSections, setLocalHiddenSections] = useState<string[]>([]);
   const [localHiddenLinks, setLocalHiddenLinks] = useState<Record<string, string[]>>({});
   const [localCustomSections, setLocalCustomSections] = useState<Record<string, CustomSectionConfig>>({});
+  const [localRoleVisibility, setLocalRoleVisibility] = useState<Record<string, RoleVisibilityConfig>>({});
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [hasChanges, setHasChanges] = useState(false);
   const [newSectionName, setNewSectionName] = useState('');
   const [isAddingSection, setIsAddingSection] = useState(false);
+  
+  // Role selection - "global" means editing the base visibility, otherwise role-specific
+  const [selectedRole, setSelectedRole] = useState<string>('global');
 
   // Initialize local state when layout loads
   useMemo(() => {
@@ -482,6 +520,7 @@ export function SidebarLayoutEditor() {
       setLocalHiddenSections(layout.hiddenSections || []);
       setLocalHiddenLinks(layout.hiddenLinks || {});
       setLocalCustomSections(layout.customSections || {});
+      setLocalRoleVisibility(layout.roleVisibility || {});
     }
   }, [layout, localSectionOrder.length]);
 
@@ -491,6 +530,21 @@ export function SidebarLayoutEditor() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Get current hidden sections/links based on selected role
+  const currentHiddenSections = useMemo(() => {
+    if (selectedRole === 'global') {
+      return localHiddenSections;
+    }
+    return localRoleVisibility[selectedRole]?.hiddenSections || [];
+  }, [selectedRole, localHiddenSections, localRoleVisibility]);
+
+  const currentHiddenLinks = useMemo(() => {
+    if (selectedRole === 'global') {
+      return localHiddenLinks;
+    }
+    return localRoleVisibility[selectedRole]?.hiddenLinks || {};
+  }, [selectedRole, localHiddenLinks, localRoleVisibility]);
 
   // Get section name (from SECTION_LABELS for built-in, from customSections for custom)
   const getSectionName = (sectionId: string): string => {
@@ -531,29 +585,93 @@ export function SidebarLayoutEditor() {
   };
 
   const handleToggleSectionVisibility = (sectionId: string) => {
-    setLocalHiddenSections((prev) => {
-      if (prev.includes(sectionId)) {
-        return prev.filter(s => s !== sectionId);
-      }
-      return [...prev, sectionId];
-    });
+    if (selectedRole === 'global') {
+      setLocalHiddenSections((prev) => {
+        if (prev.includes(sectionId)) {
+          return prev.filter(s => s !== sectionId);
+        }
+        return [...prev, sectionId];
+      });
+    } else {
+      setLocalRoleVisibility((prev) => {
+        const roleConfig = prev[selectedRole] || { hiddenSections: [], hiddenLinks: {} };
+        const hiddenSections = roleConfig.hiddenSections || [];
+        
+        return {
+          ...prev,
+          [selectedRole]: {
+            ...roleConfig,
+            hiddenSections: hiddenSections.includes(sectionId)
+              ? hiddenSections.filter(s => s !== sectionId)
+              : [...hiddenSections, sectionId],
+          },
+        };
+      });
+    }
     setHasChanges(true);
   };
 
   const handleToggleLinkVisibility = (sectionId: string, href: string) => {
-    setLocalHiddenLinks((prev) => {
-      const sectionLinks = prev[sectionId] || [];
-      if (sectionLinks.includes(href)) {
+    if (selectedRole === 'global') {
+      setLocalHiddenLinks((prev) => {
+        const sectionLinks = prev[sectionId] || [];
+        if (sectionLinks.includes(href)) {
+          return {
+            ...prev,
+            [sectionId]: sectionLinks.filter(l => l !== href),
+          };
+        }
         return {
           ...prev,
-          [sectionId]: sectionLinks.filter(l => l !== href),
+          [sectionId]: [...sectionLinks, href],
         };
-      }
-      return {
+      });
+    } else {
+      setLocalRoleVisibility((prev) => {
+        const roleConfig = prev[selectedRole] || { hiddenSections: [], hiddenLinks: {} };
+        const hiddenLinks = roleConfig.hiddenLinks || {};
+        const sectionLinks = hiddenLinks[sectionId] || [];
+        
+        return {
+          ...prev,
+          [selectedRole]: {
+            ...roleConfig,
+            hiddenLinks: {
+              ...hiddenLinks,
+              [sectionId]: sectionLinks.includes(href)
+                ? sectionLinks.filter(l => l !== href)
+                : [...sectionLinks, href],
+            },
+          },
+        };
+      });
+    }
+    setHasChanges(true);
+  };
+
+  const handleBulkToggleLinks = (sectionId: string, showAll: boolean) => {
+    const links = localLinkOrder[sectionId] || [];
+    
+    if (selectedRole === 'global') {
+      setLocalHiddenLinks((prev) => ({
         ...prev,
-        [sectionId]: [...sectionLinks, href],
-      };
-    });
+        [sectionId]: showAll ? [] : [...links],
+      }));
+    } else {
+      setLocalRoleVisibility((prev) => {
+        const roleConfig = prev[selectedRole] || { hiddenSections: [], hiddenLinks: {} };
+        return {
+          ...prev,
+          [selectedRole]: {
+            ...roleConfig,
+            hiddenLinks: {
+              ...roleConfig.hiddenLinks,
+              [sectionId]: showAll ? [] : [...links],
+            },
+          },
+        };
+      });
+    }
     setHasChanges(true);
   };
 
@@ -573,7 +691,6 @@ export function SidebarLayoutEditor() {
     setNewSectionName('');
     setIsAddingSection(false);
     setHasChanges(true);
-    // Auto-expand the new section
     setExpandedSections((prev) => new Set([...prev, sectionId]));
   };
 
@@ -586,27 +703,21 @@ export function SidebarLayoutEditor() {
   };
 
   const handleDeleteSection = (sectionId: string) => {
-    // Move links back to their original sections or hide them
     const linksToRedistribute = localLinkOrder[sectionId] || [];
     
-    // Remove section from order
     setLocalSectionOrder((prev) => prev.filter(id => id !== sectionId));
     
-    // Remove from custom sections
     setLocalCustomSections((prev) => {
       const next = { ...prev };
       delete next[sectionId];
       return next;
     });
     
-    // Remove link order for this section
     setLocalLinkOrder((prev) => {
       const next = { ...prev };
       delete next[sectionId];
       
-      // Return links to their default sections
       linksToRedistribute.forEach((href) => {
-        // Find original section for this link
         const originalSection = Object.entries(DEFAULT_LINK_ORDER).find(([, links]) => 
           links.includes(href)
         )?.[0];
@@ -621,39 +732,25 @@ export function SidebarLayoutEditor() {
       return next;
     });
     
-    // Remove from hidden sections
     setLocalHiddenSections((prev) => prev.filter(id => id !== sectionId));
     
-    // Remove hidden links for this section
     setLocalHiddenLinks((prev) => {
       const next = { ...prev };
       delete next[sectionId];
       return next;
     });
     
-    setHasChanges(true);
-  };
-
-  const handleMoveLinkToSection = (href: string, fromSection: string, toSection: string) => {
-    if (fromSection === toSection) return;
-    
-    setLocalLinkOrder((prev) => {
+    // Also clean up role visibility
+    setLocalRoleVisibility((prev) => {
       const next = { ...prev };
-      // Remove from source section
-      next[fromSection] = (next[fromSection] || []).filter(l => l !== href);
-      // Add to target section
-      next[toSection] = [...(next[toSection] || []), href];
-      return next;
-    });
-    
-    // Also move hidden status
-    setLocalHiddenLinks((prev) => {
-      const next = { ...prev };
-      const wasHidden = (next[fromSection] || []).includes(href);
-      if (wasHidden) {
-        next[fromSection] = (next[fromSection] || []).filter(l => l !== href);
-        next[toSection] = [...(next[toSection] || []), href];
-      }
+      Object.keys(next).forEach((role) => {
+        if (next[role].hiddenSections) {
+          next[role].hiddenSections = next[role].hiddenSections.filter(id => id !== sectionId);
+        }
+        if (next[role].hiddenLinks?.[sectionId]) {
+          delete next[role].hiddenLinks[sectionId];
+        }
+      });
       return next;
     });
     
@@ -667,6 +764,7 @@ export function SidebarLayoutEditor() {
       hiddenSections: localHiddenSections,
       hiddenLinks: localHiddenLinks,
       customSections: localCustomSections,
+      roleVisibility: localRoleVisibility,
     });
     setHasChanges(false);
   };
@@ -677,7 +775,16 @@ export function SidebarLayoutEditor() {
     setLocalHiddenSections([]);
     setLocalHiddenLinks({});
     setLocalCustomSections({});
+    setLocalRoleVisibility({});
+    setSelectedRole('global');
     setHasChanges(true);
+  };
+
+  // Get role icon component
+  const getRoleIcon = (role: Role | null) => {
+    if (!role) return Shield;
+    if (role.name === 'super_admin') return Crown;
+    return getRoleIconComponent(role.icon || 'shield');
   };
 
   if (isLoading) {
@@ -697,7 +804,7 @@ export function SidebarLayoutEditor() {
           <div>
             <CardTitle className="font-display text-lg">SIDEBAR NAVIGATION</CardTitle>
             <CardDescription>
-              Drag to reorder sections and links. Click the eye icon to show/hide items. Create custom sections to organize links.
+              Customize sidebar layout and per-role visibility. Global settings apply to all; role overrides hide additional items.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -727,15 +834,70 @@ export function SidebarLayoutEditor() {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Role Selector Tabs */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Visibility Mode
+          </p>
+          <Tabs value={selectedRole} onValueChange={setSelectedRole}>
+            <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
+              <TabsTrigger 
+                value="global" 
+                className="gap-1.5 data-[state=active]:bg-background"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                Global
+              </TabsTrigger>
+              {roles.map((role) => {
+                const RoleIcon = getRoleIcon(role);
+                const hasOverrides = localRoleVisibility[role.name]?.hiddenSections?.length || 
+                  Object.values(localRoleVisibility[role.name]?.hiddenLinks || {}).some(l => l.length > 0);
+                
+                return (
+                  <Tooltip key={role.id}>
+                    <TooltipTrigger asChild>
+                      <TabsTrigger 
+                        value={role.name} 
+                        className={cn(
+                          "gap-1.5 data-[state=active]:bg-background",
+                          hasOverrides && "ring-1 ring-primary/50"
+                        )}
+                      >
+                        <RoleIcon className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">{role.display_name}</span>
+                        {hasOverrides && (
+                          <Badge variant="secondary" className="h-4 w-4 p-0 text-[9px] flex items-center justify-center">
+                            ✓
+                          </Badge>
+                        )}
+                      </TabsTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {role.display_name}
+                      {hasOverrides && ' (has overrides)'}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+          {selectedRole !== 'global' && (
+            <p className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">
+              Editing visibility for <strong>{roles.find(r => r.name === selectedRole)?.display_name || selectedRole}</strong>. 
+              Items hidden here will be hidden for users with this role.
+            </p>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Editor Panel */}
           <div className="space-y-3">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Editor
+                Editor {selectedRole !== 'global' && `(${roles.find(r => r.name === selectedRole)?.display_name})`}
               </p>
-              {!isAddingSection ? (
+              {selectedRole === 'global' && !isAddingSection ? (
                 <Button
                   variant="outline"
                   size="sm"
@@ -745,7 +907,7 @@ export function SidebarLayoutEditor() {
                   <FolderPlus className="w-3.5 h-3.5" />
                   Add Section
                 </Button>
-              ) : (
+              ) : selectedRole === 'global' && isAddingSection ? (
                 <div className="flex items-center gap-1">
                   <Input
                     value={newSectionName}
@@ -768,7 +930,7 @@ export function SidebarLayoutEditor() {
                     onClick={handleAddCustomSection}
                     disabled={!newSectionName.trim()}
                   >
-                    <Check className="w-3.5 h-3.5 text-green-600" />
+                    <Check className="w-3.5 h-3.5 text-primary" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -782,7 +944,7 @@ export function SidebarLayoutEditor() {
                     <X className="w-3.5 h-3.5 text-destructive" />
                   </Button>
                 </div>
-              )}
+              ) : null}
             </div>
             
             <DndContext
@@ -800,14 +962,18 @@ export function SidebarLayoutEditor() {
                     isExpanded={expandedSections.has(sectionId)}
                     onToggle={() => handleToggleSection(sectionId)}
                     onLinksReorder={handleLinksReorder}
-                    isHidden={localHiddenSections.includes(sectionId)}
-                    hiddenLinks={localHiddenLinks[sectionId] || []}
+                    isHidden={currentHiddenSections.includes(sectionId)}
+                    hiddenLinks={currentHiddenLinks[sectionId] || []}
                     onToggleSectionVisibility={() => handleToggleSectionVisibility(sectionId)}
                     onToggleLinkVisibility={(href) => handleToggleLinkVisibility(sectionId, href)}
+                    onBulkToggleLinks={(showAll) => handleBulkToggleLinks(sectionId, showAll)}
                     isCustom={!isBuiltInSection(sectionId)}
-                    onRename={!isBuiltInSection(sectionId) ? (name) => handleRenameSection(sectionId, name) : undefined}
-                    onDelete={!isBuiltInSection(sectionId) ? () => handleDeleteSection(sectionId) : undefined}
-                    onMoveLinkToSection={handleMoveLinkToSection}
+                    onRename={!isBuiltInSection(sectionId) && selectedRole === 'global' 
+                      ? (name) => handleRenameSection(sectionId, name) 
+                      : undefined}
+                    onDelete={!isBuiltInSection(sectionId) && selectedRole === 'global' 
+                      ? () => handleDeleteSection(sectionId) 
+                      : undefined}
                   />
                 ))}
               </SortableContext>
@@ -817,13 +983,13 @@ export function SidebarLayoutEditor() {
           {/* Preview Panel */}
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              Live Preview
+              Live Preview {selectedRole !== 'global' && `(${roles.find(r => r.name === selectedRole)?.display_name})`}
             </p>
             <SidebarPreview
               sectionOrder={localSectionOrder}
               linkOrder={localLinkOrder}
-              hiddenSections={localHiddenSections}
-              hiddenLinks={localHiddenLinks}
+              hiddenSections={currentHiddenSections}
+              hiddenLinks={currentHiddenLinks}
               customSections={localCustomSections}
             />
           </div>
