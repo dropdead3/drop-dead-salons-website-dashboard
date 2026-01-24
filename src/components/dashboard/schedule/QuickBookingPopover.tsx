@@ -189,12 +189,28 @@ export function QuickBookingPopover({
     });
   }, [stylists, qualificationData]);
 
-  // Auto-select highest level stylist when entering stylist step
+  // Auto-select stylist when entering stylist step
+  // Priority: logged-in stylist/stylist_assistant > highest level stylist
   useEffect(() => {
     if (step === 'stylist' && filteredStylists.length > 0 && !selectedStylist) {
+      // Check if current user is a stylist or stylist_assistant
+      const isStylistRole = roles.some(r => ['stylist', 'stylist_assistant'].includes(r));
+      
+      if (isStylistRole && user?.id) {
+        // Try to find the logged-in user in the filtered stylists list
+        const selfStylist = filteredStylists.find(s => s.user_id === user.id);
+        
+        if (selfStylist) {
+          // Auto-select themselves
+          setSelectedStylist(selfStylist.user_id);
+          return;
+        }
+      }
+      
+      // Fallback: select highest level stylist (first in sorted list)
       setSelectedStylist(filteredStylists[0].user_id);
     }
-  }, [step, filteredStylists, selectedStylist]);
+  }, [step, filteredStylists, selectedStylist, roles, user?.id]);
 
   // totalDuration and totalPrice use selectedServiceDetails defined above
 
