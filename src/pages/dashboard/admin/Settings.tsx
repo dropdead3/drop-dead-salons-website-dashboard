@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
@@ -319,11 +320,19 @@ export default function Settings() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { colorTheme, setColorTheme, mounted: colorMounted } = useColorTheme();
   const { roleOptions: dynamicRoleOptions, isLoading: rolesLoading } = useRoleUtils();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Reset to main view when nav link is clicked (same route navigation)
+  useEffect(() => {
+    if (location.state?.navTimestamp) {
+      setActiveCategory(null);
+    }
+  }, [location.state?.navTimestamp]);
   const [businessDialogOpen, setBusinessDialogOpen] = useState(false);
   
   // Layout editing state

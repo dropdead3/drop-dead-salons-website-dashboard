@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -70,6 +70,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     onToggleCollapse,
   }, ref) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { resolvedTheme } = useTheme();
   const internalRef = useRef<HTMLElement>(null);
   const { data: businessSettings } = useBusinessSettings();
@@ -219,12 +220,19 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   }) => {
     const isActive = location.pathname === href;
     
+    const handleClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      // Always navigate with a fresh timestamp to trigger state reset on same-route navigation
+      navigate(href, { state: { navTimestamp: Date.now() } });
+      onNavClick();
+    };
+    
     const linkContent = (
-      <Link
-        to={href}
-        onClick={onNavClick}
+      <a
+        href={href}
+        onClick={handleClick}
         className={cn(
-          "flex items-center gap-3 text-sm font-sans transition-colors",
+          "flex items-center gap-3 text-sm font-sans transition-colors cursor-pointer",
           isCollapsed ? "px-0 py-3 justify-center" : "px-4 py-3",
           isActive 
             ? "bg-foreground text-background" 
@@ -241,7 +249,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         {isCollapsed && badgeCount !== undefined && badgeCount > 0 && (
           <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
         )}
-      </Link>
+      </a>
     );
     
     if (isCollapsed) {
