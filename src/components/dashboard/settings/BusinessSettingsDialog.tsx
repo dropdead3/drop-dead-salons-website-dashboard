@@ -44,6 +44,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
     phone: '',
     email: '',
     website: '',
+    default_tax_rate: '',
   });
 
   const [uploadingLight, setUploadingLight] = useState(false);
@@ -68,6 +69,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
         phone: settings.phone || '',
         email: settings.email || '',
         website: settings.website || '',
+        default_tax_rate: settings.default_tax_rate != null ? (settings.default_tax_rate * 100).toString() : '',
       });
     }
   }, [settings]);
@@ -193,7 +195,16 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateSettings.mutateAsync(formData);
+    // Convert tax rate from percentage string to decimal number
+    const taxRateValue = formData.default_tax_rate 
+      ? parseFloat(formData.default_tax_rate) / 100 
+      : null;
+    
+    const { default_tax_rate, ...rest } = formData;
+    await updateSettings.mutateAsync({
+      ...rest,
+      default_tax_rate: taxRateValue,
+    });
     onOpenChange(false);
   };
 
@@ -403,14 +414,32 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="ein">EIN</Label>
-                <Input
-                  id="ein"
-                  value={formData.ein}
-                  onChange={(e) => handleChange('ein', e.target.value)}
-                  placeholder="XX-XXXXXXX"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="ein">EIN</Label>
+                  <Input
+                    id="ein"
+                    value={formData.ein}
+                    onChange={(e) => handleChange('ein', e.target.value)}
+                    placeholder="XX-XXXXXXX"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="default_tax_rate">Default Tax Rate (%)</Label>
+                  <Input
+                    id="default_tax_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={formData.default_tax_rate}
+                    onChange={(e) => handleChange('default_tax_rate', e.target.value)}
+                    placeholder="8.00"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Applied to all locations unless overridden
+                  </p>
+                </div>
               </div>
             </div>
 

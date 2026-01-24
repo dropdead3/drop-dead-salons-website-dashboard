@@ -86,6 +86,7 @@ type LocationFormData = {
   major_crossroads: string;
   is_active: boolean;
   display_order: number;
+  tax_rate: number | null;
 };
 
 const emptyForm: LocationFormData = {
@@ -103,6 +104,7 @@ const emptyForm: LocationFormData = {
   major_crossroads: '',
   is_active: true,
   display_order: 0,
+  tax_rate: null,
 };
 
 export function LocationsSettingsContent() {
@@ -143,6 +145,7 @@ export function LocationsSettingsContent() {
       major_crossroads: location.major_crossroads || '',
       is_active: location.is_active,
       display_order: location.display_order,
+      tax_rate: location.tax_rate,
     });
     setIsDialogOpen(true);
   };
@@ -165,6 +168,7 @@ export function LocationsSettingsContent() {
       is_active: formData.is_active,
       show_on_website: true, // Default to true for new locations
       display_order: formData.display_order,
+      tax_rate: formData.tax_rate,
     };
 
     if (editingLocation) {
@@ -471,8 +475,45 @@ export function LocationsSettingsContent() {
                     Helps receptionists give directions over the phone
                   </p>
                 </div>
+
+                {/* Tax Rate Override */}
+                <div className="space-y-2 pt-4 border-t">
+                  <Label htmlFor="tax_rate">Tax Rate Override (%)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="tax_rate"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={formData.tax_rate != null ? (formData.tax_rate * 100).toString() : ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData(f => ({
+                          ...f,
+                          tax_rate: value ? parseFloat(value) / 100 : null,
+                        }));
+                      }}
+                      placeholder="Use default"
+                      className="w-32"
+                    />
+                    {formData.tax_rate != null && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData(f => ({ ...f, tax_rate: null }))}
+                      >
+                        Use Default
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Leave empty to use the default tax rate from Business Settings
+                  </p>
+                </div>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-4 border-t">
                   <Label htmlFor="is_active">Active (operational status)</Label>
                   <Switch
                     id="is_active"
