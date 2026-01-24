@@ -17,6 +17,33 @@ import { useTheme } from "next-themes";
 import { SPECIAL_GRADIENTS } from "@/utils/categoryColors";
 import { getRoleColorClasses, ROLE_COLORS } from "@/components/dashboard/RoleColorPicker";
 
+// CopyButton component defined OUTSIDE the DesignSystem component
+interface CopyButtonProps {
+  text: string;
+  label: string;
+  size?: "sm" | "xs";
+  copiedItem: string | null;
+  onCopy: (text: string, label: string) => void;
+}
+
+const CopyButton = React.forwardRef<HTMLButtonElement, CopyButtonProps>(
+  ({ text, label, size = "sm", copiedItem, onCopy }, ref) => (
+    <button
+      ref={ref}
+      onClick={() => onCopy(text, label)}
+      className={`${size === "xs" ? "p-0.5" : "p-1"} rounded hover:bg-accent transition-colors`}
+      title="Copy to clipboard"
+    >
+      {copiedItem === label ? (
+        <Check className={`${size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3"} text-success-foreground`} />
+      ) : (
+        <Copy className={`${size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3"} text-muted-foreground`} />
+      )}
+    </button>
+  )
+);
+CopyButton.displayName = "CopyButton";
+
 const DesignSystem = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
@@ -46,25 +73,6 @@ const DesignSystem = () => {
     toast({ title: "Copied!", description: `${label} copied to clipboard` });
     setTimeout(() => setCopiedItem(null), 2000);
   };
-
-  const CopyButton = React.forwardRef<
-    HTMLButtonElement,
-    { text: string; label: string; size?: "sm" | "xs" }
-  >(({ text, label, size = "sm" }, ref) => (
-    <button
-      ref={ref}
-      onClick={() => copyToClipboard(text, label)}
-      className={`${size === "xs" ? "p-0.5" : "p-1"} rounded hover:bg-accent transition-colors`}
-      title="Copy to clipboard"
-    >
-      {copiedItem === label ? (
-        <Check className={`${size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3"} text-success-foreground`} />
-      ) : (
-        <Copy className={`${size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3"} text-muted-foreground`} />
-      )}
-    </button>
-  ));
-  CopyButton.displayName = "CopyButton";
 
   // Semantic color tokens
   const semanticColors = [
@@ -350,7 +358,7 @@ const DesignSystem = () => {
                             <code>{buttonCode}</code>
                           </pre>
                           <div className="absolute top-2 right-2">
-                            <CopyButton text={buttonCode} label="Button code" />
+                            <CopyButton text={buttonCode} label="Button code" copiedItem={copiedItem} onCopy={copyToClipboard} />
                           </div>
                         </div>
                       </div>
@@ -392,7 +400,7 @@ const DesignSystem = () => {
                             <code>{badgeCode}</code>
                           </pre>
                           <div className="absolute top-2 right-2">
-                            <CopyButton text={badgeCode} label="Badge code" />
+                            <CopyButton text={badgeCode} label="Badge code" copiedItem={copiedItem} onCopy={copyToClipboard} />
                           </div>
                         </div>
                       </div>
@@ -473,7 +481,7 @@ const DesignSystem = () => {
                             <code>{cardCode}</code>
                           </pre>
                           <div className="absolute top-2 right-2">
-                            <CopyButton text={cardCode} label="Card code" />
+                            <CopyButton text={cardCode} label="Card code" copiedItem={copiedItem} onCopy={copyToClipboard} />
                           </div>
                         </div>
                       </div>
@@ -513,19 +521,19 @@ const DesignSystem = () => {
                           <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">
                             {color.variable}
                           </code>
-                          <CopyButton text={color.variable} label={color.name} />
-                          <CopyButton text={`hsl(var(${color.variable}))`} label={`${color.name} css`} />
+                          <CopyButton text={color.variable} label={color.name} copiedItem={copiedItem} onCopy={copyToClipboard} />
+                          <CopyButton text={`hsl(var(${color.variable}))`} label={`${color.name} css`} copiedItem={copiedItem} onCopy={copyToClipboard} />
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">{color.usage}</p>
                       </div>
                       <div className="text-right text-xs text-muted-foreground font-mono space-y-1">
                         <div className="flex items-center justify-end gap-1">
                           Light: {color.light}
-                          <CopyButton text={color.light} label={`${color.name} light hsl`} size="xs" />
+                          <CopyButton text={color.light} label={`${color.name} light hsl`} size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                         </div>
                         <div className="flex items-center justify-end gap-1">
                           Dark: {color.dark}
-                          <CopyButton text={color.dark} label={`${color.name} dark hsl`} size="xs" />
+                          <CopyButton text={color.dark} label={`${color.name} dark hsl`} size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                         </div>
                       </div>
                     </div>
@@ -547,7 +555,7 @@ const DesignSystem = () => {
                           <div>
                             <div className="flex items-center gap-1">
                               <code className="text-sm font-mono">145 50% 45%</code>
-                              <CopyButton text="145 50% 45%" label="uptrend hsl" size="xs" />
+                              <CopyButton text="145 50% 45%" label="uptrend hsl" size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                             </div>
                             <p className="text-xs text-muted-foreground">Uptrend (green)</p>
                           </div>
@@ -561,7 +569,7 @@ const DesignSystem = () => {
                           <div>
                             <div className="flex items-center gap-1">
                               <code className="text-sm font-mono">0 60% 60%</code>
-                              <CopyButton text="0 60% 60%" label="downtrend hsl" size="xs" />
+                              <CopyButton text="0 60% 60%" label="downtrend hsl" size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                             </div>
                             <p className="text-xs text-muted-foreground">Downtrend (red)</p>
                           </div>
@@ -599,7 +607,7 @@ const DesignSystem = () => {
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <code className="text-xs font-mono">{key}</code>
-                          <CopyButton text={gradient.background} label={gradient.name} />
+                          <CopyButton text={gradient.background} label={gradient.name} copiedItem={copiedItem} onCopy={copyToClipboard} />
                         </div>
                         <div 
                           className="mt-2 h-6 rounded border cursor-pointer hover:opacity-80 transition-opacity"
@@ -631,7 +639,7 @@ const DesignSystem = () => {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">{type.class}</code>
-                          <CopyButton text={type.class} label={type.font} />
+                          <CopyButton text={type.class} label={type.font} copiedItem={copiedItem} onCopy={copyToClipboard} />
                         </div>
                         <span className="text-xs text-muted-foreground">{type.weight}</span>
                       </div>
@@ -653,13 +661,25 @@ const DesignSystem = () => {
                     <>
                       <Separator className="my-4" />
                       <div className="space-y-3">
-                        <h4 className="font-display uppercase tracking-wide text-sm">Live Examples</h4>
-                        <div className="p-4 rounded-lg bg-background border space-y-4">
-                          <h1 className="font-display uppercase tracking-wide text-3xl">Display Headline</h1>
-                          <h2 className="font-display uppercase tracking-wide text-xl">Section Title</h2>
-                          <p className="font-sans">This is body text using Aeonik Pro. It's clean, modern, and highly readable for longer passages of content.</p>
-                          <p className="font-serif text-lg">Editorial accent with Laguna serif.</p>
-                          <p className="font-script text-2xl">Decorative script styling</p>
+                        <h4 className="font-display uppercase tracking-wide text-sm">Size Scale</h4>
+                        <div className="p-4 rounded-lg bg-background border space-y-2">
+                          {[
+                            { class: "text-xs", label: "Extra Small", preview: "The quick brown fox" },
+                            { class: "text-sm", label: "Small", preview: "The quick brown fox" },
+                            { class: "text-base", label: "Base", preview: "The quick brown fox" },
+                            { class: "text-lg", label: "Large", preview: "The quick brown fox" },
+                            { class: "text-xl", label: "Extra Large", preview: "The quick brown fox" },
+                            { class: "text-2xl", label: "2XL", preview: "The quick brown fox" },
+                            { class: "text-3xl", label: "3XL", preview: "The quick brown fox" },
+                          ].map((size) => (
+                            <div key={size.class} className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <code className="text-xs font-mono bg-muted px-2 py-0.5 rounded w-20">{size.class}</code>
+                                <span className={size.class}>{size.preview}</span>
+                              </div>
+                              <CopyButton text={size.class} label={size.class} size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </>
@@ -692,7 +712,7 @@ const DesignSystem = () => {
                           <Button variant={variant as any}>{label}</Button>
                           <div className="flex items-center justify-center gap-1">
                             <code className="text-xs">variant="{variant}"</code>
-                            <CopyButton text={`variant="${variant}"`} label={`btn-${variant}`} size="xs" />
+                            <CopyButton text={`variant="${variant}"`} label={`btn-${variant}`} size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                           </div>
                         </div>
                       ))}
@@ -711,7 +731,7 @@ const DesignSystem = () => {
                           <Button size={size as any}>{label}</Button>
                           <div className="flex items-center justify-center gap-1">
                             <code className="text-xs">size="{size}"</code>
-                            <CopyButton text={`size="${size}"`} label={`size-${size}`} size="xs" />
+                            <CopyButton text={`size="${size}"`} label={`size-${size}`} size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                           </div>
                         </div>
                       ))}
@@ -719,7 +739,7 @@ const DesignSystem = () => {
                         <Button size="icon"><Sparkles className="h-4 w-4" /></Button>
                         <div className="flex items-center justify-center gap-1">
                           <code className="text-xs">size="icon"</code>
-                          <CopyButton text={`size="icon"`} label="size-icon" size="xs" />
+                          <CopyButton text={`size="icon"`} label="size-icon" size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                         </div>
                       </div>
                     </div>
@@ -753,7 +773,7 @@ const DesignSystem = () => {
                             <Badge variant={variant as any}>{label}</Badge>
                             <div className={`flex items-center justify-center gap-1 ${dark ? "text-background" : ""}`}>
                               <code className="text-xs">variant="{variant}"</code>
-                              <CopyButton text={`variant="${variant}"`} label={`badge-${variant}`} size="xs" />
+                              <CopyButton text={`variant="${variant}"`} label={`badge-${variant}`} size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                             </div>
                           </div>
                         ))}
@@ -774,7 +794,7 @@ const DesignSystem = () => {
                               </span>
                               <div className="flex items-center justify-center gap-1">
                                 <code className="text-xs">{color.name}</code>
-                                <CopyButton text={color.name} label={`role-${color.name}`} size="xs" />
+                                <CopyButton text={color.name} label={`role-${color.name}`} size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                               </div>
                             </div>
                           );
@@ -805,7 +825,7 @@ const DesignSystem = () => {
                       </div>
                       <div className="flex items-center justify-center gap-1">
                         <code className="text-xs font-mono">{radius.class}</code>
-                        <CopyButton text={radius.class} label={radius.class} size="xs" />
+                        <CopyButton text={radius.class} label={radius.class} size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                       </div>
                       <p className="text-xs text-muted-foreground">{radius.usage}</p>
                     </div>
@@ -829,7 +849,7 @@ const DesignSystem = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">{anim.class}</code>
-                          <CopyButton text={anim.class} label={anim.class} />
+                          <CopyButton text={anim.class} label={anim.class} copiedItem={copiedItem} onCopy={copyToClipboard} />
                         </div>
                         <p className="text-sm text-muted-foreground">{anim.description}</p>
                       </div>
@@ -853,7 +873,7 @@ const DesignSystem = () => {
                     <div key={effect.class} className="p-4 rounded-lg bg-background border">
                       <div className="flex items-center justify-between mb-2">
                         <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">.{effect.class}</code>
-                        <CopyButton text={effect.class} label={effect.class} />
+                        <CopyButton text={effect.class} label={effect.class} copiedItem={copiedItem} onCopy={copyToClipboard} />
                       </div>
                       <p className="text-sm text-muted-foreground mb-3">{effect.description}</p>
                       
@@ -908,7 +928,7 @@ const DesignSystem = () => {
                       </div>
                       <div className="flex items-center justify-center gap-1">
                         <code className="text-xs">{shadow.class}</code>
-                        <CopyButton text={shadow.class} label={shadow.class} size="xs" />
+                        <CopyButton text={shadow.class} label={shadow.class} size="xs" copiedItem={copiedItem} onCopy={copyToClipboard} />
                       </div>
                       <p className="text-xs text-muted-foreground">{shadow.usage}</p>
                     </div>
@@ -930,7 +950,7 @@ const DesignSystem = () => {
                     <div key={scrollbar.class} className="p-4 rounded-lg bg-background border">
                       <div className="flex items-center gap-2">
                         <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">.{scrollbar.class}</code>
-                        <CopyButton text={scrollbar.class} label={scrollbar.class} />
+                        <CopyButton text={scrollbar.class} label={scrollbar.class} copiedItem={copiedItem} onCopy={copyToClipboard} />
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">{scrollbar.description}</p>
                       <div className={`mt-3 h-24 overflow-y-auto ${scrollbar.class} border rounded p-2`}>
