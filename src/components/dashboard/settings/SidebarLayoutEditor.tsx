@@ -71,6 +71,8 @@ import {
   X,
   FolderPlus,
   Crown,
+  ChevronsDown,
+  ChevronsUp,
 } from 'lucide-react';
 import {
   useSidebarLayout,
@@ -729,6 +731,14 @@ export function SidebarLayoutEditor() {
     });
   };
 
+  const handleExpandAllSections = () => {
+    setExpandedSections(new Set(localSectionOrder));
+  };
+
+  const handleCollapseAllSections = () => {
+    setExpandedSections(new Set());
+  };
+
   const handleToggleSectionVisibility = (sectionId: string) => {
     if (selectedRole === 'global') {
       setLocalHiddenSections((prev) => {
@@ -1064,54 +1074,79 @@ export function SidebarLayoutEditor() {
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Editor {selectedRole !== 'global' && `(${roles.find(r => r.name === selectedRole)?.display_name})`}
               </p>
-              {selectedRole === 'global' && !isAddingSection ? (
+              <div className="flex items-center gap-2">
+                {/* Expand/Collapse All buttons */}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsAddingSection(true)}
+                  onClick={handleExpandAllSections}
+                  disabled={expandedSections.size === localSectionOrder.length}
                   className="gap-1.5 text-xs"
                 >
-                  <FolderPlus className="w-3.5 h-3.5" />
-                  Add Section
+                  <ChevronsDown className="w-3.5 h-3.5" />
+                  Expand All
                 </Button>
-              ) : selectedRole === 'global' && isAddingSection ? (
-                <div className="flex items-center gap-1">
-                  <Input
-                    value={newSectionName}
-                    onChange={(e) => setNewSectionName(e.target.value)}
-                    placeholder="Section name..."
-                    className="h-7 w-32 text-xs"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddCustomSection();
-                      if (e.key === 'Escape') {
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCollapseAllSections}
+                  disabled={expandedSections.size === 0}
+                  className="gap-1.5 text-xs"
+                >
+                  <ChevronsUp className="w-3.5 h-3.5" />
+                  Collapse All
+                </Button>
+
+                {/* Add Section button (only in global mode) */}
+                {selectedRole === 'global' && !isAddingSection ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAddingSection(true)}
+                    className="gap-1.5 text-xs"
+                  >
+                    <FolderPlus className="w-3.5 h-3.5" />
+                    Add Section
+                  </Button>
+                ) : selectedRole === 'global' && isAddingSection ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      value={newSectionName}
+                      onChange={(e) => setNewSectionName(e.target.value)}
+                      placeholder="Section name..."
+                      className="h-7 w-32 text-xs"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleAddCustomSection();
+                        if (e.key === 'Escape') {
+                          setIsAddingSection(false);
+                          setNewSectionName('');
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={handleAddCustomSection}
+                      disabled={!newSectionName.trim()}
+                    >
+                      <Check className="w-3.5 h-3.5 text-primary" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => {
                         setIsAddingSection(false);
                         setNewSectionName('');
-                      }
-                    }}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={handleAddCustomSection}
-                    disabled={!newSectionName.trim()}
-                  >
-                    <Check className="w-3.5 h-3.5 text-primary" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => {
-                      setIsAddingSection(false);
-                      setNewSectionName('');
-                    }}
-                  >
-                    <X className="w-3.5 h-3.5 text-destructive" />
-                  </Button>
-                </div>
-              ) : null}
+                      }}
+                    >
+                      <X className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             </div>
             
             <DndContext
