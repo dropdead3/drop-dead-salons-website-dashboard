@@ -20,6 +20,7 @@ import {
   X,
   CalendarPlus,
   ChevronLeft,
+  ChevronRight,
   MapPin,
   Scissors
 } from 'lucide-react';
@@ -81,6 +82,7 @@ export function QuickBookingPopover({
   const { user, roles } = useAuth();
   const [step, setStep] = useState<Step>('service');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
+  const [highestStepReached, setHighestStepReached] = useState<number>(0);
   
   // Form state
   const [selectedClient, setSelectedClient] = useState<PhorestClient | null>(null);
@@ -91,6 +93,42 @@ export function QuickBookingPopover({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [serviceSearch, setServiceSearch] = useState('');
   const [autoSelectReason, setAutoSelectReason] = useState<'previous' | 'self' | 'highest' | null>(null);
+
+  // Check if a step has valid input (for forward navigation)
+  const isStepCompleted = (stepName: Step): boolean => {
+    switch (stepName) {
+      case 'service':
+        return true; // Services are optional (can skip)
+      case 'location':
+        return !!selectedLocation;
+      case 'client':
+        return !!selectedClient;
+      case 'stylist':
+        return !!selectedStylist;
+      case 'confirm':
+        return false; // Final step, no forward from here
+      default:
+        return false;
+    }
+  };
+
+  // Navigate to a step and update highest reached
+  const navigateToStep = (targetStep: Step) => {
+    const targetIndex = STEPS.indexOf(targetStep);
+    if (targetIndex > highestStepReached) {
+      setHighestStepReached(targetIndex);
+    }
+    setStep(targetStep);
+  };
+
+  // Can go forward if we've been to that step before and current step is complete
+  const canGoForward = useMemo(() => {
+    const currentIndex = STEPS.indexOf(step);
+    const nextIndex = currentIndex + 1;
+    return nextIndex <= highestStepReached && 
+           nextIndex < STEPS.length && 
+           isStepCompleted(step);
+  }, [step, highestStepReached, selectedLocation, selectedClient, selectedStylist]);
 
   // Sync location when popover opens with a new default
   useEffect(() => {
@@ -191,10 +229,16 @@ export function QuickBookingPopover({
     });
   }, [stylists, qualificationData]);
 
-  // Auto-select stylist when entering stylist step
+  // Auto-select stylist when entering stylist step for the first time
   // Priority: logged-in stylist/stylist_assistant > client's previous stylist > highest level stylist
   useEffect(() => {
-    if (step === 'stylist' && filteredStylists.length > 0 && !selectedStylist) {
+    const stylistStepIndex = STEPS.indexOf('stylist');
+    // Only auto-select on first visit to this step
+    const isFirstVisit = step === 'stylist' && 
+                         highestStepReached === stylistStepIndex &&
+                         !selectedStylist;
+    
+    if (isFirstVisit && filteredStylists.length > 0) {
       // Priority 1: If logged-in user is stylist/stylist_assistant, select themselves
       const isStylistRole = roles.some(r => ['stylist', 'stylist_assistant'].includes(r));
       if (isStylistRole && user?.id) {
@@ -222,7 +266,7 @@ export function QuickBookingPopover({
       setSelectedStylist(filteredStylists[0].user_id);
       setAutoSelectReason('highest');
     }
-  }, [step, filteredStylists, selectedStylist, roles, user?.id, selectedClient]);
+  }, [step, filteredStylists, selectedStylist, roles, user?.id, selectedClient, highestStepReached]);
 
   // totalDuration and totalPrice use selectedServiceDetails defined above
 
@@ -291,6 +335,7 @@ export function QuickBookingPopover({
 
   const handleClose = () => {
     setStep('service');
+    setHighestStepReached(0);
     setSelectedClient(null);
     setClientSearch('');
     setSelectedServices([]);
@@ -304,33 +349,30 @@ export function QuickBookingPopover({
 
   const handleSelectClient = (client: PhorestClient) => {
     setSelectedClient(client);
-    // Reset stylist selection when client changes so auto-select can run
-    setSelectedStylist('');
-    setAutoSelectReason(null);
-    setStep('stylist');
+    // Only reset stylist if this is a different client
+    if (client.id !== selectedClient?.id) {
+      setSelectedStylist('');
+      setAutoSelectReason(null);
+    }
+    navigateToStep('stylist');
   };
 
   const handleServicesComplete = () => {
-    setStep('location');
+    navigateToStep('location');
   };
 
   const handleBack = () => {
-    switch (step) {
-      case 'location':
-        setStep('service');
-        break;
-      case 'client':
-        setStep('location');
-        break;
-      case 'stylist':
-        // Reset stylist when going back so auto-select can run again
-        setSelectedStylist('');
-        setAutoSelectReason(null);
-        setStep('client');
-        break;
-      case 'confirm':
-        setStep('stylist');
-        break;
+    const currentIndex = STEPS.indexOf(step);
+    if (currentIndex > 0) {
+      setStep(STEPS[currentIndex - 1]);
+    }
+  };
+
+  const handleForward = () => {
+    const currentIndex = STEPS.indexOf(step);
+    const nextIndex = currentIndex + 1;
+    if (nextIndex <= highestStepReached && nextIndex < STEPS.length) {
+      setStep(STEPS[nextIndex]);
     }
   };
 
@@ -396,7 +438,7 @@ export function QuickBookingPopover({
           {/* Header */}
           <div className="bg-card border-b border-border">
             <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {step !== 'service' ? (
                   <Button
                     variant="ghost"
@@ -411,7 +453,17 @@ export function QuickBookingPopover({
                     <CalendarPlus className="h-4 w-4 text-muted-foreground" />
                   </div>
                 )}
-                <div>
+                {canGoForward && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                    onClick={handleForward}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+                <div className="ml-1">
                   <h2 className="font-semibold text-sm">New Booking</h2>
                   <p className="text-xs text-muted-foreground">
                     {format(date, 'EEE, MMM d')} at {formatTime12h(time)}
@@ -428,17 +480,25 @@ export function QuickBookingPopover({
               </Button>
             </div>
 
-            {/* Progress bar */}
+            {/* Progress bar - clickable segments for visited steps */}
             <div className="flex px-4 pb-3 gap-1">
-              {STEPS.map((s, i) => (
-                <div
-                  key={s}
-                  className={cn(
-                    'h-1 flex-1 rounded-full transition-colors',
-                    i <= currentStepIndex ? 'bg-primary' : 'bg-muted'
-                  )}
-                />
-              ))}
+              {STEPS.map((s, i) => {
+                const isClickable = i <= highestStepReached && i !== currentStepIndex;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => isClickable && setStep(s)}
+                    disabled={!isClickable}
+                    className={cn(
+                      'h-1.5 flex-1 rounded-full transition-all',
+                      i <= currentStepIndex ? 'bg-primary' : 'bg-muted',
+                      isClickable && 'cursor-pointer hover:opacity-70 hover:scale-y-150',
+                      !isClickable && 'cursor-default'
+                    )}
+                    title={isClickable ? `Go to ${s}` : undefined}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -749,7 +809,7 @@ export function QuickBookingPopover({
                 )}
                 <Button
                   className="w-full h-9"
-                  onClick={() => setStep('location')}
+                  onClick={() => navigateToStep('location')}
                 >
                   {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
                 </Button>
@@ -820,7 +880,7 @@ export function QuickBookingPopover({
                 <Button
                   className="w-full h-9"
                   disabled={!selectedLocation}
-                  onClick={() => setStep('client')}
+                  onClick={() => navigateToStep('client')}
                 >
                   Confirm location
                 </Button>
@@ -946,7 +1006,7 @@ export function QuickBookingPopover({
                 <Button
                   className="w-full h-10"
                   disabled={!selectedStylist}
-                  onClick={() => setStep('client')}
+                  onClick={() => navigateToStep('confirm')}
                 >
                   Continue
                 </Button>
