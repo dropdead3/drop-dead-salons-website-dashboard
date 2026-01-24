@@ -82,11 +82,21 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   ],
 };
 
+export interface CustomSectionConfig {
+  name: string;
+}
+
 export interface SidebarLayoutConfig {
   sectionOrder: string[];
   linkOrder: Record<string, string[]>;
   hiddenSections: string[];
   hiddenLinks: Record<string, string[]>;
+  customSections: Record<string, CustomSectionConfig>;
+}
+
+// Check if a section is a built-in section
+export function isBuiltInSection(sectionId: string): boolean {
+  return DEFAULT_SECTION_ORDER.includes(sectionId);
 }
 
 export function useSidebarLayout() {
@@ -121,8 +131,11 @@ export function useSidebarLayout() {
       // Hidden sections and links default to empty arrays
       const hiddenSections = stored?.hiddenSections || [];
       const hiddenLinks = stored?.hiddenLinks || {};
+      
+      // Custom sections default to empty object
+      const customSections = stored?.customSections || {};
 
-      return { sectionOrder, linkOrder, hiddenSections, hiddenLinks } as SidebarLayoutConfig;
+      return { sectionOrder, linkOrder, hiddenSections, hiddenLinks, customSections } as SidebarLayoutConfig;
     },
     staleTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
@@ -149,6 +162,7 @@ export function useUpdateSidebarLayout() {
         linkOrder: layout.linkOrder,
         hiddenSections: layout.hiddenSections,
         hiddenLinks: layout.hiddenLinks,
+        customSections: layout.customSections,
       }));
 
       const { data, error } = await supabase

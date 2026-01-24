@@ -11,7 +11,7 @@ import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER } from '@/hooks/useSidebarLayout';
+import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection } from '@/hooks/useSidebarLayout';
 
 interface NavItem {
   href: string;
@@ -75,7 +75,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
   
-  // Map section IDs to nav items
+  // Map section IDs to nav items (for built-in sections)
   const sectionItemsMap = useMemo(() => ({
     main: mainNavItems,
     growth: growthNavItems,
@@ -86,6 +86,25 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     website: websiteNavItems,
     adminOnly: adminOnlyNavItems,
   }), [mainNavItems, growthNavItems, statsNavItems, getHelpNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems]);
+
+  // Create a map of all nav items by href (for custom sections that can contain any link)
+  const allNavItemsByHref = useMemo(() => {
+    const allItems = [
+      ...mainNavItems,
+      ...growthNavItems,
+      ...statsNavItems,
+      ...getHelpNavItems,
+      ...housekeepingNavItems,
+      ...managerNavItems,
+      ...websiteNavItems,
+      ...adminOnlyNavItems,
+    ];
+    const map: Record<string, NavItem> = {};
+    allItems.forEach(item => {
+      map[item.href] = item;
+    });
+    return map;
+  }, [mainNavItems, growthNavItems, statsNavItems, getHelpNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems]);
 
   // Apply custom link ordering to nav items
   const getOrderedItems = (sectionId: string, items: NavItem[]): NavItem[] => {
@@ -350,12 +369,26 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
 
         {/* Dynamic Section Rendering Based on Custom Layout */}
         {sectionOrder.map((sectionId, index) => {
-          // Get the items for this section
-          const sectionItems = sectionItemsMap[sectionId as keyof typeof sectionItemsMap];
-          if (!sectionItems) return null;
+          // Check if this is a custom section
+          const isCustom = !isBuiltInSection(sectionId);
           
-          // Apply custom link ordering
-          const orderedItems = getOrderedItems(sectionId, sectionItems);
+          // Get the items for this section
+          let sectionItems: NavItem[];
+          
+          if (isCustom) {
+            // For custom sections, get items from linkOrder using the allNavItemsByHref map
+            const customLinks = sidebarLayout?.linkOrder?.[sectionId] || [];
+            sectionItems = customLinks
+              .map(href => allNavItemsByHref[href])
+              .filter((item): item is NavItem => !!item);
+          } else {
+            sectionItems = sectionItemsMap[sectionId as keyof typeof sectionItemsMap];
+          }
+          
+          if (!sectionItems || sectionItems.length === 0) return null;
+          
+          // Apply custom link ordering (for built-in sections)
+          const orderedItems = isCustom ? sectionItems : getOrderedItems(sectionId, sectionItems);
           
           // Filter out hidden links for this section
           const sectionHiddenLinks = hiddenLinks[sectionId] || [];
@@ -364,9 +397,16 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           // Apply section-specific filtering and conditions
           let filteredItems = filterNavItems(visibleItems);
           let shouldShow = filteredItems.length > 0;
-          let sectionLabel = SECTION_LABELS[sectionId] || sectionId;
           
-          // Section-specific logic
+          // Get section label - use custom name for custom sections
+          let sectionLabel: string;
+          if (isCustom) {
+            sectionLabel = sidebarLayout?.customSections?.[sectionId]?.name || sectionId;
+          } else {
+            sectionLabel = SECTION_LABELS[sectionId] || sectionId;
+          }
+          
+          // Section-specific logic (only for built-in sections)
           if (sectionId === 'housekeeping') {
             // Filter out onboarding when incomplete (shown at top instead)
             filteredItems = filteredItems.filter(item => 
