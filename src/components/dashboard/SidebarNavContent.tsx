@@ -9,7 +9,6 @@ import { ExternalLink, Rocket } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
-import { ColoredLogo } from './ColoredLogo';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
@@ -152,13 +151,11 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   };
   
   // Get the appropriate logo based on theme and settings
-  const getLogoConfig = () => {
+  const getLogo = () => {
     const isDark = resolvedTheme === 'dark';
     const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
     const fallbackLogo = isDark ? LogoWhite : Logo;
-    // In dark mode, apply muted-foreground color for better contrast
-    const color = isDark ? 'hsl(40 10% 60%)' : null;
-    return { url: customLogo || fallbackLogo, color };
+    return customLogo || fallbackLogo;
   };
   
   // Get the appropriate icon based on theme and settings
@@ -290,11 +287,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 <TooltipContent side="right">{businessSettings?.business_name || 'Drop Dead'}</TooltipContent>
               </Tooltip>
             ) : hasCustomLogo() ? (
-              <ColoredLogo 
-                logoUrl={getLogoConfig().url} 
-                color={getLogoConfig().color}
-                size={20}
-                alt={businessSettings?.business_name || 'Drop Dead'}
+              <img 
+                src={getLogo()} 
+                alt={businessSettings?.business_name || 'Drop Dead'} 
+                className="h-5 w-auto" 
               />
             ) : (
               <span className="font-display text-lg uppercase tracking-wider text-foreground">
