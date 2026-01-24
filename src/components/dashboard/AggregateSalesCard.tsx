@@ -217,13 +217,13 @@ export function AggregateSalesCard() {
         <div className="lg:col-span-3">
           <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
             <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <DollarSign className="w-4 h-4 text-primary" />
-                <BlurredAmount className="text-2xl font-display">
-                  ${displayMetrics.totalRevenue.toLocaleString()}
-                </BlurredAmount>
+              <div className="flex justify-center mb-2">
+                <DollarSign className="w-5 h-5 text-primary" />
               </div>
-              <p className="text-xs text-muted-foreground mb-1">Total Revenue</p>
+              <BlurredAmount className="text-2xl font-display">
+                ${displayMetrics.totalRevenue.toLocaleString()}
+              </BlurredAmount>
+              <p className="text-xs text-muted-foreground mt-1 mb-1">Total Revenue</p>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalRevenue}
@@ -232,13 +232,13 @@ export function AggregateSalesCard() {
               )}
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <Scissors className="w-4 h-4 text-primary" />
-                <BlurredAmount className="text-2xl font-display">
-                  ${displayMetrics.serviceRevenue.toLocaleString()}
-                </BlurredAmount>
+              <div className="flex justify-center mb-2">
+                <Scissors className="w-5 h-5 text-primary" />
               </div>
-              <p className="text-xs text-muted-foreground mb-1">Services</p>
+              <BlurredAmount className="text-2xl font-display">
+                ${displayMetrics.serviceRevenue.toLocaleString()}
+              </BlurredAmount>
+              <p className="text-xs text-muted-foreground mt-1 mb-1">Services</p>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.serviceRevenue} 
@@ -247,13 +247,13 @@ export function AggregateSalesCard() {
               )}
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <ShoppingBag className="w-4 h-4 text-chart-2" />
-                <BlurredAmount className="text-2xl font-display">
-                  ${displayMetrics.productRevenue.toLocaleString()}
-                </BlurredAmount>
+              <div className="flex justify-center mb-2">
+                <ShoppingBag className="w-5 h-5 text-chart-2" />
               </div>
-              <p className="text-xs text-muted-foreground mb-1">Products</p>
+              <BlurredAmount className="text-2xl font-display">
+                ${displayMetrics.productRevenue.toLocaleString()}
+              </BlurredAmount>
+              <p className="text-xs text-muted-foreground mt-1 mb-1">Products</p>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.productRevenue} 
@@ -262,13 +262,13 @@ export function AggregateSalesCard() {
               )}
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <Receipt className="w-4 h-4 text-chart-3" />
-                <BlurredAmount className="text-2xl font-display">
-                  {displayMetrics.totalTransactions}
-                </BlurredAmount>
+              <div className="flex justify-center mb-2">
+                <Receipt className="w-5 h-5 text-chart-3" />
               </div>
-              <p className="text-xs text-muted-foreground mb-1">Transactions</p>
+              <BlurredAmount className="text-2xl font-display">
+                {displayMetrics.totalTransactions}
+              </BlurredAmount>
+              <p className="text-xs text-muted-foreground mt-1 mb-1">Transactions</p>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalTransactions} 
@@ -277,13 +277,13 @@ export function AggregateSalesCard() {
               )}
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <TrendingUp className="w-4 h-4 text-chart-4" />
-                <BlurredAmount className="text-2xl font-display">
-                  ${isFinite(displayMetrics.averageTicket) ? Math.round(displayMetrics.averageTicket) : 0}
-                </BlurredAmount>
+              <div className="flex justify-center mb-2">
+                <TrendingUp className="w-5 h-5 text-chart-4" />
               </div>
-              <p className="text-xs text-muted-foreground mb-1">Avg Ticket</p>
+              <BlurredAmount className="text-2xl font-display">
+                ${isFinite(displayMetrics.averageTicket) ? Math.round(displayMetrics.averageTicket) : 0}
+              </BlurredAmount>
+              <p className="text-xs text-muted-foreground mt-1 mb-1">Avg Ticket</p>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.averageTicket} 
