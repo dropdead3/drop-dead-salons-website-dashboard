@@ -465,9 +465,19 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="flex items-center gap-2 text-lg">
             <Building2 className="w-5 h-5 text-primary" />
-            {location.name}
+            <span className="flex items-center gap-2">
+              {location.store_number && (
+                <span className="text-xs font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                  #{location.store_number}
+                </span>
+              )}
+              {location.name}
+              <span className="text-sm font-normal text-muted-foreground">
+                {location.city?.split(',')[0]?.trim()}
+              </span>
+            </span>
           </CardTitle>
           
           <div className="flex items-center gap-2">

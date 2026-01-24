@@ -30,6 +30,7 @@ export interface Location {
   address: string;
   city: string;
   phone: string;
+  store_number: string | null;
   booking_url: string | null;
   google_maps_url: string | null;
   hours: string | null;

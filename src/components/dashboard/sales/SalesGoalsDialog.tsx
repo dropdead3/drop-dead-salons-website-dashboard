@@ -143,7 +143,17 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                   return (
                     <div key={location.id} className="space-y-2 p-3 bg-muted/30 rounded-lg border">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">{location.name}</p>
+                        <div className="flex items-center gap-2">
+                          {location.store_number && (
+                            <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
+                              #{location.store_number}
+                            </span>
+                          )}
+                          <p className="text-sm font-medium">{location.name}</p>
+                          <span className="text-xs text-muted-foreground">
+                            {location.city?.split(',')[0]?.trim()}
+                          </span>
+                        </div>
                         {monthlyGoal > 0 && (
                           <span className={`text-xs font-medium ${getProgressColor(progressPercent)}`}>
                             {progressPercent}%
