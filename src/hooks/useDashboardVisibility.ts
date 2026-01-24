@@ -19,61 +19,6 @@ export interface DashboardElementVisibility {
   updated_at: string;
 }
 
-// Element definitions for auto-registration
-export interface ElementDefinition {
-  key: string;
-  name: string;
-  category: string;
-  defaultVisible?: boolean; // Defaults to true if not specified
-}
-
-// Registry of all visibility-controlled elements in the app
-export const VISIBILITY_ELEMENTS: ElementDefinition[] = [
-  // Dashboard Home - Quick Actions
-  { key: 'quick_actions', name: 'Quick Actions Section', category: 'Dashboard Home' },
-  { key: 'ring_the_bell_action', name: 'Ring the Bell Button', category: 'Dashboard Home' },
-  { key: 'log_metrics_action', name: 'Log Metrics Button', category: 'Dashboard Home' },
-  { key: 'training_action', name: 'Training Button', category: 'Dashboard Home' },
-  
-  // Dashboard Home - Cards
-  { key: 'sales_overview', name: 'Sales Overview', category: 'Dashboard Cards' },
-  { key: 'quick_stats', name: 'Quick Stats', category: 'Dashboard Cards' },
-  { key: 'todays_schedule', name: "Today's Schedule", category: 'Dashboard Cards' },
-  { key: 'my_tasks', name: 'My Tasks', category: 'Dashboard Cards' },
-  { key: 'announcements', name: 'Announcements', category: 'Dashboard Cards' },
-  { key: 'client_engine', name: 'Client Engine', category: 'Dashboard Cards' },
-  
-  // Dashboard Home - Leadership Cards
-  { key: 'website_analytics', name: 'Website Analytics', category: 'Leadership Cards' },
-  { key: 'client_engine_overview', name: 'Client Engine Overview', category: 'Leadership Cards' },
-  { key: 'onboarding_overview', name: 'Onboarding Overview', category: 'Leadership Cards' },
-  { key: 'team_overview', name: 'Team Overview', category: 'Leadership Cards' },
-  { key: 'stylists_overview', name: 'Stylists Overview', category: 'Leadership Cards' },
-  
-  // Sales Dashboard
-  { key: 'sales_kpi_cards', name: 'KPI Cards', category: 'Sales Dashboard' },
-  { key: 'sales_goal_progress', name: 'Goal Progress', category: 'Sales Dashboard' },
-  { key: 'sales_historical_comparison', name: 'Historical Comparison', category: 'Sales Dashboard' },
-  { key: 'sales_overview_tab', name: 'Overview Tab', category: 'Sales Dashboard' },
-  { key: 'sales_stylist_tab', name: 'By Stylist Tab', category: 'Sales Dashboard' },
-  { key: 'sales_location_tab', name: 'By Location Tab', category: 'Sales Dashboard' },
-  { key: 'sales_phorest_tab', name: 'Phorest Staff Tab', category: 'Sales Dashboard' },
-  { key: 'sales_compare_tab', name: 'Compare Tab', category: 'Sales Dashboard' },
-  { key: 'sales_analytics_tab', name: 'Analytics Tab', category: 'Sales Dashboard' },
-  { key: 'commission_calculator', name: 'Commission Calculator', category: 'Sales Dashboard' },
-  
-  // Team Overview
-  { key: 'team_coach_notes', name: 'Coach Notes', category: 'Team Overview' },
-  { key: 'team_weekly_wins', name: 'Weekly Wins', category: 'Team Overview' },
-  { key: 'team_handbook_status', name: 'Handbook Status', category: 'Team Overview' },
-  { key: 'team_quick_stats', name: 'Quick Stats', category: 'Team Overview' },
-  
-  // Client Engine Tracker
-  { key: 'engine_stats_cards', name: 'Stats Cards', category: 'Client Engine Tracker' },
-  { key: 'engine_pause_requests', name: 'Pause Requests', category: 'Client Engine Tracker' },
-  { key: 'engine_participant_details', name: 'Participant Details', category: 'Client Engine Tracker' },
-];
-
 // Fetch all visibility settings
 export function useDashboardVisibility() {
   return useQuery({
@@ -87,6 +32,50 @@ export function useDashboardVisibility() {
 
       if (error) throw error;
       return data as DashboardElementVisibility[];
+    },
+  });
+}
+
+// Fetch unique elements from the database (dynamic, not hardcoded)
+export function useVisibilityElements() {
+  return useQuery({
+    queryKey: ['visibility-elements'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dashboard_element_visibility')
+        .select('element_key, element_name, element_category')
+        .order('element_category')
+        .order('element_name');
+
+      if (error) throw error;
+
+      // Deduplicate by element_key
+      const uniqueElements = new Map<string, { element_key: string; element_name: string; element_category: string }>();
+      data.forEach((item) => {
+        if (!uniqueElements.has(item.element_key)) {
+          uniqueElements.set(item.element_key, item);
+        }
+      });
+
+      return Array.from(uniqueElements.values());
+    },
+  });
+}
+
+// Fetch unique categories from the database
+export function useVisibilityCategories() {
+  return useQuery({
+    queryKey: ['visibility-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dashboard_element_visibility')
+        .select('element_category');
+
+      if (error) throw error;
+
+      const categories = new Set<string>();
+      data.forEach((item) => categories.add(item.element_category));
+      return Array.from(categories).sort();
     },
   });
 }
@@ -195,13 +184,13 @@ export function useBulkUpdateVisibility() {
   });
 }
 
-// Sync visibility elements - registers any missing elements for all roles
+// Sync visibility elements - ensures all elements have entries for all active roles
 export function useSyncVisibilityElements() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      // Get all active roles
+      // Get all active roles from the roles table
       const { data: roles, error: rolesError } = await supabase
         .from('roles')
         .select('name')
@@ -212,15 +201,28 @@ export function useSyncVisibilityElements() {
       // Get existing element-role combinations
       const { data: existing, error: existingError } = await supabase
         .from('dashboard_element_visibility')
-        .select('element_key, role');
+        .select('element_key, element_name, element_category, role');
 
       if (existingError) throw existingError;
 
+      // Build a set of existing combinations and get unique elements
       const existingSet = new Set(
         (existing || []).map(e => `${e.element_key}:${e.role}`)
       );
 
-      // Find missing combinations
+      // Get unique elements from the database
+      const uniqueElements = new Map<string, { element_key: string; element_name: string; element_category: string }>();
+      (existing || []).forEach((item) => {
+        if (!uniqueElements.has(item.element_key)) {
+          uniqueElements.set(item.element_key, {
+            element_key: item.element_key,
+            element_name: item.element_name,
+            element_category: item.element_category,
+          });
+        }
+      });
+
+      // Find missing role combinations for existing elements
       const toInsert: {
         element_key: string;
         element_name: string;
@@ -229,16 +231,16 @@ export function useSyncVisibilityElements() {
         is_visible: boolean;
       }[] = [];
 
-      for (const element of VISIBILITY_ELEMENTS) {
+      for (const element of uniqueElements.values()) {
         for (const role of roles || []) {
-          const key = `${element.key}:${role.name}`;
+          const key = `${element.element_key}:${role.name}`;
           if (!existingSet.has(key)) {
             toInsert.push({
-              element_key: element.key,
-              element_name: element.name,
-              element_category: element.category,
+              element_key: element.element_key,
+              element_name: element.element_name,
+              element_category: element.element_category,
               role: role.name as AppRole,
-              is_visible: element.defaultVisible !== false,
+              is_visible: true, // Default to visible
             });
           }
         }
@@ -256,6 +258,8 @@ export function useSyncVisibilityElements() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+      queryClient.invalidateQueries({ queryKey: ['visibility-elements'] });
+      queryClient.invalidateQueries({ queryKey: ['visibility-categories'] });
       if (data.synced > 0) {
         toast.success(`Synced ${data.synced} new visibility entries`);
       } else {
@@ -264,6 +268,188 @@ export function useSyncVisibilityElements() {
     },
     onError: (error) => {
       toast.error('Failed to sync visibility elements', { description: error.message });
+    },
+  });
+}
+
+// Add a new element to the visibility system for all roles
+export function useAddVisibilityElement() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      elementKey, 
+      elementName, 
+      elementCategory,
+      defaultVisible = true 
+    }: { 
+      elementKey: string; 
+      elementName: string; 
+      elementCategory: string;
+      defaultVisible?: boolean;
+    }) => {
+      // Get all active roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('roles')
+        .select('name')
+        .eq('is_active', true);
+
+      if (rolesError) throw rolesError;
+
+      // Create entries for all roles
+      const entries = (roles || []).map(role => ({
+        element_key: elementKey,
+        element_name: elementName,
+        element_category: elementCategory,
+        role: role.name as AppRole,
+        is_visible: defaultVisible,
+      }));
+
+      const { error } = await supabase
+        .from('dashboard_element_visibility')
+        .insert(entries);
+
+      if (error) throw error;
+
+      return { count: entries.length };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+      queryClient.invalidateQueries({ queryKey: ['visibility-elements'] });
+      queryClient.invalidateQueries({ queryKey: ['visibility-categories'] });
+      toast.success(`Element added for ${data.count} roles`);
+    },
+    onError: (error) => {
+      toast.error('Failed to add element', { description: error.message });
+    },
+  });
+}
+
+// Update element metadata (name and category)
+export function useUpdateVisibilityElement() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      elementKey, 
+      elementName, 
+      elementCategory 
+    }: { 
+      elementKey: string; 
+      elementName?: string; 
+      elementCategory?: string;
+    }) => {
+      const updates: Record<string, string> = {};
+      if (elementName) updates.element_name = elementName;
+      if (elementCategory) updates.element_category = elementCategory;
+
+      const { error } = await supabase
+        .from('dashboard_element_visibility')
+        .update(updates)
+        .eq('element_key', elementKey);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+      queryClient.invalidateQueries({ queryKey: ['visibility-elements'] });
+      queryClient.invalidateQueries({ queryKey: ['visibility-categories'] });
+      toast.success('Element updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update element', { description: error.message });
+    },
+  });
+}
+
+// Delete an element from the visibility system (all roles)
+export function useDeleteVisibilityElement() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (elementKey: string) => {
+      const { error } = await supabase
+        .from('dashboard_element_visibility')
+        .delete()
+        .eq('element_key', elementKey);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+      queryClient.invalidateQueries({ queryKey: ['visibility-elements'] });
+      queryClient.invalidateQueries({ queryKey: ['visibility-categories'] });
+      toast.success('Element deleted');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete element', { description: error.message });
+    },
+  });
+}
+
+// Register an element if it doesn't exist (used by VisibilityGate for auto-registration)
+export function useRegisterVisibilityElement() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      elementKey, 
+      elementName, 
+      elementCategory 
+    }: { 
+      elementKey: string; 
+      elementName: string; 
+      elementCategory: string;
+    }) => {
+      // Check if element already exists
+      const { data: existing, error: checkError } = await supabase
+        .from('dashboard_element_visibility')
+        .select('id')
+        .eq('element_key', elementKey)
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      // If element already exists, skip
+      if (existing && existing.length > 0) {
+        return { registered: false };
+      }
+
+      // Get all active roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('roles')
+        .select('name')
+        .eq('is_active', true);
+
+      if (rolesError) throw rolesError;
+
+      // Create entries for all roles (default visible)
+      const entries = (roles || []).map(role => ({
+        element_key: elementKey,
+        element_name: elementName,
+        element_category: elementCategory,
+        role: role.name as AppRole,
+        is_visible: true,
+      }));
+
+      const { error } = await supabase
+        .from('dashboard_element_visibility')
+        .insert(entries);
+
+      if (error) throw error;
+
+      return { registered: true, count: entries.length };
+    },
+    onSuccess: (data) => {
+      if (data.registered) {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+        queryClient.invalidateQueries({ queryKey: ['visibility-elements'] });
+        queryClient.invalidateQueries({ queryKey: ['visibility-categories'] });
+      }
+    },
+    // Silent - no toast on success since this is auto-registration
+    onError: (error) => {
+      console.error('Failed to register visibility element:', error);
     },
   });
 }
@@ -304,10 +490,4 @@ export function groupByCategory(elements: ReturnType<typeof groupVisibilityByEle
   });
 
   return categories;
-}
-
-// Get all unique categories from the element registry
-export function getElementCategories(): string[] {
-  const categories = new Set(VISIBILITY_ELEMENTS.map(e => e.category));
-  return Array.from(categories);
 }
