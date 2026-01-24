@@ -487,6 +487,20 @@ export function QuickBookingPopover({
               {STEPS.map((s, i) => {
                 const isClickable = i <= highestStepReached && i !== currentStepIndex;
                 const stepLabel = s.charAt(0).toUpperCase() + s.slice(1);
+                
+                // Determine the visual state of this segment
+                const isCurrent = i === currentStepIndex;
+                const isCompleted = isStepCompleted(s);
+                const isVisited = i <= highestStepReached;
+                
+                // Determine background color based on state
+                const getSegmentStyle = () => {
+                  if (isCurrent) return 'bg-primary';
+                  if (isVisited && isCompleted) return 'bg-primary';
+                  if (isVisited && !isCompleted) return 'bg-primary/30';
+                  return 'bg-muted';
+                };
+                
                 return (
                   <div key={s} className="flex-1 group relative">
                     <button
@@ -494,15 +508,18 @@ export function QuickBookingPopover({
                       disabled={!isClickable}
                       className={cn(
                         'w-full h-1.5 rounded-full transition-all',
-                        i <= currentStepIndex ? 'bg-primary' : 'bg-muted',
+                        getSegmentStyle(),
                         isClickable && 'cursor-pointer hover:opacity-70 hover:scale-y-150',
                         !isClickable && 'cursor-default'
                       )}
                     />
-                    {/* Hover label */}
+                    {/* Hover label with completion indicator */}
                     <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                      <span className="text-[10px] font-medium text-muted-foreground bg-popover px-1.5 py-0.5 rounded shadow-sm border border-border whitespace-nowrap">
+                      <span className="text-[10px] font-medium text-muted-foreground bg-popover px-1.5 py-0.5 rounded shadow-sm border border-border whitespace-nowrap flex items-center gap-1">
                         {stepLabel}
+                        {isVisited && isCompleted && (
+                          <Check className="h-2.5 w-2.5 text-green-500" />
+                        )}
                       </span>
                     </div>
                   </div>
