@@ -24,6 +24,7 @@ export interface BusinessSettings {
   email: string | null;
   website: string | null;
   sidebar_layout: SidebarLayoutConfig | null;
+  default_tax_rate: number | null;
   created_at: string;
   updated_at: string;
 }

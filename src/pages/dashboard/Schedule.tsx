@@ -17,6 +17,7 @@ import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ export default function Schedule() {
   const effectiveUserId = useEffectiveUserId();
   const { roles } = useAuth();
   const { data: locations = [] } = useActiveLocations();
+  const { data: businessSettings } = useBusinessSettings();
   
   // Check if user is stylist or stylist_assistant (they get full calendar view access)
   const isStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
@@ -135,11 +137,17 @@ export default function Schedule() {
     ).length;
   }, [allAppointments, selectedLocation]);
 
-  // Get the phorest_branch_id for the selected location
-  const selectedBranchId = useMemo(() => {
-    const loc = locations.find(l => l.id === selectedLocation);
-    return loc?.phorest_branch_id || null;
+  // Get the phorest_branch_id and effective tax rate for the selected location
+  const selectedLocationData = useMemo(() => {
+    return locations.find(l => l.id === selectedLocation);
   }, [locations, selectedLocation]);
+
+  const selectedBranchId = selectedLocationData?.phorest_branch_id || null;
+
+  // Calculate effective tax rate for the selected location
+  const effectiveTaxRate = useMemo(() => {
+    return selectedLocationData?.tax_rate ?? businessSettings?.default_tax_rate ?? 0.08;
+  }, [selectedLocationData, businessSettings]);
 
   // Fetch stylists for DayView - filter by selected location's branch
   const { data: allStylists = [] } = useQuery({
@@ -237,7 +245,9 @@ export default function Schedule() {
       setCheckoutOpen(true);
     }
   };
-  const handleCheckoutConfirm = () => {
+  const handleCheckoutConfirm = (tipAmount: number) => {
+    // Tip amount is logged for future reporting
+    console.log('Checkout completed with tip:', tipAmount);
     handleStatusChange('completed');
     setCheckoutOpen(false);
     setSelectedAppointment(null);
@@ -360,6 +370,11 @@ export default function Schedule() {
         onOpenChange={setCheckoutOpen}
         onConfirm={handleCheckoutConfirm}
         isUpdating={isUpdating}
+        taxRate={effectiveTaxRate}
+        businessSettings={businessSettings || null}
+        locationName={selectedLocationData?.name || ''}
+        locationAddress={selectedLocationData?.address}
+        locationPhone={selectedLocationData?.phone}
       />
 
       <BookingWizard

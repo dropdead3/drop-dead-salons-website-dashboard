@@ -41,6 +41,7 @@ export interface Location {
   is_active: boolean;
   show_on_website: boolean;
   display_order: number;
+  tax_rate: number | null;
   created_at: string;
   updated_at: string;
 }

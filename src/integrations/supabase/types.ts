@@ -391,6 +391,7 @@ export type Database = {
           business_name: string
           city: string | null
           created_at: string
+          default_tax_rate: number | null
           ein: string | null
           email: string | null
           icon_dark_url: string | null
@@ -411,6 +412,7 @@ export type Database = {
           business_name?: string
           city?: string | null
           created_at?: string
+          default_tax_rate?: number | null
           ein?: string | null
           email?: string | null
           icon_dark_url?: string | null
@@ -431,6 +433,7 @@ export type Database = {
           business_name?: string
           city?: string | null
           created_at?: string
+          default_tax_rate?: number | null
           ein?: string | null
           email?: string | null
           icon_dark_url?: string | null
@@ -1696,6 +1699,7 @@ export type Database = {
           phorest_branch_id: string | null
           show_on_website: boolean
           store_number: string | null
+          tax_rate: number | null
           updated_at: string | null
         }
         Insert: {
@@ -1716,6 +1720,7 @@ export type Database = {
           phorest_branch_id?: string | null
           show_on_website?: boolean
           store_number?: string | null
+          tax_rate?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -1736,6 +1741,7 @@ export type Database = {
           phorest_branch_id?: string | null
           show_on_website?: boolean
           store_number?: string | null
+          tax_rate?: number | null
           updated_at?: string | null
         }
         Relationships: []
