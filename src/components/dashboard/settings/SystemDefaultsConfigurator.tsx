@@ -217,7 +217,7 @@ export function SystemDefaultsConfigurator() {
           </div>
 
           <Tabs value={selectedRole} onValueChange={setSelectedRole}>
-            <TabsList className="flex flex-wrap h-auto gap-1 mb-6 p-2 rounded-lg">
+            <TabsList className="flex flex-wrap h-auto gap-1 mb-6">
               {roles.map(role => {
                 const Icon = getIconComponent(role.icon);
                 const defaultCount = getDefaultsForRole(role.name).size;

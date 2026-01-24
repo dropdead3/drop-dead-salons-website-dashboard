@@ -1007,10 +1007,10 @@ export function SidebarLayoutEditor() {
             Visibility Mode
           </p>
           <Tabs value={selectedRole} onValueChange={setSelectedRole}>
-            <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg">
+            <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50">
               <TabsTrigger 
                 value="global" 
-                className="gap-1.5 data-[state=active]:bg-background rounded-md"
+                className="gap-1.5"
               >
                 <Globe className="w-3.5 h-3.5" />
                 Global
@@ -1027,7 +1027,7 @@ export function SidebarLayoutEditor() {
                         <TabsTrigger 
                           value={role.name} 
                           className={cn(
-                            "gap-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm",
+                            "gap-1.5",
                             hasOverrides && "ring-1 ring-primary/50"
                           )}
                         >
