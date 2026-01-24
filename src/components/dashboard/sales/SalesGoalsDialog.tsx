@@ -19,6 +19,7 @@ import { useSalesByLocation } from '@/hooks/useSalesData';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 
 const WEEKS_PER_MONTH = 4.333;
+const MONTHS_PER_YEAR = 12;
 
 interface SalesGoalsDialogProps {
   trigger?: React.ReactNode;
@@ -75,6 +76,7 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
   }, 0) || 0;
 
   const calculatedWeekly = Math.round(calculatedMonthly / WEEKS_PER_MONTH);
+  const calculatedYearly = calculatedMonthly * MONTHS_PER_YEAR;
 
   // Calculate overall current revenue
   const totalCurrentRevenue = locations?.reduce((sum, loc) => {
@@ -159,10 +161,10 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-3 pt-1">
+                      <div className="grid grid-cols-3 gap-3 pt-1">
                         {/* Monthly - Editable */}
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Monthly Goal</Label>
+                          <Label className="text-xs text-muted-foreground">Monthly</Label>
                           <div className="relative">
                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
                             <Input
@@ -174,11 +176,18 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                             />
                           </div>
                         </div>
-                        {/* Weekly - Read-Only (Auto-Calculated) */}
+                        {/* Weekly - Read-Only */}
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Weekly Goal</Label>
+                          <Label className="text-xs text-muted-foreground">Weekly</Label>
                           <p className="h-8 flex items-center text-sm text-muted-foreground">
                             ${Math.round((locationTargets[location.id]?.monthly || 0) / WEEKS_PER_MONTH).toLocaleString()}
+                          </p>
+                        </div>
+                        {/* Yearly - Read-Only */}
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Yearly</Label>
+                          <p className="h-8 flex items-center text-sm text-muted-foreground">
+                            ${((locationTargets[location.id]?.monthly || 0) * MONTHS_PER_YEAR).toLocaleString()}
                           </p>
                         </div>
                       </div>
@@ -217,7 +226,7 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4 pt-1">
+            <div className="grid grid-cols-3 gap-4 pt-1">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Monthly Goal</Label>
                 <p className="text-xl font-semibold">
@@ -228,6 +237,12 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                 <Label className="text-xs text-muted-foreground">Weekly Goal</Label>
                 <p className="text-xl font-semibold">
                   ${calculatedWeekly.toLocaleString()}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Yearly Goal</Label>
+                <p className="text-xl font-semibold">
+                  ${calculatedYearly.toLocaleString()}
                 </p>
               </div>
             </div>
