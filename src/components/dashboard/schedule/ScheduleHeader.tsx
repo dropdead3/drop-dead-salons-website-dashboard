@@ -186,16 +186,9 @@ export function ScheduleHeader({
                     <SelectItem 
                       key={loc.id} 
                       value={loc.id}
-                      textValue={loc.name}
+                      description={cityState || undefined}
                     >
-                      <span className="flex items-center gap-2">
-                        <span>{loc.name}</span>
-                        {cityState && (
-                          <span className="text-xs text-muted-foreground">
-                            {cityState}
-                          </span>
-                        )}
-                      </span>
+                      {loc.name}
                     </SelectItem>
                   );
                 })}
