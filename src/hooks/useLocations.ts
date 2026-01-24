@@ -39,6 +39,7 @@ export interface Location {
   major_crossroads: string | null;
   phorest_branch_id: string | null;
   is_active: boolean;
+  show_on_website: boolean;
   display_order: number;
   created_at: string;
   updated_at: string;

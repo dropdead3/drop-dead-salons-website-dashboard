@@ -48,6 +48,7 @@ import {
   RotateCcw,
   Building2,
   CalendarDays,
+  MapPin,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -61,6 +62,7 @@ import { HandbooksContent } from '@/components/dashboard/settings/HandbooksConte
 import { CommandCenterContent } from '@/components/dashboard/settings/CommandCenterContent';
 import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
 import { ScheduleSettingsContent } from '@/components/dashboard/settings/ScheduleSettingsContent';
+import { LocationsSettingsContent } from '@/components/dashboard/settings/LocationsSettingsContent';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER } from '@/hooks/useSettingsLayout';
@@ -91,7 +93,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | null;
+type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -520,6 +522,12 @@ export default function Settings() {
       label: 'Schedule',
       description: 'Calendar colors & preferences',
       icon: CalendarDays,
+    },
+    locations: {
+      id: 'locations',
+      label: 'Locations',
+      description: 'Salon addresses, hours & holidays',
+      icon: MapPin,
     },
   };
 
@@ -1001,6 +1009,8 @@ export default function Settings() {
           {activeCategory === 'visibility' && <CommandCenterContent />}
 
           {activeCategory === 'schedule' && <ScheduleSettingsContent />}
+
+          {activeCategory === 'locations' && <LocationsSettingsContent />}
         </div>
       </DashboardLayout>
     );

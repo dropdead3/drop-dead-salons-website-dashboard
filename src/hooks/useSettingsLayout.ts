@@ -15,6 +15,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   handbooks: '#EAB308',  // Yellow
   visibility: '#6366F1', // Indigo
   schedule: '#0EA5E9',   // Sky blue
+  locations: '#EF4444',  // Red
 };
 
 // Default order
@@ -30,6 +31,7 @@ export const DEFAULT_ORDER = [
   'handbooks',
   'visibility',
   'schedule',
+  'locations',
 ];
 
 interface SettingsLayoutPreferences {
