@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,7 +36,6 @@ import {
   Cell,
   Legend
 } from 'recharts';
-import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 
 const STATUS_COLORS: Record<string, string> = {
   completed: 'hsl(var(--chart-2))',
@@ -78,14 +77,6 @@ export default function OperationalAnalytics() {
   });
 
   const maxHeatValue = Math.max(...hourlyDistribution.map(d => d.count), 1);
-
-  // Extract sparkline data from dailyVolume
-  const sparklineData = useMemo(() => ({
-    total: dailyVolume.map(d => d.count),
-    completed: dailyVolume.map(d => d.completed),
-    noShow: dailyVolume.map(d => d.noShow),
-    cancelled: dailyVolume.map(d => d.cancelled),
-  }), [dailyVolume]);
 
   return (
     <DashboardLayout>

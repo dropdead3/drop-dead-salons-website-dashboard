@@ -18,8 +18,6 @@ import {
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
-import { TrendSparkline } from './TrendSparkline';
-import { useOnboardingVelocity } from '@/hooks/useOnboardingVelocity';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -36,7 +34,6 @@ interface OnboardingStats {
 
 export function OnboardingTrackerOverview() {
   const navigate = useNavigate();
-  const { data: velocityData } = useOnboardingVelocity(8);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<OnboardingStats>({
     total: 0,
@@ -282,7 +279,7 @@ export function OnboardingTrackerOverview() {
         </div>
       </div>
 
-      {/* Category Breakdown with sparklines */}
+      {/* Category Breakdown */}
       <div className="grid grid-cols-2 gap-3 pt-2 border-t">
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <BookOpen className="w-4 h-4 text-muted-foreground" />
@@ -290,9 +287,6 @@ export function OnboardingTrackerOverview() {
             <p className="text-xs text-muted-foreground">Handbooks</p>
             <p className="text-sm font-medium">{stats.handbooksCompletion}%</p>
           </div>
-          {velocityData?.handbooksTrend && velocityData.handbooksTrend.length >= 2 && (
-            <TrendSparkline data={velocityData.handbooksTrend} size="xs" variant="primary" />
-          )}
         </div>
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <ClipboardCheck className="w-4 h-4 text-muted-foreground" />
@@ -300,9 +294,6 @@ export function OnboardingTrackerOverview() {
             <p className="text-xs text-muted-foreground">Tasks</p>
             <p className="text-sm font-medium">{stats.tasksCompletion}%</p>
           </div>
-          {velocityData?.tasksTrend && velocityData.tasksTrend.length >= 2 && (
-            <TrendSparkline data={velocityData.tasksTrend} size="xs" variant="success" />
-          )}
         </div>
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <CreditCard className="w-4 h-4 text-muted-foreground" />

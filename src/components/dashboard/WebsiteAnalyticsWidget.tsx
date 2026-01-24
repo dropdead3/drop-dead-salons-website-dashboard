@@ -5,8 +5,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useWebsiteAnalytics } from '@/hooks/useWebsiteAnalytics';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { format, parseISO } from 'date-fns';
-import { TrendSparkline } from './TrendSparkline';
-import { useMemo } from 'react';
 
 interface TrendBadgeProps {
   value: number;
@@ -42,16 +40,6 @@ function formatDuration(seconds: number): string {
 
 export function WebsiteAnalyticsWidget() {
   const { summary, isLoading, refreshAnalytics, isRefreshing } = useWebsiteAnalytics();
-
-  // Extract sparkline data from weekly data
-  const sparklineData = useMemo(() => {
-    if (!summary?.weeklyData) return { pageviews: [], duration: [], bounce: [] };
-    return {
-      pageviews: summary.weeklyData.map(w => w.pageviews),
-      duration: summary.weeklyData.map(w => w.avgSessionDuration),
-      bounce: summary.weeklyData.map(w => w.bounceRate),
-    };
-  }, [summary?.weeklyData]);
 
   if (isLoading) {
     return (
@@ -187,7 +175,7 @@ export function WebsiteAnalyticsWidget() {
           </ResponsiveContainer>
         </div>
 
-        {/* Secondary metrics with sparklines */}
+        {/* Secondary metrics */}
         <div className="grid grid-cols-3 gap-3 pt-2 border-t">
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
@@ -195,11 +183,6 @@ export function WebsiteAnalyticsWidget() {
             </div>
             <p className="text-sm font-medium">{summary.thisWeek.pageviews.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground">Pageviews</p>
-            {sparklineData.pageviews.length >= 2 && (
-              <div className="flex justify-center mt-1.5">
-                <TrendSparkline data={sparklineData.pageviews} size="xs" variant="primary" />
-              </div>
-            )}
           </div>
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
@@ -207,11 +190,6 @@ export function WebsiteAnalyticsWidget() {
             </div>
             <p className="text-sm font-medium">{formatDuration(summary.thisWeek.avgSessionDuration)}</p>
             <p className="text-xs text-muted-foreground">Avg. Duration</p>
-            {sparklineData.duration.length >= 2 && (
-              <div className="flex justify-center mt-1.5">
-                <TrendSparkline data={sparklineData.duration} size="xs" variant="success" />
-              </div>
-            )}
           </div>
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
@@ -219,11 +197,6 @@ export function WebsiteAnalyticsWidget() {
             </div>
             <p className="text-sm font-medium">{summary.thisWeek.bounceRate.toFixed(0)}%</p>
             <p className="text-xs text-muted-foreground">Bounce Rate</p>
-            {sparklineData.bounce.length >= 2 && (
-              <div className="flex justify-center mt-1.5">
-                <TrendSparkline data={sparklineData.bounce} size="xs" invertTrend />
-              </div>
-            )}
           </div>
         </div>
       </CardContent>

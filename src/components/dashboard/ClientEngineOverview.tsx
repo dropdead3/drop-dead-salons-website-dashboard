@@ -18,8 +18,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { TrendSparkline } from './TrendSparkline';
-import { useEnrollmentTrend } from '@/hooks/useEnrollmentTrend';
 
 type ProgramStatus = Database['public']['Enums']['program_status'];
 
@@ -36,7 +34,6 @@ interface ClientEngineStats {
 
 export function ClientEngineOverview() {
   const navigate = useNavigate();
-  const { data: enrollmentTrend } = useEnrollmentTrend(8);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<ClientEngineStats>({
     enrolled: 0,
@@ -148,11 +145,6 @@ export function ClientEngineOverview() {
           </div>
           <p className="text-lg font-semibold">{stats.enrolled}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Enrolled</p>
-          {enrollmentTrend?.enrolledTrend && enrollmentTrend.enrolledTrend.length >= 2 && (
-            <div className="flex justify-center mt-1.5">
-              <TrendSparkline data={enrollmentTrend.enrolledTrend} size="xs" variant="muted" />
-            </div>
-          )}
         </div>
         <div className="text-center p-2.5 bg-green-500/10 rounded-lg">
           <div className="flex items-center justify-center mb-1">
@@ -160,11 +152,6 @@ export function ClientEngineOverview() {
           </div>
           <p className="text-lg font-semibold text-green-600">{stats.active}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Active</p>
-          {enrollmentTrend?.activeTrend && enrollmentTrend.activeTrend.length >= 2 && (
-            <div className="flex justify-center mt-1.5">
-              <TrendSparkline data={enrollmentTrend.activeTrend} size="xs" variant="success" />
-            </div>
-          )}
         </div>
         <div className="text-center p-2.5 bg-blue-500/10 rounded-lg">
           <div className="flex items-center justify-center mb-1">
@@ -172,11 +159,6 @@ export function ClientEngineOverview() {
           </div>
           <p className="text-lg font-semibold text-blue-600">{stats.completed}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Done</p>
-          {enrollmentTrend?.completedTrend && enrollmentTrend.completedTrend.length >= 2 && (
-            <div className="flex justify-center mt-1.5">
-              <TrendSparkline data={enrollmentTrend.completedTrend} size="xs" variant="primary" />
-            </div>
-          )}
         </div>
         <div className="text-center p-2.5 bg-yellow-500/10 rounded-lg">
           <div className="flex items-center justify-center mb-1">
@@ -184,11 +166,6 @@ export function ClientEngineOverview() {
           </div>
           <p className="text-lg font-semibold text-yellow-600">{stats.paused}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Paused</p>
-          {enrollmentTrend?.pausedTrend && enrollmentTrend.pausedTrend.length >= 2 && (
-            <div className="flex justify-center mt-1.5">
-              <TrendSparkline data={enrollmentTrend.pausedTrend} size="xs" variant="warning" />
-            </div>
-          )}
         </div>
       </div>
 

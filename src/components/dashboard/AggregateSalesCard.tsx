@@ -18,7 +18,6 @@ import {
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
-import { useSalesTrendData } from '@/hooks/useSalesTrendData';
 import { format, subDays, startOfWeek, startOfMonth } from 'date-fns';
 import {
   Select,
@@ -27,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -86,11 +85,6 @@ export function AggregateSalesCard() {
   const { data: trendData, isLoading: trendLoading } = useSalesTrend(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: comparison, isLoading: comparisonLoading } = useSalesComparison(dateFilters.dateFrom, dateFilters.dateTo);
   const { goals } = useSalesGoals();
-  
-  // Get sparkline trend data for KPIs
-  const days = dateRange === 'today' || dateRange === 'yesterday' ? 7 : 
-               dateRange === 'thisMonth' || dateRange === '30d' ? 30 : 14;
-  const { data: kpiTrendData } = useSalesTrendData(days);
 
   const isLoading = metricsLoading || locationLoading;
 
@@ -237,11 +231,6 @@ export function AggregateSalesCard() {
                   previous={comparison.previous.totalRevenue} 
                 />
               )}
-              {kpiTrendData?.revenueTrend && kpiTrendData.revenueTrend.length >= 2 && !hideNumbers && (
-                <div className="flex justify-center mt-2">
-                  <TrendSparkline data={kpiTrendData.revenueTrend} size="xs" variant="primary" />
-                </div>
-              )}
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-2">
@@ -256,11 +245,6 @@ export function AggregateSalesCard() {
                   current={comparison.current.serviceRevenue} 
                   previous={comparison.previous.serviceRevenue} 
                 />
-              )}
-              {kpiTrendData?.servicesTrend && kpiTrendData.servicesTrend.length >= 2 && !hideNumbers && (
-                <div className="flex justify-center mt-2">
-                  <TrendSparkline data={kpiTrendData.servicesTrend} size="xs" variant="success" />
-                </div>
               )}
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
@@ -277,11 +261,6 @@ export function AggregateSalesCard() {
                   previous={comparison.previous.productRevenue} 
                 />
               )}
-              {kpiTrendData?.productsTrend && kpiTrendData.productsTrend.length >= 2 && !hideNumbers && (
-                <div className="flex justify-center mt-2">
-                  <TrendSparkline data={kpiTrendData.productsTrend} size="xs" />
-                </div>
-              )}
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-2">
@@ -297,11 +276,6 @@ export function AggregateSalesCard() {
                   previous={comparison.previous.totalTransactions} 
                 />
               )}
-              {kpiTrendData?.transactionsTrend && kpiTrendData.transactionsTrend.length >= 2 && !hideNumbers && (
-                <div className="flex justify-center mt-2">
-                  <TrendSparkline data={kpiTrendData.transactionsTrend} size="xs" variant="primary" />
-                </div>
-              )}
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-2">
@@ -316,11 +290,6 @@ export function AggregateSalesCard() {
                   current={comparison.current.averageTicket} 
                   previous={comparison.previous.averageTicket} 
                 />
-              )}
-              {kpiTrendData?.avgTicketTrend && kpiTrendData.avgTicketTrend.length >= 2 && !hideNumbers && (
-                <div className="flex justify-center mt-2">
-                  <TrendSparkline data={kpiTrendData.avgTicketTrend} size="xs" variant="success" />
-                </div>
               )}
             </div>
           </div>
