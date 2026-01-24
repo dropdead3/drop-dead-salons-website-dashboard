@@ -1,4 +1,3 @@
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -6,6 +5,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { TrendData } from '@/hooks/useLeaderboardHistory';
+import { TrendSparkline } from './TrendSparkline';
 
 interface LeaderboardTrendIndicatorProps {
   trend: TrendData;
@@ -15,46 +15,27 @@ interface LeaderboardTrendIndicatorProps {
 export function LeaderboardTrendIndicator({ trend, showTooltip = true }: LeaderboardTrendIndicatorProps) {
   const { rankChange, previousRank, weeklyHistory } = trend;
 
-  const getTrendIcon = () => {
-    if (rankChange > 0) {
-      return <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />;
-    } else if (rankChange < 0) {
-      return <TrendingDown className="w-4 h-4 text-destructive" />;
-    }
-    return <Minus className="w-4 h-4 text-muted-foreground" />;
-  };
+  // Convert weekly history to score values for sparkline
+  const sparklineData = weeklyHistory.map(w => w.score);
 
-  const getTrendLabel = () => {
-    if (rankChange > 0) {
-      return `+${rankChange}`;
-    } else if (rankChange < 0) {
-      return `${rankChange}`;
-    }
-    return '—';
-  };
-
-  const getTrendColor = () => {
-    if (rankChange > 0) return 'text-emerald-600 dark:text-emerald-400';
-    if (rankChange < 0) return 'text-destructive';
-    return 'text-muted-foreground';
-  };
-
-  if (!showTooltip || weeklyHistory.length === 0) {
+  if (weeklyHistory.length < 2) {
     return (
-      <div className={`flex items-center gap-1 text-xs font-sans ${getTrendColor()}`}>
-        {getTrendIcon()}
-        <span>{getTrendLabel()}</span>
+      <div className="w-20 h-6 flex items-center justify-center text-muted-foreground text-xs">
+        —
       </div>
     );
+  }
+
+  if (!showTooltip) {
+    return <TrendSparkline data={sparklineData} width={80} height={24} />;
   }
 
   return (
     <TooltipProvider>
       <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
-          <button className={`flex items-center gap-1 text-xs font-sans hover:opacity-80 transition-opacity ${getTrendColor()}`}>
-            {getTrendIcon()}
-            <span>{getTrendLabel()}</span>
+          <button className="hover:opacity-80 transition-opacity">
+            <TrendSparkline data={sparklineData} width={80} height={24} />
           </button>
         </TooltipTrigger>
         <TooltipContent side="left" className="w-56 p-0">
@@ -109,6 +90,12 @@ export function LeaderboardTrendIndicator({ trend, showTooltip = true }: Leaderb
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Avg score</span>
                 <span>{(weeklyHistory.reduce((sum, w) => sum + w.score, 0) / weeklyHistory.length).toFixed(1)} pts</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Rank change</span>
+                <span className={rankChange > 0 ? 'text-chart-2' : rankChange < 0 ? 'text-destructive' : ''}>
+                  {rankChange > 0 ? `+${rankChange}` : rankChange < 0 ? rankChange : '—'}
+                </span>
               </div>
             </div>
           </div>
