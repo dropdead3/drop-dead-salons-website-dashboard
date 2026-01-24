@@ -308,6 +308,51 @@ export type Database = {
           },
         ]
       }
+      build_tasks: {
+        Row: {
+          blocked_by: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          notes: string[] | null
+          priority: string
+          sort_order: number | null
+          status: string
+          task_key: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          blocked_by?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string[] | null
+          priority?: string
+          sort_order?: number | null
+          status?: string
+          task_key: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          blocked_by?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string[] | null
+          priority?: string
+          sort_order?: number | null
+          status?: string
+          task_key?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_card_requests: {
         Row: {
           design_style: string
