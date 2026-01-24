@@ -6,13 +6,15 @@ interface TrendSparklineProps {
   width?: number;
   height?: number;
   className?: string;
+  variant?: 'default' | 'muted';
 }
 
 export function TrendSparkline({ 
   data, 
   width = 80,
   height = 24,
-  className = ''
+  className = '',
+  variant = 'default'
 }: TrendSparklineProps) {
   const chartData = useMemo(() => {
     return data.map((value, index) => ({
@@ -29,13 +31,18 @@ export function TrendSparkline({
     return last >= first;
   }, [data]);
 
-  const strokeColor = isUpward 
-    ? 'hsl(var(--chart-2))' 
-    : 'hsl(var(--destructive))';
+  // Use elegant, subtle colors inspired by reference
+  const gradientId = useMemo(() => `trend-gradient-${Math.random().toString(36).substr(2, 9)}`, []);
   
-  const fillColor = isUpward
-    ? 'hsl(var(--chart-2) / 0.3)'
-    : 'hsl(var(--destructive) / 0.3)';
+  // Neutral dark stroke for upward, muted rose for downward
+  const strokeColor = variant === 'muted' 
+    ? 'hsl(var(--muted-foreground))' 
+    : isUpward 
+      ? 'hsl(var(--foreground))' 
+      : 'hsl(350 40% 70%)';
+  
+  const gradientStartOpacity = isUpward ? 0.15 : 0.2;
+  const gradientEndOpacity = 0.02;
 
   if (!chartData.length || data.length < 2) {
     return (
@@ -53,16 +60,16 @@ export function TrendSparkline({
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
           <defs>
-            <linearGradient id={`gradient-${isUpward ? 'up' : 'down'}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={strokeColor} stopOpacity={0.4} />
-              <stop offset="100%" stopColor={strokeColor} stopOpacity={0.05} />
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={strokeColor} stopOpacity={gradientStartOpacity} />
+              <stop offset="100%" stopColor={strokeColor} stopOpacity={gradientEndOpacity} />
             </linearGradient>
           </defs>
           <Area
             type="monotone"
             dataKey="value"
             stroke={strokeColor}
-            fill={`url(#gradient-${isUpward ? 'up' : 'down'})`}
+            fill={`url(#${gradientId})`}
             strokeWidth={1.5}
             dot={false}
             isAnimationActive={false}
