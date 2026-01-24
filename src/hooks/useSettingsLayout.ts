@@ -18,21 +18,32 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   locations: '#EF4444',  // Red
 };
 
-// Default order
-export const DEFAULT_ORDER = [
-  'business',
-  'email',
-  'users',
-  'onboarding',
-  'integrations',
-  'system',
-  'program',
-  'levels',
-  'handbooks',
-  'visibility',
-  'schedule',
-  'locations',
+// Section groups for organized layout
+export const SECTION_GROUPS = [
+  {
+    id: 'operations',
+    label: 'Business Operations',
+    categories: ['business', 'locations', 'schedule'],
+  },
+  {
+    id: 'team',
+    label: 'Team & Access',
+    categories: ['users', 'levels', 'onboarding', 'handbooks'],
+  },
+  {
+    id: 'platform',
+    label: 'Platform',
+    categories: ['system', 'visibility', 'integrations'],
+  },
+  {
+    id: 'communications',
+    label: 'Communications',
+    categories: ['email', 'program'],
+  },
 ];
+
+// Default order (derived from section groups)
+export const DEFAULT_ORDER = SECTION_GROUPS.flatMap(section => section.categories);
 
 interface SettingsLayoutPreferences {
   order: string[];
