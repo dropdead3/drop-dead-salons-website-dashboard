@@ -11,12 +11,6 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Settings, Target, MapPin, Loader2 } from 'lucide-react';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
@@ -32,8 +26,6 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
   const { goals, updateGoals, isUpdating } = useSalesGoals();
   const { data: locations } = useLocations();
 
-  const [monthlyTarget, setMonthlyTarget] = useState(goals?.monthlyTarget || 50000);
-  const [weeklyTarget, setWeeklyTarget] = useState(goals?.weeklyTarget || 12500);
   const [locationTargets, setLocationTargets] = useState<Record<string, { monthly: number; weekly: number }>>(
     goals?.locationTargets || {}
   );
@@ -41,36 +33,36 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
   // Update local state when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen && goals) {
-      setMonthlyTarget(goals.monthlyTarget);
-      setWeeklyTarget(goals.weeklyTarget);
       setLocationTargets(goals.locationTargets || {});
     }
     setOpen(isOpen);
   };
 
-  // Auto-calculate weekly goal when monthly changes
-  const handleMonthlyChange = (value: number) => {
-    setMonthlyTarget(value);
-    setWeeklyTarget(Math.round(value / WEEKS_PER_MONTH));
-  };
-
-  const handleSave = () => {
-    updateGoals({
-      monthlyTarget,
-      weeklyTarget,
-      locationTargets,
-    });
-    setOpen(false);
-  };
-
-  const updateLocationTarget = (locationId: string, field: 'monthly' | 'weekly', value: number) => {
+  // Update location monthly and auto-calculate weekly
+  const updateLocationTarget = (locationId: string, value: number) => {
     setLocationTargets(prev => ({
       ...prev,
       [locationId]: {
-        ...prev[locationId],
-        [field]: value,
+        monthly: value,
+        weekly: Math.round(value / WEEKS_PER_MONTH),
       },
     }));
+  };
+
+  // Calculate overall targets from location goals
+  const calculatedMonthly = locations?.reduce((sum, loc) => {
+    return sum + (locationTargets[loc.id]?.monthly || 0);
+  }, 0) || 0;
+
+  const calculatedWeekly = Math.round(calculatedMonthly / WEEKS_PER_MONTH);
+
+  const handleSave = () => {
+    updateGoals({
+      monthlyTarget: calculatedMonthly,
+      weeklyTarget: calculatedWeekly,
+      locationTargets,
+    });
+    setOpen(false);
   };
 
   return (
@@ -90,100 +82,77 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
             Sales Goals
           </DialogTitle>
           <DialogDescription>
-            Set revenue targets for your team. These goals are used to track progress on the dashboard.
+            Set monthly revenue targets for each location. Weekly goals and overall totals are calculated automatically.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Global Targets */}
-          <div className="space-y-4">
+          {/* Location-Specific Goals (Primary) */}
+          {locations && locations.length > 0 ? (
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                Location Goals
+              </h3>
+              <div className="space-y-3">
+                {locations.map((location) => (
+                  <div key={location.id} className="space-y-2 p-3 bg-muted/30 rounded-lg border">
+                    <p className="text-sm font-medium">{location.name}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Monthly - Editable */}
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Monthly</Label>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+                          <Input
+                            type="number"
+                            value={locationTargets[location.id]?.monthly || ''}
+                            onChange={(e) => updateLocationTarget(location.id, Number(e.target.value))}
+                            placeholder="0"
+                            className="pl-5 h-8 text-sm"
+                          />
+                        </div>
+                      </div>
+                      {/* Weekly - Read-Only (Auto-Calculated) */}
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Weekly</Label>
+                        <p className="h-8 flex items-center text-sm text-muted-foreground">
+                          ${Math.round((locationTargets[location.id]?.monthly || 0) / WEEKS_PER_MONTH).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No locations found. Add locations to set specific goals.
+            </p>
+          )}
+
+          {/* Overall Targets - Calculated (Read-Only) */}
+          <div className="space-y-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
             <h3 className="text-sm font-medium flex items-center gap-2">
               <Target className="w-4 h-4 text-primary" />
               Overall Targets
+              <span className="text-xs text-muted-foreground font-normal">(calculated)</span>
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="monthly">Monthly Goal</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    id="monthly"
-                    type="number"
-                    value={monthlyTarget}
-                    onChange={(e) => handleMonthlyChange(Number(e.target.value))}
-                    className="pl-7"
-                  />
-                </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Monthly Goal</Label>
+                <p className="text-xl font-semibold">
+                  ${calculatedMonthly.toLocaleString()}
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="weekly">Weekly Goal</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    id="weekly"
-                    type="number"
-                    value={weeklyTarget}
-                    onChange={(e) => setWeeklyTarget(Number(e.target.value))}
-                    className="pl-7"
-                  />
-                </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Weekly Goal</Label>
+                <p className="text-xl font-semibold">
+                  ${calculatedWeekly.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
-
-          {/* Location-Specific Targets */}
-          {locations && locations.length > 0 && (
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="locations" className="border-none">
-                <AccordionTrigger className="text-sm font-medium py-2 hover:no-underline">
-                  <span className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    Location-Specific Goals
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 pt-2">
-                    {locations.map((location) => (
-                      <div key={location.id} className="space-y-2 p-3 bg-muted/30 rounded-lg">
-                        <p className="text-sm font-medium">{location.name}</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Monthly</Label>
-                            <div className="relative">
-                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
-                              <Input
-                                type="number"
-                                value={locationTargets[location.id]?.monthly || ''}
-                                onChange={(e) => updateLocationTarget(location.id, 'monthly', Number(e.target.value))}
-                                placeholder={String(monthlyTarget / (locations?.length || 1))}
-                                className="pl-5 h-8 text-sm"
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Weekly</Label>
-                            <div className="relative">
-                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
-                              <Input
-                                type="number"
-                                value={locationTargets[location.id]?.weekly || ''}
-                                onChange={(e) => updateLocationTarget(location.id, 'weekly', Number(e.target.value))}
-                                placeholder={String(weeklyTarget / (locations?.length || 1))}
-                                className="pl-5 h-8 text-sm"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    <p className="text-xs text-muted-foreground">
-                      Leave blank to use a proportional share of the overall goal.
-                    </p>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          )}
         </div>
 
         <DialogFooter>
