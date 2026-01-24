@@ -39,11 +39,25 @@ export function LocationSelect({
         {includeAll && (
           <SelectItem value="all">{allLabel}</SelectItem>
         )}
-        {locations.map(loc => (
-          <SelectItem key={loc.id} value={loc.id}>
-            {loc.name}
-          </SelectItem>
-        ))}
+        {locations.map(loc => {
+          // Parse city, state from the city field (format: "City, State ZIP")
+          const cityState = loc.city 
+            ? `${loc.city.split(',')[0]?.trim()}, ${loc.city.split(',')[1]?.trim().split(' ')[0] || ''}`
+            : '';
+          
+          return (
+            <SelectItem key={loc.id} value={loc.id}>
+              <span className="flex items-center gap-2">
+                <span>{loc.name}</span>
+                {cityState && (
+                  <span className="text-xs text-muted-foreground">
+                    {cityState}
+                  </span>
+                )}
+              </span>
+            </SelectItem>
+          );
+        })}
       </SelectContent>
     </Select>
   );
