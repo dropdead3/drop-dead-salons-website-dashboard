@@ -64,6 +64,7 @@ import DashboardBuild from "./pages/dashboard/admin/DashboardBuild";
 import RecruitingPipeline from "./pages/dashboard/admin/RecruitingPipeline";
 import GraduationTracker from "./pages/dashboard/admin/GraduationTracker";
 import MyGraduation from "./pages/dashboard/MyGraduation";
+import DesignSystem from "./pages/dashboard/DesignSystem";
 import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
 import ProgramAnalytics from "./pages/dashboard/admin/ProgramAnalytics";
 import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
@@ -123,6 +124,7 @@ const App = () => (
               <Route path="/dashboard/my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
               <Route path="/dashboard/my-clients" element={<ProtectedRoute requiredPermission="view_own_stats"><MyClients /></ProtectedRoute>} />
               <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
+              <Route path="/dashboard/design-system" element={<ProtectedRoute requiredPermission="manage_settings"><DesignSystem /></ProtectedRoute>} />
               
               {/* Admin routes */}
               <Route path="/dashboard/admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />

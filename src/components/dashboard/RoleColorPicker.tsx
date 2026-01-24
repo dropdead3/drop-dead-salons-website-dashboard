@@ -5,7 +5,7 @@ interface RoleColorPickerProps {
   onChange: (color: string) => void;
 }
 
-const ROLE_COLORS = [
+export const ROLE_COLORS = [
   { name: 'red', bg: 'bg-red-500', text: 'text-red-500', preview: 'bg-red-100' },
   { name: 'orange', bg: 'bg-orange-500', text: 'text-orange-500', preview: 'bg-orange-100' },
   { name: 'yellow', bg: 'bg-yellow-500', text: 'text-yellow-500', preview: 'bg-yellow-100' },
