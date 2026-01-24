@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { SECTION_LABELS } from '@/hooks/useSidebarLayout';
+import { SECTION_LABELS, isBuiltInSection, type CustomSectionConfig } from '@/hooks/useSidebarLayout';
 
 // Map hrefs to their labels and icons for the preview
 const LINK_CONFIG: Record<string, { label: string }> = {
@@ -46,6 +46,7 @@ interface SidebarPreviewProps {
   linkOrder: Record<string, string[]>;
   hiddenSections: string[];
   hiddenLinks: Record<string, string[]>;
+  customSections: Record<string, CustomSectionConfig>;
 }
 
 export function SidebarPreview({
@@ -53,9 +54,18 @@ export function SidebarPreview({
   linkOrder,
   hiddenSections,
   hiddenLinks,
+  customSections,
 }: SidebarPreviewProps) {
   // Filter out hidden sections
   const visibleSections = sectionOrder.filter(s => !hiddenSections.includes(s));
+
+  // Get section name
+  const getSectionName = (sectionId: string): string => {
+    if (isBuiltInSection(sectionId)) {
+      return SECTION_LABELS[sectionId] || sectionId;
+    }
+    return customSections[sectionId]?.name || sectionId;
+  };
 
   return (
     <div className="border rounded-lg bg-sidebar h-[500px] overflow-y-auto">
@@ -76,6 +86,8 @@ export function SidebarPreview({
 
           if (visibleLinks.length === 0) return null;
 
+          const isCustom = !isBuiltInSection(sectionId);
+
           return (
             <div key={sectionId}>
               {/* Divider for all sections except the first */}
@@ -87,8 +99,11 @@ export function SidebarPreview({
               
               {/* Section label - skip for 'main' to match actual sidebar */}
               {sectionId !== 'main' && (
-                <p className="px-3 mb-1.5 text-[10px] uppercase tracking-wider text-foreground font-display font-medium">
-                  {SECTION_LABELS[sectionId]}
+                <p className={cn(
+                  "px-3 mb-1.5 text-[10px] uppercase tracking-wider font-display font-medium",
+                  isCustom ? "text-primary" : "text-foreground"
+                )}>
+                  {getSectionName(sectionId)}
                 </p>
               )}
               

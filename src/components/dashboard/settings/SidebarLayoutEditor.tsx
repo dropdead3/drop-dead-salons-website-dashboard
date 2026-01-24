@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import {
@@ -12,6 +13,9 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -58,6 +62,12 @@ import {
   Scissors,
   Eye,
   EyeOff,
+  Plus,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  FolderPlus,
 } from 'lucide-react';
 import {
   useSidebarLayout,
@@ -65,7 +75,9 @@ import {
   DEFAULT_SECTION_ORDER,
   DEFAULT_LINK_ORDER,
   SECTION_LABELS,
+  isBuiltInSection,
   type SidebarLayoutConfig,
+  type CustomSectionConfig,
 } from '@/hooks/useSidebarLayout';
 import { SidebarPreview } from './SidebarPreview';
 
@@ -183,9 +195,26 @@ function SortableLink({
   );
 }
 
+// Static Link Display for DragOverlay
+function LinkOverlay({ href }: { href: string }) {
+  const config = LINK_CONFIG[href];
+  if (!config) return null;
+
+  const Icon = config.icon;
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-card border border-primary shadow-lg">
+      <GripVertical className="w-4 h-4 text-muted-foreground" />
+      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+      <span className="text-sm">{config.label}</span>
+    </div>
+  );
+}
+
 // Sortable Section Component
 function SortableSection({
   sectionId,
+  sectionName,
   links,
   isExpanded,
   onToggle,
@@ -194,8 +223,13 @@ function SortableSection({
   hiddenLinks,
   onToggleSectionVisibility,
   onToggleLinkVisibility,
+  isCustom,
+  onRename,
+  onDelete,
+  onMoveLinkToSection,
 }: {
   sectionId: string;
+  sectionName: string;
   links: string[];
   isExpanded: boolean;
   onToggle: () => void;
@@ -204,7 +238,15 @@ function SortableSection({
   hiddenLinks: string[];
   onToggleSectionVisibility: () => void;
   onToggleLinkVisibility: (href: string) => void;
+  isCustom: boolean;
+  onRename?: (newName: string) => void;
+  onDelete?: () => void;
+  onMoveLinkToSection: (href: string, fromSection: string, toSection: string) => void;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(sectionName);
+  const [activeLink, setActiveLink] = useState<string | null>(null);
+
   const {
     attributes,
     listeners,
@@ -226,14 +268,35 @@ function SortableSection({
     })
   );
 
+  const handleLinkDragStart = (event: DragStartEvent) => {
+    setActiveLink(event.active.id as string);
+  };
+
   const handleLinkDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveLink(null);
+    
     if (!over || active.id === over.id) return;
 
     const oldIndex = links.indexOf(active.id as string);
     const newIndex = links.indexOf(over.id as string);
-    const newLinks = arrayMove(links, oldIndex, newIndex);
-    onLinksReorder(sectionId, newLinks);
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newLinks = arrayMove(links, oldIndex, newIndex);
+      onLinksReorder(sectionId, newLinks);
+    }
+  };
+
+  const handleSaveRename = () => {
+    if (editName.trim() && onRename) {
+      onRename(editName.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelRename = () => {
+    setEditName(sectionName);
+    setIsEditing(false);
   };
 
   const visibleLinksCount = links.filter(l => !hiddenLinks.includes(l)).length;
@@ -245,16 +308,18 @@ function SortableSection({
       className={cn(
         "border border-border rounded-lg overflow-hidden",
         isDragging && "opacity-50 ring-2 ring-primary",
-        isHidden && "opacity-60"
+        isHidden && "opacity-60",
+        isCustom && "border-primary/30"
       )}
     >
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <CollapsibleTrigger asChild>
           <div className={cn(
             "flex items-center justify-between px-4 py-3 bg-card hover:bg-muted/50 cursor-pointer transition-colors",
-            isHidden && "bg-muted/30"
+            isHidden && "bg-muted/30",
+            isCustom && "bg-primary/5"
           )}>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
               <div
                 {...attributes}
                 {...listeners}
@@ -278,46 +343,115 @@ function SortableSection({
                   <Eye className="w-3.5 h-3.5 text-muted-foreground" />
                 )}
               </Button>
-              <span className={cn(
-                "font-display text-sm uppercase tracking-wider",
-                isHidden && "line-through text-muted-foreground"
-              )}>
-                {SECTION_LABELS[sectionId] || sectionId}
-              </span>
-              <Badge variant="secondary" className="text-xs">
+              
+              {isEditing ? (
+                <div className="flex items-center gap-1 flex-1" onClick={(e) => e.stopPropagation()}>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="h-7 text-sm font-display uppercase"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveRename();
+                      if (e.key === 'Escape') handleCancelRename();
+                    }}
+                  />
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleSaveRename}>
+                    <Check className="w-3.5 h-3.5 text-green-600" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCancelRename}>
+                    <X className="w-3.5 h-3.5 text-destructive" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <span className={cn(
+                    "font-display text-sm uppercase tracking-wider truncate",
+                    isHidden && "line-through text-muted-foreground"
+                  )}>
+                    {sectionName}
+                  </span>
+                  {isCustom && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary shrink-0">
+                      Custom
+                    </Badge>
+                  )}
+                </>
+              )}
+              
+              <Badge variant="secondary" className="text-xs shrink-0">
                 {visibleLinksCount}/{links.length}
               </Badge>
               {isHidden && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-muted-foreground/50">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-muted-foreground/50 shrink-0">
                   Hidden
                 </Badge>
               )}
             </div>
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            )}
+            
+            <div className="flex items-center gap-1">
+              {isCustom && !isEditing && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditing(true);
+                    }}
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete?.();
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </>
+              )}
+              {isExpanded ? (
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              )}
+            </div>
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="p-3 bg-muted/30 border-t border-border space-y-2">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleLinkDragEnd}
-            >
-              <SortableContext items={links} strategy={verticalListSortingStrategy}>
-                {links.map((href) => (
-                  <SortableLink 
-                    key={href} 
-                    href={href}
-                    isHidden={hiddenLinks.includes(href)}
-                    onToggleVisibility={() => onToggleLinkVisibility(href)}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
+            {links.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                No links in this section. Drag links here from other sections.
+              </p>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleLinkDragStart}
+                onDragEnd={handleLinkDragEnd}
+              >
+                <SortableContext items={links} strategy={verticalListSortingStrategy}>
+                  {links.map((href) => (
+                    <SortableLink 
+                      key={href} 
+                      href={href}
+                      isHidden={hiddenLinks.includes(href)}
+                      onToggleVisibility={() => onToggleLinkVisibility(href)}
+                    />
+                  ))}
+                </SortableContext>
+                <DragOverlay>
+                  {activeLink ? <LinkOverlay href={activeLink} /> : null}
+                </DragOverlay>
+              </DndContext>
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -334,8 +468,11 @@ export function SidebarLayoutEditor() {
   const [localLinkOrder, setLocalLinkOrder] = useState<Record<string, string[]>>({});
   const [localHiddenSections, setLocalHiddenSections] = useState<string[]>([]);
   const [localHiddenLinks, setLocalHiddenLinks] = useState<Record<string, string[]>>({});
+  const [localCustomSections, setLocalCustomSections] = useState<Record<string, CustomSectionConfig>>({});
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [hasChanges, setHasChanges] = useState(false);
+  const [newSectionName, setNewSectionName] = useState('');
+  const [isAddingSection, setIsAddingSection] = useState(false);
 
   // Initialize local state when layout loads
   useMemo(() => {
@@ -344,6 +481,7 @@ export function SidebarLayoutEditor() {
       setLocalLinkOrder(layout.linkOrder);
       setLocalHiddenSections(layout.hiddenSections || []);
       setLocalHiddenLinks(layout.hiddenLinks || {});
+      setLocalCustomSections(layout.customSections || {});
     }
   }, [layout, localSectionOrder.length]);
 
@@ -353,6 +491,14 @@ export function SidebarLayoutEditor() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Get section name (from SECTION_LABELS for built-in, from customSections for custom)
+  const getSectionName = (sectionId: string): string => {
+    if (isBuiltInSection(sectionId)) {
+      return SECTION_LABELS[sectionId] || sectionId;
+    }
+    return localCustomSections[sectionId]?.name || sectionId;
+  };
 
   const handleSectionDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -411,12 +557,116 @@ export function SidebarLayoutEditor() {
     setHasChanges(true);
   };
 
+  const handleAddCustomSection = () => {
+    if (!newSectionName.trim()) return;
+    
+    const sectionId = `custom-${Date.now()}`;
+    setLocalCustomSections((prev) => ({
+      ...prev,
+      [sectionId]: { name: newSectionName.trim() },
+    }));
+    setLocalSectionOrder((prev) => [...prev, sectionId]);
+    setLocalLinkOrder((prev) => ({
+      ...prev,
+      [sectionId]: [],
+    }));
+    setNewSectionName('');
+    setIsAddingSection(false);
+    setHasChanges(true);
+    // Auto-expand the new section
+    setExpandedSections((prev) => new Set([...prev, sectionId]));
+  };
+
+  const handleRenameSection = (sectionId: string, newName: string) => {
+    setLocalCustomSections((prev) => ({
+      ...prev,
+      [sectionId]: { ...prev[sectionId], name: newName },
+    }));
+    setHasChanges(true);
+  };
+
+  const handleDeleteSection = (sectionId: string) => {
+    // Move links back to their original sections or hide them
+    const linksToRedistribute = localLinkOrder[sectionId] || [];
+    
+    // Remove section from order
+    setLocalSectionOrder((prev) => prev.filter(id => id !== sectionId));
+    
+    // Remove from custom sections
+    setLocalCustomSections((prev) => {
+      const next = { ...prev };
+      delete next[sectionId];
+      return next;
+    });
+    
+    // Remove link order for this section
+    setLocalLinkOrder((prev) => {
+      const next = { ...prev };
+      delete next[sectionId];
+      
+      // Return links to their default sections
+      linksToRedistribute.forEach((href) => {
+        // Find original section for this link
+        const originalSection = Object.entries(DEFAULT_LINK_ORDER).find(([, links]) => 
+          links.includes(href)
+        )?.[0];
+        
+        if (originalSection && next[originalSection]) {
+          if (!next[originalSection].includes(href)) {
+            next[originalSection] = [...next[originalSection], href];
+          }
+        }
+      });
+      
+      return next;
+    });
+    
+    // Remove from hidden sections
+    setLocalHiddenSections((prev) => prev.filter(id => id !== sectionId));
+    
+    // Remove hidden links for this section
+    setLocalHiddenLinks((prev) => {
+      const next = { ...prev };
+      delete next[sectionId];
+      return next;
+    });
+    
+    setHasChanges(true);
+  };
+
+  const handleMoveLinkToSection = (href: string, fromSection: string, toSection: string) => {
+    if (fromSection === toSection) return;
+    
+    setLocalLinkOrder((prev) => {
+      const next = { ...prev };
+      // Remove from source section
+      next[fromSection] = (next[fromSection] || []).filter(l => l !== href);
+      // Add to target section
+      next[toSection] = [...(next[toSection] || []), href];
+      return next;
+    });
+    
+    // Also move hidden status
+    setLocalHiddenLinks((prev) => {
+      const next = { ...prev };
+      const wasHidden = (next[fromSection] || []).includes(href);
+      if (wasHidden) {
+        next[fromSection] = (next[fromSection] || []).filter(l => l !== href);
+        next[toSection] = [...(next[toSection] || []), href];
+      }
+      return next;
+    });
+    
+    setHasChanges(true);
+  };
+
   const handleSave = () => {
     updateLayout.mutate({
       sectionOrder: localSectionOrder,
       linkOrder: localLinkOrder,
       hiddenSections: localHiddenSections,
       hiddenLinks: localHiddenLinks,
+      customSections: localCustomSections,
     });
     setHasChanges(false);
   };
@@ -426,6 +676,7 @@ export function SidebarLayoutEditor() {
     setLocalLinkOrder(DEFAULT_LINK_ORDER);
     setLocalHiddenSections([]);
     setLocalHiddenLinks({});
+    setLocalCustomSections({});
     setHasChanges(true);
   };
 
@@ -446,7 +697,7 @@ export function SidebarLayoutEditor() {
           <div>
             <CardTitle className="font-display text-lg">SIDEBAR NAVIGATION</CardTitle>
             <CardDescription>
-              Drag to reorder sections and links. Click the eye icon to show/hide items.
+              Drag to reorder sections and links. Click the eye icon to show/hide items. Create custom sections to organize links.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -480,9 +731,60 @@ export function SidebarLayoutEditor() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Editor Panel */}
           <div className="space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              Editor
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Editor
+              </p>
+              {!isAddingSection ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddingSection(true)}
+                  className="gap-1.5 text-xs"
+                >
+                  <FolderPlus className="w-3.5 h-3.5" />
+                  Add Section
+                </Button>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <Input
+                    value={newSectionName}
+                    onChange={(e) => setNewSectionName(e.target.value)}
+                    placeholder="Section name..."
+                    className="h-7 w-32 text-xs"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddCustomSection();
+                      if (e.key === 'Escape') {
+                        setIsAddingSection(false);
+                        setNewSectionName('');
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleAddCustomSection}
+                    disabled={!newSectionName.trim()}
+                  >
+                    <Check className="w-3.5 h-3.5 text-green-600" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => {
+                      setIsAddingSection(false);
+                      setNewSectionName('');
+                    }}
+                  >
+                    <X className="w-3.5 h-3.5 text-destructive" />
+                  </Button>
+                </div>
+              )}
+            </div>
+            
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -493,6 +795,7 @@ export function SidebarLayoutEditor() {
                   <SortableSection
                     key={sectionId}
                     sectionId={sectionId}
+                    sectionName={getSectionName(sectionId)}
                     links={localLinkOrder[sectionId] || []}
                     isExpanded={expandedSections.has(sectionId)}
                     onToggle={() => handleToggleSection(sectionId)}
@@ -501,6 +804,10 @@ export function SidebarLayoutEditor() {
                     hiddenLinks={localHiddenLinks[sectionId] || []}
                     onToggleSectionVisibility={() => handleToggleSectionVisibility(sectionId)}
                     onToggleLinkVisibility={(href) => handleToggleLinkVisibility(sectionId, href)}
+                    isCustom={!isBuiltInSection(sectionId)}
+                    onRename={!isBuiltInSection(sectionId) ? (name) => handleRenameSection(sectionId, name) : undefined}
+                    onDelete={!isBuiltInSection(sectionId) ? () => handleDeleteSection(sectionId) : undefined}
+                    onMoveLinkToSection={handleMoveLinkToSection}
                   />
                 ))}
               </SortableContext>
@@ -517,6 +824,7 @@ export function SidebarLayoutEditor() {
               linkOrder={localLinkOrder}
               hiddenSections={localHiddenSections}
               hiddenLinks={localHiddenLinks}
+              customSections={localCustomSections}
             />
           </div>
         </div>
