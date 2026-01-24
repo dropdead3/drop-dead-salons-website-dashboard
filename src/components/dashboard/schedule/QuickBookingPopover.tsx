@@ -857,6 +857,7 @@ export function QuickBookingPopover({
                       const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0) + '.' : '';
                       const displayName = `${firstName} ${lastInitial}`.trim();
                       const isSelected = selectedStylist === stylist.user_id;
+                      const isPreviousStylist = selectedClient?.preferred_stylist_id === stylist.user_id;
                       const stylistLevelNum = getLevelNumber(stylist.employee_profiles?.stylist_level);
                       const stylistLevelSlug = getLevelSlug(stylist.employee_profiles?.stylist_level);
                       
@@ -893,9 +894,19 @@ export function QuickBookingPopover({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-foreground block truncate">
-                              {displayName}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-medium text-foreground truncate">
+                                {displayName}
+                              </span>
+                              {isPreviousStylist && (
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-[9px] px-1.5 py-0 font-normal bg-accent/50 text-accent-foreground border-accent shrink-0"
+                                >
+                                  Previously Seen
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0 pr-2 justify-end">
                             {stylistLevelNum && (
