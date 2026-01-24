@@ -2,11 +2,17 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Copy, Palette, Type, Sparkles, MousePointer, Square, CircleDot, Layers, Sun, Moon } from "lucide-react";
-import { useState } from "react";
+import { Check, Copy, Palette, Type, Sparkles, MousePointer, Square, CircleDot, Layers, Sun, Moon, Search, X, Play, Code } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { SPECIAL_GRADIENTS } from "@/utils/categoryColors";
 import { getRoleColorClasses, ROLE_COLORS } from "@/components/dashboard/RoleColorPicker";
@@ -15,6 +21,24 @@ const DesignSystem = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openSections, setOpenSections] = useState<string[]>(["colors", "gradients", "typography"]);
+
+  // Playground state
+  const [buttonVariant, setButtonVariant] = useState<"default" | "secondary" | "outline" | "ghost" | "link" | "destructive">("default");
+  const [buttonSize, setButtonSize] = useState<"sm" | "default" | "lg" | "icon">("default");
+  const [buttonLabel, setButtonLabel] = useState("Click me");
+  const [buttonDisabled, setButtonDisabled] = useState(false);
+
+  const [badgeVariant, setBadgeVariant] = useState<"default" | "secondary" | "outline" | "destructive" | "glass" | "glass-dark">("default");
+  const [badgeText, setBadgeText] = useState("Status");
+
+  const [cardTitle, setCardTitle] = useState("Card Title");
+  const [cardDescription, setCardDescription] = useState("Card description text");
+  const [cardContent, setCardContent] = useState("This is the main content of the card.");
+  const [cardShadow, setCardShadow] = useState("shadow-lg");
+  const [cardRadius, setCardRadius] = useState("rounded-xl");
+  const [cardHasButton, setCardHasButton] = useState(true);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -23,16 +47,16 @@ const DesignSystem = () => {
     setTimeout(() => setCopiedItem(null), 2000);
   };
 
-  const CopyButton = ({ text, label }: { text: string; label: string }) => (
+  const CopyButton = ({ text, label, size = "sm" }: { text: string; label: string; size?: "sm" | "xs" }) => (
     <button
       onClick={() => copyToClipboard(text, label)}
-      className="ml-2 p-1 rounded hover:bg-accent transition-colors"
+      className={`${size === "xs" ? "p-0.5" : "p-1"} rounded hover:bg-accent transition-colors`}
       title="Copy to clipboard"
     >
       {copiedItem === label ? (
-        <Check className="h-3 w-3 text-success-foreground" />
+        <Check className={`${size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3"} text-success-foreground`} />
       ) : (
-        <Copy className="h-3 w-3 text-muted-foreground" />
+        <Copy className={`${size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3"} text-muted-foreground`} />
       )}
     </button>
   );
@@ -99,504 +123,820 @@ const DesignSystem = () => {
     { class: "pulse-glow", description: "Pulsing glow for emphasis", code: "Box-shadow pulse" },
   ];
 
+  // Shadow classes
+  const shadows = [
+    { class: "shadow-sm", usage: "Subtle elevation" },
+    { class: "shadow", usage: "Default elevation" },
+    { class: "shadow-md", usage: "Medium elevation" },
+    { class: "shadow-lg", usage: "High elevation" },
+    { class: "shadow-xl", usage: "Very high elevation" },
+    { class: "shadow-2xl", usage: "Premium cards" },
+  ];
+
+  // Scrollbar classes
+  const scrollbarClasses = [
+    { class: "scrollbar-minimal", description: "4px thin scrollbar, subtle styling" },
+    { class: "scrollbar-thin", description: "6px rounded scrollbar" },
+    { class: "scrollbar-hide", description: "Hidden scrollbar (still scrollable)" },
+  ];
+
+  // Filter function
+  const filterItems = <T extends Record<string, any>>(items: T[], fields: (keyof T)[]): T[] => {
+    if (!searchQuery) return items;
+    const query = searchQuery.toLowerCase();
+    return items.filter(item =>
+      fields.some(field => String(item[field]).toLowerCase().includes(query))
+    );
+  };
+
+  // Filtered data
+  const filteredColors = filterItems(semanticColors, ["name", "variable", "usage"]);
+  const filteredTypography = filterItems(typography, ["class", "font", "usage"]);
+  const filteredBorderRadius = filterItems(borderRadius, ["class", "usage"]);
+  const filteredAnimations = filterItems(animations, ["class", "description"]);
+  const filteredEffects = filterItems(effectClasses, ["class", "description"]);
+  const filteredShadows = filterItems(shadows, ["class", "usage"]);
+  const filteredScrollbars = filterItems(scrollbarClasses, ["class", "description"]);
+  
+  const filteredGradients = useMemo(() => {
+    if (!searchQuery) return Object.entries(SPECIAL_GRADIENTS);
+    const query = searchQuery.toLowerCase();
+    return Object.entries(SPECIAL_GRADIENTS).filter(([key, gradient]) =>
+      key.toLowerCase().includes(query) || gradient.name.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
+
+  const filteredRoleColors = useMemo(() => {
+    if (!searchQuery) return ROLE_COLORS;
+    const query = searchQuery.toLowerCase();
+    return ROLE_COLORS.filter(color => color.name.toLowerCase().includes(query));
+  }, [searchQuery]);
+
+  // Count matches per section
+  const sectionCounts = useMemo(() => ({
+    colors: filteredColors.length,
+    gradients: filteredGradients.length,
+    typography: filteredTypography.length,
+    buttons: searchQuery ? (searchQuery.toLowerCase().includes("button") ? 1 : 0) : 6,
+    badges: filteredRoleColors.length + (searchQuery ? 0 : 6),
+    radius: filteredBorderRadius.length,
+    animations: filteredAnimations.length,
+    effects: filteredEffects.length,
+    shadows: filteredShadows.length,
+    scrollbar: filteredScrollbars.length,
+    playground: searchQuery ? (searchQuery.toLowerCase().includes("playground") || searchQuery.toLowerCase().includes("preview") ? 1 : 0) : 1,
+  }), [searchQuery, filteredColors, filteredGradients, filteredTypography, filteredRoleColors, filteredBorderRadius, filteredAnimations, filteredEffects, filteredShadows, filteredScrollbars]);
+
+  // Auto-expand sections with matches when searching
+  useEffect(() => {
+    if (searchQuery) {
+      const sectionsWithMatches = Object.entries(sectionCounts)
+        .filter(([, count]) => count > 0)
+        .map(([key]) => key);
+      setOpenSections(sectionsWithMatches);
+    } else {
+      setOpenSections(["colors", "gradients", "typography"]);
+    }
+  }, [searchQuery, sectionCounts]);
+
+  // Generated code for playground
+  const buttonCode = `<Button variant="${buttonVariant}" size="${buttonSize}"${buttonDisabled ? " disabled" : ""}>${buttonLabel}</Button>`;
+  const badgeCode = `<Badge variant="${badgeVariant}">${badgeText}</Badge>`;
+  const cardCode = `<Card className="${cardShadow} ${cardRadius}">
+  <CardHeader>
+    <CardTitle>${cardTitle}</CardTitle>
+    <CardDescription>${cardDescription}</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <p>${cardContent}</p>
+  </CardContent>${cardHasButton ? `
+  <CardFooter>
+    <Button>Action</Button>
+  </CardFooter>` : ""}
+</Card>`;
+
+  const renderSectionHeader = (icon: React.ReactNode, title: string, sectionKey: string) => (
+    <div className="flex items-center gap-3">
+      {icon}
+      <span className="font-display uppercase tracking-wide">{title}</span>
+      {searchQuery && sectionCounts[sectionKey as keyof typeof sectionCounts] > 0 && (
+        <Badge variant="secondary" className="ml-2 text-xs">
+          {sectionCounts[sectionKey as keyof typeof sectionCounts]}
+        </Badge>
+      )}
+    </div>
+  );
+
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-display uppercase tracking-wide">Design System</h1>
             <p className="text-muted-foreground mt-1">Visual reference for all design tokens and components</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Search */}
+            <div className="relative flex-1 sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search colors, classes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-8"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-accent"
+                >
+                  <X className="h-3 w-3 text-muted-foreground" />
+                </button>
+              )}
+            </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
-              {theme === 'dark' ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
-              {theme === 'dark' ? 'Light' : 'Dark'} Mode
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
           </div>
         </div>
 
-        <Accordion type="multiple" defaultValue={["colors", "gradients", "typography"]} className="space-y-4">
-          {/* Color Palette */}
-          <AccordionItem value="colors" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <Palette className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Color Palette</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid gap-3 pb-4">
-                {semanticColors.map((color) => (
-                  <div key={color.name} className="flex items-center gap-4 p-3 rounded-lg bg-background border">
-                    <div className="flex gap-2">
-                      <div 
-                        className="w-12 h-12 rounded-lg border shadow-sm"
-                        style={{ backgroundColor: `hsl(${color.light})` }}
-                        title="Light mode"
-                      />
-                      <div 
-                        className="w-12 h-12 rounded-lg border shadow-sm"
-                        style={{ backgroundColor: `hsl(${color.dark})` }}
-                        title="Dark mode"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">
-                          {color.variable}
-                        </code>
-                        <CopyButton text={color.variable} label={color.name} />
+        {searchQuery && Object.values(sectionCounts).every(c => c === 0) && (
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground">No results found for "{searchQuery}"</p>
+            <Button variant="link" onClick={() => setSearchQuery("")}>Clear search</Button>
+          </Card>
+        )}
+
+        <Accordion 
+          type="multiple" 
+          value={openSections}
+          onValueChange={setOpenSections}
+          className="space-y-4"
+        >
+          {/* Component Playground */}
+          {sectionCounts.playground > 0 && (
+            <AccordionItem value="playground" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<Play className="h-5 w-5 text-gold" />, "Component Playground", "playground")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <Tabs defaultValue="button" className="pb-4">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="button">Button</TabsTrigger>
+                    <TabsTrigger value="badge">Badge</TabsTrigger>
+                    <TabsTrigger value="card">Card</TabsTrigger>
+                  </TabsList>
+
+                  {/* Button Builder */}
+                  <TabsContent value="button">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4 p-4 rounded-lg bg-background border">
+                        <h4 className="font-display uppercase tracking-wide text-sm">Controls</h4>
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Variant</Label>
+                            <Select value={buttonVariant} onValueChange={(v) => setButtonVariant(v as any)}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="default">default</SelectItem>
+                                <SelectItem value="secondary">secondary</SelectItem>
+                                <SelectItem value="outline">outline</SelectItem>
+                                <SelectItem value="ghost">ghost</SelectItem>
+                                <SelectItem value="link">link</SelectItem>
+                                <SelectItem value="destructive">destructive</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Size</Label>
+                            <Select value={buttonSize} onValueChange={(v) => setButtonSize(v as any)}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="sm">sm</SelectItem>
+                                <SelectItem value="default">default</SelectItem>
+                                <SelectItem value="lg">lg</SelectItem>
+                                <SelectItem value="icon">icon</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Label</Label>
+                            <Input value={buttonLabel} onChange={(e) => setButtonLabel(e.target.value)} />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch checked={buttonDisabled} onCheckedChange={setButtonDisabled} id="btn-disabled" />
+                            <Label htmlFor="btn-disabled" className="text-xs">Disabled</Label>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">{color.usage}</p>
+                      <div className="space-y-4">
+                        <div className="p-8 rounded-lg bg-muted/30 border flex items-center justify-center min-h-[120px]">
+                          <Button variant={buttonVariant} size={buttonSize} disabled={buttonDisabled}>
+                            {buttonSize === "icon" ? <Sparkles className="h-4 w-4" /> : buttonLabel}
+                          </Button>
+                        </div>
+                        <div className="relative">
+                          <pre className="p-3 rounded-lg bg-foreground/5 border text-xs font-mono overflow-x-auto">
+                            <code>{buttonCode}</code>
+                          </pre>
+                          <div className="absolute top-2 right-2">
+                            <CopyButton text={buttonCode} label="Button code" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right text-xs text-muted-foreground font-mono">
-                      <div>Light: {color.light}</div>
-                      <div>Dark: {color.dark}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  </TabsContent>
 
-              <Separator className="my-4" />
+                  {/* Badge Builder */}
+                  <TabsContent value="badge">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4 p-4 rounded-lg bg-background border">
+                        <h4 className="font-display uppercase tracking-wide text-sm">Controls</h4>
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Variant</Label>
+                            <Select value={badgeVariant} onValueChange={(v) => setBadgeVariant(v as any)}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="default">default</SelectItem>
+                                <SelectItem value="secondary">secondary</SelectItem>
+                                <SelectItem value="outline">outline</SelectItem>
+                                <SelectItem value="destructive">destructive</SelectItem>
+                                <SelectItem value="glass">glass</SelectItem>
+                                <SelectItem value="glass-dark">glass-dark</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Text</Label>
+                            <Input value={badgeText} onChange={(e) => setBadgeText(e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className={`p-8 rounded-lg border flex items-center justify-center min-h-[120px] ${badgeVariant === "glass-dark" ? "bg-foreground" : "bg-muted/30"}`}>
+                          <Badge variant={badgeVariant}>{badgeText}</Badge>
+                        </div>
+                        <div className="relative">
+                          <pre className="p-3 rounded-lg bg-foreground/5 border text-xs font-mono overflow-x-auto">
+                            <code>{badgeCode}</code>
+                          </pre>
+                          <div className="absolute top-2 right-2">
+                            <CopyButton text={badgeCode} label="Badge code" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
 
-              {/* Trend Colors */}
-              <div className="pb-4">
-                <h4 className="font-display uppercase tracking-wide text-sm mb-3">Trend Indicator Colors</h4>
-                <div className="flex gap-4">
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-background border">
-                    <div className="w-8 h-8 rounded-full" style={{ backgroundColor: 'hsl(145 50% 45%)' }} />
-                    <div>
-                      <code className="text-sm font-mono">hsl(145 50% 45%)</code>
-                      <p className="text-xs text-muted-foreground">Uptrend (green)</p>
+                  {/* Card Builder */}
+                  <TabsContent value="card">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4 p-4 rounded-lg bg-background border">
+                        <h4 className="font-display uppercase tracking-wide text-sm">Controls</h4>
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Title</Label>
+                            <Input value={cardTitle} onChange={(e) => setCardTitle(e.target.value)} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Description</Label>
+                            <Input value={cardDescription} onChange={(e) => setCardDescription(e.target.value)} />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Content</Label>
+                            <Textarea value={cardContent} onChange={(e) => setCardContent(e.target.value)} rows={2} />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Shadow</Label>
+                              <Select value={cardShadow} onValueChange={setCardShadow}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="shadow-sm">shadow-sm</SelectItem>
+                                  <SelectItem value="shadow">shadow</SelectItem>
+                                  <SelectItem value="shadow-md">shadow-md</SelectItem>
+                                  <SelectItem value="shadow-lg">shadow-lg</SelectItem>
+                                  <SelectItem value="shadow-xl">shadow-xl</SelectItem>
+                                  <SelectItem value="shadow-2xl">shadow-2xl</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Radius</Label>
+                              <Select value={cardRadius} onValueChange={setCardRadius}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="rounded-lg">rounded-lg</SelectItem>
+                                  <SelectItem value="rounded-xl">rounded-xl</SelectItem>
+                                  <SelectItem value="rounded-2xl">rounded-2xl</SelectItem>
+                                  <SelectItem value="rounded-3xl">rounded-3xl</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch checked={cardHasButton} onCheckedChange={setCardHasButton} id="card-btn" />
+                            <Label htmlFor="card-btn" className="text-xs">Include Footer Button</Label>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="p-6 rounded-lg bg-muted/30 border min-h-[200px]">
+                          <Card className={`${cardShadow} ${cardRadius}`}>
+                            <CardHeader>
+                              <CardTitle>{cardTitle}</CardTitle>
+                              <CardDescription>{cardDescription}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <p>{cardContent}</p>
+                            </CardContent>
+                            {cardHasButton && (
+                              <CardFooter>
+                                <Button>Action</Button>
+                              </CardFooter>
+                            )}
+                          </Card>
+                        </div>
+                        <div className="relative">
+                          <pre className="p-3 rounded-lg bg-foreground/5 border text-xs font-mono overflow-x-auto max-h-32">
+                            <code>{cardCode}</code>
+                          </pre>
+                          <div className="absolute top-2 right-2">
+                            <CopyButton text={cardCode} label="Card code" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-background border">
-                    <div className="w-8 h-8 rounded-full" style={{ backgroundColor: 'hsl(0 60% 60%)' }} />
-                    <div>
-                      <code className="text-sm font-mono">hsl(0 60% 60%)</code>
-                      <p className="text-xs text-muted-foreground">Downtrend (red)</p>
+                  </TabsContent>
+                </Tabs>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Color Palette */}
+          {sectionCounts.colors > 0 && (
+            <AccordionItem value="colors" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<Palette className="h-5 w-5 text-gold" />, "Color Palette", "colors")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-3 pb-4">
+                  {filteredColors.map((color) => (
+                    <div key={color.name} className="flex items-center gap-4 p-3 rounded-lg bg-background border">
+                      <div className="flex gap-2">
+                        <button 
+                          className="w-12 h-12 rounded-lg border shadow-sm hover:ring-2 ring-primary transition-all cursor-pointer"
+                          style={{ backgroundColor: `hsl(${color.light})` }}
+                          title="Click to copy light HSL"
+                          onClick={() => copyToClipboard(color.light, `${color.name} light`)}
+                        />
+                        <button 
+                          className="w-12 h-12 rounded-lg border shadow-sm hover:ring-2 ring-primary transition-all cursor-pointer"
+                          style={{ backgroundColor: `hsl(${color.dark})` }}
+                          title="Click to copy dark HSL"
+                          onClick={() => copyToClipboard(color.dark, `${color.name} dark`)}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">
+                            {color.variable}
+                          </code>
+                          <CopyButton text={color.variable} label={color.name} />
+                          <CopyButton text={`hsl(var(${color.variable}))`} label={`${color.name} css`} />
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">{color.usage}</p>
+                      </div>
+                      <div className="text-right text-xs text-muted-foreground font-mono space-y-1">
+                        <div className="flex items-center justify-end gap-1">
+                          Light: {color.light}
+                          <CopyButton text={color.light} label={`${color.name} light hsl`} size="xs" />
+                        </div>
+                        <div className="flex items-center justify-end gap-1">
+                          Dark: {color.dark}
+                          <CopyButton text={color.dark} label={`${color.name} dark hsl`} size="xs" />
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+
+                {(!searchQuery || "trend".includes(searchQuery.toLowerCase()) || "indicator".includes(searchQuery.toLowerCase())) && (
+                  <>
+                    <Separator className="my-4" />
+                    <div className="pb-4">
+                      <h4 className="font-display uppercase tracking-wide text-sm mb-3">Trend Indicator Colors</h4>
+                      <div className="flex gap-4">
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-background border">
+                          <button 
+                            className="w-8 h-8 rounded-full hover:ring-2 ring-primary transition-all cursor-pointer" 
+                            style={{ backgroundColor: 'hsl(145 50% 45%)' }}
+                            onClick={() => copyToClipboard("145 50% 45%", "uptrend")}
+                          />
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <code className="text-sm font-mono">145 50% 45%</code>
+                              <CopyButton text="145 50% 45%" label="uptrend hsl" size="xs" />
+                            </div>
+                            <p className="text-xs text-muted-foreground">Uptrend (green)</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-background border">
+                          <button 
+                            className="w-8 h-8 rounded-full hover:ring-2 ring-primary transition-all cursor-pointer" 
+                            style={{ backgroundColor: 'hsl(0 60% 60%)' }}
+                            onClick={() => copyToClipboard("0 60% 60%", "downtrend")}
+                          />
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <code className="text-sm font-mono">0 60% 60%</code>
+                              <CopyButton text="0 60% 60%" label="downtrend hsl" size="xs" />
+                            </div>
+                            <p className="text-xs text-muted-foreground">Downtrend (red)</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Special Gradients */}
-          <AccordionItem value="gradients" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <Sparkles className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Special Gradients</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
-                {Object.entries(SPECIAL_GRADIENTS).map(([key, gradient]) => (
-                  <Card key={key} className="overflow-hidden">
-                    <div 
-                      className="h-24 flex items-center justify-center"
-                      style={{ background: gradient.background }}
-                    >
-                      <span 
-                        className="font-display uppercase tracking-wide text-sm"
-                        style={{ color: gradient.textColor }}
+          {sectionCounts.gradients > 0 && (
+            <AccordionItem value="gradients" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<Sparkles className="h-5 w-5 text-gold" />, "Special Gradients", "gradients")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                  {filteredGradients.map(([key, gradient]) => (
+                    <Card key={key} className="overflow-hidden">
+                      <button 
+                        className="h-24 w-full flex items-center justify-center hover:opacity-90 transition-opacity cursor-pointer"
+                        style={{ background: gradient.background }}
+                        onClick={() => copyToClipboard(gradient.background, gradient.name)}
                       >
-                        {gradient.name}
-                      </span>
-                    </div>
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <code className="text-xs font-mono">{key}</code>
-                        <CopyButton text={gradient.background} label={gradient.name} />
-                      </div>
-                      <div 
-                        className="mt-2 h-6 rounded border"
-                        style={{ 
-                          background: gradient.glassStroke,
-                          opacity: 0.5 
-                        }}
-                        title="Glass stroke overlay"
-                      />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+                        <span 
+                          className="font-display uppercase tracking-wide text-sm"
+                          style={{ color: gradient.textColor }}
+                        >
+                          {gradient.name}
+                        </span>
+                      </button>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <code className="text-xs font-mono">{key}</code>
+                          <CopyButton text={gradient.background} label={gradient.name} />
+                        </div>
+                        <div 
+                          className="mt-2 h-6 rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                          style={{ 
+                            background: gradient.glassStroke,
+                            opacity: 0.5 
+                          }}
+                          title="Click to copy glass stroke"
+                          onClick={() => copyToClipboard(gradient.glassStroke, `${gradient.name} glass`)}
+                        />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Typography */}
-          <AccordionItem value="typography" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <Type className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Typography</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4 pb-4">
-                {typography.map((type) => (
-                  <div key={type.class} className="p-4 rounded-lg bg-background border">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">{type.class}</code>
-                        <CopyButton text={type.class} label={type.font} />
+          {sectionCounts.typography > 0 && (
+            <AccordionItem value="typography" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<Type className="h-5 w-5 text-gold" />, "Typography", "typography")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 pb-4">
+                  {filteredTypography.map((type) => (
+                    <div key={type.class} className="p-4 rounded-lg bg-background border">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">{type.class}</code>
+                          <CopyButton text={type.class} label={type.font} />
+                        </div>
+                        <span className="text-xs text-muted-foreground">{type.weight}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">{type.weight}</span>
-                    </div>
-                    <div className={type.class === 'font-display' ? 'font-display uppercase tracking-wide' : type.class}>
-                      <span className="text-2xl">{type.font}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">{type.usage}</p>
-                    {type.class === 'font-display' && (
-                      <div className="mt-3 p-2 rounded bg-destructive/10 border border-destructive/20">
-                        <p className="text-xs text-destructive font-medium">
-                          ⚠️ NEVER use font-bold or font-semibold with Termina. Always use font-medium (500).
-                        </p>
+                      <div className={type.class === 'font-display' ? 'font-display uppercase tracking-wide' : type.class}>
+                        <span className="text-2xl">{type.font}</span>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      <p className="text-sm text-muted-foreground mt-2">{type.usage}</p>
+                      {type.class === 'font-display' && (
+                        <div className="mt-3 p-2 rounded bg-destructive/10 border border-destructive/20">
+                          <p className="text-xs text-destructive font-medium">
+                            ⚠️ NEVER use font-bold or font-semibold with Termina. Always use font-medium (500).
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
 
-                <Separator className="my-4" />
-
-                {/* Typography examples */}
-                <div className="space-y-3">
-                  <h4 className="font-display uppercase tracking-wide text-sm">Live Examples</h4>
-                  <div className="p-4 rounded-lg bg-background border space-y-4">
-                    <h1 className="font-display uppercase tracking-wide text-3xl">Display Headline</h1>
-                    <h2 className="font-display uppercase tracking-wide text-xl">Section Title</h2>
-                    <p className="font-sans">This is body text using Aeonik Pro. It's clean, modern, and highly readable for longer passages of content.</p>
-                    <p className="font-serif text-lg">Editorial accent with Laguna serif.</p>
-                    <p className="font-script text-2xl">Decorative script styling</p>
-                  </div>
+                  {!searchQuery && (
+                    <>
+                      <Separator className="my-4" />
+                      <div className="space-y-3">
+                        <h4 className="font-display uppercase tracking-wide text-sm">Live Examples</h4>
+                        <div className="p-4 rounded-lg bg-background border space-y-4">
+                          <h1 className="font-display uppercase tracking-wide text-3xl">Display Headline</h1>
+                          <h2 className="font-display uppercase tracking-wide text-xl">Section Title</h2>
+                          <p className="font-sans">This is body text using Aeonik Pro. It's clean, modern, and highly readable for longer passages of content.</p>
+                          <p className="font-serif text-lg">Editorial accent with Laguna serif.</p>
+                          <p className="font-script text-2xl">Decorative script styling</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Buttons */}
-          <AccordionItem value="buttons" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <MousePointer className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Buttons</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-6 pb-4">
-                {/* Variants */}
-                <div>
-                  <h4 className="font-display uppercase tracking-wide text-sm mb-3">Variants</h4>
-                  <div className="flex flex-wrap gap-3 p-4 rounded-lg bg-background border">
-                    <div className="space-y-2 text-center">
-                      <Button variant="default">Default</Button>
-                      <code className="block text-xs">variant="default"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Button variant="secondary">Secondary</Button>
-                      <code className="block text-xs">variant="secondary"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Button variant="outline">Outline</Button>
-                      <code className="block text-xs">variant="outline"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Button variant="ghost">Ghost</Button>
-                      <code className="block text-xs">variant="ghost"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Button variant="link">Link</Button>
-                      <code className="block text-xs">variant="link"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Button variant="destructive">Destructive</Button>
-                      <code className="block text-xs">variant="destructive"</code>
+          {sectionCounts.buttons > 0 && (
+            <AccordionItem value="buttons" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<MousePointer className="h-5 w-5 text-gold" />, "Buttons", "buttons")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-6 pb-4">
+                  <div>
+                    <h4 className="font-display uppercase tracking-wide text-sm mb-3">Variants</h4>
+                    <div className="flex flex-wrap gap-3 p-4 rounded-lg bg-background border">
+                      {[
+                        { variant: "default", label: "Default" },
+                        { variant: "secondary", label: "Secondary" },
+                        { variant: "outline", label: "Outline" },
+                        { variant: "ghost", label: "Ghost" },
+                        { variant: "link", label: "Link" },
+                        { variant: "destructive", label: "Destructive" },
+                      ].map(({ variant, label }) => (
+                        <div key={variant} className="space-y-2 text-center">
+                          <Button variant={variant as any}>{label}</Button>
+                          <div className="flex items-center justify-center gap-1">
+                            <code className="text-xs">variant="{variant}"</code>
+                            <CopyButton text={`variant="${variant}"`} label={`btn-${variant}`} size="xs" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
 
-                {/* Sizes */}
-                <div>
-                  <h4 className="font-display uppercase tracking-wide text-sm mb-3">Sizes</h4>
-                  <div className="flex flex-wrap items-end gap-3 p-4 rounded-lg bg-background border">
-                    <div className="space-y-2 text-center">
-                      <Button size="sm">Small</Button>
-                      <code className="block text-xs">size="sm"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Button size="default">Default</Button>
-                      <code className="block text-xs">size="default"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Button size="lg">Large</Button>
-                      <code className="block text-xs">size="lg"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Button size="icon"><Sparkles className="h-4 w-4" /></Button>
-                      <code className="block text-xs">size="icon"</code>
+                  <div>
+                    <h4 className="font-display uppercase tracking-wide text-sm mb-3">Sizes</h4>
+                    <div className="flex flex-wrap items-end gap-3 p-4 rounded-lg bg-background border">
+                      {[
+                        { size: "sm", label: "Small" },
+                        { size: "default", label: "Default" },
+                        { size: "lg", label: "Large" },
+                      ].map(({ size, label }) => (
+                        <div key={size} className="space-y-2 text-center">
+                          <Button size={size as any}>{label}</Button>
+                          <div className="flex items-center justify-center gap-1">
+                            <code className="text-xs">size="{size}"</code>
+                            <CopyButton text={`size="${size}"`} label={`size-${size}`} size="xs" />
+                          </div>
+                        </div>
+                      ))}
+                      <div className="space-y-2 text-center">
+                        <Button size="icon"><Sparkles className="h-4 w-4" /></Button>
+                        <div className="flex items-center justify-center gap-1">
+                          <code className="text-xs">size="icon"</code>
+                          <CopyButton text={`size="icon"`} label="size-icon" size="xs" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Badges */}
-          <AccordionItem value="badges" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <CircleDot className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Badges</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-6 pb-4">
-                {/* Badge Variants */}
-                <div>
-                  <h4 className="font-display uppercase tracking-wide text-sm mb-3">Variants</h4>
-                  <div className="flex flex-wrap gap-3 p-4 rounded-lg bg-background border">
-                    <div className="space-y-2 text-center">
-                      <Badge variant="default">Default</Badge>
-                      <code className="block text-xs">variant="default"</code>
+          {sectionCounts.badges > 0 && (
+            <AccordionItem value="badges" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<CircleDot className="h-5 w-5 text-gold" />, "Badges", "badges")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-6 pb-4">
+                  {!searchQuery && (
+                    <div>
+                      <h4 className="font-display uppercase tracking-wide text-sm mb-3">Variants</h4>
+                      <div className="flex flex-wrap gap-3 p-4 rounded-lg bg-background border">
+                        {[
+                          { variant: "default", label: "Default", dark: false },
+                          { variant: "secondary", label: "Secondary", dark: false },
+                          { variant: "outline", label: "Outline", dark: false },
+                          { variant: "destructive", label: "Destructive", dark: false },
+                          { variant: "glass", label: "Glass", dark: false },
+                          { variant: "glass-dark", label: "Glass Dark", dark: true },
+                        ].map(({ variant, label, dark }) => (
+                          <div key={variant} className={`space-y-2 text-center ${dark ? "p-2 bg-foreground rounded" : ""}`}>
+                            <Badge variant={variant as any}>{label}</Badge>
+                            <div className={`flex items-center justify-center gap-1 ${dark ? "text-background" : ""}`}>
+                              <code className="text-xs">variant="{variant}"</code>
+                              <CopyButton text={`variant="${variant}"`} label={`badge-${variant}`} size="xs" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="space-y-2 text-center">
-                      <Badge variant="secondary">Secondary</Badge>
-                      <code className="block text-xs">variant="secondary"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Badge variant="outline">Outline</Badge>
-                      <code className="block text-xs">variant="outline"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Badge variant="destructive">Destructive</Badge>
-                      <code className="block text-xs">variant="destructive"</code>
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <Badge variant="glass">Glass</Badge>
-                      <code className="block text-xs">variant="glass"</code>
-                    </div>
-                    <div className="space-y-2 text-center p-2 bg-foreground rounded">
-                      <Badge variant="glass-dark">Glass Dark</Badge>
-                      <code className="block text-xs text-background">variant="glass-dark"</code>
-                    </div>
-                  </div>
-                </div>
+                  )}
 
-                {/* Role Colors */}
-                <div>
-                  <h4 className="font-display uppercase tracking-wide text-sm mb-3">Role Colors</h4>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 p-4 rounded-lg bg-background border">
-                    {ROLE_COLORS.map((color) => {
-                      const classes = getRoleColorClasses(color.name);
-                      return (
-                        <div key={color.name} className="space-y-2 text-center">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${classes.bg} ${classes.text}`}>
-                            {color.name}
-                          </span>
-                          <code className="block text-xs">{color.name}</code>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {filteredRoleColors.length > 0 && (
+                    <div>
+                      <h4 className="font-display uppercase tracking-wide text-sm mb-3">Role Colors</h4>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 p-4 rounded-lg bg-background border">
+                        {filteredRoleColors.map((color) => {
+                          const classes = getRoleColorClasses(color.name);
+                          return (
+                            <div key={color.name} className="space-y-2 text-center">
+                              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${classes.bg} ${classes.text}`}>
+                                {color.name}
+                              </span>
+                              <div className="flex items-center justify-center gap-1">
+                                <code className="text-xs">{color.name}</code>
+                                <CopyButton text={color.name} label={`role-${color.name}`} size="xs" />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Border Radius */}
-          <AccordionItem value="radius" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <Square className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Border Radius</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 pb-4">
-                {borderRadius.map((radius) => (
-                  <div key={radius.class} className="text-center space-y-2">
-                    <div 
-                      className={`w-16 h-16 mx-auto bg-primary ${radius.class} flex items-center justify-center`}
-                    >
-                      <span className="text-primary-foreground text-xs">{radius.value}</span>
+          {sectionCounts.radius > 0 && (
+            <AccordionItem value="radius" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<Square className="h-5 w-5 text-gold" />, "Border Radius", "radius")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 pb-4">
+                  {filteredBorderRadius.map((radius) => (
+                    <div key={radius.class} className="text-center space-y-2">
+                      <div 
+                        className={`w-16 h-16 mx-auto bg-primary ${radius.class} flex items-center justify-center cursor-pointer hover:ring-2 ring-gold transition-all`}
+                        onClick={() => copyToClipboard(radius.class, radius.class)}
+                      >
+                        <span className="text-primary-foreground text-xs">{radius.value}</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-1">
+                        <code className="text-xs font-mono">{radius.class}</code>
+                        <CopyButton text={radius.class} label={radius.class} size="xs" />
+                      </div>
+                      <p className="text-xs text-muted-foreground">{radius.usage}</p>
                     </div>
-                    <code className="text-xs font-mono">{radius.class}</code>
-                    <p className="text-xs text-muted-foreground">{radius.usage}</p>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Animations */}
-          <AccordionItem value="animations" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <Sparkles className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Animations</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4 pb-4">
-                {animations.map((anim) => (
-                  <div key={anim.class} className="flex items-center gap-4 p-3 rounded-lg bg-background border">
-                    <div className={`w-12 h-12 rounded-lg bg-primary ${anim.class}`} />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">{anim.class}</code>
-                        <CopyButton text={anim.class} label={anim.class} />
+          {sectionCounts.animations > 0 && (
+            <AccordionItem value="animations" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<Sparkles className="h-5 w-5 text-gold" />, "Animations", "animations")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 pb-4">
+                  {filteredAnimations.map((anim) => (
+                    <div key={anim.class} className="flex items-center gap-4 p-3 rounded-lg bg-background border">
+                      <div className={`w-12 h-12 rounded-lg bg-primary ${anim.class}`} />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">{anim.class}</code>
+                          <CopyButton text={anim.class} label={anim.class} />
+                        </div>
+                        <p className="text-sm text-muted-foreground">{anim.description}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground">{anim.description}</p>
+                      <span className="text-xs text-muted-foreground">{anim.duration}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">{anim.duration}</span>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Effect Classes */}
-          <AccordionItem value="effects" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <Layers className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Effect Utilities</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid sm:grid-cols-2 gap-4 pb-4">
-                {effectClasses.map((effect) => (
-                  <div key={effect.class} className="p-4 rounded-lg bg-background border">
-                    <div className="flex items-center justify-between mb-2">
-                      <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">.{effect.class}</code>
-                      <CopyButton text={effect.class} label={effect.class} />
+          {sectionCounts.effects > 0 && (
+            <AccordionItem value="effects" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<Layers className="h-5 w-5 text-gold" />, "Effect Utilities", "effects")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid sm:grid-cols-2 gap-4 pb-4">
+                  {filteredEffects.map((effect) => (
+                    <div key={effect.class} className="p-4 rounded-lg bg-background border">
+                      <div className="flex items-center justify-between mb-2">
+                        <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">.{effect.class}</code>
+                        <CopyButton text={effect.class} label={effect.class} />
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">{effect.description}</p>
+                      
+                      <div className="p-4 rounded-lg bg-muted/50 flex items-center justify-center min-h-[80px]">
+                        {effect.class === 'hover-lift' && (
+                          <div className="w-20 h-20 bg-card rounded-lg shadow hover-lift cursor-pointer flex items-center justify-center text-xs">
+                            Hover me
+                          </div>
+                        )}
+                        {effect.class === 'card-glow' && (
+                          <div className="w-20 h-20 bg-card rounded-lg card-glow cursor-pointer flex items-center justify-center text-xs">
+                            Hover me
+                          </div>
+                        )}
+                        {effect.class === 'shimmer' && (
+                          <div className="w-full h-8 rounded shimmer" />
+                        )}
+                        {effect.class === 'gold-shimmer' && (
+                          <div className="px-4 py-2 rounded-full gold-shimmer text-white text-sm font-display uppercase">
+                            Premium
+                          </div>
+                        )}
+                        {effect.class === 'pulse-glow' && (
+                          <div className="w-12 h-12 rounded-full bg-gold pulse-glow" />
+                        )}
+                        {(effect.class === 'btn-hover-fill' || effect.class === 'link-underline' || effect.class === 'badge-shine') && (
+                          <span className="text-xs text-muted-foreground">See CSS in index.css</span>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">{effect.description}</p>
-                    
-                    {/* Live demo */}
-                    <div className="p-4 rounded-lg bg-muted/50 flex items-center justify-center min-h-[80px]">
-                      {effect.class === 'hover-lift' && (
-                        <div className="w-20 h-20 bg-card rounded-lg shadow hover-lift cursor-pointer flex items-center justify-center text-xs">
-                          Hover me
-                        </div>
-                      )}
-                      {effect.class === 'card-glow' && (
-                        <div className="w-20 h-20 bg-card rounded-lg card-glow cursor-pointer flex items-center justify-center text-xs">
-                          Hover me
-                        </div>
-                      )}
-                      {effect.class === 'shimmer' && (
-                        <div className="w-full h-8 rounded shimmer" />
-                      )}
-                      {effect.class === 'gold-shimmer' && (
-                        <div className="px-4 py-2 rounded-full gold-shimmer text-white text-sm font-display uppercase">
-                          Premium
-                        </div>
-                      )}
-                      {effect.class === 'pulse-glow' && (
-                        <div className="w-12 h-12 rounded-full bg-gold pulse-glow" />
-                      )}
-                      {(effect.class === 'btn-hover-fill' || effect.class === 'link-underline' || effect.class === 'badge-shine') && (
-                        <span className="text-xs text-muted-foreground">See CSS in index.css</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Shadows */}
-          <AccordionItem value="shadows" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <Layers className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Shadows & Depth</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="flex flex-wrap gap-6 pb-4 p-4 rounded-lg bg-muted/30">
-                <div className="space-y-2 text-center">
-                  <div className="w-24 h-24 bg-card rounded-xl shadow-sm flex items-center justify-center">
-                    <span className="text-xs">sm</span>
-                  </div>
-                  <code className="text-xs">shadow-sm</code>
+          {sectionCounts.shadows > 0 && (
+            <AccordionItem value="shadows" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<Layers className="h-5 w-5 text-gold" />, "Shadows & Depth", "shadows")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="flex flex-wrap gap-6 pb-4 p-4 rounded-lg bg-muted/30">
+                  {filteredShadows.map((shadow) => (
+                    <div key={shadow.class} className="space-y-2 text-center">
+                      <div 
+                        className={`w-24 h-24 bg-card rounded-xl ${shadow.class} flex items-center justify-center cursor-pointer hover:ring-2 ring-gold transition-all`}
+                        onClick={() => copyToClipboard(shadow.class, shadow.class)}
+                      >
+                        <span className="text-xs">{shadow.class.replace("shadow-", "")}</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-1">
+                        <code className="text-xs">{shadow.class}</code>
+                        <CopyButton text={shadow.class} label={shadow.class} size="xs" />
+                      </div>
+                      <p className="text-xs text-muted-foreground">{shadow.usage}</p>
+                    </div>
+                  ))}
                 </div>
-                <div className="space-y-2 text-center">
-                  <div className="w-24 h-24 bg-card rounded-xl shadow flex items-center justify-center">
-                    <span className="text-xs">default</span>
-                  </div>
-                  <code className="text-xs">shadow</code>
-                </div>
-                <div className="space-y-2 text-center">
-                  <div className="w-24 h-24 bg-card rounded-xl shadow-md flex items-center justify-center">
-                    <span className="text-xs">md</span>
-                  </div>
-                  <code className="text-xs">shadow-md</code>
-                </div>
-                <div className="space-y-2 text-center">
-                  <div className="w-24 h-24 bg-card rounded-xl shadow-lg flex items-center justify-center">
-                    <span className="text-xs">lg</span>
-                  </div>
-                  <code className="text-xs">shadow-lg</code>
-                </div>
-                <div className="space-y-2 text-center">
-                  <div className="w-24 h-24 bg-card rounded-xl shadow-xl flex items-center justify-center">
-                    <span className="text-xs">xl</span>
-                  </div>
-                  <code className="text-xs">shadow-xl</code>
-                </div>
-                <div className="space-y-2 text-center">
-                  <div className="w-24 h-24 bg-card rounded-2xl shadow-2xl flex items-center justify-center">
-                    <span className="text-xs">2xl</span>
-                  </div>
-                  <code className="text-xs">shadow-2xl</code>
-                  <p className="text-xs text-muted-foreground">Premium</p>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Scrollbar Utilities */}
-          <AccordionItem value="scrollbar" className="border rounded-xl px-4 bg-card">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-3">
-                <Layers className="h-5 w-5 text-gold" />
-                <span className="font-display uppercase tracking-wide">Scrollbar Utilities</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid sm:grid-cols-3 gap-4 pb-4">
-                <div className="p-4 rounded-lg bg-background border">
-                  <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">.scrollbar-minimal</code>
-                  <p className="text-sm text-muted-foreground mt-2">4px thin scrollbar, subtle styling</p>
-                  <div className="mt-3 h-24 overflow-y-auto scrollbar-minimal border rounded p-2">
-                    <div className="h-48 bg-muted/30 rounded" />
-                  </div>
+          {sectionCounts.scrollbar > 0 && (
+            <AccordionItem value="scrollbar" className="border rounded-xl px-4 bg-card">
+              <AccordionTrigger className="hover:no-underline">
+                {renderSectionHeader(<Layers className="h-5 w-5 text-gold" />, "Scrollbar Utilities", "scrollbar")}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid sm:grid-cols-3 gap-4 pb-4">
+                  {filteredScrollbars.map((scrollbar) => (
+                    <div key={scrollbar.class} className="p-4 rounded-lg bg-background border">
+                      <div className="flex items-center gap-2">
+                        <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">.{scrollbar.class}</code>
+                        <CopyButton text={scrollbar.class} label={scrollbar.class} />
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">{scrollbar.description}</p>
+                      <div className={`mt-3 h-24 overflow-y-auto ${scrollbar.class} border rounded p-2`}>
+                        <div className="h-48 bg-muted/30 rounded" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="p-4 rounded-lg bg-background border">
-                  <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">.scrollbar-thin</code>
-                  <p className="text-sm text-muted-foreground mt-2">6px rounded scrollbar</p>
-                  <div className="mt-3 h-24 overflow-y-auto scrollbar-thin border rounded p-2">
-                    <div className="h-48 bg-muted/30 rounded" />
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg bg-background border">
-                  <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">.scrollbar-hide</code>
-                  <p className="text-sm text-muted-foreground mt-2">Hidden scrollbar (still scrollable)</p>
-                  <div className="mt-3 h-24 overflow-y-auto scrollbar-hide border rounded p-2">
-                    <div className="h-48 bg-muted/30 rounded" />
-                  </div>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+              </AccordionContent>
+            </AccordionItem>
+          )}
         </Accordion>
       </div>
     </DashboardLayout>
