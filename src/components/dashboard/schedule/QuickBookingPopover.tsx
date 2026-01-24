@@ -438,7 +438,7 @@ export function QuickBookingPopover({
           {/* Header */}
           <div className="bg-card border-b border-border">
             <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 {step !== 'service' ? (
                   <Button
                     variant="ghost"
@@ -453,6 +453,14 @@ export function QuickBookingPopover({
                     <CalendarPlus className="h-4 w-4 text-muted-foreground" />
                   </div>
                 )}
+                <div>
+                  <h2 className="font-semibold text-sm">New Booking</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {format(date, 'EEE, MMM d')} at {formatTime12h(time)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
                 {canGoForward && (
                   <Button
                     variant="ghost"
@@ -463,21 +471,15 @@ export function QuickBookingPopover({
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 )}
-                <div className="ml-1">
-                  <h2 className="font-semibold text-sm">New Booking</h2>
-                  <p className="text-xs text-muted-foreground">
-                    {format(date, 'EEE, MMM d')} at {formatTime12h(time)}
-                  </p>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full hover:bg-muted"
+                  onClick={handleClose}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full hover:bg-muted"
-                onClick={handleClose}
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
 
             {/* Progress bar - clickable segments for visited steps */}
