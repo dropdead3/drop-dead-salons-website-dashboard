@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,8 @@ import {
 import { Settings, Target, MapPin, Loader2 } from 'lucide-react';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
+import { useSalesByLocation } from '@/hooks/useSalesData';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 
 const WEEKS_PER_MONTH = 4.333;
 
@@ -25,6 +28,23 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
   const [open, setOpen] = useState(false);
   const { goals, updateGoals, isUpdating } = useSalesGoals();
   const { data: locations } = useLocations();
+
+  // Get current month's revenue by location
+  const today = new Date();
+  const monthStart = format(startOfMonth(today), 'yyyy-MM-dd');
+  const monthEnd = format(endOfMonth(today), 'yyyy-MM-dd');
+  const { data: locationRevenue } = useSalesByLocation(monthStart, monthEnd);
+
+  // Map location revenue for easy lookup
+  const revenueByLocationId = useMemo(() => {
+    const map: Record<string, number> = {};
+    locationRevenue?.forEach(loc => {
+      if (loc.location_id) {
+        map[loc.location_id] = loc.totalRevenue || 0;
+      }
+    });
+    return map;
+  }, [locationRevenue]);
 
   const [locationTargets, setLocationTargets] = useState<Record<string, { monthly: number; weekly: number }>>(
     goals?.locationTargets || {}
@@ -56,6 +76,15 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
 
   const calculatedWeekly = Math.round(calculatedMonthly / WEEKS_PER_MONTH);
 
+  // Calculate overall current revenue
+  const totalCurrentRevenue = locations?.reduce((sum, loc) => {
+    return sum + (revenueByLocationId[loc.id] || 0);
+  }, 0) || 0;
+
+  const overallProgress = calculatedMonthly > 0 
+    ? Math.min(100, Math.round((totalCurrentRevenue / calculatedMonthly) * 100))
+    : 0;
+
   const handleSave = () => {
     updateGoals({
       monthlyTarget: calculatedMonthly,
@@ -63,6 +92,13 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
       locationTargets,
     });
     setOpen(false);
+  };
+
+  const getProgressColor = (percent: number) => {
+    if (percent >= 100) return 'text-green-600';
+    if (percent >= 75) return 'text-primary';
+    if (percent >= 50) return 'text-yellow-600';
+    return 'text-muted-foreground';
   };
 
   return (
@@ -75,7 +111,7 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">
             <Settings className="w-5 h-5" />
@@ -95,34 +131,60 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                 Location Goals
               </h3>
               <div className="space-y-3">
-                {locations.map((location) => (
-                  <div key={location.id} className="space-y-2 p-3 bg-muted/30 rounded-lg border">
-                    <p className="text-sm font-medium">{location.name}</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Monthly - Editable */}
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Monthly</Label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
-                          <Input
-                            type="number"
-                            value={locationTargets[location.id]?.monthly || ''}
-                            onChange={(e) => updateLocationTarget(location.id, Number(e.target.value))}
-                            placeholder="0"
-                            className="pl-5 h-8 text-sm"
-                          />
+                {locations.map((location) => {
+                  const currentRevenue = revenueByLocationId[location.id] || 0;
+                  const monthlyGoal = locationTargets[location.id]?.monthly || 0;
+                  const progressPercent = monthlyGoal > 0 
+                    ? Math.min(100, Math.round((currentRevenue / monthlyGoal) * 100))
+                    : 0;
+
+                  return (
+                    <div key={location.id} className="space-y-2 p-3 bg-muted/30 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{location.name}</p>
+                        {monthlyGoal > 0 && (
+                          <span className={`text-xs font-medium ${getProgressColor(progressPercent)}`}>
+                            {progressPercent}%
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Progress bar */}
+                      {monthlyGoal > 0 && (
+                        <div className="space-y-1">
+                          <Progress value={progressPercent} className="h-1.5" />
+                          <p className="text-xs text-muted-foreground">
+                            ${currentRevenue.toLocaleString()} of ${monthlyGoal.toLocaleString()} this month
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        {/* Monthly - Editable */}
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Monthly Goal</Label>
+                          <div className="relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+                            <Input
+                              type="number"
+                              value={locationTargets[location.id]?.monthly || ''}
+                              onChange={(e) => updateLocationTarget(location.id, Number(e.target.value))}
+                              placeholder="0"
+                              className="pl-5 h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+                        {/* Weekly - Read-Only (Auto-Calculated) */}
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Weekly Goal</Label>
+                          <p className="h-8 flex items-center text-sm text-muted-foreground">
+                            ${Math.round((locationTargets[location.id]?.monthly || 0) / WEEKS_PER_MONTH).toLocaleString()}
+                          </p>
                         </div>
                       </div>
-                      {/* Weekly - Read-Only (Auto-Calculated) */}
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Weekly</Label>
-                        <p className="h-8 flex items-center text-sm text-muted-foreground">
-                          ${Math.round((locationTargets[location.id]?.monthly || 0) / WEEKS_PER_MONTH).toLocaleString()}
-                        </p>
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : (
@@ -133,12 +195,29 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
 
           {/* Overall Targets - Calculated (Read-Only) */}
           <div className="space-y-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
-            <h3 className="text-sm font-medium flex items-center gap-2">
-              <Target className="w-4 h-4 text-primary" />
-              Overall Targets
-              <span className="text-xs text-muted-foreground font-normal">(calculated)</span>
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <Target className="w-4 h-4 text-primary" />
+                Overall Targets
+                <span className="text-xs text-muted-foreground font-normal">(calculated)</span>
+              </h3>
+              {calculatedMonthly > 0 && (
+                <span className={`text-xs font-medium ${getProgressColor(overallProgress)}`}>
+                  {overallProgress}%
+                </span>
+              )}
+            </div>
+            
+            {calculatedMonthly > 0 && (
+              <div className="space-y-1">
+                <Progress value={overallProgress} className="h-2" />
+                <p className="text-xs text-muted-foreground">
+                  ${totalCurrentRevenue.toLocaleString()} of ${calculatedMonthly.toLocaleString()} this month
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4 pt-1">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Monthly Goal</Label>
                 <p className="text-xl font-semibold">
