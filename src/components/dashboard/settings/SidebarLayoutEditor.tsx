@@ -17,6 +17,8 @@ import {
   DragEndEvent,
   DragStartEvent,
   DragOverlay,
+  DragOverEvent,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -125,15 +127,17 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/admin/settings': { label: 'Settings', icon: Settings },
 };
 
-// Sortable Link Component
+// Sortable Link Component with cross-section drag support
 function SortableLink({ 
   href, 
   isHidden,
   onToggleVisibility,
+  sectionId,
 }: { 
   href: string;
   isHidden: boolean;
   onToggleVisibility: () => void;
+  sectionId: string;
 }) {
   const {
     attributes,
@@ -142,7 +146,10 @@ function SortableLink({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: href });
+  } = useSortable({ 
+    id: href,
+    data: { type: 'link', sectionId, href }
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -199,6 +206,34 @@ function SortableLink({
   );
 }
 
+// Droppable Section Container for cross-section drops
+function DroppableSection({ 
+  sectionId, 
+  children,
+  isOver,
+}: { 
+  sectionId: string; 
+  children: React.ReactNode;
+  isOver: boolean;
+}) {
+  const { setNodeRef } = useDroppable({
+    id: `droppable-${sectionId}`,
+    data: { type: 'section', sectionId }
+  });
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      className={cn(
+        "space-y-2 min-h-[40px] transition-colors rounded-md p-1 -m-1",
+        isOver && "bg-primary/10 ring-2 ring-primary/30"
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 // Static Link Display for DragOverlay
 function LinkOverlay({ href }: { href: string }) {
   const config = LINK_CONFIG[href];
@@ -215,14 +250,13 @@ function LinkOverlay({ href }: { href: string }) {
   );
 }
 
-// Sortable Section Component
-function SortableSection({
+// Section Component (non-sortable for links - links are sorted at parent level)
+function SectionContainer({
   sectionId,
   sectionName,
   links,
   isExpanded,
   onToggle,
-  onLinksReorder,
   isHidden,
   hiddenLinks,
   onToggleSectionVisibility,
@@ -231,13 +265,17 @@ function SortableSection({
   isCustom,
   onRename,
   onDelete,
+  isDropTarget,
+  sectionDragHandleProps,
+  sectionDragRef,
+  sectionDragStyle,
+  isDraggingSection,
 }: {
   sectionId: string;
   sectionName: string;
   links: string[];
   isExpanded: boolean;
   onToggle: () => void;
-  onLinksReorder: (sectionId: string, links: string[]) => void;
   isHidden: boolean;
   hiddenLinks: string[];
   onToggleSectionVisibility: () => void;
@@ -246,50 +284,19 @@ function SortableSection({
   isCustom: boolean;
   onRename?: (newName: string) => void;
   onDelete?: () => void;
+  isDropTarget: boolean;
+  sectionDragHandleProps: Record<string, unknown>;
+  sectionDragRef: (node: HTMLElement | null) => void;
+  sectionDragStyle: React.CSSProperties;
+  isDraggingSection: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(sectionName);
-  const [activeLink, setActiveLink] = useState<string | null>(null);
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: sectionId });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleLinkDragStart = (event: DragStartEvent) => {
-    setActiveLink(event.active.id as string);
-  };
-
-  const handleLinkDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveLink(null);
-    
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = links.indexOf(active.id as string);
-    const newIndex = links.indexOf(over.id as string);
-    
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newLinks = arrayMove(links, oldIndex, newIndex);
-      onLinksReorder(sectionId, newLinks);
-    }
-  };
+  
+  const { setNodeRef: setDroppableRef } = useDroppable({
+    id: `droppable-${sectionId}`,
+    data: { type: 'section', sectionId }
+  });
 
   const handleSaveRename = () => {
     if (editName.trim() && onRename) {
@@ -309,11 +316,11 @@ function SortableSection({
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
+      ref={sectionDragRef}
+      style={sectionDragStyle}
       className={cn(
         "border border-border rounded-lg overflow-hidden",
-        isDragging && "opacity-50 ring-2 ring-primary",
+        isDraggingSection && "opacity-50 ring-2 ring-primary",
         isHidden && "opacity-60",
         isCustom && "border-primary/30"
       )}
@@ -327,8 +334,7 @@ function SortableSection({
           )}>
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <div
-                {...attributes}
-                {...listeners}
+                {...sectionDragHandleProps}
                 className="cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-muted rounded"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -431,7 +437,13 @@ function SortableSection({
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="p-3 bg-muted/30 border-t border-border space-y-2">
+          <div 
+            ref={setDroppableRef}
+            className={cn(
+              "p-3 bg-muted/30 border-t border-border space-y-2 min-h-[60px] transition-colors",
+              isDropTarget && "bg-primary/10 ring-2 ring-inset ring-primary/30"
+            )}
+          >
             {/* Bulk toggle buttons */}
             {links.length > 0 && (
               <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
@@ -464,31 +476,52 @@ function SortableSection({
                 No links in this section. Drag links here from other sections.
               </p>
             ) : (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleLinkDragStart}
-                onDragEnd={handleLinkDragEnd}
-              >
-                <SortableContext items={links} strategy={verticalListSortingStrategy}>
-                  {links.map((href) => (
-                    <SortableLink 
-                      key={href} 
-                      href={href}
-                      isHidden={hiddenLinks.includes(href)}
-                      onToggleVisibility={() => onToggleLinkVisibility(href)}
-                    />
-                  ))}
-                </SortableContext>
-                <DragOverlay>
-                  {activeLink ? <LinkOverlay href={activeLink} /> : null}
-                </DragOverlay>
-              </DndContext>
+              <SortableContext items={links} strategy={verticalListSortingStrategy}>
+                {links.map((href) => (
+                  <SortableLink 
+                    key={href} 
+                    href={href}
+                    sectionId={sectionId}
+                    isHidden={hiddenLinks.includes(href)}
+                    onToggleVisibility={() => onToggleLinkVisibility(href)}
+                  />
+                ))}
+              </SortableContext>
             )}
           </div>
         </CollapsibleContent>
       </Collapsible>
     </div>
+  );
+}
+
+// Wrapper to make section sortable
+function SortableSection(props: Omit<Parameters<typeof SectionContainer>[0], 'sectionDragHandleProps' | 'sectionDragRef' | 'sectionDragStyle' | 'isDraggingSection'>) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id: props.sectionId,
+    data: { type: 'section-item', sectionId: props.sectionId }
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <SectionContainer
+      {...props}
+      sectionDragHandleProps={{ ...attributes, ...listeners }}
+      sectionDragRef={setNodeRef}
+      sectionDragStyle={style}
+      isDraggingSection={isDragging}
+    />
   );
 }
 
@@ -511,6 +544,10 @@ export function SidebarLayoutEditor() {
   
   // Role selection - "global" means editing the base visibility, otherwise role-specific
   const [selectedRole, setSelectedRole] = useState<string>('global');
+  
+  // Track active drag item and drop target for cross-section drag
+  const [activeDragItem, setActiveDragItem] = useState<{ id: string; type: 'link' | 'section'; sectionId?: string } | null>(null);
+  const [dropTargetSection, setDropTargetSection] = useState<string | null>(null);
 
   // Initialize local state when layout loads
   useMemo(() => {
@@ -554,14 +591,122 @@ export function SidebarLayoutEditor() {
     return localCustomSections[sectionId]?.name || sectionId;
   };
 
-  const handleSectionDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
+  // Unified drag start handler
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const data = active.data.current as { type: string; sectionId?: string } | undefined;
+    
+    if (data?.type === 'link') {
+      setActiveDragItem({ id: active.id as string, type: 'link', sectionId: data.sectionId });
+    } else if (data?.type === 'section-item') {
+      setActiveDragItem({ id: active.id as string, type: 'section', sectionId: data.sectionId });
+    }
+  };
+  
+  // Track drag over for visual feedback
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    if (!over) {
+      setDropTargetSection(null);
+      return;
+    }
+    
+    const overData = over.data.current as { type: string; sectionId?: string } | undefined;
+    
+    // If dragging over a section droppable zone
+    if (over.id.toString().startsWith('droppable-')) {
+      setDropTargetSection(over.id.toString().replace('droppable-', ''));
+    } else if (overData?.type === 'link') {
+      // Dragging over another link - get its section
+      setDropTargetSection(overData.sectionId || null);
+    } else {
+      setDropTargetSection(null);
+    }
+  };
 
-    const oldIndex = localSectionOrder.indexOf(active.id as string);
-    const newIndex = localSectionOrder.indexOf(over.id as string);
-    setLocalSectionOrder(arrayMove(localSectionOrder, oldIndex, newIndex));
-    setHasChanges(true);
+  // Unified drag end handler
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    setActiveDragItem(null);
+    setDropTargetSection(null);
+    
+    if (!over) return;
+    
+    const activeData = active.data.current as { type: string; sectionId?: string } | undefined;
+    const overData = over.data.current as { type: string; sectionId?: string } | undefined;
+    
+    // Handle section reordering
+    if (activeData?.type === 'section-item') {
+      if (active.id === over.id) return;
+      const oldIndex = localSectionOrder.indexOf(active.id as string);
+      const newIndex = localSectionOrder.indexOf(over.id as string);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setLocalSectionOrder(arrayMove(localSectionOrder, oldIndex, newIndex));
+        setHasChanges(true);
+      }
+      return;
+    }
+    
+    // Handle link reordering/moving
+    if (activeData?.type === 'link') {
+      const activeHref = active.id as string;
+      const sourceSectionId = activeData.sectionId!;
+      
+      let targetSectionId: string | null = null;
+      let targetIndex = -1;
+      
+      // Determine target section
+      if (over.id.toString().startsWith('droppable-')) {
+        targetSectionId = over.id.toString().replace('droppable-', '');
+        targetIndex = (localLinkOrder[targetSectionId] || []).length; // Add to end
+      } else if (overData?.type === 'link') {
+        targetSectionId = overData.sectionId || null;
+        if (targetSectionId) {
+          targetIndex = (localLinkOrder[targetSectionId] || []).indexOf(over.id as string);
+        }
+      }
+      
+      if (!targetSectionId) return;
+      
+      // Same section - just reorder
+      if (sourceSectionId === targetSectionId) {
+        const links = localLinkOrder[sourceSectionId] || [];
+        const oldIndex = links.indexOf(activeHref);
+        const newIndex = targetIndex !== -1 ? targetIndex : links.length;
+        
+        if (oldIndex !== -1 && oldIndex !== newIndex) {
+          setLocalLinkOrder(prev => ({
+            ...prev,
+            [sourceSectionId]: arrayMove(links, oldIndex, newIndex),
+          }));
+          setHasChanges(true);
+        }
+      } else {
+        // Cross-section move
+        setLocalLinkOrder(prev => {
+          const sourceLinks = [...(prev[sourceSectionId] || [])];
+          const targetLinks = [...(prev[targetSectionId!] || [])];
+          
+          // Remove from source
+          const sourceIndex = sourceLinks.indexOf(activeHref);
+          if (sourceIndex !== -1) {
+            sourceLinks.splice(sourceIndex, 1);
+          }
+          
+          // Add to target at the correct position
+          const insertIndex = targetIndex !== -1 ? targetIndex : targetLinks.length;
+          targetLinks.splice(insertIndex, 0, activeHref);
+          
+          return {
+            ...prev,
+            [sourceSectionId]: sourceLinks,
+            [targetSectionId!]: targetLinks,
+          };
+        });
+        setHasChanges(true);
+      }
+    }
   };
 
   const handleLinksReorder = (sectionId: string, newLinks: string[]) => {
@@ -757,6 +902,15 @@ export function SidebarLayoutEditor() {
     setHasChanges(true);
   };
 
+  const handleResetRoleToGlobal = (roleName: string) => {
+    setLocalRoleVisibility((prev) => {
+      const next = { ...prev };
+      delete next[roleName];
+      return next;
+    });
+    setHasChanges(true);
+  };
+
   const handleSave = () => {
     updateLayout.mutate({
       sectionOrder: localSectionOrder,
@@ -883,10 +1037,23 @@ export function SidebarLayoutEditor() {
             </TabsList>
           </Tabs>
           {selectedRole !== 'global' && (
-            <p className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">
-              Editing visibility for <strong>{roles.find(r => r.name === selectedRole)?.display_name || selectedRole}</strong>. 
-              Items hidden here will be hidden for users with this role.
-            </p>
+            <div className="flex items-center justify-between gap-2 bg-muted/50 rounded px-2 py-1">
+              <p className="text-xs text-muted-foreground">
+                Editing visibility for <strong>{roles.find(r => r.name === selectedRole)?.display_name || selectedRole}</strong>. 
+                Items hidden here will be hidden for users with this role.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 text-xs gap-1 shrink-0"
+                onClick={() => handleResetRoleToGlobal(selectedRole)}
+                disabled={!localRoleVisibility[selectedRole]?.hiddenSections?.length && 
+                  !Object.values(localRoleVisibility[selectedRole]?.hiddenLinks || {}).some(l => l.length > 0)}
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset to Global
+              </Button>
+            </div>
           )}
         </div>
 
@@ -950,7 +1117,9 @@ export function SidebarLayoutEditor() {
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
-              onDragEnd={handleSectionDragEnd}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
             >
               <SortableContext items={localSectionOrder} strategy={verticalListSortingStrategy}>
                 {localSectionOrder.map((sectionId) => (
@@ -961,13 +1130,13 @@ export function SidebarLayoutEditor() {
                     links={localLinkOrder[sectionId] || []}
                     isExpanded={expandedSections.has(sectionId)}
                     onToggle={() => handleToggleSection(sectionId)}
-                    onLinksReorder={handleLinksReorder}
                     isHidden={currentHiddenSections.includes(sectionId)}
                     hiddenLinks={currentHiddenLinks[sectionId] || []}
                     onToggleSectionVisibility={() => handleToggleSectionVisibility(sectionId)}
                     onToggleLinkVisibility={(href) => handleToggleLinkVisibility(sectionId, href)}
                     onBulkToggleLinks={(showAll) => handleBulkToggleLinks(sectionId, showAll)}
                     isCustom={!isBuiltInSection(sectionId)}
+                    isDropTarget={dropTargetSection === sectionId && activeDragItem?.sectionId !== sectionId}
                     onRename={!isBuiltInSection(sectionId) && selectedRole === 'global' 
                       ? (name) => handleRenameSection(sectionId, name) 
                       : undefined}
@@ -977,6 +1146,9 @@ export function SidebarLayoutEditor() {
                   />
                 ))}
               </SortableContext>
+              <DragOverlay>
+                {activeDragItem?.type === 'link' ? <LinkOverlay href={activeDragItem.id} /> : null}
+              </DragOverlay>
             </DndContext>
           </div>
 
