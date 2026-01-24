@@ -17,6 +17,7 @@ import { useTheme } from "next-themes";
 import { SPECIAL_GRADIENTS } from "@/utils/categoryColors";
 import { getRoleColorClasses, ROLE_COLORS } from "@/components/dashboard/RoleColorPicker";
 import { ThemeEditor } from "@/components/dashboard/ThemeEditor";
+import { TypographyEditor } from "@/components/dashboard/TypographyEditor";
 
 // CopyButton component defined OUTSIDE the DesignSystem component
 interface CopyButtonProps {
@@ -52,6 +53,7 @@ const DesignSystem = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [openSections, setOpenSections] = useState<string[]>(["playground", "colors", "gradients", "typography"]);
   const [isThemeEditMode, setIsThemeEditMode] = useState(false);
+  const [isTypographyEditMode, setIsTypographyEditMode] = useState(false);
 
   // Playground state
   const [buttonVariant, setButtonVariant] = useState<"default" | "secondary" | "outline" | "ghost" | "link" | "destructive">("default");
@@ -294,11 +296,17 @@ const DesignSystem = () => {
           </Card>
         )}
 
-        {/* Theme Editor */}
-        <ThemeEditor 
-          isEditMode={isThemeEditMode} 
-          onToggleEditMode={() => setIsThemeEditMode(!isThemeEditMode)} 
-        />
+        {/* Theme Editors */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ThemeEditor 
+            isEditMode={isThemeEditMode} 
+            onToggleEditMode={() => setIsThemeEditMode(!isThemeEditMode)} 
+          />
+          <TypographyEditor
+            isEditMode={isTypographyEditMode}
+            onToggleEditMode={() => setIsTypographyEditMode(!isTypographyEditMode)}
+          />
+        </div>
 
         <Accordion 
           type="multiple" 

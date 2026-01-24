@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * ThemeInitializer component
- * Loads and applies custom theme overrides from user_preferences on app load.
+ * Loads and applies custom theme (colors + typography) overrides from user_preferences on app load.
  * Should be placed inside AuthProvider to have access to the authenticated user.
  */
 export function ThemeInitializer() {
@@ -15,7 +15,7 @@ export function ThemeInitializer() {
         
         const { data, error } = await supabase
           .from('user_preferences')
-          .select('custom_theme')
+          .select('custom_theme, custom_typography')
           .eq('user_id', user.id)
           .maybeSingle();
         
@@ -24,10 +24,20 @@ export function ThemeInitializer() {
           return;
         }
         
+        // Apply color theme overrides
         if (data?.custom_theme && typeof data.custom_theme === 'object') {
           const theme = data.custom_theme as Record<string, string>;
-          // Apply each CSS variable override
           Object.entries(theme).forEach(([key, value]) => {
+            if (value && typeof value === 'string') {
+              document.documentElement.style.setProperty(`--${key}`, value);
+            }
+          });
+        }
+        
+        // Apply typography overrides
+        if (data?.custom_typography && typeof data.custom_typography === 'object') {
+          const typography = data.custom_typography as Record<string, string>;
+          Object.entries(typography).forEach(([key, value]) => {
             if (value && typeof value === 'string') {
               document.documentElement.style.setProperty(`--${key}`, value);
             }
@@ -46,7 +56,6 @@ export function ThemeInitializer() {
         loadCustomTheme();
       } else if (event === 'SIGNED_OUT') {
         // Clear custom CSS variables on sign out
-        // Get all custom CSS properties and remove them
         const style = document.documentElement.style;
         const propsToRemove: string[] = [];
         for (let i = 0; i < style.length; i++) {
