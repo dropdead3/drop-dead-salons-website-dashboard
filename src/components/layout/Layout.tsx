@@ -20,13 +20,25 @@ export function Layout({ children }: LayoutProps) {
       }
     };
 
-    updateFooterHeight();
+    // Initial measurement after a brief delay to ensure content renders
+    const initialTimeout = setTimeout(updateFooterHeight, 100);
+    
+    // Use ResizeObserver for accurate dynamic measurements
+    const resizeObserver = new ResizeObserver(updateFooterHeight);
+    if (footerRef.current) {
+      resizeObserver.observe(footerRef.current);
+    }
+
     window.addEventListener("resize", updateFooterHeight);
     
     // Also update after fonts load
     document.fonts?.ready.then(updateFooterHeight);
 
-    return () => window.removeEventListener("resize", updateFooterHeight);
+    return () => {
+      clearTimeout(initialTimeout);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateFooterHeight);
+    };
   }, []);
 
   return (
