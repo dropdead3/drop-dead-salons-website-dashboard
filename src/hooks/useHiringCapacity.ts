@@ -12,6 +12,11 @@ export interface LocationCapacity {
   assistantsNeeded: number;
   targetAssistants: number;
   totalNeeded: number;
+  // Priority scoring
+  priorityScore: number;
+  priorityLevel: 'critical' | 'high' | 'medium' | 'low';
+  capacityPercentage: number;
+  weeklyAppointments: number;
 }
 
 export interface HiringCapacitySummary {
@@ -24,6 +29,30 @@ export interface HiringCapacitySummary {
   totalCurrentAssistants: number;
   totalTargetAssistants: number;
   isLoading: boolean;
+}
+
+// Helper to calculate priority score
+function calculatePriorityScore(
+  capacityPct: number, 
+  appointmentVolume: number, 
+  maxVolume: number
+): number {
+  // Understaffing severity (lower capacity = higher priority) - 40% weight
+  const understaffingWeight = Math.max(0, (100 - capacityPct)) * 0.4;
+  
+  // Volume weight (higher volume = higher priority) - 40% weight
+  const volumeWeight = maxVolume > 0 ? (appointmentVolume / maxVolume) * 40 : 0;
+  
+  // Combined score capped at 100
+  return Math.min(100, Math.round(understaffingWeight + volumeWeight));
+}
+
+// Helper to get priority level from score
+function getPriorityLevel(score: number): 'critical' | 'high' | 'medium' | 'low' {
+  if (score >= 80) return 'critical';
+  if (score >= 60) return 'high';
+  if (score >= 40) return 'medium';
+  return 'low';
 }
 
 export function useHiringCapacity(): HiringCapacitySummary {
@@ -91,6 +120,38 @@ export function useHiringCapacity(): HiringCapacitySummary {
     },
   });
 
+  // Fetch appointment counts for priority scoring (last 7 days)
+  const appointmentsQuery = useQuery({
+    queryKey: ['appointments-by-location-week'],
+    queryFn: async () => {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const { data, error } = await supabase
+        .from('phorest_appointments')
+        .select('location_id')
+        .gte('appointment_date', sevenDaysAgo.toISOString().split('T')[0]);
+
+      if (error) throw error;
+
+      // Count by location
+      const counts = new Map<string, number>();
+      data?.forEach(apt => {
+        if (apt.location_id) {
+          counts.set(apt.location_id, (counts.get(apt.location_id) || 0) + 1);
+        }
+      });
+
+      return counts;
+    },
+  });
+
+  // Get max appointment volume for priority calculation
+  const appointmentCounts = appointmentsQuery.data;
+  const maxVolume = appointmentCounts 
+    ? Math.max(...Array.from(appointmentCounts.values()), 1) 
+    : 1;
+
   // Combine data and calculate needs
   const locations: LocationCapacity[] = (locationsQuery.data || []).map(loc => {
     const counts = staffCountsQuery.data?.get(loc.id) || { stylists: 0, assistants: 0 };
@@ -113,6 +174,22 @@ export function useHiringCapacity(): HiringCapacitySummary {
     const targetAssistants = Math.ceil(stylistsForCalc * assistantRatio);
     const assistantsNeeded = Math.max(0, targetAssistants - currentAssistants);
 
+    // Calculate capacity percentage for priority
+    const totalTarget = (stylistCapacity || 0) + targetAssistants;
+    const currentTotal = currentStylists + currentAssistants;
+    const capacityPercentage = totalTarget > 0 
+      ? Math.round((currentTotal / totalTarget) * 100) 
+      : 100;
+
+    // Get weekly appointments for this location
+    const weeklyAppointments = appointmentCounts?.get(loc.id) || 0;
+
+    // Calculate priority score
+    const priorityScore = stylistCapacity !== null 
+      ? calculatePriorityScore(capacityPercentage, weeklyAppointments, maxVolume)
+      : 0;
+    const priorityLevel = getPriorityLevel(priorityScore);
+
     return {
       id: loc.id,
       name: loc.name,
@@ -124,8 +201,15 @@ export function useHiringCapacity(): HiringCapacitySummary {
       assistantsNeeded,
       targetAssistants,
       totalNeeded: stylistsNeeded + assistantsNeeded,
+      priorityScore,
+      priorityLevel,
+      capacityPercentage,
+      weeklyAppointments,
     };
   });
+
+  // Sort by priority score (highest first)
+  const sortedLocations = [...locations].sort((a, b) => b.priorityScore - a.priorityScore);
 
   // Calculate totals
   const totalStylistsNeeded = locations.reduce((sum, loc) => sum + loc.stylistsNeeded, 0);
@@ -136,7 +220,7 @@ export function useHiringCapacity(): HiringCapacitySummary {
   const totalTargetAssistants = locations.reduce((sum, loc) => sum + loc.targetAssistants, 0);
 
   return {
-    locations,
+    locations: sortedLocations,
     totalStylistsNeeded,
     totalAssistantsNeeded,
     totalHiresNeeded: totalStylistsNeeded + totalAssistantsNeeded,
@@ -144,6 +228,6 @@ export function useHiringCapacity(): HiringCapacitySummary {
     totalStylistCapacity,
     totalCurrentAssistants,
     totalTargetAssistants,
-    isLoading: locationsQuery.isLoading || staffCountsQuery.isLoading,
+    isLoading: locationsQuery.isLoading || staffCountsQuery.isLoading || appointmentsQuery.isLoading,
   };
 }

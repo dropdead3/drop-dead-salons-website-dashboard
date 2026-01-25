@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
+import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { 
   Calendar, 
   TrendingUp, 
@@ -179,8 +180,11 @@ export default function OperationalAnalytics() {
           </Card>
         </div>
 
-        {/* Hiring Capacity Card */}
-        <HiringCapacityCard className="mb-6" />
+        {/* Hiring Capacity and Staffing Trends */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-6">
+          <HiringCapacityCard />
+          <StaffingTrendChart />
+        </div>
 
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Appointment Volume Chart */}

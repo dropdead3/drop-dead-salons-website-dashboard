@@ -68,7 +68,9 @@ import { SidebarLayoutEditor } from '@/components/dashboard/settings/SidebarLayo
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
+import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hooks/useStaffingAlertSettings';
 import { cn } from '@/lib/utils';
+import { Slider } from '@/components/ui/slider';
 import {
   DndContext,
   closestCenter,
@@ -206,6 +208,149 @@ function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick 
       <CardContent>
         <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
         <CardDescription>{category.description}</CardDescription>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Notifications card component with staffing alert settings
+function NotificationsCard() {
+  const { data: staffingSettings, isLoading: isLoadingSettings } = useStaffingAlertSettings();
+  const updateStaffingSettings = useUpdateStaffingAlertSettings();
+  const [localThreshold, setLocalThreshold] = useState(70);
+  const [localEmailEnabled, setLocalEmailEnabled] = useState(true);
+  const [localInAppEnabled, setLocalInAppEnabled] = useState(true);
+
+  // Sync local state with fetched settings
+  useEffect(() => {
+    if (staffingSettings) {
+      setLocalThreshold(staffingSettings.percentage);
+      setLocalEmailEnabled(staffingSettings.email_enabled);
+      setLocalInAppEnabled(staffingSettings.in_app_enabled);
+    }
+  }, [staffingSettings]);
+
+  const handleSaveStaffingSettings = () => {
+    updateStaffingSettings.mutate({
+      percentage: localThreshold,
+      email_enabled: localEmailEnabled,
+      in_app_enabled: localInAppEnabled,
+    });
+  };
+
+  const hasStaffingChanges = staffingSettings && (
+    localThreshold !== staffingSettings.percentage ||
+    localEmailEnabled !== staffingSettings.email_enabled ||
+    localInAppEnabled !== staffingSettings.in_app_enabled
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Bell className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display text-lg">NOTIFICATIONS</CardTitle>
+        </div>
+        <CardDescription>Configure email reminders and notifications.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Staffing Alerts Section */}
+        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-sans font-medium text-sm">Staffing Capacity Alerts</p>
+              <p className="text-xs text-muted-foreground">Alert leadership when locations fall below threshold</p>
+            </div>
+          </div>
+          
+          {isLoadingSettings ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading settings...
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">Alert Threshold</Label>
+                  <span className="font-medium text-sm">{localThreshold}%</span>
+                </div>
+                <Slider 
+                  value={[localThreshold]} 
+                  onValueChange={([val]) => setLocalThreshold(val)}
+                  min={50} 
+                  max={95} 
+                  step={5}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Receive alerts when any location falls below this capacity percentage
+                </p>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-sans text-sm">Send email alerts</p>
+                  <p className="text-xs text-muted-foreground">Email admins when threshold is breached</p>
+                </div>
+                <Switch 
+                  checked={localEmailEnabled} 
+                  onCheckedChange={setLocalEmailEnabled} 
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-sans text-sm">In-app notifications</p>
+                  <p className="text-xs text-muted-foreground">Show alerts in notification center</p>
+                </div>
+                <Switch 
+                  checked={localInAppEnabled} 
+                  onCheckedChange={setLocalInAppEnabled} 
+                />
+              </div>
+              
+              {hasStaffingChanges && (
+                <Button 
+                  size="sm" 
+                  onClick={handleSaveStaffingSettings}
+                  disabled={updateStaffingSettings.isPending}
+                  className="w-full"
+                >
+                  {updateStaffingSettings.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Save Alert Settings
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Other notification settings */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-sans font-medium text-sm">Daily Check-in Reminders</p>
+            <p className="text-xs text-muted-foreground">Send reminder emails at 10 AM and 9 PM AZ time</p>
+          </div>
+          <Switch defaultChecked />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-sans font-medium text-sm">Weekly Wins Reminders</p>
+            <p className="text-xs text-muted-foreground">Remind stylists to submit weekly wins</p>
+          </div>
+          <Switch defaultChecked />
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-sans font-medium text-sm">Birthday Reminders</p>
+            <p className="text-xs text-muted-foreground">Email leadership team 3 days before</p>
+          </div>
+          <Switch defaultChecked />
+        </div>
       </CardContent>
     </Card>
   );
@@ -936,38 +1081,7 @@ export default function Settings() {
               </Card>
 
               {/* Notifications */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Bell className="w-5 h-5 text-primary" />
-                    <CardTitle className="font-display text-lg">NOTIFICATIONS</CardTitle>
-                  </div>
-                  <CardDescription>Configure email reminders and notifications.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-sans font-medium text-sm">Daily Check-in Reminders</p>
-                      <p className="text-xs text-muted-foreground">Send reminder emails at 10 AM and 9 PM AZ time</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-sans font-medium text-sm">Weekly Wins Reminders</p>
-                      <p className="text-xs text-muted-foreground">Remind stylists to submit weekly wins</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-sans font-medium text-sm">Birthday Reminders</p>
-                      <p className="text-xs text-muted-foreground">Email leadership team 3 days before</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                </CardContent>
-              </Card>
+              <NotificationsCard />
 
               {/* Security */}
               <Card>
