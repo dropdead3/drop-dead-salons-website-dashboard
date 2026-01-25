@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { 
@@ -221,9 +222,11 @@ export function AggregateSalesCard() {
               <div className="flex justify-center mb-2">
                 <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
-                ${displayMetrics.totalRevenue.toLocaleString()}
-              </BlurredAmount>
+              <AnimatedBlurredAmount 
+                value={displayMetrics.totalRevenue}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
               <p className="text-xs text-muted-foreground mt-1 mb-1">Total Revenue</p>
               {comparison && (
                 <SalesTrendIndicator 
@@ -236,9 +239,11 @@ export function AggregateSalesCard() {
               <div className="flex justify-center mb-2">
                 <Scissors className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
-                ${displayMetrics.serviceRevenue.toLocaleString()}
-              </BlurredAmount>
+              <AnimatedBlurredAmount 
+                value={displayMetrics.serviceRevenue}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
               <p className="text-xs text-muted-foreground mt-1 mb-1">Services</p>
               {comparison && (
                 <SalesTrendIndicator 
@@ -251,9 +256,11 @@ export function AggregateSalesCard() {
               <div className="flex justify-center mb-2">
                 <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-chart-2" />
               </div>
-              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
-                ${displayMetrics.productRevenue.toLocaleString()}
-              </BlurredAmount>
+              <AnimatedBlurredAmount 
+                value={displayMetrics.productRevenue}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
               <p className="text-xs text-muted-foreground mt-1 mb-1">Products</p>
               {comparison && (
                 <SalesTrendIndicator 
@@ -266,9 +273,10 @@ export function AggregateSalesCard() {
               <div className="flex justify-center mb-2">
                 <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-chart-3" />
               </div>
-              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
-                {displayMetrics.totalTransactions}
-              </BlurredAmount>
+              <AnimatedBlurredAmount 
+                value={displayMetrics.totalTransactions}
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
               <p className="text-xs text-muted-foreground mt-1 mb-1">Transactions</p>
               {comparison && (
                 <SalesTrendIndicator 
@@ -281,9 +289,11 @@ export function AggregateSalesCard() {
               <div className="flex justify-center mb-2">
                 <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-chart-4" />
               </div>
-              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
-                ${isFinite(displayMetrics.averageTicket) ? Math.round(displayMetrics.averageTicket) : 0}
-              </BlurredAmount>
+              <AnimatedBlurredAmount 
+                value={isFinite(displayMetrics.averageTicket) ? Math.round(displayMetrics.averageTicket) : 0}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
               <p className="text-xs text-muted-foreground mt-1 mb-1">Avg Ticket</p>
               {comparison && (
                 <SalesTrendIndicator 
