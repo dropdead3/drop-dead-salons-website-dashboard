@@ -6,6 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Search, BookOpen, DollarSign, TrendingUp, Trophy, Rocket, ClipboardCheck, BarChart3 } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { DataHealthSection } from "@/components/dashboard/DataHealthSection";
 import { 
   metricsGlossary, 
   MetricCategory, 
@@ -133,6 +134,9 @@ export default function MetricsGlossary() {
             )}
           </div>
         </div>
+
+        {/* Data Health Section */}
+        <DataHealthSection />
 
         {/* Metrics by Category */}
         {filteredMetrics.length === 0 ? (
