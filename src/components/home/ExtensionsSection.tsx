@@ -33,10 +33,10 @@ export function ExtensionsSection() {
   ];
 
   return (
-    <Section className="bg-foreground text-background overflow-hidden" theme="dark">
+    <Section className="bg-background overflow-hidden" theme="light">
       <motion.div 
         ref={scrollRef} 
-        className="relative"
+        className="relative bg-foreground text-background rounded-3xl p-8 md:p-12 lg:p-16 overflow-hidden"
         style={{ opacity, y, filter: blurFilter }}
       >
         {/* Background accent */}
@@ -47,7 +47,7 @@ export function ExtensionsSection() {
           className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-oat blur-3xl pointer-events-none"
         />
 
-        <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center relative">
+        <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center relative">
           {/* Left side - Content */}
           <div className="space-y-8">
             <motion.div
