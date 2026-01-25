@@ -17,7 +17,7 @@ export interface WeekAheadData {
   peakDay: DayForecast | null;
 }
 
-export function useWeekAheadRevenue() {
+export function useWeekAheadRevenue(locationId?: string) {
   const today = new Date();
   
   // Generate date range for next 7 days (starting tomorrow)
@@ -33,14 +33,21 @@ export function useWeekAheadRevenue() {
   const endDate = dates[6].date;
 
   return useQuery({
-    queryKey: ['week-ahead-revenue', startDate, endDate],
+    queryKey: ['week-ahead-revenue', startDate, endDate, locationId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('phorest_appointments')
         .select('appointment_date, total_price, status')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
         .not('status', 'in', '("cancelled","no_show")');
+
+      // Filter by location if specified
+      if (locationId && locationId !== 'all') {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
