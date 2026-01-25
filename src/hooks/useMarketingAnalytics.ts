@@ -6,11 +6,18 @@ export interface CampaignPerformance {
   campaign: string;
   source: string;
   medium: string;
+  platform: string | null;
   totalLeads: number;
   converted: number;
   conversionRate: number;
   totalRevenue: number;
   avgResponseTime: number;
+  // ROI Fields
+  budget: number | null;
+  spendToDate: number | null;
+  costPerLead: number | null;
+  roas: number | null;
+  roiPercent: number | null;
 }
 
 export interface SourcePerformance {
@@ -37,6 +44,11 @@ export interface MarketingAnalytics {
     totalRevenue: number;
     overallConversionRate: number;
     topCampaign: string | null;
+    // ROI Summary
+    totalBudget: number;
+    totalSpend: number;
+    avgCPL: number | null;
+    overallROAS: number | null;
   };
 }
 
@@ -55,6 +67,14 @@ interface LeadData {
   response_time_seconds: number | null;
   preferred_location: string | null;
   created_at: string;
+}
+
+interface CampaignData {
+  utm_campaign: string;
+  campaign_name: string;
+  platform: string | null;
+  budget: number | null;
+  spend_to_date: number | null;
 }
 
 function getDateFilter(range: 'week' | 'month' | '3months'): DateFilter {
@@ -78,18 +98,30 @@ export function useMarketingAnalytics(
     queryFn: async (): Promise<MarketingAnalytics> => {
       const { startDate, endDate } = getDateFilter(dateRange);
 
-      // Build query with explicit column selection
-      const { data, error } = await supabase
-        .from('salon_inquiries')
-        .select('id, status, utm_source, utm_medium, utm_campaign, first_service_revenue, response_time_seconds, preferred_location, created_at')
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
-        .not('utm_campaign', 'is', null);
+      // Fetch leads and campaigns in parallel
+      const [leadsResponse, campaignsResponse] = await Promise.all([
+        supabase
+          .from('salon_inquiries')
+          .select('id, status, utm_source, utm_medium, utm_campaign, first_service_revenue, response_time_seconds, preferred_location, created_at')
+          .gte('created_at', startDate.toISOString())
+          .lte('created_at', endDate.toISOString())
+          .not('utm_campaign', 'is', null),
+        supabase
+          .from('marketing_campaigns')
+          .select('utm_campaign, campaign_name, platform, budget, spend_to_date')
+      ]);
 
-      if (error) throw error;
+      if (leadsResponse.error) throw leadsResponse.error;
+      if (campaignsResponse.error) throw campaignsResponse.error;
 
-      // Filter by location if specified (since preferred_location is a string, not UUID)
-      let leads = (data || []) as unknown as LeadData[];
+      // Create campaign lookup map
+      const campaignLookup = new Map<string, CampaignData>();
+      ((campaignsResponse.data || []) as CampaignData[]).forEach(c => {
+        campaignLookup.set(c.utm_campaign, c);
+      });
+
+      // Filter by location if specified
+      let leads = (leadsResponse.data || []) as unknown as LeadData[];
       if (locationId) {
         leads = leads.filter(l => l.preferred_location === locationId);
       }
@@ -164,20 +196,44 @@ export function useMarketingAnalytics(
         mediumMap.set(medium, mediumData);
       });
 
-      // Convert maps to arrays
+      // Convert maps to arrays with ROI calculations
       const campaigns: CampaignPerformance[] = Array.from(campaignMap.entries())
-        .map(([campaign, data]) => ({
-          campaign,
-          source: data.source,
-          medium: data.medium,
-          totalLeads: data.leads,
-          converted: data.converted,
-          conversionRate: data.leads > 0 ? (data.converted / data.leads) * 100 : 0,
-          totalRevenue: data.revenue,
-          avgResponseTime: data.responseTimes.length > 0
-            ? data.responseTimes.reduce((a, b) => a + b, 0) / data.responseTimes.length / 3600
-            : 0,
-        }))
+        .map(([campaign, data]) => {
+          const campaignInfo = campaignLookup.get(campaign);
+          const budget = campaignInfo?.budget ?? null;
+          const spendToDate = campaignInfo?.spend_to_date ?? null;
+          const platform = campaignInfo?.platform ?? null;
+
+          // Calculate ROI metrics
+          const costPerLead = spendToDate && data.leads > 0 
+            ? spendToDate / data.leads 
+            : null;
+          const roas = spendToDate && spendToDate > 0 
+            ? data.revenue / spendToDate 
+            : null;
+          const roiPercent = spendToDate && spendToDate > 0 
+            ? ((data.revenue - spendToDate) / spendToDate) * 100 
+            : null;
+
+          return {
+            campaign,
+            source: data.source,
+            medium: data.medium,
+            platform,
+            totalLeads: data.leads,
+            converted: data.converted,
+            conversionRate: data.leads > 0 ? (data.converted / data.leads) * 100 : 0,
+            totalRevenue: data.revenue,
+            avgResponseTime: data.responseTimes.length > 0
+              ? data.responseTimes.reduce((a, b) => a + b, 0) / data.responseTimes.length / 3600
+              : 0,
+            budget,
+            spendToDate,
+            costPerLead,
+            roas,
+            roiPercent,
+          };
+        })
         .sort((a, b) => b.totalRevenue - a.totalRevenue);
 
       const sources: SourcePerformance[] = Array.from(sourceMap.entries())
@@ -198,13 +254,18 @@ export function useMarketingAnalytics(
         }))
         .sort((a, b) => b.leads - a.leads);
 
-      // Calculate summary
+      // Calculate summary with ROI
       const totalLeads = leads.length;
       const totalConverted = campaigns.reduce((sum, c) => sum + c.converted, 0);
       const totalRevenue = campaigns.reduce((sum, c) => sum + c.totalRevenue, 0);
+      const totalBudget = campaigns.reduce((sum, c) => sum + (c.budget || 0), 0);
+      const totalSpend = campaigns.reduce((sum, c) => sum + (c.spendToDate || 0), 0);
       const topCampaign = campaigns.length > 0 
         ? campaigns.reduce((top, c) => c.conversionRate > top.conversionRate ? c : top).campaign
         : null;
+
+      const avgCPL = totalSpend > 0 && totalLeads > 0 ? totalSpend / totalLeads : null;
+      const overallROAS = totalSpend > 0 ? totalRevenue / totalSpend : null;
 
       return {
         campaigns,
@@ -216,6 +277,10 @@ export function useMarketingAnalytics(
           totalRevenue,
           overallConversionRate: totalLeads > 0 ? (totalConverted / totalLeads) * 100 : 0,
           topCampaign,
+          totalBudget,
+          totalSpend,
+          avgCPL,
+          overallROAS,
         },
       };
     },

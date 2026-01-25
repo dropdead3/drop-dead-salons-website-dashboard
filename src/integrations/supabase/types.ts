@@ -2030,6 +2030,54 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaigns: {
+        Row: {
+          budget: number | null
+          campaign_name: string
+          created_at: string | null
+          created_by: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          platform: string | null
+          spend_to_date: number | null
+          start_date: string | null
+          updated_at: string | null
+          utm_campaign: string
+        }
+        Insert: {
+          budget?: number | null
+          campaign_name: string
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          platform?: string | null
+          spend_to_date?: number | null
+          start_date?: string | null
+          updated_at?: string | null
+          utm_campaign: string
+        }
+        Update: {
+          budget?: number | null
+          campaign_name?: string
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          platform?: string | null
+          spend_to_date?: number | null
+          start_date?: string | null
+          updated_at?: string | null
+          utm_campaign?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           announcement_enabled: boolean

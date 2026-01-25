@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUpDown, Download, TrendingUp, Clock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ArrowUpDown, Download, TrendingUp, Clock, DollarSign, Target } from 'lucide-react';
 import { CampaignPerformance, formatSourceName, formatMediumName } from '@/hooks/useMarketingAnalytics';
 
 interface CampaignPerformanceTableProps {
@@ -11,8 +12,22 @@ interface CampaignPerformanceTableProps {
   isLoading?: boolean;
 }
 
-type SortField = 'campaign' | 'totalLeads' | 'converted' | 'conversionRate' | 'totalRevenue';
+type SortField = 'campaign' | 'totalLeads' | 'converted' | 'conversionRate' | 'totalRevenue' | 'costPerLead' | 'roas';
 type SortDirection = 'asc' | 'desc';
+
+function getRoasColor(roas: number | null): string {
+  if (roas === null) return '';
+  if (roas >= 3) return 'text-green-600 dark:text-green-400';
+  if (roas >= 1) return 'text-amber-600 dark:text-amber-400';
+  return 'text-red-600 dark:text-red-400';
+}
+
+function getRoasBadge(roas: number | null): { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null {
+  if (roas === null) return null;
+  if (roas >= 3) return { label: 'Great', variant: 'default' };
+  if (roas >= 1) return { label: 'OK', variant: 'secondary' };
+  return { label: 'Low', variant: 'destructive' };
+}
 
 export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerformanceTableProps) {
   const [sortField, setSortField] = useState<SortField>('totalRevenue');
@@ -32,11 +47,13 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
     if (sortField === 'campaign') {
       return multiplier * a.campaign.localeCompare(b.campaign);
     }
-    return multiplier * (a[sortField] - b[sortField]);
+    const aVal = a[sortField] ?? 0;
+    const bVal = b[sortField] ?? 0;
+    return multiplier * (aVal - bVal);
   });
 
   const handleExport = () => {
-    const headers = ['Campaign', 'Source', 'Medium', 'Leads', 'Conversions', 'Conv %', 'Revenue', 'Avg Response (hrs)'];
+    const headers = ['Campaign', 'Source', 'Medium', 'Leads', 'Conversions', 'Conv %', 'Revenue', 'Budget', 'Spend', 'CPL', 'ROAS', 'Avg Response (hrs)'];
     const rows = sortedCampaigns.map(c => [
       c.campaign,
       c.source,
@@ -45,6 +62,10 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
       c.converted,
       `${c.conversionRate.toFixed(1)}%`,
       `$${c.totalRevenue.toLocaleString()}`,
+      c.budget ? `$${c.budget.toLocaleString()}` : '',
+      c.spendToDate ? `$${c.spendToDate.toLocaleString()}` : '',
+      c.costPerLead ? `$${c.costPerLead.toFixed(2)}` : '',
+      c.roas ? `${c.roas.toFixed(2)}x` : '',
       c.avgResponseTime.toFixed(1),
     ]);
 
@@ -102,6 +123,9 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
     );
   }
 
+  // Check if any campaign has spend data
+  const hasSpendData = campaigns.some(c => c.spendToDate !== null && c.spendToDate > 0);
+
   return (
     <Card className="premium-card">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -112,7 +136,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -133,6 +157,22 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
                 <TableHead className="text-right">
                   <SortButton field="totalRevenue">Revenue</SortButton>
                 </TableHead>
+                {hasSpendData && (
+                  <>
+                    <TableHead className="text-right">
+                      <span className="flex items-center justify-end gap-1">
+                        <DollarSign className="h-3 w-3" />
+                        Spend
+                      </span>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <SortButton field="costPerLead">CPL</SortButton>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <SortButton field="roas">ROAS</SortButton>
+                    </TableHead>
+                  </>
+                )}
                 <TableHead className="text-right">
                   <span className="flex items-center justify-end gap-1">
                     <Clock className="h-3 w-3" />
@@ -142,34 +182,71 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedCampaigns.map((campaign) => (
-                <TableRow key={campaign.campaign}>
-                  <TableCell className="font-medium">{campaign.campaign}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-xs">
-                      {formatSourceName(campaign.source)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs">
-                      {formatMediumName(campaign.medium)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{campaign.totalLeads}</TableCell>
-                  <TableCell className="text-right tabular-nums">{campaign.converted}</TableCell>
-                  <TableCell className="text-right">
-                    <span className={campaign.conversionRate >= 20 ? 'text-green-600 dark:text-green-400 font-medium' : ''}>
-                      {campaign.conversionRate.toFixed(1)}%
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums font-medium">
-                    ${campaign.totalRevenue.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    {campaign.avgResponseTime > 0 ? campaign.avgResponseTime.toFixed(1) : '—'}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {sortedCampaigns.map((campaign) => {
+                const roasBadge = getRoasBadge(campaign.roas);
+                
+                return (
+                  <TableRow key={campaign.campaign}>
+                    <TableCell className="font-medium">{campaign.campaign}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-xs">
+                        {formatSourceName(campaign.source)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {formatMediumName(campaign.medium)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{campaign.totalLeads}</TableCell>
+                    <TableCell className="text-right tabular-nums">{campaign.converted}</TableCell>
+                    <TableCell className="text-right">
+                      <span className={campaign.conversionRate >= 20 ? 'text-green-600 dark:text-green-400 font-medium' : ''}>
+                        {campaign.conversionRate.toFixed(1)}%
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">
+                      ${campaign.totalRevenue.toLocaleString()}
+                    </TableCell>
+                    {hasSpendData && (
+                      <>
+                        <TableCell className="text-right tabular-nums">
+                          {campaign.spendToDate !== null ? `$${campaign.spendToDate.toLocaleString()}` : '—'}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {campaign.costPerLead !== null ? (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                ${campaign.costPerLead.toFixed(2)}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Cost per Lead
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : '—'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {campaign.roas !== null ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <span className={`tabular-nums font-medium ${getRoasColor(campaign.roas)}`}>
+                                {campaign.roas.toFixed(2)}x
+                              </span>
+                              {roasBadge && (
+                                <Badge variant={roasBadge.variant} className="text-xs">
+                                  {roasBadge.label}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : '—'}
+                        </TableCell>
+                      </>
+                    )}
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {campaign.avgResponseTime > 0 ? campaign.avgResponseTime.toFixed(1) : '—'}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

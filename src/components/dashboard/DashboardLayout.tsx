@@ -149,7 +149,7 @@ const statsNavItems: NavItem[] = [
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
   { href: '/dashboard/admin/sales', label: 'Sales Dashboard', icon: DollarSign, permission: 'view_team_overview' },
   { href: '/dashboard/admin/operational-analytics', label: 'Operational Analytics', icon: BarChart3, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/marketing', label: 'Marketing Analytics', icon: TrendingUp, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/marketing', label: 'Marketing Analytics', icon: TrendingUp, permission: 'view_marketing_analytics' },
   { href: '/dashboard/admin/staff-utilization', label: 'Staff Utilization', icon: Users, permission: 'view_team_overview' },
 ];
 

@@ -169,7 +169,7 @@ const App = () => (
               <Route path="/dashboard/admin/staff-utilization" element={<ProtectedRoute requiredPermission="view_team_overview"><StaffUtilization /></ProtectedRoute>} />
               <Route path="/dashboard/admin/operational-analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><OperationalAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/marketing" element={<ProtectedRoute requiredPermission="view_team_overview"><MarketingAnalytics /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/marketing" element={<ProtectedRoute requiredPermission="view_marketing_analytics"><MarketingAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/feature-flags" element={<ProtectedRoute requiredPermission="manage_settings"><FeatureFlags /></ProtectedRoute>} />
               <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
 
