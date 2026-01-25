@@ -40,13 +40,13 @@ export function FooterCTA() {
   return (
     <section 
       ref={sectionRef}
-      className="relative z-10 bg-secondary text-foreground py-24 lg:py-32 text-center overflow-hidden"
+      className="relative z-10 bg-secondary text-foreground py-28 lg:py-32 text-center overflow-hidden"
       data-theme="light"
     >
       <div className="container mx-auto px-6 lg:px-12">
         {/* Eyebrow */}
         <motion.p 
-          className="text-foreground/50 text-xs uppercase tracking-[0.2em] font-display mb-6"
+          className="text-foreground/50 text-sm md:text-xs uppercase tracking-[0.2em] font-display mb-6"
           style={{ 
             opacity: eyebrowOpacity, 
             y: eyebrowY,
@@ -57,7 +57,7 @@ export function FooterCTA() {
         </motion.p>
 
         {/* Main headline - Split into two lines */}
-        <h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-foreground mb-6 flex flex-col items-center leading-[0.95]">
+        <h2 className="font-display text-5xl md:text-6xl lg:text-7xl text-foreground mb-6 flex flex-col items-center leading-[0.95]">
           <motion.span 
             className="block"
             style={{ 
@@ -84,7 +84,7 @@ export function FooterCTA() {
 
         {/* Description */}
         <motion.p 
-          className="text-foreground/60 text-base md:text-lg font-sans font-light max-w-xl mx-auto mb-10"
+          className="text-foreground/60 text-lg md:text-xl font-sans font-light max-w-xl mx-auto mb-10"
           style={{ 
             opacity: descOpacity, 
             y: descY,
