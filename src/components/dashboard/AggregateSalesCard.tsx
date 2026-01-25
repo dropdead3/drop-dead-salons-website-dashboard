@@ -21,7 +21,7 @@ import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend }
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
-import { format, subDays, startOfWeek, startOfMonth } from 'date-fns';
+import { format, subDays, startOfWeek, startOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -49,7 +49,7 @@ import { SalesGoalProgress } from './sales/SalesGoalProgress';
 import { LastSyncIndicator } from './sales/LastSyncIndicator';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
-type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth';
+type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'ytd' | 'lastYear' | 'last365';
 
 export function AggregateSalesCard() {
   const navigate = useNavigate();
@@ -73,9 +73,25 @@ export function AggregateSalesCard() {
           dateFrom: format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'), 
           dateTo: format(now, 'yyyy-MM-dd') 
         };
-      case 'thisMonth':
+      case 'mtd':
         return { 
           dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
+          dateTo: format(now, 'yyyy-MM-dd') 
+        };
+      case 'ytd':
+        return { 
+          dateFrom: format(startOfYear(now), 'yyyy-MM-dd'), 
+          dateTo: format(now, 'yyyy-MM-dd') 
+        };
+      case 'lastYear':
+        const lastYearDate = subYears(now, 1);
+        return { 
+          dateFrom: format(startOfYear(lastYearDate), 'yyyy-MM-dd'), 
+          dateTo: format(endOfYear(lastYearDate), 'yyyy-MM-dd') 
+        };
+      case 'last365':
+        return { 
+          dateFrom: format(subDays(now, 365), 'yyyy-MM-dd'), 
           dateTo: format(now, 'yyyy-MM-dd') 
         };
       default:
@@ -94,9 +110,37 @@ export function AggregateSalesCard() {
   const isLoading = metricsLoading || locationLoading;
 
   // Calculate goal based on date range
-  const currentGoal = dateRange === 'thisMonth' || dateRange === '30d' 
-    ? (goals?.monthlyTarget || 50000)
-    : (goals?.weeklyTarget || 12500);
+  const currentGoal = (() => {
+    switch (dateRange) {
+      case 'mtd':
+      case '30d':
+        return goals?.monthlyTarget || 50000;
+      case 'ytd':
+      case 'lastYear':
+      case 'last365':
+        return (goals?.monthlyTarget || 50000) * 12; // Yearly goal
+      default:
+        return goals?.weeklyTarget || 12500;
+    }
+  })();
+
+  // Get goal label based on date range
+  const goalLabel = (() => {
+    switch (dateRange) {
+      case 'mtd':
+      case '30d':
+        return 'Monthly Goal';
+      case 'ytd':
+      case 'lastYear':
+      case 'last365':
+        return 'Yearly Goal';
+      default:
+        return 'Weekly Goal';
+    }
+  })();
+
+  // Check if comparison data is available for trend indicators
+  const showTrendIndicators = comparison && !['lastYear', 'last365'].includes(dateRange);
 
   // Get trend data for a specific location
   const getLocationTrend = (locationId: string | null) => {
@@ -198,8 +242,11 @@ export function AggregateSalesCard() {
               <SelectItem value="yesterday">Yesterday</SelectItem>
               <SelectItem value="thisWeek">This Week</SelectItem>
               <SelectItem value="7d">Last 7 Days</SelectItem>
-              <SelectItem value="thisMonth">This Month</SelectItem>
               <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="mtd">Month To Date</SelectItem>
+              <SelectItem value="ytd">Year To Date</SelectItem>
+              <SelectItem value="lastYear">Last Year</SelectItem>
+              <SelectItem value="last365">Last 365 Days</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" className="h-8" onClick={handleExportCSV}>
@@ -235,7 +282,7 @@ export function AggregateSalesCard() {
                 <p className="text-xs text-muted-foreground">Total Revenue</p>
                 <MetricInfoTooltip description="Sum of all service and product sales for the selected date range, synced from Phorest daily summaries." />
               </div>
-              {comparison && (
+              {showTrendIndicators && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalRevenue}
                   previous={comparison.previous.totalRevenue} 
@@ -255,7 +302,7 @@ export function AggregateSalesCard() {
                 <p className="text-xs text-muted-foreground">Services</p>
                 <MetricInfoTooltip description="Revenue from all service transactions (cuts, color, treatments, etc.) excluding retail products." />
               </div>
-              {comparison && (
+              {showTrendIndicators && (
                 <SalesTrendIndicator 
                   current={comparison.current.serviceRevenue} 
                   previous={comparison.previous.serviceRevenue} 
@@ -275,7 +322,7 @@ export function AggregateSalesCard() {
                 <p className="text-xs text-muted-foreground">Products</p>
                 <MetricInfoTooltip description="Revenue from retail product sales only, excluding service charges." />
               </div>
-              {comparison && (
+              {showTrendIndicators && (
                 <SalesTrendIndicator 
                   current={comparison.current.productRevenue} 
                   previous={comparison.previous.productRevenue} 
@@ -294,7 +341,7 @@ export function AggregateSalesCard() {
                 <p className="text-xs text-muted-foreground">Transactions</p>
                 <MetricInfoTooltip description="Total number of completed sales transactions. One client visit = one transaction." />
               </div>
-              {comparison && (
+              {showTrendIndicators && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalTransactions} 
                   previous={comparison.previous.totalTransactions} 
@@ -314,7 +361,7 @@ export function AggregateSalesCard() {
                 <p className="text-xs text-muted-foreground">Avg Ticket</p>
                 <MetricInfoTooltip description="Total Revenue ÷ Transactions. Average spend per client visit." />
               </div>
-              {comparison && (
+              {showTrendIndicators && (
                 <SalesTrendIndicator 
                   current={comparison.current.averageTicket} 
                   previous={comparison.previous.averageTicket} 
@@ -345,7 +392,7 @@ export function AggregateSalesCard() {
             <SalesGoalProgress 
               current={displayMetrics.totalRevenue} 
               target={currentGoal}
-              label={dateRange === 'thisMonth' || dateRange === '30d' ? 'Monthly Goal' : 'Weekly Goal'}
+              label={goalLabel}
             />
           </div>
         </div>
