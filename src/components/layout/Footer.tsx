@@ -21,8 +21,8 @@ export function Footer() {
     >
       <div className="container mx-auto px-6 lg:px-12 py-12 md:py-16 lg:py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 md:gap-12 lg:gap-16">
-          {/* Brand */}
-          <div className="space-y-4 md:space-y-6">
+        {/* Brand */}
+          <div className="space-y-4 md:space-y-6 text-center md:text-left flex flex-col items-center md:items-start">
             <Link
               to="/"
               className="hover:opacity-70 transition-opacity inline-block"
@@ -39,11 +39,11 @@ export function Footer() {
           </div>
 
           {/* Navigation */}
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-4 md:space-y-6 text-center md:text-left">
             <h4 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
               Navigate
             </h4>
-            <nav className="flex flex-row md:flex-col gap-6 md:gap-3">
+            <nav className="flex flex-row justify-center md:justify-start md:flex-col gap-6 md:gap-3">
               {footerLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -57,7 +57,7 @@ export function Footer() {
           </div>
 
           {/* Locations */}
-          <div className="space-y-4 md:space-y-6 lg:col-span-2">
+          <div className="space-y-4 md:space-y-6 lg:col-span-2 text-center md:text-left">
             <h4 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
               Locations
             </h4>
@@ -68,7 +68,7 @@ export function Footer() {
                 const showClosedNotice = holidayClosure || closedToday;
                 
                 return (
-                  <div key={location.name} className="space-y-2">
+                  <div key={location.name} className="space-y-2 flex flex-col items-center md:items-start">
                     {/* Closed Notice */}
                     {showClosedNotice && (
                       <div className="inline-flex items-center gap-1.5 text-amber-600 px-2 py-0.5 bg-amber-600/10 rounded-full w-fit">
@@ -85,16 +85,16 @@ export function Footer() {
                       href={location.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.address}, ${location.city}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-start gap-2.5 group"
+                      className="flex flex-col md:flex-row items-center md:items-start gap-2.5 group"
                     >
-                      <MapPin className="w-4 h-4 text-foreground/40 group-hover:text-foreground flex-shrink-0 mt-0.5 transition-colors" />
+                      <MapPin className="w-4 h-4 text-foreground/40 group-hover:text-foreground flex-shrink-0 transition-colors" />
                       <div className="text-sm font-sans font-light text-foreground/70 group-hover:text-foreground transition-colors">
                         <p className="font-medium text-foreground">{location.name}</p>
                         <p className="text-foreground/60">{location.address}</p>
                         <p className="text-foreground/60">{location.city}</p>
                       </div>
                     </a>
-                    <div className="pl-[26px] space-y-0.5">
+                    <div className="md:pl-[26px] pl-0 space-y-0.5 flex flex-col items-center md:items-start">
                       <a 
                         href={`tel:${location.phone.replace(/[^0-9]/g, '')}`}
                         className="flex items-center gap-1.5 text-sm font-sans font-light text-foreground/50 hover:text-foreground transition-colors"
@@ -113,11 +113,11 @@ export function Footer() {
           </div>
 
           {/* Contact */}
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-4 md:space-y-6 text-center md:text-left flex flex-col items-center md:items-start">
             <h4 className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
               Connect
             </h4>
-            <div className="space-y-4">
+            <div className="space-y-4 flex flex-col items-center md:items-start">
               <a
                 href="mailto:contact@dropdeadsalon.com"
                 className="block text-sm font-sans font-light text-foreground/70 hover:text-foreground transition-colors"
