@@ -232,11 +232,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         href={href}
         onClick={handleClick}
         className={cn(
-          "flex items-center gap-3 text-sm font-sans transition-colors cursor-pointer",
-          isCollapsed ? "px-0 py-3 justify-center" : "px-4 py-3",
+          "flex items-center gap-3 text-sm font-sans cursor-pointer",
+          "transition-all duration-200 ease-out rounded-lg",
+          isCollapsed 
+            ? "px-2 py-2.5 justify-center mx-2" 
+            : "px-3 py-2.5 mx-3",
           isActive 
-            ? "bg-foreground text-background" 
-            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            ? "bg-foreground text-background shadow-sm" 
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
         )}
       >
         <Icon className="w-4 h-4 shrink-0" />
@@ -331,10 +334,11 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     to="/dashboard/onboarding"
                     onClick={onNavClick}
                     className={cn(
-                      "flex items-center justify-center py-3 text-sm font-sans transition-colors",
+                      "flex items-center justify-center px-2 py-2.5 mx-2 text-sm font-sans",
+                      "transition-all duration-200 ease-out rounded-lg",
                       location.pathname === '/dashboard/onboarding'
-                        ? "bg-foreground text-background" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "bg-foreground text-background shadow-sm" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                     )}
                   >
                     <Rocket className="w-4 h-4" />
@@ -349,10 +353,11 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 to="/dashboard/onboarding"
                 onClick={onNavClick}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 text-sm font-sans transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 mx-3 text-sm font-sans",
+                  "transition-all duration-200 ease-out rounded-lg",
                   location.pathname === '/dashboard/onboarding'
-                    ? "bg-foreground text-background" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "bg-foreground text-background shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 )}
               >
                 <Rocket className="w-4 h-4" />
