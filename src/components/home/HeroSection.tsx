@@ -133,7 +133,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
       )}
 
       <motion.div 
-        className="flex-1 flex items-start justify-center pt-32 pb-36 lg:pt-36 lg:pb-48 relative z-0"
+        className="flex-1 flex items-center justify-center pt-32 pb-36 lg:pt-36 lg:pb-48 relative z-0"
         style={{ opacity }}
       >
         <div className="container mx-auto px-6 lg:px-12">
