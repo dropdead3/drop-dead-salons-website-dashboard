@@ -47,6 +47,7 @@ import { TopPerformersCard } from './sales/TopPerformersCard';
 import { RevenueDonutChart } from './sales/RevenueDonutChart';
 import { SalesGoalProgress } from './sales/SalesGoalProgress';
 import { LastSyncIndicator } from './sales/LastSyncIndicator';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth';
 
@@ -230,7 +231,10 @@ export function AggregateSalesCard() {
                 prefix="$"
                 className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
               />
-              <p className="text-xs text-muted-foreground mt-1 mb-1">Total Revenue</p>
+              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
+                <p className="text-xs text-muted-foreground">Total Revenue</p>
+                <MetricInfoTooltip description="Sum of all service and product sales for the selected date range, synced from Phorest daily summaries." />
+              </div>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalRevenue}
@@ -247,7 +251,10 @@ export function AggregateSalesCard() {
                 prefix="$"
                 className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
               />
-              <p className="text-xs text-muted-foreground mt-1 mb-1">Services</p>
+              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
+                <p className="text-xs text-muted-foreground">Services</p>
+                <MetricInfoTooltip description="Revenue from all service transactions (cuts, color, treatments, etc.) excluding retail products." />
+              </div>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.serviceRevenue} 
@@ -264,7 +271,10 @@ export function AggregateSalesCard() {
                 prefix="$"
                 className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
               />
-              <p className="text-xs text-muted-foreground mt-1 mb-1">Products</p>
+              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
+                <p className="text-xs text-muted-foreground">Products</p>
+                <MetricInfoTooltip description="Revenue from retail product sales only, excluding service charges." />
+              </div>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.productRevenue} 
@@ -280,7 +290,10 @@ export function AggregateSalesCard() {
                 value={displayMetrics.totalTransactions}
                 className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
               />
-              <p className="text-xs text-muted-foreground mt-1 mb-1">Transactions</p>
+              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
+                <p className="text-xs text-muted-foreground">Transactions</p>
+                <MetricInfoTooltip description="Total number of completed sales transactions. One client visit = one transaction." />
+              </div>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.totalTransactions} 
@@ -297,7 +310,10 @@ export function AggregateSalesCard() {
                 prefix="$"
                 className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
               />
-              <p className="text-xs text-muted-foreground mt-1 mb-1">Avg Ticket</p>
+              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
+                <p className="text-xs text-muted-foreground">Avg Ticket</p>
+                <MetricInfoTooltip description="Total Revenue ÷ Transactions. Average spend per client visit." />
+              </div>
               {comparison && (
                 <SalesTrendIndicator 
                   current={comparison.current.averageTicket} 
@@ -314,7 +330,10 @@ export function AggregateSalesCard() {
                 prefix="$"
                 className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
               />
-              <p className="text-xs text-muted-foreground mt-1">Rev. Tomorrow</p>
+              <div className="flex items-center gap-1 justify-center mt-1">
+                <p className="text-xs text-muted-foreground">Rev. Tomorrow</p>
+                <MetricInfoTooltip description="Projected revenue from confirmed and booked appointments scheduled for tomorrow." />
+              </div>
               <span className="text-xs text-muted-foreground/70">
                 {tomorrowData?.appointmentCount || 0} bookings
               </span>
@@ -334,7 +353,10 @@ export function AggregateSalesCard() {
         {/* Sidebar - Top Performers & Donut */}
         <div className="space-y-4">
           <div>
-            <h3 className="font-display text-xs tracking-wide text-muted-foreground mb-3">TOP PERFORMERS</h3>
+            <div className="flex items-center gap-1.5 mb-3">
+              <h3 className="font-display text-xs tracking-wide text-muted-foreground">TOP PERFORMERS</h3>
+              <MetricInfoTooltip description="Ranked by total service + product revenue for the selected period." />
+            </div>
             <TopPerformersCard 
               performers={stylistData || []} 
               isLoading={stylistLoading} 

@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { 
   Target, 
   Users, 
@@ -131,7 +132,10 @@ export function ClientEngineOverview() {
       {/* Average Progress */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Avg Team Progress</span>
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Avg Team Progress</span>
+            <MetricInfoTooltip description="Average completion percentage across all enrolled stylists in the Client Engine program." />
+          </div>
           <span className="font-medium">{stats.avgProgress}%</span>
         </div>
         <Progress value={stats.avgProgress} className="h-2" />
@@ -144,28 +148,40 @@ export function ClientEngineOverview() {
             <Users className="w-4 h-4 text-muted-foreground" />
           </div>
           <p className="text-lg font-semibold">{stats.enrolled}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Enrolled</p>
+          <div className="flex items-center gap-0.5 justify-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Enrolled</p>
+            <MetricInfoTooltip description="Total number of team members currently enrolled in the Client Engine." />
+          </div>
         </div>
         <div className="text-center p-2.5 bg-green-500/10 rounded-lg">
           <div className="flex items-center justify-center mb-1">
             <Play className="w-4 h-4 text-green-600" />
           </div>
           <p className="text-lg font-semibold text-green-600">{stats.active}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Active</p>
+          <div className="flex items-center gap-0.5 justify-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Active</p>
+            <MetricInfoTooltip description="Members who have started but not yet completed the program." />
+          </div>
         </div>
         <div className="text-center p-2.5 bg-blue-500/10 rounded-lg">
           <div className="flex items-center justify-center mb-1">
             <Trophy className="w-4 h-4 text-blue-600" />
           </div>
           <p className="text-lg font-semibold text-blue-600">{stats.completed}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Done</p>
+          <div className="flex items-center gap-0.5 justify-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Done</p>
+            <MetricInfoTooltip description="Members who have finished all 75 days of the Client Engine." />
+          </div>
         </div>
         <div className="text-center p-2.5 bg-yellow-500/10 rounded-lg">
           <div className="flex items-center justify-center mb-1">
             <Pause className="w-4 h-4 text-yellow-600" />
           </div>
           <p className="text-lg font-semibold text-yellow-600">{stats.paused}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Paused</p>
+          <div className="flex items-center gap-0.5 justify-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Paused</p>
+            <MetricInfoTooltip description="Members with enrollment temporarily on hold." />
+          </div>
         </div>
       </div>
 
@@ -174,21 +190,30 @@ export function ClientEngineOverview() {
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <DollarSign className="w-4 h-4 text-emerald-600" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Revenue</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-muted-foreground">Revenue</p>
+              <MetricInfoTooltip description="Combined revenue from Ring the Bell entries logged by enrolled stylists." />
+            </div>
             <BlurredAmount className="text-sm font-medium">${stats.totalRevenue.toLocaleString()}</BlurredAmount>
           </div>
         </div>
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <Bell className="w-4 h-4 text-primary" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Bells Rung</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-muted-foreground">Bells Rung</p>
+              <MetricInfoTooltip description="Total number of Ring the Bell celebration entries logged by the team." />
+            </div>
             <p className="text-sm font-medium">{stats.totalRings}</p>
           </div>
         </div>
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <Flame className="w-4 h-4 text-orange-500" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Top Streak</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-muted-foreground">Top Streak</p>
+              <MetricInfoTooltip description="Longest consecutive days streak achieved by any team member." />
+            </div>
             <p className="text-sm font-medium">{stats.topStreak} days</p>
           </div>
         </div>

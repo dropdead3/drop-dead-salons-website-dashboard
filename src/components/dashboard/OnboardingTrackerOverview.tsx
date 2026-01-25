@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { 
   Users, 
   CheckCircle2, 
@@ -238,7 +239,10 @@ export function OnboardingTrackerOverview() {
       {/* Overall Progress */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Team Completion</span>
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Team Completion</span>
+            <MetricInfoTooltip description="Percentage of all onboarding items (tasks + handbooks) completed across all active employees." />
+          </div>
           <span className="font-medium">{completionPercentage}%</span>
         </div>
         <Progress 
@@ -254,28 +258,40 @@ export function OnboardingTrackerOverview() {
             <Users className="w-4 h-4 text-muted-foreground" />
           </div>
           <p className="text-lg font-semibold">{stats.total}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</p>
+          <div className="flex items-center gap-0.5 justify-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</p>
+            <MetricInfoTooltip description="Count of all active employees in the onboarding process." />
+          </div>
         </div>
         <div className="text-center p-2.5 bg-green-500/10 rounded-lg">
           <div className="flex items-center justify-center mb-1">
             <CheckCircle2 className="w-4 h-4 text-green-600" />
           </div>
           <p className="text-lg font-semibold text-green-600">{stats.complete}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Done</p>
+          <div className="flex items-center gap-0.5 justify-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Done</p>
+            <MetricInfoTooltip description="Employees who have completed 100% of their onboarding items." />
+          </div>
         </div>
         <div className="text-center p-2.5 bg-yellow-500/10 rounded-lg">
           <div className="flex items-center justify-center mb-1">
             <Clock className="w-4 h-4 text-yellow-600" />
           </div>
           <p className="text-lg font-semibold text-yellow-600">{stats.inProgress}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Active</p>
+          <div className="flex items-center gap-0.5 justify-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Active</p>
+            <MetricInfoTooltip description="Employees currently working through their onboarding checklist." />
+          </div>
         </div>
         <div className="text-center p-2.5 bg-red-500/10 rounded-lg">
           <div className="flex items-center justify-center mb-1">
             <AlertCircle className="w-4 h-4 text-red-600" />
           </div>
           <p className="text-lg font-semibold text-red-600">{stats.notStarted}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Pending</p>
+          <div className="flex items-center gap-0.5 justify-center">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Pending</p>
+            <MetricInfoTooltip description="Employees who haven't started any onboarding items yet." />
+          </div>
         </div>
       </div>
 
@@ -284,28 +300,40 @@ export function OnboardingTrackerOverview() {
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <BookOpen className="w-4 h-4 text-muted-foreground" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Handbooks</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-muted-foreground">Handbooks</p>
+              <MetricInfoTooltip description="Percentage of onboarding handbooks acknowledged by employees." />
+            </div>
             <p className="text-sm font-medium">{stats.handbooksCompletion}%</p>
           </div>
         </div>
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <ClipboardCheck className="w-4 h-4 text-muted-foreground" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Tasks</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-muted-foreground">Tasks</p>
+              <MetricInfoTooltip description="Percentage of onboarding tasks marked as complete." />
+            </div>
             <p className="text-sm font-medium">{stats.tasksCompletion}%</p>
           </div>
         </div>
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <CreditCard className="w-4 h-4 text-muted-foreground" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Business Cards</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-muted-foreground">Business Cards</p>
+              <MetricInfoTooltip description="Number of business card requests submitted by new hires." />
+            </div>
             <p className="text-sm font-medium">{stats.businessCardsRequested} requested</p>
           </div>
         </div>
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">
           <Camera className="w-4 h-4 text-muted-foreground" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Headshots</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-muted-foreground">Headshots</p>
+              <MetricInfoTooltip description="Number of headshot requests submitted by new hires." />
+            </div>
             <p className="text-sm font-medium">{stats.headshotsRequested} requested</p>
           </div>
         </div>

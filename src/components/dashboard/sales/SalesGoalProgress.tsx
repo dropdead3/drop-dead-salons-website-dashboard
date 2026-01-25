@@ -2,6 +2,7 @@ import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface SalesGoalProgressProps {
   current: number;
@@ -29,6 +30,7 @@ export function SalesGoalProgress({
             isComplete ? 'text-chart-2' : 'text-muted-foreground'
           )} />
           <span className="font-medium">{label}</span>
+          <MetricInfoTooltip description="Progress toward your configured sales target. Percentage = (Current Revenue ÷ Target) × 100." />
         </div>
         <span className={cn(
           'text-xs font-medium',
