@@ -17,6 +17,8 @@ export interface DayForecast {
   date: string;
   dayName: string;
   revenue: number;
+  confirmedRevenue: number;
+  unconfirmedRevenue: number;
   appointmentCount: number;
   appointments: AppointmentSummary[];
 }
@@ -86,15 +88,23 @@ export function useWeekAheadRevenue(locationId?: string) {
       }
       
       // Group by date
-      const byDate: Record<string, { revenue: number; count: number; appointments: AppointmentSummary[] }> = {};
+      const byDate: Record<string, { revenue: number; confirmedRevenue: number; unconfirmedRevenue: number; count: number; appointments: AppointmentSummary[] }> = {};
       dates.forEach(d => {
-        byDate[d.date] = { revenue: 0, count: 0, appointments: [] };
+        byDate[d.date] = { revenue: 0, confirmedRevenue: 0, unconfirmedRevenue: 0, count: 0, appointments: [] };
       });
 
       appointments.forEach(apt => {
         const dateKey = apt.appointment_date;
         if (byDate[dateKey]) {
-          byDate[dateKey].revenue += Number(apt.total_price) || 0;
+          const price = Number(apt.total_price) || 0;
+          const isConfirmed = ['confirmed', 'checked_in', 'completed'].includes(apt.status?.toLowerCase() || '');
+          
+          byDate[dateKey].revenue += price;
+          if (isConfirmed) {
+            byDate[dateKey].confirmedRevenue += price;
+          } else {
+            byDate[dateKey].unconfirmedRevenue += price;
+          }
           byDate[dateKey].count += 1;
           byDate[dateKey].appointments.push({
             id: apt.id,
@@ -114,6 +124,8 @@ export function useWeekAheadRevenue(locationId?: string) {
         date: d.date,
         dayName: d.dayName,
         revenue: byDate[d.date].revenue,
+        confirmedRevenue: byDate[d.date].confirmedRevenue,
+        unconfirmedRevenue: byDate[d.date].unconfirmedRevenue,
         appointmentCount: byDate[d.date].count,
         appointments: byDate[d.date].appointments,
       }));

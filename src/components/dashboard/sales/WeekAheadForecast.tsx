@@ -22,18 +22,16 @@ import {
   LabelList 
 } from 'recharts';
 
-// Custom label inside the bar for revenue
-function InBarLabel({ x, y, width, height, value }: any) {
-  // Only show label if bar is tall enough
-  if (height < 25 || !value || value === 0) return null;
+// Label positioned above each bar for revenue
+function AboveBarLabel({ x, y, width, value }: any) {
+  if (value === undefined || value === null || value === 0) return null;
   
   return (
     <text
       x={x + width / 2}
-      y={y + height / 2}
+      y={y - 8}
       textAnchor="middle"
-      dominantBaseline="middle"
-      className="fill-white text-[9px] font-medium"
+      className="fill-foreground text-xs font-medium tabular-nums"
       style={{ pointerEvents: 'none' }}
     >
       ${value.toLocaleString()}
@@ -129,10 +127,12 @@ export function WeekAheadForecast() {
 
   const { days, totalRevenue, totalAppointments, averageDaily, peakDay } = data;
 
-  // Chart data
+  // Chart data with confirmed/unconfirmed split
   const chartData = days.map(day => ({
     name: day.dayName,
-    revenue: day.revenue,
+    confirmedRevenue: day.confirmedRevenue,
+    unconfirmedRevenue: day.unconfirmedRevenue,
+    totalRevenue: day.revenue,
     appointments: day.appointmentCount,
     isPeak: peakDay?.date === day.date,
   }));
@@ -195,10 +195,10 @@ export function WeekAheadForecast() {
             </div>
           </div>
 
-          {/* Bar Chart with in-bar labels */}
+          {/* Bar Chart with stacked confirmed/unconfirmed and labels above */}
           <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 5, bottom: 35, left: 5 }}>
+              <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: 35, left: 5 }}>
                 <XAxis 
                   dataKey="name" 
                   tick={<CustomXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} />}
@@ -216,27 +216,44 @@ export function WeekAheadForecast() {
                     fontSize: '12px',
                   }}
                   formatter={(value: number, name: string) => {
-                    if (name === 'revenue') return [`$${value.toLocaleString()}`, 'Revenue'];
-                    return [value, 'Appointments'];
+                    if (name === 'confirmedRevenue') return [`$${value.toLocaleString()}`, 'Confirmed'];
+                    if (name === 'unconfirmedRevenue') return [`$${value.toLocaleString()}`, 'Unconfirmed'];
+                    return [value, name];
                   }}
                   labelFormatter={(label) => {
                     const day = days.find(d => d.dayName === label);
                     return day ? format(parseISO(day.date), 'EEEE, MMM d') : label;
                   }}
                 />
+                {/* Unconfirmed revenue - bottom of stack, lighter opacity */}
                 <Bar 
-                  dataKey="revenue" 
+                  dataKey="unconfirmedRevenue" 
+                  stackId="revenue"
+                  radius={[0, 0, 0, 0]}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`unconfirmed-${index}`}
+                      fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
+                      fillOpacity={0.3}
+                    />
+                  ))}
+                </Bar>
+                {/* Confirmed revenue - top of stack, solid */}
+                <Bar 
+                  dataKey="confirmedRevenue" 
+                  stackId="revenue"
                   radius={[4, 4, 0, 0]}
                 >
                   <LabelList 
-                    dataKey="revenue" 
-                    content={InBarLabel}
+                    dataKey="totalRevenue"
+                    content={AboveBarLabel}
                   />
                   {chartData.map((entry, index) => (
                     <Cell 
-                      key={`cell-${index}`}
+                      key={`confirmed-${index}`}
                       fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
-                      fillOpacity={entry.isPeak ? 1 : 0.7}
+                      fillOpacity={entry.isPeak ? 1 : 0.85}
                     />
                   ))}
                 </Bar>
