@@ -153,6 +153,7 @@ const statsNavItems: NavItem[] = [
 
 // Manager-accessible admin items
 const managerNavItems: NavItem[] = [
+  { href: '/dashboard/admin/leads', label: 'Lead Management', icon: UserPlus, permission: 'view_team_overview' },
   { href: '/dashboard/admin/birthdays', label: 'Birthdays & Anniversaries', icon: Cake, permission: 'view_team_overview' },
   { href: '/dashboard/admin/onboarding-tracker', label: 'Onboarding Tracker', icon: ClipboardList, permission: 'view_team_overview' },
   { href: '/dashboard/admin/client-engine-tracker', label: 'Client Engine Tracker', icon: Target, permission: 'view_team_overview' },
