@@ -121,10 +121,10 @@ export function FAQSection() {
     <section 
       ref={sectionRef}
       data-theme="light"
-      className="py-20 lg:py-32"
+      className="py-24 lg:py-32"
     >
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 text-center lg:text-left">
           {/* Left Column - Intro */}
           <motion.div
             initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
@@ -132,7 +132,7 @@ export function FAQSection() {
             transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
             className="lg:sticky lg:top-32 lg:self-start"
           >
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
+            <h2 className="text-4xl md:text-4xl lg:text-5xl font-display mb-6">
               Frequently<br />
               <span className="font-light">{displayText}</span>
               <br />
@@ -148,7 +148,7 @@ export function FAQSection() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
               <Link
                 to="/faq"
                 className="group/faq inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-full hover:bg-primary/90 transition-all duration-300 overflow-hidden"

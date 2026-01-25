@@ -133,7 +133,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
       )}
 
       <motion.div 
-        className="flex-1 flex items-start justify-center pt-28 pb-32 lg:pt-36 lg:pb-48 relative z-0"
+        className="flex-1 flex items-start justify-center pt-32 pb-36 lg:pt-36 lg:pb-48 relative z-0"
         style={{ opacity }}
       >
         <div className="container mx-auto px-6 lg:px-12">
@@ -194,7 +194,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
               initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ ...springTransition, delay: 3.6 }}
-              className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
+              className="mt-8 text-base md:text-lg text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
               style={{ y: subheadlineY }}
             >
               Where technical talent meets artistry.
