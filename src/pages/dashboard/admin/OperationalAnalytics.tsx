@@ -8,6 +8,7 @@ import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { LeadFunnelCard } from '@/components/dashboard/LeadFunnelCard';
+import { LeadInbox } from '@/components/dashboard/LeadInbox';
 import { 
   Calendar, 
   TrendingUp, 
@@ -190,6 +191,11 @@ export default function OperationalAnalytics() {
           locationId={locationFilter}
           dateRange={dateRange}
         />
+
+        {/* Lead Inbox */}
+        <div className="mb-6">
+          <LeadInbox />
+        </div>
 
         {/* Hiring Capacity and Staffing Trends */}
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
