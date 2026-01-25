@@ -1167,6 +1167,7 @@ export type Database = {
           birthday: string | null
           created_at: string
           dd_certified: boolean | null
+          departure_notes: string | null
           display_name: string | null
           email: string | null
           emergency_contact: string | null
@@ -1190,6 +1191,7 @@ export type Database = {
           location_ids: string[] | null
           phone: string | null
           photo_url: string | null
+          planned_departure_date: string | null
           preferred_social_handle: string | null
           specialties: string[] | null
           stylist_level: string | null
@@ -1208,6 +1210,7 @@ export type Database = {
           birthday?: string | null
           created_at?: string
           dd_certified?: boolean | null
+          departure_notes?: string | null
           display_name?: string | null
           email?: string | null
           emergency_contact?: string | null
@@ -1231,6 +1234,7 @@ export type Database = {
           location_ids?: string[] | null
           phone?: string | null
           photo_url?: string | null
+          planned_departure_date?: string | null
           preferred_social_handle?: string | null
           specialties?: string[] | null
           stylist_level?: string | null
@@ -1249,6 +1253,7 @@ export type Database = {
           birthday?: string | null
           created_at?: string
           dd_certified?: boolean | null
+          departure_notes?: string | null
           display_name?: string | null
           email?: string | null
           emergency_contact?: string | null
@@ -1272,6 +1277,7 @@ export type Database = {
           location_ids?: string[] | null
           phone?: string | null
           photo_url?: string | null
+          planned_departure_date?: string | null
           preferred_social_handle?: string | null
           specialties?: string[] | null
           stylist_level?: string | null
@@ -3689,6 +3695,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      staffing_history: {
+        Row: {
+          assistant_count: number
+          assistant_ratio: number | null
+          created_at: string | null
+          id: string
+          location_id: string
+          record_date: string
+          stylist_capacity: number | null
+          stylist_count: number
+        }
+        Insert: {
+          assistant_count?: number
+          assistant_ratio?: number | null
+          created_at?: string | null
+          id?: string
+          location_id: string
+          record_date?: string
+          stylist_capacity?: number | null
+          stylist_count?: number
+        }
+        Update: {
+          assistant_count?: number
+          assistant_ratio?: number | null
+          created_at?: string | null
+          id?: string
+          location_id?: string
+          record_date?: string
+          stylist_capacity?: number | null
+          stylist_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staffing_history_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stylist_levels: {
         Row: {

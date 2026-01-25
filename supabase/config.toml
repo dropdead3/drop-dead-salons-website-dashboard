@@ -41,3 +41,9 @@ verify_jwt = false
 
 [functions.update-phorest-appointment]
 verify_jwt = false
+
+[functions.record-staffing-snapshot]
+verify_jwt = false
+
+[functions.check-staffing-levels]
+verify_jwt = false
