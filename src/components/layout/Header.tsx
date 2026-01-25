@@ -40,11 +40,26 @@ export function Header() {
   const [isOverDark, setIsOverDark] = useState(false);
   const [isStaffMenuOpen, setIsStaffMenuOpen] = useState(false);
   const [hiddenNavItems, setHiddenNavItems] = useState<number[]>([]);
+  const [isDesktop, setIsDesktop] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const staffMenuRef = useRef<HTMLDivElement>(null);
   const navContainerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const location = useLocation();
+
+  // Track desktop breakpoint for sticky effects
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024); // lg breakpoint
+    };
+    
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
+
+  // Desktop-only scroll state - sticky effects only apply on lg+
+  const isScrolledDesktop = isScrolled && isDesktop;
 
   // All nav items with their priorities for responsive hiding
   // Priority: higher number = hidden first
@@ -200,27 +215,27 @@ export function Header() {
         ref={headerRef}
         className={cn(
           "sticky top-0 left-0 right-0 z-50 px-4 md:px-6 lg:px-8 transition-[padding] duration-400",
-          isScrolled ? "pt-4 md:pt-6 lg:pt-8" : "pt-2"
+          isScrolledDesktop ? "pt-4 md:pt-6 lg:pt-8" : "pt-2"
         )}
       >
         <motion.div
           initial={false}
           animate={{
-            backgroundColor: isScrolled 
+            backgroundColor: isScrolledDesktop 
               ? isOverDark ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.1)" 
               : "transparent",
-            backdropFilter: isScrolled ? "blur(24px) saturate(1.5)" : "blur(0px)",
-            borderColor: isScrolled 
+            backdropFilter: isScrolledDesktop ? "blur(24px) saturate(1.5)" : "blur(0px)",
+            borderColor: isScrolledDesktop 
               ? isOverDark ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.2)" 
               : "transparent",
-            boxShadow: isScrolled 
+            boxShadow: isScrolledDesktop 
               ? "0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
               : "none",
           }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className={cn(
             "rounded-full border transition-colors duration-300",
-            isScrolled 
+            isScrolledDesktop 
               ? isOverDark ? "bg-black/20" : "bg-white/10" 
               : "bg-transparent"
           )}
@@ -236,13 +251,13 @@ export function Header() {
                 to="/"
                 className="flex items-center hover:opacity-70 transition-opacity relative h-12"
               >
-                {/* Primary Logo - shows when not scrolled OR scrolling up */}
+                {/* Primary Logo - shows when not scrolled OR scrolling up (desktop only for transition) */}
                 <img
                   src={Logo}
                   alt="Drop Dead"
                   style={{ 
-                    opacity: !isScrolled || isScrollingUp ? 1 : 0,
-                    transform: !isScrolled || isScrollingUp ? "scale(1)" : "scale(0.95)",
+                    opacity: !isScrolledDesktop || isScrollingUp ? 1 : 0,
+                    transform: !isScrolledDesktop || isScrollingUp ? "scale(1)" : "scale(0.95)",
                     transition: "opacity 0.5s ease-out, transform 0.5s ease-out"
                   }}
                   className={cn(
@@ -250,13 +265,13 @@ export function Header() {
                     isOverDark && "invert"
                   )}
                 />
-                {/* Secondary Logo - shows when scrolled AND scrolling down */}
+                {/* Secondary Logo - shows when scrolled AND scrolling down (desktop only) */}
                 <img
                   src={LogoIcon}
                   alt="Drop Dead"
                   style={{ 
-                    opacity: isScrolled && !isScrollingUp ? 1 : 0,
-                    transform: isScrolled && !isScrollingUp ? "scale(1)" : "scale(0.95)",
+                    opacity: isScrolledDesktop && !isScrollingUp ? 1 : 0,
+                    transform: isScrolledDesktop && !isScrollingUp ? "scale(1)" : "scale(0.95)",
                     transition: "opacity 0.5s ease-out 0.1s, transform 0.5s ease-out 0.1s"
                   }}
                   className={cn(
