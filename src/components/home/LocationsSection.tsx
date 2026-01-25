@@ -99,7 +99,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
             
             {/* Closed Today Notice */}
             {showClosedNotice && (
-              <div className="absolute top-4 left-4 right-4 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 flex items-center gap-2">
+              <div className="absolute top-4 left-4 bg-amber-500/10 border border-amber-500/30 rounded-full px-3 py-2 flex items-center gap-2 w-fit">
                 <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
                 <span className="text-xs text-amber-700 font-medium">
                   {holidayClosure 
