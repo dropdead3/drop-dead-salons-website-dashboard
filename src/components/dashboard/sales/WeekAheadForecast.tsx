@@ -19,6 +19,42 @@ import {
   Cell 
 } from 'recharts';
 
+// Custom X-axis tick to show day name, revenue, and appointments under each bar
+function CustomXAxisTick({ x, y, payload, days, peakDate }: any) {
+  const day = days.find((d: DayForecast) => d.dayName === payload.value);
+  if (!day) return null;
+  
+  const isPeak = day.date === peakDate;
+  
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text 
+        x={0} y={0} dy={12} 
+        textAnchor="middle" 
+        className="fill-foreground text-[11px]"
+        style={{ fontWeight: 500 }}
+      >
+        {day.dayName}
+      </text>
+      <text 
+        x={0} y={0} dy={26} 
+        textAnchor="middle" 
+        className={cn("text-[10px]", isPeak ? "fill-[hsl(var(--chart-2))]" : "fill-muted-foreground")}
+        style={{ fontWeight: isPeak ? 500 : 400 }}
+      >
+        ${day.revenue.toLocaleString()}
+      </text>
+      <text 
+        x={0} y={0} dy={38} 
+        textAnchor="middle" 
+        className="fill-muted-foreground text-[9px]"
+      >
+        {day.appointmentCount} appt
+      </text>
+    </g>
+  );
+}
+
 export function WeekAheadForecast() {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
@@ -122,15 +158,17 @@ export function WeekAheadForecast() {
           </div>
         </div>
 
-        {/* Bar Chart */}
-        <div className="h-[120px]">
+        {/* Bar Chart with labels underneath */}
+        <div className="h-[180px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+            <BarChart data={chartData} margin={{ top: 5, right: 5, bottom: 45, left: 5 }}>
               <XAxis 
                 dataKey="name" 
-                tick={{ fontSize: 11 }} 
+                tick={<CustomXAxisTick days={days} peakDate={peakDay?.date} />}
                 tickLine={false}
                 axisLine={false}
+                interval={0}
+                height={50}
               />
               <YAxis hide domain={[0, 'auto']} />
               <Tooltip
@@ -176,57 +214,7 @@ export function WeekAheadForecast() {
             </span>
           </div>
         )}
-
-        {/* Daily Breakdown - Compact List */}
-        <div className="space-y-1">
-          {days.map((day) => (
-            <DayRow 
-              key={day.date} 
-              day={day} 
-              maxRevenue={maxRevenue}
-              isPeak={peakDay?.date === day.date}
-            />
-          ))}
-        </div>
       </CardContent>
     </Card>
-  );
-}
-
-function DayRow({ 
-  day, 
-  maxRevenue, 
-  isPeak 
-}: { 
-  day: DayForecast; 
-  maxRevenue: number;
-  isPeak: boolean;
-}) {
-  const percentage = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
-  
-  return (
-    <div className={cn(
-      "flex items-center gap-3 py-1.5 px-2 rounded-md transition-colors",
-      isPeak && "bg-chart-2/5"
-    )}>
-      <div className="w-10 text-xs font-medium text-muted-foreground">
-        {day.dayName}
-      </div>
-      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-        <div 
-          className={cn(
-            "h-full rounded-full transition-all duration-500",
-            isPeak ? "bg-chart-2" : "bg-primary/60"
-          )}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-      <div className="w-16 text-right text-xs tabular-nums">
-        <BlurredAmount>${day.revenue.toLocaleString()}</BlurredAmount>
-      </div>
-      <div className="w-12 text-right text-xs text-muted-foreground tabular-nums">
-        {day.appointmentCount} appts
-      </div>
-    </div>
   );
 }
