@@ -79,7 +79,7 @@ export function WeekAheadForecast() {
               onValueChange={setSelectedLocation}
               includeAll={true}
               allLabel="All Locations"
-              triggerClassName="h-8 w-[140px] text-xs"
+              triggerClassName="h-8 w-[180px] text-xs"
             />
             <Badge variant="outline" className="text-xs whitespace-nowrap">
               {totalAppointments} bookings
