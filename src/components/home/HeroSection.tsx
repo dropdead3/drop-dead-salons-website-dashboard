@@ -258,7 +258,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-20"
         aria-label="Scroll down"
       >
-        <span className="text-xs uppercase tracking-[0.2em] font-display -mr-[0.2em]">Scroll</span>
+        <span className="text-xs uppercase tracking-normal md:tracking-[0.2em] font-display">Scroll</span>
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ 
