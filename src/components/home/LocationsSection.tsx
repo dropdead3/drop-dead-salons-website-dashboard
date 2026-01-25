@@ -273,7 +273,7 @@ export function LocationsSection() {
     <section 
       ref={sectionRef}
       data-theme="light"
-      className="relative pt-40 sm:pt-52 md:pt-64 pb-20 md:pb-28 bg-background"
+      className="relative pt-44 sm:pt-56 md:pt-64 pb-24 md:pb-28 bg-background"
     >
       {/* Gradient transition from stylists section */}
       <div 
