@@ -79,11 +79,11 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
   return (
     <Wrapper
       {...wrapperProps}
-      className="group relative flex flex-col items-center gap-4 px-12 md:px-16 lg:px-20 cursor-pointer"
+      className="group relative flex flex-col items-center gap-4 px-10 md:px-14 lg:px-18 cursor-pointer"
     >
       {/* Drink image container with tooltip */}
       <div className="relative">
-        <div className="w-24 h-32 md:w-28 md:h-36 lg:w-32 lg:h-40 transition-transform duration-300 group-hover:scale-110">
+        <div className="w-32 h-40 md:w-28 md:h-36 lg:w-32 lg:h-40 transition-transform duration-300 group-hover:scale-110">
           <img 
             src={drink.image} 
             alt={drink.name}
@@ -127,7 +127,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
         </div>
       </div>
       
-      <h3 className="font-display text-lg md:text-xl lg:text-2xl text-foreground whitespace-nowrap">
+      <h3 className="font-display text-xl md:text-2xl lg:text-3xl text-foreground whitespace-nowrap">
         {drink.name}
       </h3>
     </Wrapper>
@@ -170,7 +170,7 @@ export function DrinkMenuSection() {
     baseX.current -= moveBy;
     
     // Reset position for infinite loop (based on single set width ~1200px)
-    const singleSetWidth = 1200;
+    const singleSetWidth = 1400;
     if (baseX.current <= -singleSetWidth) {
       baseX.current += singleSetWidth;
     }
@@ -194,7 +194,7 @@ export function DrinkMenuSection() {
         transition={{ duration: 0.6 }}
         className="container mx-auto px-6 text-center mb-12"
       >
-        <p className="text-xs md:text-sm uppercase tracking-[0.2em] text-muted-foreground font-display">
+        <p className="text-sm md:text-base uppercase tracking-[0.2em] text-muted-foreground font-display">
           Drinks on us. We have an exclusive menu of{" "}
           <span className="underline underline-offset-4">complimentary</span>{" "}
           options for your appointment.
