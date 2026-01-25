@@ -3,14 +3,13 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
+import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { 
   Calendar, 
   TrendingUp, 
-  TrendingDown,
   Users,
   AlertTriangle,
   CheckCircle,
@@ -21,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useOperationalAnalytics } from '@/hooks/useOperationalAnalytics';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { 
@@ -56,6 +56,8 @@ export default function OperationalAnalytics() {
   const [dateRange, setDateRange] = useState<'week' | 'month' | '3months'>('month');
   const { data: locations = [] } = useActiveLocations();
   
+  const locationFilter = selectedLocation === 'all' ? undefined : selectedLocation;
+  
   const { 
     dailyVolume, 
     hourlyDistribution, 
@@ -63,8 +65,10 @@ export default function OperationalAnalytics() {
     retention, 
     summary,
     isLoading 
-  } = useOperationalAnalytics(
-    selectedLocation === 'all' ? undefined : selectedLocation,
+  } = useOperationalAnalytics(locationFilter, dateRange);
+
+  const { workload, isLoading: utilizationLoading } = useStaffUtilization(
+    locationFilter,
     dateRange
   );
 
@@ -185,6 +189,12 @@ export default function OperationalAnalytics() {
           <HiringCapacityCard />
           <StaffingTrendChart />
         </div>
+
+        {/* Stylist Workload Distribution */}
+        <StylistWorkloadCard 
+          workload={workload}
+          isLoading={utilizationLoading}
+        />
 
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Appointment Volume Chart */}
