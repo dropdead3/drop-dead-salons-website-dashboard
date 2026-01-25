@@ -42,6 +42,8 @@ export interface Location {
   show_on_website: boolean;
   display_order: number;
   tax_rate: number | null;
+  stylist_capacity: number | null;
+  assistant_ratio: number | null;
   created_at: string;
   updated_at: string;
 }
