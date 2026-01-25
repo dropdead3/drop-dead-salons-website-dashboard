@@ -231,10 +231,10 @@ export function Header() {
           )}>
             <div className="flex items-center justify-between h-16 lg:h-20 gap-4">
             {/* Logo with scroll transition - responsive width to give nav more room */}
-            <div className="w-32 lg:w-40 xl:w-56 shrink-0 flex items-center">
+            <div className="w-40 lg:w-40 xl:w-56 shrink-0 flex items-center">
               <Link
                 to="/"
-                className="flex items-center hover:opacity-70 transition-opacity relative h-10"
+                className="flex items-center hover:opacity-70 transition-opacity relative h-12"
               >
                 {/* Primary Logo - shows when not scrolled OR scrolling up */}
                 <img
@@ -246,7 +246,7 @@ export function Header() {
                     transition: "opacity 0.5s ease-out, transform 0.5s ease-out"
                   }}
                   className={cn(
-                    "h-10 lg:h-10 w-auto",
+                    "h-12 lg:h-10 w-auto",
                     isOverDark && "invert"
                   )}
                 />
