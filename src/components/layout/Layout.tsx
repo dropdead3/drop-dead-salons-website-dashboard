@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { FooterCTA } from "./FooterCTA";
 import { StickyFooterBar } from "./StickyFooterBar";
 import { PageTransition } from "./PageTransition";
 
@@ -47,6 +48,9 @@ export function Layout({ children }: LayoutProps) {
         <main className="flex-1 bg-background">
           <PageTransition>{children}</PageTransition>
         </main>
+        
+        {/* CTA - part of scrolling content, NOT fixed footer */}
+        <FooterCTA />
         
         {/* Bottom fade/blur edge for parallax reveal transition */}
         <div 
