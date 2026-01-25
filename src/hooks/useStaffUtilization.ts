@@ -14,6 +14,9 @@ export interface StaffWorkload {
   cancelledCount: number;
   averagePerDay: number;
   utilizationScore: number; // 0-100 based on relative workload
+  totalRevenue: number;
+  averageTicket: number;
+  efficiencyScore: number; // 100 = team average
 }
 
 export interface ServiceQualification {
@@ -74,12 +77,13 @@ export function useStaffUtilization(locationId?: string, dateRange: 'week' | 'mo
 
       if (staffError) throw staffError;
 
-      // Then get appointments
+      // Then get appointments with revenue data
       let aptQuery = supabase
         .from('phorest_appointments')
-        .select('stylist_user_id, status')
+        .select('stylist_user_id, status, total_price')
         .gte('appointment_date', startDateStr)
-        .lte('appointment_date', endDateStr);
+        .lte('appointment_date', endDateStr)
+        .not('status', 'eq', 'cancelled');
 
       if (locationId) {
         aptQuery = aptQuery.eq('location_id', locationId);
@@ -94,6 +98,7 @@ export function useStaffUtilization(locationId?: string, dateRange: 'week' | 'mo
         completedCount: number;
         noShowCount: number;
         cancelledCount: number;
+        totalRevenue: number;
       }>();
 
       (appointments || []).forEach(apt => {
@@ -104,18 +109,25 @@ export function useStaffUtilization(locationId?: string, dateRange: 'week' | 'mo
           completedCount: 0,
           noShowCount: 0,
           cancelledCount: 0,
+          totalRevenue: 0,
         };
 
         existing.appointmentCount++;
+        existing.totalRevenue += Number(apt.total_price) || 0;
         if (apt.status === 'completed') existing.completedCount++;
         if (apt.status === 'no_show') existing.noShowCount++;
-        if (apt.status === 'cancelled') existing.cancelledCount++;
 
         staffStats.set(apt.stylist_user_id, existing);
       });
 
       // Calculate max for utilization score
       const maxAppointments = Math.max(...Array.from(staffStats.values()).map(s => s.appointmentCount), 1);
+
+      // Calculate team average ticket for efficiency score
+      const allStats = Array.from(staffStats.values());
+      const totalTeamRevenue = allStats.reduce((sum, s) => sum + s.totalRevenue, 0);
+      const totalTeamAppointments = allStats.reduce((sum, s) => sum + s.appointmentCount, 0);
+      const teamAvgTicket = totalTeamAppointments > 0 ? totalTeamRevenue / totalTeamAppointments : 0;
 
       // Build workload array
       const workload: StaffWorkload[] = (staffMappings || []).map((staff: any) => {
@@ -124,7 +136,17 @@ export function useStaffUtilization(locationId?: string, dateRange: 'week' | 'mo
           completedCount: 0,
           noShowCount: 0,
           cancelledCount: 0,
+          totalRevenue: 0,
         };
+
+        const averageTicket = stats.appointmentCount > 0 
+          ? stats.totalRevenue / stats.appointmentCount 
+          : 0;
+        
+        // Efficiency score: 100 = team average, higher = more productive
+        const efficiencyScore = teamAvgTicket > 0 
+          ? Math.min(200, Math.round((averageTicket / teamAvgTicket) * 100))
+          : 100;
 
         return {
           userId: staff.user_id,
@@ -135,6 +157,8 @@ export function useStaffUtilization(locationId?: string, dateRange: 'week' | 'mo
           ...stats,
           averagePerDay: daysInRange > 0 ? stats.appointmentCount / daysInRange : 0,
           utilizationScore: (stats.appointmentCount / maxAppointments) * 100,
+          averageTicket,
+          efficiencyScore,
         };
       });
 
