@@ -7,7 +7,7 @@ export function FooterCTA() {
 
   return (
     <section 
-      className="bg-secondary text-foreground py-24 lg:py-32 text-center"
+      className="relative z-10 bg-secondary text-foreground py-24 lg:py-32 text-center"
       data-theme="light"
     >
       <div className="container mx-auto px-6 lg:px-12">
