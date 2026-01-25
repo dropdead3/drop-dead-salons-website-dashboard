@@ -97,13 +97,17 @@ export function useWeekAheadRevenue(locationId?: string) {
         const dateKey = apt.appointment_date;
         if (byDate[dateKey]) {
           const price = Number(apt.total_price) || 0;
-          const isConfirmed = ['confirmed', 'checked_in', 'completed'].includes(apt.status?.toLowerCase() || '');
+          const status = apt.status?.toLowerCase() || '';
+          // Treat 'confirmed', 'checked_in', 'completed' as confirmed
+          // Treat 'unknown' as confirmed (default state from Phorest sync)
+          // Only 'unconfirmed' or similar explicitly unconfirmed statuses count as unconfirmed
+          const isUnconfirmed = status === 'unconfirmed' || status === 'pending';
           
           byDate[dateKey].revenue += price;
-          if (isConfirmed) {
-            byDate[dateKey].confirmedRevenue += price;
-          } else {
+          if (isUnconfirmed) {
             byDate[dateKey].unconfirmedRevenue += price;
+          } else {
+            byDate[dateKey].confirmedRevenue += price;
           }
           byDate[dateKey].count += 1;
           byDate[dateKey].appointments.push({
