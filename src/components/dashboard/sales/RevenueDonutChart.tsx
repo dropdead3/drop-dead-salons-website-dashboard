@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface RevenueDonutChartProps {
   serviceRevenue: number;
@@ -84,6 +85,7 @@ export function RevenueDonutChart({
         <div className="pt-2 mt-2 border-t border-border/50">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Retail %</span>
+            <MetricInfoTooltip description="Product Revenue ÷ Total Revenue × 100. Shows retail sales as a percentage of all revenue." />
             <span className="font-semibold text-foreground">
               {100 - servicePercent}%
             </span>

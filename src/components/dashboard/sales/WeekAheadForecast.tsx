@@ -7,6 +7,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useWeekAheadRevenue, DayForecast } from '@/hooks/useWeekAheadRevenue';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CalendarRange, TrendingUp, Calendar, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -173,7 +174,10 @@ export function WeekAheadForecast() {
                 prefix="$"
                 className="text-lg font-display tabular-nums"
               />
-              <p className="text-xs text-muted-foreground">7-Day Total</p>
+              <div className="flex items-center gap-1 justify-center">
+                <p className="text-xs text-muted-foreground">7-Day Total</p>
+                <MetricInfoTooltip description="Sum of projected revenue from all scheduled appointments over the next 7 days." />
+              </div>
             </div>
             <div className="text-center p-3 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-1">
@@ -184,14 +188,20 @@ export function WeekAheadForecast() {
                 prefix="$"
                 className="text-lg font-display tabular-nums"
               />
-              <p className="text-xs text-muted-foreground">Daily Avg</p>
+              <div className="flex items-center gap-1 justify-center">
+                <p className="text-xs text-muted-foreground">Daily Avg</p>
+                <MetricInfoTooltip description="7-Day Total ÷ 7. Average projected daily revenue for the upcoming week." />
+              </div>
             </div>
             <div className="text-center p-3 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-1">
                 <Users className="w-4 h-4 text-chart-3" />
               </div>
               <span className="text-lg font-display tabular-nums">{totalAppointments}</span>
-              <p className="text-xs text-muted-foreground">Appointments</p>
+              <div className="flex items-center gap-1 justify-center">
+                <p className="text-xs text-muted-foreground">Appointments</p>
+                <MetricInfoTooltip description="Total count of scheduled appointments across the next 7 days." />
+              </div>
             </div>
           </div>
 

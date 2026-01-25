@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Medal } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface Performer {
   user_id: string;
@@ -13,6 +14,7 @@ interface Performer {
 interface TopPerformersCardProps {
   performers: Performer[];
   isLoading?: boolean;
+  showInfoTooltip?: boolean;
 }
 
 const getRankIcon = (rank: number) => {
@@ -41,7 +43,7 @@ const getRankBg = (rank: number) => {
   }
 };
 
-export function TopPerformersCard({ performers, isLoading }: TopPerformersCardProps) {
+export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false }: TopPerformersCardProps) {
   if (isLoading) {
     return (
       <div className="space-y-2">
