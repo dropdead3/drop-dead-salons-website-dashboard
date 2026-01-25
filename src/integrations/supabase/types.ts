@@ -1913,6 +1913,7 @@ export type Database = {
       locations: {
         Row: {
           address: string
+          assistant_ratio: number | null
           booking_url: string | null
           city: string
           created_at: string | null
@@ -1929,11 +1930,13 @@ export type Database = {
           phorest_branch_id: string | null
           show_on_website: boolean
           store_number: string | null
+          stylist_capacity: number | null
           tax_rate: number | null
           updated_at: string | null
         }
         Insert: {
           address: string
+          assistant_ratio?: number | null
           booking_url?: string | null
           city: string
           created_at?: string | null
@@ -1950,11 +1953,13 @@ export type Database = {
           phorest_branch_id?: string | null
           show_on_website?: boolean
           store_number?: string | null
+          stylist_capacity?: number | null
           tax_rate?: number | null
           updated_at?: string | null
         }
         Update: {
           address?: string
+          assistant_ratio?: number | null
           booking_url?: string | null
           city?: string
           created_at?: string | null
@@ -1971,6 +1976,7 @@ export type Database = {
           phorest_branch_id?: string | null
           show_on_website?: boolean
           store_number?: string | null
+          stylist_capacity?: number | null
           tax_rate?: number | null
           updated_at?: string | null
         }

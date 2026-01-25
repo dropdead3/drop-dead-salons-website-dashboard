@@ -87,6 +87,8 @@ type LocationFormData = {
   is_active: boolean;
   display_order: number;
   tax_rate: number | null;
+  stylist_capacity: number | null;
+  assistant_ratio: number | null;
 };
 
 const emptyForm: LocationFormData = {
@@ -105,6 +107,8 @@ const emptyForm: LocationFormData = {
   is_active: true,
   display_order: 0,
   tax_rate: null,
+  stylist_capacity: null,
+  assistant_ratio: 0.5,
 };
 
 export function LocationsSettingsContent() {
@@ -146,6 +150,8 @@ export function LocationsSettingsContent() {
       is_active: location.is_active,
       display_order: location.display_order,
       tax_rate: location.tax_rate,
+      stylist_capacity: location.stylist_capacity,
+      assistant_ratio: location.assistant_ratio,
     });
     setIsDialogOpen(true);
   };
@@ -169,6 +175,8 @@ export function LocationsSettingsContent() {
       show_on_website: true, // Default to true for new locations
       display_order: formData.display_order,
       tax_rate: formData.tax_rate,
+      stylist_capacity: formData.stylist_capacity,
+      assistant_ratio: formData.assistant_ratio,
     };
 
     if (editingLocation) {
@@ -511,6 +519,49 @@ export function LocationsSettingsContent() {
                   <p className="text-xs text-muted-foreground">
                     Leave empty to use the default tax rate from Business Settings
                   </p>
+                </div>
+
+                {/* Staffing Capacity */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h4 className="font-medium text-sm">Staffing Capacity</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="stylist_capacity">Stylist Capacity</Label>
+                      <Input
+                        id="stylist_capacity"
+                        type="number"
+                        min="0"
+                        value={formData.stylist_capacity ?? ''}
+                        onChange={(e) => setFormData(f => ({ 
+                          ...f, 
+                          stylist_capacity: e.target.value ? parseInt(e.target.value) : null 
+                        }))}
+                        placeholder="e.g., 8"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Target number of stylists for this location
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="assistant_ratio">Assistant Ratio</Label>
+                      <Input
+                        id="assistant_ratio"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="5"
+                        value={formData.assistant_ratio ?? ''}
+                        onChange={(e) => setFormData(f => ({ 
+                          ...f, 
+                          assistant_ratio: e.target.value ? parseFloat(e.target.value) : null 
+                        }))}
+                        placeholder="e.g., 0.5"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Assistants per stylist (0.5 = 1 per 2 stylists)
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="flex items-center justify-between pt-4 border-t">
