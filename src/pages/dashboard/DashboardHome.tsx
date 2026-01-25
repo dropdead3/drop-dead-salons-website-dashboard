@@ -45,6 +45,7 @@ import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrac
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
+import { WeekAheadForecast } from '@/components/dashboard/sales/WeekAheadForecast';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -244,6 +245,13 @@ export default function DashboardHome() {
         {isLeadership && (
           <VisibilityGate elementKey="sales_overview">
             <AggregateSalesCard />
+          </VisibilityGate>
+        )}
+
+        {/* Week Ahead Forecast - Leadership Only */}
+        {isLeadership && (
+          <VisibilityGate elementKey="week_ahead_forecast">
+            <WeekAheadForecast />
           </VisibilityGate>
         )}
 
