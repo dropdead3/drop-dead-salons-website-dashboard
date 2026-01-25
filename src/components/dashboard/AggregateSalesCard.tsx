@@ -49,7 +49,7 @@ type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth'
 
 export function AggregateSalesCard() {
   const navigate = useNavigate();
-  const [dateRange, setDateRange] = useState<DateRange>('7d');
+  const [dateRange, setDateRange] = useState<DateRange>('today');
   const { hideNumbers } = useHideNumbers();
 
   const dateFilters = (() => {
@@ -216,12 +216,12 @@ export function AggregateSalesCard() {
       <div className="grid lg:grid-cols-4 gap-6 mb-6">
         {/* KPIs with Trends */}
         <div className="lg:col-span-3">
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
+          <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
               <div className="flex justify-center mb-2">
-                <DollarSign className="w-5 h-5 text-primary" />
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <BlurredAmount className="text-2xl font-display">
+              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
                 ${displayMetrics.totalRevenue.toLocaleString()}
               </BlurredAmount>
               <p className="text-xs text-muted-foreground mt-1 mb-1">Total Revenue</p>
@@ -232,11 +232,11 @@ export function AggregateSalesCard() {
                 />
               )}
             </div>
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
               <div className="flex justify-center mb-2">
-                <Scissors className="w-5 h-5 text-primary" />
+                <Scissors className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <BlurredAmount className="text-2xl font-display">
+              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
                 ${displayMetrics.serviceRevenue.toLocaleString()}
               </BlurredAmount>
               <p className="text-xs text-muted-foreground mt-1 mb-1">Services</p>
@@ -247,11 +247,11 @@ export function AggregateSalesCard() {
                 />
               )}
             </div>
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
               <div className="flex justify-center mb-2">
-                <ShoppingBag className="w-5 h-5 text-chart-2" />
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-chart-2" />
               </div>
-              <BlurredAmount className="text-2xl font-display">
+              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
                 ${displayMetrics.productRevenue.toLocaleString()}
               </BlurredAmount>
               <p className="text-xs text-muted-foreground mt-1 mb-1">Products</p>
@@ -262,11 +262,11 @@ export function AggregateSalesCard() {
                 />
               )}
             </div>
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
               <div className="flex justify-center mb-2">
-                <CreditCard className="w-5 h-5 text-chart-3" />
+                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-chart-3" />
               </div>
-              <BlurredAmount className="text-2xl font-display">
+              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
                 {displayMetrics.totalTransactions}
               </BlurredAmount>
               <p className="text-xs text-muted-foreground mt-1 mb-1">Transactions</p>
@@ -277,11 +277,11 @@ export function AggregateSalesCard() {
                 />
               )}
             </div>
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
               <div className="flex justify-center mb-2">
-                <Receipt className="w-5 h-5 text-chart-4" />
+                <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-chart-4" />
               </div>
-              <BlurredAmount className="text-2xl font-display">
+              <BlurredAmount className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate">
                 ${isFinite(displayMetrics.averageTicket) ? Math.round(displayMetrics.averageTicket) : 0}
               </BlurredAmount>
               <p className="text-xs text-muted-foreground mt-1 mb-1">Avg Ticket</p>
