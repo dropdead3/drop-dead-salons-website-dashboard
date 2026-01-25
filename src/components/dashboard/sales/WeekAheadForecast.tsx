@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useWeekAheadRevenue, DayForecast } from '@/hooks/useWeekAheadRevenue';
+import { LocationSelect } from '@/components/ui/location-select';
 import { CalendarRange, TrendingUp, Calendar, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -18,7 +20,8 @@ import {
 } from 'recharts';
 
 export function WeekAheadForecast() {
-  const { data, isLoading, error } = useWeekAheadRevenue();
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
 
   if (isLoading) {
     return (
@@ -70,9 +73,18 @@ export function WeekAheadForecast() {
             <CalendarRange className="w-5 h-5 text-primary" />
             <CardTitle className="font-display text-base">Week Ahead</CardTitle>
           </div>
-          <Badge variant="outline" className="text-xs">
-            {totalAppointments} bookings
-          </Badge>
+          <div className="flex items-center gap-2">
+            <LocationSelect
+              value={selectedLocation}
+              onValueChange={setSelectedLocation}
+              includeAll={true}
+              allLabel="All Locations"
+              triggerClassName="h-8 w-[140px] text-xs"
+            />
+            <Badge variant="outline" className="text-xs whitespace-nowrap">
+              {totalAppointments} bookings
+            </Badge>
+          </div>
         </div>
         <CardDescription>Projected revenue from scheduled appointments</CardDescription>
       </CardHeader>
