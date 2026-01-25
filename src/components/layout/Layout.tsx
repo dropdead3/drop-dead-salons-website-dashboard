@@ -47,6 +47,17 @@ export function Layout({ children }: LayoutProps) {
         <main className="flex-1 bg-background">
           <PageTransition>{children}</PageTransition>
         </main>
+        
+        {/* Bottom fade/blur edge for parallax reveal transition */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-24 md:h-32 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.5) 40%, hsl(var(--background)) 100%)',
+            backdropFilter: 'blur(2px)',
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)',
+          }}
+        />
       </div>
 
       <StickyFooterBar />
