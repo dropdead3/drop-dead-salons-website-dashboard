@@ -79,6 +79,7 @@ import Schedule from "./pages/dashboard/Schedule";
 import AllNotifications from "./pages/dashboard/AllNotifications";
 import Changelog from "./pages/dashboard/Changelog";
 import ChangelogManager from "./pages/dashboard/admin/ChangelogManager";
+import MetricsGlossary from "./pages/dashboard/MetricsGlossary";
 import PublicBooking from "./pages/PublicBooking";
 
 const queryClient = new QueryClient();
@@ -131,6 +132,7 @@ const App = () => (
               <Route path="/dashboard/my-clients" element={<ProtectedRoute requiredPermission="view_own_stats"><MyClients /></ProtectedRoute>} />
               <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
               <Route path="/dashboard/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
+              <Route path="/dashboard/metrics-glossary" element={<ProtectedRoute><MetricsGlossary /></ProtectedRoute>} />
               <Route path="/dashboard/design-system" element={<ProtectedRoute requiredPermission="manage_settings"><DesignSystem /></ProtectedRoute>} />
               
               {/* Admin routes */}
