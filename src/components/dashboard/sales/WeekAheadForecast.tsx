@@ -21,36 +21,50 @@ import {
 
 // Custom X-axis tick to show day name, revenue, and appointments under each bar
 function CustomXAxisTick({ x, y, payload, days, peakDate }: any) {
+  const [isHovered, setIsHovered] = useState(false);
   const day = days.find((d: DayForecast) => d.dayName === payload.value);
   if (!day) return null;
   
   const isPeak = day.date === peakDate;
   
   return (
-    <g transform={`translate(${x},${y})`}>
-      <text 
-        x={0} y={0} dy={12} 
-        textAnchor="middle" 
-        className="fill-foreground text-[11px]"
-        style={{ fontWeight: 500 }}
+    <g 
+      transform={`translate(${x},${y})`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ cursor: 'pointer' }}
+    >
+      <g
+        style={{
+          transform: isHovered ? 'scale(1.15)' : 'scale(1)',
+          transformOrigin: 'center top',
+          transition: 'transform 0.2s ease-out',
+        }}
       >
-        {day.dayName}
-      </text>
-      <text 
-        x={0} y={0} dy={26} 
-        textAnchor="middle" 
-        className={cn("text-[10px]", isPeak ? "fill-[hsl(var(--chart-2))]" : "fill-muted-foreground")}
-        style={{ fontWeight: isPeak ? 500 : 400 }}
-      >
-        ${day.revenue.toLocaleString()}
-      </text>
-      <text 
-        x={0} y={0} dy={38} 
-        textAnchor="middle" 
-        className="fill-muted-foreground text-[9px]"
-      >
-        {day.appointmentCount} appt
-      </text>
+        <text 
+          x={0} y={0} dy={12} 
+          textAnchor="middle" 
+          className="fill-foreground text-[11px]"
+          style={{ fontWeight: 500 }}
+        >
+          {day.dayName}
+        </text>
+        <text 
+          x={0} y={0} dy={26} 
+          textAnchor="middle" 
+          className={cn("text-[10px]", isPeak ? "fill-[hsl(var(--chart-2))]" : "fill-muted-foreground")}
+          style={{ fontWeight: isPeak ? 500 : 400 }}
+        >
+          ${day.revenue.toLocaleString()}
+        </text>
+        <text 
+          x={0} y={0} dy={38} 
+          textAnchor="middle" 
+          className="fill-muted-foreground text-[9px]"
+        >
+          {day.appointmentCount} appt
+        </text>
+      </g>
     </g>
   );
 }
