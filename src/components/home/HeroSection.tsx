@@ -57,6 +57,11 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
   const subheadlineY = useTransform(scrollYProgress, [0, 1], [0, -150]);
   const ctaY = useTransform(scrollYProgress, [0, 1], [0, -200]);
 
+  // Directional scroll transforms for headline split animation
+  const topLineX = useTransform(scrollYProgress, [0, 0.4], [0, -150]); // Exit left
+  const bottomLineX = useTransform(scrollYProgress, [0, 0.4], [0, 150]); // Exit right
+  const headlineScrollOpacity = useTransform(scrollYProgress, [0, 0.35], [1, 0]);
+
   const scrollToContent = () => {
     window.scrollTo({
       top: window.innerHeight - 100,
@@ -155,10 +160,17 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 2.5 }}
+                style={{ x: topLineX, opacity: headlineScrollOpacity }}
               >
                 Drop Dead
               </motion.span>
-              <span className="block overflow-hidden h-[1.15em]">
+              <motion.span 
+                className="block overflow-hidden h-[1.15em]"
+                initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ ...springTransition, delay: 2.5 }}
+                style={{ x: bottomLineX, opacity: headlineScrollOpacity }}
+              >
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={rotatingWords[currentWordIndex]}
@@ -174,7 +186,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                     {rotatingWords[currentWordIndex]}
                   </motion.span>
                 </AnimatePresence>
-              </span>
+              </motion.span>
             </motion.h1>
 
             {/* Subheadline */}
