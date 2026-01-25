@@ -152,7 +152,7 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
 
             {/* Main headline - Always two lines: "Drop Dead" on first, rotating word on second */}
             <motion.h1
-              className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center"
+              className="font-display text-[clamp(3rem,10vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center"
               style={{ y: headlineY, filter: headingBlurFilter }}
             >
               <motion.span 
@@ -215,10 +215,10 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 >
                   <button
                     onClick={() => setConsultationOpen(true)}
-                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
+                    className="group w-full sm:w-auto px-10 py-5 text-lg md:text-base md:px-8 md:py-4 font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
                   >
                     <span className="relative z-10">I am a new client</span>
-                    <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
+                    <ArrowRight className="w-0 h-5 md:h-4 opacity-0 group-hover:w-5 md:group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
                   </button>
                 </motion.div>
                 <motion.div
@@ -228,10 +228,10 @@ export function HeroSection({ videoSrc }: HeroSectionProps) {
                 >
                   <Link
                     to="/booking"
-                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
+                    className="group w-full sm:w-auto px-10 py-5 text-lg md:text-base md:px-8 md:py-4 font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
                   >
                     <span className="relative z-10">I am a returning client</span>
-                    <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
+                    <ArrowRight className="w-0 h-5 md:h-4 opacity-0 group-hover:w-5 md:group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
                   </Link>
                 </motion.div>
               </div>
