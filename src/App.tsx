@@ -61,6 +61,7 @@ import NotificationPreferences from "./pages/dashboard/NotificationPreferences";
 import OnboardingTracker from "./pages/dashboard/admin/OnboardingTracker";
 import ClientEngineTracker from "./pages/dashboard/admin/ClientEngineTracker";
 import AssistantRequestsOverview from "./pages/dashboard/admin/AssistantRequestsOverview";
+import ScheduleRequests from "./pages/dashboard/admin/ScheduleRequests";
 import DashboardBuild from "./pages/dashboard/admin/DashboardBuild";
 import RecruitingPipeline from "./pages/dashboard/admin/RecruitingPipeline";
 import GraduationTracker from "./pages/dashboard/admin/GraduationTracker";
@@ -139,6 +140,7 @@ const App = () => (
               <Route path="/dashboard/admin/onboarding-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><OnboardingTracker /></ProtectedRoute>} />
               <Route path="/dashboard/admin/client-engine-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientEngineTracker /></ProtectedRoute>} />
               <Route path="/dashboard/admin/assistant-requests" element={<ProtectedRoute requiredPermission="view_team_overview"><AssistantRequestsOverview /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/schedule-requests" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ScheduleRequests /></ProtectedRoute>} />
               <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
               <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
               <Route path="/dashboard/admin/homepage-stylists" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><HomepageStylists /></ProtectedRoute>} />

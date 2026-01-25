@@ -157,6 +157,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/recruiting', label: 'Recruiting Pipeline', icon: Briefcase, permission: 'view_team_overview' },
   { href: '/dashboard/admin/graduation-tracker', label: 'Graduation Tracker', icon: GraduationCap, permission: 'view_team_overview' },
   { href: '/dashboard/admin/assistant-requests', label: 'Assistant Requests', icon: HandHelping, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/schedule-requests', label: 'Schedule Requests', icon: CalendarClock, permission: 'manage_schedule_requests' },
   { href: '/dashboard/admin/strikes', label: 'Staff Strikes', icon: AlertTriangle, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/business-cards', label: 'Business Cards', icon: CreditCard, permission: 'manage_settings' },
   { href: '/dashboard/admin/headshots', label: 'Headshots', icon: Camera, permission: 'manage_settings' },
