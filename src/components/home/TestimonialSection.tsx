@@ -75,12 +75,12 @@ export function TestimonialSection() {
     <section 
       ref={sectionRef} 
       data-theme="light"
-      className="py-24 lg:py-32 overflow-hidden"
+      className="py-20 lg:py-32 overflow-hidden"
     >
       {/* Header */}
       <div className="container mx-auto px-6 lg:px-12 mb-10">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 items-center md:items-end text-center md:text-left">
-          <div className="flex flex-col gap-3 items-center md:items-start">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="flex flex-col gap-3">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -92,7 +92,7 @@ export function TestimonialSection() {
               initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
               animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
               transition={{ duration: 0.9, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
-              className="text-4xl md:text-4xl lg:text-5xl font-display"
+              className="text-3xl md:text-4xl lg:text-5xl font-display"
             >
               Our happy 5-star reviews
             </motion.h2>

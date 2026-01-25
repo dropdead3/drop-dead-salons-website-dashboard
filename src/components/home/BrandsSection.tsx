@@ -8,14 +8,14 @@ const brandLogos = [
 
 export function BrandsSection() {
   return (
-    <section data-theme="light" className="py-16 md:py-20 bg-background">
+    <section data-theme="light" className="py-12 md:py-16 bg-background">
       <div className="container mx-auto" style={{ paddingLeft: 'calc(1.5rem + 6px)', paddingRight: 'calc(1.5rem + 6px)' }}>
         <div className="flex items-center">
           {/* Left side text with divider */}
           <div className="flex-shrink-0 pr-6 md:pr-10 flex items-center">
             <div className="max-w-[180px] md:max-w-[200px]">
               <p 
-                className="text-sm md:text-sm tracking-[0.02em] text-foreground/80 leading-relaxed"
+                className="text-xs md:text-sm tracking-[0.02em] text-foreground/80 leading-relaxed"
                 style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
               >
                 Our favorite brands

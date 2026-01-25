@@ -47,9 +47,9 @@ export function ExtensionsSection() {
           className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-oat blur-3xl pointer-events-none"
         />
 
-        <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center relative text-center lg:text-left">
+        <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center relative">
           {/* Left side - Content */}
-          <div className="space-y-8 flex flex-col items-center lg:items-start">
+          <div className="space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -73,7 +73,7 @@ export function ExtensionsSection() {
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="font-display text-5xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]"
+              className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]"
             >
               <span className="whitespace-nowrap">Drop Dead</span>
               <br />
@@ -152,7 +152,7 @@ export function ExtensionsSection() {
               transition={{ duration: 0.8, delay: 0.7 }}
               className="space-y-4 pt-4"
             >
-              <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
+              <div className="flex flex-wrap gap-4">
                 <Link
                   to="/booking"
                   className="group inline-flex items-center gap-3 bg-oat text-oat-foreground px-6 py-3.5 text-sm font-medium tracking-wide rounded-full hover:bg-oat/90 transition-all duration-300"

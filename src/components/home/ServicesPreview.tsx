@@ -263,9 +263,9 @@ export function ServicesPreview() {
   };
 
   return (
-    <Section className="py-20 lg:py-24 pb-8 lg:pb-12 overflow-visible" sectionRef={sectionRef} theme="light">
+    <Section className="pb-8 lg:pb-12 overflow-visible" sectionRef={sectionRef} theme="light">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 items-center md:items-end text-center md:text-left">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}

@@ -58,7 +58,7 @@ export const NewClientSection = () => {
 
   return (
     <section 
-      className="py-16 md:py-20 pb-16 md:pb-20 lg:pb-24 relative z-10"
+      className="py-12 md:py-16 pb-16 md:pb-20 lg:pb-24 relative z-10"
       style={{ 
         background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)' 
       }}
@@ -75,14 +75,14 @@ export const NewClientSection = () => {
             background: 'linear-gradient(180deg, hsl(var(--secondary)) 0%, hsl(var(--secondary)) 70%, transparent 100%)'
           }}
         >
-          <div ref={contentRef} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 lg:gap-16 items-center lg:items-start text-center lg:text-left">
+          <div ref={contentRef} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 lg:gap-16">
             {/* Content */}
             <div className="flex-1 max-w-2xl">
               <motion.h2
                 initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
                 animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 20, filter: "blur(4px)" }}
                 transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
-                className="text-4xl md:text-4xl lg:text-5xl font-display mb-6"
+                className="text-3xl md:text-4xl lg:text-5xl font-display mb-6"
               >
                 <span className="whitespace-nowrap">New Clients</span>{" "}
                 <span className="inline-block min-w-[180px] md:min-w-[220px]">{displayText}</span>
@@ -92,7 +92,7 @@ export const NewClientSection = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1], delay: 0.1 }}
-                className="text-foreground/80 text-lg md:text-lg leading-relaxed mb-8"
+                className="text-foreground/80 text-base md:text-lg leading-relaxed mb-8"
               >
                 Let's get you matched to a stylist right for you. We just need a some details from you. 
                 You may be required to come in for a consultation to best understand your needs and 
@@ -104,7 +104,7 @@ export const NewClientSection = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
-                className="flex flex-wrap gap-3 justify-center lg:justify-start"
+                className="flex flex-wrap gap-3"
               >
                 {benefits.map((benefit, index) => (
                   <div
