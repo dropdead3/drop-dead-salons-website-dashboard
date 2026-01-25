@@ -180,14 +180,14 @@ export function Header() {
   return (
     <>
       {/* Top Announcement Bar */}
-      <div className="bg-secondary py-2.5 px-6">
-        <div className="container mx-auto flex items-center justify-between">
-          <p className="text-xs md:text-sm text-foreground/80">
+      <div className="bg-secondary py-4 md:py-2.5 px-4 md:px-6">
+        <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
+          <p className="text-sm text-foreground/80 text-center md:text-left">
             Are you a salon <span className="font-medium">professional</span> looking for our extensions?
           </p>
           <a 
             href="#" 
-            className="group inline-flex items-center gap-1.5 text-xs md:text-sm font-sans font-medium text-foreground uppercase tracking-wider hover:opacity-70 transition-opacity"
+            className="group inline-flex items-center gap-1.5 text-sm font-sans font-medium text-foreground uppercase tracking-wider hover:opacity-70 transition-opacity"
           >
             Shop Our Extensions Here
             <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
