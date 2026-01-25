@@ -39,7 +39,6 @@ import { StylistsOverviewCard, StaffOverviewCard } from '@/components/dashboard/
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
 import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
 import { WorkScheduleWidget } from '@/components/dashboard/WorkScheduleWidget';
-import { ScheduleRequestsCard } from '@/components/dashboard/ScheduleRequestsCard';
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
 import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
 import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
@@ -461,7 +460,7 @@ export default function DashboardHome() {
           </div>
         )}
 
-        {/* Leadership-only: Team & Stylists Overview + Schedule Requests */}
+        {/* Leadership-only: Team & Stylists Overview */}
         {isLeadership && (
           <div className="grid gap-6 lg:grid-cols-2">
             <VisibilityGate elementKey="team_overview">
@@ -470,7 +469,6 @@ export default function DashboardHome() {
             <VisibilityGate elementKey="stylists_overview">
               <StylistsOverviewCard />
             </VisibilityGate>
-            <ScheduleRequestsCard />
           </div>
         )}
 
