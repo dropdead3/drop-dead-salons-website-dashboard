@@ -9,6 +9,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { CalendarRange, TrendingUp, Calendar, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
+import { motion } from 'framer-motion';
 import { 
   BarChart, 
   Bar, 
@@ -34,12 +35,10 @@ function CustomXAxisTick({ x, y, payload, days, peakDate }: any) {
       onMouseLeave={() => setIsHovered(false)}
       style={{ cursor: 'pointer' }}
     >
-      <g
-        style={{
-          transform: isHovered ? 'scale(1.15)' : 'scale(1)',
-          transformOrigin: 'center top',
-          transition: 'transform 0.2s ease-out',
-        }}
+      <motion.g
+        animate={{ scale: isHovered ? 1.15 : 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        style={{ originX: 0.5, originY: 0 }}
       >
         <text 
           x={0} y={0} dy={12} 
@@ -64,7 +63,7 @@ function CustomXAxisTick({ x, y, payload, days, peakDate }: any) {
         >
           {day.appointmentCount} appt
         </text>
-      </g>
+      </motion.g>
     </g>
   );
 }
