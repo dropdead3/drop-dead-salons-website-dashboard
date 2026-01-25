@@ -246,7 +246,7 @@ export function Header() {
                     transition: "opacity 0.5s ease-out, transform 0.5s ease-out"
                   }}
                   className={cn(
-                    "h-8 lg:h-10 w-auto",
+                    "h-10 lg:h-10 w-auto",
                     isOverDark && "invert"
                   )}
                 />
@@ -260,7 +260,7 @@ export function Header() {
                     transition: "opacity 0.5s ease-out 0.1s, transform 0.5s ease-out 0.1s"
                   }}
                   className={cn(
-                    "h-6 w-auto absolute left-0",
+                    "h-8 lg:h-6 w-auto absolute left-0",
                     isOverDark && "invert"
                   )}
                 />
