@@ -7,10 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
-import { LeadFunnelCard } from '@/components/dashboard/LeadFunnelCard';
-import { LeadInbox } from '@/components/dashboard/LeadInbox';
-import { LeadSlaSettings } from '@/components/dashboard/leads/LeadSlaSettings';
-import { 
+import {
   Calendar, 
   TrendingUp, 
   Users,
@@ -185,22 +182,6 @@ export default function OperationalAnalytics() {
               </div>
             </div>
           </Card>
-        </div>
-
-        {/* Lead Funnel Analytics */}
-        <div className="grid lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-2">
-            <LeadFunnelCard 
-              locationId={locationFilter}
-              dateRange={dateRange}
-            />
-          </div>
-          <LeadSlaSettings />
-        </div>
-
-        {/* Lead Inbox */}
-        <div className="mb-6">
-          <LeadInbox />
         </div>
 
         {/* Hiring Capacity and Staffing Trends */}
