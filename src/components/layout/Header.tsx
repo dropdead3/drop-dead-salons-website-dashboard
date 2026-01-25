@@ -551,10 +551,13 @@ export function Header() {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2"
+              className={cn(
+                "lg:hidden p-2 transition-all",
+                isMobileMenuOpen && "p-3 rounded-full border border-border"
+              )}
               aria-label="Toggle menu"
             >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={24} />}
             </button>
             </div>
           </div>
@@ -574,11 +577,12 @@ export function Header() {
                 <Link
                   to="/services"
                   className={cn(
-                    "text-lg font-serif tracking-wide transition-opacity",
+                    "text-2xl font-display uppercase tracking-wide transition-opacity",
                     location.pathname === "/services"
                       ? "opacity-100"
                       : "opacity-60"
                   )}
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Services
                 </Link>
@@ -587,11 +591,12 @@ export function Header() {
                     key={link.href}
                     to={link.href}
                     className={cn(
-                      "text-lg font-serif tracking-wide transition-opacity pl-4",
+                      "text-2xl font-display uppercase tracking-wide transition-opacity pl-4",
                       location.pathname === link.href
                         ? "opacity-100"
                         : "opacity-60"
                     )}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.label}
                   </Link>
@@ -601,24 +606,34 @@ export function Header() {
                     key={link.href}
                     to={link.href}
                     className={cn(
-                      "text-lg font-serif tracking-wide transition-opacity",
+                      "text-2xl font-display uppercase tracking-wide transition-opacity",
                       location.pathname === link.href
                         ? "opacity-100"
                         : "opacity-60"
                     )}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.label}
                   </Link>
                 ))}
                 <Link
                   to="/contact"
-                  className="text-lg font-serif tracking-wide opacity-60"
+                  className="text-2xl font-display uppercase tracking-wide opacity-60"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Contact Us
                 </Link>
                 <Link
+                  to="/staff-login"
+                  className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Staff Login
+                </Link>
+                <Link
                   to="/booking"
-                  className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-sans font-medium bg-foreground text-background"
+                  className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-display uppercase tracking-wide bg-foreground text-background rounded-full"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Book consult
                 </Link>
