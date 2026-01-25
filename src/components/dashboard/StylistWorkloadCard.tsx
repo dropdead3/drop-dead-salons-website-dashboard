@@ -1,11 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, ArrowRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Users, ArrowRight, TrendingUp, TrendingDown, Minus, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StaffWorkload } from '@/hooks/useStaffUtilization';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 interface StylistWorkloadCardProps {
   workload: StaffWorkload[];
@@ -114,10 +116,19 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
   const balanceScore = calculateWorkloadBalance(workload);
   const topStylists = activeWorkload.slice(0, 5);
   const totalAppointments = activeWorkload.reduce((sum, w) => sum + w.appointmentCount, 0);
+  const totalRevenue = activeWorkload.reduce((sum, w) => sum + w.totalRevenue, 0);
+  const teamAvgTicket = totalAppointments > 0 ? totalRevenue / totalAppointments : 0;
   const avgPerStylist = activeWorkload.length > 0 ? Math.round(totalAppointments / activeWorkload.length) : 0;
-  const highestWorkload = activeWorkload[0] || { displayName: 'N/A', name: 'N/A', appointmentCount: 0 };
-  const lowestWorkload = activeWorkload[activeWorkload.length - 1] || { displayName: 'N/A', name: 'N/A', appointmentCount: 0 };
+  const highestWorkload = activeWorkload[0] || { displayName: 'N/A', name: 'N/A', appointmentCount: 0, averageTicket: 0 };
+  const lowestWorkload = activeWorkload[activeWorkload.length - 1] || { displayName: 'N/A', name: 'N/A', appointmentCount: 0, averageTicket: 0 };
   const maxCount = highestWorkload.appointmentCount;
+
+  // Sort by efficiency for top performers
+  const topByEfficiency = [...activeWorkload]
+    .filter(w => w.appointmentCount >= 3) // Minimum threshold for meaningful average
+    .sort((a, b) => b.averageTicket - a.averageTicket)
+    .slice(0, 5);
+  const highestAvgTicket = topByEfficiency[0]?.averageTicket || 0;
 
   // Prepare chart data
   const chartData = topStylists.map(s => ({
@@ -206,27 +217,96 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
           </div>
         </div>
 
+        {/* Efficiency Metrics Section */}
+        {topByEfficiency.length > 0 && (
+          <div className="mt-6 pt-4 border-t">
+            <h4 className="text-sm font-medium mb-4 flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-primary" />
+              Productivity per Appointment
+            </h4>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Efficiency Ranking */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Top Performers (Avg Ticket)</p>
+                <div className="space-y-2">
+                  {topByEfficiency.map((stylist, idx) => (
+                    <div key={stylist.userId} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium w-5 text-muted-foreground">{idx + 1}</span>
+                        <span className="text-sm truncate max-w-[100px]">
+                          {stylist.displayName || stylist.name.split(' ')[0]}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium tabular-nums">
+                          <BlurredAmount>${stylist.averageTicket.toFixed(0)}</BlurredAmount>
+                        </span>
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            'text-xs tabular-nums',
+                            stylist.efficiencyScore >= 110 ? 'text-chart-2 border-chart-2' :
+                            stylist.efficiencyScore >= 90 ? 'text-primary border-primary' : 
+                            'text-muted-foreground'
+                          )}
+                        >
+                          {stylist.efficiencyScore}%
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Team Metrics */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
+                  <span className="text-sm text-muted-foreground">Team Avg Ticket</span>
+                  <span className="font-display text-lg tabular-nums">
+                    <BlurredAmount>${teamAvgTicket.toFixed(0)}</BlurredAmount>
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
+                  <span className="text-sm text-muted-foreground">Highest Performer</span>
+                  <span className="font-display text-lg text-chart-2 tabular-nums">
+                    <BlurredAmount>${highestAvgTicket.toFixed(0)}</BlurredAmount>
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
+                  <span className="text-sm text-muted-foreground">Total Revenue</span>
+                  <span className="font-display text-lg tabular-nums">
+                    <BlurredAmount>${totalRevenue.toLocaleString()}</BlurredAmount>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Quick Stats Footer */}
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
+        <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t">
           <div className="text-center">
-            <p className="font-display text-lg text-chart-2 truncate">
-              {highestWorkload.displayName || highestWorkload.name.split(' ')[0]}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Highest: {highestWorkload.appointmentCount} appts
-            </p>
+            <p className="font-display text-lg tabular-nums">{totalAppointments}</p>
+            <p className="text-xs text-muted-foreground">Total Appts</p>
           </div>
           <div className="text-center">
-            <p className="font-display text-lg">{avgPerStylist}</p>
-            <p className="text-xs text-muted-foreground">Team Average</p>
+            <p className="font-display text-lg tabular-nums">
+              <BlurredAmount>${teamAvgTicket.toFixed(0)}</BlurredAmount>
+            </p>
+            <p className="text-xs text-muted-foreground">Avg Ticket</p>
           </div>
           <div className="text-center">
-            <p className="font-display text-lg text-chart-4 truncate">
-              {lowestWorkload.displayName || lowestWorkload.name.split(' ')[0]}
+            <p className="font-display text-lg text-chart-2 tabular-nums">
+              <BlurredAmount>${highestAvgTicket.toFixed(0)}</BlurredAmount>
             </p>
-            <p className="text-xs text-muted-foreground">
-              Lowest: {lowestWorkload.appointmentCount} appts
+            <p className="text-xs text-muted-foreground">Top Productivity</p>
+          </div>
+          <div className="text-center">
+            <p className="font-display text-lg tabular-nums">
+              <BlurredAmount>${totalRevenue.toLocaleString()}</BlurredAmount>
             </p>
+            <p className="text-xs text-muted-foreground">Total Revenue</p>
           </div>
         </div>
       </CardContent>
