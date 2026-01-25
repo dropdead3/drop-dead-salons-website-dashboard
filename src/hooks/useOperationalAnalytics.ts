@@ -30,6 +30,13 @@ export interface RetentionMetrics {
   atRiskClients: number;
 }
 
+export interface LeadSlaMetrics {
+  totalNewLeads: number;
+  overdueLeads: number;
+  averageResponseTime: number;
+  slaBreachRate: number;
+}
+
 export function useOperationalAnalytics(locationId?: string, dateRange: 'week' | 'month' | '3months' = 'month') {
   // Calculate date range
   const today = new Date();

@@ -9,6 +9,7 @@ import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { LeadFunnelCard } from '@/components/dashboard/LeadFunnelCard';
 import { LeadInbox } from '@/components/dashboard/LeadInbox';
+import { LeadSlaSettings } from '@/components/dashboard/leads/LeadSlaSettings';
 import { 
   Calendar, 
   TrendingUp, 
@@ -187,10 +188,15 @@ export default function OperationalAnalytics() {
         </div>
 
         {/* Lead Funnel Analytics */}
-        <LeadFunnelCard 
-          locationId={locationFilter}
-          dateRange={dateRange}
-        />
+        <div className="grid lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2">
+            <LeadFunnelCard 
+              locationId={locationFilter}
+              dateRange={dateRange}
+            />
+          </div>
+          <LeadSlaSettings />
+        </div>
 
         {/* Lead Inbox */}
         <div className="mb-6">
