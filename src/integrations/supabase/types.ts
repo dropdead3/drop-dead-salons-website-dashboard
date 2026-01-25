@@ -1686,6 +1686,48 @@ export type Database = {
         }
         Relationships: []
       }
+      inquiry_activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          inquiry_id: string
+          notes: string | null
+          performed_by: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          inquiry_id: string
+          notes?: string | null
+          performed_by?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          inquiry_id?: string
+          notes?: string | null
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_activity_log_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "salon_inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiry_activity_log_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       job_application_notes: {
         Row: {
           application_id: string
@@ -3426,6 +3468,102 @@ export type Database = {
         }
         Relationships: []
       }
+      salon_inquiries: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          assigned_to: string | null
+          consultation_booked_at: string | null
+          converted_at: string | null
+          created_at: string
+          email: string | null
+          first_service_revenue: number | null
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          phorest_client_id: string | null
+          preferred_location: string | null
+          preferred_service: string | null
+          preferred_stylist: string | null
+          response_time_seconds: number | null
+          source: Database["public"]["Enums"]["inquiry_source"]
+          source_detail: string | null
+          status: Database["public"]["Enums"]["inquiry_status"]
+          updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          consultation_booked_at?: string | null
+          converted_at?: string | null
+          created_at?: string
+          email?: string | null
+          first_service_revenue?: number | null
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          phorest_client_id?: string | null
+          preferred_location?: string | null
+          preferred_service?: string | null
+          preferred_stylist?: string | null
+          response_time_seconds?: number | null
+          source?: Database["public"]["Enums"]["inquiry_source"]
+          source_detail?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          consultation_booked_at?: string | null
+          converted_at?: string | null
+          created_at?: string
+          email?: string | null
+          first_service_revenue?: number | null
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          phorest_client_id?: string | null
+          preferred_location?: string | null
+          preferred_service?: string | null
+          preferred_stylist?: string | null
+          response_time_seconds?: number | null
+          source?: Database["public"]["Enums"]["inquiry_source"]
+          source_detail?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_inquiries_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "salon_inquiries_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       salon_services: {
         Row: {
           category: string | null
@@ -4319,6 +4457,22 @@ export type Database = {
         | "admin_assistant"
         | "operations_assistant"
         | "super_admin"
+      inquiry_source:
+        | "website_form"
+        | "google_business"
+        | "facebook_lead"
+        | "instagram_lead"
+        | "phone_call"
+        | "walk_in"
+        | "referral"
+        | "other"
+      inquiry_status:
+        | "new"
+        | "contacted"
+        | "assigned"
+        | "consultation_booked"
+        | "converted"
+        | "lost"
       lead_source:
         | "content"
         | "ads"
@@ -4467,6 +4621,24 @@ export const Constants = {
         "admin_assistant",
         "operations_assistant",
         "super_admin",
+      ],
+      inquiry_source: [
+        "website_form",
+        "google_business",
+        "facebook_lead",
+        "instagram_lead",
+        "phone_call",
+        "walk_in",
+        "referral",
+        "other",
+      ],
+      inquiry_status: [
+        "new",
+        "contacted",
+        "assigned",
+        "consultation_booked",
+        "converted",
+        "lost",
       ],
       lead_source: [
         "content",

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronDown, ArrowUpRight, AlertCircle, X } from "lucide-react";
+import { captureWebsiteLead } from "@/lib/leadCapture";
 
 interface ConsultationFormDialogProps {
   open: boolean;
@@ -38,12 +39,31 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
     e.preventDefault();
     setIsSubmitting(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    toast({
-      title: "Request Received",
-      description: "We'll be in touch within 24 hours to confirm your appointment.",
+    // Capture lead in database
+    const result = await captureWebsiteLead({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      location: formData.location,
+      service: formData.service,
+      stylist: formData.stylist,
+      referralSource: formData.referralSource,
+      message: formData.message,
     });
+
+    if (result.success) {
+      toast({
+        title: "Request Received",
+        description: "We'll be in touch within 24 hours to confirm your appointment.",
+      });
+    } else {
+      toast({
+        title: "Request Received",
+        description: "We'll be in touch within 24 hours to confirm your appointment.",
+      });
+      // Log error but still show success to user
+      console.error('Lead capture failed:', result.error);
+    }
 
     setFormData({
       name: "",

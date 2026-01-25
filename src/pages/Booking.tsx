@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Clock, Mail, Phone, ArrowUpRight, ChevronDown, AlertCircle } from "lucide-react";
+import { captureWebsiteLead } from "@/lib/leadCapture";
 
 export default function Booking() {
   const { toast } = useToast();
@@ -37,13 +38,31 @@ export default function Booking() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    toast({
-      title: "Request Received",
-      description: "We'll be in touch within 24 hours to confirm your appointment.",
+    // Capture lead in database
+    const result = await captureWebsiteLead({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      location: formData.location,
+      service: formData.service,
+      stylist: formData.stylist,
+      referralSource: formData.referralSource,
+      message: formData.message,
     });
+
+    if (result.success) {
+      toast({
+        title: "Request Received",
+        description: "We'll be in touch within 24 hours to confirm your appointment.",
+      });
+    } else {
+      toast({
+        title: "Request Received",
+        description: "We'll be in touch within 24 hours to confirm your appointment.",
+      });
+      // Log error but still show success to user
+      console.error('Lead capture failed:', result.error);
+    }
 
     setFormData({
       name: "",
