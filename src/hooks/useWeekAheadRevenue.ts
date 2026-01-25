@@ -2,11 +2,23 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays } from 'date-fns';
 
+export interface AppointmentSummary {
+  id: string;
+  client_name: string | null;
+  service_name: string | null;
+  start_time: string;
+  end_time: string;
+  status: string;
+  total_price: number | null;
+  stylist_name: string | null;
+}
+
 export interface DayForecast {
   date: string;
   dayName: string;
   revenue: number;
   appointmentCount: number;
+  appointments: AppointmentSummary[];
 }
 
 export interface WeekAheadData {
@@ -37,10 +49,11 @@ export function useWeekAheadRevenue(locationId?: string) {
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('appointment_date, total_price, status')
+        .select('id, appointment_date, total_price, status, client_name, service_name, start_time, end_time, phorest_staff_id')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
-        .not('status', 'in', '("cancelled","no_show")');
+        .not('status', 'in', '("cancelled","no_show")')
+        .order('start_time', { ascending: true });
 
       // Filter by location if specified
       if (locationId && locationId !== 'all') {
@@ -52,11 +65,30 @@ export function useWeekAheadRevenue(locationId?: string) {
       if (error) throw error;
 
       const appointments = data || [];
+
+      // Fetch staff names for the appointments
+      const staffIds = [...new Set(appointments.map(a => a.phorest_staff_id).filter(Boolean))] as string[];
+      const staffMap: Record<string, string> = {};
+      
+      if (staffIds.length > 0) {
+        const { data: staffData } = await (supabase as any)
+          .from('phorest_staff_mappings')
+          .select('phorest_staff_id, staff_first_name, staff_last_name')
+          .in('phorest_staff_id', staffIds);
+        
+        if (staffData) {
+          (staffData as any[]).forEach((s: any) => {
+            if (s.phorest_staff_id) {
+              staffMap[s.phorest_staff_id] = `${s.staff_first_name || ''} ${s.staff_last_name?.charAt(0) || ''}.`.trim();
+            }
+          });
+        }
+      }
       
       // Group by date
-      const byDate: Record<string, { revenue: number; count: number }> = {};
+      const byDate: Record<string, { revenue: number; count: number; appointments: AppointmentSummary[] }> = {};
       dates.forEach(d => {
-        byDate[d.date] = { revenue: 0, count: 0 };
+        byDate[d.date] = { revenue: 0, count: 0, appointments: [] };
       });
 
       appointments.forEach(apt => {
@@ -64,6 +96,16 @@ export function useWeekAheadRevenue(locationId?: string) {
         if (byDate[dateKey]) {
           byDate[dateKey].revenue += Number(apt.total_price) || 0;
           byDate[dateKey].count += 1;
+          byDate[dateKey].appointments.push({
+            id: apt.id,
+            client_name: apt.client_name,
+            service_name: apt.service_name,
+            start_time: apt.start_time,
+            end_time: apt.end_time,
+            status: apt.status,
+            total_price: apt.total_price,
+            stylist_name: apt.phorest_staff_id ? staffMap[apt.phorest_staff_id] || null : null,
+          });
         }
       });
 
@@ -73,6 +115,7 @@ export function useWeekAheadRevenue(locationId?: string) {
         dayName: d.dayName,
         revenue: byDate[d.date].revenue,
         appointmentCount: byDate[d.date].count,
+        appointments: byDate[d.date].appointments,
       }));
 
       // Calculate totals
