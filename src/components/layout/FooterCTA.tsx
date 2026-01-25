@@ -1,33 +1,108 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Phone } from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 import { useActiveLocations } from "@/hooks/useLocations";
 
 export function FooterCTA() {
   const { data: locations = [] } = useActiveLocations();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "center center"]
+  });
+
+  // Staggered reveal animations
+  const eyebrowOpacity = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
+  const eyebrowY = useTransform(scrollYProgress, [0, 0.3], [30, 0]);
+  const eyebrowBlur = useTransform(scrollYProgress, [0, 0.3], [10, 0]);
+
+  // Headline split animation - "Book Your" exits left, "Consult" exits right on reverse
+  const topLineOpacity = useTransform(scrollYProgress, [0.1, 0.5], [0, 1]);
+  const topLineY = useTransform(scrollYProgress, [0.1, 0.5], [40, 0]);
+  const topLineX = useTransform(scrollYProgress, [0.1, 0.5], [-30, 0]);
+  const topLineBlur = useTransform(scrollYProgress, [0.1, 0.4], [12, 0]);
+
+  const bottomLineOpacity = useTransform(scrollYProgress, [0.15, 0.55], [0, 1]);
+  const bottomLineY = useTransform(scrollYProgress, [0.15, 0.55], [40, 0]);
+  const bottomLineX = useTransform(scrollYProgress, [0.15, 0.55], [30, 0]);
+  const bottomLineBlur = useTransform(scrollYProgress, [0.15, 0.45], [12, 0]);
+
+  const descOpacity = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
+  const descY = useTransform(scrollYProgress, [0.3, 0.6], [30, 0]);
+  const descBlur = useTransform(scrollYProgress, [0.3, 0.55], [8, 0]);
+
+  const ctaOpacity = useTransform(scrollYProgress, [0.4, 0.7], [0, 1]);
+  const ctaY = useTransform(scrollYProgress, [0.4, 0.7], [25, 0]);
+  const ctaBlur = useTransform(scrollYProgress, [0.4, 0.65], [8, 0]);
 
   return (
     <section 
-      className="relative z-10 bg-secondary text-foreground py-24 lg:py-32 text-center"
+      ref={sectionRef}
+      className="relative z-10 bg-secondary text-foreground py-24 lg:py-32 text-center overflow-hidden"
       data-theme="light"
     >
       <div className="container mx-auto px-6 lg:px-12">
         {/* Eyebrow */}
-        <p className="text-foreground/50 text-xs uppercase tracking-[0.2em] font-display mb-6">
+        <motion.p 
+          className="text-foreground/50 text-xs uppercase tracking-[0.2em] font-display mb-6"
+          style={{ 
+            opacity: eyebrowOpacity, 
+            y: eyebrowY,
+            filter: useTransform(eyebrowBlur, (v) => `blur(${v}px)`)
+          }}
+        >
           Ready for Something Different?
-        </p>
+        </motion.p>
 
-        {/* Main headline */}
-        <h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-foreground mb-6">
-          Book Your Consult
+        {/* Main headline - Split into two lines */}
+        <h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-foreground mb-6 flex flex-col items-center leading-[0.95]">
+          <motion.span 
+            className="block"
+            style={{ 
+              opacity: topLineOpacity, 
+              y: topLineY,
+              x: topLineX,
+              filter: useTransform(topLineBlur, (v) => `blur(${v}px)`)
+            }}
+          >
+            Book Your
+          </motion.span>
+          <motion.span 
+            className="block"
+            style={{ 
+              opacity: bottomLineOpacity, 
+              y: bottomLineY,
+              x: bottomLineX,
+              filter: useTransform(bottomLineBlur, (v) => `blur(${v}px)`)
+            }}
+          >
+            Consult
+          </motion.span>
         </h2>
 
         {/* Description */}
-        <p className="text-foreground/60 text-base md:text-lg font-sans font-light max-w-xl mx-auto mb-10">
+        <motion.p 
+          className="text-foreground/60 text-base md:text-lg font-sans font-light max-w-xl mx-auto mb-10"
+          style={{ 
+            opacity: descOpacity, 
+            y: descY,
+            filter: useTransform(descBlur, (v) => `blur(${v}px)`)
+          }}
+        >
           Every great transformation begins with a conversation. Let's plan yours.
-        </p>
+        </motion.p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col items-center justify-center gap-4">
+        <motion.div 
+          className="flex flex-col items-center justify-center gap-4"
+          style={{ 
+            opacity: ctaOpacity, 
+            y: ctaY,
+            filter: useTransform(ctaBlur, (v) => `blur(${v}px)`)
+          }}
+        >
           <Link
             to="/booking"
             className="group inline-flex items-center gap-3 px-8 py-4 text-base font-sans font-medium bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all duration-300 active:scale-[0.98]"
@@ -52,7 +127,7 @@ export function FooterCTA() {
               </span>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
