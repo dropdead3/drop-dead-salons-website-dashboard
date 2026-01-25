@@ -15,8 +15,10 @@ import {
   Building2,
   Download,
   ChevronRight,
+  CalendarClock,
 } from 'lucide-react';
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
+import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { format, subDays, startOfWeek, startOfMonth } from 'date-fns';
@@ -85,6 +87,7 @@ export function AggregateSalesCard() {
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: trendData, isLoading: trendLoading } = useSalesTrend(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: comparison, isLoading: comparisonLoading } = useSalesComparison(dateFilters.dateFrom, dateFilters.dateTo);
+  const { data: tomorrowData } = useTomorrowRevenue();
   const { goals } = useSalesGoals();
 
   const isLoading = metricsLoading || locationLoading;
@@ -142,8 +145,8 @@ export function AggregateSalesCard() {
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-8 w-32" />
         </div>
-        <div className="grid gap-4 md:grid-cols-5 mb-6">
-          {[...Array(5)].map((_, i) => (
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 mb-6">
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="text-center">
               <Skeleton className="h-8 w-20 mx-auto mb-1" />
               <Skeleton className="h-4 w-16 mx-auto" />
@@ -217,7 +220,7 @@ export function AggregateSalesCard() {
       <div className="grid lg:grid-cols-4 gap-6 mb-6">
         {/* KPIs with Trends */}
         <div className="lg:col-span-3">
-          <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+          <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3">
             <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
               <div className="flex justify-center mb-2">
                 <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -301,6 +304,20 @@ export function AggregateSalesCard() {
                   previous={comparison.previous.averageTicket} 
                 />
               )}
+            </div>
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <CalendarClock className="w-4 h-4 sm:w-5 sm:h-5 text-chart-5" />
+              </div>
+              <AnimatedBlurredAmount 
+                value={tomorrowData?.revenue || 0}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Rev. Tomorrow</p>
+              <span className="text-xs text-muted-foreground/70">
+                {tomorrowData?.appointmentCount || 0} bookings
+              </span>
             </div>
           </div>
 
