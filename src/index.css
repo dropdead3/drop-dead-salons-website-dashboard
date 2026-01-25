@@ -139,13 +139,6 @@
 
     --radius: 0rem;
 
-    /* Chart colors for data visualization */
-    --chart-1: 0 0% 8%;
-    --chart-2: 142 71% 45%;
-    --chart-3: 217 91% 60%;
-    --chart-4: 38 70% 50%;
-    --chart-5: 280 65% 60%;
-
     /* Typography tokens */
     --font-size-xs: 12px;
     --font-size-sm: 14px;
@@ -234,13 +227,6 @@
     --sidebar-accent-foreground: 40 20% 92%;
     --sidebar-border: 0 0% 18%;
     --sidebar-ring: 40 20% 92%;
-
-    /* Chart colors for data visualization */
-    --chart-1: 40 20% 92%;
-    --chart-2: 142 65% 50%;
-    --chart-3: 217 85% 65%;
-    --chart-4: 42 75% 55%;
-    --chart-5: 280 60% 65%;
   }
 
   /* ===== THEME: ROSE (Blush Pink Pastel) ===== */
