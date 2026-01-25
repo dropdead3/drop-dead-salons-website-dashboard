@@ -29,13 +29,13 @@ export function FooterCTA() {
   const bottomLineX = useTransform(scrollYProgress, [0.3, 0.6], [40, 0]);
   const bottomLineBlur = useTransform(scrollYProgress, [0.3, 0.55], [15, 0]);
 
-  const descOpacity = useTransform(scrollYProgress, [0.45, 0.7], [0, 1]);
-  const descY = useTransform(scrollYProgress, [0.45, 0.7], [35, 0]);
-  const descBlur = useTransform(scrollYProgress, [0.45, 0.65], [10, 0]);
+  const descOpacity = useTransform(scrollYProgress, [0.5, 0.8], [0, 1]);
+  const descY = useTransform(scrollYProgress, [0.5, 0.8], [40, 0]);
+  const descBlur = useTransform(scrollYProgress, [0.5, 0.75], [12, 0]);
 
-  const ctaOpacity = useTransform(scrollYProgress, [0.55, 0.8], [0, 1]);
-  const ctaY = useTransform(scrollYProgress, [0.55, 0.8], [30, 0]);
-  const ctaBlur = useTransform(scrollYProgress, [0.55, 0.75], [10, 0]);
+  const ctaOpacity = useTransform(scrollYProgress, [0.6, 0.9], [0, 1]);
+  const ctaY = useTransform(scrollYProgress, [0.6, 0.9], [40, 0]);
+  const ctaBlur = useTransform(scrollYProgress, [0.6, 0.85], [12, 0]);
 
   return (
     <section 
