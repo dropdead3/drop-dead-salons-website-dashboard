@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { 
   LayoutGrid,
   PanelRightClose,
   PanelRightOpen,
-  ExternalLink
+  ExternalLink,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
 import { BrandStatementEditor } from '@/components/dashboard/website-editor/BrandStatementEditor';
@@ -24,13 +25,12 @@ import { StylistsContent } from '@/components/dashboard/website-editor/StylistsC
 import { LocationsContent } from '@/components/dashboard/website-editor/LocationsContent';
 import { ServicesContent } from '@/components/dashboard/website-editor/ServicesContent';
 import { AnnouncementBarContent } from '@/components/dashboard/website-editor/AnnouncementBarContent';
-import { OverviewTab } from '@/components/dashboard/website-editor/OverviewTab';
+
+// Sidebar Navigation
+import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
 
 // Preview Component
 import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
-
-// Search Component
-import { WebsiteEditorSearch } from '@/components/dashboard/website-editor/WebsiteEditorSearch';
 
 // Layout Components
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -39,46 +39,112 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
+import { useIsMobile } from '@/hooks/use-mobile';
+
+// Map of tab values to editor components
+const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
+  'hero': HeroEditor,
+  'brand': BrandStatementEditor,
+  'testimonials': TestimonialsContent,
+  'new-client': NewClientEditor,
+  'extensions': ExtensionsEditor,
+  'faq': FAQEditor,
+  'services': ServicesContent,
+  'gallery': GalleryContent,
+  'stylists': StylistsContent,
+  'locations': LocationsContent,
+  'brands': BrandsManager,
+  'drinks': DrinksManager,
+  'footer-cta': FooterCTAEditor,
+  'banner': AnnouncementBarContent,
+};
+
+// Tab labels for breadcrumb display
+const TAB_LABELS: Record<string, string> = {
+  'hero': 'Hero Section',
+  'brand': 'Brand Statement',
+  'testimonials': 'Testimonials',
+  'new-client': 'New Client CTA',
+  'extensions': 'Extensions Spotlight',
+  'faq': 'FAQ',
+  'services': 'Services',
+  'gallery': 'Gallery',
+  'stylists': 'Stylists',
+  'locations': 'Locations',
+  'brands': 'Partner Brands',
+  'drinks': 'Drink Menu',
+  'footer-cta': 'Footer CTA',
+  'banner': 'Announcement Banner',
+};
 
 export default function WebsiteSectionsHub() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const defaultTab = searchParams.get('tab') || 'overview';
+  const defaultTab = searchParams.get('tab') || 'hero';
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [showPreview, setShowPreview] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const isMobile = useIsMobile();
 
   // Sync URL with active tab
   useEffect(() => {
-    if (activeTab !== 'overview') {
-      setSearchParams({ tab: activeTab }, { replace: true });
-    } else {
-      setSearchParams({}, { replace: true });
-    }
+    setSearchParams({ tab: activeTab }, { replace: true });
   }, [activeTab, setSearchParams]);
 
-  const handleSearchSelect = (tab: string) => {
+  const handleTabChange = (tab: string) => {
     setActiveTab(tab);
   };
+
+  const EditorComponent = EDITOR_COMPONENTS[activeTab];
 
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-8rem)]">
         <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Sidebar Navigation Panel */}
+          {showSidebar && !isMobile && (
+            <>
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                <WebsiteEditorSidebar
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
+                />
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+            </>
+          )}
+
           {/* Main Editor Panel */}
-          <ResizablePanel defaultSize={showPreview ? 60 : 100} minSize={40}>
-            <div className="space-y-6 h-full overflow-auto pr-2">
+          <ResizablePanel defaultSize={showPreview ? 50 : 80} minSize={30}>
+            <div className="h-full flex flex-col overflow-hidden">
               {/* Header */}
-              <div className="flex flex-col gap-4">
+              <div className="flex-shrink-0 px-6 py-4 border-b bg-background">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-3">
+                      {!isMobile && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowSidebar(!showSidebar)}
+                          className="h-8 w-8"
+                        >
+                          {showSidebar ? (
+                            <PanelLeftClose className="h-4 w-4" />
+                          ) : (
+                            <PanelLeftOpen className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                       <div className="p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
                         <LayoutGrid className="h-5 w-5 text-primary" />
                       </div>
-                      <h1 className="text-2xl font-display font-medium">Website Editor</h1>
+                      <div>
+                        <h1 className="text-xl font-display font-medium">Website Editor</h1>
+                        <p className="text-xs text-muted-foreground">
+                          {TAB_LABELS[activeTab] || 'Select a section'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-muted-foreground text-sm">
-                      Configure content, visibility, and ordering for all website sections
-                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button 
@@ -94,7 +160,7 @@ export default function WebsiteSectionsHub() {
                       ) : (
                         <>
                           <PanelRightOpen className="h-4 w-4 mr-2" />
-                          Preview Changes
+                          Preview
                         </>
                       )}
                     </Button>
@@ -108,93 +174,18 @@ export default function WebsiteSectionsHub() {
                     </Button>
                   </div>
                 </div>
-
-                {/* Global Search */}
-                <WebsiteEditorSearch onSelectResult={handleSearchSelect} />
               </div>
 
-              {/* Tabbed Editor */}
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <div className="overflow-x-auto pb-2">
-                  <TabsList className="inline-flex h-auto flex-wrap gap-1">
-                    <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-                    <TabsTrigger value="banner" className="text-xs sm:text-sm">Banner</TabsTrigger>
-                    <TabsTrigger value="hero" className="text-xs sm:text-sm">Hero</TabsTrigger>
-                    <TabsTrigger value="brand" className="text-xs sm:text-sm">Brand</TabsTrigger>
-                    <TabsTrigger value="testimonials" className="text-xs sm:text-sm">Testimonials</TabsTrigger>
-                    <TabsTrigger value="new-client" className="text-xs sm:text-sm">New Client</TabsTrigger>
-                    <TabsTrigger value="extensions" className="text-xs sm:text-sm">Extensions</TabsTrigger>
-                    <TabsTrigger value="faq" className="text-xs sm:text-sm">FAQ</TabsTrigger>
-                    <TabsTrigger value="services" className="text-xs sm:text-sm">Services</TabsTrigger>
-                    <TabsTrigger value="gallery" className="text-xs sm:text-sm">Gallery</TabsTrigger>
-                    <TabsTrigger value="stylists" className="text-xs sm:text-sm">Stylists</TabsTrigger>
-                    <TabsTrigger value="locations" className="text-xs sm:text-sm">Locations</TabsTrigger>
-                    <TabsTrigger value="brands" className="text-xs sm:text-sm">Brands</TabsTrigger>
-                    <TabsTrigger value="drinks" className="text-xs sm:text-sm">Drinks</TabsTrigger>
-                    <TabsTrigger value="footer-cta" className="text-xs sm:text-sm">Footer CTA</TabsTrigger>
-                  </TabsList>
-                </div>
-
-                <TabsContent value="overview" className="mt-0">
-                  <OverviewTab />
-                </TabsContent>
-
-                <TabsContent value="banner" className="mt-0">
-                  <AnnouncementBarContent />
-                </TabsContent>
-
-                <TabsContent value="hero" className="mt-0">
-                  <HeroEditor />
-                </TabsContent>
-
-                <TabsContent value="brand" className="mt-0">
-                  <BrandStatementEditor />
-                </TabsContent>
-
-                <TabsContent value="testimonials" className="mt-0">
-                  <TestimonialsContent />
-                </TabsContent>
-
-                <TabsContent value="new-client" className="mt-0">
-                  <NewClientEditor />
-                </TabsContent>
-
-                <TabsContent value="extensions" className="mt-0">
-                  <ExtensionsEditor />
-                </TabsContent>
-
-                <TabsContent value="faq" className="mt-0">
-                  <FAQEditor />
-                </TabsContent>
-
-                <TabsContent value="services" className="mt-0">
-                  <ServicesContent />
-                </TabsContent>
-
-                <TabsContent value="gallery" className="mt-0">
-                  <GalleryContent />
-                </TabsContent>
-
-                <TabsContent value="stylists" className="mt-0">
-                  <StylistsContent />
-                </TabsContent>
-
-                <TabsContent value="locations" className="mt-0">
-                  <LocationsContent />
-                </TabsContent>
-
-                <TabsContent value="brands" className="mt-0">
-                  <BrandsManager />
-                </TabsContent>
-
-                <TabsContent value="drinks" className="mt-0">
-                  <DrinksManager />
-                </TabsContent>
-
-                <TabsContent value="footer-cta" className="mt-0">
-                  <FooterCTAEditor />
-                </TabsContent>
-              </Tabs>
+              {/* Editor Content */}
+              <div className="flex-1 overflow-auto p-6">
+                {EditorComponent ? (
+                  <EditorComponent />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    Select a section from the sidebar to edit
+                  </div>
+                )}
+              </div>
             </div>
           </ResizablePanel>
 
@@ -202,7 +193,7 @@ export default function WebsiteSectionsHub() {
           {showPreview && (
             <>
               <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={40} minSize={25} maxSize={60}>
+              <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
                 <LivePreviewPanel onClose={() => setShowPreview(false)} />
               </ResizablePanel>
             </>
