@@ -31,9 +31,11 @@ import {
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
+import type { StaffDateRange } from '@/hooks/useStaffUtilization';
+
 interface StaffUtilizationContentProps {
   locationId?: string;
-  dateRange: 'week' | 'month' | '3months';
+  dateRange: StaffDateRange;
 }
 
 export function StaffUtilizationContent({ locationId, dateRange }: StaffUtilizationContentProps) {

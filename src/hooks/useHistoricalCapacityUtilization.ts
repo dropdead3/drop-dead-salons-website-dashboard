@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subDays, startOfWeek, startOfMonth, differenceInMinutes, parseISO } from 'date-fns';
+import { format, subDays, startOfWeek, startOfMonth, differenceInMinutes, parseISO, addDays } from 'date-fns';
 import { getServiceCategory } from '@/utils/serviceCategorization';
 
 export interface DayCapacity {
@@ -55,22 +55,32 @@ function getOperatingHoursForDay(hoursJson: Record<string, any> | null, dayOfWee
   }
 }
 
+export type CapacityDateRange = 'tomorrow' | '7days' | '30days' | '90days';
+
 export function useHistoricalCapacityUtilization(
   locationId?: string,
-  dateRange: 'week' | 'month' | '3months' = 'month'
+  dateRange: CapacityDateRange = '30days'
 ) {
   const today = new Date();
   let startDate: Date;
+  let endDate: Date = today;
   
   switch (dateRange) {
-    case 'week':
-      startDate = startOfWeek(today);
+    case 'tomorrow':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 1);
       break;
-    case 'month':
-      startDate = startOfMonth(today);
+    case '7days':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 7);
       break;
-    case '3months':
-      startDate = subDays(today, 90);
+    case '30days':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 30);
+      break;
+    case '90days':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 90);
       break;
   }
 

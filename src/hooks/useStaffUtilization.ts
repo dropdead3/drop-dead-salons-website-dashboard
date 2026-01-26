@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subDays, addDays } from 'date-fns';
 
 export interface StaffWorkload {
   userId: string;
@@ -33,23 +33,34 @@ export interface LocationDistribution {
   percentage: number;
 }
 
-export function useStaffUtilization(locationId?: string, dateRange: 'week' | 'month' | '3months' = 'month') {
+export type StaffDateRange = 'tomorrow' | '7days' | '30days' | '90days';
+
+export function useStaffUtilization(locationId?: string, dateRange: StaffDateRange = '30days') {
   // Calculate date range
   const today = new Date();
   let startDate: Date;
+  let endDate: Date = today;
   let daysInRange: number;
   
   switch (dateRange) {
-    case 'week':
-      startDate = subDays(today, 7);
+    case 'tomorrow':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 1);
+      daysInRange = 1;
+      break;
+    case '7days':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 7);
       daysInRange = 7;
       break;
-    case 'month':
-      startDate = startOfMonth(today);
-      daysInRange = today.getDate();
+    case '30days':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 30);
+      daysInRange = 30;
       break;
-    case '3months':
-      startDate = subDays(today, 90);
+    case '90days':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 90);
       daysInRange = 90;
       break;
   }

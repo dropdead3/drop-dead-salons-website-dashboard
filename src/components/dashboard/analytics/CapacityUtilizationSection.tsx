@@ -20,10 +20,12 @@ import {
 } from 'recharts';
 import type { CapacityData, DayCapacity } from '@/hooks/useHistoricalCapacityUtilization';
 
+export type CapacityDateRangeType = 'tomorrow' | '7days' | '30days' | '90days';
+
 interface CapacityUtilizationSectionProps {
   capacityData: CapacityData | null;
   isLoading: boolean;
-  dateRange: 'week' | 'month' | '3months';
+  dateRange: CapacityDateRangeType;
 }
 
 const PIE_COLORS = [
@@ -37,9 +39,10 @@ const PIE_COLORS = [
 ];
 
 const DATE_RANGE_LABELS: Record<string, string> = {
-  'week': 'this week',
-  'month': 'this month',
-  '3months': 'last 3 months',
+  'tomorrow': 'tomorrow',
+  '7days': 'the next 7 days',
+  '30days': 'the next 30 days',
+  '90days': 'the next 90 days',
 };
 
 function getUtilizationColor(percent: number): string {
@@ -153,8 +156,8 @@ export function CapacityUtilizationSection({
     lowDay,
   } = capacityData;
 
-  // Chart data - limit for 3 months view
-  const chartData = dateRange === '3months' 
+  // Chart data - limit for 90 days view
+  const chartData = dateRange === '90days' 
     ? dailyCapacity.filter((_, i) => i % 7 === 0).map(day => ({
         name: day.dayName,
         utilization: day.utilizationPercent,
@@ -277,15 +280,15 @@ export function CapacityUtilizationSection({
                 <BarChart data={chartData} margin={{ top: 20, right: 5, bottom: 35, left: 5 }}>
                   <XAxis 
                     dataKey="name" 
-                    tick={dateRange === 'week' 
+                    tick={dateRange === '7days' 
                       ? <DayXAxisTick days={dailyCapacity} /> 
                       : { fontSize: 10 }
                     }
-                    tickFormatter={dateRange !== 'week' ? (value, index) => {
+                    tickFormatter={dateRange !== '7days' ? (value, index) => {
                       const day = chartData[index];
                       if (day) {
                         try {
-                          return format(parseISO(day.date), dateRange === '3months' ? 'MMM d' : 'EEE');
+                          return format(parseISO(day.date), dateRange === '90days' ? 'MMM d' : 'EEE');
                         } catch {
                           return value;
                         }
@@ -295,7 +298,7 @@ export function CapacityUtilizationSection({
                     tickLine={false}
                     axisLine={false}
                     interval={0}
-                    height={dateRange === 'week' ? 40 : 20}
+                    height={dateRange === '7days' ? 40 : 20}
                   />
                   <YAxis hide domain={[0, 100]} />
                   <Tooltip

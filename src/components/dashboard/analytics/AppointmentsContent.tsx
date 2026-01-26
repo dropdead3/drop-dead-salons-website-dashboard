@@ -55,7 +55,7 @@ interface AppointmentsContentProps {
   isLoading: boolean;
   capacityData?: CapacityData | null;
   capacityLoading?: boolean;
-  dateRange?: 'week' | 'month' | '3months';
+  dateRange?: 'tomorrow' | '7days' | '30days' | '90days';
 }
 
 export function AppointmentsContent({ 
@@ -66,7 +66,7 @@ export function AppointmentsContent({
   isLoading,
   capacityData,
   capacityLoading,
-  dateRange = 'month'
+  dateRange = '30days'
 }: AppointmentsContentProps) {
   // Build heatmap data
   const heatmapData = HOURS.map(hour => {
