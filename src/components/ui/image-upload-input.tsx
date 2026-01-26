@@ -6,6 +6,7 @@ import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { optimizeImage, formatFileSize } from '@/lib/image-utils';
 
 interface ImageUploadInputProps {
   value: string;
@@ -17,6 +18,14 @@ interface ImageUploadInputProps {
   className?: string;
   aspectRatio?: string;
   maxSizeMB?: number;
+  /** Max width for optimization (default: 1200) */
+  maxWidth?: number;
+  /** Max height for optimization (default: 1600) */
+  maxHeight?: number;
+  /** Quality 0-1 for compression (default: 0.85) */
+  quality?: number;
+  /** Disable optimization and upload original */
+  skipOptimization?: boolean;
 }
 
 export function ImageUploadInput({
@@ -28,9 +37,14 @@ export function ImageUploadInput({
   placeholder = 'https://...',
   className,
   aspectRatio = '3/4',
-  maxSizeMB = 5,
+  maxSizeMB = 10,
+  maxWidth = 1200,
+  maxHeight = 1600,
+  quality = 0.85,
+  skipOptimization = false,
 }: ImageUploadInputProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlValue, setUrlValue] = useState('');
@@ -43,7 +57,7 @@ export function ImageUploadInput({
       return;
     }
 
-    // Validate file size
+    // Validate file size (before optimization)
     const maxBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxBytes) {
       toast.error(`File size must be less than ${maxSizeMB}MB`);
@@ -51,13 +65,44 @@ export function ImageUploadInput({
     }
 
     setIsUploading(true);
+    setUploadProgress('Optimizing...');
+    
     try {
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      let uploadBlob: Blob = file;
+      let fileExt = 'webp';
+      
+      // Optimize image unless skipped
+      if (!skipOptimization) {
+        const originalSize = file.size;
+        setUploadProgress(`Optimizing ${formatFileSize(originalSize)}...`);
+        
+        const { blob, width, height } = await optimizeImage(file, {
+          maxWidth,
+          maxHeight,
+          quality,
+          format: 'webp',
+        });
+        
+        uploadBlob = blob;
+        const savedPercent = Math.round((1 - blob.size / originalSize) * 100);
+        const savedText = savedPercent > 0 ? ` (${savedPercent}% smaller)` : '';
+        
+        console.log(
+          `Image optimized: ${formatFileSize(originalSize)} → ${formatFileSize(blob.size)}${savedText}, ${width}×${height}`
+        );
+      } else {
+        fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      }
+      
+      setUploadProgress('Uploading...');
       const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, uploadBlob, { 
+          upsert: true,
+          contentType: skipOptimization ? file.type : 'image/webp',
+        });
 
       if (uploadError) throw uploadError;
 
@@ -66,14 +111,15 @@ export function ImageUploadInput({
         .getPublicUrl(fileName);
 
       onChange(urlData.publicUrl);
-      toast.success('Image uploaded successfully');
+      toast.success('Image uploaded & optimized');
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload image');
     } finally {
       setIsUploading(false);
+      setUploadProgress('');
     }
-  }, [bucket, folder, maxSizeMB, onChange]);
+  }, [bucket, folder, maxSizeMB, maxWidth, maxHeight, quality, skipOptimization, onChange]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -171,7 +217,7 @@ export function ImageUploadInput({
               {isUploading ? (
                 <>
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Uploading...</p>
+                  <p className="text-sm text-muted-foreground">{uploadProgress || 'Processing...'}</p>
                 </>
               ) : (
                 <>
