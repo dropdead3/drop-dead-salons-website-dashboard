@@ -649,7 +649,7 @@ async function syncSalesTransactions(
       .from("phorest_staff_mapping")
       .select("phorest_staff_id, user_id, phorest_branch_id");
 
-    const staffMap = new Map(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
+    const staffMap = new Map<string, string>(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
 
     let totalTransactions = 0;
     let syncedTransactions = 0;
@@ -735,6 +735,12 @@ async function syncSalesTransactions(
       
       console.log(`Processing ${purchases.length} transactions for ${branchName}`);
       totalTransactions += purchases.length;
+      
+      // Also save to detailed transaction items table
+      if (purchases.length > 0) {
+        const itemsSaved = await saveTransactionItems(supabase, purchases, branchId, branchName, staffMap);
+        console.log(`Saved ${itemsSaved} items to phorest_transaction_items for ${branchName}`);
+      }
 
       for (const purchase of purchases) {
         const staffId = purchase.staffId || purchase.staff?.staffId;
@@ -905,7 +911,7 @@ async function syncSalesTransactions(
   }
 }
 
-// Helper function to fetch sales via CSV export job
+// Helper function to fetch sales via CSV export job with multiple job type fallbacks
 async function fetchSalesViaCsvExport(
   branchId: string,
   businessId: string,
@@ -914,118 +920,238 @@ async function fetchSalesViaCsvExport(
   dateFrom: string,
   dateTo: string
 ): Promise<any[]> {
-  // Step 1: Create CSV export job
-  const exportJob = await phorestPostRequest(
-    `/branch/${branchId}/csvexportjob`,
-    businessId,
-    username,
-    password,
-    { 
-      jobType: "TRANSACTIONS_CSV",
-      startDate: dateFrom,
-      endDate: dateTo
+  // Job types to try in order - Phorest documentation suggests various types
+  const jobTypesToTry = ['TRANSACTION', 'TRANSACTIONS', 'SALES', 'PURCHASES', 'TRANSACTIONS_CSV'];
+  
+  let lastError: Error | null = null;
+  
+  for (const jobType of jobTypesToTry) {
+    try {
+      console.log(`[CSV Export] Attempting job type: ${jobType} for branch ${branchId}`);
+      console.log(`[CSV Export] Date range: ${dateFrom} to ${dateTo}`);
+      
+      // Step 1: Create CSV export job
+      const jobBody = { 
+        jobType,
+        startDate: dateFrom,
+        endDate: dateTo
+      };
+      
+      console.log(`[CSV Export] Creating job with body:`, JSON.stringify(jobBody));
+      
+      const exportJob = await phorestPostRequest(
+        `/branch/${branchId}/csvexportjob`,
+        businessId,
+        username,
+        password,
+        jobBody
+      );
+      
+      console.log(`[CSV Export] Job creation response:`, JSON.stringify(exportJob).substring(0, 500));
+      
+      const jobId = exportJob.jobId || exportJob.id;
+      if (!jobId) {
+        console.log(`[CSV Export] No job ID in response for type ${jobType}, trying next...`);
+        continue;
+      }
+      
+      console.log(`[CSV Export] Job created successfully: ${jobId} (type: ${jobType})`);
+      
+      // Step 2: Poll for completion with enhanced logging
+      let status = "PENDING";
+      let attempts = 0;
+      const maxAttempts = 60; // 2 minutes max (60 * 2s)
+      let jobStatusResponse: any = null;
+      
+      while (!["DONE", "COMPLETED", "READY"].includes(status.toUpperCase()) && attempts < maxAttempts) {
+        await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds
+        
+        try {
+          jobStatusResponse = await phorestRequest(
+            `/branch/${branchId}/csvexportjob/${jobId}`,
+            businessId,
+            username,
+            password
+          );
+          
+          status = (jobStatusResponse.status || jobStatusResponse.state || "").toUpperCase();
+          
+          if (attempts % 5 === 0) { // Log every 10 seconds
+            console.log(`[CSV Export] Job ${jobId} status: ${status} (attempt ${attempts + 1}/${maxAttempts})`);
+          }
+          
+          if (["FAILED", "ERROR", "CANCELLED"].includes(status)) {
+            const errorMsg = jobStatusResponse.errorMessage || jobStatusResponse.error || 'Unknown error';
+            console.log(`[CSV Export] Job failed with status ${status}: ${errorMsg}`);
+            throw new Error(`CSV export job failed: ${errorMsg}`);
+          }
+        } catch (pollError: any) {
+          console.log(`[CSV Export] Poll request failed: ${pollError.message}`);
+          // Continue polling - might be a transient error
+        }
+        
+        attempts++;
+      }
+      
+      if (!["DONE", "COMPLETED", "READY"].includes(status.toUpperCase())) {
+        console.log(`[CSV Export] Job ${jobId} timed out after ${maxAttempts * 2} seconds with status: ${status}`);
+        continue; // Try next job type
+      }
+      
+      console.log(`[CSV Export] Job ${jobId} completed successfully, downloading CSV...`);
+      
+      // Step 3: Download CSV with retry
+      let csvText = '';
+      let downloadAttempts = 0;
+      const maxDownloadAttempts = 3;
+      
+      while (downloadAttempts < maxDownloadAttempts) {
+        try {
+          csvText = await phorestRequestText(
+            `/branch/${branchId}/csvexportjob/${jobId}/download`,
+            businessId,
+            username,
+            password
+          );
+          
+          console.log(`[CSV Export] Downloaded ${csvText.length} characters`);
+          console.log(`[CSV Export] First 500 chars: ${csvText.substring(0, 500)}`);
+          break;
+        } catch (downloadError: any) {
+          downloadAttempts++;
+          console.log(`[CSV Export] Download attempt ${downloadAttempts} failed: ${downloadError.message}`);
+          if (downloadAttempts < maxDownloadAttempts) {
+            await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+          }
+        }
+      }
+      
+      if (!csvText || csvText.length === 0) {
+        console.log(`[CSV Export] Empty CSV response for job type ${jobType}`);
+        continue; // Try next job type
+      }
+      
+      // Step 4: Parse CSV
+      const transactions = parseSalesCsv(csvText, branchId);
+      console.log(`[CSV Export] Parsed ${transactions.length} transactions from CSV (job type: ${jobType})`);
+      
+      if (transactions.length > 0) {
+        return transactions;
+      }
+      
+      // If no transactions found, try next job type
+      console.log(`[CSV Export] No transactions found with job type ${jobType}, trying next...`);
+      
+    } catch (error: any) {
+      lastError = error;
+      console.log(`[CSV Export] Job type ${jobType} failed: ${error.message}`);
+      // Continue to next job type
     }
-  );
-  
-  const jobId = exportJob.jobId || exportJob.id;
-  if (!jobId) {
-    throw new Error("No job ID returned from CSV export request");
   }
   
-  console.log(`CSV export job created: ${jobId}`);
-  
-  // Step 2: Poll for completion (max 60 seconds)
-  let status = "PENDING";
-  let attempts = 0;
-  const maxAttempts = 30;
-  
-  while (status !== "DONE" && status !== "COMPLETED" && attempts < maxAttempts) {
-    await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds
-    
-    const jobStatus = await phorestRequest(
-      `/branch/${branchId}/csvexportjob/${jobId}`,
-      businessId,
-      username,
-      password
-    );
-    
-    status = jobStatus.status || jobStatus.state;
-    console.log(`CSV export job status: ${status} (attempt ${attempts + 1}/${maxAttempts})`);
-    
-    if (status === "FAILED" || status === "ERROR") {
-      throw new Error(`CSV export job failed: ${jobStatus.errorMessage || 'Unknown error'}`);
-    }
-    
-    attempts++;
-  }
-  
-  if (status !== "DONE" && status !== "COMPLETED") {
-    throw new Error(`CSV export job timed out after ${maxAttempts * 2} seconds`);
-  }
-  
-  // Step 3: Download and parse CSV
-  const csvText = await phorestRequestText(
-    `/branch/${branchId}/csvexportjob/${jobId}/download`,
-    businessId,
-    username,
-    password
-  );
-  
-  return parseSalesCsv(csvText, branchId);
+  // All job types failed
+  throw lastError || new Error('All CSV export job types failed');
 }
 
-// Parse CSV text into transaction records
+// Parse CSV text into transaction records with flexible column mapping
 function parseSalesCsv(csvText: string, branchId: string): any[] {
   const lines = csvText.split('\n').filter(line => line.trim());
-  if (lines.length < 2) return [];
+  if (lines.length < 2) {
+    console.log(`[CSV Parser] Not enough lines in CSV: ${lines.length}`);
+    return [];
+  }
   
   // Parse header to get column indices
   const headerLine = lines[0];
-  const headers = parseCSVLine(headerLine).map(h => h.toLowerCase().trim());
+  const headers = parseCSVLine(headerLine).map(h => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
   
-  const getIndex = (possibleNames: string[]) => {
+  console.log(`[CSV Parser] Headers found: ${headers.join(', ')}`);
+  
+  // Flexible column mapping - try multiple possible names
+  const getIndex = (possibleNames: string[]): number => {
     for (const name of possibleNames) {
-      const idx = headers.findIndex(h => h.includes(name));
+      const normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const idx = headers.findIndex(h => h.includes(normalizedName) || normalizedName.includes(h));
       if (idx !== -1) return idx;
     }
     return -1;
   };
   
-  const idxTransactionId = getIndex(['transaction', 'id', 'purchaseid']);
-  const idxStaffId = getIndex(['staff', 'staffid', 'employee']);
-  const idxDate = getIndex(['date', 'purchasedate', 'transactiondate']);
-  const idxAmount = getIndex(['amount', 'total', 'price', 'revenue']);
-  const idxType = getIndex(['type', 'itemtype', 'category']);
-  const idxName = getIndex(['name', 'description', 'item', 'service', 'product']);
-  const idxClientName = getIndex(['client', 'clientname', 'customer']);
+  // Column mappings with multiple possible Phorest CSV header names
+  const idxTransactionId = getIndex(['transactionid', 'transaction', 'purchaseid', 'purchase', 'saleid', 'sale', 'id', 'receiptno', 'invoiceno']);
+  const idxStaffId = getIndex(['staffid', 'staff', 'employeeid', 'employee', 'therapistid', 'therapist', 'stylistid', 'stylist']);
+  const idxStaffName = getIndex(['staffname', 'employeename', 'therapistname', 'stylistname']);
+  const idxDate = getIndex(['date', 'transactiondate', 'purchasedate', 'saledate', 'completeddate', 'created']);
+  const idxTime = getIndex(['time', 'transactiontime']);
+  const idxAmount = getIndex(['amount', 'total', 'price', 'revenue', 'value', 'nettotal', 'grosstotal', 'totalamount']);
+  const idxType = getIndex(['type', 'itemtype', 'category', 'producttype', 'servicetype', 'linetype']);
+  const idxName = getIndex(['name', 'description', 'item', 'service', 'product', 'itemname', 'servicename', 'productname']);
+  const idxClientId = getIndex(['clientid', 'client', 'customerid', 'customer']);
+  const idxClientName = getIndex(['clientname', 'customername', 'firstname', 'fullname']);
+  const idxQuantity = getIndex(['quantity', 'qty', 'count']);
+  const idxDiscount = getIndex(['discount', 'discountamount', 'discountvalue']);
+  const idxTax = getIndex(['tax', 'taxamount', 'vat']);
+  
+  console.log(`[CSV Parser] Column indices: transactionId=${idxTransactionId}, staffId=${idxStaffId}, date=${idxDate}, amount=${idxAmount}, type=${idxType}, name=${idxName}`);
   
   const transactions: any[] = [];
   
   for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
-    if (values.length < 3) continue;
-    
-    const transaction = {
-      purchaseId: idxTransactionId >= 0 ? values[idxTransactionId] : `csv-${branchId}-${i}`,
-      staffId: idxStaffId >= 0 ? values[idxStaffId] : null,
-      purchaseDate: idxDate >= 0 ? values[idxDate] : null,
-      total: idxAmount >= 0 ? parseFloat(values[idxAmount]) || 0 : 0,
-      clientName: idxClientName >= 0 ? values[idxClientName] : null,
-      items: [{
-        type: idxType >= 0 ? values[idxType] : 'service',
-        name: idxName >= 0 ? values[idxName] : 'Transaction',
-        price: idxAmount >= 0 ? parseFloat(values[idxAmount]) || 0 : 0,
-        quantity: 1,
-      }]
-    };
-    
-    transactions.push(transaction);
+    try {
+      const values = parseCSVLine(lines[i]);
+      if (values.length < 3) continue;
+      
+      // Extract date - handle various formats
+      let transactionDate = idxDate >= 0 ? values[idxDate] : null;
+      if (transactionDate) {
+        // Try to normalize date format (could be DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, etc.)
+        if (transactionDate.includes('/')) {
+          const parts = transactionDate.split('/');
+          if (parts.length === 3) {
+            // Assume DD/MM/YYYY for UK/EU or MM/DD/YYYY for US
+            // Phorest is Irish, so likely DD/MM/YYYY
+            if (parseInt(parts[2]) > 100) {
+              transactionDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+          }
+        }
+      }
+      
+      const transaction = {
+        purchaseId: idxTransactionId >= 0 && values[idxTransactionId] 
+          ? values[idxTransactionId] 
+          : `csv-${branchId}-${i}-${Date.now()}`,
+        staffId: idxStaffId >= 0 ? values[idxStaffId] : null,
+        staffName: idxStaffName >= 0 ? values[idxStaffName] : null,
+        purchaseDate: transactionDate,
+        purchaseTime: idxTime >= 0 ? values[idxTime] : null,
+        total: idxAmount >= 0 ? parseFloat(values[idxAmount]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+        clientId: idxClientId >= 0 ? values[idxClientId] : null,
+        clientName: idxClientName >= 0 ? values[idxClientName] : null,
+        items: [{
+          type: idxType >= 0 ? (values[idxType]?.toLowerCase() || 'service') : 'service',
+          name: idxName >= 0 ? (values[idxName] || 'Transaction') : 'Transaction',
+          price: idxAmount >= 0 ? parseFloat(values[idxAmount]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+          quantity: idxQuantity >= 0 ? parseInt(values[idxQuantity]) || 1 : 1,
+          discount: idxDiscount >= 0 ? parseFloat(values[idxDiscount]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+          tax: idxTax >= 0 ? parseFloat(values[idxTax]?.replace(/[^0-9.-]/g, '')) || 0 : 0,
+        }]
+      };
+      
+      // Only add if we have meaningful data
+      if (transaction.purchaseDate || transaction.total > 0) {
+        transactions.push(transaction);
+      }
+    } catch (lineError: any) {
+      console.log(`[CSV Parser] Error parsing line ${i}: ${lineError.message}`);
+      // Continue with next line
+    }
   }
   
   return transactions;
 }
 
-// Helper to parse CSV line handling quoted values
+// Helper to parse CSV line handling quoted values and escaped quotes
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
@@ -1033,9 +1159,16 @@ function parseCSVLine(line: string): string[] {
   
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
+    const nextChar = line[i + 1];
     
     if (char === '"') {
-      inQuotes = !inQuotes;
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote
+        current += '"';
+        i++; // Skip next quote
+      } else {
+        inQuotes = !inQuotes;
+      }
     } else if (char === ',' && !inQuotes) {
       result.push(current.trim());
       current = '';
@@ -1054,7 +1187,10 @@ async function logSync(
   status: string,
   recordsSynced: number,
   errorMessage?: string,
-  metadata?: any
+  metadata?: any,
+  apiEndpoint?: string,
+  responseSample?: string,
+  retryCount?: number
 ) {
   await supabase.from("phorest_sync_log").insert({
     sync_type: syncType,
@@ -1063,7 +1199,57 @@ async function logSync(
     completed_at: new Date().toISOString(),
     error_message: errorMessage,
     metadata: metadata || {},
+    api_endpoint: apiEndpoint,
+    response_sample: responseSample?.substring(0, 1000), // Limit sample size
+    retry_count: retryCount || 0,
   });
+}
+
+// Helper function to save transaction items to the new detailed table
+async function saveTransactionItems(
+  supabase: any,
+  transactions: any[],
+  branchId: string,
+  branchName: string,
+  staffMap: Map<string, string>
+): Promise<number> {
+  let savedCount = 0;
+  
+  for (const transaction of transactions) {
+    const staffId = transaction.staffId;
+    const stylistUserId = staffId ? staffMap.get(staffId) : null;
+    const transactionDate = transaction.purchaseDate?.split('T')[0];
+    
+    if (!transactionDate) continue;
+    
+    for (const item of transaction.items || []) {
+      const itemRecord = {
+        transaction_id: transaction.purchaseId,
+        phorest_staff_id: staffId,
+        stylist_user_id: stylistUserId,
+        phorest_client_id: transaction.clientId,
+        client_name: transaction.clientName,
+        location_id: branchId,
+        branch_name: branchName,
+        transaction_date: transactionDate,
+        item_type: item.type || 'service',
+        item_name: item.name || 'Unknown Item',
+        item_category: item.category || null,
+        quantity: item.quantity || 1,
+        unit_price: item.price || 0,
+        discount: item.discount || 0,
+        total_amount: (item.price || 0) * (item.quantity || 1) - (item.discount || 0),
+      };
+      
+      const { error } = await supabase
+        .from('phorest_transaction_items')
+        .upsert(itemRecord, { onConflict: 'transaction_id,item_name,item_type' });
+      
+      if (!error) savedCount++;
+    }
+  }
+  
+  return savedCount;
 }
 
 serve(async (req: Request) => {
