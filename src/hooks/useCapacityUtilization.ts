@@ -26,6 +26,15 @@ export interface DayCapacity {
   serviceMix: ServiceMixItem[];
 }
 
+export interface CapacityBreakdownData {
+  grossHoursPerStylist: number;
+  breakMinutes: number;
+  lunchMinutes: number;
+  paddingMinutes: number;
+  stylistCount: number;
+  daysInPeriod: number;
+}
+
 export interface CapacityData {
   days: DayCapacity[];
   totalAvailableHours: number;
@@ -39,6 +48,7 @@ export interface CapacityData {
   serviceMix: ServiceMixItem[];
   peakDay: DayCapacity | null;
   lowDay: DayCapacity | null;
+  breakdown: CapacityBreakdownData;
 }
 
 const PERIOD_DAYS: Record<CapacityPeriod, number> = {
@@ -50,9 +60,9 @@ const PERIOD_DAYS: Record<CapacityPeriod, number> = {
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
 /**
- * Calculate operating hours from hours_json for a specific day
+ * Calculate gross operating hours from hours_json for a specific day
  */
-function getOperatingHours(hoursJson: HoursJson | null, dayOfWeek: number): number {
+function getGrossOperatingHours(hoursJson: HoursJson | null, dayOfWeek: number): number {
   if (!hoursJson) return 8; // Default to 8 hours if no hours set
   
   const dayName = DAY_NAMES[dayOfWeek];
@@ -68,6 +78,22 @@ function getOperatingHours(hoursJson: HoursJson | null, dayOfWeek: number): numb
   const closeMinutes = closeHour * 60 + closeMin;
   
   return (closeMinutes - openMinutes) / 60;
+}
+
+/**
+ * Calculate effective hours after subtracting breaks and lunch
+ */
+function getEffectiveHours(
+  hoursJson: HoursJson | null, 
+  dayOfWeek: number,
+  breakMinutes: number,
+  lunchMinutes: number
+): number {
+  const grossHours = getGrossOperatingHours(hoursJson, dayOfWeek);
+  if (grossHours === 0) return 0; // Closed day
+  
+  const nonProductiveHours = (breakMinutes + lunchMinutes) / 60;
+  return Math.max(0, grossHours - nonProductiveHours);
 }
 
 /**
@@ -124,7 +150,31 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
           serviceMix: [],
           peakDay: null,
           lowDay: null,
+          breakdown: {
+            grossHoursPerStylist: 8,
+            breakMinutes: 30,
+            lunchMinutes: 45,
+            paddingMinutes: 10,
+            stylistCount: 0,
+            daysInPeriod: 0,
+          },
         } as CapacityData;
+      }
+
+      // Calculate aggregate breakdown data for display
+      const totalStylistCapacity = filteredLocations.reduce((sum, loc) => sum + (loc.stylist_capacity || 1), 0);
+      const avgBreakMins = filteredLocations.reduce((sum, loc) => sum + (loc.break_minutes_per_day ?? 30), 0) / filteredLocations.length;
+      const avgLunchMins = filteredLocations.reduce((sum, loc) => sum + (loc.lunch_minutes ?? 45), 0) / filteredLocations.length;
+      const avgPaddingMins = filteredLocations.reduce((sum, loc) => sum + (loc.appointment_padding_minutes ?? 10), 0) / filteredLocations.length;
+      
+      // Calculate average gross hours per stylist per day (from first open day as sample)
+      let avgGrossHoursPerStylist = 8;
+      for (let d = 0; d <= 6; d++) {
+        const grossHours = getGrossOperatingHours(filteredLocations[0].hours_json, d);
+        if (grossHours > 0) {
+          avgGrossHoursPerStylist = grossHours;
+          break;
+        }
       }
 
       // Fetch appointments
@@ -156,9 +206,11 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
         let totalAvailable = 0;
         
         filteredLocations.forEach(loc => {
-          const operatingHours = getOperatingHours(loc.hours_json, d.dayOfWeek);
+          const breakMins = loc.break_minutes_per_day ?? 30;
+          const lunchMins = loc.lunch_minutes ?? 45;
+          const effectiveHours = getEffectiveHours(loc.hours_json, d.dayOfWeek, breakMins, lunchMins);
           const capacity = loc.stylist_capacity || 1; // Default to 1 if not set
-          totalAvailable += operatingHours * capacity;
+          totalAvailable += effectiveHours * capacity;
         });
 
         byDate[d.date] = {
@@ -291,6 +343,14 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
         serviceMix,
         peakDay,
         lowDay,
+        breakdown: {
+          grossHoursPerStylist: Math.round(avgGrossHoursPerStylist * 10) / 10,
+          breakMinutes: Math.round(avgBreakMins),
+          lunchMinutes: Math.round(avgLunchMins),
+          paddingMinutes: Math.round(avgPaddingMins),
+          stylistCount: totalStylistCapacity,
+          daysInPeriod: days.length,
+        },
       } as CapacityData;
     },
     enabled: locations.length > 0,

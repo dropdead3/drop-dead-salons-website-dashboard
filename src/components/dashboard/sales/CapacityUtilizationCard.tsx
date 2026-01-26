@@ -9,6 +9,7 @@ import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { useCapacityUtilization, CapacityPeriod, DayCapacity } from '@/hooks/useCapacityUtilization';
 import { LocationSelect } from '@/components/ui/location-select';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBreakdown';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Gauge, Clock, DollarSign, TrendingDown, Calendar, PieChart, Info } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -151,6 +152,7 @@ export function CapacityUtilizationCard() {
     serviceMix,
     peakDay,
     lowDay,
+    breakdown,
   } = data;
 
   // Chart data
@@ -255,6 +257,16 @@ export function CapacityUtilizationCard() {
               overallUtilization >= 50 && overallUtilization < 70 && 'bg-amber-500',
               overallUtilization < 50 && 'bg-destructive'
             )}
+          />
+
+          {/* Capacity Breakdown Calculator */}
+          <CapacityBreakdown
+            grossHoursPerStylist={breakdown.grossHoursPerStylist}
+            breakMinutes={breakdown.breakMinutes}
+            lunchMinutes={breakdown.lunchMinutes}
+            paddingMinutes={breakdown.paddingMinutes}
+            stylistCount={breakdown.stylistCount}
+            daysInPeriod={breakdown.daysInPeriod}
           />
         </div>
 

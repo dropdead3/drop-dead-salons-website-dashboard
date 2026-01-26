@@ -22,6 +22,15 @@ export interface ServiceMix {
   percentage: number;
 }
 
+export interface CapacityBreakdownData {
+  grossHoursPerStylist: number;
+  breakMinutes: number;
+  lunchMinutes: number;
+  paddingMinutes: number;
+  stylistCount: number;
+  daysInPeriod: number;
+}
+
 export interface CapacityData {
   totalAvailableHours: number;
   totalBookedHours: number;
@@ -34,10 +43,11 @@ export interface CapacityData {
   totalAppointments: number;
   peakDay: DayCapacity | null;
   lowDay: DayCapacity | null;
+  breakdown: CapacityBreakdownData;
 }
 
 // Parse hours from location hours_json for a specific day
-function getOperatingHoursForDay(hoursJson: Record<string, any> | null, dayOfWeek: number): number {
+function getGrossOperatingHours(hoursJson: Record<string, any> | null, dayOfWeek: number): number {
   if (!hoursJson) return 8; // Default to 8 hours
   
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -53,6 +63,20 @@ function getOperatingHoursForDay(hoursJson: Record<string, any> | null, dayOfWee
   } catch {
     return 8; // Default fallback
   }
+}
+
+// Calculate effective hours after subtracting breaks and lunch
+function getEffectiveHoursForDay(
+  hoursJson: Record<string, any> | null, 
+  dayOfWeek: number,
+  breakMinutes: number,
+  lunchMinutes: number
+): number {
+  const grossHours = getGrossOperatingHours(hoursJson, dayOfWeek);
+  if (grossHours === 0) return 0; // Closed day
+  
+  const nonProductiveHours = (breakMinutes + lunchMinutes) / 60;
+  return Math.max(0, grossHours - nonProductiveHours);
 }
 
 export type CapacityDateRange = 'tomorrow' | '7days' | '30days' | '90days';
@@ -93,7 +117,7 @@ export function useHistoricalCapacityUtilization(
     queryFn: async () => {
       let query = supabase
         .from('locations')
-        .select('id, name, stylist_capacity, hours_json')
+        .select('id, name, stylist_capacity, hours_json, break_minutes_per_day, lunch_minutes, appointment_padding_minutes')
         .eq('is_active', true);
 
       if (locationId) {
@@ -136,6 +160,22 @@ export function useHistoricalCapacityUtilization(
 
     if (locations.length === 0) return null;
 
+    // Calculate aggregate breakdown data for display
+    const totalStylistCapacity = locations.reduce((sum, loc) => sum + (loc.stylist_capacity || 4), 0);
+    const avgBreakMins = locations.reduce((sum, loc) => sum + (loc.break_minutes_per_day ?? 30), 0) / locations.length;
+    const avgLunchMins = locations.reduce((sum, loc) => sum + (loc.lunch_minutes ?? 45), 0) / locations.length;
+    const avgPaddingMins = locations.reduce((sum, loc) => sum + (loc.appointment_padding_minutes ?? 10), 0) / locations.length;
+    
+    // Calculate average gross hours per stylist per day (from first open day as sample)
+    let avgGrossHoursPerStylist = 8; // Default
+    for (let d = 0; d <= 6; d++) {
+      const grossHours = getGrossOperatingHours(locations[0].hours_json as Record<string, any> | null, d);
+      if (grossHours > 0) {
+        avgGrossHoursPerStylist = grossHours;
+        break;
+      }
+    }
+
     // Calculate daily capacity
     const dailyMap = new Map<string, DayCapacity>();
     const serviceMixMap = new Map<string, ServiceMix>();
@@ -150,9 +190,11 @@ export function useHistoricalCapacityUtilization(
       let dayAvailableHours = 0;
       locations.forEach(loc => {
         const hoursJson = loc.hours_json as Record<string, any> | null;
-        const operatingHours = getOperatingHoursForDay(hoursJson, dayOfWeek);
+        const breakMins = loc.break_minutes_per_day ?? 30;
+        const lunchMins = loc.lunch_minutes ?? 45;
+        const effectiveHours = getEffectiveHoursForDay(hoursJson, dayOfWeek, breakMins, lunchMins);
         const capacity = loc.stylist_capacity || 4;
-        dayAvailableHours += operatingHours * capacity;
+        dayAvailableHours += effectiveHours * capacity;
       });
 
       dailyMap.set(dateStr, {
@@ -251,6 +293,9 @@ export function useHistoricalCapacityUtilization(
       , daysWithAvailability[0]);
     }
 
+    // Calculate days in period
+    const daysInPeriod = dailyCapacity.length;
+
     return {
       totalAvailableHours: Math.round(totalAvailableHours),
       totalBookedHours: Math.round(totalBookedHours),
@@ -263,6 +308,14 @@ export function useHistoricalCapacityUtilization(
       totalAppointments,
       peakDay,
       lowDay,
+      breakdown: {
+        grossHoursPerStylist: Math.round(avgGrossHoursPerStylist * 10) / 10,
+        breakMinutes: Math.round(avgBreakMins),
+        lunchMinutes: Math.round(avgLunchMins),
+        paddingMinutes: Math.round(avgPaddingMins),
+        stylistCount: totalStylistCapacity,
+        daysInPeriod,
+      },
     };
   })();
 

@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
+import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBreakdown';
 import { Gauge, Clock, TrendingDown, Calendar, PieChart as PieChartIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -154,6 +155,7 @@ export function CapacityUtilizationSection({
     totalAppointments,
     peakDay,
     lowDay,
+    breakdown,
   } = capacityData;
 
   // Chart data - limit for 90 days view
@@ -227,6 +229,16 @@ export function CapacityUtilizationSection({
               overallUtilization >= 50 && overallUtilization < 70 && 'bg-amber-500',
               overallUtilization < 50 && 'bg-destructive'
             )}
+          />
+
+          {/* Capacity Breakdown Calculator */}
+          <CapacityBreakdown
+            grossHoursPerStylist={breakdown.grossHoursPerStylist}
+            breakMinutes={breakdown.breakMinutes}
+            lunchMinutes={breakdown.lunchMinutes}
+            paddingMinutes={breakdown.paddingMinutes}
+            stylistCount={breakdown.stylistCount}
+            daysInPeriod={breakdown.daysInPeriod}
           />
         </div>
 

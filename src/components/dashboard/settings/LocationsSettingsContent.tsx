@@ -89,6 +89,9 @@ type LocationFormData = {
   tax_rate: number | null;
   stylist_capacity: number | null;
   assistant_ratio: number | null;
+  break_minutes_per_day: number | null;
+  lunch_minutes: number | null;
+  appointment_padding_minutes: number | null;
 };
 
 const emptyForm: LocationFormData = {
@@ -109,6 +112,9 @@ const emptyForm: LocationFormData = {
   tax_rate: null,
   stylist_capacity: null,
   assistant_ratio: 0.5,
+  break_minutes_per_day: 30,
+  lunch_minutes: 45,
+  appointment_padding_minutes: 10,
 };
 
 export function LocationsSettingsContent() {
@@ -152,6 +158,9 @@ export function LocationsSettingsContent() {
       tax_rate: location.tax_rate,
       stylist_capacity: location.stylist_capacity,
       assistant_ratio: location.assistant_ratio,
+      break_minutes_per_day: location.break_minutes_per_day ?? 30,
+      lunch_minutes: location.lunch_minutes ?? 45,
+      appointment_padding_minutes: location.appointment_padding_minutes ?? 10,
     });
     setIsDialogOpen(true);
   };
@@ -180,6 +189,9 @@ export function LocationsSettingsContent() {
       day_rate_enabled: null,
       day_rate_default_price: null,
       day_rate_blackout_dates: null,
+      break_minutes_per_day: formData.break_minutes_per_day,
+      lunch_minutes: formData.lunch_minutes,
+      appointment_padding_minutes: formData.appointment_padding_minutes,
     };
 
     if (editingLocation) {
@@ -562,6 +574,70 @@ export function LocationsSettingsContent() {
                       />
                       <p className="text-xs text-muted-foreground">
                         Assistants per stylist (0.5 = 1 per 2 stylists)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Capacity Timing Settings */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h4 className="font-medium text-sm">Capacity Timing</h4>
+                  <p className="text-xs text-muted-foreground -mt-2">
+                    Adjust for real-world availability by accounting for breaks, lunch, and appointment transitions
+                  </p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="break_minutes_per_day">Breaks/Day</Label>
+                      <Input
+                        id="break_minutes_per_day"
+                        type="number"
+                        min="0"
+                        max="120"
+                        value={formData.break_minutes_per_day ?? 30}
+                        onChange={(e) => setFormData(f => ({ 
+                          ...f, 
+                          break_minutes_per_day: e.target.value ? parseInt(e.target.value) : null 
+                        }))}
+                        placeholder="30"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Minutes (e.g., 2×15 min)
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lunch_minutes">Lunch</Label>
+                      <Input
+                        id="lunch_minutes"
+                        type="number"
+                        min="0"
+                        max="120"
+                        value={formData.lunch_minutes ?? 45}
+                        onChange={(e) => setFormData(f => ({ 
+                          ...f, 
+                          lunch_minutes: e.target.value ? parseInt(e.target.value) : null 
+                        }))}
+                        placeholder="45"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Per stylist/day
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="appointment_padding_minutes">Appt Padding</Label>
+                      <Input
+                        id="appointment_padding_minutes"
+                        type="number"
+                        min="0"
+                        max="60"
+                        value={formData.appointment_padding_minutes ?? 10}
+                        onChange={(e) => setFormData(f => ({ 
+                          ...f, 
+                          appointment_padding_minutes: e.target.value ? parseInt(e.target.value) : null 
+                        }))}
+                        placeholder="10"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Buffer between appts
                       </p>
                     </div>
                   </div>
