@@ -1,25 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, LayoutGrid, PanelRightOpen, PanelRightClose } from 'lucide-react';
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from '@/components/ui/resizable';
-
-// Tab Components
-import { OverviewTab } from '@/components/dashboard/website-editor/OverviewTab';
+import { 
+  LayoutGrid,
+  PanelRightClose,
+  PanelRightOpen,
+  ExternalLink
+} from 'lucide-react';
 import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
 import { BrandStatementEditor } from '@/components/dashboard/website-editor/BrandStatementEditor';
-import { TestimonialsEditor } from '@/components/dashboard/website-editor/TestimonialsEditor';
 import { NewClientEditor } from '@/components/dashboard/website-editor/NewClientEditor';
+import { TestimonialsEditor } from '@/components/dashboard/website-editor/TestimonialsEditor';
 import { ExtensionsEditor } from '@/components/dashboard/website-editor/ExtensionsEditor';
 import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
 import { BrandsManager } from '@/components/dashboard/website-editor/BrandsManager';
-import { DrinkMenuEditor } from '@/components/dashboard/website-editor/DrinkMenuEditor';
+import { DrinksManager } from '@/components/dashboard/website-editor/DrinksManager';
 import { FooterCTAEditor } from '@/components/dashboard/website-editor/FooterCTAEditor';
 // Embedded Content Components
 import { TestimonialsContent } from '@/components/dashboard/website-editor/TestimonialsContent';
@@ -28,12 +24,21 @@ import { StylistsContent } from '@/components/dashboard/website-editor/StylistsC
 import { LocationsContent } from '@/components/dashboard/website-editor/LocationsContent';
 import { ServicesContent } from '@/components/dashboard/website-editor/ServicesContent';
 import { AnnouncementBarContent } from '@/components/dashboard/website-editor/AnnouncementBarContent';
+import { OverviewTab } from '@/components/dashboard/website-editor/OverviewTab';
 
 // Preview Component
 import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
 
 // Search Component
 import { WebsiteEditorSearch } from '@/components/dashboard/website-editor/WebsiteEditorSearch';
+
+// Layout Components
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable';
 
 export default function WebsiteSectionsHub() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -183,7 +188,7 @@ export default function WebsiteSectionsHub() {
                 </TabsContent>
 
                 <TabsContent value="drinks" className="mt-0">
-                  <DrinkMenuEditor />
+                  <DrinksManager />
                 </TabsContent>
 
                 <TabsContent value="footer-cta" className="mt-0">
