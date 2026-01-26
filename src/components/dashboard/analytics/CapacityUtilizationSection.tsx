@@ -202,7 +202,7 @@ export function CapacityUtilizationSection({
               {overallUtilization}% utilized
             </Badge>
           </div>
-          <CardDescription>How much of your salon's capacity was used {DATE_RANGE_LABELS[dateRange]}</CardDescription>
+          <CardDescription>How much of your salon's capacity is booked for {DATE_RANGE_LABELS[dateRange]}</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

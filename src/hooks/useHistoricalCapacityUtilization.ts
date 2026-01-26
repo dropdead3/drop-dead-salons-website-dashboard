@@ -85,7 +85,7 @@ export function useHistoricalCapacityUtilization(
   }
 
   const startDateStr = format(startDate, 'yyyy-MM-dd');
-  const endDateStr = format(today, 'yyyy-MM-dd');
+  const endDateStr = format(endDate, 'yyyy-MM-dd');
 
   // Fetch locations data
   const locationsQuery = useQuery({
@@ -142,7 +142,7 @@ export function useHistoricalCapacityUtilization(
 
     // Initialize days in range
     let currentDate = new Date(startDate);
-    while (currentDate <= today) {
+    while (currentDate <= endDate) {
       const dateStr = format(currentDate, 'yyyy-MM-dd');
       const dayOfWeek = currentDate.getDay();
       
