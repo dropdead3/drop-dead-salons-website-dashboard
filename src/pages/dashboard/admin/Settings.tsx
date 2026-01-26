@@ -50,6 +50,7 @@ import {
   Building2,
   CalendarDays,
   MapPin,
+  Armchair,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -64,6 +65,7 @@ import { CommandCenterContent } from '@/components/dashboard/settings/CommandCen
 import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
 import { ScheduleSettingsContent } from '@/components/dashboard/settings/ScheduleSettingsContent';
 import { LocationsSettingsContent } from '@/components/dashboard/settings/LocationsSettingsContent';
+import { DayRateSettingsContent } from '@/components/dashboard/settings/DayRateSettingsContent';
 import { SidebarLayoutEditor } from '@/components/dashboard/settings/SidebarLayoutEditor';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
@@ -97,7 +99,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | null;
+type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -684,6 +686,12 @@ export default function Settings() {
       description: 'Salon addresses, hours & holidays',
       icon: MapPin,
     },
+    dayrate: {
+      id: 'dayrate',
+      label: 'Day Rate',
+      description: 'Chair rentals, pricing & agreements',
+      icon: Armchair,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -1140,6 +1148,8 @@ export default function Settings() {
           {activeCategory === 'schedule' && <ScheduleSettingsContent />}
 
           {activeCategory === 'locations' && <LocationsSettingsContent />}
+
+          {activeCategory === 'dayrate' && <DayRateSettingsContent />}
         </div>
       </DashboardLayout>
     );

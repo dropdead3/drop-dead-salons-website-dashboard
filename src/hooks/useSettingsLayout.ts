@@ -16,6 +16,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   visibility: '#6366F1', // Indigo
   schedule: '#0EA5E9',   // Sky blue
   locations: '#EF4444',  // Red
+  dayrate: '#F97316',    // Orange (chair rental)
 };
 
 // Section groups for organized layout
@@ -23,7 +24,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['business', 'locations', 'schedule'],
+    categories: ['business', 'locations', 'schedule', 'dayrate'],
   },
   {
     id: 'team',
