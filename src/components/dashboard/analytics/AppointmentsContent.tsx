@@ -82,17 +82,8 @@ export function AppointmentsContent({
 
   return (
     <>
-      {/* Capacity Utilization Section - Top of page */}
-      <div className="mb-6">
-        <CapacityUtilizationSection 
-          capacityData={capacityData ?? null}
-          isLoading={capacityLoading ?? false}
-          dateRange={dateRange}
-        />
-      </div>
-
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -142,6 +133,15 @@ export function AppointmentsContent({
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* Capacity Utilization Section */}
+      <div className="mb-8">
+        <CapacityUtilizationSection 
+          capacityData={capacityData ?? null}
+          isLoading={capacityLoading ?? false}
+          dateRange={dateRange}
+        />
       </div>
 
       {/* Charts Row */}
