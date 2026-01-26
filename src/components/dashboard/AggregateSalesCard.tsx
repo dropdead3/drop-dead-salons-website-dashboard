@@ -17,10 +17,13 @@ import {
   Info,
   ChevronRight,
   CalendarClock,
+  CalendarPlus,
+  CalendarRange,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
+import { useNewBookings } from '@/hooks/useNewBookings';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { format, subDays, startOfWeek, startOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
@@ -107,6 +110,7 @@ export function AggregateSalesCard() {
   const { data: trendData, isLoading: trendLoading } = useSalesTrend(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: comparison, isLoading: comparisonLoading } = useSalesComparison(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: tomorrowData } = useTomorrowRevenue();
+  const { data: newBookings } = useNewBookings();
   const { goals } = useSalesGoals();
 
   const isLoading = metricsLoading || locationLoading;
@@ -392,6 +396,30 @@ export function AggregateSalesCard() {
               <span className="text-xs text-muted-foreground/70">
                 {tomorrowData?.appointmentCount || 0} bookings
               </span>
+            </div>
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <CalendarPlus className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+              </div>
+              <p className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block">
+                {newBookings?.bookedToday || 0}
+              </p>
+              <div className="flex items-center gap-1 justify-center mt-1">
+                <p className="text-xs text-muted-foreground">Booked Today</p>
+                <MetricInfoTooltip description="New appointments created today (by creation date, not appointment date)." />
+              </div>
+            </div>
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <CalendarRange className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+              </div>
+              <p className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block">
+                {newBookings?.bookedThisWeek || 0}
+              </p>
+              <div className="flex items-center gap-1 justify-center mt-1">
+                <p className="text-xs text-muted-foreground">Booked This Week</p>
+                <MetricInfoTooltip description="New appointments created this week (by creation date, not appointment date)." />
+              </div>
             </div>
           </div>
 

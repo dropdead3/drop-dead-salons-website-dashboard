@@ -6,9 +6,12 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  BarChart3
+  BarChart3,
+  CalendarPlus,
+  CalendarRange
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNewBookings } from '@/hooks/useNewBookings';
 import { DailyVolume, HourlyDistribution, StatusBreakdown } from '@/hooks/useOperationalAnalytics';
 import { format, parseISO } from 'date-fns';
 import { 
@@ -80,10 +83,12 @@ export function AppointmentsContent({
 
   const maxHeatValue = Math.max(...hourlyDistribution.map(d => d.count), 1);
 
+  const { data: newBookings, isLoading: newBookingsLoading } = useNewBookings();
+
   return (
     <>
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -130,6 +135,36 @@ export function AppointmentsContent({
             <div>
               <p className="font-display text-2xl">{summary.cancellationRate.toFixed(1)}%</p>
               <p className="text-xs text-muted-foreground">Cancellation Rate</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+              <CalendarPlus className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              {newBookingsLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <p className="font-display text-2xl">{newBookings?.bookedToday || 0}</p>
+              )}
+              <p className="text-xs text-muted-foreground">Booked Today</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+              <CalendarRange className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              {newBookingsLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <p className="font-display text-2xl">{newBookings?.bookedThisWeek || 0}</p>
+              )}
+              <p className="text-xs text-muted-foreground">Booked This Week</p>
             </div>
           </div>
         </Card>
