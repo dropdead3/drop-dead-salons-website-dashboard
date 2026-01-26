@@ -47,6 +47,9 @@ export interface Location {
   day_rate_enabled: boolean | null;
   day_rate_default_price: number | null;
   day_rate_blackout_dates: string[] | null;
+  break_minutes_per_day: number | null;
+  lunch_minutes: number | null;
+  appointment_padding_minutes: number | null;
   created_at: string;
   updated_at: string;
 }

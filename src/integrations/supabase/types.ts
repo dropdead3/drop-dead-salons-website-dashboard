@@ -2179,8 +2179,10 @@ export type Database = {
       locations: {
         Row: {
           address: string
+          appointment_padding_minutes: number | null
           assistant_ratio: number | null
           booking_url: string | null
+          break_minutes_per_day: number | null
           city: string
           created_at: string | null
           day_rate_blackout_dates: string[] | null
@@ -2193,6 +2195,7 @@ export type Database = {
           hours_json: Json | null
           id: string
           is_active: boolean | null
+          lunch_minutes: number | null
           major_crossroads: string | null
           name: string
           phone: string
@@ -2205,8 +2208,10 @@ export type Database = {
         }
         Insert: {
           address: string
+          appointment_padding_minutes?: number | null
           assistant_ratio?: number | null
           booking_url?: string | null
+          break_minutes_per_day?: number | null
           city: string
           created_at?: string | null
           day_rate_blackout_dates?: string[] | null
@@ -2219,6 +2224,7 @@ export type Database = {
           hours_json?: Json | null
           id: string
           is_active?: boolean | null
+          lunch_minutes?: number | null
           major_crossroads?: string | null
           name: string
           phone: string
@@ -2231,8 +2237,10 @@ export type Database = {
         }
         Update: {
           address?: string
+          appointment_padding_minutes?: number | null
           assistant_ratio?: number | null
           booking_url?: string | null
+          break_minutes_per_day?: number | null
           city?: string
           created_at?: string | null
           day_rate_blackout_dates?: string[] | null
@@ -2245,6 +2253,7 @@ export type Database = {
           hours_json?: Json | null
           id?: string
           is_active?: boolean | null
+          lunch_minutes?: number | null
           major_crossroads?: string | null
           name?: string
           phone?: string
