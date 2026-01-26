@@ -41,7 +41,6 @@ import HomepageStylists from "./pages/dashboard/admin/HomepageStylists";
 import ManageRoles from "./pages/dashboard/admin/ManageRoles";
 import AccountManagement from "./pages/dashboard/admin/AccountManagement";
 import TestimonialsManager from "./pages/dashboard/admin/TestimonialsManager";
-import GalleryManager from "./pages/dashboard/admin/GalleryManager";
 import ServicesManager from "./pages/dashboard/admin/ServicesManager";
 import AnnouncementBarManager from "./pages/dashboard/admin/AnnouncementBarManager";
 import StylistLevels from "./pages/dashboard/admin/StylistLevels";

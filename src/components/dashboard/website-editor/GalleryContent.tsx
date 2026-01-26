@@ -1,7 +1,22 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,41 +29,30 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { 
   Images, 
   Plus, 
-  Trash2, 
-  Eye,
-  EyeOff,
   ArrowLeftRight,
   Image as ImageIcon,
   Loader2,
   Upload,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { ImageUploadInput } from '@/components/ui/image-upload-input';
 import { BulkImageUpload } from '@/components/ui/bulk-image-upload';
+import { SortableGalleryImage } from './gallery/SortableGalleryImage';
+import { SortableTransformation } from './gallery/SortableTransformation';
 import {
   useGalleryImages,
   useAddGalleryImage,
   useBulkAddGalleryImages,
   useUpdateGalleryImage,
   useDeleteGalleryImage,
+  useReorderGalleryImages,
   useGalleryTransformations,
   useAddGalleryTransformation,
   useUpdateGalleryTransformation,
   useDeleteGalleryTransformation,
+  useReorderGalleryTransformations,
 } from '@/hooks/useGalleryImages';
 
 export function GalleryContent() {
@@ -72,9 +76,27 @@ export function GalleryContent() {
   const bulkAddImages = useBulkAddGalleryImages();
   const updateImage = useUpdateGalleryImage();
   const deleteImage = useDeleteGalleryImage();
+  const reorderImages = useReorderGalleryImages();
   const addTransformation = useAddGalleryTransformation();
   const updateTransformation = useUpdateGalleryTransformation();
   const deleteTransformation = useDeleteGalleryTransformation();
+  const reorderTransformations = useReorderGalleryTransformations();
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Memoized IDs for sortable context
+  const imageIds = useMemo(() => galleryImages.map(img => img.id), [galleryImages]);
+  const transformationIds = useMemo(() => transformations.map(t => t.id), [transformations]);
 
   const handleToggleImageVisibility = (id: string, currentVisibility: boolean) => {
     updateImage.mutate({ id, updates: { is_visible: !currentVisibility } });
@@ -133,6 +155,40 @@ export function GalleryContent() {
     );
   };
 
+  const handleImageDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = galleryImages.findIndex((img) => img.id === active.id);
+      const newIndex = galleryImages.findIndex((img) => img.id === over.id);
+
+      const reordered = arrayMove(galleryImages, oldIndex, newIndex);
+      const updates = reordered.map((img, index) => ({
+        id: img.id,
+        display_order: index,
+      }));
+
+      reorderImages.mutate(updates);
+    }
+  };
+
+  const handleTransformationDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = transformations.findIndex((t) => t.id === active.id);
+      const newIndex = transformations.findIndex((t) => t.id === over.id);
+
+      const reordered = arrayMove(transformations, oldIndex, newIndex);
+      const updates = reordered.map((t, index) => ({
+        id: t.id,
+        display_order: index,
+      }));
+
+      reorderTransformations.mutate(updates);
+    }
+  };
+
   const visibleImages = galleryImages.filter(img => img.is_visible).length;
   const visibleTransforms = transformations.filter(t => t.is_visible).length;
   const isLoading = imagesLoading || transformsLoading;
@@ -146,7 +202,7 @@ export function GalleryContent() {
             Gallery Manager
           </h2>
           <p className="text-muted-foreground text-sm">
-            Manage gallery images and before/after transformations
+            Manage gallery images and before/after transformations. Drag to reorder.
           </p>
         </div>
       </div>
@@ -273,66 +329,24 @@ export function GalleryContent() {
                 <p className="text-muted-foreground">No gallery images yet. Add your first image to get started.</p>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {galleryImages.map((image) => (
-                  <Card 
-                    key={image.id} 
-                    className={cn(
-                      "overflow-hidden transition-opacity",
-                      !image.is_visible && "opacity-60"
-                    )}
-                  >
-                    <div className="aspect-[3/4] relative group">
-                      <img 
-                        src={image.src} 
-                        alt={image.alt} 
-                        className="w-full h-full object-cover"
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleImageDragEnd}
+              >
+                <SortableContext items={imageIds} strategy={rectSortingStrategy}>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {galleryImages.map((image) => (
+                      <SortableGalleryImage
+                        key={image.id}
+                        image={image}
+                        onToggleVisibility={handleToggleImageVisibility}
+                        onDelete={handleDeleteImage}
                       />
-                      {!image.is_visible && (
-                        <div className="absolute top-2 left-2">
-                          <Badge variant="secondary">Hidden</Badge>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          onClick={() => handleToggleImageVisibility(image.id, image.is_visible)}
-                        >
-                          {image.is_visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="icon">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Image?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently remove this image from the gallery.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteImage(image.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                    <CardContent className="p-3">
-                      <p className="text-sm text-muted-foreground truncate">{image.alt}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </TabsContent>
 
@@ -406,76 +420,24 @@ export function GalleryContent() {
                 <p className="text-muted-foreground">No transformations yet. Add your first before/after to get started.</p>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {transformations.map((transform) => (
-                  <Card 
-                    key={transform.id} 
-                    className={cn(
-                      "overflow-hidden transition-opacity",
-                      !transform.is_visible && "opacity-60"
-                    )}
-                  >
-                    <div className="grid grid-cols-2 gap-1">
-                      <div className="aspect-[3/4] relative">
-                        <img 
-                          src={transform.before_image} 
-                          alt={transform.before_label} 
-                          className="w-full h-full object-cover"
-                        />
-                        <Badge className="absolute bottom-2 left-2">{transform.before_label}</Badge>
-                      </div>
-                      <div className="aspect-[3/4] relative">
-                        <img 
-                          src={transform.after_image} 
-                          alt={transform.after_label} 
-                          className="w-full h-full object-cover"
-                        />
-                        <Badge className="absolute bottom-2 right-2">{transform.after_label}</Badge>
-                      </div>
-                    </div>
-                    <CardContent className="p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {!transform.is_visible && (
-                          <Badge variant="outline">Hidden</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleToggleTransformVisibility(transform.id, transform.is_visible)}
-                        >
-                          {transform.is_visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Transformation?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently remove this before/after comparison.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteTransform(transform.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleTransformationDragEnd}
+              >
+                <SortableContext items={transformationIds} strategy={verticalListSortingStrategy}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {transformations.map((transform) => (
+                      <SortableTransformation
+                        key={transform.id}
+                        transform={transform}
+                        onToggleVisibility={handleToggleTransformVisibility}
+                        onDelete={handleDeleteTransform}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </TabsContent>
         </Tabs>
