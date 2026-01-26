@@ -9,7 +9,7 @@ export function useNewBookings() {
   const sevenDaysAgo = format(startOfDay(subDays(today, 7)), "yyyy-MM-dd'T'HH:mm:ss");
 
   return useQuery({
-    queryKey: ['new-bookings', format(today, 'yyyy-MM-dd')],
+    queryKey: ['new-bookings', format(today, 'yyyy-MM-dd'), sevenDaysAgo],
     queryFn: async () => {
       // Fetch appointments created today
       const { data: todayBookings, error: todayError } = await supabase
