@@ -15,18 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { DailyVolume, StatusBreakdown, RetentionMetrics } from '@/hooks/useOperationalAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
-
-interface CapacityData {
-  totalAvailableHours: number;
-  totalBookedHours: number;
-  overallUtilization: number;
-  gapHours: number;
-  gapRevenue: number;
-  avgHourlyRevenue: number;
-  dailyCapacity: any[];
-  serviceMix: any[];
-  totalAppointments: number;
-}
+import type { CapacityData } from '@/hooks/useHistoricalCapacityUtilization';
 
 interface OverviewContentProps {
   summary: {

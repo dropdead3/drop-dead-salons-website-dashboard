@@ -38,17 +38,7 @@ const STATUS_COLORS: Record<string, string> = {
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
 
-interface CapacityData {
-  totalAvailableHours: number;
-  totalBookedHours: number;
-  overallUtilization: number;
-  gapHours: number;
-  gapRevenue: number;
-  avgHourlyRevenue: number;
-  dailyCapacity: any[];
-  serviceMix: any[];
-  totalAppointments: number;
-}
+import type { CapacityData } from '@/hooks/useHistoricalCapacityUtilization';
 
 interface AppointmentsContentProps {
   summary: {
