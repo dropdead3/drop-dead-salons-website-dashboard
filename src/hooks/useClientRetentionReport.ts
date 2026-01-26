@@ -27,7 +27,7 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
       // Get all clients
       const { data: clients } = await supabase
         .from('phorest_clients')
-        .select('id, client_name, created_at');
+        .select('id, name, created_at');
 
       if (!clients || clients.length === 0) {
         return {
@@ -97,7 +97,7 @@ export function useClientRetentionReport(dateFrom: string, dateTo: string, locat
         if (daysSince >= 60) {
           atRiskClientsList.push({
             id: client.id,
-            name: client.client_name || 'Unknown',
+            name: client.name || 'Unknown',
             lastVisit: stats.lastVisit,
             daysSinceVisit: daysSince,
             totalSpend: stats.totalSpend,
