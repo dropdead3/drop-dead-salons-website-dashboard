@@ -2,19 +2,23 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useHeroConfig, type HeroConfig, DEFAULT_HERO } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
 import { SectionPreviewWrapper } from './SectionPreviewWrapper';
 import { HeroSectionPreview } from './previews/HeroSectionPreview';
+import { SliderInput } from './inputs/SliderInput';
+import { UrlInput } from './inputs/UrlInput';
+import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export function HeroEditor() {
   const { data, isLoading, isSaving, update } = useHeroConfig();
   const [localConfig, setLocalConfig] = useState<HeroConfig>(DEFAULT_HERO);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
   // Sync local state when data loads
@@ -104,21 +108,34 @@ export function HeroEditor() {
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Call to Action Buttons</h4>
             <div className="space-y-2">
-              <Label htmlFor="cta_new">New Client Button</Label>
+              <Label htmlFor="cta_new">New Client Button Text</Label>
               <Input
                 id="cta_new"
                 value={localConfig.cta_new_client}
                 onChange={(e) => updateField('cta_new_client', e.target.value)}
               />
             </div>
+            <UrlInput
+              label="New Client Button URL"
+              value={localConfig.cta_new_client_url}
+              onChange={(value) => updateField('cta_new_client_url', value)}
+              placeholder="Leave empty to open consultation form"
+              description="Leave empty to open the consultation form dialog"
+            />
             <div className="space-y-2">
-              <Label htmlFor="cta_returning">Returning Client Button</Label>
+              <Label htmlFor="cta_returning">Returning Client Button Text</Label>
               <Input
                 id="cta_returning"
                 value={localConfig.cta_returning_client}
                 onChange={(e) => updateField('cta_returning_client', e.target.value)}
               />
             </div>
+            <UrlInput
+              label="Returning Client Button URL"
+              value={localConfig.cta_returning_client_url}
+              onChange={(value) => updateField('cta_returning_client_url', value)}
+              placeholder="/booking"
+            />
           </div>
 
           {/* Consultation Notes */}
@@ -141,6 +158,66 @@ export function HeroEditor() {
               />
             </div>
           </div>
+
+          {/* Advanced Settings */}
+          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between mt-4">
+                <span className="flex items-center gap-2">
+                  <Settings2 className="h-4 w-4" />
+                  Advanced Settings
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {showAdvanced ? 'Hide' : 'Show'}
+                </span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-6 pt-4">
+              {/* Animation Timing */}
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-medium text-sm">Animation Timing</h4>
+                <SliderInput
+                  label="Animation Start Delay"
+                  value={localConfig.animation_start_delay}
+                  onChange={(value) => updateField('animation_start_delay', value)}
+                  min={1}
+                  max={8}
+                  step={0.5}
+                  unit="s"
+                  description="When word rotation begins after page load"
+                />
+                <SliderInput
+                  label="Word Rotation Interval"
+                  value={localConfig.word_rotation_interval}
+                  onChange={(value) => updateField('word_rotation_interval', value)}
+                  min={2}
+                  max={10}
+                  step={0.5}
+                  unit="s"
+                  description="How long each rotating word displays"
+                />
+              </div>
+
+              {/* Scroll Indicator */}
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-medium text-sm">Scroll Indicator</h4>
+                <ToggleInput
+                  label="Show Scroll Indicator"
+                  value={localConfig.show_scroll_indicator}
+                  onChange={(value) => updateField('show_scroll_indicator', value)}
+                  description="Show the scroll arrow at the bottom"
+                />
+                <div className="space-y-2">
+                  <Label>Scroll Indicator Text</Label>
+                  <Input
+                    value={localConfig.scroll_indicator_text}
+                    onChange={(e) => updateField('scroll_indicator_text', e.target.value)}
+                    placeholder="Scroll"
+                  />
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
 

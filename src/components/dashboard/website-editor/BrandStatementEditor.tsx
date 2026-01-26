@@ -4,17 +4,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Settings2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBrandStatementConfig, type BrandStatementConfig, DEFAULT_BRAND_STATEMENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
 import { SectionPreviewWrapper } from './SectionPreviewWrapper';
 import { BrandStatementPreview } from './previews/BrandStatementPreview';
+import { SliderInput } from './inputs/SliderInput';
+import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export function BrandStatementEditor() {
   const { data, isLoading, isSaving, update } = useBrandStatementConfig();
   const [localConfig, setLocalConfig] = useState<BrandStatementConfig>(DEFAULT_BRAND_STATEMENT);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
   useEffect(() => {
@@ -40,6 +44,19 @@ export function BrandStatementEditor() {
     const newParagraphs = [...localConfig.paragraphs];
     newParagraphs[index] = value;
     updateField('paragraphs', newParagraphs);
+  };
+
+  const addParagraph = () => {
+    if (localConfig.paragraphs.length < 5) {
+      updateField('paragraphs', [...localConfig.paragraphs, '']);
+    }
+  };
+
+  const removeParagraph = (index: number) => {
+    if (localConfig.paragraphs.length > 1) {
+      const newParagraphs = localConfig.paragraphs.filter((_, i) => i !== index);
+      updateField('paragraphs', newParagraphs);
+    }
   };
 
   if (isLoading) {
@@ -104,10 +121,31 @@ export function BrandStatementEditor() {
 
           {/* Paragraphs */}
           <div className="space-y-4 pt-4 border-t">
-            <h4 className="font-medium text-sm">Description Paragraphs</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm">Description Paragraphs</h4>
+              {localConfig.paragraphs.length < 5 && (
+                <Button type="button" variant="outline" size="sm" onClick={addParagraph}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              )}
+            </div>
             {localConfig.paragraphs.map((paragraph, index) => (
               <div key={index} className="space-y-2">
-                <Label>Paragraph {index + 1}</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Paragraph {index + 1}</Label>
+                  {localConfig.paragraphs.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeParagraph(index)}
+                      className="h-8 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
                 <Textarea
                   value={paragraph}
                   onChange={(e) => updateParagraph(index, e.target.value)}
@@ -116,6 +154,52 @@ export function BrandStatementEditor() {
               </div>
             ))}
           </div>
+
+          {/* Advanced Settings */}
+          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between mt-4">
+                <span className="flex items-center gap-2">
+                  <Settings2 className="h-4 w-4" />
+                  Advanced Settings
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {showAdvanced ? 'Hide' : 'Show'}
+                </span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-4">
+              <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+                <h4 className="font-medium text-sm">Typewriter Animation</h4>
+                <SliderInput
+                  label="Typing Speed"
+                  value={localConfig.typewriter_speed}
+                  onChange={(value) => updateField('typewriter_speed', value)}
+                  min={50}
+                  max={200}
+                  step={10}
+                  unit="ms"
+                  description="Time between each character"
+                />
+                <SliderInput
+                  label="Pause Between Words"
+                  value={localConfig.typewriter_pause}
+                  onChange={(value) => updateField('typewriter_pause', value)}
+                  min={1}
+                  max={5}
+                  step={0.5}
+                  unit="s"
+                  description="How long to pause after completing a word"
+                />
+                <ToggleInput
+                  label="Show Blinking Cursor"
+                  value={localConfig.show_typewriter_cursor}
+                  onChange={(value) => updateField('show_typewriter_cursor', value)}
+                  description="Display the typewriter cursor animation"
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
 
