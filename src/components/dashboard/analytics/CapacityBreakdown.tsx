@@ -47,7 +47,7 @@ export function CapacityBreakdown({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full flex items-center justify-between h-8 px-2 hover:bg-muted/50"
+          className="w-full flex items-center justify-between h-9 px-3 border border-border rounded-lg hover:bg-muted/50 hover:border-primary/30 transition-colors"
         >
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calculator className="w-3.5 h-3.5" />
