@@ -9,10 +9,13 @@ import { toast } from 'sonner';
 import { useFAQConfig, type FAQConfig, DEFAULT_FAQ } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
 import { useDebounce } from '@/hooks/use-debounce';
+import { SectionPreviewWrapper } from './SectionPreviewWrapper';
+import { FAQPreview } from './previews/FAQPreview';
 
 export function FAQEditor() {
   const { data, isLoading, isSaving, update } = useFAQConfig();
   const [localConfig, setLocalConfig] = useState<FAQConfig>(DEFAULT_FAQ);
+  const debouncedConfig = useDebounce(localConfig, 300);
 
   useEffect(() => {
     if (data && !isLoading) {
@@ -48,7 +51,7 @@ export function FAQEditor() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="grid xl:grid-cols-2 gap-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">FAQ Section</CardTitle>
@@ -109,6 +112,13 @@ export function FAQEditor() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Live Preview */}
+      <div className="hidden xl:block">
+        <SectionPreviewWrapper>
+          <FAQPreview config={debouncedConfig} />
+        </SectionPreviewWrapper>
+      </div>
     </div>
   );
 }

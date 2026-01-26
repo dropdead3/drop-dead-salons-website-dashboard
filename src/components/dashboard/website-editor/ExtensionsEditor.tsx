@@ -8,6 +8,8 @@ import { Loader2, Save, Star, Award, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useExtensionsConfig, type ExtensionsConfig, DEFAULT_EXTENSIONS } from '@/hooks/useSectionConfig';
 import { useDebounce } from '@/hooks/use-debounce';
+import { SectionPreviewWrapper } from './SectionPreviewWrapper';
+import { ExtensionsPreview } from './previews/ExtensionsPreview';
 
 const ICON_OPTIONS = [
   { value: 'Star', icon: Star },
@@ -18,6 +20,7 @@ const ICON_OPTIONS = [
 export function ExtensionsEditor() {
   const { data, isLoading, isSaving, update } = useExtensionsConfig();
   const [localConfig, setLocalConfig] = useState<ExtensionsConfig>(DEFAULT_EXTENSIONS);
+  const debouncedConfig = useDebounce(localConfig, 300);
 
   useEffect(() => {
     if (data && !isLoading) {
@@ -53,7 +56,7 @@ export function ExtensionsEditor() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="grid xl:grid-cols-2 gap-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Extensions Section</CardTitle>
@@ -172,6 +175,13 @@ export function ExtensionsEditor() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Live Preview */}
+      <div className="hidden xl:block">
+        <SectionPreviewWrapper>
+          <ExtensionsPreview config={debouncedConfig} />
+        </SectionPreviewWrapper>
+      </div>
     </div>
   );
 }

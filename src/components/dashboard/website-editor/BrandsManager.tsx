@@ -9,6 +9,9 @@ import { useBrandsConfig, type Brand, DEFAULT_BRANDS } from '@/hooks/useSectionC
 import { supabase } from '@/integrations/supabase/client';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
+import { useDebounce } from '@/hooks/use-debounce';
+import { SectionPreviewWrapper } from './SectionPreviewWrapper';
+import { BrandsPreview } from './previews/BrandsPreview';
 import {
   DndContext,
   closestCenter,
@@ -174,6 +177,7 @@ export function BrandsManager() {
   const [localConfig, setLocalConfig] = useState(DEFAULT_BRANDS);
   const [uploadingBrandId, setUploadingBrandId] = useState<string | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const debouncedConfig = useDebounce(localConfig, 300);
 
   // Initialize local state when data loads
   if (data && !hasInitialized && !isLoading) {
@@ -289,8 +293,8 @@ export function BrandsManager() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Main Settings Card */}
+    <div className="grid xl:grid-cols-2 gap-6">
+      <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Brands Section</CardTitle>
@@ -382,6 +386,14 @@ export function BrandsManager() {
           )}
         </CardContent>
       </Card>
+      </div>
+
+      {/* Live Preview */}
+      <div className="hidden xl:block">
+        <SectionPreviewWrapper>
+          <BrandsPreview config={debouncedConfig} />
+        </SectionPreviewWrapper>
+      </div>
     </div>
   );
 }
