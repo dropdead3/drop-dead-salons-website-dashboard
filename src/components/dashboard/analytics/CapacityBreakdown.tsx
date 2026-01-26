@@ -46,7 +46,7 @@ export function CapacityBreakdown({
   const breakHoursPerDay = (breakMinutes / 60) * stylistCount;
   const lunchHoursPerDay = (lunchMinutes / 60) * stylistCount;
   const grossHoursPerDay = grossHours * stylistCount;
-  const netHoursPerDay = grossHoursPerDay - breakHoursPerDay - lunchHoursPerDay;
+  const netHoursPerDay = Math.max(0, grossHoursPerDay - breakHoursPerDay - lunchHoursPerDay);
   
   const totalNetHours = netHoursPerDay * daysInPeriod;
 
@@ -90,125 +90,134 @@ export function CapacityBreakdown({
           )}
         </Button>
       </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2">
-        <div className="bg-muted/30 rounded-lg p-3 space-y-3 text-xs">
-          <div className="flex items-center justify-between">
-            <div className="font-medium text-foreground">Daily Capacity Calculator</div>
+      <CollapsibleContent className="pt-3">
+        <div className="bg-muted/30 rounded-xl p-4 space-y-4 text-sm">
+          {/* Header */}
+          <div className="flex items-center justify-between pb-2 border-b border-border/50">
+            <div className="font-semibold text-foreground">Daily Capacity Calculator</div>
             {hasChanges && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleReset}
-                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
               >
-                <RotateCcw className="w-3 h-3 mr-1" />
+                <RotateCcw className="w-3 h-3" />
                 Reset
               </Button>
             )}
           </div>
           
-          {/* Operating Hours × Stylists */}
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground shrink-0">Operating Hours × Stylists</span>
-            <div className="flex items-center gap-1.5">
-              <Input
-                type="number"
-                min={1}
-                max={24}
-                value={grossHours}
-                onChange={(e) => setGrossHours(Math.max(1, Math.min(24, Number(e.target.value) || 0)))}
-                className="w-14 h-7 text-xs text-center px-1 tabular-nums"
-              />
-              <span className="text-muted-foreground">h ×</span>
-              <Input
-                type="number"
-                min={1}
-                max={100}
-                value={stylistCount}
-                onChange={(e) => setStylistCount(Math.max(1, Math.min(100, Number(e.target.value) || 0)))}
-                className="w-14 h-7 text-xs text-center px-1 tabular-nums"
-              />
-              <span className="text-muted-foreground">=</span>
-              <span className="font-medium tabular-nums w-12 text-right">{grossHoursPerDay}h</span>
+          {/* Calculator Rows */}
+          <div className="space-y-3">
+            {/* Operating Hours × Stylists */}
+            <div className="grid grid-cols-[1fr,auto] items-center gap-4">
+              <span className="text-muted-foreground">Operating Hours × Stylists</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={24}
+                  value={grossHours}
+                  onChange={(e) => setGrossHours(Math.max(1, Math.min(24, Number(e.target.value) || 0)))}
+                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                />
+                <span className="text-muted-foreground text-xs w-6">h ×</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={stylistCount}
+                  onChange={(e) => setStylistCount(Math.max(1, Math.min(100, Number(e.target.value) || 0)))}
+                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                />
+                <span className="text-muted-foreground text-xs w-4">=</span>
+                <span className="font-semibold tabular-nums w-14 text-right">{grossHoursPerDay}h</span>
+              </div>
+            </div>
+            
+            {/* Break deduction */}
+            <div className="grid grid-cols-[1fr,auto] items-center gap-4">
+              <span className="text-muted-foreground">Less Breaks (per stylist)</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={breakMinutes}
+                  onChange={(e) => setBreakMinutes(Math.max(0, Math.min(120, Number(e.target.value) || 0)))}
+                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                />
+                <span className="text-muted-foreground text-xs w-6">min</span>
+                <span className="w-16" />
+                <span className="w-4" />
+                <span className="tabular-nums w-14 text-right text-muted-foreground">
+                  −{breakHoursPerDay.toFixed(1)}h
+                </span>
+              </div>
+            </div>
+            
+            {/* Lunch deduction */}
+            <div className="grid grid-cols-[1fr,auto] items-center gap-4">
+              <span className="text-muted-foreground">Less Lunch (per stylist)</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={lunchMinutes}
+                  onChange={(e) => setLunchMinutes(Math.max(0, Math.min(120, Number(e.target.value) || 0)))}
+                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                />
+                <span className="text-muted-foreground text-xs w-6">min</span>
+                <span className="w-16" />
+                <span className="w-4" />
+                <span className="tabular-nums w-14 text-right text-muted-foreground">
+                  −{lunchHoursPerDay.toFixed(1)}h
+                </span>
+              </div>
             </div>
           </div>
           
-          {/* Break deduction */}
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground shrink-0">Less Breaks (min/stylist)</span>
-            <div className="flex items-center gap-1.5">
-              <Input
-                type="number"
-                min={0}
-                max={120}
-                value={breakMinutes}
-                onChange={(e) => setBreakMinutes(Math.max(0, Math.min(120, Number(e.target.value) || 0)))}
-                className="w-14 h-7 text-xs text-center px-1 tabular-nums"
-              />
-              <span className="text-muted-foreground">min</span>
-              <span className="tabular-nums w-12 text-right text-muted-foreground">
-                −{breakHoursPerDay.toFixed(1)}h
+          {/* Net hours result */}
+          <div className="pt-3 border-t border-border/50">
+            <div className="grid grid-cols-[1fr,auto] items-center gap-4">
+              <span className="font-semibold text-foreground">Net Available Hours</span>
+              <span className="text-primary font-bold tabular-nums text-base">
+                {netHoursPerDay.toFixed(1)}h<span className="text-xs font-normal text-muted-foreground">/day</span>
               </span>
             </div>
-          </div>
-          
-          {/* Lunch deduction */}
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground shrink-0">Less Lunch (min/stylist)</span>
-            <div className="flex items-center gap-1.5">
-              <Input
-                type="number"
-                min={0}
-                max={120}
-                value={lunchMinutes}
-                onChange={(e) => setLunchMinutes(Math.max(0, Math.min(120, Number(e.target.value) || 0)))}
-                className="w-14 h-7 text-xs text-center px-1 tabular-nums"
-              />
-              <span className="text-muted-foreground">min</span>
-              <span className="tabular-nums w-12 text-right text-muted-foreground">
-                −{lunchHoursPerDay.toFixed(1)}h
-              </span>
-            </div>
-          </div>
-          
-          {/* Divider */}
-          <div className="border-t border-border/50 my-1" />
-          
-          {/* Net hours */}
-          <div className="flex items-center justify-between font-medium">
-            <span className="text-foreground">Net Available Hours</span>
-            <span className="text-primary tabular-nums text-sm">{netHoursPerDay.toFixed(1)}h/day</span>
-          </div>
 
-          {/* Period total */}
-          {daysInPeriod > 1 && (
-            <div className="flex items-center justify-between text-muted-foreground pt-1">
-              <span>Total for {daysInPeriod} days</span>
-              <span className="tabular-nums font-medium">{Math.round(totalNetHours)}h</span>
-            </div>
-          )}
+            {/* Period total */}
+            {daysInPeriod > 1 && (
+              <div className="grid grid-cols-[1fr,auto] items-center gap-4 mt-2">
+                <span className="text-muted-foreground text-xs">Total for {daysInPeriod} days</span>
+                <span className="tabular-nums font-semibold text-sm">{Math.round(totalNetHours)}h</span>
+              </div>
+            )}
+          </div>
 
           {/* Padding section */}
-          <div className="border-t border-border/50 pt-2 mt-2 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-muted-foreground shrink-0">Appt Padding (min between)</span>
-              <div className="flex items-center gap-1.5">
+          <div className="pt-3 border-t border-border/50 space-y-3">
+            <div className="grid grid-cols-[1fr,auto] items-center gap-4">
+              <span className="text-muted-foreground">Appointment Padding</span>
+              <div className="flex items-center gap-2">
                 <Input
                   type="number"
                   min={0}
                   max={60}
                   value={paddingMinutes}
                   onChange={(e) => setPaddingMinutes(Math.max(0, Math.min(60, Number(e.target.value) || 0)))}
-                  className="w-14 h-7 text-xs text-center px-1 tabular-nums"
+                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
                 />
-                <span className="text-muted-foreground">min</span>
+                <span className="text-muted-foreground text-xs">min</span>
               </div>
             </div>
             {paddingMinutes > 0 && (
-              <div className="flex items-start gap-1.5 text-muted-foreground">
-                <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
+                <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/70" />
                 <span>
-                  Reduces effective booking time by ~{paddingImpact}% for 1-hour appointments.
+                  Adding {paddingMinutes} min between appointments reduces effective booking capacity by ~{paddingImpact}% for 1-hour services.
                 </span>
               </div>
             )}
