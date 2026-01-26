@@ -31,6 +31,8 @@ export function CapacityBreakdown({
   const [breakMinutes, setBreakMinutes] = useState(initialBreakMinutes);
   const [lunchMinutes, setLunchMinutes] = useState(initialLunchMinutes);
   const [paddingMinutes, setPaddingMinutes] = useState(initialPaddingMinutes);
+  const [stylingMinutes, setStylingMinutes] = useState(0);
+  const [stylingPercentage, setStylingPercentage] = useState(25);
 
   // Update local state when props change
   useEffect(() => {
@@ -53,15 +55,24 @@ export function CapacityBreakdown({
     ? Math.round((paddingMinutes / (avgAppointmentMinutes + paddingMinutes)) * 100)
     : 0;
 
+  // Calculate styling/photography impact (weighted by percentage of appointments)
+  const stylingImpact = stylingMinutes > 0 && stylingPercentage > 0
+    ? Math.round(((stylingMinutes * (stylingPercentage / 100)) / avgAppointmentMinutes) * 100)
+    : 0;
+
   const hasChanges = 
     breakMinutes !== initialBreakMinutes ||
     lunchMinutes !== initialLunchMinutes ||
-    paddingMinutes !== initialPaddingMinutes;
+    paddingMinutes !== initialPaddingMinutes ||
+    stylingMinutes !== 0 ||
+    stylingPercentage !== 25;
 
   const handleReset = () => {
     setBreakMinutes(initialBreakMinutes);
     setLunchMinutes(initialLunchMinutes);
     setPaddingMinutes(initialPaddingMinutes);
+    setStylingMinutes(0);
+    setStylingPercentage(25);
   };
 
   return (
@@ -211,6 +222,46 @@ export function CapacityBreakdown({
                 <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/70" />
                 <span>
                   Adding {paddingMinutes} min between appointments reduces effective booking capacity by ~{paddingImpact}% for 1-hour services.
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Styling & Photography section */}
+          <div className="pt-3 border-t border-border/50 space-y-3">
+            <div className="grid grid-cols-[1fr,auto] items-center gap-4">
+              <span className="text-muted-foreground">Styling & Photography</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={60}
+                    value={stylingMinutes}
+                    onChange={(e) => setStylingMinutes(Math.max(0, Math.min(60, Number(e.target.value) || 0)))}
+                    className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                  />
+                  <span className="text-muted-foreground text-xs">min</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={stylingPercentage}
+                    onChange={(e) => setStylingPercentage(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
+                    className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                  />
+                  <span className="text-muted-foreground text-xs">%</span>
+                </div>
+              </div>
+            </div>
+            {stylingMinutes > 0 && stylingPercentage > 0 && (
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
+                <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/70" />
+                <span>
+                  If {stylingPercentage}% of appointments include {stylingMinutes} min of styling/photography,
+                  this reduces effective capacity by ~{stylingImpact}%.
                 </span>
               </div>
             )}
