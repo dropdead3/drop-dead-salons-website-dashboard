@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -8,7 +10,7 @@ import { useCapacityUtilization, CapacityPeriod, DayCapacity } from '@/hooks/use
 import { LocationSelect } from '@/components/ui/location-select';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Gauge, Clock, DollarSign, TrendingDown, Calendar, PieChart } from 'lucide-react';
+import { Gauge, Clock, DollarSign, TrendingDown, Calendar, PieChart, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { 
@@ -97,9 +99,14 @@ const PIE_COLORS = [
 ];
 
 export function CapacityUtilizationCard() {
+  const navigate = useNavigate();
   const [period, setPeriod] = useState<CapacityPeriod>('7days');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const { data, isLoading, error } = useCapacityUtilization(period, selectedLocation);
+
+  const handleViewDetails = () => {
+    navigate('/dashboard/admin/operational-analytics?tab=appointments');
+  };
 
   if (isLoading) {
     return (
@@ -172,6 +179,15 @@ export function CapacityUtilizationCard() {
             <div className="flex items-center gap-2">
               <Gauge className="w-5 h-5 text-primary" />
               <CardTitle className="font-display text-base">Capacity Utilization</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                onClick={handleViewDetails}
+              >
+                View Details
+                <ChevronRight className="w-3 h-3 ml-1" />
+              </Button>
             </div>
             <div className="flex items-center gap-2">
               <LocationSelect

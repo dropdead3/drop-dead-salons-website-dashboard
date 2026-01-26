@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -9,7 +11,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { CalendarRange, TrendingUp, Calendar, Users } from 'lucide-react';
+import { CalendarRange, TrendingUp, Calendar, Users, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -147,6 +149,7 @@ function WeeklyXAxisTick({ x, y, payload, weeks, peakWeekStart }: any) {
 }
 
 export function ForecastingCard() {
+  const navigate = useNavigate();
   const [period, setPeriod] = useState<ForecastPeriod>('7days');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
@@ -156,6 +159,10 @@ export function ForecastingCard() {
   const handleDayClick = (day: DayForecast) => {
     setSelectedDay(day);
     setSheetOpen(true);
+  };
+
+  const handleViewDetails = () => {
+    navigate('/dashboard/admin/sales');
   };
 
   const showWeeklyChart = period === '30days' || period === '60days';
@@ -231,14 +238,23 @@ export function ForecastingCard() {
   return (
     <>
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CalendarRange className="w-5 h-5 text-primary" />
-                <CardTitle className="font-display text-base">Forecasting</CardTitle>
-              </div>
-              <div className="flex items-center gap-2">
+      <CardHeader className="pb-3">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarRange className="w-5 h-5 text-primary" />
+              <CardTitle className="font-display text-base">Forecasting</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                onClick={handleViewDetails}
+              >
+                View Details
+                <ChevronRight className="w-3 h-3 ml-1" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
                 <LocationSelect
                   value={selectedLocation}
                   onValueChange={setSelectedLocation}

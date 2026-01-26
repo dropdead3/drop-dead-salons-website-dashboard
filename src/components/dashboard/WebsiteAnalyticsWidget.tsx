@@ -1,4 +1,5 @@
-import { TrendingUp, TrendingDown, Minus, RefreshCw, Globe, Eye, Clock, MousePointerClick } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { TrendingUp, TrendingDown, Minus, RefreshCw, Globe, Eye, Clock, MousePointerClick, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,7 +40,12 @@ function formatDuration(seconds: number): string {
 }
 
 export function WebsiteAnalyticsWidget() {
+  const navigate = useNavigate();
   const { summary, isLoading, refreshAnalytics, isRefreshing } = useWebsiteAnalytics();
+
+  const handleViewDetails = () => {
+    navigate('/dashboard/admin/marketing');
+  };
 
   if (isLoading) {
     return (
@@ -103,10 +109,21 @@ export function WebsiteAnalyticsWidget() {
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <Globe className="h-4 w-4 text-primary" />
-            Website Traffic
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium">
+              <Globe className="h-4 w-4 text-primary" />
+              Website Traffic
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs text-muted-foreground hover:text-foreground"
+              onClick={handleViewDetails}
+            >
+              View Details
+              <ChevronRight className="w-3 h-3 ml-1" />
+            </Button>
+          </div>
           <Button
             variant="ghost"
             size="icon"

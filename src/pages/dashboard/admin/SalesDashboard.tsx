@@ -49,6 +49,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { cn } from '@/lib/utils';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 // Sub-components
 import { SalesGoalsDialog } from '@/components/dashboard/sales/SalesGoalsDialog';
@@ -273,6 +274,10 @@ export default function SalesDashboard() {
               <h1 className="text-xl md:text-2xl font-display truncate">SALES DASHBOARD</h1>
               <p className="text-muted-foreground text-sm hidden sm:block">Revenue and transaction analytics</p>
             </div>
+            <CommandCenterVisibilityToggle 
+              elementKey="week_ahead_forecast" 
+              elementName="Forecasting" 
+            />
           </div>
           
           {/* Controls - Scrollable on mobile */}

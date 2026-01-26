@@ -46,6 +46,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -418,11 +419,17 @@ export default function OnboardingTracker() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="font-display text-2xl lg:text-3xl mb-1">ONBOARDING TRACKER</h1>
-          <p className="text-muted-foreground font-sans text-sm">
-            Monitor team onboarding progress across handbooks, tasks, and requests.
-          </p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="font-display text-2xl lg:text-3xl mb-1">ONBOARDING TRACKER</h1>
+            <p className="text-muted-foreground font-sans text-sm">
+              Monitor team onboarding progress across handbooks, tasks, and requests.
+            </p>
+          </div>
+          <CommandCenterVisibilityToggle 
+            elementKey="onboarding_overview" 
+            elementName="Onboarding" 
+          />
         </div>
 
         {/* Stats Cards */}

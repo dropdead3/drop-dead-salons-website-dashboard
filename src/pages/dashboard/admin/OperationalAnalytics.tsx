@@ -8,6 +8,7 @@ import { useOperationalAnalytics } from '@/hooks/useOperationalAnalytics';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useHistoricalCapacityUtilization } from '@/hooks/useHistoricalCapacityUtilization';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 // Content Components
 import { OverviewContent } from '@/components/dashboard/analytics/OverviewContent';
@@ -54,11 +55,17 @@ export default function OperationalAnalytics() {
       <div className="p-6 lg:p-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">OPERATIONAL ANALYTICS</h1>
-            <p className="text-muted-foreground font-sans">
-              Track appointment trends, no-show rates, and client retention metrics.
-            </p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h1 className="font-display text-3xl lg:text-4xl mb-2">OPERATIONAL ANALYTICS</h1>
+              <p className="text-muted-foreground font-sans">
+                Track appointment trends, no-show rates, and client retention metrics.
+              </p>
+            </div>
+            <CommandCenterVisibilityToggle 
+              elementKey="capacity_utilization" 
+              elementName="Capacity Utilization" 
+            />
           </div>
           <div className="flex gap-3">
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
