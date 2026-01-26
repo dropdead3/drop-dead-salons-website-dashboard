@@ -41,13 +41,9 @@ export function useStaffKPIReport(dateFrom: string, dateTo: string, locationId?:
       // Get performance metrics
       let metricsQuery = supabase
         .from('phorest_performance_metrics')
-        .select('phorest_staff_id, report_date, location_id, rebooking_rate, retention_rate, new_clients')
-        .gte('report_date', dateFrom)
-        .lte('report_date', dateTo);
-
-      if (locationId) {
-        metricsQuery = metricsQuery.eq('location_id', locationId);
-      }
+        .select('phorest_staff_id, week_start, rebooking_rate, retention_rate, new_clients')
+        .gte('week_start', dateFrom)
+        .lte('week_start', dateTo);
 
       const { data: metrics } = await metricsQuery;
 
