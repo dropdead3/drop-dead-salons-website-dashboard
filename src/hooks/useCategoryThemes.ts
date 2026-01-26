@@ -19,13 +19,13 @@ export function useServiceCategoryThemes() {
     queryKey: ['service-category-themes'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('service_category_themes')
+        .from('service_category_themes' as any)
         .select('*')
         .order('is_default', { ascending: false })
         .order('name');
       
       if (error) throw error;
-      return data as ServiceCategoryTheme[];
+      return (data || []) as unknown as ServiceCategoryTheme[];
     },
   });
 }
@@ -92,7 +92,7 @@ export function useSaveAsCustomTheme() {
 
       // Insert new theme
       const { error: insertError } = await supabase
-        .from('service_category_themes')
+        .from('service_category_themes' as any)
         .insert({
           name,
           description: description || null,
@@ -116,7 +116,7 @@ export function useDeleteCategoryTheme() {
   return useMutation({
     mutationFn: async (themeId: string) => {
       const { error } = await supabase
-        .from('service_category_themes')
+        .from('service_category_themes' as any)
         .delete()
         .eq('id', themeId)
         .eq('is_custom', true); // Only allow deleting custom themes
