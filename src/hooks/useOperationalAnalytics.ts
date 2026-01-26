@@ -22,12 +22,24 @@ export interface StatusBreakdown {
   percentage: number;
 }
 
+export interface AtRiskClient {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  lastVisit: string | null;
+  daysSinceVisit: number;
+  visitCount: number;
+  totalSpend: number;
+}
+
 export interface RetentionMetrics {
   totalClients: number;
   returningClients: number;
   newClients: number;
   retentionRate: number;
   atRiskClients: number;
+  atRiskClientsList: AtRiskClient[];
 }
 
 export interface LeadSlaMetrics {
@@ -181,7 +193,7 @@ export function useOperationalAnalytics(locationId?: string, dateRange: 'week' |
     queryFn: async () => {
       let query = supabase
         .from('phorest_clients')
-        .select('id, visit_count, last_visit, created_at');
+        .select('id, name, email, phone, visit_count, last_visit, total_spend, created_at');
 
       if (locationId) {
         query = query.eq('location_id', locationId);
@@ -195,10 +207,24 @@ export function useOperationalAnalytics(locationId?: string, dateRange: 'week' |
       const newClients = (data || []).filter(c => c.visit_count === 1).length;
       
       // At-risk: 2+ visits but no visit in 60+ days
-      const atRiskClients = (data || []).filter(c => {
+      const atRiskClientsData = (data || []).filter(c => {
         if (c.visit_count < 2 || !c.last_visit) return false;
         return differenceInDays(new Date(), parseISO(c.last_visit)) >= 60;
-      }).length;
+      });
+
+      // Build at-risk clients list with full details
+      const atRiskClientsList: AtRiskClient[] = atRiskClientsData
+        .map(c => ({
+          id: c.id,
+          name: c.name || 'Unknown',
+          email: c.email,
+          phone: c.phone,
+          lastVisit: c.last_visit,
+          daysSinceVisit: c.last_visit ? differenceInDays(new Date(), parseISO(c.last_visit)) : 0,
+          visitCount: c.visit_count || 0,
+          totalSpend: Number(c.total_spend) || 0,
+        }))
+        .sort((a, b) => b.daysSinceVisit - a.daysSinceVisit); // Most overdue first
 
       const retentionRate = totalClients > 0 ? (returningClients / totalClients) * 100 : 0;
 
@@ -207,7 +233,8 @@ export function useOperationalAnalytics(locationId?: string, dateRange: 'week' |
         returningClients,
         newClients,
         retentionRate,
-        atRiskClients,
+        atRiskClients: atRiskClientsData.length,
+        atRiskClientsList,
       } as RetentionMetrics;
     },
   });

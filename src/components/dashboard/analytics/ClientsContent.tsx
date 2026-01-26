@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { 
   Users, 
   AlertTriangle,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RetentionMetrics } from '@/hooks/useOperationalAnalytics';
+import { AtRiskClientsList } from './AtRiskClientsList';
 
 interface ClientsContentProps {
   retention?: RetentionMetrics;
@@ -238,6 +240,27 @@ export function ClientsContent({ retention, isLoading }: ClientsContentProps) {
               <p className="text-xs text-red-600">At-Risk</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* At-Risk Clients List */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+            At-Risk Clients
+            {retention.atRiskClientsList.length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {retention.atRiskClientsList.length}
+              </Badge>
+            )}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Clients with 2+ visits who haven't returned in 60+ days
+          </p>
+        </CardHeader>
+        <CardContent>
+          <AtRiskClientsList clients={retention.atRiskClientsList} />
         </CardContent>
       </Card>
     </>
