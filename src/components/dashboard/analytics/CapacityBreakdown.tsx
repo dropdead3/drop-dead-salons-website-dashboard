@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Calculator, Info, RotateCcw } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ChevronDown, ChevronUp, Calculator, Info, RotateCcw, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -26,26 +27,22 @@ export function CapacityBreakdown({
 }: CapacityBreakdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   
-  // Editable state
-  const [grossHours, setGrossHours] = useState(initialGrossHours);
-  const [stylistCount, setStylistCount] = useState(initialStylistCount);
+  // Editable state (hours and stylist count are read-only from location settings)
   const [breakMinutes, setBreakMinutes] = useState(initialBreakMinutes);
   const [lunchMinutes, setLunchMinutes] = useState(initialLunchMinutes);
   const [paddingMinutes, setPaddingMinutes] = useState(initialPaddingMinutes);
 
   // Update local state when props change
   useEffect(() => {
-    setGrossHours(initialGrossHours);
-    setStylistCount(initialStylistCount);
     setBreakMinutes(initialBreakMinutes);
     setLunchMinutes(initialLunchMinutes);
     setPaddingMinutes(initialPaddingMinutes);
-  }, [initialGrossHours, initialStylistCount, initialBreakMinutes, initialLunchMinutes, initialPaddingMinutes]);
+  }, [initialBreakMinutes, initialLunchMinutes, initialPaddingMinutes]);
 
-  // Calculations
-  const breakHoursPerDay = (breakMinutes / 60) * stylistCount;
-  const lunchHoursPerDay = (lunchMinutes / 60) * stylistCount;
-  const grossHoursPerDay = grossHours * stylistCount;
+  // Calculations (use props directly for hours/stylists)
+  const breakHoursPerDay = (breakMinutes / 60) * initialStylistCount;
+  const lunchHoursPerDay = (lunchMinutes / 60) * initialStylistCount;
+  const grossHoursPerDay = initialGrossHours * initialStylistCount;
   const netHoursPerDay = Math.max(0, grossHoursPerDay - breakHoursPerDay - lunchHoursPerDay);
   
   const totalNetHours = netHoursPerDay * daysInPeriod;
@@ -57,15 +54,11 @@ export function CapacityBreakdown({
     : 0;
 
   const hasChanges = 
-    grossHours !== initialGrossHours ||
-    stylistCount !== initialStylistCount ||
     breakMinutes !== initialBreakMinutes ||
     lunchMinutes !== initialLunchMinutes ||
     paddingMinutes !== initialPaddingMinutes;
 
   const handleReset = () => {
-    setGrossHours(initialGrossHours);
-    setStylistCount(initialStylistCount);
     setBreakMinutes(initialBreakMinutes);
     setLunchMinutes(initialLunchMinutes);
     setPaddingMinutes(initialPaddingMinutes);
@@ -110,29 +103,29 @@ export function CapacityBreakdown({
           
           {/* Calculator Rows */}
           <div className="space-y-3">
-            {/* Operating Hours × Stylists */}
-            <div className="grid grid-cols-[1fr,auto] items-center gap-4">
-              <span className="text-muted-foreground">Operating Hours × Stylists</span>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={grossHours}
-                  onChange={(e) => setGrossHours(Math.max(1, Math.min(24, Number(e.target.value) || 0)))}
-                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
-                />
-                <span className="text-muted-foreground text-xs w-6">h ×</span>
-                <Input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={stylistCount}
-                  onChange={(e) => setStylistCount(Math.max(1, Math.min(100, Number(e.target.value) || 0)))}
-                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
-                />
-                <span className="text-muted-foreground text-xs w-4">=</span>
-                <span className="font-semibold tabular-nums w-14 text-right">{grossHoursPerDay}h</span>
+            {/* Operating Hours × Stylists - Read Only */}
+            <div className="space-y-1">
+              <div className="grid grid-cols-[1fr,auto] items-center gap-4">
+                <span className="text-muted-foreground">Operating Hours × Stylists</span>
+                <div className="flex items-center gap-2">
+                  <span className="tabular-nums text-sm">{initialGrossHours}h</span>
+                  <span className="text-muted-foreground text-xs">×</span>
+                  <span className="tabular-nums text-sm">{initialStylistCount}</span>
+                  <span className="text-muted-foreground text-xs">=</span>
+                  <span className="font-semibold tabular-nums w-14 text-right">{grossHoursPerDay}h</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground/70">
+                  From your location settings
+                </span>
+                <Link 
+                  to="/dashboard/admin/settings?category=locations"
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  Edit Settings
+                  <Settings className="w-3 h-3" />
+                </Link>
               </div>
             </div>
             
