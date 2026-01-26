@@ -18,7 +18,7 @@ import { TestimonialsEditor } from '@/components/dashboard/website-editor/Testim
 import { NewClientEditor } from '@/components/dashboard/website-editor/NewClientEditor';
 import { ExtensionsEditor } from '@/components/dashboard/website-editor/ExtensionsEditor';
 import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
-import { BrandsEditor } from '@/components/dashboard/website-editor/BrandsEditor';
+import { BrandsManager } from '@/components/dashboard/website-editor/BrandsManager';
 import { DrinkMenuEditor } from '@/components/dashboard/website-editor/DrinkMenuEditor';
 import { FooterCTAEditor } from '@/components/dashboard/website-editor/FooterCTAEditor';
 // Embedded Content Components
@@ -179,7 +179,7 @@ export default function WebsiteSectionsHub() {
                 </TabsContent>
 
                 <TabsContent value="brands" className="mt-0">
-                  <BrandsEditor />
+                  <BrandsManager />
                 </TabsContent>
 
                 <TabsContent value="drinks" className="mt-0">
