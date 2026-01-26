@@ -9,11 +9,24 @@ import {
   ArrowRight,
   BarChart3,
   UserCheck,
-  AlertTriangle
+  AlertTriangle,
+  Gauge
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DailyVolume, StatusBreakdown, RetentionMetrics } from '@/hooks/useOperationalAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
+
+interface CapacityData {
+  totalAvailableHours: number;
+  totalBookedHours: number;
+  overallUtilization: number;
+  gapHours: number;
+  gapRevenue: number;
+  avgHourlyRevenue: number;
+  dailyCapacity: any[];
+  serviceMix: any[];
+  totalAppointments: number;
+}
 
 interface OverviewContentProps {
   summary: {
@@ -29,6 +42,8 @@ interface OverviewContentProps {
   statusBreakdown: StatusBreakdown[];
   isLoading: boolean;
   onNavigateToTab: (tab: string) => void;
+  capacityData?: CapacityData | null;
+  capacityLoading?: boolean;
 }
 
 export function OverviewContent({ 
@@ -37,7 +52,9 @@ export function OverviewContent({
   dailyVolume,
   statusBreakdown,
   isLoading,
-  onNavigateToTab 
+  onNavigateToTab,
+  capacityData,
+  capacityLoading 
 }: OverviewContentProps) {
   // Calculate quick insights
   const peakDay = dailyVolume.reduce((max, d) => d.count > max.count ? d : max, { date: '', count: 0 });
@@ -103,9 +120,10 @@ export function OverviewContent({
       </div>
 
       {/* Quick Insights Section */}
-      <div className="grid md:grid-cols-3 gap-4 mb-8">
-        {isLoading ? (
+      <div className="grid md:grid-cols-4 gap-4 mb-8">
+        {isLoading || capacityLoading ? (
           <>
+            <Skeleton className="h-24" />
             <Skeleton className="h-24" />
             <Skeleton className="h-24" />
             <Skeleton className="h-24" />
@@ -151,6 +169,33 @@ export function OverviewContent({
                   <p className="text-sm text-muted-foreground">Need follow-up</p>
                 </div>
                 <AlertTriangle className="w-5 h-5 text-amber-600" />
+              </div>
+            </Card>
+            <Card 
+              className="p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => onNavigateToTab('appointments')}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Capacity Utilization</p>
+                  <p className={cn(
+                    "font-display text-lg",
+                    capacityData && capacityData.overallUtilization < 50 && "text-amber-600",
+                    capacityData && capacityData.overallUtilization >= 70 && "text-green-600"
+                  )}>
+                    {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {capacityData ? `${capacityData.gapHours.toFixed(0)}h unused` : 'View details'}
+                  </p>
+                </div>
+                <Gauge className={cn(
+                  "w-5 h-5",
+                  capacityData && capacityData.overallUtilization < 50 && "text-amber-600",
+                  capacityData && capacityData.overallUtilization >= 50 && capacityData.overallUtilization < 70 && "text-amber-500",
+                  capacityData && capacityData.overallUtilization >= 70 && "text-green-600",
+                  !capacityData && "text-muted-foreground"
+                )} />
               </div>
             </Card>
           </>
