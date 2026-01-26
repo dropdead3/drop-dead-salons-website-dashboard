@@ -1422,6 +1422,72 @@ export type Database = {
           },
         ]
       }
+      gallery_images: {
+        Row: {
+          alt: string
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_visible: boolean | null
+          src: string
+          updated_at: string | null
+        }
+        Insert: {
+          alt: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          src: string
+          updated_at?: string | null
+        }
+        Update: {
+          alt?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          src?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      gallery_transformations: {
+        Row: {
+          after_image: string
+          after_label: string | null
+          before_image: string
+          before_label: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_visible: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          after_image: string
+          after_label?: string | null
+          before_image: string
+          before_label?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          after_image?: string
+          after_label?: string | null
+          before_image?: string
+          before_label?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       graduation_feedback: {
         Row: {
           coach_id: string
