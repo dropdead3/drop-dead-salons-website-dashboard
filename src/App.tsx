@@ -72,7 +72,7 @@ import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
 import ProgramAnalytics from "./pages/dashboard/admin/ProgramAnalytics";
 import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 import SalesDashboard from "./pages/dashboard/admin/SalesDashboard";
-import StaffUtilization from "./pages/dashboard/admin/StaffUtilization";
+
 import OperationalAnalytics from "./pages/dashboard/admin/OperationalAnalytics";
 import LeadManagement from "./pages/dashboard/admin/LeadManagement";
 import MarketingAnalytics from "./pages/dashboard/admin/MarketingAnalytics";
@@ -171,7 +171,7 @@ const App = () => (
               <Route path="/dashboard/admin/program-analytics" element={<ProtectedRoute requiredPermission="view_program_analytics"><ProgramAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/phorest" element={<ProtectedRoute requiredPermission="manage_settings"><PhorestSettings /></ProtectedRoute>} />
               <Route path="/dashboard/admin/sales" element={<ProtectedRoute requiredPermission="view_team_overview"><SalesDashboard /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/staff-utilization" element={<ProtectedRoute requiredPermission="view_team_overview"><StaffUtilization /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/staff-utilization" element={<Navigate to="/dashboard/admin/operational-analytics?tab=staff-utilization" replace />} />
               <Route path="/dashboard/admin/operational-analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><OperationalAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
               <Route path="/dashboard/admin/marketing" element={<ProtectedRoute requiredPermission="view_marketing_analytics"><MarketingAnalytics /></ProtectedRoute>} />

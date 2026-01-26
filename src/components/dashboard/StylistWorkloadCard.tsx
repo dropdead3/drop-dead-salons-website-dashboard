@@ -95,7 +95,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/dashboard/admin/staff-utilization')}
+              onClick={() => navigate('/dashboard/admin/operational-analytics?tab=staff-utilization')}
               className="gap-1 text-muted-foreground hover:text-foreground"
             >
               View Full Report
@@ -149,7 +149,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/dashboard/admin/staff-utilization')}
+            onClick={() => navigate('/dashboard/admin/operational-analytics?tab=staff-utilization')}
             className="gap-1 text-muted-foreground hover:text-foreground"
           >
             View Full Report
