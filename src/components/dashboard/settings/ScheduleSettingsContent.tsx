@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, Calendar, Palette, Eye, Info, Clock } from 'lucide-react';
+import { Loader2, Calendar, Palette, Eye, Info, Clock, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   useServiceCategoryColors, 
@@ -326,6 +327,14 @@ export function ScheduleSettingsContent() {
           </div>
           <CardDescription>
             Customize colors for each service category. These colors appear on the calendar and in booking flows throughout the app.
+            {' '}
+            <Link 
+              to="/dashboard/admin/website-sections?tab=services" 
+              className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+            >
+              Want to edit your categories? Go here
+              <ArrowRight className="w-3 h-3" />
+            </Link>
           </CardDescription>
         </CardHeader>
         <CardContent>
