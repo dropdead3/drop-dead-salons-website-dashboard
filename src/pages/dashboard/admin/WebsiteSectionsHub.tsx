@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,10 +32,27 @@ import { AnnouncementBarContent } from '@/components/dashboard/website-editor/An
 // Preview Component
 import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
 
+// Search Component
+import { WebsiteEditorSearch } from '@/components/dashboard/website-editor/WebsiteEditorSearch';
+
 export default function WebsiteSectionsHub() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [showPreview, setShowPreview] = useState(false);
+
+  // Sync URL with active tab
+  useEffect(() => {
+    if (activeTab !== 'overview') {
+      setSearchParams({ tab: activeTab }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  }, [activeTab, setSearchParams]);
+
+  const handleSearchSelect = (tab: string) => {
+    setActiveTab(tab);
+  };
 
   return (
     <DashboardLayout>
@@ -45,49 +62,54 @@ export default function WebsiteSectionsHub() {
           <ResizablePanel defaultSize={showPreview ? 60 : 100} minSize={40}>
             <div className="space-y-6 h-full overflow-auto pr-2">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-                      <LayoutGrid className="h-5 w-5 text-primary" />
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
+                        <LayoutGrid className="h-5 w-5 text-primary" />
+                      </div>
+                      <h1 className="text-2xl font-display font-medium">Website Editor</h1>
                     </div>
-                    <h1 className="text-2xl font-display font-medium">Website Editor</h1>
+                    <p className="text-muted-foreground text-sm">
+                      Configure content, visibility, and ordering for all website sections
+                    </p>
                   </div>
-                  <p className="text-muted-foreground text-sm">
-                    Configure content, visibility, and ordering for all website sections
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant={showPreview ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowPreview(!showPreview)}
+                    >
+                      {showPreview ? (
+                        <>
+                          <PanelRightClose className="h-4 w-4 mr-2" />
+                          Hide Preview
+                        </>
+                      ) : (
+                        <>
+                          <PanelRightOpen className="h-4 w-4 mr-2" />
+                          Preview Changes
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open('/', '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open Site
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant={showPreview ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowPreview(!showPreview)}
-                  >
-                    {showPreview ? (
-                      <>
-                        <PanelRightClose className="h-4 w-4 mr-2" />
-                        Hide Preview
-                      </>
-                    ) : (
-                      <>
-                        <PanelRightOpen className="h-4 w-4 mr-2" />
-                        Preview Changes
-                      </>
-                    )}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open('/', '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open Site
-                  </Button>
-                </div>
+
+                {/* Global Search */}
+                <WebsiteEditorSearch onSelectResult={handleSearchSelect} />
               </div>
 
               {/* Tabbed Editor */}
-              <Tabs defaultValue={defaultTab} className="space-y-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <div className="overflow-x-auto pb-2">
                   <TabsList className="inline-flex h-auto flex-wrap gap-1">
                     <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
