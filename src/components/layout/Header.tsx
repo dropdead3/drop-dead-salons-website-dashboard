@@ -577,7 +577,7 @@ export function Header() {
                 <Link
                   to="/services"
                   className={cn(
-                    "text-2xl font-display uppercase tracking-wide transition-opacity",
+                    "text-xl font-display uppercase tracking-wide transition-opacity",
                     location.pathname === "/services"
                       ? "opacity-100"
                       : "opacity-60"
@@ -591,13 +591,14 @@ export function Header() {
                     key={link.href}
                     to={link.href}
                     className={cn(
-                      "text-2xl font-display uppercase tracking-wide transition-opacity pl-4",
+                      "text-xl font-display uppercase tracking-wide transition-opacity flex items-center gap-2",
                       location.pathname === link.href
                         ? "opacity-100"
                         : "opacity-60"
                     )}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
+                    <ArrowRight size={16} className="text-muted-foreground" />
                     {link.label}
                   </Link>
                 ))}
@@ -606,7 +607,7 @@ export function Header() {
                     key={link.href}
                     to={link.href}
                     className={cn(
-                      "text-2xl font-display uppercase tracking-wide transition-opacity",
+                      "text-xl font-display uppercase tracking-wide transition-opacity",
                       location.pathname === link.href
                         ? "opacity-100"
                         : "opacity-60"
@@ -618,7 +619,7 @@ export function Header() {
                 ))}
                 <Link
                   to="/contact"
-                  className="text-2xl font-display uppercase tracking-wide opacity-60"
+                  className="text-xl font-display uppercase tracking-wide opacity-60"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Contact Us
