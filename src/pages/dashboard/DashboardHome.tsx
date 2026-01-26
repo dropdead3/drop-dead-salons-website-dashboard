@@ -250,6 +250,13 @@ export default function DashboardHome() {
           </VisibilityGate>
         )}
 
+        {/* New Bookings - Leadership Only */}
+        {isLeadership && (
+          <VisibilityGate elementKey="new_bookings">
+            <NewBookingsCard />
+          </VisibilityGate>
+        )}
+
         {/* Forecasting - Leadership Only */}
         {isLeadership && (
           <VisibilityGate elementKey="week_ahead_forecast">
@@ -261,13 +268,6 @@ export default function DashboardHome() {
         {isLeadership && (
           <VisibilityGate elementKey="capacity_utilization">
             <CapacityUtilizationCard />
-          </VisibilityGate>
-        )}
-
-        {/* New Bookings - Leadership Only */}
-        {isLeadership && (
-          <VisibilityGate elementKey="new_bookings">
-            <NewBookingsCard />
           </VisibilityGate>
         )}
 
