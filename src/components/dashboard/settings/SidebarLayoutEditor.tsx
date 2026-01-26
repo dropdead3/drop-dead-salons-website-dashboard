@@ -105,7 +105,6 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/leaderboard': { label: 'Leaderboard', icon: Trophy },
   '/dashboard/admin/sales': { label: 'Sales Dashboard', icon: DollarSign },
   '/dashboard/admin/operational-analytics': { label: 'Operational Analytics', icon: BarChart3 },
-  '/dashboard/admin/staff-utilization': { label: 'Staff Utilization', icon: Users },
   '/dashboard/assistant-schedule': { label: 'Assistant Schedule', icon: Users },
   '/dashboard/schedule-meeting': { label: 'Schedule 1:1 Meeting', icon: CalendarClock },
   '/dashboard/onboarding': { label: 'Onboarding', icon: Users },
