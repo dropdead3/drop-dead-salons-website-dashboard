@@ -1,14 +1,16 @@
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
+import { StaffRevenueLeaderboard } from '@/components/dashboard/analytics/StaffRevenueLeaderboard';
 import { StaffWorkload } from '@/hooks/useStaffUtilization';
 
 interface StaffingContentProps {
   workload: StaffWorkload[];
   isLoading: boolean;
+  locationId?: string;
 }
 
-export function StaffingContent({ workload, isLoading }: StaffingContentProps) {
+export function StaffingContent({ workload, isLoading, locationId }: StaffingContentProps) {
   return (
     <>
       {/* Hiring Capacity and Staffing Trends */}
@@ -22,6 +24,9 @@ export function StaffingContent({ workload, isLoading }: StaffingContentProps) {
         workload={workload}
         isLoading={isLoading}
       />
+
+      {/* Staff Revenue Leaderboard */}
+      <StaffRevenueLeaderboard locationId={locationId} />
     </>
   );
 }

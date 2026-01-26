@@ -1,0 +1,193 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { subDays, startOfMonth, startOfDay, format } from 'date-fns';
+import { usePerformanceThreshold } from './usePerformanceThreshold';
+
+export type RevenueTimeRange = 'today' | 'week' | 'month' | '90days' | '6months' | '365days';
+
+export interface StaffRevenueData {
+  userId: string | null;
+  phorestStaffId: string;
+  name: string;
+  displayName: string | null;
+  photoUrl: string | null;
+  totalRevenue: number;
+  serviceRevenue: number;
+  productRevenue: number;
+  transactionCount: number;
+  averageTicket: number;
+  daysWithData: number;
+  isBelowThreshold: boolean;
+}
+
+function getDateRange(timeRange: RevenueTimeRange): { startDate: string; endDate: string } {
+  const today = new Date();
+  const endDate = format(today, 'yyyy-MM-dd');
+  
+  let startDate: string;
+  
+  switch (timeRange) {
+    case 'today':
+      startDate = endDate;
+      break;
+    case 'week':
+      startDate = format(subDays(today, 7), 'yyyy-MM-dd');
+      break;
+    case 'month':
+      startDate = format(startOfMonth(today), 'yyyy-MM-dd');
+      break;
+    case '90days':
+      startDate = format(subDays(today, 90), 'yyyy-MM-dd');
+      break;
+    case '6months':
+      startDate = format(subDays(today, 180), 'yyyy-MM-dd');
+      break;
+    case '365days':
+      startDate = format(subDays(today, 365), 'yyyy-MM-dd');
+      break;
+    default:
+      startDate = format(subDays(today, 30), 'yyyy-MM-dd');
+  }
+  
+  return { startDate, endDate };
+}
+
+export function useStaffRevenuePerformance(
+  timeRange: RevenueTimeRange = 'month',
+  locationId?: string
+) {
+  const { data: threshold } = usePerformanceThreshold();
+  
+  return useQuery({
+    queryKey: ['staff-revenue-performance', timeRange, locationId, threshold],
+    queryFn: async () => {
+      const { startDate, endDate } = getDateRange(timeRange);
+      
+      // Fetch daily sales summary data
+      let salesQuery = supabase
+        .from('phorest_daily_sales_summary')
+        .select('phorest_staff_id, total_revenue, service_revenue, product_revenue, total_transactions, summary_date, location_id')
+        .gte('summary_date', startDate)
+        .lte('summary_date', endDate)
+        .not('phorest_staff_id', 'is', null);
+      
+      if (locationId) {
+        salesQuery = salesQuery.eq('location_id', locationId);
+      }
+      
+      const { data: salesData, error: salesError } = await salesQuery;
+      
+      if (salesError) throw salesError;
+      
+      // Get staff mappings to link phorest IDs to user profiles
+      const { data: mappings, error: mappingsError } = await supabase
+        .from('phorest_staff_mapping')
+        .select('user_id, phorest_staff_id, phorest_staff_name');
+      
+      if (mappingsError) throw mappingsError;
+      
+      // Get employee profiles for photos and display names
+      const { data: profiles, error: profilesError } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name, photo_url')
+        .eq('is_active', true);
+      
+      if (profilesError) throw profilesError;
+      
+      // Create lookup maps
+      const mappingByPhorestId = new Map(
+        (mappings || []).map(m => [m.phorest_staff_id, m])
+      );
+      const profileByUserId = new Map(
+        (profiles || []).map(p => [p.user_id, p])
+      );
+      
+      // Aggregate by phorest_staff_id
+      const aggregatedData = new Map<string, {
+        totalRevenue: number;
+        serviceRevenue: number;
+        productRevenue: number;
+        transactionCount: number;
+        daysWithData: Set<string>;
+      }>();
+      
+      for (const sale of salesData || []) {
+        const staffId = sale.phorest_staff_id;
+        if (!staffId) continue;
+        
+        const existing = aggregatedData.get(staffId) || {
+          totalRevenue: 0,
+          serviceRevenue: 0,
+          productRevenue: 0,
+          transactionCount: 0,
+          daysWithData: new Set<string>(),
+        };
+        
+        existing.totalRevenue += Number(sale.total_revenue) || 0;
+        existing.serviceRevenue += Number(sale.service_revenue) || 0;
+        existing.productRevenue += Number(sale.product_revenue) || 0;
+        existing.transactionCount += Number(sale.total_transactions) || 0;
+        existing.daysWithData.add(sale.summary_date);
+        
+        aggregatedData.set(staffId, existing);
+      }
+      
+      // Build final staff list
+      const staffList: StaffRevenueData[] = [];
+      
+      for (const [phorestStaffId, data] of aggregatedData) {
+        const mapping = mappingByPhorestId.get(phorestStaffId);
+        const profile = mapping?.user_id ? profileByUserId.get(mapping.user_id) : null;
+        
+        const daysWithData = data.daysWithData.size;
+        const averageTicket = data.transactionCount > 0 
+          ? data.totalRevenue / data.transactionCount 
+          : 0;
+        
+        // Calculate if below threshold (prorate based on actual days with data)
+        let isBelowThreshold = false;
+        if (threshold?.alertsEnabled && threshold.minimumRevenue > 0) {
+          const evaluationDays = threshold.evaluationPeriodDays || 30;
+          const proratedThreshold = threshold.minimumRevenue * (daysWithData / evaluationDays);
+          isBelowThreshold = data.totalRevenue < proratedThreshold && daysWithData >= 7; // Only flag if 7+ days of data
+        }
+        
+        staffList.push({
+          userId: mapping?.user_id || null,
+          phorestStaffId,
+          name: profile?.full_name || mapping?.phorest_staff_name || 'Unknown Staff',
+          displayName: profile?.display_name || null,
+          photoUrl: profile?.photo_url || null,
+          totalRevenue: data.totalRevenue,
+          serviceRevenue: data.serviceRevenue,
+          productRevenue: data.productRevenue,
+          transactionCount: data.transactionCount,
+          averageTicket,
+          daysWithData,
+          isBelowThreshold,
+        });
+      }
+      
+      // Sort by total revenue descending
+      staffList.sort((a, b) => b.totalRevenue - a.totalRevenue);
+      
+      // Calculate summary stats
+      const totalRevenue = staffList.reduce((sum, s) => sum + s.totalRevenue, 0);
+      const avgPerStaff = staffList.length > 0 ? totalRevenue / staffList.length : 0;
+      const topPerformer = staffList[0] || null;
+      const belowThresholdCount = staffList.filter(s => s.isBelowThreshold).length;
+      
+      return {
+        staff: staffList,
+        summary: {
+          totalRevenue,
+          avgPerStaff,
+          topPerformer,
+          belowThresholdCount,
+          staffCount: staffList.length,
+        },
+      };
+    },
+    enabled: !!threshold,
+  });
+}
