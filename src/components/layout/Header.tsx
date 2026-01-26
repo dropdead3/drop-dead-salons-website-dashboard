@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/assets/drop-dead-logo.svg";
 import LogoIcon from "@/assets/dd-secondary-logo.svg";
 import { cn } from "@/lib/utils";
+import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
 import {
   Tooltip,
   TooltipContent,
@@ -46,6 +47,7 @@ export function Header() {
   const navContainerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const location = useLocation();
+  const { data: announcementSettings } = useAnnouncementBarSettings();
 
   // Track desktop breakpoint for sticky effects
   useEffect(() => {
@@ -195,20 +197,26 @@ export function Header() {
   return (
     <>
       {/* Top Announcement Bar */}
-      <div className="bg-secondary py-4 md:py-2.5 px-4 md:px-6">
-        <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
-          <p className="text-sm text-foreground/80 text-center md:text-left">
-            Are you a salon <span className="font-medium">professional</span> looking for our extensions?
-          </p>
-          <a 
-            href="#" 
-            className="group inline-flex items-center gap-1.5 text-sm font-sans font-medium text-foreground uppercase tracking-wider hover:opacity-70 transition-opacity"
-          >
-            Shop Our Extensions Here
-            <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
-          </a>
+      {announcementSettings?.enabled && (
+        <div className="bg-secondary py-4 md:py-2.5 px-4 md:px-6">
+          <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
+            <p className="text-sm text-foreground/80 text-center md:text-left">
+              {announcementSettings.message_prefix}{' '}
+              <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
+              {announcementSettings.message_suffix}
+            </p>
+            <a 
+              href={announcementSettings.cta_url || '#'} 
+              target={announcementSettings.open_in_new_tab ? '_blank' : undefined}
+              rel={announcementSettings.open_in_new_tab ? 'noopener noreferrer' : undefined}
+              className="group inline-flex items-center gap-1.5 text-sm font-sans font-medium text-foreground uppercase tracking-wider hover:opacity-70 transition-opacity"
+            >
+              {announcementSettings.cta_text}
+              <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </a>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Header */}
       <header 

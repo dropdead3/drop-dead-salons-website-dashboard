@@ -43,6 +43,7 @@ import AccountManagement from "./pages/dashboard/admin/AccountManagement";
 import TestimonialsManager from "./pages/dashboard/admin/TestimonialsManager";
 import GalleryManager from "./pages/dashboard/admin/GalleryManager";
 import ServicesManager from "./pages/dashboard/admin/ServicesManager";
+import AnnouncementBarManager from "./pages/dashboard/admin/AnnouncementBarManager";
 import StylistLevels from "./pages/dashboard/admin/StylistLevels";
 import LocationsManager from "./pages/dashboard/admin/LocationsManager";
 
@@ -151,6 +152,7 @@ const App = () => (
               <Route path="/dashboard/admin/testimonials" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><TestimonialsManager /></ProtectedRoute>} />
               <Route path="/dashboard/admin/gallery" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><GalleryManager /></ProtectedRoute>} />
               <Route path="/dashboard/admin/services" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><ServicesManager /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/announcement-bar" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><AnnouncementBarManager /></ProtectedRoute>} />
               <Route path="/dashboard/admin/roles" element={<ProtectedRoute requiredPermission="manage_user_roles"><ManageRoles /></ProtectedRoute>} />
               <Route path="/dashboard/admin/accounts" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountManagement /></ProtectedRoute>} />
               <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
