@@ -18,6 +18,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
+  Scissors,
+  MessageSquareQuote,
+  Images,
+  Users,
+  MapPin,
+  Megaphone,
+} from 'lucide-react';
+import {
   useWebsiteSections,
   useUpdateWebsiteSections,
   SECTION_LABELS,
@@ -27,6 +35,7 @@ import {
 } from '@/hooks/useWebsiteSections';
 import { SectionNavItem } from './SectionNavItem';
 import { SectionGroupHeader } from './SectionGroupHeader';
+import { ContentNavItem } from './ContentNavItem';
 import { WebsiteEditorSearch } from './WebsiteEditorSearch';
 
 type SectionKey = keyof HomepageSections;
@@ -36,7 +45,17 @@ interface SectionItem {
   config: SectionConfig;
 }
 
-// Section groupings for logical organization
+// Site Content items (data managers - not part of homepage ordering)
+const SITE_CONTENT_ITEMS = [
+  { tab: 'services', label: 'Services', description: 'Manage service catalog', icon: Scissors },
+  { tab: 'testimonials', label: 'Testimonials', description: 'Manage client reviews', icon: MessageSquareQuote },
+  { tab: 'gallery', label: 'Gallery', description: 'Manage portfolio images', icon: Images },
+  { tab: 'stylists', label: 'Stylists', description: 'Manage team profiles', icon: Users },
+  { tab: 'locations', label: 'Locations', description: 'Manage salon locations', icon: MapPin },
+  { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide banner', icon: Megaphone },
+];
+
+// Homepage section groupings for logical organization
 const SECTION_GROUPS: { title: string; sections: SectionKey[] }[] = [
   {
     title: 'Above the Fold',
@@ -55,22 +74,22 @@ const SECTION_GROUPS: { title: string; sections: SectionKey[] }[] = [
     sections: ['new_client', 'faq'],
   },
   {
-    title: 'Team & Locations',
+    title: 'Team & Extras',
     sections: ['stylists', 'locations', 'drink_menu'],
   },
 ];
 
-// Map section keys to tab values
+// Map section keys to UNIQUE tab values
 const SECTION_TO_TAB: Record<SectionKey, string> = {
   hero: 'hero',
   brand_statement: 'brand',
-  testimonials: 'testimonials',
-  services_preview: 'services',
-  popular_services: 'services',
-  gallery: 'gallery',
+  testimonials: 'testimonials-section', // Unique: section config
+  services_preview: 'services-preview', // Unique
+  popular_services: 'popular-services', // Unique
+  gallery: 'gallery-section', // Unique: section config
   new_client: 'new-client',
-  stylists: 'stylists',
-  locations: 'locations',
+  stylists: 'stylists-section', // Unique: section config
+  locations: 'locations-section', // Unique: section config
   faq: 'faq',
   extensions: 'extensions',
   brands: 'brands',
@@ -206,16 +225,39 @@ export function WebsiteEditorSidebar({
 
       {/* Navigation */}
       <ScrollArea className="flex-1">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={localSections.map(s => s.key)}
-            strategy={verticalListSortingStrategy}
+        <div className="py-2">
+          {/* Site Content Section (Data Managers) */}
+          <SectionGroupHeader title="Site Content" />
+          <div className="space-y-0.5 mb-2">
+            {SITE_CONTENT_ITEMS.map(item => (
+              <ContentNavItem
+                key={item.tab}
+                label={item.label}
+                description={item.description}
+                icon={item.icon}
+                isActive={activeTab === item.tab}
+                onSelect={() => onTabChange(item.tab)}
+              />
+            ))}
+          </div>
+
+          <Separator className="my-3 mx-3" />
+
+          {/* Homepage Sections (with DND) */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            <div className="py-2">
+            <SortableContext
+              items={localSections.map(s => s.key)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="mb-1">
+                <p className="px-4 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                  Homepage Layout
+                </p>
+              </div>
               {SECTION_GROUPS.map((group, groupIndex) => (
                 <div key={group.title}>
                   {groupIndex > 0 && <Separator className="my-2 mx-3" />}
@@ -235,9 +277,9 @@ export function WebsiteEditorSidebar({
                   ))}
                 </div>
               ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+            </SortableContext>
+          </DndContext>
+        </div>
       </ScrollArea>
 
       {/* Stats Footer */}

@@ -43,38 +43,56 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 // Map of tab values to editor components
 const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
-  'hero': HeroEditor,
-  'brand': BrandStatementEditor,
-  'testimonials': TestimonialsContent,
-  'new-client': NewClientEditor,
-  'extensions': ExtensionsEditor,
-  'faq': FAQEditor,
+  // Site Content (Data Managers)
   'services': ServicesContent,
+  'testimonials': TestimonialsContent,
   'gallery': GalleryContent,
   'stylists': StylistsContent,
   'locations': LocationsContent,
+  'banner': AnnouncementBarContent,
+  
+  // Homepage Section Editors
+  'hero': HeroEditor,
+  'brand': BrandStatementEditor,
+  'testimonials-section': TestimonialsEditor,
+  'services-preview': ServicesContent, // TODO: Create dedicated editor
+  'popular-services': ServicesContent, // TODO: Create dedicated editor
+  'gallery-section': GalleryContent, // TODO: Create dedicated editor
+  'new-client': NewClientEditor,
+  'stylists-section': StylistsContent, // TODO: Create dedicated editor
+  'locations-section': LocationsContent, // TODO: Create dedicated editor
+  'extensions': ExtensionsEditor,
+  'faq': FAQEditor,
   'brands': BrandsManager,
   'drinks': DrinksManager,
   'footer-cta': FooterCTAEditor,
-  'banner': AnnouncementBarContent,
 };
 
 // Tab labels for breadcrumb display
 const TAB_LABELS: Record<string, string> = {
+  // Site Content
+  'services': 'Services Manager',
+  'testimonials': 'Testimonials Manager',
+  'gallery': 'Gallery Manager',
+  'stylists': 'Stylists Manager',
+  'locations': 'Locations Manager',
+  'banner': 'Announcement Banner',
+  
+  // Homepage Sections
   'hero': 'Hero Section',
   'brand': 'Brand Statement',
-  'testimonials': 'Testimonials',
+  'testimonials-section': 'Testimonials Display',
+  'services-preview': 'Services Preview',
+  'popular-services': 'Popular Services',
+  'gallery-section': 'Gallery Display',
   'new-client': 'New Client CTA',
+  'stylists-section': 'Stylists Display',
+  'locations-section': 'Locations Display',
   'extensions': 'Extensions Spotlight',
   'faq': 'FAQ',
-  'services': 'Services',
-  'gallery': 'Gallery',
-  'stylists': 'Stylists',
-  'locations': 'Locations',
   'brands': 'Partner Brands',
   'drinks': 'Drink Menu',
   'footer-cta': 'Footer CTA',
-  'banner': 'Announcement Banner',
 };
 
 export default function WebsiteSectionsHub() {
