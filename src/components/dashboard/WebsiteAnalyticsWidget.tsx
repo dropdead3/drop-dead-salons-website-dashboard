@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, TrendingDown, Minus, RefreshCw, Globe, Eye, Clock, MousePointerClick, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, RefreshCw, Globe, Eye, Clock, MousePointerClick, Info } from 'lucide-react';
+import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -114,15 +115,21 @@ export function WebsiteAnalyticsWidget() {
               <Globe className="h-4 w-4 text-primary" />
               Website Traffic
             </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 text-xs text-muted-foreground hover:text-foreground"
-              onClick={handleViewDetails}
-            >
-              View Details
-              <ChevronRight className="w-3 h-3 ml-1" />
-            </Button>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-full hover:bg-primary/10"
+                  onClick={handleViewDetails}
+                >
+                  <Info className="w-4 h-4 text-primary" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                View full analytics
+              </TooltipContent>
+            </UITooltip>
           </div>
           <Button
             variant="ghost"

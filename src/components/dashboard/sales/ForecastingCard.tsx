@@ -11,7 +11,8 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { CalendarRange, TrendingUp, Calendar, Users, ChevronRight } from 'lucide-react';
+import { CalendarRange, TrendingUp, Calendar, Users, Info } from 'lucide-react';
+import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -244,15 +245,21 @@ export function ForecastingCard() {
             <div className="flex items-center gap-2">
               <CalendarRange className="w-5 h-5 text-primary" />
               <CardTitle className="font-display text-base">Forecasting</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 text-xs text-muted-foreground hover:text-foreground"
-                onClick={handleViewDetails}
-              >
-                View Details
-                <ChevronRight className="w-3 h-3 ml-1" />
-              </Button>
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 rounded-full hover:bg-primary/10"
+                    onClick={handleViewDetails}
+                  >
+                    <Info className="w-4 h-4 text-primary" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  View full analytics
+                </TooltipContent>
+              </UITooltip>
             </div>
             <div className="flex items-center gap-2">
                 <LocationSelect

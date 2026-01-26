@@ -14,9 +14,11 @@ import {
   MapPin,
   Building2,
   Download,
+  Info,
   ChevronRight,
   CalendarClock,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
@@ -252,15 +254,21 @@ export function AggregateSalesCard() {
           <Button variant="outline" size="sm" className="h-8" onClick={handleExportCSV}>
             <Download className="w-4 h-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 text-xs"
-            onClick={() => handleViewDetails()}
-          >
-            View Details
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 rounded-full hover:bg-primary/10"
+                onClick={() => handleViewDetails()}
+              >
+                <Info className="w-4 h-4 text-primary" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              View full analytics
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
