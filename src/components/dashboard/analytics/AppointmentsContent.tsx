@@ -87,8 +87,8 @@ export function AppointmentsContent({
 
   return (
     <>
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      {/* Summary Stats - 3x2 grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -108,33 +108,6 @@ export function AppointmentsContent({
             <div>
               <p className="font-display text-2xl">{summary.completedAppointments}</p>
               <p className="text-xs text-muted-foreground">Completed</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-              <XCircle className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <p className={cn(
-                "font-display text-2xl",
-                summary.noShowRate > 5 && "text-red-600"
-              )}>
-                {summary.noShowRate.toFixed(1)}%
-              </p>
-              <p className="text-xs text-muted-foreground">No-Show Rate</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="font-display text-2xl">{summary.cancellationRate.toFixed(1)}%</p>
-              <p className="text-xs text-muted-foreground">Cancellation Rate</p>
             </div>
           </div>
         </Card>
@@ -165,6 +138,33 @@ export function AppointmentsContent({
                 <p className="font-display text-2xl">{newBookings?.bookedThisWeek || 0}</p>
               )}
               <p className="text-xs text-muted-foreground">Booked This Week</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+              <XCircle className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <p className={cn(
+                "font-display text-2xl",
+                summary.noShowRate > 5 && "text-red-600"
+              )}>
+                {summary.noShowRate.toFixed(1)}%
+              </p>
+              <p className="text-xs text-muted-foreground">No-Show Rate</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+              <Clock className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="font-display text-2xl">{summary.cancellationRate.toFixed(1)}%</p>
+              <p className="text-xs text-muted-foreground">Cancellation Rate</p>
             </div>
           </div>
         </Card>
