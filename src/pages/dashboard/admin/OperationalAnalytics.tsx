@@ -22,7 +22,7 @@ export default function OperationalAnalytics() {
   const activeTab = searchParams.get('tab') || 'overview';
   
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<'tomorrow' | '7days' | '30days' | '90days'>('30days');
+  const [dateRange, setDateRange] = useState<'tomorrow' | '7days' | '30days' | '90days'>('tomorrow');
   const { data: locations = [] } = useActiveLocations();
   
   const locationFilter = selectedLocation === 'all' ? undefined : selectedLocation;
