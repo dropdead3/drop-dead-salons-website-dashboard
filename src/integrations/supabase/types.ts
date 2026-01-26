@@ -980,6 +980,158 @@ export type Database = {
         }
         Relationships: []
       }
+      day_rate_agreements: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          title: string
+          version: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          version: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      day_rate_bookings: {
+        Row: {
+          agreement_signed_at: string | null
+          agreement_version: string | null
+          amount_paid: number | null
+          booking_date: string
+          business_name: string | null
+          chair_id: string | null
+          created_at: string
+          id: string
+          instagram_handle: string | null
+          license_number: string
+          license_state: string
+          location_id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["day_rate_booking_status"]
+          stripe_payment_id: string | null
+          stylist_email: string
+          stylist_name: string
+          stylist_phone: string
+          updated_at: string
+        }
+        Insert: {
+          agreement_signed_at?: string | null
+          agreement_version?: string | null
+          amount_paid?: number | null
+          booking_date: string
+          business_name?: string | null
+          chair_id?: string | null
+          created_at?: string
+          id?: string
+          instagram_handle?: string | null
+          license_number: string
+          license_state: string
+          location_id: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["day_rate_booking_status"]
+          stripe_payment_id?: string | null
+          stylist_email: string
+          stylist_name: string
+          stylist_phone: string
+          updated_at?: string
+        }
+        Update: {
+          agreement_signed_at?: string | null
+          agreement_version?: string | null
+          amount_paid?: number | null
+          booking_date?: string
+          business_name?: string | null
+          chair_id?: string | null
+          created_at?: string
+          id?: string
+          instagram_handle?: string | null
+          license_number?: string
+          license_state?: string
+          location_id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["day_rate_booking_status"]
+          stripe_payment_id?: string | null
+          stylist_email?: string
+          stylist_name?: string
+          stylist_phone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_rate_bookings_chair_id_fkey"
+            columns: ["chair_id"]
+            isOneToOne: false
+            referencedRelation: "day_rate_chairs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "day_rate_bookings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      day_rate_chairs: {
+        Row: {
+          chair_number: number
+          created_at: string
+          daily_rate: number | null
+          id: string
+          is_available: boolean | null
+          location_id: string
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          chair_number: number
+          created_at?: string
+          daily_rate?: number | null
+          id?: string
+          is_available?: boolean | null
+          location_id: string
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chair_number?: number
+          created_at?: string
+          daily_rate?: number | null
+          id?: string
+          is_available?: boolean | null
+          location_id?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_rate_chairs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_digest_log: {
         Row: {
           digest_type: string
@@ -2031,6 +2183,9 @@ export type Database = {
           booking_url: string | null
           city: string
           created_at: string | null
+          day_rate_blackout_dates: string[] | null
+          day_rate_default_price: number | null
+          day_rate_enabled: boolean | null
           display_order: number | null
           google_maps_url: string | null
           holiday_closures: Json | null
@@ -2054,6 +2209,9 @@ export type Database = {
           booking_url?: string | null
           city: string
           created_at?: string | null
+          day_rate_blackout_dates?: string[] | null
+          day_rate_default_price?: number | null
+          day_rate_enabled?: boolean | null
           display_order?: number | null
           google_maps_url?: string | null
           holiday_closures?: Json | null
@@ -2077,6 +2235,9 @@ export type Database = {
           booking_url?: string | null
           city?: string
           created_at?: string | null
+          day_rate_blackout_dates?: string[] | null
+          day_rate_default_price?: number | null
+          day_rate_enabled?: boolean | null
           display_order?: number | null
           google_maps_url?: string | null
           holiday_closures?: Json | null
@@ -4571,6 +4732,13 @@ export type Database = {
         | "admin_assistant"
         | "operations_assistant"
         | "super_admin"
+      day_rate_booking_status:
+        | "pending"
+        | "confirmed"
+        | "checked_in"
+        | "completed"
+        | "cancelled"
+        | "no_show"
       inquiry_source:
         | "website_form"
         | "google_business"
@@ -4735,6 +4903,14 @@ export const Constants = {
         "admin_assistant",
         "operations_assistant",
         "super_admin",
+      ],
+      day_rate_booking_status: [
+        "pending",
+        "confirmed",
+        "checked_in",
+        "completed",
+        "cancelled",
+        "no_show",
       ],
       inquiry_source: [
         "website_form",

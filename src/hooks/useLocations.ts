@@ -44,6 +44,9 @@ export interface Location {
   tax_rate: number | null;
   stylist_capacity: number | null;
   assistant_ratio: number | null;
+  day_rate_enabled: boolean | null;
+  day_rate_default_price: number | null;
+  day_rate_blackout_dates: string[] | null;
   created_at: string;
   updated_at: string;
 }

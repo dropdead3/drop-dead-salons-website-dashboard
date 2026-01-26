@@ -3,11 +3,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings2, Cake, Calendar, Award, Sparkles } from 'lucide-react';
+import { Settings2, Cake, Calendar, Award, Sparkles, Armchair } from 'lucide-react';
 import { BirthdayWidget } from './BirthdayWidget';
 import { WorkScheduleWidgetCompact } from './WorkScheduleWidgetCompact';
 import { AnniversaryWidget } from './AnniversaryWidget';
 import { ChangelogWidget } from './ChangelogWidget';
+import { DayRateWidget } from './DayRateWidget';
 
 // Widget configuration - add more widgets here as needed
 const AVAILABLE_WIDGETS = [
@@ -15,6 +16,7 @@ const AVAILABLE_WIDGETS = [
   { id: 'birthdays', label: 'Team Birthdays', icon: Cake },
   { id: 'anniversaries', label: 'Work Anniversaries', icon: Award },
   { id: 'schedule', label: 'My Schedule', icon: Calendar },
+  { id: 'dayrate', label: 'Day Rate Bookings', icon: Armchair },
 ] as const;
 
 type WidgetId = typeof AVAILABLE_WIDGETS[number]['id'];
@@ -121,6 +123,7 @@ export function WidgetsSection({ defaultEnabledWidgets = ['changelog', 'birthday
         {isWidgetEnabled('birthdays') && <BirthdayWidget />}
         {isWidgetEnabled('anniversaries') && <AnniversaryWidget />}
         {isWidgetEnabled('schedule') && <WorkScheduleWidgetCompact />}
+        {isWidgetEnabled('dayrate') && <DayRateWidget />}
       </div>
     </div>
   );
