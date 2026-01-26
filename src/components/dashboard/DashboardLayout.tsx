@@ -180,6 +180,7 @@ const adminOnlyNavItems: NavItem[] = [
 
 // Website management items
 const websiteNavItems: NavItem[] = [
+  { href: '/dashboard/admin/announcement-bar', label: 'Announcement Bar', icon: Bell, permission: 'manage_homepage_stylists' },
   { href: '/dashboard/admin/homepage-stylists', label: 'Homepage Stylists', icon: Globe, permission: 'manage_homepage_stylists' },
   { href: '/dashboard/admin/testimonials', label: 'Testimonials', icon: Quote, permission: 'manage_homepage_stylists' },
   { href: '/dashboard/admin/gallery', label: 'Gallery', icon: Images, permission: 'manage_homepage_stylists' },
