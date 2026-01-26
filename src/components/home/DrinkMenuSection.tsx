@@ -1,7 +1,8 @@
-import { motion, useInView, useScroll, useVelocity, useTransform, useSpring, useAnimationFrame } from "framer-motion";
+import { motion, useInView, useScroll, useVelocity, useSpring, useAnimationFrame } from "framer-motion";
 import { useRef, useState } from "react";
+import { useDrinkMenuConfig, type Drink } from "@/hooks/useSectionConfig";
 
-// Import drink images
+// Import fallback drink images
 import dirtyPeachImg from "@/assets/drinks/dirty-peach.jpg";
 import blowOutImg from "@/assets/drinks/blow-out.jpg";
 import scaryStoriesImg from "@/assets/drinks/scary-stories.jpg";
@@ -9,47 +10,18 @@ import grampsImg from "@/assets/drinks/gramps.jpg";
 import zombieImg from "@/assets/drinks/zombie.jpg";
 import afterlifeImg from "@/assets/drinks/afterlife.jpg";
 
-const drinks = [
-  {
-    id: 1,
-    name: "Dirty Peach",
-    image: dirtyPeachImg,
-    ingredients: "Coke, peach, vanilla cream",
-  },
-  {
-    id: 2,
-    name: "Blow Out",
-    image: blowOutImg,
-    ingredients: "Sparkling water, peach, strawberry",
-  },
-  {
-    id: 3,
-    name: "Scary Stories",
-    image: scaryStoriesImg,
-    ingredients: "Espresso, white chocolate, toasted marshmallow, oat milk, whipped cream, cinnamon powder",
-  },
-  {
-    id: 4,
-    name: "Gramps",
-    image: grampsImg,
-    ingredients: "Espresso, caramel drizzle, butterscotch, hazelnut, oat milk",
-  },
-  {
-    id: 5,
-    name: "Zombie",
-    image: zombieImg,
-    ingredients: "Espresso, brown sugar cinnamon, vanilla, oat milk, cinnamon powder",
-  },
-  {
-    id: 6,
-    name: "Afterlife",
-    image: afterlifeImg,
-    ingredients: "Red Bull, coconut, strawberry, vanilla cream",
-  },
+// Default drinks for fallback when no config is set
+const defaultDrinks: Drink[] = [
+  { id: "1", name: "Dirty Peach", image_url: dirtyPeachImg, ingredients: "Coke, peach, vanilla cream" },
+  { id: "2", name: "Blow Out", image_url: blowOutImg, ingredients: "Sparkling water, peach, strawberry" },
+  { id: "3", name: "Scary Stories", image_url: scaryStoriesImg, ingredients: "Espresso, white chocolate, toasted marshmallow, oat milk, whipped cream, cinnamon powder" },
+  { id: "4", name: "Gramps", image_url: grampsImg, ingredients: "Espresso, caramel drizzle, butterscotch, hazelnut, oat milk" },
+  { id: "5", name: "Zombie", image_url: zombieImg, ingredients: "Espresso, brown sugar cinnamon, vanilla, oat milk, cinnamon powder" },
+  { id: "6", name: "Afterlife", image_url: afterlifeImg, ingredients: "Red Bull, coconut, strawberry, vanilla cream" },
 ];
 
 interface DrinkCardProps {
-  drink: typeof drinks[0];
+  drink: Drink;
   index?: number;
   isInView?: boolean;
   animated?: boolean;
@@ -85,7 +57,7 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
       <div className="relative">
         <div className="w-32 h-40 md:w-28 md:h-36 lg:w-32 lg:h-40 transition-transform duration-300 group-hover:scale-110">
           <img 
-            src={drink.image} 
+            src={drink.image_url} 
             alt={drink.name}
             className="w-full h-full object-contain mix-blend-darken"
           />
@@ -137,6 +109,10 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
 export function DrinkMenuSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const { data: config } = useDrinkMenuConfig();
+  
+  // Use configured drinks or fallback to defaults
+  const drinks = config.drinks.length > 0 ? config.drinks : defaultDrinks;
   
   // Track scroll velocity
   const { scrollY } = useScroll();
@@ -154,10 +130,10 @@ export function DrinkMenuSection() {
   // Animate continuously with velocity-based speed
   useAnimationFrame((_, delta) => {
     // Slow down significantly when hovered
-    const hoverMultiplier = isHovered ? 0.1 : 1;
+    const hoverMultiplier = isHovered ? config.hover_slowdown_factor : 1;
     
-    // Base speed (pixels per second)
-    const baseSpeed = 30 * hoverMultiplier;
+    // Base speed (pixels per second) - use config value
+    const baseSpeed = config.carousel_speed * hoverMultiplier;
     
     // Get current velocity and add to base speed
     const velocity = smoothVelocity.get();
@@ -187,7 +163,7 @@ export function DrinkMenuSection() {
         background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(0 0% 100%) 75%, hsl(40 20% 92%) 100%)'
       }}
     >
-      {/* Header */}
+      {/* Header - use config values */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -195,9 +171,9 @@ export function DrinkMenuSection() {
         className="container mx-auto px-6 text-center mb-12"
       >
         <p className="text-sm md:text-base uppercase tracking-[0.2em] text-muted-foreground font-display">
-          Drinks on us. We have an exclusive menu of{" "}
-          <span className="underline underline-offset-4">complimentary</span>{" "}
-          options for your appointment.
+          {config.eyebrow}{" "}
+          <span className="underline underline-offset-4">{config.eyebrow_highlight}</span>{" "}
+          {config.eyebrow_suffix}
         </p>
       </motion.div>
 
