@@ -22,7 +22,7 @@ export default function OperationalAnalytics() {
   const activeTab = searchParams.get('tab') || 'overview';
   
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<'week' | 'month' | '3months'>('month');
+  const [dateRange, setDateRange] = useState<'tomorrow' | '7days' | '30days' | '90days'>('30days');
   const { data: locations = [] } = useActiveLocations();
   
   const locationFilter = selectedLocation === 'all' ? undefined : selectedLocation;
@@ -54,7 +54,7 @@ export default function OperationalAnalytics() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div className="mb-4">
           <div className="flex items-center gap-2">
             <div>
               <h1 className="font-display text-3xl lg:text-4xl mb-2">OPERATIONAL ANALYTICS</h1>
@@ -67,7 +67,11 @@ export default function OperationalAnalytics() {
               elementName="Capacity Utilization" 
             />
           </div>
-          <div className="flex gap-3">
+        </div>
+
+        {/* Sticky Filter Bar */}
+        <div className="sticky top-16 z-20 -mx-6 lg:-mx-8 px-6 lg:px-8 py-3 bg-background/95 backdrop-blur-sm border-b border-border/50 mb-6">
+          <div className="flex gap-3 justify-end">
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
               <SelectTrigger className="w-[180px]">
                 <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -82,9 +86,10 @@ export default function OperationalAnalytics() {
             </Select>
             <Tabs value={dateRange} onValueChange={(v) => setDateRange(v as any)}>
               <TabsList>
-                <TabsTrigger value="week">Week</TabsTrigger>
-                <TabsTrigger value="month">Month</TabsTrigger>
-                <TabsTrigger value="3months">3 Months</TabsTrigger>
+                <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
+                <TabsTrigger value="7days">7 Days</TabsTrigger>
+                <TabsTrigger value="30days">30 Days</TabsTrigger>
+                <TabsTrigger value="90days">90 Days</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>

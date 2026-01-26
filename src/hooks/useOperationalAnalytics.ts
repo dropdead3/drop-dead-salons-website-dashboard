@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO, differenceInDays } from 'date-fns';
+import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO, differenceInDays, addDays } from 'date-fns';
 
 export interface DailyVolume {
   date: string;
@@ -49,20 +49,30 @@ export interface LeadSlaMetrics {
   slaBreachRate: number;
 }
 
-export function useOperationalAnalytics(locationId?: string, dateRange: 'week' | 'month' | '3months' = 'month') {
+export type AnalyticsDateRange = 'tomorrow' | '7days' | '30days' | '90days';
+
+export function useOperationalAnalytics(locationId?: string, dateRange: AnalyticsDateRange = '30days') {
   // Calculate date range
   const today = new Date();
   let startDate: Date;
+  let endDate: Date = today;
   
   switch (dateRange) {
-    case 'week':
-      startDate = startOfWeek(today);
+    case 'tomorrow':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 1);
       break;
-    case 'month':
-      startDate = startOfMonth(today);
+    case '7days':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 7);
       break;
-    case '3months':
-      startDate = subDays(today, 90);
+    case '30days':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 30);
+      break;
+    case '90days':
+      startDate = addDays(today, 1);
+      endDate = addDays(today, 90);
       break;
   }
 
