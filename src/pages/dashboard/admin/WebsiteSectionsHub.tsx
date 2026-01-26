@@ -20,7 +20,7 @@ import { ExtensionsEditor } from '@/components/dashboard/website-editor/Extensio
 import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
 import { BrandsEditor } from '@/components/dashboard/website-editor/BrandsEditor';
 import { DrinkMenuEditor } from '@/components/dashboard/website-editor/DrinkMenuEditor';
-
+import { FooterCTAEditor } from '@/components/dashboard/website-editor/FooterCTAEditor';
 // Embedded Content Components
 import { TestimonialsContent } from '@/components/dashboard/website-editor/TestimonialsContent';
 import { GalleryContent } from '@/components/dashboard/website-editor/GalleryContent';
@@ -126,6 +126,7 @@ export default function WebsiteSectionsHub() {
                     <TabsTrigger value="locations" className="text-xs sm:text-sm">Locations</TabsTrigger>
                     <TabsTrigger value="brands" className="text-xs sm:text-sm">Brands</TabsTrigger>
                     <TabsTrigger value="drinks" className="text-xs sm:text-sm">Drinks</TabsTrigger>
+                    <TabsTrigger value="footer-cta" className="text-xs sm:text-sm">Footer CTA</TabsTrigger>
                   </TabsList>
                 </div>
 
@@ -183,6 +184,10 @@ export default function WebsiteSectionsHub() {
 
                 <TabsContent value="drinks" className="mt-0">
                   <DrinkMenuEditor />
+                </TabsContent>
+
+                <TabsContent value="footer-cta" className="mt-0">
+                  <FooterCTAEditor />
                 </TabsContent>
               </Tabs>
             </div>
