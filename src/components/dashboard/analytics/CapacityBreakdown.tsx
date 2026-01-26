@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Calculator, Info, RotateCcw, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,19 +28,12 @@ export function CapacityBreakdown({
 }: CapacityBreakdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   
-  // Editable state (hours and stylist count are read-only from location settings)
-  const [breakMinutes, setBreakMinutes] = useState(initialBreakMinutes);
-  const [lunchMinutes, setLunchMinutes] = useState(initialLunchMinutes);
-  const [paddingMinutes, setPaddingMinutes] = useState(initialPaddingMinutes);
-  const [stylingMinutes, setStylingMinutes] = useState(0);
+  // Editable state with sensible defaults
+  const [breakMinutes, setBreakMinutes] = useState(20);
+  const [lunchMinutes, setLunchMinutes] = useState(30);
+  const [paddingMinutes, setPaddingMinutes] = useState(15);
+  const [stylingMinutes, setStylingMinutes] = useState(20);
   const [stylingPercentage, setStylingPercentage] = useState(25);
-
-  // Update local state when props change
-  useEffect(() => {
-    setBreakMinutes(initialBreakMinutes);
-    setLunchMinutes(initialLunchMinutes);
-    setPaddingMinutes(initialPaddingMinutes);
-  }, [initialBreakMinutes, initialLunchMinutes, initialPaddingMinutes]);
 
   // Calculations (use props directly for hours/stylists)
   const breakHoursPerDay = (breakMinutes / 60) * initialStylistCount;
@@ -62,17 +55,17 @@ export function CapacityBreakdown({
     : 0;
 
   const hasChanges = 
-    breakMinutes !== initialBreakMinutes ||
-    lunchMinutes !== initialLunchMinutes ||
-    paddingMinutes !== initialPaddingMinutes ||
-    stylingMinutes !== 0 ||
+    breakMinutes !== 20 ||
+    lunchMinutes !== 30 ||
+    paddingMinutes !== 15 ||
+    stylingMinutes !== 20 ||
     stylingPercentage !== 25;
 
   const handleReset = () => {
-    setBreakMinutes(initialBreakMinutes);
-    setLunchMinutes(initialLunchMinutes);
-    setPaddingMinutes(initialPaddingMinutes);
-    setStylingMinutes(0);
+    setBreakMinutes(20);
+    setLunchMinutes(30);
+    setPaddingMinutes(15);
+    setStylingMinutes(20);
     setStylingPercentage(25);
   };
 
