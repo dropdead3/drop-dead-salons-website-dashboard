@@ -47,6 +47,7 @@ import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
+import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -260,6 +261,13 @@ export default function DashboardHome() {
         {isLeadership && (
           <VisibilityGate elementKey="capacity_utilization">
             <CapacityUtilizationCard />
+          </VisibilityGate>
+        )}
+
+        {/* New Bookings - Leadership Only */}
+        {isLeadership && (
+          <VisibilityGate elementKey="new_bookings">
+            <NewBookingsCard />
           </VisibilityGate>
         )}
 
