@@ -204,7 +204,7 @@ export function CapacityUtilizationCard() {
                 onValueChange={setSelectedLocation}
                 includeAll={true}
                 allLabel="All Locations"
-                triggerClassName="h-8 w-[180px] text-xs"
+                triggerClassName="h-8 w-[180px] text-xs border border-border"
               />
               <Badge 
                 variant={getUtilizationBadgeVariant(overallUtilization)}
