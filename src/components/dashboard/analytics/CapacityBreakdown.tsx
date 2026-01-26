@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, Calculator, Info, RotateCcw, Settings } from 'l
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface CapacityBreakdownProps {
@@ -253,6 +254,16 @@ export function CapacityBreakdown({
                     className="w-20 h-8 text-sm text-center tabular-nums bg-background pr-1"
                   />
                   <span className="text-muted-foreground text-xs">%</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3.5 h-3.5 text-muted-foreground/70 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[200px]">
+                        <p className="text-xs">Percentage of appointments that get styled and photographed</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             </div>
