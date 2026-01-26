@@ -177,6 +177,9 @@ export function LocationsSettingsContent() {
       tax_rate: formData.tax_rate,
       stylist_capacity: formData.stylist_capacity,
       assistant_ratio: formData.assistant_ratio,
+      day_rate_enabled: null,
+      day_rate_default_price: null,
+      day_rate_blackout_dates: null,
     };
 
     if (editingLocation) {

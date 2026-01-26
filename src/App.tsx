@@ -84,6 +84,9 @@ import Changelog from "./pages/dashboard/Changelog";
 import ChangelogManager from "./pages/dashboard/admin/ChangelogManager";
 import MetricsGlossary from "./pages/dashboard/MetricsGlossary";
 import PublicBooking from "./pages/PublicBooking";
+import DayRateBooking from "./pages/DayRateBooking";
+import DayRateSettings from "./pages/dashboard/admin/DayRateSettings";
+import DayRateCalendar from "./pages/dashboard/admin/DayRateCalendar";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +115,7 @@ const App = () => (
               <Route path="/policies" element={<Policies />} />
               <Route path="/staff-login" element={<StaffLogin />} />
               <Route path="/book" element={<PublicBooking />} />
+              <Route path="/day-rate" element={<DayRateBooking />} />
 
               {/* Protected dashboard routes */}
               <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
@@ -170,6 +174,8 @@ const App = () => (
               <Route path="/dashboard/admin/program-editor" element={<ProtectedRoute requiredPermission="manage_program_editor"><ProgramEditor /></ProtectedRoute>} />
               <Route path="/dashboard/admin/program-analytics" element={<ProtectedRoute requiredPermission="view_program_analytics"><ProgramAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/phorest" element={<ProtectedRoute requiredPermission="manage_settings"><PhorestSettings /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/day-rate-settings" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateSettings /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/day-rate-calendar" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateCalendar /></ProtectedRoute>} />
               <Route path="/dashboard/admin/sales" element={<ProtectedRoute requiredPermission="view_team_overview"><SalesDashboard /></ProtectedRoute>} />
               <Route path="/dashboard/admin/staff-utilization" element={<Navigate to="/dashboard/admin/operational-analytics?tab=staff-utilization" replace />} />
               <Route path="/dashboard/admin/operational-analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><OperationalAnalytics /></ProtectedRoute>} />
