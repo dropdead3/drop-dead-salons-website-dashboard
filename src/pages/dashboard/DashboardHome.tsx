@@ -46,6 +46,7 @@ import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOvervie
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
+import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -252,6 +253,13 @@ export default function DashboardHome() {
         {isLeadership && (
           <VisibilityGate elementKey="week_ahead_forecast">
             <ForecastingCard />
+          </VisibilityGate>
+        )}
+
+        {/* Capacity Utilization - Leadership Only */}
+        {isLeadership && (
+          <VisibilityGate elementKey="capacity_utilization">
+            <CapacityUtilizationCard />
           </VisibilityGate>
         )}
 
