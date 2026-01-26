@@ -3625,6 +3625,50 @@ export type Database = {
         }
         Relationships: []
       }
+      report_history: {
+        Row: {
+          created_at: string | null
+          date_from: string
+          date_to: string
+          file_url: string | null
+          generated_by: string | null
+          id: string
+          parameters: Json | null
+          report_name: string
+          report_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          date_from: string
+          date_to: string
+          file_url?: string | null
+          generated_by?: string | null
+          id?: string
+          parameters?: Json | null
+          report_name: string
+          report_type: string
+        }
+        Update: {
+          created_at?: string | null
+          date_from?: string
+          date_to?: string
+          file_url?: string | null
+          generated_by?: string | null
+          id?: string
+          parameters?: Json | null
+          report_name?: string
+          report_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_history_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       ring_the_bell_entries: {
         Row: {
           closing_script: string | null

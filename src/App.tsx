@@ -72,7 +72,7 @@ import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
 import ProgramAnalytics from "./pages/dashboard/admin/ProgramAnalytics";
 import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 import SalesDashboard from "./pages/dashboard/admin/SalesDashboard";
-
+import ReportsHub from "./pages/dashboard/admin/ReportsHub";
 import OperationalAnalytics from "./pages/dashboard/admin/OperationalAnalytics";
 import LeadManagement from "./pages/dashboard/admin/LeadManagement";
 import MarketingAnalytics from "./pages/dashboard/admin/MarketingAnalytics";
@@ -183,6 +183,7 @@ const App = () => (
               <Route path="/dashboard/admin/marketing" element={<ProtectedRoute requiredPermission="view_marketing_analytics"><MarketingAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/feature-flags" element={<ProtectedRoute requiredPermission="manage_settings"><FeatureFlags /></ProtectedRoute>} />
               <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/reports" element={<ProtectedRoute requiredPermission="view_team_overview"><ReportsHub /></ProtectedRoute>} />
 
 
               <Route path="*" element={<NotFound />} />
