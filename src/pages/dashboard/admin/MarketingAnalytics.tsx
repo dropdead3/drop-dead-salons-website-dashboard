@@ -21,6 +21,7 @@ import { CampaignPerformanceTable } from '@/components/dashboard/marketing/Campa
 import { SourceBreakdownChart } from '@/components/dashboard/marketing/SourceBreakdownChart';
 import { MediumDistributionChart } from '@/components/dashboard/marketing/MediumDistributionChart';
 import { CampaignBudgetManager } from '@/components/dashboard/marketing/CampaignBudgetManager';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 type DateRange = 'week' | 'month' | '3months';
 
@@ -42,11 +43,17 @@ export default function MarketingAnalytics() {
       <div className="p-6 lg:p-8">
         {/* Header with filters */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">MARKETING ANALYTICS</h1>
-            <p className="text-muted-foreground font-sans">
-              Track UTM campaign performance, conversion rates, and ROI.
-            </p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h1 className="font-display text-3xl lg:text-4xl mb-2">MARKETING ANALYTICS</h1>
+              <p className="text-muted-foreground font-sans">
+                Track UTM campaign performance, conversion rates, and ROI.
+              </p>
+            </div>
+            <CommandCenterVisibilityToggle 
+              elementKey="website_analytics" 
+              elementName="Website Traffic" 
+            />
           </div>
           <div className="flex flex-wrap gap-3">
             {/* Manage Campaigns Button */}
