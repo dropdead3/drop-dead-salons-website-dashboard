@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import ScrollToTop from "./components/ScrollToTop";
@@ -149,12 +149,14 @@ const App = () => (
               <Route path="/dashboard/admin/schedule-requests" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ScheduleRequests /></ProtectedRoute>} />
               <Route path="/dashboard/admin/handbooks" element={<ProtectedRoute requiredPermission="manage_handbooks"><Handbooks /></ProtectedRoute>} />
               <Route path="/dashboard/admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/homepage-stylists" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><HomepageStylists /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/testimonials" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><TestimonialsManager /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/gallery" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><GalleryManager /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/services" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><ServicesManager /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/announcement-bar" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><AnnouncementBarManager /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/homepage-stylists" element={<Navigate to="/dashboard/admin/website-sections?tab=stylists" replace />} />
+              <Route path="/dashboard/admin/testimonials" element={<Navigate to="/dashboard/admin/website-sections?tab=testimonials" replace />} />
+              <Route path="/dashboard/admin/gallery" element={<Navigate to="/dashboard/admin/website-sections?tab=gallery" replace />} />
+              <Route path="/dashboard/admin/services" element={<Navigate to="/dashboard/admin/website-sections?tab=services" replace />} />
+              <Route path="/dashboard/admin/announcement-bar" element={<Navigate to="/dashboard/admin/website-sections?tab=banner" replace />} />
+              <Route path="/dashboard/admin/locations" element={<Navigate to="/dashboard/admin/website-sections?tab=locations" replace />} />
               <Route path="/dashboard/admin/website-sections" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><WebsiteSectionsHub /></ProtectedRoute>} />
+              <Route path="/dashboard/admin/roles" element={<ProtectedRoute requiredPermission="manage_user_roles"><ManageRoles /></ProtectedRoute>} />
               <Route path="/dashboard/admin/roles" element={<ProtectedRoute requiredPermission="manage_user_roles"><ManageRoles /></ProtectedRoute>} />
               <Route path="/dashboard/admin/accounts" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountManagement /></ProtectedRoute>} />
               <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
