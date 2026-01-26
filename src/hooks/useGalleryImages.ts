@@ -78,6 +78,46 @@ export function useAddGalleryImage() {
   });
 }
 
+export function useBulkAddGalleryImages() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (images: { src: string; alt: string }[]) => {
+      // Get max display_order
+      const { data: existing } = await supabase
+        .from('gallery_images')
+        .select('display_order')
+        .order('display_order', { ascending: false })
+        .limit(1);
+
+      let nextOrder = (existing?.[0]?.display_order ?? -1) + 1;
+
+      // Prepare all images with incremental display_order
+      const imagesToInsert = images.map((image, index) => ({
+        src: image.src,
+        alt: image.alt,
+        display_order: nextOrder + index,
+      }));
+
+      const { data, error } = await supabase
+        .from('gallery_images')
+        .insert(imagesToInsert)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['gallery-images'] });
+      toast.success(`${data?.length || 0} images added to gallery`);
+    },
+    onError: (error) => {
+      console.error('Error bulk adding gallery images:', error);
+      toast.error('Failed to add images');
+    },
+  });
+}
+
 export function useUpdateGalleryImage() {
   const queryClient = useQueryClient();
 
