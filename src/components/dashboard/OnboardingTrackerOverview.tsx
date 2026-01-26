@@ -10,12 +10,13 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle,
-  ChevronRight,
+  Info,
   BookOpen,
   ClipboardCheck,
   CreditCard,
   Camera,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
@@ -225,15 +226,21 @@ export function OnboardingTrackerOverview() {
           </div>
           <h3 className="font-medium text-sm">Onboarding Overview</h3>
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-xs gap-1"
-          onClick={() => navigate('/dashboard/admin/onboarding-tracker')}
-        >
-          View Details
-          <ChevronRight className="w-3.5 h-3.5" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7 rounded-full hover:bg-primary/10"
+              onClick={() => navigate('/dashboard/admin/onboarding-tracker')}
+            >
+              <Info className="w-4 h-4 text-primary" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            View full analytics
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Overall Progress */}
