@@ -3941,6 +3941,39 @@ export type Database = {
         }
         Relationships: []
       }
+      service_category_themes: {
+        Row: {
+          colors: Json
+          created_at: string | null
+          description: string | null
+          id: string
+          is_custom: boolean | null
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          colors: Json
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_custom?: boolean | null
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          colors?: Json
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_custom?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       signature_presets: {
         Row: {
           config: Json

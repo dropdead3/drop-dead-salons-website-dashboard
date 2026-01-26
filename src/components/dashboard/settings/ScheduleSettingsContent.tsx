@@ -14,6 +14,7 @@ import {
 } from '@/hooks/useServiceCategoryColors';
 import { toast } from 'sonner';
 import { CalendarColorPreview } from './CalendarColorPreview';
+import { ThemeSelector } from './ThemeSelector';
 import { 
   getCategoryAbbreviation as getAbbr, 
   SPECIAL_GRADIENTS, 
@@ -337,7 +338,12 @@ export function ScheduleSettingsContent() {
             </Link>
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          {/* Theme Selector */}
+          <ThemeSelector currentColors={colorMap} />
+          
+          <div className="h-px bg-border" />
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {serviceCategories.map(renderCategoryCard)}
           </div>
