@@ -135,9 +135,9 @@ export function AppointmentsContent({
               {newBookingsLoading ? (
                 <Skeleton className="h-8 w-12" />
               ) : (
-                <p className="font-display text-2xl">{newBookings?.bookedThisWeek || 0}</p>
+                <p className="font-display text-2xl">{newBookings?.bookedLast7Days || 0}</p>
               )}
-              <p className="text-xs text-muted-foreground">Booked This Week</p>
+              <p className="text-xs text-muted-foreground">Booked in Last 7 Days</p>
             </div>
           </div>
         </Card>

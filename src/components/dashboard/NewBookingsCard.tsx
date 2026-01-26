@@ -38,7 +38,7 @@ export function NewBookingsCard() {
           </div>
         </div>
 
-        {/* Booked This Week */}
+        {/* Booked in Last 7 Days */}
         <div className="text-center p-4 bg-muted/30 rounded-lg">
           <div className="flex justify-center mb-2">
             <CalendarRange className="w-5 h-5 text-purple-600" />
@@ -46,11 +46,11 @@ export function NewBookingsCard() {
           {isLoading ? (
             <Skeleton className="h-8 w-12 mx-auto" />
           ) : (
-            <p className="text-2xl font-display tabular-nums">{newBookings?.bookedThisWeek || 0}</p>
+            <p className="text-2xl font-display tabular-nums">{newBookings?.bookedLast7Days || 0}</p>
           )}
           <div className="flex items-center gap-1 justify-center mt-1">
-            <p className="text-xs text-muted-foreground">Booked This Week</p>
-            <MetricInfoTooltip description="New appointments created this week (Monday–Sunday, by creation date)." />
+            <p className="text-xs text-muted-foreground">Booked in Last 7 Days</p>
+            <MetricInfoTooltip description="New appointments created in the last 7 days (by creation date)." />
           </div>
         </div>
       </div>
