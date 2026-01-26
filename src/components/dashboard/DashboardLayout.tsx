@@ -151,6 +151,7 @@ const statsNavItems: NavItem[] = [
   { href: '/dashboard/admin/sales', label: 'Sales Dashboard', icon: DollarSign, permission: 'view_team_overview' },
   { href: '/dashboard/admin/operational-analytics', label: 'Operational Analytics', icon: BarChart3, permission: 'view_team_overview' },
   { href: '/dashboard/admin/marketing', label: 'Marketing Analytics', icon: TrendingUp, permission: 'view_marketing_analytics' },
+  { href: '/dashboard/admin/reports', label: 'Reports Hub', icon: FileText, permission: 'view_team_overview' },
 ];
 
 // Manager-accessible admin items
