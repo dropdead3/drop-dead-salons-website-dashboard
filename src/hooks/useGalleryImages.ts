@@ -274,3 +274,60 @@ export function useDeleteGalleryTransformation() {
     },
   });
 }
+
+// Reorder hooks
+export function useReorderGalleryImages() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (images: { id: string; display_order: number }[]) => {
+      // Update all images in parallel
+      const updates = images.map(({ id, display_order }) =>
+        supabase
+          .from('gallery_images')
+          .update({ display_order })
+          .eq('id', id)
+      );
+
+      const results = await Promise.all(updates);
+      const error = results.find(r => r.error)?.error;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gallery-images'] });
+      toast.success('Gallery order updated');
+    },
+    onError: (error) => {
+      console.error('Error reordering gallery images:', error);
+      toast.error('Failed to update order');
+    },
+  });
+}
+
+export function useReorderGalleryTransformations() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (transformations: { id: string; display_order: number }[]) => {
+      // Update all transformations in parallel
+      const updates = transformations.map(({ id, display_order }) =>
+        supabase
+          .from('gallery_transformations')
+          .update({ display_order })
+          .eq('id', id)
+      );
+
+      const results = await Promise.all(updates);
+      const error = results.find(r => r.error)?.error;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gallery-transformations'] });
+      toast.success('Transformations order updated');
+    },
+    onError: (error) => {
+      console.error('Error reordering transformations:', error);
+      toast.error('Failed to update order');
+    },
+  });
+}
