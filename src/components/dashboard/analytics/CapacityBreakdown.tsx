@@ -150,7 +150,7 @@ export function CapacityBreakdown({
                   max={120}
                   value={breakMinutes}
                   onChange={(e) => setBreakMinutes(Math.max(0, Math.min(120, Number(e.target.value) || 0)))}
-                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                  className="w-20 h-8 text-sm text-center tabular-nums bg-background pr-1"
                 />
                 <span className="text-muted-foreground text-xs w-6">min</span>
                 <span className="w-16" />
@@ -171,7 +171,7 @@ export function CapacityBreakdown({
                   max={120}
                   value={lunchMinutes}
                   onChange={(e) => setLunchMinutes(Math.max(0, Math.min(120, Number(e.target.value) || 0)))}
-                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                  className="w-20 h-8 text-sm text-center tabular-nums bg-background pr-1"
                 />
                 <span className="text-muted-foreground text-xs w-6">min</span>
                 <span className="w-16" />
@@ -212,7 +212,7 @@ export function CapacityBreakdown({
                   max={60}
                   value={paddingMinutes}
                   onChange={(e) => setPaddingMinutes(Math.max(0, Math.min(60, Number(e.target.value) || 0)))}
-                  className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                  className="w-20 h-8 text-sm text-center tabular-nums bg-background pr-1"
                 />
                 <span className="text-muted-foreground text-xs">min</span>
               </div>
@@ -239,7 +239,7 @@ export function CapacityBreakdown({
                     max={60}
                     value={stylingMinutes}
                     onChange={(e) => setStylingMinutes(Math.max(0, Math.min(60, Number(e.target.value) || 0)))}
-                    className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                    className="w-20 h-8 text-sm text-center tabular-nums bg-background pr-1"
                   />
                   <span className="text-muted-foreground text-xs">min</span>
                 </div>
@@ -250,7 +250,7 @@ export function CapacityBreakdown({
                     max={100}
                     value={stylingPercentage}
                     onChange={(e) => setStylingPercentage(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
-                    className="w-16 h-8 text-sm text-center tabular-nums bg-background"
+                    className="w-20 h-8 text-sm text-center tabular-nums bg-background pr-1"
                   />
                   <span className="text-muted-foreground text-xs">%</span>
                 </div>
