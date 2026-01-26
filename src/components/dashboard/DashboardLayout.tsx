@@ -179,15 +179,9 @@ const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 
-// Website management items
+// Website management items - consolidated into single entry
 const websiteNavItems: NavItem[] = [
-  { href: '/dashboard/admin/announcement-bar', label: 'Announcement Bar', icon: Bell, permission: 'manage_homepage_stylists' },
-  { href: '/dashboard/admin/website-sections', label: 'Sections', icon: LayoutGrid, permission: 'manage_homepage_stylists' },
-  { href: '/dashboard/admin/homepage-stylists', label: 'Homepage Stylists', icon: Globe, permission: 'manage_homepage_stylists' },
-  { href: '/dashboard/admin/testimonials', label: 'Testimonials', icon: Quote, permission: 'manage_homepage_stylists' },
-  { href: '/dashboard/admin/gallery', label: 'Gallery', icon: Images, permission: 'manage_homepage_stylists' },
-  { href: '/dashboard/admin/services', label: 'Services', icon: Scissors, permission: 'manage_homepage_stylists' },
-  { href: '/dashboard/admin/locations', label: 'Locations', icon: MapPin, permission: 'manage_settings' },
+  { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: LayoutGrid, permission: 'manage_homepage_stylists' },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';

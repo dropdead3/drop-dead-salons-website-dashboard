@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,19 @@ import { ExtensionsEditor } from '@/components/dashboard/website-editor/Extensio
 import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
 import { BrandsEditor } from '@/components/dashboard/website-editor/BrandsEditor';
 import { DrinkMenuEditor } from '@/components/dashboard/website-editor/DrinkMenuEditor';
-import { LinkToManagerCard } from '@/components/dashboard/website-editor/LinkToManagerCard';
+
+// Embedded Content Components
+import { TestimonialsContent } from '@/components/dashboard/website-editor/TestimonialsContent';
+import { GalleryContent } from '@/components/dashboard/website-editor/GalleryContent';
+import { StylistsContent } from '@/components/dashboard/website-editor/StylistsContent';
+import { LocationsContent } from '@/components/dashboard/website-editor/LocationsContent';
+import { ServicesContent } from '@/components/dashboard/website-editor/ServicesContent';
+import { AnnouncementBarContent } from '@/components/dashboard/website-editor/AnnouncementBarContent';
 
 export default function WebsiteSectionsHub() {
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'overview';
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -43,10 +54,11 @@ export default function WebsiteSectionsHub() {
         </div>
 
         {/* Tabbed Editor */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <div className="overflow-x-auto pb-2">
             <TabsList className="inline-flex h-auto flex-wrap gap-1">
               <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+              <TabsTrigger value="banner" className="text-xs sm:text-sm">Banner</TabsTrigger>
               <TabsTrigger value="hero" className="text-xs sm:text-sm">Hero</TabsTrigger>
               <TabsTrigger value="brand" className="text-xs sm:text-sm">Brand</TabsTrigger>
               <TabsTrigger value="testimonials" className="text-xs sm:text-sm">Testimonials</TabsTrigger>
@@ -66,6 +78,10 @@ export default function WebsiteSectionsHub() {
             <OverviewTab />
           </TabsContent>
 
+          <TabsContent value="banner" className="mt-0">
+            <AnnouncementBarContent />
+          </TabsContent>
+
           <TabsContent value="hero" className="mt-0">
             <HeroEditor />
           </TabsContent>
@@ -75,7 +91,7 @@ export default function WebsiteSectionsHub() {
           </TabsContent>
 
           <TabsContent value="testimonials" className="mt-0">
-            <TestimonialsEditor />
+            <TestimonialsContent />
           </TabsContent>
 
           <TabsContent value="new-client" className="mt-0">
@@ -91,39 +107,19 @@ export default function WebsiteSectionsHub() {
           </TabsContent>
 
           <TabsContent value="services" className="mt-0">
-            <LinkToManagerCard
-              title="Services Preview"
-              description="Service categories are managed in the Services Manager. Toggle visibility in the Overview tab."
-              linkHref="/dashboard/admin/services"
-              linkText="Go to Services Manager"
-            />
+            <ServicesContent />
           </TabsContent>
 
           <TabsContent value="gallery" className="mt-0">
-            <LinkToManagerCard
-              title="Gallery Section"
-              description="Before/after transformations are managed in the Gallery Manager."
-              linkHref="/dashboard/admin/gallery"
-              linkText="Go to Gallery Manager"
-            />
+            <GalleryContent />
           </TabsContent>
 
           <TabsContent value="stylists" className="mt-0">
-            <LinkToManagerCard
-              title="Meet Our Stylists"
-              description="Stylist visibility and ordering are managed in the Homepage Stylists section."
-              linkHref="/dashboard/admin/homepage-stylists"
-              linkText="Go to Homepage Stylists"
-            />
+            <StylistsContent />
           </TabsContent>
 
           <TabsContent value="locations" className="mt-0">
-            <LinkToManagerCard
-              title="Locations Section"
-              description="Location information is managed in the Locations Manager."
-              linkHref="/dashboard/admin/locations"
-              linkText="Go to Locations Manager"
-            />
+            <LocationsContent />
           </TabsContent>
 
           <TabsContent value="brands" className="mt-0">
