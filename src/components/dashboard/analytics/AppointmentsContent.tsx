@@ -82,6 +82,15 @@ export function AppointmentsContent({
 
   return (
     <>
+      {/* Capacity Utilization Section - Top of page */}
+      <div className="mb-6">
+        <CapacityUtilizationSection 
+          capacityData={capacityData ?? null}
+          isLoading={capacityLoading ?? false}
+          dateRange={dateRange}
+        />
+      </div>
+
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Card className="p-4">
@@ -297,15 +306,6 @@ export function AppointmentsContent({
           )}
         </CardContent>
       </Card>
-
-      {/* Capacity Utilization Section */}
-      <div className="mt-6">
-        <CapacityUtilizationSection 
-          capacityData={capacityData ?? null}
-          isLoading={capacityLoading ?? false}
-          dateRange={dateRange}
-        />
-      </div>
     </>
   );
 }
