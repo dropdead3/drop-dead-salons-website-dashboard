@@ -7,6 +7,7 @@ import { MapPin } from 'lucide-react';
 import { useOperationalAnalytics } from '@/hooks/useOperationalAnalytics';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
+import { useHistoricalCapacityUtilization } from '@/hooks/useHistoricalCapacityUtilization';
 
 // Content Components
 import { OverviewContent } from '@/components/dashboard/analytics/OverviewContent';
@@ -35,6 +36,11 @@ export default function OperationalAnalytics() {
   } = useOperationalAnalytics(locationFilter, dateRange);
 
   const { workload, isLoading: utilizationLoading } = useStaffUtilization(
+    locationFilter,
+    dateRange
+  );
+
+  const { capacityData, isLoading: capacityLoading } = useHistoricalCapacityUtilization(
     locationFilter,
     dateRange
   );
@@ -95,16 +101,21 @@ export default function OperationalAnalytics() {
               statusBreakdown={statusBreakdown}
               isLoading={isLoading}
               onNavigateToTab={handleTabChange}
+              capacityData={capacityData}
+              capacityLoading={capacityLoading}
             />
           </TabsContent>
 
           <TabsContent value="appointments" className="mt-6">
-            <AppointmentsContent 
+            <AppointmentsContent
               summary={summary}
               dailyVolume={dailyVolume}
               statusBreakdown={statusBreakdown}
               hourlyDistribution={hourlyDistribution}
               isLoading={isLoading}
+              capacityData={capacityData}
+              capacityLoading={capacityLoading}
+              dateRange={dateRange}
             />
           </TabsContent>
 

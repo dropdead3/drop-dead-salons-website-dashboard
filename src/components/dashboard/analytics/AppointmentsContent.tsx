@@ -24,6 +24,7 @@ import {
   Cell,
   Legend
 } from 'recharts';
+import { CapacityUtilizationSection } from './CapacityUtilizationSection';
 
 const STATUS_COLORS: Record<string, string> = {
   completed: 'hsl(var(--chart-2))',
@@ -36,6 +37,18 @@ const STATUS_COLORS: Record<string, string> = {
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+
+interface CapacityData {
+  totalAvailableHours: number;
+  totalBookedHours: number;
+  overallUtilization: number;
+  gapHours: number;
+  gapRevenue: number;
+  avgHourlyRevenue: number;
+  dailyCapacity: any[];
+  serviceMix: any[];
+  totalAppointments: number;
+}
 
 interface AppointmentsContentProps {
   summary: {
@@ -50,6 +63,9 @@ interface AppointmentsContentProps {
   statusBreakdown: StatusBreakdown[];
   hourlyDistribution: HourlyDistribution[];
   isLoading: boolean;
+  capacityData?: CapacityData | null;
+  capacityLoading?: boolean;
+  dateRange?: 'week' | 'month' | '3months';
 }
 
 export function AppointmentsContent({ 
@@ -57,7 +73,10 @@ export function AppointmentsContent({
   dailyVolume, 
   statusBreakdown, 
   hourlyDistribution,
-  isLoading 
+  isLoading,
+  capacityData,
+  capacityLoading,
+  dateRange = 'month'
 }: AppointmentsContentProps) {
   // Build heatmap data
   const heatmapData = HOURS.map(hour => {
@@ -288,6 +307,15 @@ export function AppointmentsContent({
           )}
         </CardContent>
       </Card>
+
+      {/* Capacity Utilization Section */}
+      <div className="mt-6">
+        <CapacityUtilizationSection 
+          capacityData={capacityData ?? null}
+          isLoading={capacityLoading ?? false}
+          dateRange={dateRange}
+        />
+      </div>
     </>
   );
 }
