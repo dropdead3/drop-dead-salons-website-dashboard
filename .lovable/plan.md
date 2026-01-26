@@ -1,121 +1,115 @@
 
-# Add Styling & Photography Padding Option
+# Split Booking Metrics to Standalone Card
 
 ## Overview
-Add a new "Styling & Photography" section to the capacity calculator that lets users input:
-1. Minutes added per appointment for styling/photography
-2. Percentage of appointments that get styled and photographed
-
-The system will calculate the effective capacity impact based on both values.
+Extract the "Booked Today" and "Booked This Week" metrics from the Sales Overview card into a dedicated "New Bookings" card on the Command Center dashboard.
 
 ## Changes Required
 
-### File: `src/components/dashboard/analytics/CapacityBreakdown.tsx`
+### 1. Create New Component: `src/components/dashboard/NewBookingsCard.tsx`
 
-#### 1. Add New State Variables
+A standalone card that displays:
+- Header: "NEW BOOKINGS" with CalendarPlus icon
+- Two metric tiles side-by-side:
+  - Booked Today (with CalendarPlus icon, blue)
+  - Booked This Week (with CalendarRange icon, purple)
+- Info tooltips explaining each metric
+
+### 2. Update `src/components/dashboard/AggregateSalesCard.tsx`
+
+Remove the two booking metric tiles (lines ~400-423):
+- Remove "Booked Today" tile
+- Remove "Booked This Week" tile  
+- Remove `useNewBookings` hook import and usage
+- Remove `CalendarPlus` and `CalendarRange` icon imports
+
+The Sales Overview card will now show only 6 KPIs:
+- Total Revenue, Services, Products
+- Transactions, Avg Ticket, Rev. Tomorrow
+
+### 3. Update `src/pages/dashboard/DashboardHome.tsx`
+
+Add the new `NewBookingsCard` after the Sales Overview section:
+
 ```tsx
-const [stylingMinutes, setStylingMinutes] = useState(0);
-const [stylingPercentage, setStylingPercentage] = useState(25); // Default 25% of appointments
+{/* New Bookings - Leadership Only */}
+{isLeadership && (
+  <VisibilityGate elementKey="new_bookings">
+    <NewBookingsCard />
+  </VisibilityGate>
+)}
 ```
 
-#### 2. Add to hasChanges and handleReset
-Include the new styling values in change detection and reset functionality.
+## Visual Result
 
-#### 3. Calculate Styling Impact
-```tsx
-// Weighted impact: (styling minutes × percentage of appts) / avg appointment time
-const stylingImpact = stylingMinutes > 0 && stylingPercentage > 0
-  ? Math.round(((stylingMinutes * (stylingPercentage / 100)) / avgAppointmentMinutes) * 100)
-  : 0;
+**Sales Overview Card** (cleaned up - 6 KPIs in 2 rows of 3):
+```
+| Total Revenue | Services | Products    |
+| Transactions  | Avg Ticket| Rev. Tomorrow|
 ```
 
-#### 4. Add New UI Section (after Appointment Padding)
-New section with:
-- "Styling & Photography" label
-- Input for minutes (0-60 min range)
-- Input for percentage of appointments (0-100%)
-- Info callout showing combined capacity impact
-
-### Visual Design
-
-```text
-Styling & Photography
-  Duration:    [15] min     Appointments:    [25] %
-  
-  ℹ If 25% of appointments include 15 min of styling/photography,
-    this reduces effective capacity by ~4%.
+**New Bookings Card** (new standalone):
+```
+┌────────────────────────────────────────┐
+│ 📅+ NEW BOOKINGS                       │
+├────────────────────────────────────────┤
+│  📅+              📅≡                  │
+│   3                 3                  │
+│ Booked Today ⓘ  Booked This Week ⓘ    │
+└────────────────────────────────────────┘
 ```
 
 ## Technical Details
 
-### New State & Effects:
+### NewBookingsCard Component Structure:
 ```tsx
-const [stylingMinutes, setStylingMinutes] = useState(0);
-const [stylingPercentage, setStylingPercentage] = useState(25);
+export function NewBookingsCard() {
+  const { data: newBookings, isLoading } = useNewBookings();
 
-// In useEffect - reset on prop changes
-// (styling has no initial prop, so no reset needed from props)
+  return (
+    <Card className="p-6">
+      {/* Header with CalendarPlus icon */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center rounded-lg">
+          <CalendarPlus className="w-5 h-5 text-blue-600" />
+        </div>
+        <div>
+          <h2 className="font-display text-sm tracking-wide">NEW BOOKINGS</h2>
+          <p className="text-xs text-muted-foreground">Appointments created</p>
+        </div>
+      </div>
 
-// Updated hasChanges
-const hasChanges = 
-  breakMinutes !== initialBreakMinutes ||
-  lunchMinutes !== initialLunchMinutes ||
-  paddingMinutes !== initialPaddingMinutes ||
-  stylingMinutes !== 0 ||
-  stylingPercentage !== 25;
+      {/* Two metric tiles */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Booked Today */}
+        <div className="text-center p-4 bg-muted/30 rounded-lg">
+          <CalendarPlus className="w-5 h-5 text-blue-600 mx-auto mb-2" />
+          <p className="text-2xl font-display">{newBookings?.bookedToday || 0}</p>
+          <div className="flex items-center gap-1 justify-center mt-1">
+            <p className="text-xs text-muted-foreground">Booked Today</p>
+            <MetricInfoTooltip description="..." />
+          </div>
+        </div>
 
-// Updated handleReset
-const handleReset = () => {
-  setBreakMinutes(initialBreakMinutes);
-  setLunchMinutes(initialLunchMinutes);
-  setPaddingMinutes(initialPaddingMinutes);
-  setStylingMinutes(0);
-  setStylingPercentage(25);
-};
+        {/* Booked This Week */}
+        <div className="text-center p-4 bg-muted/30 rounded-lg">
+          <CalendarRange className="w-5 h-5 text-purple-600 mx-auto mb-2" />
+          <p className="text-2xl font-display">{newBookings?.bookedThisWeek || 0}</p>
+          <div className="flex items-center gap-1 justify-center mt-1">
+            <p className="text-xs text-muted-foreground">Booked This Week</p>
+            <MetricInfoTooltip description="..." />
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
 ```
 
-### New UI Section JSX:
-```tsx
-{/* Styling & Photography section */}
-<div className="pt-3 border-t border-border/50 space-y-3">
-  <div className="grid grid-cols-[1fr,auto] items-center gap-4">
-    <span className="text-muted-foreground">Styling & Photography</span>
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-1.5">
-        <Input
-          type="number"
-          min={0}
-          max={60}
-          value={stylingMinutes}
-          onChange={(e) => setStylingMinutes(Math.max(0, Math.min(60, Number(e.target.value) || 0)))}
-          className="w-16 h-8 text-sm text-center tabular-nums bg-background"
-        />
-        <span className="text-muted-foreground text-xs">min</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <Input
-          type="number"
-          min={0}
-          max={100}
-          value={stylingPercentage}
-          onChange={(e) => setStylingPercentage(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
-          className="w-16 h-8 text-sm text-center tabular-nums bg-background"
-        />
-        <span className="text-muted-foreground text-xs">%</span>
-      </div>
-    </div>
-  </div>
-  {stylingMinutes > 0 && stylingPercentage > 0 && (
-    <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
-      <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/70" />
-      <span>
-        If {stylingPercentage}% of appointments include {stylingMinutes} min of styling/photography,
-        this reduces effective capacity by ~{stylingImpact}%.
-      </span>
-    </div>
-  )}
-</div>
-```
+## File Summary
 
-## Result
-Users can model the capacity impact of styling and photography time by specifying both the duration and the percentage of appointments that include this service. The calculator will show the weighted impact on overall capacity.
+| File | Action |
+|------|--------|
+| `src/components/dashboard/NewBookingsCard.tsx` | Create new component |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Remove booking tiles + cleanup imports |
+| `src/pages/dashboard/DashboardHome.tsx` | Add NewBookingsCard to layout |
