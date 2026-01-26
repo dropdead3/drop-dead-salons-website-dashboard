@@ -46,6 +46,7 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/leaderboard',
     '/dashboard/admin/sales',
     '/dashboard/admin/operational-analytics',
+    '/dashboard/admin/reports',
   ],
   getHelp: [
     '/dashboard/assistant-schedule',
