@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfWeek, startOfMonth, differenceInMinutes, parseISO } from 'date-fns';
 import { getServiceCategory } from '@/utils/serviceCategorization';
 
-interface DayCapacity {
+export interface DayCapacity {
   date: string;
   dayName: string;
   availableHours: number;
@@ -11,16 +11,18 @@ interface DayCapacity {
   utilizationPercent: number;
   appointmentCount: number;
   revenue: number;
+  gapHours: number;
 }
 
-interface ServiceMix {
+export interface ServiceMix {
   category: string;
   hours: number;
   revenue: number;
   count: number;
+  percentage: number;
 }
 
-interface CapacityData {
+export interface CapacityData {
   totalAvailableHours: number;
   totalBookedHours: number;
   overallUtilization: number;
@@ -30,6 +32,8 @@ interface CapacityData {
   dailyCapacity: DayCapacity[];
   serviceMix: ServiceMix[];
   totalAppointments: number;
+  peakDay: DayCapacity | null;
+  lowDay: DayCapacity | null;
 }
 
 // Parse hours from location hours_json for a specific day
@@ -149,6 +153,7 @@ export function useHistoricalCapacityUtilization(
         utilizationPercent: 0,
         appointmentCount: 0,
         revenue: 0,
+        gapHours: dayAvailableHours,
       });
 
       currentDate.setDate(currentDate.getDate() + 1);
@@ -177,18 +182,19 @@ export function useHistoricalCapacityUtilization(
 
       // Service mix
       const category = getServiceCategory(apt.service_name || 'Other');
-      const existing = serviceMixMap.get(category) || { category, hours: 0, revenue: 0, count: 0 };
+      const existing = serviceMixMap.get(category) || { category, hours: 0, revenue: 0, count: 0, percentage: 0 };
       existing.hours += durationHours;
       existing.revenue += revenue;
       existing.count += 1;
       serviceMixMap.set(category, existing);
     });
 
-    // Calculate utilization percentages
+    // Calculate utilization percentages and gap hours
     dailyMap.forEach((day) => {
       if (day.availableHours > 0) {
-        day.utilizationPercent = (day.bookedHours / day.availableHours) * 100;
+        day.utilizationPercent = Math.round((day.bookedHours / day.availableHours) * 100);
       }
+      day.gapHours = Math.max(0, day.availableHours - day.bookedHours);
     });
 
     // Aggregate totals
@@ -205,23 +211,48 @@ export function useHistoricalCapacityUtilization(
     });
 
     const overallUtilization = totalAvailableHours > 0 
-      ? (totalBookedHours / totalAvailableHours) * 100 
+      ? Math.round((totalBookedHours / totalAvailableHours) * 100)
       : 0;
 
-    const gapHours = totalAvailableHours - totalBookedHours;
-    const avgHourlyRevenue = totalBookedHours > 0 ? totalRevenue / totalBookedHours : 0;
-    const gapRevenue = gapHours * avgHourlyRevenue;
+    const gapHours = Math.max(0, totalAvailableHours - totalBookedHours);
+    const avgHourlyRevenue = totalBookedHours > 0 ? Math.round(totalRevenue / totalBookedHours) : 0;
+    const gapRevenue = Math.round(gapHours * avgHourlyRevenue);
+
+    // Calculate service mix percentages
+    const totalServiceHours = Array.from(serviceMixMap.values()).reduce((sum, s) => sum + s.hours, 0);
+    serviceMixMap.forEach((service) => {
+      service.percentage = totalServiceHours > 0 ? Math.round((service.hours / totalServiceHours) * 100) : 0;
+    });
+
+    // Find peak and low days (only days with availability)
+    const dailyCapacity = Array.from(dailyMap.values());
+    const daysWithAvailability = dailyCapacity.filter(d => d.availableHours > 0);
+    
+    let peakDay: DayCapacity | null = null;
+    let lowDay: DayCapacity | null = null;
+    
+    if (daysWithAvailability.length > 0) {
+      peakDay = daysWithAvailability.reduce((max, day) => 
+        day.utilizationPercent > max.utilizationPercent ? day : max
+      , daysWithAvailability[0]);
+      
+      lowDay = daysWithAvailability.reduce((min, day) => 
+        day.utilizationPercent < min.utilizationPercent ? day : min
+      , daysWithAvailability[0]);
+    }
 
     return {
-      totalAvailableHours,
-      totalBookedHours,
+      totalAvailableHours: Math.round(totalAvailableHours),
+      totalBookedHours: Math.round(totalBookedHours),
       overallUtilization,
-      gapHours,
+      gapHours: Math.round(gapHours),
       gapRevenue,
       avgHourlyRevenue,
-      dailyCapacity: Array.from(dailyMap.values()),
+      dailyCapacity,
       serviceMix: Array.from(serviceMixMap.values()).sort((a, b) => b.hours - a.hours),
       totalAppointments,
+      peakDay,
+      lowDay,
     };
   })();
 

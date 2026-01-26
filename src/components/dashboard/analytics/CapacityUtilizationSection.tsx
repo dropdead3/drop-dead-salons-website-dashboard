@@ -1,10 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { Gauge, Clock, DollarSign, Calendar, AlertTriangle } from 'lucide-react';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
+import { Gauge, Clock, TrendingDown, Calendar, PieChart as PieChartIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format, parseISO } from 'date-fns';
 import {
   BarChart,
   Bar,
@@ -15,38 +17,8 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from 'recharts';
-import { format, parseISO } from 'date-fns';
-
-interface DayCapacity {
-  date: string;
-  dayName: string;
-  availableHours: number;
-  bookedHours: number;
-  utilizationPercent: number;
-  appointmentCount: number;
-  revenue: number;
-}
-
-interface ServiceMix {
-  category: string;
-  hours: number;
-  revenue: number;
-  count: number;
-}
-
-interface CapacityData {
-  totalAvailableHours: number;
-  totalBookedHours: number;
-  overallUtilization: number;
-  gapHours: number;
-  gapRevenue: number;
-  avgHourlyRevenue: number;
-  dailyCapacity: DayCapacity[];
-  serviceMix: ServiceMix[];
-  totalAppointments: number;
-}
+import type { CapacityData, DayCapacity } from '@/hooks/useHistoricalCapacityUtilization';
 
 interface CapacityUtilizationSectionProps {
   capacityData: CapacityData | null;
@@ -54,32 +26,74 @@ interface CapacityUtilizationSectionProps {
   dateRange: 'week' | 'month' | '3months';
 }
 
-const SERVICE_COLORS = [
+const PIE_COLORS = [
   'hsl(var(--chart-1))',
   'hsl(var(--chart-2))',
   'hsl(var(--chart-3))',
   'hsl(var(--chart-4))',
   'hsl(var(--chart-5))',
   'hsl(var(--primary))',
-  'hsl(var(--accent))',
+  'hsl(var(--muted-foreground))',
 ];
 
+const DATE_RANGE_LABELS: Record<string, string> = {
+  'week': 'this week',
+  'month': 'this month',
+  '3months': 'last 3 months',
+};
+
 function getUtilizationColor(percent: number): string {
-  if (percent >= 70) return 'hsl(142 76% 36%)'; // green
-  if (percent >= 50) return 'hsl(38 92% 50%)'; // amber
-  return 'hsl(var(--destructive))'; // red
+  if (percent >= 70) return 'hsl(var(--chart-2))';
+  if (percent >= 50) return 'hsl(45 93% 47%)';
+  return 'hsl(0 72% 51%)';
 }
 
-function getUtilizationBgClass(percent: number): string {
-  if (percent >= 70) return 'bg-green-100 dark:bg-green-900/30';
-  if (percent >= 50) return 'bg-amber-100 dark:bg-amber-900/30';
-  return 'bg-red-100 dark:bg-red-900/30';
+function getUtilizationBadgeVariant(percent: number): 'default' | 'secondary' | 'destructive' {
+  if (percent >= 70) return 'default';
+  if (percent >= 50) return 'secondary';
+  return 'destructive';
 }
 
-function getUtilizationTextClass(percent: number): string {
-  if (percent >= 70) return 'text-green-600';
-  if (percent >= 50) return 'text-amber-600';
-  return 'text-red-600';
+// Custom bar label showing percentage above each bar
+function UtilizationBarLabel({ x, y, width, value }: any) {
+  if (value === undefined || value === null) return null;
+  
+  return (
+    <text
+      x={x + width / 2}
+      y={y - 6}
+      textAnchor="middle"
+      className="fill-foreground text-[10px] font-medium tabular-nums"
+    >
+      {value}%
+    </text>
+  );
+}
+
+// Custom X-axis tick showing day name and hours open
+function DayXAxisTick({ x, y, payload, days }: any) {
+  const day = days.find((d: DayCapacity) => d.dayName === payload.value);
+  if (!day) return null;
+  
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text 
+        x={0} y={0} dy={12} 
+        textAnchor="middle" 
+        className="fill-foreground text-[11px]"
+        style={{ fontWeight: 500 }}
+      >
+        {day.dayName}
+      </text>
+      <text 
+        x={0} y={0} dy={24} 
+        textAnchor="middle" 
+        className="fill-muted-foreground text-[10px]"
+      >
+        {day.gapHours > 0 ? `${Math.round(day.gapHours)}h open` : 'Full'}
+      </text>
+    </g>
+  );
 }
 
 export function CapacityUtilizationSection({ 
@@ -90,22 +104,18 @@ export function CapacityUtilizationSection({
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Gauge className="w-5 h-5" />
-            Capacity Utilization
-          </CardTitle>
+        <CardHeader className="pb-3">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-64 mt-1" />
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <div className="grid grid-cols-3 gap-4">
-              <Skeleton className="h-20" />
-              <Skeleton className="h-20" />
-              <Skeleton className="h-20" />
-            </div>
-            <Skeleton className="h-[200px]" />
+        <CardContent className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <div className="grid grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
           </div>
+          <Skeleton className="h-32 w-full" />
         </CardContent>
       </Card>
     );
@@ -129,202 +139,280 @@ export function CapacityUtilizationSection({
     );
   }
 
-  const { 
-    overallUtilization, 
-    gapHours, 
-    gapRevenue, 
+  const {
+    totalAvailableHours,
     totalBookedHours,
-    dailyCapacity, 
+    overallUtilization,
+    gapHours,
+    gapRevenue,
+    avgHourlyRevenue,
+    dailyCapacity,
     serviceMix,
-    totalAppointments 
+    totalAppointments,
+    peakDay,
+    lowDay,
   } = capacityData;
 
-  // Limit daily chart data for readability
+  // Chart data - limit for 3 months view
   const chartData = dateRange === '3months' 
-    ? dailyCapacity.filter((_, i) => i % 7 === 0) // Weekly for 3 months
-    : dailyCapacity;
+    ? dailyCapacity.filter((_, i) => i % 7 === 0).map(day => ({
+        name: day.dayName,
+        utilization: day.utilizationPercent,
+        gapHours: day.gapHours,
+        bookedHours: day.bookedHours,
+        date: day.date,
+      }))
+    : dailyCapacity.map(day => ({
+        name: day.dayName,
+        utilization: day.utilizationPercent,
+        gapHours: day.gapHours,
+        bookedHours: day.bookedHours,
+        date: day.date,
+      }));
+
+  const pieData = serviceMix.slice(0, 6).map((item, index) => ({
+    name: item.category,
+    value: item.hours,
+    percentage: item.percentage,
+    fill: PIE_COLORS[index % PIE_COLORS.length],
+  }));
+
+  const showChart = chartData.length > 1;
+  const showPieChart = serviceMix.length > 0;
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Gauge className="w-5 h-5" />
-            Capacity Utilization
-          </CardTitle>
-          <MetricInfoTooltip 
-            description="Compares booked chair-hours against available capacity (Operating Hours × Stylist Count)"
-          />
+      <CardHeader className="pb-3">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Gauge className="w-5 h-5 text-primary" />
+              <CardTitle className="font-display text-base">Capacity Utilization</CardTitle>
+              <MetricInfoTooltip 
+                description="Compares booked chair-hours against available capacity (Operating Hours × Stylist Count)"
+              />
+            </div>
+            <Badge 
+              variant={getUtilizationBadgeVariant(overallUtilization)}
+              className="text-xs whitespace-nowrap"
+            >
+              {overallUtilization}% utilized
+            </Badge>
+          </div>
+          <CardDescription>How much of your salon's capacity was used {DATE_RANGE_LABELS[dateRange]}</CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Overall Utilization Progress */}
+      <CardContent className="space-y-4">
+        {/* Main Utilization Progress */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Overall Utilization</span>
-            <span className={cn("font-semibold", getUtilizationTextClass(overallUtilization))}>
-              {overallUtilization.toFixed(1)}%
+            <span className="text-muted-foreground">
+              {totalBookedHours}h booked of {totalAvailableHours}h available
+            </span>
+            <span 
+              className="font-medium tabular-nums"
+              style={{ color: getUtilizationColor(overallUtilization) }}
+            >
+              {overallUtilization}%
             </span>
           </div>
           <Progress 
             value={Math.min(overallUtilization, 100)} 
             className="h-3"
             indicatorClassName={cn(
-              overallUtilization >= 70 && "bg-green-600",
-              overallUtilization >= 50 && overallUtilization < 70 && "bg-amber-500",
-              overallUtilization < 50 && "bg-red-500"
+              overallUtilization >= 70 && 'bg-chart-2',
+              overallUtilization >= 50 && overallUtilization < 70 && 'bg-amber-500',
+              overallUtilization < 50 && 'bg-destructive'
             )}
           />
-          {overallUtilization < 50 && (
-            <div className="flex items-center gap-2 text-sm text-amber-600 mt-2">
-              <AlertTriangle className="w-4 h-4" />
-              <span>Below 50% utilization - opportunity to book more appointments</span>
-            </div>
-          )}
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className={cn("rounded-lg p-4", getUtilizationBgClass(overallUtilization))}>
-            <div className="flex items-center gap-2 mb-1">
-              <Gauge className={cn("w-4 h-4", getUtilizationTextClass(overallUtilization))} />
-              <span className="text-xs text-muted-foreground">Utilization</span>
+        {/* Summary Stats - 3 column centered layout */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center p-3 bg-muted/30 rounded-lg">
+            <div className="flex justify-center mb-1">
+              <Clock className="w-4 h-4 text-chart-3" />
             </div>
-            <p className={cn("font-display text-xl", getUtilizationTextClass(overallUtilization))}>
-              {overallUtilization.toFixed(0)}%
-            </p>
+            <span className="text-lg font-display tabular-nums">{gapHours}h</span>
+            <div className="flex items-center gap-1 justify-center">
+              <p className="text-xs text-muted-foreground">Unused Hours</p>
+              <MetricInfoTooltip description="Total chair-hours available but not booked. Each stylist-hour counts as one chair-hour." />
+            </div>
           </div>
-          
-          <div className="rounded-lg p-4 bg-muted/30">
-            <div className="flex items-center gap-2 mb-1">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Booked Hours</span>
+          <div className="text-center p-3 bg-muted/30 rounded-lg">
+            <div className="flex justify-center mb-1">
+              <TrendingDown className="w-4 h-4 text-destructive" />
             </div>
-            <p className="font-display text-xl">{totalBookedHours.toFixed(0)}h</p>
+            <AnimatedBlurredAmount 
+              value={gapRevenue}
+              prefix="$"
+              className="text-lg font-display tabular-nums"
+            />
+            <div className="flex items-center gap-1 justify-center">
+              <p className="text-xs text-muted-foreground">Gap Revenue</p>
+              <MetricInfoTooltip description={`Potential revenue if unused hours were booked. Based on avg hourly revenue of $${avgHourlyRevenue}.`} />
+            </div>
           </div>
-          
-          <div className="rounded-lg p-4 bg-muted/30">
-            <div className="flex items-center gap-2 mb-1">
-              <Clock className="w-4 h-4 text-amber-600" />
-              <span className="text-xs text-muted-foreground">Unused Hours</span>
+          <div className="text-center p-3 bg-muted/30 rounded-lg">
+            <div className="flex justify-center mb-1">
+              <Calendar className="w-4 h-4 text-primary" />
             </div>
-            <p className="font-display text-xl text-amber-600">{gapHours.toFixed(0)}h</p>
-          </div>
-          
-          <div className="rounded-lg p-4 bg-muted/30">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="w-4 h-4 text-amber-600" />
-              <span className="text-xs text-muted-foreground">Gap Revenue</span>
+            <span className="text-lg font-display tabular-nums">{totalAppointments}</span>
+            <div className="flex items-center gap-1 justify-center">
+              <p className="text-xs text-muted-foreground">Appointments</p>
+              <MetricInfoTooltip description={`Total completed appointments ${DATE_RANGE_LABELS[dateRange]}.`} />
             </div>
-            <p className="font-display text-xl text-amber-600">
-              <BlurredAmount>${gapRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</BlurredAmount>
-            </p>
           </div>
         </div>
 
-        {/* Charts Row */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Daily Utilization Chart */}
+        {/* Daily Utilization Chart */}
+        {showChart && (
           <div>
-            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Daily Utilization
-            </h4>
-            {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={chartData}>
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Daily Utilization</span>
+            </div>
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 20, right: 5, bottom: 35, left: 5 }}>
                   <XAxis 
-                    dataKey="date" 
-                    tickFormatter={(date) => {
-                      try {
-                        return format(parseISO(date), dateRange === '3months' ? 'MMM d' : 'EEE');
-                      } catch {
-                        return date;
+                    dataKey="name" 
+                    tick={dateRange === 'week' 
+                      ? <DayXAxisTick days={dailyCapacity} /> 
+                      : { fontSize: 10 }
+                    }
+                    tickFormatter={dateRange !== 'week' ? (value, index) => {
+                      const day = chartData[index];
+                      if (day) {
+                        try {
+                          return format(parseISO(day.date), dateRange === '3months' ? 'MMM d' : 'EEE');
+                        } catch {
+                          return value;
+                        }
                       }
+                      return value;
+                    } : undefined}
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                    height={dateRange === 'week' ? 40 : 20}
+                  />
+                  <YAxis hide domain={[0, 100]} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px',
                     }}
-                    tick={{ fontSize: 10 }}
-                    interval={dateRange === 'month' ? 2 : 0}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 10 }} 
-                    domain={[0, 100]}
-                    tickFormatter={(v) => `${v}%`}
-                  />
-                  <Tooltip 
-                    labelFormatter={(date) => {
-                      try {
-                        return format(parseISO(date as string), 'EEE, MMM d');
-                      } catch {
-                        return date;
+                    formatter={(value: number, name: string) => {
+                      if (name === 'utilization') return [`${value}%`, 'Utilization'];
+                      if (name === 'gapHours') return [`${Math.round(value)}h`, 'Open Hours'];
+                      return [value, name];
+                    }}
+                    labelFormatter={(label, payload) => {
+                      if (payload && payload[0]) {
+                        const day = payload[0].payload;
+                        try {
+                          return format(parseISO(day.date), 'EEEE, MMM d');
+                        } catch {
+                          return label;
+                        }
                       }
+                      return label;
                     }}
-                    formatter={(value: number) => [`${value.toFixed(1)}%`, 'Utilization']}
                   />
                   <Bar 
-                    dataKey="utilizationPercent" 
+                    dataKey="utilization" 
                     radius={[4, 4, 0, 0]}
-                    fill="hsl(var(--primary))"
+                    label={<UtilizationBarLabel />}
                   >
                     {chartData.map((entry, index) => (
                       <Cell 
-                        key={`cell-${index}`} 
-                        fill={getUtilizationColor(entry.utilizationPercent)} 
+                        key={`cell-${index}`}
+                        fill={getUtilizationColor(entry.utilization)}
                       />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
-                No daily data available
-              </div>
-            )}
+            </div>
           </div>
+        )}
 
-          {/* Service Mix Pie Chart */}
-          <div>
-            <h4 className="text-sm font-medium mb-3">Service Mix (by hours)</h4>
-            {serviceMix.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={serviceMix}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={70}
-                    paddingAngle={2}
-                    dataKey="hours"
-                    nameKey="category"
-                  >
-                    {serviceMix.map((_, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={SERVICE_COLORS[index % SERVICE_COLORS.length]} 
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number, _: string, props: any) => [
-                      `${value.toFixed(1)}h (${props.payload.count} appts)`,
-                      props.payload.category
-                    ]}
-                  />
-                  <Legend 
-                    layout="vertical"
-                    align="right"
-                    verticalAlign="middle"
-                    formatter={(value) => <span className="text-xs">{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
-                No service data available
+        {/* Service Mix Breakdown */}
+        {showPieChart && (
+          <div className="pt-3 border-t border-border/50">
+            <div className="flex items-center gap-2 mb-3">
+              <PieChartIcon className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Service Mix</span>
+              <MetricInfoTooltip description="Breakdown of booked time by service category. Shows how salon capacity is being used." />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-[120px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={25}
+                      outerRadius={45}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            )}
+              <div className="space-y-1.5">
+                {serviceMix.slice(0, 5).map((item, index) => (
+              <div key={item.category} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                      />
+                      <span className="text-muted-foreground truncate max-w-[100px]">
+                        {item.category}
+                      </span>
+                    </div>
+                    <span className="font-medium tabular-nums">{item.percentage}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Opportunity Insights */}
+        {overallUtilization < 70 && gapHours > 0 && (
+          <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+            <div className="flex items-start gap-2">
+              <TrendingDown className="w-4 h-4 text-warning mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-warning">
+                  Room for ~{Math.round(gapHours / 2)} more bookings
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {lowDay && lowDay.utilizationPercent < 50 ? (
+                    <>{format(parseISO(lowDay.date), 'EEEE')} had the most availability ({Math.round(lowDay.gapHours)}h open)</>
+                  ) : (
+                    <>Fill unused hours to capture ${gapRevenue.toLocaleString()} in potential revenue</>
+                  )}
+                </p>
+                {peakDay && peakDay.utilizationPercent >= 80 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    💪 {format(parseISO(peakDay.date), 'EEEE')} was your strongest day ({peakDay.utilizationPercent}% utilized)
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
