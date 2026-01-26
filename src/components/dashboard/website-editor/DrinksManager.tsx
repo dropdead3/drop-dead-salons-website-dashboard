@@ -8,8 +8,10 @@ import { Loader2, Save, Plus, Trash2, GripVertical, Upload, X, Coffee } from 'lu
 import { toast } from 'sonner';
 import { useDrinkMenuConfig, type DrinkMenuConfig, type Drink, DEFAULT_DRINK_MENU } from '@/hooks/useSectionConfig';
 import { SliderInput } from './inputs/SliderInput';
-import { ToggleInput } from './inputs/ToggleInput';
 import { supabase } from '@/integrations/supabase/client';
+import { useDebounce } from '@/hooks/use-debounce';
+import { SectionPreviewWrapper } from './SectionPreviewWrapper';
+import { DrinksPreview } from './previews/DrinksPreview';
 import {
   DndContext,
   closestCenter,
@@ -152,6 +154,7 @@ export function DrinksManager() {
   const { data, isLoading, isSaving, update } = useDrinkMenuConfig();
   const [localConfig, setLocalConfig] = useState<DrinkMenuConfig>(DEFAULT_DRINK_MENU);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const debouncedConfig = useDebounce(localConfig, 300);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -257,8 +260,8 @@ export function DrinksManager() {
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
-      {/* Header Text Config */}
+    <div className="grid xl:grid-cols-2 gap-6">
+      <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Drink Menu Section</CardTitle>
@@ -383,6 +386,14 @@ export function DrinksManager() {
           </p>
         </CardContent>
       </Card>
+      </div>
+
+      {/* Live Preview */}
+      <div className="hidden xl:block">
+        <SectionPreviewWrapper>
+          <DrinksPreview config={debouncedConfig} />
+        </SectionPreviewWrapper>
+      </div>
     </div>
   );
 }

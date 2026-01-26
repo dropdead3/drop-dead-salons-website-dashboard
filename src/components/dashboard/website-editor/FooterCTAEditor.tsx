@@ -9,10 +9,14 @@ import { toast } from 'sonner';
 import { useFooterCTAConfig, type FooterCTAConfig, DEFAULT_FOOTER_CTA } from '@/hooks/useSectionConfig';
 import { UrlInput } from './inputs/UrlInput';
 import { ToggleInput } from './inputs/ToggleInput';
+import { useDebounce } from '@/hooks/use-debounce';
+import { SectionPreviewWrapper } from './SectionPreviewWrapper';
+import { FooterCTAPreview } from './previews/FooterCTAPreview';
 
 export function FooterCTAEditor() {
   const { data, isLoading, isSaving, update } = useFooterCTAConfig();
   const [localConfig, setLocalConfig] = useState<FooterCTAConfig>(DEFAULT_FOOTER_CTA);
+  const debouncedConfig = useDebounce(localConfig, 300);
 
   useEffect(() => {
     if (data && !isLoading) {
@@ -42,7 +46,7 @@ export function FooterCTAEditor() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="grid xl:grid-cols-2 gap-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Footer CTA Section</CardTitle>
@@ -132,6 +136,13 @@ export function FooterCTAEditor() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Live Preview */}
+      <div className="hidden xl:block">
+        <SectionPreviewWrapper>
+          <FooterCTAPreview config={debouncedConfig} />
+        </SectionPreviewWrapper>
+      </div>
     </div>
   );
 }

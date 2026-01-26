@@ -6,10 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTestimonialsConfig, type TestimonialsConfig, DEFAULT_TESTIMONIALS } from '@/hooks/useSectionConfig';
+import { useDebounce } from '@/hooks/use-debounce';
+import { SectionPreviewWrapper } from './SectionPreviewWrapper';
+import { TestimonialsPreview } from './previews/TestimonialsPreview';
 
 export function TestimonialsEditor() {
   const { data, isLoading, isSaving, update } = useTestimonialsConfig();
   const [localConfig, setLocalConfig] = useState<TestimonialsConfig>(DEFAULT_TESTIMONIALS);
+  const debouncedConfig = useDebounce(localConfig, 300);
 
   useEffect(() => {
     if (data && !isLoading) {
@@ -39,7 +43,7 @@ export function TestimonialsEditor() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="grid xl:grid-cols-2 gap-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Testimonials Section</CardTitle>
@@ -97,6 +101,13 @@ export function TestimonialsEditor() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Live Preview */}
+      <div className="hidden xl:block">
+        <SectionPreviewWrapper>
+          <TestimonialsPreview config={debouncedConfig} />
+        </SectionPreviewWrapper>
+      </div>
     </div>
   );
 }
