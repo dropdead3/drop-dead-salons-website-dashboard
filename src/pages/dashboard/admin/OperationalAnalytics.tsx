@@ -119,6 +119,7 @@ export default function OperationalAnalytics() {
             <StaffingContent 
               workload={workload}
               isLoading={utilizationLoading}
+              locationId={locationFilter}
             />
           </TabsContent>
 
