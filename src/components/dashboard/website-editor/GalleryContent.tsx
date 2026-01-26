@@ -34,12 +34,15 @@ import {
   ArrowLeftRight,
   Image as ImageIcon,
   Loader2,
+  Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ImageUploadInput } from '@/components/ui/image-upload-input';
+import { BulkImageUpload } from '@/components/ui/bulk-image-upload';
 import {
   useGalleryImages,
   useAddGalleryImage,
+  useBulkAddGalleryImages,
   useUpdateGalleryImage,
   useDeleteGalleryImage,
   useGalleryTransformations,
@@ -50,6 +53,7 @@ import {
 
 export function GalleryContent() {
   const [isAddImageOpen, setIsAddImageOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isAddTransformOpen, setIsAddTransformOpen] = useState(false);
   const [newImage, setNewImage] = useState({ src: '', alt: '' });
   const [newTransform, setNewTransform] = useState({ 
@@ -65,6 +69,7 @@ export function GalleryContent() {
 
   // Mutations
   const addImage = useAddGalleryImage();
+  const bulkAddImages = useBulkAddGalleryImages();
   const updateImage = useUpdateGalleryImage();
   const deleteImage = useDeleteGalleryImage();
   const addTransformation = useAddGalleryTransformation();
@@ -99,6 +104,14 @@ export function GalleryContent() {
         },
       }
     );
+  };
+
+  const handleBulkUploadComplete = (images: { src: string; alt: string }[]) => {
+    bulkAddImages.mutate(images, {
+      onSuccess: () => {
+        setIsBulkUploadOpen(false);
+      },
+    });
   };
 
   const handleAddTransform = () => {
@@ -182,7 +195,33 @@ export function GalleryContent() {
           </TabsList>
 
           <TabsContent value="gallery" className="space-y-4 mt-4">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {/* Bulk Upload Dialog */}
+              <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Upload className="w-4 h-4" />
+                    Bulk Upload
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Bulk Upload Images</DialogTitle>
+                    <DialogDescription>
+                      Select multiple images to upload at once. Images will be automatically optimized.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <BulkImageUpload
+                      onComplete={handleBulkUploadComplete}
+                      onCancel={() => setIsBulkUploadOpen(false)}
+                      folder="gallery/images"
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Single Image Dialog */}
               <Dialog open={isAddImageOpen} onOpenChange={setIsAddImageOpen}>
                 <DialogTrigger asChild>
                   <Button className="gap-2">
