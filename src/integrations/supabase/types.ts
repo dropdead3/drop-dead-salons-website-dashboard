@@ -3080,36 +3080,113 @@ export type Database = {
       }
       phorest_sync_log: {
         Row: {
+          api_endpoint: string | null
           completed_at: string | null
           error_message: string | null
           id: string
           metadata: Json | null
           records_synced: number | null
+          response_sample: string | null
+          retry_count: number | null
           started_at: string
           status: string
           sync_type: string
         }
         Insert: {
+          api_endpoint?: string | null
           completed_at?: string | null
           error_message?: string | null
           id?: string
           metadata?: Json | null
           records_synced?: number | null
+          response_sample?: string | null
+          retry_count?: number | null
           started_at?: string
           status?: string
           sync_type: string
         }
         Update: {
+          api_endpoint?: string | null
           completed_at?: string | null
           error_message?: string | null
           id?: string
           metadata?: Json | null
           records_synced?: number | null
+          response_sample?: string | null
+          retry_count?: number | null
           started_at?: string
           status?: string
           sync_type?: string
         }
         Relationships: []
+      }
+      phorest_transaction_items: {
+        Row: {
+          branch_name: string | null
+          client_name: string | null
+          created_at: string | null
+          discount: number | null
+          id: string
+          item_category: string | null
+          item_name: string
+          item_type: string
+          location_id: string | null
+          phorest_client_id: string | null
+          phorest_staff_id: string | null
+          quantity: number | null
+          stylist_user_id: string | null
+          total_amount: number
+          transaction_date: string
+          transaction_id: string
+          unit_price: number | null
+        }
+        Insert: {
+          branch_name?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          discount?: number | null
+          id?: string
+          item_category?: string | null
+          item_name: string
+          item_type: string
+          location_id?: string | null
+          phorest_client_id?: string | null
+          phorest_staff_id?: string | null
+          quantity?: number | null
+          stylist_user_id?: string | null
+          total_amount: number
+          transaction_date: string
+          transaction_id: string
+          unit_price?: number | null
+        }
+        Update: {
+          branch_name?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          discount?: number | null
+          id?: string
+          item_category?: string | null
+          item_name?: string
+          item_type?: string
+          location_id?: string | null
+          phorest_client_id?: string | null
+          phorest_staff_id?: string | null
+          quantity?: number | null
+          stylist_user_id?: string | null
+          total_amount?: number
+          transaction_date?: string
+          transaction_id?: string
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phorest_transaction_items_stylist_user_id_fkey"
+            columns: ["stylist_user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       program_achievements: {
         Row: {
