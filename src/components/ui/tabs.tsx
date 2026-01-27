@@ -73,7 +73,7 @@ const SubTabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center gap-2 px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground data-[state=active]:border-primary",
+      "inline-flex items-center gap-2 px-2 py-2 text-sm font-medium border-b-2 border-transparent rounded-t-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-foreground hover:bg-muted/50 data-[state=active]:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent",
       className,
     )}
     {...props}
