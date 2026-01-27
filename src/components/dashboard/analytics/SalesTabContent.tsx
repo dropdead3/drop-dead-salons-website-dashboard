@@ -1,39 +1,36 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
 } from 'recharts';
 import {
   DollarSign,
-  TrendingUp,
   ShoppingBag,
   Scissors,
   RefreshCw,
   Loader2,
   Download,
+  CreditCard,
+  Receipt,
+  CalendarClock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation } from '@/hooks/useSalesData';
 import { useTriggerPhorestSync } from '@/hooks/usePhorestSync';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
-import { cn } from '@/lib/utils';
+import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 // Sub-components
 import { SalesGoalsDialog } from '@/components/dashboard/sales/SalesGoalsDialog';
@@ -53,15 +50,9 @@ import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
 import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
+import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
+import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
-
-const CHART_COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
 
 interface SalesTabContentProps {
   filters: AnalyticsFilters;
@@ -73,6 +64,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
   const { data: locations } = useLocations();
   const syncSales = useTriggerPhorestSync();
   const { goals } = useSalesGoals();
+  const { data: tomorrowData } = useTomorrowRevenue();
 
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
 
@@ -111,14 +103,6 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
     }));
   }, [trendData]);
 
-  // Pie chart data for revenue breakdown
-  const revenueBreakdown = useMemo(() => {
-    if (!metrics) return [];
-    return [
-      { name: 'Services', value: metrics.serviceRevenue, color: CHART_COLORS[0] },
-      { name: 'Products', value: metrics.productRevenue, color: CHART_COLORS[1] },
-    ].filter(d => d.value > 0);
-  }, [metrics]);
 
   const maxStylistRevenue = useMemo(() => {
     return Math.max(...(stylistData || []).map(s => s.totalRevenue), 1);
@@ -209,68 +193,121 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         }
       />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <Card className="col-span-1">
-          <CardContent className="p-4 md:pt-6">
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+      {/* KPI Cards - Consolidated from Command Center */}
+      <div className="grid lg:grid-cols-4 gap-6">
+        {/* Main KPIs */}
+        <div className="lg:col-span-3">
+          <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3">
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <div className="min-w-0">
-                <p className="text-lg md:text-2xl font-display truncate">
-                  {metricsLoading ? '...' : `$${(metrics?.totalRevenue || 0).toLocaleString()}`}
-                </p>
-                <p className="text-xs text-muted-foreground">Revenue</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-1">
-          <CardContent className="p-4 md:pt-6">
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-chart-2/10 flex items-center justify-center shrink-0">
-                <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-chart-2" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-lg md:text-2xl font-display">
-                  {metricsLoading ? '...' : `$${Math.round(metrics?.averageTicket || 0)}`}
-                </p>
-                <p className="text-xs text-muted-foreground">Avg Ticket</p>
+              <AnimatedBlurredAmount 
+                value={metrics?.totalRevenue || 0}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
+              <div className="flex items-center gap-1 justify-center mt-1">
+                <p className="text-xs text-muted-foreground">Total Revenue</p>
+                <MetricInfoTooltip description="Sum of all service and product sales for the selected date range." />
               </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-1">
-          <CardContent className="p-4 md:pt-6">
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-chart-3/10 flex items-center justify-center shrink-0">
-                <Scissors className="w-4 h-4 md:w-5 md:h-5 text-chart-3" />
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <Scissors className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <div className="min-w-0">
-                <p className="text-lg md:text-2xl font-display">
-                  {metricsLoading ? '...' : (metrics?.totalServices || 0).toLocaleString()}
-                </p>
+              <AnimatedBlurredAmount 
+                value={metrics?.serviceRevenue || 0}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
+              <div className="flex items-center gap-1 justify-center mt-1">
                 <p className="text-xs text-muted-foreground">Services</p>
+                <MetricInfoTooltip description="Revenue from all service transactions (cuts, color, treatments, etc.)." />
               </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-1">
-          <CardContent className="p-4 md:pt-6">
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-chart-4/10 flex items-center justify-center shrink-0">
-                <ShoppingBag className="w-4 h-4 md:w-5 md:h-5 text-chart-4" />
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-chart-2" />
               </div>
-              <div className="min-w-0">
-                <p className="text-lg md:text-2xl font-display">
-                  {metricsLoading ? '...' : (metrics?.totalProducts || 0).toLocaleString()}
-                </p>
+              <AnimatedBlurredAmount 
+                value={metrics?.productRevenue || 0}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
+              <div className="flex items-center gap-1 justify-center mt-1">
                 <p className="text-xs text-muted-foreground">Products</p>
+                <MetricInfoTooltip description="Revenue from retail product sales only." />
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-chart-3" />
+              </div>
+              <AnimatedBlurredAmount 
+                value={metrics?.totalTransactions || 0}
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
+              <div className="flex items-center gap-1 justify-center mt-1">
+                <p className="text-xs text-muted-foreground">Transactions</p>
+                <MetricInfoTooltip description="Total number of completed sales transactions." />
+              </div>
+            </div>
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-chart-4" />
+              </div>
+              <AnimatedBlurredAmount 
+                value={Math.round(metrics?.averageTicket || 0)}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
+              <div className="flex items-center gap-1 justify-center mt-1">
+                <p className="text-xs text-muted-foreground">Avg Ticket</p>
+                <MetricInfoTooltip description="Total Revenue ÷ Transactions. Average spend per client visit." />
+              </div>
+            </div>
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <CalendarClock className="w-4 h-4 sm:w-5 sm:h-5 text-chart-5" />
+              </div>
+              <AnimatedBlurredAmount 
+                value={tomorrowData?.revenue || 0}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
+              <div className="flex items-center gap-1 justify-center mt-1">
+                <p className="text-xs text-muted-foreground">Rev. Tomorrow</p>
+                <MetricInfoTooltip description="Projected revenue from confirmed appointments scheduled for tomorrow." />
+              </div>
+              <span className="text-xs text-muted-foreground/70">
+                {tomorrowData?.appointmentCount || 0} bookings
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar - Top Performers & Revenue Mix */}
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center gap-1.5 mb-3">
+              <h3 className="font-display text-xs tracking-wide text-muted-foreground">TOP PERFORMERS</h3>
+              <MetricInfoTooltip description="Ranked by total service + product revenue for the selected period." />
+            </div>
+            <TopPerformersCard 
+              performers={stylistData || []} 
+              isLoading={stylistLoading} 
+            />
+          </div>
+          <div>
+            <h3 className="font-display text-xs tracking-wide text-muted-foreground mb-3">REVENUE MIX</h3>
+            <RevenueDonutChart 
+              serviceRevenue={metrics?.serviceRevenue || 0} 
+              productRevenue={metrics?.productRevenue || 0}
+              size={70}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Sub-tabs for detailed views */}
@@ -337,42 +374,11 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             </CardContent>
           </Card>
 
-          {/* Revenue Breakdown and Location Comparison */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-display">Revenue Mix</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={revenueBreakdown}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {revenueBreakdown.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <LocationComparison 
-              locations={locationData || []} 
-              isLoading={locationLoading} 
-            />
-          </div>
+          {/* Location Comparison */}
+          <LocationComparison 
+            locations={locationData || []} 
+            isLoading={locationLoading} 
+          />
 
           {/* Product and Service Charts */}
           <div className="grid lg:grid-cols-2 gap-6">
