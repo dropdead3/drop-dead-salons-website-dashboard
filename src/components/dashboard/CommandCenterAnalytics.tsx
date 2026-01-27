@@ -6,7 +6,7 @@ import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
 
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 
-import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
+
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
@@ -60,8 +60,6 @@ export function CommandCenterAnalytics() {
   
   const hasClientEngineOverview = isElementVisible('client_engine_overview');
   
-  const hasTeamOverview = isElementVisible('team_overview');
-  const hasStylistsOverview = isElementVisible('stylists_overview');
   
   // New pinnable cards
   const hasTopPerformers = isElementVisible('top_performers');
@@ -73,8 +71,7 @@ export function CommandCenterAnalytics() {
   const hasStylistWorkload = isElementVisible('stylist_workload');
   
   const hasAnyPinned = hasSalesOverview || hasNewBookings || hasForecast || hasCapacity || 
-    hasClientEngineOverview || 
-    hasTeamOverview || hasStylistsOverview || hasTopPerformers || hasRevenueBreakdown ||
+    hasClientEngineOverview || hasTopPerformers || hasRevenueBreakdown ||
     hasClientFunnel || hasTeamGoals || hasHiringCapacity ||
     hasStaffingTrends || hasStylistWorkload;
   
@@ -213,21 +210,6 @@ export function CommandCenterAnalytics() {
         </VisibilityGate>
       )}
       
-      {/* Team Overview Cards */}
-      {(hasTeamOverview || hasStylistsOverview) && (
-        <div className="grid lg:grid-cols-2 gap-6">
-          {hasTeamOverview && (
-            <VisibilityGate elementKey="team_overview">
-              <StaffOverviewCard />
-            </VisibilityGate>
-          )}
-          {hasStylistsOverview && (
-            <VisibilityGate elementKey="stylists_overview">
-              <StylistsOverviewCard />
-            </VisibilityGate>
-          )}
-        </div>
-      )}
       
     </div>
   );
