@@ -144,7 +144,7 @@ export default function AnalyticsHub() {
             {/* Location Filter - conditionally rendered based on access */}
             {showLocationSelector && (
               <Select value={locationId} onValueChange={setLocationId}>
-                <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[200px]">
                   <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
                   <SelectValue placeholder="Select Location" />
                 </SelectTrigger>
@@ -169,7 +169,7 @@ export default function AnalyticsHub() {
 
             {/* Date Range Select */}
             <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[180px]">
                 <CalendarIcon className="w-4 h-4 mr-2 text-muted-foreground" />
                 <SelectValue />
               </SelectTrigger>
