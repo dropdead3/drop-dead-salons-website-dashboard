@@ -1,225 +1,153 @@
 
-# Make All Analytics Hub Sections Pinnable to Command Center
+# Combine Top Performers & Revenue Mix into One Pinnable Card
 
 ## Overview
 
-Enable every section within the Analytics Hub tabs (Sales, Operations, Marketing, Program, Reports) to be individually pinnable to the Command Center. This provides leadership with an ultra-customized dashboard experience where they can surface the exact analytics cards they need.
+Merge the "Top Performers" and "Revenue Mix" sections in the Analytics Hub sidebar into a single unified card. This creates one pinnable element that can be added to the Command Center as a cohesive "Sales Snapshot" widget.
 
 ---
 
 ## Current State
 
-**Analytics Hub Structure:**
-| Tab | Sub-sections/Cards |
-|-----|-------------------|
-| Sales | KPI Cards, Revenue Trend, Location Comparison, Top Performers, Forecasting, Commission Calculator, etc. |
-| Operations | Summary Stats, Capacity Utilization, Appointments, Clients, Staffing |
-| Marketing | Campaign KPIs, Website Analytics, Source/Medium Charts |
-| Program | Enrollment Stats, Funnel, Cohort Analysis, Drop-off Points |
-| Reports | Report Generator Cards (not pinnable, action-based) |
+The sidebar currently has two separate cards:
+1. **Top Performers** (`top_performers` element key) - Shows top 3 stylists by revenue
+2. **Revenue Mix** (`revenue_breakdown` element key) - Shows service vs product donut chart
 
-**Pinning Mechanism:**
-- `CommandCenterVisibilityToggle` component shows gear icon (⚙️)
-- Updates `dashboard_element_visibility` table for leadership roles
-- `CommandCenterAnalytics` checks visibility and renders pinned cards
-
-**Currently Pinnable (11 cards):**
-- sales_overview, new_bookings, week_ahead_forecast, capacity_utilization
-- top_performers, revenue_breakdown, client_funnel, team_goals
-- hiring_capacity, staffing_trends, stylist_workload
+Each has its own:
+- Card wrapper with header
+- `CommandCenterVisibilityToggle` gear icon
+- Separate element key for pinning
 
 ---
 
 ## Solution
 
-### New Pinnable Sections to Add
-
-**Sales Tab (8 new):**
-1. `sales_kpi_grid` - Main 6-card KPI grid (Total Revenue, Services, Products, Transactions, Avg Ticket, Rev Tomorrow)
-2. `revenue_trend_chart` - Daily/weekly revenue line chart
-3. `location_comparison` - Multi-location performance comparison
-4. `product_category_chart` - Product sales by category
-5. `service_popularity_chart` - Service mix breakdown
-6. `peak_hours_heatmap` - Busy time analysis
-7. `commission_calculator` - Staff commission breakdown
-8. `yoy_comparison` - Year-over-year trends
-
-**Operations Tab (7 new):**
-1. `operations_summary` - Summary stat cards (Appointments, Completion Rate, No-Show Rate, Retention)
-2. `operations_insights` - Quick insights panel (Peak Day, Client Base, At-Risk, Capacity)
-3. `appointments_volume_chart` - Daily appointment trends
-4. `status_breakdown_chart` - Completed vs No-Show vs Cancelled
-5. `hourly_distribution` - Peak hours analysis
-6. `retention_metrics` - Client retention breakdown
-7. `at_risk_clients_list` - Clients needing follow-up
-
-**Marketing Tab (5 new):**
-1. `marketing_kpis` - Main KPI grid (Campaigns, Leads, Revenue, Conversion, Top Campaign)
-2. `marketing_roi_metrics` - ROI cards (Budget, Spend, CPL, ROAS)
-3. `campaign_performance_table` - Campaign details table
-4. `source_breakdown_chart` - Traffic source analysis
-5. `medium_distribution_chart` - Marketing medium breakdown
-
-**Program Tab (5 new):**
-1. `program_summary_stats` - Enrollment, Completion Rate, Avg Streak, At Risk
-2. `program_funnel` - Completion funnel visualization
-3. `program_daily_trends` - Daily completions chart
-4. `program_cohorts` - Cohort analysis table
-5. `program_dropoff` - Drop-off analysis chart
+Create a new combined card component that:
+1. Has a single `PinnableCard` wrapper with one element key (`sales_snapshot`)
+2. Contains both Top Performers and Revenue Mix sections inside
+3. Uses a clean visual separation between the two sections
+4. Removes the redundant individual Card wrappers from child components
 
 ---
 
-## Implementation Plan
+## Implementation
 
-### 1. Create `PinnableCard` Wrapper Component
+### File 1: Create `SalesSnapshotCard.tsx`
 
-A reusable wrapper that adds the pinning gear icon to any analytics card:
-
-**File: `src/components/dashboard/PinnableCard.tsx`**
+New component that combines both sections into one card:
 
 ```typescript
-interface PinnableCardProps {
-  elementKey: string;
-  elementName: string;
-  children: React.ReactNode;
-  className?: string;
+// src/components/dashboard/sales/SalesSnapshotCard.tsx
+
+interface SalesSnapshotCardProps {
+  performers: Performer[];
+  isLoading?: boolean;
+  serviceRevenue: number;
+  productRevenue: number;
 }
 
-export function PinnableCard({ elementKey, elementName, children, className }: PinnableCardProps) {
+export function SalesSnapshotCard({
+  performers,
+  isLoading,
+  serviceRevenue,
+  productRevenue
+}: SalesSnapshotCardProps) {
   return (
-    <div className={cn("relative group", className)}>
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        <CommandCenterVisibilityToggle 
-          elementKey={elementKey} 
-          elementName={elementName} 
-        />
-      </div>
-      {children}
-    </div>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display text-base">Sales Snapshot</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Top Performers Section */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-2">
+            <Trophy className="w-4 h-4 text-chart-4" />
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Top Performers
+            </h4>
+          </div>
+          {/* Performer list content (inline, no card wrapper) */}
+        </div>
+        
+        <Separator />
+        
+        {/* Revenue Mix Section */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-2">
+            <PieChartIcon className="w-4 h-4 text-chart-2" />
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Revenue Mix
+            </h4>
+          </div>
+          {/* Donut chart content (inline, no card wrapper) */}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 ```
 
-### 2. Update Tab Content Components
+### File 2: Update `SalesTabContent.tsx`
 
-Wrap each pinnable section with `PinnableCard`:
-
-**File: `src/components/dashboard/analytics/SalesTabContent.tsx`**
+Replace the two separate `PinnableCard` components with one:
 
 ```typescript
-// Wrap KPI Grid
-<PinnableCard elementKey="sales_kpi_grid" elementName="Sales KPIs">
-  <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3">
-    {/* KPI cards */}
-  </div>
+// Before (lines 294-314):
+<div className="space-y-4">
+  <PinnableCard elementKey="top_performers" ...>
+    ...
+  </PinnableCard>
+  <PinnableCard elementKey="revenue_breakdown" ...>
+    ...
+  </PinnableCard>
+</div>
+
+// After:
+<PinnableCard 
+  elementKey="sales_snapshot" 
+  elementName="Sales Snapshot" 
+  category="Analytics Hub - Sales"
+>
+  <SalesSnapshotCard
+    performers={stylistData || []}
+    isLoading={stylistLoading}
+    serviceRevenue={metrics?.serviceRevenue || 0}
+    productRevenue={metrics?.productRevenue || 0}
+  />
 </PinnableCard>
-
-// Wrap Revenue Trend
-<PinnableCard elementKey="revenue_trend_chart" elementName="Revenue Trend">
-  <Card>
-    <CardHeader><CardTitle>Revenue Trend</CardTitle></CardHeader>
-    {/* Chart content */}
-  </Card>
-</PinnableCard>
 ```
 
-Apply same pattern to:
-- `OperationsTabContent.tsx` (OverviewContent, AppointmentsContent, etc.)
-- `MarketingTabContent.tsx`
-- `ProgramTabContent.tsx`
+### File 3: Update existing components (optional cleanup)
 
-### 3. Update CommandCenterAnalytics
+The `TopPerformersCard` and `RevenueDonutChart` components can either:
+- **Option A**: Be refactored into "inline" variants without Card wrappers for use in the combined card
+- **Option B**: Keep as-is for backward compatibility if used elsewhere, and duplicate the content inline in `SalesSnapshotCard`
 
-Add rendering logic for all new pinnable sections:
+I'll use **Option B** to avoid breaking other usages - the new `SalesSnapshotCard` will contain its own inline content.
 
-**File: `src/components/dashboard/CommandCenterAnalytics.tsx`**
+---
 
-```typescript
-// Add visibility checks for new sections
-const hasSalesKpis = isElementVisible('sales_kpi_grid');
-const hasRevenueTrend = isElementVisible('revenue_trend_chart');
-const hasLocationComparison = isElementVisible('location_comparison');
-// ... etc for all new sections
+## Visual Layout
 
-// Add conditional rendering
-{hasSalesKpis && (
-  <VisibilityGate elementKey="sales_kpi_grid">
-    <SalesKPIGrid metrics={salesData} />
-  </VisibilityGate>
-)}
-
-{hasRevenueTrend && (
-  <VisibilityGate elementKey="revenue_trend_chart">
-    <RevenueTrendCard dateFrom={dateFrom} dateTo={dateTo} />
-  </VisibilityGate>
-)}
-// ... etc
-```
-
-### 4. Create Standalone Card Components
-
-Extract reusable card components that can be used both in Analytics Hub AND Command Center:
-
-| Component | Source | New File |
-|-----------|--------|----------|
-| SalesKPIGrid | SalesTabContent inline | `SalesKPIGrid.tsx` |
-| RevenueTrendCard | SalesTabContent inline | `RevenueTrendCard.tsx` |
-| OperationsSummaryCard | OverviewContent inline | Already exists as inline |
-| MarketingKPIsCard | MarketingTabContent inline | `MarketingKPIsCard.tsx` |
-| ProgramSummaryCard | ProgramTabContent inline | `ProgramSummaryCard.tsx` |
-
-### 5. Update DashboardCustomizeMenu
-
-Add a new "Pinned Analytics" section to the customize drawer for leadership users:
-
-**File: `src/components/dashboard/DashboardCustomizeMenu.tsx`**
-
-```typescript
-// Add after Widgets section for leadership users
-{roleContext?.isLeadership && (
-  <>
-    <Separator />
-    <div>
-      <h3 className="text-sm font-medium text-muted-foreground mb-3">
-        PINNED ANALYTICS
-      </h3>
-      <p className="text-xs text-muted-foreground mb-4">
-        Pin cards from the Analytics Hub using the ⚙ icon
-      </p>
-      <Button variant="ghost" size="sm" className="w-full" asChild>
-        <Link to="/dashboard/admin/analytics">
-          Open Analytics Hub
-        </Link>
-      </Button>
-    </div>
-  </>
-)}
-```
-
-### 6. Update Visibility Console
-
-Add all new pinnable elements to the "Command Center Analytics" category:
-
-**File: `src/components/dashboard/settings/CommandCenterContent.tsx`**
-
-Update the category filter logic to include the new elements. Since VisibilityGate auto-registers elements, this should happen automatically on first render, but we can add a category constant for reference:
-
-```typescript
-const ANALYTICS_PINNABLE_ELEMENTS = [
-  // Sales
-  'sales_kpi_grid', 'revenue_trend_chart', 'location_comparison',
-  'product_category_chart', 'service_popularity_chart', 'peak_hours_heatmap',
-  'commission_calculator', 'yoy_comparison',
-  // Operations
-  'operations_summary', 'operations_insights', 'appointments_volume_chart',
-  'status_breakdown_chart', 'hourly_distribution', 'retention_metrics', 'at_risk_clients_list',
-  // Marketing
-  'marketing_kpis', 'marketing_roi_metrics', 'campaign_performance_table',
-  'source_breakdown_chart', 'medium_distribution_chart',
-  // Program
-  'program_summary_stats', 'program_funnel', 'program_daily_trends',
-  'program_cohorts', 'program_dropoff',
-];
+```text
+┌─────────────────────────────────┐
+│ ⚙ Sales Snapshot               │ ← Single gear icon for pinning
+├─────────────────────────────────┤
+│ 🏆 TOP PERFORMERS               │
+│ ┌─────────────────────────────┐ │
+│ │ 1. [Avatar] Name    $3,550  │ │
+│ │ 2. [Avatar] Name    $2,100  │ │
+│ │ 3. [Avatar] Name    $1,800  │ │
+│ └─────────────────────────────┘ │
+├─────────────────────────────────┤
+│ 📊 REVENUE MIX                  │
+│ [Donut Chart]  Services 100%    │
+│                Products 0%      │
+│                Retail % 0%      │
+└─────────────────────────────────┘
 ```
 
 ---
@@ -228,34 +156,25 @@ const ANALYTICS_PINNABLE_ELEMENTS = [
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/PinnableCard.tsx` | New - wrapper component with gear icon |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Wrap sections with PinnableCard |
-| `src/components/dashboard/analytics/OperationsTabContent.tsx` | Wrap sections with PinnableCard |
-| `src/components/dashboard/analytics/OverviewContent.tsx` | Wrap sections with PinnableCard |
-| `src/components/dashboard/analytics/AppointmentsContent.tsx` | Wrap sections with PinnableCard |
-| `src/components/dashboard/analytics/ClientsContent.tsx` | Wrap sections with PinnableCard |
-| `src/components/dashboard/analytics/MarketingTabContent.tsx` | Wrap sections with PinnableCard |
-| `src/components/dashboard/analytics/ProgramTabContent.tsx` | Wrap sections with PinnableCard |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | Add visibility checks and rendering for all new sections |
-| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Add Pinned Analytics section for leadership |
-| `src/hooks/useDashboardLayout.ts` | Already supports pinnedCards array |
+| `src/components/dashboard/sales/SalesSnapshotCard.tsx` | **New** - Combined card component |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Replace two PinnableCards with one using SalesSnapshotCard |
 
 ---
 
-## UI/UX Flow
+## Element Key Consolidation
 
-1. **Analytics Hub**: Each major section shows a ⚙ gear icon on hover (top-right corner)
-2. **Click Gear**: Opens popover with "Show on Command Center" toggle
-3. **Toggle On**: Card appears in Command Center for all leadership roles
-4. **Command Center**: Displays all pinned cards in a logical layout
-5. **Customize Drawer**: Shows "Pinned Analytics" section with link to Analytics Hub
+| Before | After |
+|--------|-------|
+| `top_performers` | Merged into `sales_snapshot` |
+| `revenue_breakdown` | Merged into `sales_snapshot` |
+
+The old element keys can remain in the database but will no longer be actively used. The new `sales_snapshot` key becomes the single pinnable element.
 
 ---
 
 ## Result
 
-Leadership users can build a fully customized Command Center by:
-- Visiting the Analytics Hub
-- Hovering over any section they want to monitor
-- Clicking the gear icon to pin it to Command Center
-- Their pinned selections persist and display on their dashboard
+- **One card** in the Analytics Hub sidebar containing both sections
+- **One gear icon** to pin the entire card to Command Center
+- **Cleaner UI** with visual separation via separator
+- **Single element key** (`sales_snapshot`) for visibility management
