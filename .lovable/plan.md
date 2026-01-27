@@ -1,150 +1,96 @@
 
 
-# Move Metrics Glossary from Navigation to System Settings Tab
+# Restrict Today's Queue to Front Desk Only
 
 ## Overview
 
-This plan moves the "Metrics Glossary" from the sidebar navigation (under Housekeeping) into the System settings section as a new tab. This consolidates system-level reference information into a single administrative location.
-
-## Changes Summary
-
-| File | Action | Description |
-|------|--------|-------------|
-| `src/components/dashboard/DashboardLayout.tsx` | Edit | Remove the Metrics Glossary nav link from `housekeepingNavItems` |
-| `src/hooks/useSidebarLayout.ts` | Edit | Remove `/dashboard/metrics-glossary` from housekeeping section if present |
-| `src/pages/dashboard/admin/Settings.tsx` | Edit | Add tabbed interface to System section with "Settings" and "Metrics Glossary" tabs |
-| `src/components/dashboard/settings/MetricsGlossaryContent.tsx` | Create | Extract core glossary content (without DashboardLayout wrapper) for embedding in System settings |
-
-## Implementation Details
-
-### Step 1: Create Extracted Metrics Glossary Content
-
-Create a new component `MetricsGlossaryContent.tsx` that contains the glossary UI without the `DashboardLayout` wrapper:
-
-```text
-src/components/dashboard/settings/MetricsGlossaryContent.tsx
-
-- Extracts all content from MetricsGlossary.tsx
-- Removes the <DashboardLayout> wrapper
-- Keeps: search, category filter, DataHealthSection, accordion metrics display
-- Exported for use in System settings tab
-```
-
-### Step 2: Update System Settings Section
-
-Modify `Settings.tsx` to add a tabbed interface within the System category:
-
-```text
-activeCategory === 'system'
-
-Current structure:
-+------------------+
-| APPEARANCE       |
-| NOTIFICATIONS    |
-| SECURITY         |
-+------------------+
-
-New structure with tabs:
-+------------------------------------------+
-| [Settings] [Metrics Glossary]            |  <- Tab bar
-+------------------------------------------+
-| Settings Tab (default):                   |
-|   - Appearance Card                       |
-|   - Notifications Card                    |
-|   - Security Card                         |
-|                                           |
-| Metrics Glossary Tab:                     |
-|   - Search & filter                       |
-|   - Data Health Section                   |
-|   - Metrics accordion by category         |
-+------------------------------------------+
-```
-
-### Step 3: Remove from Sidebar Navigation
-
-Edit `DashboardLayout.tsx` to remove the Metrics Glossary link:
-
-```typescript
-// Before (line 126-131)
-const housekeepingNavItems: NavItem[] = [
-  { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users, permission: 'view_onboarding' },
-  { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText, permission: 'view_handbooks' },
-  { href: '/dashboard/changelog', label: "What's New", icon: Sparkles },
-  { href: '/dashboard/metrics-glossary', label: 'Metrics Glossary', icon: BookOpen },  // REMOVE
-];
-
-// After
-const housekeepingNavItems: NavItem[] = [
-  { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users, permission: 'view_onboarding' },
-  { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText, permission: 'view_handbooks' },
-  { href: '/dashboard/changelog', label: "What's New", icon: Sparkles },
-];
-```
-
-### Step 4: Keep Route for Direct Access (Optional)
-
-The `/dashboard/metrics-glossary` route in `App.tsx` can remain functional for backward compatibility or be redirected to the System settings with the Metrics Glossary tab pre-selected.
+This change restricts the "Today's Queue" section on the Command Center dashboard to only display for users with the **Front Desk** (`receptionist`) role. Currently, it shows for receptionists, admins, and all leadership roles.
 
 ---
 
-## Technical Details
+## Current State
 
-### New Component Structure
+The Today's Queue section is visible to:
+- `receptionist` (Front Desk)
+- `admin` (Director Of Operations)
+- `manager` 
+- `super_admin`
+- Other leadership roles
 
-**MetricsGlossaryContent.tsx:**
-- Receives no props (self-contained with internal state)
-- Uses same hooks: `useState`, `useMemo`
-- Imports: `DataHealthSection`, `MetricCard`, `metricsGlossary` data
-- Returns JSX without layout wrapper
-
-### Tab Implementation in System Settings
-
-Using the existing `Tabs` component from `@/components/ui/tabs`:
-
+This is controlled by the condition:
 ```typescript
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MetricsGlossaryContent } from "@/components/dashboard/settings/MetricsGlossaryContent";
-
-// Inside activeCategory === 'system' block:
-<Tabs defaultValue="settings">
-  <TabsList>
-    <TabsTrigger value="settings">Settings</TabsTrigger>
-    <TabsTrigger value="metrics">Metrics Glossary</TabsTrigger>
-  </TabsList>
-  
-  <TabsContent value="settings">
-    {/* Existing: Appearance, Notifications, Security cards */}
-  </TabsContent>
-  
-  <TabsContent value="metrics">
-    <MetricsGlossaryContent />
-  </TabsContent>
-</Tabs>
+{(isReceptionist || isLeadership) && (
+  <VisibilityGate elementKey="todays_queue" ...>
+    <TodaysQueueSection />
+  </VisibilityGate>
+)}
 ```
 
-### Imports to Add in Settings.tsx
+Where `isReceptionist` includes both `receptionist` AND `admin` roles.
+
+---
+
+## Solution
+
+### File: `src/pages/dashboard/DashboardHome.tsx`
+
+**Change 1: Add a dedicated Front Desk check**
+
+Add a new flag specifically for front desk users (around line 100-101):
 
 ```typescript
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MetricsGlossaryContent } from "@/components/dashboard/settings/MetricsGlossaryContent";
+// Current:
+const isReceptionist = roles.includes('receptionist') || roles.includes('admin');
+
+// Add new:
+const isFrontDesk = roles.includes('receptionist');
+```
+
+**Change 2: Update Today's Queue visibility condition**
+
+Update lines 273-282 to use the new `isFrontDesk` flag:
+
+```typescript
+// Before:
+{(isReceptionist || isLeadership) && (
+  <VisibilityGate 
+    elementKey="todays_queue"
+    elementName="Today's Queue"
+    elementCategory="operations"
+  >
+    <TodaysQueueSection />
+  </VisibilityGate>
+)}
+
+// After:
+{isFrontDesk && (
+  <VisibilityGate 
+    elementKey="todays_queue"
+    elementName="Today's Queue"
+    elementCategory="operations"
+  >
+    <TodaysQueueSection />
+  </VisibilityGate>
+)}
 ```
 
 ---
 
-## File Changes Summary
+## Impact Summary
 
-1. **Create** `src/components/dashboard/settings/MetricsGlossaryContent.tsx`
-   - Copy content from `MetricsGlossary.tsx`
-   - Remove `DashboardLayout` wrapper
-   - Export as `MetricsGlossaryContent`
+| Role | Before | After |
+|------|--------|-------|
+| `receptionist` (Front Desk) | ✅ Visible | ✅ Visible |
+| `admin` (Director of Ops) | ✅ Visible | ❌ Hidden |
+| `manager` | ✅ Visible | ❌ Hidden |
+| `super_admin` | ✅ Visible | ❌ Hidden |
+| `stylist` | ❌ Hidden | ❌ Hidden |
 
-2. **Edit** `src/components/dashboard/DashboardLayout.tsx`
-   - Remove line 130: `{ href: '/dashboard/metrics-glossary', label: 'Metrics Glossary', icon: BookOpen }`
+---
 
-3. **Edit** `src/pages/dashboard/admin/Settings.tsx`
-   - Add `Tabs` import
-   - Add `MetricsGlossaryContent` import
-   - Wrap System section content in tabbed interface
+## Notes
 
-4. **Optional** - The original `MetricsGlossary.tsx` page can remain for direct URL access or be modified to redirect to Settings
+- The **Operations Quick Stats** section will remain visible to receptionists and leadership per the existing `isReceptionist || isLeadership` logic (no change there unless requested)
+- Leadership users can still access the full schedule at `/dashboard/schedule` or the Operations page if needed
+- The `VisibilityGate` wrapper is preserved, allowing the section to still be toggled via the Visibility Console if needed in the future
 
