@@ -10,6 +10,7 @@ import { CustomCursor } from "./components/ui/CustomCursor";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ViewAsProvider } from "./contexts/ViewAsContext";
 import { HideNumbersProvider } from "./contexts/HideNumbersContext";
+import { DashboardThemeProvider } from "./contexts/DashboardThemeContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ThemeInitializer } from "./components/ThemeInitializer";
 
@@ -92,8 +93,9 @@ const App = () => (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeInitializer />
-          <ViewAsProvider>
-            <HideNumbersProvider>
+          <DashboardThemeProvider>
+            <ViewAsProvider>
+              <HideNumbersProvider>
             <TooltipProvider>
             <Toaster />
             <Sonner />
@@ -191,6 +193,7 @@ const App = () => (
             </TooltipProvider>
             </HideNumbersProvider>
           </ViewAsProvider>
+          </DashboardThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
