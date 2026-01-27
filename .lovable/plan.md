@@ -1,194 +1,129 @@
 
 
-# Full Command Center Customization System
+# Move Onboarding Overview to Onboarding Hub
 
 ## Overview
 
-This plan establishes the Command Center as a **fully customizable dashboard** where users can pin any analytics element from the Analytics Hub. All unique dashboard elements will be moved to their respective tabs in the Analytics Hub, and every analytics card will have a "Pin to Command Center" toggle.
+This plan moves the `OnboardingTrackerOverview` card off the Command Center and into the Onboarding Tracker page (which will be renamed to "Onboarding Hub"). The overview card will become a summary section at the top of the Onboarding Hub page.
 
-## Current State Analysis
+## Current State
 
-### Already Implemented (Phase 1 Complete)
-These cards already have the visibility toggle and can be pinned:
-| Card | Element Key | Location |
-|------|-------------|----------|
-| `AggregateSalesCard` | `sales_overview` | Sales Tab |
-| `ForecastingCard` | `week_ahead_forecast` | Sales > Forecasting |
-| `NewBookingsCard` | `new_bookings` | Operations > Appointments |
-| `CapacityUtilizationCard` | `capacity_utilization` | Operations > Appointments |
-| `WebsiteAnalyticsWidget` | `website_analytics` | Marketing Tab |
-| `ClientEngineOverview` | `client_engine_overview` | Program Tab |
-| `OnboardingTrackerOverview` | `onboarding_overview` | Operations > Staffing |
-| `StaffOverviewCard` | `team_overview` | Operations > Staffing |
-| `StylistsOverviewCard` | `stylists_overview` | Operations > Staffing |
+| Location | Component | Purpose |
+|----------|-----------|---------|
+| Command Center | `OnboardingTrackerOverview` | Pinnable summary card (via `onboarding_overview` visibility key) |
+| Analytics Hub > Staffing | `OnboardingTrackerOverview` | Summary with link to full tracker |
+| Onboarding Tracker page | Stats cards (separate implementation) | Duplicative stats display |
 
-### Elements Requiring Pinning Support
+## Problem
 
-#### Sales Tab - Additional Cards
-| Card | Suggested Element Key | Description |
-|------|----------------------|-------------|
-| `TopPerformersCard` | `top_performers` | Staff leaderboard by revenue |
-| `RevenueDonutChart` | `revenue_breakdown` | Service vs Product split |
-| `ClientFunnelCard` | `client_funnel` | New vs Returning revenue |
-| `RevenueForecast` | `revenue_forecast` | Month-end projection |
-| `TeamGoalsCard` | `team_goals` | Goal progress tracking |
+1. The `OnboardingTrackerOverview` component is a summary card intended for quick glances
+2. It's currently pinnable to the Command Center, but the user wants it moved permanently to the Onboarding page
+3. The page is called "Onboarding Tracker" but should be renamed to "Onboarding Hub"
 
-#### Operations Tab - Additional Cards
-| Card | Suggested Element Key | Description |
-|------|----------------------|-------------|
-| `HiringCapacityCard` | `hiring_capacity` | Headcount vs targets |
-| `StaffingTrendChart` | `staffing_trends` | Staff count over time |
-| `StylistWorkloadCard` | `stylist_workload` | Workload distribution |
+## Solution
 
-#### Program Tab - Additional Cards
-| Card | Suggested Element Key | Description |
-|------|----------------------|-------------|
-| `ProgramCompletionFunnel` | `program_funnel` | Enrollment funnel |
+1. **Rename page**: "Onboarding Tracker" → "Onboarding Hub" (title, sidebar labels, route stays the same)
+2. **Integrate overview**: Add `OnboardingTrackerOverview` as a summary section at the top of the Onboarding Hub page
+3. **Remove from Command Center**: Remove the pinning toggle and Command Center rendering for this card
+4. **Remove from Analytics Hub Staffing**: Remove from StaffingContent.tsx (consolidate in Onboarding Hub)
 
-## Implementation Plan
-
-### Phase 1: Add Toggles to Sales Tab Cards
-
-**Files to modify:**
-- `src/components/dashboard/sales/TopPerformersCard.tsx`
-- `src/components/dashboard/sales/RevenueDonutChart.tsx`
-- `src/components/dashboard/sales/ClientFunnelCard.tsx`
-- `src/components/dashboard/sales/RevenueForecast.tsx`
-- `src/components/dashboard/sales/TeamGoalsCard.tsx`
-
-For each card, add the toggle to the CardHeader:
-```tsx
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
-
-// In CardHeader, add after title:
-<CommandCenterVisibilityToggle 
-  elementKey="[element_key]" 
-  elementName="[Display Name]" 
-/>
-```
-
-### Phase 2: Add Toggles to Operations Tab Cards
-
-**Files to modify:**
-- `src/components/dashboard/HiringCapacityCard.tsx`
-- `src/components/dashboard/StaffingTrendChart.tsx`
-- `src/components/dashboard/StylistWorkloadCard.tsx`
-
-Same pattern: add `CommandCenterVisibilityToggle` to each card header.
-
-### Phase 3: Update CommandCenterAnalytics Component
-
-**File: `src/components/dashboard/CommandCenterAnalytics.tsx`**
-
-Add imports and visibility checks for all new pinnable cards:
-
-```tsx
-// New imports
-import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
-import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
-import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
-import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
-import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
-import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
-import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
-import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
-
-// Add visibility checks
-const hasTopPerformers = isElementVisible('top_performers');
-const hasRevenueBreakdown = isElementVisible('revenue_breakdown');
-const hasClientFunnel = isElementVisible('client_funnel');
-const hasRevenueForecast = isElementVisible('revenue_forecast');
-const hasTeamGoals = isElementVisible('team_goals');
-const hasHiringCapacity = isElementVisible('hiring_capacity');
-const hasStaffingTrends = isElementVisible('staffing_trends');
-const hasStylistWorkload = isElementVisible('stylist_workload');
-
-// Update hasAnyPinned to include all
-const hasAnyPinned = hasSalesOverview || hasNewBookings || ... || hasTopPerformers || ...;
-
-// Render conditionally
-{hasTopPerformers && (
-  <VisibilityGate elementKey="top_performers">
-    <TopPerformersCard />
-  </VisibilityGate>
-)}
-// ... repeat for all new cards
-```
-
-### Phase 4: Organize Command Center Layout
-
-Group pinned cards by category for a clean layout:
-
-```text
-Command Center (Pinned Analytics)
-├── Sales Section
-│   ├── Sales Overview (sales_overview)
-│   ├── Top Performers (top_performers)
-│   ├── Revenue Breakdown (revenue_breakdown)
-│   ├── Client Funnel (client_funnel)
-│   └── Team Goals (team_goals)
-│
-├── Forecasting Section
-│   ├── Week Ahead Forecast (week_ahead_forecast)
-│   └── Revenue Forecast (revenue_forecast)
-│
-├── Operations Section
-│   ├── New Bookings (new_bookings)
-│   ├── Capacity Utilization (capacity_utilization)
-│   ├── Hiring Capacity (hiring_capacity)
-│   └── Staffing Trends (staffing_trends)
-│
-├── Team Section
-│   ├── Team Overview (team_overview)
-│   ├── Stylists by Level (stylists_overview)
-│   ├── Stylist Workload (stylist_workload)
-│   └── Onboarding (onboarding_overview)
-│
-├── Marketing Section
-│   └── Website Analytics (website_analytics)
-│
-└── Program Section
-    └── Client Engine (client_engine_overview)
-```
-
-## Files to Modify Summary
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/sales/TopPerformersCard.tsx` | Add toggle |
-| `src/components/dashboard/sales/RevenueDonutChart.tsx` | Add toggle |
-| `src/components/dashboard/sales/ClientFunnelCard.tsx` | Add toggle |
-| `src/components/dashboard/sales/RevenueForecast.tsx` | Add toggle |
-| `src/components/dashboard/sales/TeamGoalsCard.tsx` | Add toggle |
-| `src/components/dashboard/HiringCapacityCard.tsx` | Add toggle |
-| `src/components/dashboard/StaffingTrendChart.tsx` | Add toggle |
-| `src/components/dashboard/StylistWorkloadCard.tsx` | Add toggle |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | Add all new cards |
+| `src/pages/dashboard/admin/OnboardingTracker.tsx` | Change title to "ONBOARDING HUB", add `OnboardingTrackerOverview` at top, remove pin toggle |
+| `src/components/dashboard/DashboardLayout.tsx` | Change sidebar label to "Onboarding Hub" |
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Change label to "Onboarding Hub" |
+| `src/components/dashboard/settings/SidebarPreview.tsx` | Change label to "Onboarding Hub" |
+| `src/components/dashboard/CommandCenterAnalytics.tsx` | Remove `OnboardingTrackerOverview` import and rendering |
+| `src/components/dashboard/analytics/StaffingContent.tsx` | Remove `OnboardingTrackerOverview` import and section |
+| `src/components/dashboard/OnboardingTrackerOverview.tsx` | Remove `CommandCenterVisibilityToggle` (no longer pinnable), update info button tooltip |
 
-## User Experience Flow
+## Updated Page Layout
 
 ```text
-1. User navigates to Analytics Hub
-2. Sees card with data they want on Command Center
-3. Clicks gear icon (⚙) on that card's header
-4. Toggles "Show on Command Center" ON
-5. Card now appears on their Command Center dashboard
-6. Can toggle OFF anytime to remove from Command Center
+Onboarding Hub (/dashboard/admin/onboarding-tracker)
+┌──────────────────────────────────────────────────────────────┐
+│  ONBOARDING HUB                                              │
+│  Monitor team onboarding progress                            │
+├──────────────────────────────────────────────────────────────┤
+│  OnboardingTrackerOverview (Summary Card)                    │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ Team Completion ██████████░░░░░░░░░░  50%              │  │
+│  │ ┌────────┬────────┬────────┬────────┐                  │  │
+│  │ │ Total  │  Done  │ Active │Pending │                  │  │
+│  │ │   7    │   0    │   7    │   0    │                  │  │
+│  │ └────────┴────────┴────────┴────────┘                  │  │
+│  │ Handbooks: 100%  │  Tasks: 0%                          │  │
+│  │ Business Cards: 0 │  Headshots: 0                      │  │
+│  └────────────────────────────────────────────────────────┘  │
+├──────────────────────────────────────────────────────────────┤
+│  [Existing detailed tracker content - filters, staff list]  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Technical Details
+## Implementation Details
 
-- **Visibility System**: Uses existing `dashboard_element_visibility` table
-- **Toggle Component**: Uses existing `CommandCenterVisibilityToggle` (only visible to Super Admins)
-- **Rendering**: Uses existing `VisibilityGate` component for conditional rendering
-- **No Database Changes**: All infrastructure is already in place
-- **Role-Based**: Pinned cards respect role-based visibility rules
+### 1. OnboardingTracker.tsx Changes
+
+**Header update (line 424):**
+```tsx
+// Before
+<h1 className="font-display text-2xl lg:text-3xl mb-1">ONBOARDING TRACKER</h1>
+
+// After
+<h1 className="font-display text-2xl lg:text-3xl mb-1">ONBOARDING HUB</h1>
+```
+
+**Remove pin toggle (lines 429-432):** Delete `CommandCenterVisibilityToggle`
+
+**Add overview card after header, before stats cards:**
+```tsx
+import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
+
+// After header, before Stats Cards section:
+<OnboardingTrackerOverview />
+```
+
+### 2. Remove existing stats cards
+
+The page currently has its own stats cards (lines 436-481) that duplicate what `OnboardingTrackerOverview` shows. These can be removed since the overview component now provides this functionality.
+
+### 3. Sidebar Labels
+
+Update all three files with the label change:
+```tsx
+// Before
+{ label: 'Onboarding Tracker', ... }
+
+// After
+{ label: 'Onboarding Hub', ... }
+```
+
+### 4. CommandCenterAnalytics.tsx
+
+Remove:
+- Import of `OnboardingTrackerOverview` (line 8)
+- `hasOnboardingOverview` variable (line 67)
+- Reference in `hasAnyPinned` (line 81)
+- Rendering block (lines 243-248)
+
+### 5. StaffingContent.tsx
+
+Remove:
+- Import of `OnboardingTrackerOverview` (line 6)
+- Onboarding Tracker section (lines 24-27)
+
+### 6. OnboardingTrackerOverview.tsx
+
+Since it's no longer pinnable to Command Center:
+- Remove `CommandCenterVisibilityToggle` import and usage
+- Remove or update the info button (currently links to the tracker page - can be removed since it's now on that page)
 
 ## Benefits
 
-1. **Full Control**: Leadership can fully customize their Command Center
-2. **Contextual**: Toggles are right on the cards, easy to discover
-3. **Centralized Data**: Analytics Hub is the single source of truth
-4. **Flexible**: Any combination of cards can be pinned
-5. **Clean Default**: Empty Command Center shows helpful guidance to Analytics Hub
+1. **Consolidated**: All onboarding data in one dedicated hub
+2. **Simplified**: No pinning complexity for this component
+3. **Better naming**: "Hub" implies a comprehensive destination
+4. **Reduced redundancy**: Single source of truth for onboarding overview
 
