@@ -4,8 +4,6 @@ import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
 
-import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
-
 
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
@@ -58,8 +56,6 @@ export function CommandCenterAnalytics() {
   const hasForecast = isElementVisible('week_ahead_forecast');
   const hasCapacity = isElementVisible('capacity_utilization');
   
-  const hasClientEngineOverview = isElementVisible('client_engine_overview');
-  
   
   // New pinnable cards
   const hasTopPerformers = isElementVisible('top_performers');
@@ -71,7 +67,7 @@ export function CommandCenterAnalytics() {
   const hasStylistWorkload = isElementVisible('stylist_workload');
   
   const hasAnyPinned = hasSalesOverview || hasNewBookings || hasForecast || hasCapacity || 
-    hasClientEngineOverview || hasTopPerformers || hasRevenueBreakdown ||
+    hasTopPerformers || hasRevenueBreakdown ||
     hasClientFunnel || hasTeamGoals || hasHiringCapacity ||
     hasStaffingTrends || hasStylistWorkload;
   
@@ -201,15 +197,6 @@ export function CommandCenterAnalytics() {
           />
         </VisibilityGate>
       )}
-      
-      
-      {/* Client Engine Overview */}
-      {hasClientEngineOverview && (
-        <VisibilityGate elementKey="client_engine_overview">
-          <ClientEngineOverview />
-        </VisibilityGate>
-      )}
-      
       
     </div>
   );

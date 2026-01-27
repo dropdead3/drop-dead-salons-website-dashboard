@@ -26,7 +26,6 @@ import {
 } from 'lucide-react';
 import { format, subDays, startOfWeek, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface EnrollmentData {
@@ -209,8 +208,6 @@ export function ProgramTabContent({ filters }: ProgramTabContentProps) {
         </Button>
       </div>
 
-      {/* Client Engine Overview Card */}
-      <ClientEngineOverview />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
