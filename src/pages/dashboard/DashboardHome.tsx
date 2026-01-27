@@ -44,10 +44,7 @@ import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsW
 import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
-import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
-import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
-import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
-import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
+import { CommandCenterAnalytics } from '@/components/dashboard/CommandCenterAnalytics';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -243,33 +240,8 @@ export default function DashboardHome() {
           </VisibilityGate>
         )}
 
-        {/* Aggregate Sales Overview - Leadership Only */}
-        {isLeadership && (
-          <VisibilityGate elementKey="sales_overview">
-            <AggregateSalesCard />
-          </VisibilityGate>
-        )}
-
-        {/* New Bookings - Leadership Only */}
-        {isLeadership && (
-          <VisibilityGate elementKey="new_bookings">
-            <NewBookingsCard />
-          </VisibilityGate>
-        )}
-
-        {/* Forecasting - Leadership Only */}
-        {isLeadership && (
-          <VisibilityGate elementKey="week_ahead_forecast">
-            <ForecastingCard />
-          </VisibilityGate>
-        )}
-
-        {/* Capacity Utilization - Leadership Only */}
-        {isLeadership && (
-          <VisibilityGate elementKey="capacity_utilization">
-            <CapacityUtilizationCard />
-          </VisibilityGate>
-        )}
+        {/* Pinned Analytics Section - Leadership Only */}
+        {isLeadership && <CommandCenterAnalytics />}
 
         {/* Quick Stats - Non-leadership only */}
         {!isLeadership && (
