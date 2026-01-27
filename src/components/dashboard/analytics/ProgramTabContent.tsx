@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { format, subDays, startOfWeek, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface EnrollmentData {
@@ -210,63 +211,65 @@ export function ProgramTabContent({ filters }: ProgramTabContentProps) {
 
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
+      <PinnableCard elementKey="program_summary_stats" elementName="Program Summary" category="Analytics Hub - Program">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-display">{stats.total}</p>
+                  <p className="text-xs text-muted-foreground">Total Enrolled</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-display">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total Enrolled</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-chart-2/10 flex items-center justify-center">
+                  <Trophy className="w-5 h-5 text-chart-2" />
+                </div>
+                <div>
+                  <p className="text-2xl font-display">{stats.completionRate}%</p>
+                  <p className="text-xs text-muted-foreground">Completion Rate</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-chart-2/10 flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-chart-2" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-chart-4/10 flex items-center justify-center">
+                  <Flame className="w-5 h-5 text-chart-4" />
+                </div>
+                <div>
+                  <p className="text-2xl font-display">{stats.avgStreak}</p>
+                  <p className="text-xs text-muted-foreground">Avg Streak</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-display">{stats.completionRate}%</p>
-                <p className="text-xs text-muted-foreground">Completion Rate</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center",
+                  stats.atRisk > 0 ? "bg-destructive/10" : "bg-muted"
+                )}>
+                  <AlertTriangle className={cn("w-5 h-5", stats.atRisk > 0 ? "text-destructive" : "text-muted-foreground")} />
+                </div>
+                <div>
+                  <p className="text-2xl font-display">{stats.atRisk}</p>
+                  <p className="text-xs text-muted-foreground">At Risk</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-chart-4/10 flex items-center justify-center">
-                <Flame className="w-5 h-5 text-chart-4" />
-              </div>
-              <div>
-                <p className="text-2xl font-display">{stats.avgStreak}</p>
-                <p className="text-xs text-muted-foreground">Avg Streak</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center",
-                stats.atRisk > 0 ? "bg-destructive/10" : "bg-muted"
-              )}>
-                <AlertTriangle className={cn("w-5 h-5", stats.atRisk > 0 ? "text-destructive" : "text-muted-foreground")} />
-              </div>
-              <div>
-                <p className="text-2xl font-display">{stats.atRisk}</p>
-                <p className="text-xs text-muted-foreground">At Risk</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      </PinnableCard>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList>

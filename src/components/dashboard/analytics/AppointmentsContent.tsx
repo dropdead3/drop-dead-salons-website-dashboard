@@ -27,6 +27,7 @@ import {
   Cell,
   Legend
 } from 'recharts';
+import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { CapacityUtilizationSection } from './CapacityUtilizationSection';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -88,96 +89,108 @@ export function AppointmentsContent({
   return (
     <>
       {/* Summary Stats - 3x2 grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Calendar className="w-5 h-5 text-primary" />
+      <PinnableCard 
+        elementKey="appointments_summary" 
+        elementName="Appointments Summary" 
+        category="Analytics Hub - Operations"
+        className="mb-6"
+      >
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Calendar className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-display text-2xl">{summary.totalAppointments}</p>
+                <p className="text-xs text-muted-foreground">Total Appointments</p>
+              </div>
             </div>
-            <div>
-              <p className="font-display text-2xl">{summary.totalAppointments}</p>
-              <p className="text-xs text-muted-foreground">Total Appointments</p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="font-display text-2xl">{summary.completedAppointments}</p>
+                <p className="text-xs text-muted-foreground">Completed</p>
+              </div>
             </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <CalendarPlus className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                {newBookingsLoading ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="font-display text-2xl">{newBookings?.bookedToday || 0}</p>
+                )}
+                <p className="text-xs text-muted-foreground">Booked Today</p>
+              </div>
             </div>
-            <div>
-              <p className="font-display text-2xl">{summary.completedAppointments}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                <CalendarRange className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                {newBookingsLoading ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="font-display text-2xl">{newBookings?.bookedLast7Days || 0}</p>
+                )}
+                <p className="text-xs text-muted-foreground">Booked in Last 7 Days</p>
+              </div>
             </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-              <CalendarPlus className="w-5 h-5 text-blue-600" />
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+                <XCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className={cn(
+                  "font-display text-2xl",
+                  summary.noShowRate > 5 && "text-red-600"
+                )}>
+                  {summary.noShowRate.toFixed(1)}%
+                </p>
+                <p className="text-xs text-muted-foreground">No-Show Rate</p>
+              </div>
             </div>
-            <div>
-              {newBookingsLoading ? (
-                <Skeleton className="h-8 w-12" />
-              ) : (
-                <p className="font-display text-2xl">{newBookings?.bookedToday || 0}</p>
-              )}
-              <p className="text-xs text-muted-foreground">Booked Today</p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                <Clock className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="font-display text-2xl">{summary.cancellationRate.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground">Cancellation Rate</p>
+              </div>
             </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-              <CalendarRange className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              {newBookingsLoading ? (
-                <Skeleton className="h-8 w-12" />
-              ) : (
-                <p className="font-display text-2xl">{newBookings?.bookedLast7Days || 0}</p>
-              )}
-              <p className="text-xs text-muted-foreground">Booked in Last 7 Days</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-              <XCircle className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <p className={cn(
-                "font-display text-2xl",
-                summary.noShowRate > 5 && "text-red-600"
-              )}>
-                {summary.noShowRate.toFixed(1)}%
-              </p>
-              <p className="text-xs text-muted-foreground">No-Show Rate</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="font-display text-2xl">{summary.cancellationRate.toFixed(1)}%</p>
-              <p className="text-xs text-muted-foreground">Cancellation Rate</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      </PinnableCard>
 
       {/* Capacity Utilization Section */}
-      <div className="mb-8">
+      <PinnableCard 
+        elementKey="capacity_utilization" 
+        elementName="Capacity Utilization" 
+        category="Analytics Hub - Operations"
+        className="mb-8"
+      >
         <CapacityUtilizationSection 
           capacityData={capacityData ?? null}
           isLoading={capacityLoading ?? false}
           dateRange={dateRange}
         />
-      </div>
+      </PinnableCard>
 
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
