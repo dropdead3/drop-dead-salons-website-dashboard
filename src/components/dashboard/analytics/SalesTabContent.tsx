@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import {
   AreaChart,
   Area,
@@ -274,14 +274,18 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
       </div>
 
       {/* Sub-tabs for detailed views */}
-      <Tabs value={subTab} onValueChange={onSubTabChange}>
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="goals">Goals</TabsTrigger>
-          <TabsTrigger value="staff">Staff Performance</TabsTrigger>
-          <TabsTrigger value="forecasting">Forecasting</TabsTrigger>
-          <TabsTrigger value="commission">Commission</TabsTrigger>
-        </TabsList>
+      <div className="space-y-2">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          View
+        </span>
+        <Tabs value={subTab} onValueChange={onSubTabChange}>
+          <SubTabsList>
+            <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
+            <SubTabsTrigger value="goals">Goals</SubTabsTrigger>
+            <SubTabsTrigger value="staff">Staff Performance</SubTabsTrigger>
+            <SubTabsTrigger value="forecasting">Forecasting</SubTabsTrigger>
+            <SubTabsTrigger value="commission">Commission</SubTabsTrigger>
+          </SubTabsList>
 
         <TabsContent value="overview" className="mt-6 space-y-6">
           {/* Revenue Trend */}
@@ -437,7 +441,8 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             <CommissionTiersEditor />
           </div>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }

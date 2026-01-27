@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import { useOperationalAnalytics } from '@/hooks/useOperationalAnalytics';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useHistoricalCapacityUtilization } from '@/hooks/useHistoricalCapacityUtilization';
@@ -73,14 +73,18 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
       </div>
 
       {/* Sub-tabs */}
-      <Tabs value={subTab} onValueChange={onSubTabChange}>
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
-          <TabsTrigger value="clients">Clients</TabsTrigger>
-          <TabsTrigger value="staffing">Staffing</TabsTrigger>
-          <TabsTrigger value="staff-utilization">Staff Utilization</TabsTrigger>
-        </TabsList>
+      <div className="space-y-2">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          View
+        </span>
+        <Tabs value={subTab} onValueChange={onSubTabChange}>
+          <SubTabsList>
+            <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
+            <SubTabsTrigger value="appointments">Appointments</SubTabsTrigger>
+            <SubTabsTrigger value="clients">Clients</SubTabsTrigger>
+            <SubTabsTrigger value="staffing">Staffing</SubTabsTrigger>
+            <SubTabsTrigger value="staff-utilization">Staff Utilization</SubTabsTrigger>
+          </SubTabsList>
 
         <TabsContent value="overview" className="mt-6">
           <OverviewContent 
@@ -129,7 +133,8 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
             dateRange={operationalDateRange}
           />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }
