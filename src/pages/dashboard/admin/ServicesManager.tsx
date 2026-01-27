@@ -52,14 +52,19 @@ import {
   GripVertical,
   Check,
   X,
+  Mail,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { services as initialServices, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
 import { StylistLevelsEditor } from '@/components/dashboard/StylistLevelsEditor';
 import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
+import { ServiceCommunicationFlowEditor } from '@/components/dashboard/ServiceCommunicationFlowEditor';
+import { useAllServiceCommunicationFlows } from '@/hooks/useServiceCommunicationFlows';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function ServicesManager() {
   const { data: stylistLevels } = useStylistLevelsSimple();
+  const { data: allFlows } = useAllServiceCommunicationFlows();
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(initialServices);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingService, setEditingService] = useState<{ categoryIndex: number; itemIndex: number; item: ServiceItem } | null>(null);
@@ -71,6 +76,15 @@ export default function ServicesManager() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryIsAddOn, setNewCategoryIsAddOn] = useState(false);
   const [deletingCategoryIndex, setDeletingCategoryIndex] = useState<number | null>(null);
+  const [configureFlowsServiceName, setConfigureFlowsServiceName] = useState<string | null>(null);
+
+  // Get set of service names that have active flows
+  const servicesWithFlows = new Set(
+    allFlows?.filter(f => f.is_active).map(f => {
+      // We need to look up the service name - for now we'll track by service_id
+      return f.service_id;
+    }) || []
+  );
 
   const totalServices = serviceCategories.reduce((sum, cat) => sum + cat.items.length, 0);
   const popularServices = serviceCategories.reduce(
@@ -505,6 +519,30 @@ export default function ServicesManager() {
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setConfigureFlowsServiceName(item.name);
+                                    }}
+                                  >
+                                    <Mail className={cn(
+                                      "w-4 h-4",
+                                      servicesWithFlows.size > 0 && "text-primary"
+                                    )} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Configure communication flows</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
                             <div className="flex items-center gap-2">
                               <Label htmlFor={`popular-${item.name}`} className="text-xs text-muted-foreground">
                                 Popular
@@ -636,6 +674,15 @@ export default function ServicesManager() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Communication Flow Editor Dialog */}
+      {configureFlowsServiceName && (
+        <ServiceCommunicationFlowEditor
+          open={!!configureFlowsServiceName}
+          onOpenChange={(open) => !open && setConfigureFlowsServiceName(null)}
+          serviceName={configureFlowsServiceName}
+        />
+      )}
     </DashboardLayout>
   );
 }
