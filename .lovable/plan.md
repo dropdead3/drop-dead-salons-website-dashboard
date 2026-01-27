@@ -1,294 +1,107 @@
 
-# Location-Based Analytics Permissions for Leadership
+# Reorganize Available Analytics in Sensible Order
 
 ## Overview
 
-Implement granular location-based access control so that leadership users (admin, manager) who are assigned to specific locations can only see analytics and stats for their assigned location(s). Super admins retain full access to all locations.
+Reorder the `PINNABLE_CARDS` array in `DashboardCustomizeMenu.tsx` to group cards logically by category, starting with Sales.
 
 ---
 
-## Current State
+## Current Order (Disorganized)
 
-**How it works today:**
-- All leadership users see the same `AnalyticsFilterBar` with "All Locations" option and all active locations
-- Users can freely toggle between any location to view its analytics
-- Location assignment exists on `employee_profiles` via `location_id` (single) and `location_ids` (array)
-- No permission currently controls whether a user can view cross-location analytics
-
-**Current location data on employee profiles:**
-- `location_id` (TEXT) - Legacy single location assignment
-- `location_ids` (TEXT[]) - Multi-location support array
+```text
+1. Operations Stats
+2. Sales Dashboard
+3. Sales Overview
+4. Top Performers
+5. Revenue Breakdown
+6. Client Funnel
+7. Team Goals
+8. New Bookings
+9. Week Ahead Forecast
+10. Capacity Utilization
+11. Hiring Capacity
+12. Staffing Trends
+13. Stylist Workload
+```
 
 ---
 
-## Solution
+## Proposed Order (Grouped by Category)
 
-### Access Control Rules
+```text
+SALES & REVENUE
+1. Sales Dashboard        - Primary sales view
+2. Sales Overview         - KPI summary
+3. Revenue Breakdown      - Service vs Product split
+4. Top Performers         - Stylist leaderboard
 
-| User Type | Access Level |
-|-----------|--------------|
-| Super Admin (`is_super_admin = true`) | All locations + "All Locations" aggregate |
-| Admin/Manager with `view_all_locations_analytics` permission | All locations + "All Locations" aggregate |
-| Admin/Manager assigned to specific location(s) | Only their assigned locations (no aggregate view) |
-| Admin/Manager with NO location assignment | Only aggregate "All Locations" (edge case fallback) |
+FORECASTING & GOALS
+5. Week Ahead Forecast    - Revenue projections
+6. Team Goals             - Target tracking
+7. New Bookings           - Booking metrics
 
-### New Permission
+CLIENTS
+8. Client Funnel          - Client retention/growth
 
-Create a new permission that allows cross-location analytics access:
+OPERATIONS & CAPACITY
+9. Operations Stats       - Daily operations overview
+10. Capacity Utilization  - Booking capacity metrics
+11. Stylist Workload      - Individual stylist capacity
 
-| Permission Name | Category | Description |
-|-----------------|----------|-------------|
-| `view_all_locations_analytics` | Management | View analytics and stats across all salon locations |
-
-By default, this permission will be granted to `super_admin` only. Admins and managers will NOT have it by default, restricting them to their assigned locations.
+STAFFING
+12. Staffing Trends       - Team size over time
+13. Hiring Capacity       - Hiring needs analysis
+```
 
 ---
 
 ## Implementation
 
-### Step 1: Add New Permission (Database Migration)
-
-```sql
-INSERT INTO permissions (id, name, description, category)
-VALUES (
-  gen_random_uuid(),
-  'view_all_locations_analytics',
-  'View analytics and stats across all salon locations',
-  'Management'
-);
-
--- Grant to super_admin by default
-INSERT INTO role_permissions (role, permission_id)
-SELECT 'super_admin', id FROM permissions WHERE name = 'view_all_locations_analytics';
-```
-
-### Step 2: Create `useUserLocationAccess` Hook
-
-A new hook that encapsulates the location access logic:
+Update the `PINNABLE_CARDS` array order in `DashboardCustomizeMenu.tsx`:
 
 ```typescript
-// src/hooks/useUserLocationAccess.ts
-export function useUserLocationAccess() {
-  const { hasPermission } = useAuth();
-  const { data: profile } = useEmployeeProfile();
-  const { data: allLocations } = useActiveLocations();
+const PINNABLE_CARDS = [
+  // Sales & Revenue
+  { id: 'sales_dashboard_bento', label: 'Sales Dashboard', icon: <LayoutDashboard /> },
+  { id: 'sales_overview', label: 'Sales Overview', icon: <DollarSign /> },
+  { id: 'revenue_breakdown', label: 'Revenue Breakdown', icon: <PieChart /> },
+  { id: 'top_performers', label: 'Top Performers', icon: <Trophy /> },
   
-  // Super admin or has cross-location permission
-  const canViewAllLocations = profile?.is_super_admin || 
-    hasPermission('view_all_locations_analytics');
+  // Forecasting & Goals
+  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', icon: <TrendingUp /> },
+  { id: 'team_goals', label: 'Team Goals', icon: <Target /> },
+  { id: 'new_bookings', label: 'New Bookings', icon: <CalendarPlus /> },
   
-  // Get user's assigned locations
-  const assignedLocationIds = useMemo(() => {
-    if (!profile) return [];
-    return profile.location_ids?.length 
-      ? profile.location_ids 
-      : profile.location_id 
-        ? [profile.location_id] 
-        : [];
-  }, [profile]);
+  // Clients
+  { id: 'client_funnel', label: 'Client Funnel', icon: <Users /> },
   
-  // Filter locations based on access
-  const accessibleLocations = useMemo(() => {
-    if (!allLocations) return [];
-    if (canViewAllLocations) return allLocations;
-    return allLocations.filter(loc => assignedLocationIds.includes(loc.id));
-  }, [allLocations, canViewAllLocations, assignedLocationIds]);
+  // Operations & Capacity
+  { id: 'operations_stats', label: 'Operations Stats', icon: <LayoutDashboard /> },
+  { id: 'capacity_utilization', label: 'Capacity Utilization', icon: <Gauge /> },
+  { id: 'stylist_workload', label: 'Stylist Workload', icon: <Briefcase /> },
   
-  // Determine if "All Locations" aggregate is available
-  const canViewAggregate = canViewAllLocations || assignedLocationIds.length === 0;
-  
-  // Get default location (first assigned or 'all' if permitted)
-  const defaultLocationId = useMemo(() => {
-    if (canViewAllLocations) return 'all';
-    return assignedLocationIds[0] || 'all';
-  }, [canViewAllLocations, assignedLocationIds]);
-  
-  return {
-    canViewAllLocations,
-    accessibleLocations,
-    assignedLocationIds,
-    canViewAggregate,
-    defaultLocationId,
-    isLoading: !profile || !allLocations,
-  };
-}
-```
-
-### Step 3: Update `AnalyticsFilterBar`
-
-Modify to accept location access constraints:
-
-```typescript
-interface AnalyticsFilterBarProps {
-  locationId: string;
-  onLocationChange: (value: string) => void;
-  dateRange: DateRangeType;
-  onDateRangeChange: (value: DateRangeType) => void;
-  // New props for location restrictions
-  accessibleLocations?: Location[];
-  canViewAggregate?: boolean;
-}
-
-export function AnalyticsFilterBar({
-  locationId,
-  onLocationChange,
-  dateRange,
-  onDateRangeChange,
-  accessibleLocations,
-  canViewAggregate = true,
-}: AnalyticsFilterBarProps) {
-  // Use provided locations or fetch all
-  const { data: allLocations } = useActiveLocations();
-  const locations = accessibleLocations ?? allLocations;
-  
-  // If only one location and no aggregate, hide the selector entirely
-  const showLocationSelector = canViewAggregate || (locations?.length ?? 0) > 1;
-  
-  return (
-    <div className="flex flex-wrap items-center gap-3 mb-6">
-      {/* Location Select - conditionally rendered */}
-      {showLocationSelector && (
-        <Select value={locationId} onValueChange={onLocationChange}>
-          <SelectTrigger className="h-9 w-auto min-w-[180px] text-sm">
-            <MapPin className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {canViewAggregate && (
-              <SelectItem value="all">All Locations</SelectItem>
-            )}
-            {locations?.map(loc => (
-              <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-      
-      {/* Single location badge (when only one location assigned) */}
-      {!showLocationSelector && locations?.length === 1 && (
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md text-sm">
-          <MapPin className="w-4 h-4 text-muted-foreground" />
-          <span>{locations[0].name}</span>
-        </div>
-      )}
-      
-      {/* Date Range Select - unchanged */}
-      ...
-    </div>
-  );
-}
-```
-
-### Step 4: Update `DashboardHome.tsx`
-
-Integrate the location access hook:
-
-```typescript
-// In DashboardHome component
-const { 
-  accessibleLocations, 
-  canViewAggregate, 
-  defaultLocationId,
-  isLoading: locationAccessLoading 
-} = useUserLocationAccess();
-
-// Initialize locationId with the user's default (not always 'all')
-const [locationId, setLocationId] = useState<string>('');
-
-// Set default when access data loads
-useEffect(() => {
-  if (!locationAccessLoading && !locationId) {
-    setLocationId(defaultLocationId);
-  }
-}, [locationAccessLoading, defaultLocationId]);
-
-// Pass to DashboardSections
-<DashboardSections 
-  ...
-  analyticsFilters={analyticsFilters}
-  onLocationChange={setLocationId}
-  onDateRangeChange={setDateRange}
-  accessibleLocations={accessibleLocations}
-  canViewAggregate={canViewAggregate}
-/>
-```
-
-### Step 5: Update Analytics Hub (Optional Enhancement)
-
-Apply the same restrictions to the Analytics Hub pages so location restrictions are consistent across the application.
-
----
-
-## Visual Behavior
-
-### Super Admin / Users with Permission
-
-```text
-┌─────────────────────────────────────────────┐
-│ 📍 All Locations ▼  │  📅 This Month ▼      │
-│     ├── All Locations                       │
-│     ├── Downtown Salon                      │
-│     ├── Uptown Studio                       │
-│     └── West Side Location                  │
-└─────────────────────────────────────────────┘
-```
-
-### Manager Assigned to "Downtown Salon" Only
-
-```text
-┌─────────────────────────────────────────────┐
-│ 📍 Downtown Salon   │  📅 This Month ▼      │
-│     (no dropdown - single location badge)   │
-└─────────────────────────────────────────────┘
-```
-
-### Manager Assigned to 2+ Locations (but not all)
-
-```text
-┌─────────────────────────────────────────────┐
-│ 📍 Downtown Salon ▼ │  📅 This Month ▼      │
-│     ├── Downtown Salon                      │
-│     └── Uptown Studio                       │
-│     (no "All Locations" option)             │
-└─────────────────────────────────────────────┘
+  // Staffing
+  { id: 'staffing_trends', label: 'Staffing Trends', icon: <LineChart /> },
+  { id: 'hiring_capacity', label: 'Hiring Capacity', icon: <UserPlus /> },
+];
 ```
 
 ---
 
-## Location Leaderboard Exception
+## File to Modify
 
-For the location leaderboard specifically (cross-location comparison), we can add a special case:
-
-- Users can see a **read-only leaderboard** comparing locations, even if they can't drill into other location's detailed stats
-- This encourages healthy competition while protecting detailed analytics
-- Implementation: The leaderboard component checks for a separate `view_location_leaderboard` permission or shows aggregated/anonymized data
+| File | Change |
+|------|--------|
+| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Reorder `PINNABLE_CARDS` array |
 
 ---
 
-## Files to Create/Modify
+## Result
 
-| File | Changes |
-|------|---------|
-| `src/hooks/useUserLocationAccess.ts` | **NEW** - Hook for location access logic |
-| `src/components/dashboard/AnalyticsFilterBar.tsx` | Accept location restrictions as props |
-| `src/pages/dashboard/DashboardHome.tsx` | Integrate location access hook |
-| Database migration | Add `view_all_locations_analytics` permission |
-
----
-
-## Benefits
-
-1. **Granular Control**: Leadership can be restricted to their assigned location(s)
-2. **Permission-Based Override**: Grant `view_all_locations_analytics` to unlock cross-location access
-3. **Super Admin Bypass**: Super admins always have full access
-4. **Graceful Degradation**: Single-location users see a clean UI without unnecessary dropdowns
-5. **Extensible**: Same pattern can apply to other location-sensitive features
-
----
-
-## Edge Cases
-
-- **No location assigned**: Falls back to "All Locations" to prevent empty state
-- **View As mode**: Uses the simulated role's permissions, not the actual user's
-- **Multiple roles**: If any role has `view_all_locations_analytics`, user gets full access
-- **Location deleted**: Filter gracefully handles missing locations in user's list
+The Available Analytics list will display in a logical flow:
+- **Sales first** (most commonly viewed)
+- **Forecasting & Goals** (future-focused metrics)
+- **Clients** (retention and funnel)
+- **Operations** (day-to-day capacity)
+- **Staffing** (team management)
