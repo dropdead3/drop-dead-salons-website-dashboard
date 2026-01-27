@@ -67,6 +67,7 @@ import { ScheduleSettingsContent } from '@/components/dashboard/settings/Schedul
 import { LocationsSettingsContent } from '@/components/dashboard/settings/LocationsSettingsContent';
 import { DayRateSettingsContent } from '@/components/dashboard/settings/DayRateSettingsContent';
 import { SidebarLayoutEditor } from '@/components/dashboard/settings/SidebarLayoutEditor';
+import { RoleAccessConfigurator } from '@/components/dashboard/settings/RoleAccessConfigurator';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
@@ -99,7 +100,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | null;
+type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -692,6 +693,12 @@ export default function Settings() {
       description: 'Chair rentals, pricing & agreements',
       icon: Armchair,
     },
+    'role-access': {
+      id: 'role-access',
+      label: 'Role Access',
+      description: 'Navigation, tabs & widgets by role',
+      icon: Shield,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -1150,6 +1157,8 @@ export default function Settings() {
           {activeCategory === 'locations' && <LocationsSettingsContent />}
 
           {activeCategory === 'dayrate' && <DayRateSettingsContent />}
+
+          {activeCategory === 'role-access' && <RoleAccessConfigurator />}
         </div>
       </DashboardLayout>
     );
