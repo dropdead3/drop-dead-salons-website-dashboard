@@ -696,6 +696,53 @@ export type Database = {
           },
         ]
       }
+      client_form_signatures: {
+        Row: {
+          appointment_id: string | null
+          client_id: string
+          collected_by: string | null
+          created_at: string | null
+          form_template_id: string
+          form_version: string
+          id: string
+          ip_address: string | null
+          signed_at: string | null
+          typed_signature: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          client_id: string
+          collected_by?: string | null
+          created_at?: string | null
+          form_template_id: string
+          form_version: string
+          id?: string
+          ip_address?: string | null
+          signed_at?: string | null
+          typed_signature?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          client_id?: string
+          collected_by?: string | null
+          created_at?: string | null
+          form_template_id?: string
+          form_version?: string
+          id?: string
+          ip_address?: string | null
+          signed_at?: string | null
+          typed_signature?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_form_signatures_form_template_id_fkey"
+            columns: ["form_template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_notes: {
         Row: {
           client_id: string
@@ -1609,6 +1656,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      form_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          form_type: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          requires_witness: boolean | null
+          updated_at: string | null
+          version: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          form_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          requires_witness?: boolean | null
+          updated_at?: string | null
+          version?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          form_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          requires_witness?: boolean | null
+          updated_at?: string | null
+          version?: string
+        }
+        Relationships: []
       }
       gallery_images: {
         Row: {
@@ -4203,6 +4292,48 @@ export type Database = {
             columns: ["sms_template_id"]
             isOneToOne: false
             referencedRelation: "sms_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_form_requirements: {
+        Row: {
+          created_at: string | null
+          form_template_id: string
+          id: string
+          is_required: boolean | null
+          service_id: string
+          signing_frequency: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          form_template_id: string
+          id?: string
+          is_required?: boolean | null
+          service_id: string
+          signing_frequency?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          form_template_id?: string
+          id?: string
+          is_required?: boolean | null
+          service_id?: string
+          signing_frequency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_form_requirements_form_template_id_fkey"
+            columns: ["form_template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_form_requirements_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_services"
             referencedColumns: ["id"]
           },
         ]

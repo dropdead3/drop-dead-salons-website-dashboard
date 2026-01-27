@@ -54,6 +54,7 @@ import {
   MessageSquare,
   Sparkles,
   Settings2,
+  FileCheck,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -71,6 +72,7 @@ import { LocationsSettingsContent } from '@/components/dashboard/settings/Locati
 import { DayRateSettingsContent } from '@/components/dashboard/settings/DayRateSettingsContent';
 import { RoleAccessConfigurator } from '@/components/dashboard/settings/RoleAccessConfigurator';
 import { SmsTemplatesManager } from '@/components/dashboard/SmsTemplatesManager';
+import { FormsTemplatesContent } from '@/components/dashboard/settings/FormsTemplatesContent';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
@@ -104,7 +106,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | 'forms' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -750,6 +752,12 @@ export default function Settings() {
       description: 'Automated emails & texts per service',
       icon: Sparkles,
     },
+    forms: {
+      id: 'forms',
+      label: 'Forms',
+      description: 'Client agreements & waivers',
+      icon: FileCheck,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -877,6 +885,10 @@ export default function Settings() {
             <div className="space-y-6">
               <ServiceCommunicationFlowsCard />
             </div>
+          )}
+
+          {activeCategory === 'forms' && (
+            <FormsTemplatesContent />
           )}
 
           {activeCategory === 'users' && (
