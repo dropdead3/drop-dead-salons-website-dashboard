@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Copy,
   Check,
+  XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -56,6 +57,7 @@ export function QueueCard({
   };
 
   const getStatusBadge = () => {
+    // In-service appointments show time remaining
     if (variant === 'inService') {
       return (
         <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
@@ -65,6 +67,7 @@ export function QueueCard({
       );
     }
 
+    // Late arrivals get priority warning
     if (appointment.isLate) {
       return (
         <Badge variant="destructive" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
@@ -74,21 +77,39 @@ export function QueueCard({
       );
     }
 
-    if (variant === 'upcoming') {
-      return (
-        <Badge variant="outline" className="bg-muted/50 text-muted-foreground">
-          <Clock className="w-3 h-3 mr-1" />
-          {formatTime(appointment.start_time)}
-        </Badge>
-      );
+    // Show actual booking status based on appointment.status
+    switch (appointment.status) {
+      case 'confirmed':
+        return (
+          <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+            <CheckCircle2 className="w-3 h-3 mr-1" />
+            Confirmed
+          </Badge>
+        );
+      case 'cancelled':
+        return (
+          <Badge variant="destructive" className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+            <XCircle className="w-3 h-3 mr-1" />
+            Cancelled
+          </Badge>
+        );
+      case 'no_show':
+        return (
+          <Badge variant="destructive">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            No-Show
+          </Badge>
+        );
+      case 'booked':
+      case 'unknown':
+      default:
+        return (
+          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700">
+            <Clock className="w-3 h-3 mr-1" />
+            Unconfirmed
+          </Badge>
+        );
     }
-
-    return (
-      <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-        <CheckCircle2 className="w-3 h-3 mr-1" />
-        Confirmed
-      </Badge>
-    );
   };
 
   return (
@@ -96,6 +117,7 @@ export function QueueCard({
       "p-4 transition-all duration-200 hover:shadow-md",
       variant === 'inService' && "border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20",
       appointment.isLate && variant === 'waiting' && "border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20",
+      appointment.status === 'cancelled' && "opacity-60 border-red-200 dark:border-red-900",
     )}>
       <div className="flex flex-col gap-3">
         {/* Header: Time & Status */}
