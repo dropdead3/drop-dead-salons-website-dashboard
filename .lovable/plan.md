@@ -1,107 +1,148 @@
 
-# Reorganize Available Analytics in Sensible Order
 
-## Overview
+# Fix: Analytics Cards Not Toggling On
 
-Reorder the `PINNABLE_CARDS` array in `DashboardCustomizeMenu.tsx` to group cards logically by category, starting with Sales.
+## Problem
 
----
+When you toggle "Sales Overview" (and other cards) in the Available Analytics list, nothing happens. The card doesn't appear on the dashboard.
 
-## Current Order (Disorganized)
+## Root Cause
 
-```text
-1. Operations Stats
-2. Sales Dashboard
-3. Sales Overview
-4. Top Performers
-5. Revenue Breakdown
-6. Client Funnel
-7. Team Goals
-8. New Bookings
-9. Week Ahead Forecast
-10. Capacity Utilization
-11. Hiring Capacity
-12. Staffing Trends
-13. Stylist Workload
-```
+The toggle system tries to **update** visibility records in the database, but many analytics cards don't have records in the `dashboard_element_visibility` table yet.
 
----
+**Cards registered in database:**
+- sales_dashboard_bento
+- top_performers
+- revenue_breakdown
+- capacity_utilization
+- week_ahead_forecast
 
-## Proposed Order (Grouped by Category)
+**Cards missing from database (can't be toggled):**
+- sales_overview
+- operations_stats
+- client_funnel
+- team_goals
+- new_bookings
+- hiring_capacity
+- staffing_trends
+- stylist_workload
 
-```text
-SALES & REVENUE
-1. Sales Dashboard        - Primary sales view
-2. Sales Overview         - KPI summary
-3. Revenue Breakdown      - Service vs Product split
-4. Top Performers         - Stylist leaderboard
-
-FORECASTING & GOALS
-5. Week Ahead Forecast    - Revenue projections
-6. Team Goals             - Target tracking
-7. New Bookings           - Booking metrics
-
-CLIENTS
-8. Client Funnel          - Client retention/growth
-
-OPERATIONS & CAPACITY
-9. Operations Stats       - Daily operations overview
-10. Capacity Utilization  - Booking capacity metrics
-11. Stylist Workload      - Individual stylist capacity
-
-STAFFING
-12. Staffing Trends       - Team size over time
-13. Hiring Capacity       - Hiring needs analysis
-```
+When `handleTogglePinnedCard` runs, it calls an UPDATE query on non-existent rows, which silently fails.
 
 ---
 
-## Implementation
+## Solution
 
-Update the `PINNABLE_CARDS` array order in `DashboardCustomizeMenu.tsx`:
+Modify `handleTogglePinnedCard` in `DashboardCustomizeMenu.tsx` to **upsert** (insert if missing, update if exists) rather than just update.
+
+### Option A: Use existing `useAddVisibilityElement` hook (Recommended)
+
+Before toggling, check if the element exists. If not, register it first using the existing registration pattern:
 
 ```typescript
-const PINNABLE_CARDS = [
-  // Sales & Revenue
-  { id: 'sales_dashboard_bento', label: 'Sales Dashboard', icon: <LayoutDashboard /> },
-  { id: 'sales_overview', label: 'Sales Overview', icon: <DollarSign /> },
-  { id: 'revenue_breakdown', label: 'Revenue Breakdown', icon: <PieChart /> },
-  { id: 'top_performers', label: 'Top Performers', icon: <Trophy /> },
+const handleTogglePinnedCard = async (cardId: string) => {
+  const isPinned = isCardPinned(cardId);
+  const newIsVisible = !isPinned;
   
-  // Forecasting & Goals
-  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', icon: <TrendingUp /> },
-  { id: 'team_goals', label: 'Team Goals', icon: <Target /> },
-  { id: 'new_bookings', label: 'New Bookings', icon: <CalendarPlus /> },
+  // Get card metadata for registration
+  const card = PINNABLE_CARDS.find(c => c.id === cardId);
   
-  // Clients
-  { id: 'client_funnel', label: 'Client Funnel', icon: <Users /> },
+  // Check if element exists in visibility system
+  const elementExists = visibilityData?.some(v => v.element_key === cardId);
   
-  // Operations & Capacity
-  { id: 'operations_stats', label: 'Operations Stats', icon: <LayoutDashboard /> },
-  { id: 'capacity_utilization', label: 'Capacity Utilization', icon: <Gauge /> },
-  { id: 'stylist_workload', label: 'Stylist Workload', icon: <Briefcase /> },
+  if (!elementExists && newIsVisible && card) {
+    // Register the element first (creates entries for all roles)
+    await registerElement.mutateAsync({
+      elementKey: cardId,
+      elementName: card.label,
+      elementCategory: 'Analytics',
+    });
+  }
   
-  // Staffing
-  { id: 'staffing_trends', label: 'Staffing Trends', icon: <LineChart /> },
-  { id: 'hiring_capacity', label: 'Hiring Capacity', icon: <UserPlus /> },
-];
+  // Then toggle visibility for leadership roles
+  for (const role of leadershipRoles) {
+    await toggleVisibility.mutateAsync({
+      elementKey: cardId,
+      role,
+      isVisible: newIsVisible,
+    });
+  }
+  
+  // Update sectionOrder...
+};
 ```
+
+### Option B: Update toggle mutation to upsert
+
+Modify `useToggleDashboardVisibility` to use an upsert operation instead of update.
 
 ---
 
-## File to Modify
+## Implementation Steps
+
+1. **Add `useAddVisibilityElement` hook** to `DashboardCustomizeMenu.tsx`
+
+2. **Update `handleTogglePinnedCard`** to:
+   - Check if element exists in `visibilityData`
+   - If not, call `registerElement.mutateAsync()` first
+   - Then proceed with toggling visibility
+
+3. **Add category metadata** to `PINNABLE_CARDS` for proper registration:
+   ```typescript
+   const PINNABLE_CARDS = [
+     { id: 'sales_overview', label: 'Sales Overview', category: 'Sales', icon: ... },
+     { id: 'operations_stats', label: 'Operations Stats', category: 'Operations', icon: ... },
+     // etc.
+   ];
+   ```
+
+---
+
+## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Reorder `PINNABLE_CARDS` array |
+| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Import `useAddVisibilityElement`, update toggle logic to register missing elements first |
 
 ---
 
-## Result
+## Technical Details
 
-The Available Analytics list will display in a logical flow:
-- **Sales first** (most commonly viewed)
-- **Forecasting & Goals** (future-focused metrics)
-- **Clients** (retention and funnel)
-- **Operations** (day-to-day capacity)
-- **Staffing** (team management)
+The fix adds a pre-check before toggling:
+
+```typescript
+// In DashboardCustomizeMenu.tsx
+const registerElement = useAddVisibilityElement();
+
+const handleTogglePinnedCard = async (cardId: string) => {
+  const isPinned = isCardPinned(cardId);
+  const newIsVisible = !isPinned;
+  const card = PINNABLE_CARDS.find(c => c.id === cardId);
+  
+  // Check if this element has any visibility entries
+  const elementExists = visibilityData?.some(v => v.element_key === cardId);
+  
+  // If turning ON and element doesn't exist, register it first
+  if (!elementExists && newIsVisible && card) {
+    await registerElement.mutateAsync({
+      elementKey: cardId,
+      elementName: card.label,
+      elementCategory: card.category || 'Analytics',
+    });
+  }
+  
+  // Now toggle visibility for leadership roles
+  for (const role of leadershipRoles) {
+    await toggleVisibility.mutateAsync({
+      elementKey: cardId,
+      role,
+      isVisible: newIsVisible,
+    });
+  }
+  
+  // Rest of the function (updating sectionOrder)...
+};
+```
+
+This ensures any new pinnable card will be auto-registered on first toggle.
+
