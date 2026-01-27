@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, 
   Users, 
@@ -181,16 +181,20 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
 
   return (
     <div className="space-y-6">
-      {/* Category Tabs */}
-      <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-        <TabsList className="w-full md:w-auto">
-          {reportCategories.map((cat) => (
-            <TabsTrigger key={cat.id} value={cat.id} className="gap-2">
-              <cat.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{cat.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* Category Label + Sub-tabs */}
+      <div className="space-y-2">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Report Category
+        </span>
+        <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+          <SubTabsList>
+            {reportCategories.map((cat) => (
+              <SubTabsTrigger key={cat.id} value={cat.id}>
+                <cat.icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{cat.label}</span>
+              </SubTabsTrigger>
+            ))}
+          </SubTabsList>
 
         <TabsContent value="sales" className="mt-6">
           {renderReportCards(salesReports)}
@@ -211,7 +215,8 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
         <TabsContent value="financial" className="mt-6">
           {renderReportCards(financialReports)}
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
 
       {/* Recent Reports */}
       <RecentReports />
