@@ -11,9 +11,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface OperationsQuickStatsProps {
   locationId?: string;
+  hideRevenue?: boolean;
 }
 
-export function OperationsQuickStats({ locationId }: OperationsQuickStatsProps) {
+export function OperationsQuickStats({ locationId, hideRevenue }: OperationsQuickStatsProps) {
   const { data: queueData, isLoading } = useTodaysQueue(locationId);
 
   const stats = [
@@ -72,7 +73,7 @@ export function OperationsQuickStats({ locationId }: OperationsQuickStatsProps) 
   return (
     <div className="space-y-4">
       <h2 className="font-display text-sm tracking-wide">TODAY'S OPERATIONS</h2>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className={`grid grid-cols-2 ${hideRevenue ? 'lg:grid-cols-4' : 'lg:grid-cols-5'} gap-4`}>
         {stats.map((stat) => (
           <Card key={stat.label} className="p-4">
             <div className="flex items-center gap-3">
@@ -87,20 +88,22 @@ export function OperationsQuickStats({ locationId }: OperationsQuickStatsProps) 
           </Card>
         ))}
         
-        {/* Revenue Card */}
-        <Card className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-600/10 flex items-center justify-center rounded">
-              <DollarSign className="w-5 h-5 text-green-600" />
+        {/* Revenue Card - Hidden for Front Desk */}
+        {!hideRevenue && (
+          <Card className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-600/10 flex items-center justify-center rounded">
+                <DollarSign className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-display text-green-700 dark:text-green-400">
+                  ${queueData?.stats.totalRevenue?.toLocaleString() ?? 0}
+                </p>
+                <p className="text-xs text-green-600/80 dark:text-green-500 font-sans">Today's Revenue</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-display text-green-700 dark:text-green-400">
-                ${queueData?.stats.totalRevenue?.toLocaleString() ?? 0}
-              </p>
-              <p className="text-xs text-green-600/80 dark:text-green-500 font-sans">Today's Revenue</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
     </div>
   );
