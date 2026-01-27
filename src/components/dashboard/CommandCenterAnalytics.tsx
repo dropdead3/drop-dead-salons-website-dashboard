@@ -3,7 +3,7 @@ import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
-import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
+
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 
 import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
@@ -40,11 +40,6 @@ export function CommandCenterAnalytics() {
   const dateFrom = format(subDays(today, 30), 'yyyy-MM-dd');
   const dateTo = format(today, 'yyyy-MM-dd');
   
-  // Top-level access: account owner (primary owner), super admin, and DOO (admin role) only
-  const isTopLeadership = profile?.is_primary_owner || 
-    profile?.is_super_admin || 
-    roles.includes('super_admin') ||
-    roles.includes('admin');
   
   // Check if any analytics cards are visible for leadership roles
   const leadershipRoles = ['super_admin', 'admin', 'manager'];
@@ -62,7 +57,7 @@ export function CommandCenterAnalytics() {
   const hasNewBookings = isElementVisible('new_bookings');
   const hasForecast = isElementVisible('week_ahead_forecast');
   const hasCapacity = isElementVisible('capacity_utilization');
-  const hasWebsiteAnalytics = isElementVisible('website_analytics') && isTopLeadership;
+  
   const hasClientEngineOverview = isElementVisible('client_engine_overview');
   
   const hasTeamOverview = isElementVisible('team_overview');
@@ -78,7 +73,7 @@ export function CommandCenterAnalytics() {
   const hasStylistWorkload = isElementVisible('stylist_workload');
   
   const hasAnyPinned = hasSalesOverview || hasNewBookings || hasForecast || hasCapacity || 
-    hasWebsiteAnalytics || hasClientEngineOverview || 
+    hasClientEngineOverview || 
     hasTeamOverview || hasStylistsOverview || hasTopPerformers || hasRevenueBreakdown ||
     hasClientFunnel || hasTeamGoals || hasHiringCapacity ||
     hasStaffingTrends || hasStylistWorkload;
@@ -210,12 +205,6 @@ export function CommandCenterAnalytics() {
         </VisibilityGate>
       )}
       
-      {/* Website Analytics - Top Leadership Only */}
-      {hasWebsiteAnalytics && (
-        <VisibilityGate elementKey="website_analytics">
-          <WebsiteAnalyticsWidget />
-        </VisibilityGate>
-      )}
       
       {/* Client Engine Overview */}
       {hasClientEngineOverview && (
