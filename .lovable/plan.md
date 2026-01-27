@@ -1,136 +1,187 @@
 
+# Analytics & Reports Hub: Unified Data Dashboard
 
-# Fix Dashboard Page Padding Consistency
+## Overview
 
-## Problem Identified
-
-The Reports Hub page (and potentially other newly created pages) lacks padding because the `DashboardLayout` component does not apply padding to its `{children}` container. The padding must be added explicitly by each page.
-
-Looking at the screenshot, the content is flush against the left edge with no breathing room.
+Transform the Reports Hub into a **unified Analytics & Reports center** that consolidates all analytics pages as tabs within a single cohesive experience. This eliminates navigation fragmentation and creates a single source of truth for business intelligence.
 
 ## Current State
 
-| Page | Padding Applied? |
-|------|------------------|
-| `SalesDashboard.tsx` | Yes - `p-4 md:p-6 lg:p-8` |
-| `OperationalAnalytics.tsx` | Yes - `p-6 lg:p-8` |
-| `FeatureFlags.tsx` | Yes - `p-6 lg:p-8 max-w-7xl mx-auto` |
-| **`ReportsHub.tsx`** | **No - only `space-y-6`** |
+| Page | Route | Purpose |
+|------|-------|---------|
+| Sales Dashboard | `/dashboard/admin/sales` | Revenue, stylist performance |
+| Operational Analytics | `/dashboard/admin/operational-analytics` | Appointments, capacity, clients |
+| Marketing Analytics | `/dashboard/admin/marketing` | Campaigns, leads, ROI |
+| Reports Hub | `/dashboard/admin/reports` | PDF/CSV exports |
+| Program Analytics | `/dashboard/admin/program-analytics` | Client Engine metrics |
 
-## Root Cause
+**Problem:** 5 separate pages with overlapping filters, redundant navigation, and inconsistent layouts.
 
-The `DashboardLayout.tsx` component (lines 1004-1012) wraps children like this:
+## Proposed Architecture
 
+```text
+/dashboard/admin/analytics ← New unified route (or rename /reports to /analytics)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ANALYTICS & REPORTS                        [Location ▾] [Date Range]  │
+├─────────────────────────────────────────────────────────────────────────┤
+│  [Sales] [Operations] [Marketing] [Program] [Reports]                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Selected Tab Content                                            │   │
+│  │  (e.g., Sales: Revenue charts, stylist leaderboard, trends)      │   │
+│  │                                                                   │   │
+│  │  Each tab can have its own sub-tabs if needed                    │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+## Tab Structure
+
+| Tab | Content Source | Sub-tabs (if any) |
+|-----|---------------|-------------------|
+| **Sales** | Current SalesDashboard.tsx | Overview, Goals, Staff Performance, Forecasting |
+| **Operations** | Current OperationalAnalytics.tsx | Overview, Appointments, Clients, Staffing, Utilization |
+| **Marketing** | Current MarketingAnalytics.tsx | Overview, Campaigns, Sources |
+| **Program** | Current ProgramAnalytics.tsx | Enrollment, Completion, Cohorts |
+| **Reports** | Current ReportsHub exports | Sales, Staff, Clients, Operations, Financial |
+
+## Navigation Changes
+
+### Before (Current Sidebar)
+```text
+Stats & Leaderboard
+├── My Stats
+├── My Clients
+├── Leaderboard
+├── Sales Dashboard        ← Separate page
+├── Operational Analytics  ← Separate page
+├── Marketing Analytics    ← Separate page
+└── Reports Hub           ← Separate page
+```
+
+### After (Renamed Section)
+```text
+Stats & Analytics
+├── My Stats
+├── My Clients
+├── Leaderboard
+└── Analytics Hub         ← Single unified entry point
+```
+
+## Implementation Approach
+
+### Phase 1: Create Unified Analytics Page
+
+1. **Rename and repurpose ReportsHub.tsx** → `AnalyticsHub.tsx`
+2. **Update route** from `/dashboard/admin/reports` to `/dashboard/admin/analytics`
+3. **Create shared filter bar** with location and date range that passes to all tabs
+4. **Implement tab-based navigation** using URL params (`?tab=sales`, `?tab=operations`, etc.)
+
+### Phase 2: Extract Tab Content Components
+
+Move the content from each current page into dedicated tab content components:
+
+| Current File | Becomes |
+|--------------|---------|
+| `SalesDashboard.tsx` | `src/components/dashboard/analytics/SalesTabContent.tsx` |
+| `OperationalAnalytics.tsx` | Already modular → Keep as `OperationalAnalytics` content components |
+| `MarketingAnalytics.tsx` | `src/components/dashboard/analytics/MarketingTabContent.tsx` |
+| `ProgramAnalytics.tsx` | `src/components/dashboard/analytics/ProgramTabContent.tsx` |
+| `ReportsHub.tsx` (exports) | `src/components/dashboard/analytics/ReportsTabContent.tsx` |
+
+### Phase 3: Update Routing and Navigation
+
+1. **Add redirect routes** for old URLs to preserve bookmarks:
+   - `/dashboard/admin/sales` → `/dashboard/admin/analytics?tab=sales`
+   - `/dashboard/admin/operational-analytics` → `/dashboard/admin/analytics?tab=operations`
+   - `/dashboard/admin/marketing` → `/dashboard/admin/analytics?tab=marketing`
+   - `/dashboard/admin/program-analytics` → `/dashboard/admin/analytics?tab=program`
+   - `/dashboard/admin/reports` → `/dashboard/admin/analytics?tab=reports`
+
+2. **Update sidebar navigation** to single "Analytics Hub" entry
+
+3. **Rename sidebar section** from "Stats & Leaderboard" to "Stats & Analytics"
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/pages/dashboard/admin/AnalyticsHub.tsx` | New unified page with tab navigation |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Extracted sales content |
+| `src/components/dashboard/analytics/MarketingTabContent.tsx` | Extracted marketing content |
+| `src/components/dashboard/analytics/ProgramTabContent.tsx` | Extracted program content |
+| `src/components/dashboard/analytics/ReportsTabContent.tsx` | Export functionality |
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add new route, add redirects for old routes |
+| `src/components/dashboard/DashboardLayout.tsx` | Update sidebar nav items, rename section |
+| `src/hooks/useSidebarLayout.ts` | Update default link order |
+
+## Files to Keep (For Now)
+
+The original page files can be kept as simple redirects or removed after confirming the new structure works. This provides a safe migration path.
+
+## Shared Components
+
+The new Analytics Hub will leverage these existing components:
+
+- **Filter Bar**: Location selector + Date range tabs (already exist in each page)
+- **Command Center Toggle**: For visibility management
+- **Tab-specific Content**: Reuse all existing charts, cards, and visualizations
+
+## Benefits
+
+1. **Single entry point** - One place for all business intelligence
+2. **Consistent filtering** - Location and date range apply across all tabs
+3. **Reduced navigation** - Fewer sidebar items, cleaner menu
+4. **Better discoverability** - Users see all analytics options at once
+5. **Easier maintenance** - Shared layout and filter logic
+6. **URL deep-linking** - `?tab=sales&subtab=forecasting` preserves state
+
+## Technical Details
+
+### URL State Management
 ```tsx
-<div className="flex-1">
-  {children}
-</div>
+const [searchParams, setSearchParams] = useSearchParams();
+const activeTab = searchParams.get('tab') || 'sales';
+const subTab = searchParams.get('subtab') || 'overview';
 ```
 
-No default padding is applied, so every page must add its own padding wrapper.
-
-## Solution Options
-
-### Option A: Fix at Page Level (Recommended)
-Add padding to `ReportsHub.tsx` to match existing dashboard pages.
-
-**Pros:**
-- Quick fix
-- Follows existing pattern
-- No risk of breaking other pages
-
-**Cons:**
-- Must remember to add padding to future pages
-- Inconsistent if forgotten
-
-### Option B: Fix at Layout Level
-Add default padding to `DashboardLayout.tsx` children wrapper.
-
-**Pros:**
-- Consistent across all pages automatically
-- Future pages get padding by default
-
-**Cons:**
-- May break pages that intentionally have edge-to-edge layouts (like schedule views)
-- Requires auditing all existing pages
-- Memory note mentions "Global dashboard padding was reverted to a page-specific strategy to support edge-to-edge layouts"
-
-## Recommended Approach: Option A
-
-Based on the memory note that mentions "Global dashboard padding was reverted to a page-specific strategy to support edge-to-edge layouts", the page-level approach is the established pattern.
-
-## Implementation
-
-### File: `src/pages/dashboard/admin/ReportsHub.tsx`
-
-Change line 187 from:
+### Shared Filter Context (Optional Enhancement)
 ```tsx
-<div className="space-y-6">
-```
-
-To:
-```tsx
-<div className="p-4 md:p-6 lg:p-8 space-y-6">
-```
-
-This matches the pattern used in `SalesDashboard.tsx` which has:
-- `p-4` for mobile (16px)
-- `md:p-6` for tablets (24px)  
-- `lg:p-8` for desktop (32px)
-
-## Visual Result
-
-Before:
-```
-|Content flush to edge
-|No breathing room
-```
-
-After:
-```
-|  Content with proper padding
-|  Comfortable spacing from edges
-```
-
-## Preventing Future Issues
-
-To avoid this in future pages, consider:
-1. Creating a reusable wrapper component like `DashboardPageWrapper`
-2. Adding a code comment in `DashboardLayout.tsx` reminding developers to add padding
-3. Using a snippet/template for new dashboard pages
-
-### Optional: Create a Wrapper Component
-
-```tsx
-// src/components/dashboard/DashboardPageWrapper.tsx
-export function DashboardPageWrapper({ 
-  children, 
-  className 
-}: { 
-  children: React.ReactNode; 
-  className?: string;
-}) {
-  return (
-    <div className={cn("p-4 md:p-6 lg:p-8", className)}>
-      {children}
-    </div>
-  );
+interface AnalyticsFilters {
+  locationId: string;
+  dateRange: '7d' | '30d' | '90d' | 'mtd' | 'ytd';
+  dateFrom?: Date;
+  dateTo?: Date;
 }
+
+// Passed to all tab content components
+<SalesTabContent filters={filters} />
+<OperationsTabContent filters={filters} />
 ```
 
-This would make future pages simpler:
+### Tab Definition
 ```tsx
-<DashboardLayout>
-  <DashboardPageWrapper className="space-y-6">
-    {/* page content */}
-  </DashboardPageWrapper>
-</DashboardLayout>
+const analyticsCategories = [
+  { id: 'sales', label: 'Sales', icon: DollarSign },
+  { id: 'operations', label: 'Operations', icon: BarChart3 },
+  { id: 'marketing', label: 'Marketing', icon: TrendingUp },
+  { id: 'program', label: 'Program', icon: Target },
+  { id: 'reports', label: 'Reports', icon: FileText },
+];
 ```
 
 ## Summary
 
-| Task | File |
-|------|------|
-| Add padding classes | `src/pages/dashboard/admin/ReportsHub.tsx` |
-| (Optional) Create wrapper component | `src/components/dashboard/DashboardPageWrapper.tsx` |
-
+This consolidation creates a premium, unified analytics experience while:
+- Reusing all existing visualization components
+- Maintaining backward compatibility with redirects
+- Simplifying the navigation structure
+- Providing a consistent user experience across all analytics domains
