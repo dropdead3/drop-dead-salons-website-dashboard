@@ -414,6 +414,9 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                 <span>Total</span>
                 <span className="font-mono tabular-nums">${calculatedTotalPrice}</span>
               </div>
+              <p className="text-xs text-muted-foreground text-center pt-1">
+                Estimated price, not including overages
+              </p>
             </div>
           )}
         </div>
