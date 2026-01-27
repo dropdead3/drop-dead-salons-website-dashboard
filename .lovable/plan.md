@@ -1,167 +1,142 @@
 
-# Add Pinned Analytics Management to Customize Dashboard Drawer
+# Allow Pinned Analytics to Move Among Dashboard Sections
 
 ## Overview
 
-Enable users to view, unpin, and rearrange pinned analytics cards directly from the "Customize Dashboard" drawer instead of requiring navigation to the Analytics Hub. This creates a unified dashboard configuration experience.
+Transform pinned analytics cards from being contained within a single "Command Center" section to being independent, reorderable items that can be positioned anywhere among other dashboard sections (like Quick Actions, Announcements, Operations Stats, etc.).
 
 ---
 
-## Current State
-
-**How pinning works today:**
-- Analytics cards are pinned via the gear icon (CommandCenterVisibilityToggle) in the Analytics Hub
-- Pinned state is stored in the `dashboard_element_visibility` table with `is_visible: true` for leadership roles
-- The Customize Dashboard drawer shows a "PINNED ANALYTICS" section that only links to the Analytics Hub
-- There's no way to unpin or reorder cards from the drawer
-
-**Current drawer structure:**
-```text
-SECTIONS
-├── Command Center ☑
-├── Operations Stats ☑
-├── Announcements ☑
-└── ...
-
-WIDGETS
-├── What's New ☑
-├── Team Birthdays ☑
-└── ...
-
-PINNED ANALYTICS
-└── "Pin cards from the Analytics Hub..." → [Open Analytics Hub]
-```
-
----
-
-## Solution
-
-Replace the static "PINNED ANALYTICS" section with a dynamic, interactive list that:
-1. Shows all currently pinned analytics cards
-2. Allows toggling (unpinning) each card via a switch
-3. Supports drag-and-drop reordering (order stored in user's layout)
-4. Still provides a link to the Analytics Hub for pinning new cards
-
----
-
-## Visual Design
+## Current Architecture
 
 ```text
-PINNED ANALYTICS
-├── ⋮⋮ Sales Dashboard        ☑
-├── ⋮⋮ Top Performers         ☑
-├── ⋮⋮ Revenue Breakdown      ☑
-└── ⋮⋮ Capacity Utilization   ☐  (disabled = unpinned)
-
-[Open Analytics Hub to pin more cards]
+Dashboard
+├── Quick Actions
+├── Command Center          ← Single section containing all pinned cards
+│   ├── [Filter Bar]
+│   ├── Sales Dashboard
+│   ├── Top Performers
+│   └── Revenue Breakdown
+├── Operations Stats
+├── Announcements
+└── Widgets
 ```
 
-Each item has:
-- Drag handle (⋮⋮) for reordering
-- Icon representing the card type
-- Label (card name)
-- Toggle switch to unpin
+**Problem:** All pinned analytics are bundled inside "Command Center". Users can reorder cards within it, but cannot position individual cards among other sections.
+
+---
+
+## Proposed Architecture
+
+```text
+Dashboard
+├── Quick Actions
+├── [Pinned] Sales Dashboard    ← Analytics card as independent section
+├── Operations Stats
+├── [Pinned] Top Performers     ← Can be placed anywhere
+├── Announcements
+├── [Pinned] Revenue Breakdown
+└── Widgets
+```
+
+**Solution:** Treat each pinned analytics card as a standalone section that can be reordered alongside other sections.
+
+---
+
+## Implementation Approach
+
+### Key Changes
+
+1. **Merge pinned cards into sectionOrder**: Instead of keeping pinned cards separate, include them directly in `sectionOrder` alongside regular sections
+2. **Remove the "Command Center" section concept**: The "Command Center" becomes just a label/header, not a container
+3. **Update Customize Drawer**: Show pinned cards inline with sections for reordering
+4. **Shared Filter Bar**: Move the filter bar to render at the top when any analytics cards are visible (independent of specific cards)
+
+---
+
+## Data Model Changes
+
+### Current `DashboardLayout`:
+```typescript
+{
+  sections: ['quick_actions', 'command_center', 'operations_stats', ...],
+  sectionOrder: ['quick_actions', 'command_center', 'operations_stats', ...],
+  pinnedCards: ['sales_dashboard_bento', 'top_performers'],  // Separate array
+  widgets: [...],
+}
+```
+
+### New `DashboardLayout`:
+```typescript
+{
+  sections: ['quick_actions', 'operations_stats', ...],  // No more 'command_center'
+  sectionOrder: [
+    'quick_actions', 
+    'pinned:sales_dashboard_bento',  // Pinned cards with prefix
+    'operations_stats',
+    'pinned:top_performers',
+    'announcements',
+  ],
+  pinnedCards: ['sales_dashboard_bento', 'top_performers'],  // Still tracked for visibility
+  widgets: [...],
+}
+```
+
+Using a `pinned:` prefix allows distinguishing analytics cards from regular sections in the unified order.
 
 ---
 
 ## Implementation Steps
 
-### Step 1: Define Available Pinnable Cards Configuration
+### Step 1: Update `useDashboardLayout.ts`
 
-Create a configuration array of all pinnable analytics cards with their metadata:
+- Add helper functions to identify pinned card entries in `sectionOrder`
+- Update default layout to remove `command_center` as a section
+- Add migration logic to convert existing layouts (insert pinned cards into sectionOrder)
 
-```typescript
-const PINNABLE_CARDS = [
-  { id: 'sales_dashboard_bento', label: 'Sales Dashboard', icon: <LayoutDashboard /> },
-  { id: 'sales_overview', label: 'Sales Overview', icon: <DollarSign /> },
-  { id: 'top_performers', label: 'Top Performers', icon: <Trophy /> },
-  { id: 'revenue_breakdown', label: 'Revenue Breakdown', icon: <PieChart /> },
-  { id: 'client_funnel', label: 'Client Funnel', icon: <Users /> },
-  { id: 'team_goals', label: 'Team Goals', icon: <Target /> },
-  { id: 'new_bookings', label: 'New Bookings', icon: <CalendarPlus /> },
-  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', icon: <TrendingUp /> },
-  { id: 'capacity_utilization', label: 'Capacity Utilization', icon: <Gauge /> },
-  { id: 'hiring_capacity', label: 'Hiring Capacity', icon: <UserPlus /> },
-  { id: 'staffing_trends', label: 'Staffing Trends', icon: <LineChart /> },
-  { id: 'stylist_workload', label: 'Stylist Workload', icon: <Briefcase /> },
-];
-```
+### Step 2: Update `DashboardHome.tsx`
 
-### Step 2: Create SortablePinnedCardItem Component
+- Modify the section rendering loop to handle pinned card IDs
+- When encountering a `pinned:*` entry, render the corresponding analytics card
+- Render the shared filter bar at the top when any pinned cards exist
 
-Create a new component similar to `SortableWidgetItem` for rendering draggable pinned card items:
+### Step 3: Update `DashboardCustomizeMenu.tsx`
 
-```typescript
-// src/components/dashboard/SortablePinnedCardItem.tsx
-interface SortablePinnedCardItemProps {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  isPinned: boolean;
-  onToggle: () => void;
-}
-```
+- Merge pinned cards into the sections list for unified drag-and-drop
+- Show pinned cards with a distinct visual treatment (badge/icon)
+- Allow toggling visibility and reordering in a single list
 
-### Step 3: Update DashboardCustomizeMenu
+### Step 4: Remove `CommandCenterAnalytics` as a Section
 
-Replace the static "PINNED ANALYTICS" section with an interactive list:
-
-1. **Fetch visibility data** using `useDashboardVisibility()` hook
-2. **Determine which cards are pinned** by checking if `is_visible` is true for leadership roles
-3. **Compute ordered list** from `layout.pinnedCards` (user's saved order) + any newly pinned cards
-4. **Render sortable list** with toggle switches for unpinning
-5. **Handle toggle** by calling `useToggleDashboardVisibility` for all leadership roles
-6. **Handle drag end** by saving new order to `layout.pinnedCards`
-
-### Step 4: Update CommandCenterAnalytics to Respect Order
-
-The Command Center should render cards in the order specified by `layout.pinnedCards` rather than a fixed order:
-
-```typescript
-// Get user's preferred order
-const pinnedCardsOrder = layout.pinnedCards || [];
-
-// Sort visible cards by saved order
-const orderedPinnedCards = pinnedCardsOrder
-  .filter(cardId => isElementVisible(cardId))
-  .concat(
-    // Add any newly pinned cards not in saved order
-    allVisibleCards.filter(id => !pinnedCardsOrder.includes(id))
-  );
-```
+- The component will be refactored into individual card renderers
+- Filter bar will be rendered separately at the top of the dashboard
+- Remove the `command_center` entry from sections configuration
 
 ---
 
-## Data Flow
-
-### Unpinning a Card (from drawer)
+## Visual Design - Customize Drawer
 
 ```text
-User toggles switch OFF
-      │
-      ▼
-DashboardCustomizeMenu calls useToggleDashboardVisibility
-      │
-      ▼
-Updates dashboard_element_visibility table (is_visible = false for leadership roles)
-      │
-      ▼
-React Query invalidates cache → CommandCenterAnalytics re-renders → Card disappears
-```
+SECTIONS & ANALYTICS
 
-### Reordering Cards (from drawer)
+⋮⋮ Quick Actions           ☑   [Section]
+⋮⋮ Sales Dashboard         ☑   [Analytics - pinned]
+⋮⋮ Operations Stats        ☑   [Section]
+⋮⋮ Top Performers          ☑   [Analytics - pinned]
+⋮⋮ Announcements           ☑   [Section]
+⋮⋮ Revenue Breakdown       ☑   [Analytics - pinned]
+⋮⋮ Widgets                 ☑   [Section]
 
-```text
-User drags card to new position
-      │
-      ▼
-DashboardCustomizeMenu calls useSaveDashboardLayout with updated pinnedCards array
-      │
-      ▼
-Updates user_preferences.dashboard_layout JSON
-      │
-      ▼
-CommandCenterAnalytics uses new order to render cards
+───────────────────────────────────
+UNPINNED ANALYTICS
+(Pin from Analytics Hub)
+
+  Client Funnel             ☐
+  Team Goals                ☐
+  Hiring Capacity           ☐
+  ...
+
+[Open Analytics Hub]
 ```
 
 ---
@@ -170,59 +145,78 @@ CommandCenterAnalytics uses new order to render cards
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/SortablePinnedCardItem.tsx` | **NEW** - Sortable item component for pinned analytics cards |
-| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Add interactive pinned cards list with drag-and-drop and toggle |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | Respect pinnedCards order from layout when rendering |
-| `src/hooks/useDashboardLayout.ts` | Ensure pinnedCards is properly parsed and saved |
+| `src/hooks/useDashboardLayout.ts` | Add pinned card helpers, update default layout, add migration logic |
+| `src/pages/dashboard/DashboardHome.tsx` | Handle `pinned:*` entries in section loop, render filter bar at top |
+| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Merge sections and pinned cards into unified sortable list |
+| `src/components/dashboard/CommandCenterAnalytics.tsx` | Refactor to export individual card renderers or remove entirely |
 
 ---
 
 ## Technical Details
 
-### Determining Pinned Status
-
-A card is considered "pinned" if all leadership roles (`super_admin`, `admin`, `manager`) have `is_visible: true` for that element key in `dashboard_element_visibility`:
+### Identifying Pinned Card Entries
 
 ```typescript
-const isPinned = (elementKey: string) => {
-  const leadershipRoles = ['super_admin', 'admin', 'manager'];
-  return leadershipRoles.every(role => 
-    visibilityData?.find(v => v.element_key === elementKey && v.role === role)?.is_visible ?? false
-  );
-};
+const isPinnedCardEntry = (id: string) => id.startsWith('pinned:');
+const getPinnedCardId = (id: string) => id.replace('pinned:', '');
+const toPinnedEntry = (cardId: string) => `pinned:${cardId}`;
 ```
 
-### Saving Order to Layout
-
-When the user reorders pinned cards, save the new order to `layout.pinnedCards`:
+### Rendering Logic in DashboardHome
 
 ```typescript
-const handlePinnedCardDragEnd = (event: DragEndEvent) => {
-  const { active, over } = event;
-  if (!over || active.id === over.id) return;
-  
-  const oldIndex = orderedPinnedCards.indexOf(active.id as string);
-  const newIndex = orderedPinnedCards.indexOf(over.id as string);
-  const newOrder = arrayMove(orderedPinnedCards, oldIndex, newIndex);
-  
-  saveLayout.mutate({ ...layout, pinnedCards: newOrder });
-};
-```
-
-### Unpinning a Card
-
-When the user toggles a card OFF, update the visibility table (not the layout):
-
-```typescript
-const handleUnpinCard = async (cardId: string) => {
-  const leadershipRoles: AppRole[] = ['super_admin', 'admin', 'manager'];
-  for (const role of leadershipRoles) {
-    await toggleVisibility.mutateAsync({
-      elementKey: cardId,
-      role,
-      isVisible: false,
-    });
+orderedSectionIds.map(sectionId => {
+  // Check if this is a pinned analytics card
+  if (isPinnedCardEntry(sectionId)) {
+    const cardId = getPinnedCardId(sectionId);
+    if (!isCardPinned(cardId)) return null;
+    return <PinnedCardRenderer key={sectionId} cardId={cardId} filters={sharedFilters} />;
   }
+  
+  // Regular section
+  if (!layout.sections.includes(sectionId)) return null;
+  const component = sectionComponents[sectionId];
+  return component ? <Fragment key={sectionId}>{component}</Fragment> : null;
+});
+```
+
+### Filter Bar Placement
+
+The shared filter bar renders at the top of the dashboard (above all sections) when any pinned cards are visible:
+
+```typescript
+{hasPinnedAnalytics && (
+  <div className="flex items-center gap-3 mb-6">
+    <LocationSelect value={locationId} onChange={setLocationId} />
+    <DateRangeSelect value={dateRange} onChange={setDateRange} />
+  </div>
+)}
+```
+
+---
+
+## Migration Strategy
+
+For existing users with saved layouts:
+
+```typescript
+// In useDashboardLayout hook
+const migrateLayout = (layout: DashboardLayout): DashboardLayout => {
+  // If sectionOrder contains 'command_center', migrate
+  if (layout.sectionOrder.includes('command_center')) {
+    const insertIndex = layout.sectionOrder.indexOf('command_center');
+    
+    // Remove command_center from sections and sectionOrder
+    const newSectionOrder = layout.sectionOrder.filter(id => id !== 'command_center');
+    const newSections = layout.sections.filter(id => id !== 'command_center');
+    
+    // Insert pinned cards at the command_center position
+    const pinnedEntries = (layout.pinnedCards || []).map(id => `pinned:${id}`);
+    newSectionOrder.splice(insertIndex, 0, ...pinnedEntries);
+    
+    return { ...layout, sectionOrder: newSectionOrder, sections: newSections };
+  }
+  return layout;
 };
 ```
 
@@ -230,16 +224,16 @@ const handleUnpinCard = async (cardId: string) => {
 
 ## Benefits
 
-1. **Unified Experience** - Manage all dashboard customization from one drawer
-2. **Quick Unpinning** - Remove cards without navigating to Analytics Hub
-3. **Custom Order** - Users can arrange pinned cards in their preferred sequence
-4. **Consistent UI** - Matches existing Sections and Widgets patterns in the drawer
-5. **Preserved Navigation** - Still provides link to Analytics Hub for discovering/pinning new cards
+1. **Full Flexibility**: Place any analytics card anywhere among dashboard sections
+2. **Unified Ordering**: Single drag-and-drop list manages all dashboard elements
+3. **Simpler Mental Model**: No "container within container" concept
+4. **Consistent UX**: Same interaction pattern for sections and analytics cards
 
 ---
 
 ## Edge Cases
 
-- **No pinned cards**: Show helpful message "No analytics cards pinned yet" with link to Analytics Hub
-- **New cards pinned externally**: Cards pinned from Analytics Hub appear at the end of the list
-- **Order persistence**: Order is saved per-user in `user_preferences.dashboard_layout.pinnedCards`
+- **New pinned card**: Added to end of sectionOrder as `pinned:{cardId}`
+- **Unpinned card**: Entry removed from sectionOrder when visibility is toggled off
+- **Existing users**: Migration converts `command_center` position to inline pinned cards
+- **No pinned cards**: Filter bar not shown, dashboard renders only regular sections
