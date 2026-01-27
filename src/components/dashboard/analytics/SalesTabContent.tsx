@@ -48,6 +48,7 @@ import { SalesReportPDF } from '@/components/dashboard/sales/SalesReportPDF';
 import { CommissionTiersEditor } from '@/components/dashboard/sales/CommissionTiersEditor';
 import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
 import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
+import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
@@ -430,16 +431,19 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </TabsContent>
 
         <TabsContent value="forecasting" className="mt-6 space-y-6">
-          <RevenueForecast 
-            dailyData={chartData.map(d => ({ date: d.dateLabel, revenue: d.totalRevenue || 0 }))} 
-            monthlyTarget={goals?.monthlyTarget || 50000} 
-            isLoading={trendLoading}
-          />
-          <HistoricalComparison 
-            currentDateFrom={filters.dateFrom} 
-            currentDateTo={filters.dateTo} 
-            locationId={locationFilter}
-          />
+          <ForecastingCard />
+          <div className="grid lg:grid-cols-2 gap-6">
+            <RevenueForecast 
+              dailyData={chartData.map(d => ({ date: d.dateLabel, revenue: d.totalRevenue || 0 }))} 
+              monthlyTarget={goals?.monthlyTarget || 50000} 
+              isLoading={trendLoading}
+            />
+            <HistoricalComparison 
+              currentDateFrom={filters.dateFrom} 
+              currentDateTo={filters.dateTo} 
+              locationId={locationFilter}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="commission" className="mt-6 space-y-6">
