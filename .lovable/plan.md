@@ -1,185 +1,104 @@
 
-# Move Remaining Command Center Cards to Analytics Hub
 
-## Current State Analysis
+# Move Forecasting to Analytics Hub Sales Page
 
-The Command Center (`DashboardHome.tsx`) still contains these leadership-only widgets that should be moved to the Analytics Hub:
+## Current State
 
-| Widget | Current Location (Line) | Target Analytics Hub Tab | Element Key |
-|--------|------------------------|-------------------------|-------------|
-| `WebsiteAnalyticsWidget` | Lines 441-446 | Marketing | `website_analytics` |
-| `ClientEngineOverview` | Lines 450-452 | Program | `client_engine_overview` |
-| `OnboardingTrackerOverview` | Lines 453-455 | Operations > Staffing | `onboarding_overview` |
-| `StaffOverviewCard` (Team Overview) | Lines 462-464 | Operations > Staffing | `team_overview` |
-| `StylistsOverviewCard` | Lines 465-467 | Operations > Staffing | `stylists_overview` |
+| Component | Location | Description |
+|-----------|----------|-------------|
+| `ForecastingCard` | Command Center (via CommandCenterAnalytics.tsx) | Full-featured: 4 time periods (Tomorrow/7/30/60 days), bar charts, location filter, click-to-view appointments |
+| `RevenueForecast` | Analytics Hub > Sales > Forecasting tab | Simpler: Month-end projection with progress bar and trend line |
+| `HistoricalComparison` | Analytics Hub > Sales > Forecasting tab | Year-over-year comparison |
+
+## Problem
+
+The Analytics Hub's "Forecasting" sub-tab has a simpler `RevenueForecast` component, while the Command Center has the richer `ForecastingCard`. This creates redundancy and inconsistency.
+
+## Solution
+
+Consolidate by adding the `ForecastingCard` to the Analytics Hub Sales > Forecasting tab as the primary forecasting tool, keeping `RevenueForecast` as a supplementary month-end projection view.
 
 ## Implementation Plan
 
-### Phase 1: Update Analytics Hub Tabs with New Content
+### Phase 1: Enhance Forecasting Tab in Analytics Hub
 
-#### 1.1 Marketing Tab - Add Website Analytics
+**File: `src/components/dashboard/analytics/SalesTabContent.tsx`**
 
-**File: `src/components/dashboard/analytics/MarketingTabContent.tsx`**
+Update the Forecasting tab content (lines 432-443) to include:
+1. The full `ForecastingCard` component at the top
+2. Keep `RevenueForecast` as a secondary "Month-End Projection" card
+3. Keep `HistoricalComparison` for year-over-year insights
 
-Add the `WebsiteAnalyticsWidget` at the top of the Marketing tab, above the KPI cards. The visibility toggle already exists (line 60-63).
+Changes:
+- Import `ForecastingCard` from `@/components/dashboard/sales/ForecastingCard`
+- Add `ForecastingCard` as the first element in the Forecasting tab
 
-```tsx
-import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
+### Phase 2: No Changes to CommandCenterAnalytics
 
-// Add below header controls, before KPI cards:
-<WebsiteAnalyticsWidget />
-```
+The `CommandCenterAnalytics.tsx` already handles `ForecastingCard` via the `week_ahead_forecast` visibility key. No changes needed - it will continue to render when pinned.
 
-#### 1.2 Program Tab - Add Client Engine Overview
+### Phase 3: Verify Visibility Toggle Exists
 
-**File: `src/components/dashboard/analytics/ProgramTabContent.tsx`**
-
-Add the `ClientEngineOverview` as a summary card and add a visibility toggle in the header.
-
-```tsx
-import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
-
-// Add to header area:
-<CommandCenterVisibilityToggle 
-  elementKey="client_engine_overview" 
-  elementName="Client Engine Overview" 
-/>
-
-// Add ClientEngineOverview as a full-width card at the top of the content
-```
-
-#### 1.3 Operations Tab > Staffing - Add Team Cards
-
-**File: `src/components/dashboard/analytics/StaffingContent.tsx`**
-
-Add `StaffOverviewCard`, `StylistsOverviewCard`, and `OnboardingTrackerOverview` to the Staffing sub-tab.
-
-```tsx
-import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
-import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
-
-// Add as a 2-column grid section:
-<div className="grid lg:grid-cols-2 gap-6 mb-6">
-  <StaffOverviewCard />
-  <StylistsOverviewCard />
-</div>
-
-<OnboardingTrackerOverview />
-```
-
-#### 1.4 Operations Tab Header - Add Visibility Toggles
-
-**File: `src/components/dashboard/analytics/OperationsTabContent.tsx`**
-
-Add visibility toggles for the new elements.
-
-```tsx
-<CommandCenterVisibilityToggle 
-  elementKey="team_overview" 
-  elementName="Team Overview" 
-/>
-<CommandCenterVisibilityToggle 
-  elementKey="stylists_overview" 
-  elementName="Stylists by Level" 
-/>
-<CommandCenterVisibilityToggle 
-  elementKey="onboarding_overview" 
-  elementName="Onboarding Overview" 
-/>
-```
-
-### Phase 2: Update Command Center Analytics Component
-
-**File: `src/components/dashboard/CommandCenterAnalytics.tsx`**
-
-Add the new elements to the pinned analytics section, so they render when visibility is enabled.
-
-```tsx
-import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
-import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
-import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
-import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
-
-// Add visibility checks:
-const hasClientEngineOverview = isElementVisible('client_engine_overview');
-const hasOnboardingOverview = isElementVisible('onboarding_overview');
-const hasTeamOverview = isElementVisible('team_overview');
-const hasStylistsOverview = isElementVisible('stylists_overview');
-
-// Update hasAnyPinned check to include all elements
-
-// Render conditionally:
-{hasClientEngineOverview && (
-  <VisibilityGate elementKey="client_engine_overview">
-    <ClientEngineOverview />
-  </VisibilityGate>
-)}
-// ... same pattern for other widgets
-```
-
-### Phase 3: Remove Elements from Command Center
-
-**File: `src/pages/dashboard/DashboardHome.tsx`**
-
-Remove the following sections (they will now be rendered via `CommandCenterAnalytics` when pinned):
-
-1. **Lines 441-446**: Remove standalone `WebsiteAnalyticsWidget` (already in CommandCenterAnalytics)
-2. **Lines 448-457**: Remove `ClientEngineOverview` and `OnboardingTrackerOverview` grid
-3. **Lines 459-469**: Remove `StaffOverviewCard` and `StylistsOverviewCard` grid
-
-Also remove unused imports:
-- `WebsiteAnalyticsWidget` (line 43)
-- `OnboardingTrackerOverview` (line 44)
-- `ClientEngineOverview` (line 45)
-- `StylistsOverviewCard`, `StaffOverviewCard` (line 38)
+The visibility toggle for `week_ahead_forecast` is already in place (line 144-147 of SalesTabContent.tsx). This allows Super Admins to pin/unpin forecasting to the Command Center directly from the Sales tab header.
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/analytics/MarketingTabContent.tsx` | Add `WebsiteAnalyticsWidget` at top |
-| `src/components/dashboard/analytics/ProgramTabContent.tsx` | Add `ClientEngineOverview` + visibility toggle |
-| `src/components/dashboard/analytics/StaffingContent.tsx` | Add team overview cards + onboarding |
-| `src/components/dashboard/analytics/OperationsTabContent.tsx` | Add visibility toggles for new elements |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | Add all new pinnable cards |
-| `src/pages/dashboard/DashboardHome.tsx` | Remove standalone widgets, clean up imports |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Add `ForecastingCard` to the Forecasting tab content |
 
-## Data Flow Diagram
+## Updated Forecasting Tab Layout
+
+```text
+Analytics Hub > Sales > Forecasting Tab
+┌──────────────────────────────────────────────────────┐
+│  ForecastingCard                                     │
+│  ┌────────────────────────────────────────────────┐  │
+│  │ Tomorrow │ 7 Days │ 30 Days │ 60 Days          │  │
+│  │ Location Filter        [X bookings]            │  │
+│  │ ┌──────┬──────┬──────┐                         │  │
+│  │ │ Total│ Avg  │ Appts│  Summary KPIs           │  │
+│  │ └──────┴──────┴──────┘                         │  │
+│  │ ▓▓▓ ▓▓▓▓ ▓▓ ▓▓▓▓▓  Bar Chart with Peak        │  │
+│  │ Mon Tue Wed Thu Fri                            │  │
+│  └────────────────────────────────────────────────┘  │
+├──────────────────────────────────────────────────────┤
+│  RevenueForecast (Month-End Projection)              │
+│  ┌────────────────────────────────────────────────┐  │
+│  │ Progress toward monthly goal                   │  │
+│  │ ████████████░░░░░░░░  75% achieved             │  │
+│  │ Trend line with projection                     │  │
+│  └────────────────────────────────────────────────┘  │
+├──────────────────────────────────────────────────────┤
+│  HistoricalComparison (Year-over-Year)               │
+│  ┌────────────────────────────────────────────────┐  │
+│  │ Compare current period to same period last yr  │  │
+│  └────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────┘
+```
+
+## Data Flow
 
 ```text
 Analytics Hub (Source of Truth)
-├── Sales Tab
-│   ├── Sales KPIs ──────────[⚙ Pin]──► Command Center
-│   └── Forecasting ─────────[⚙ Pin]──► Command Center
-│
-├── Operations Tab
-│   ├── Appointments
-│   │   └── New Bookings ────[⚙ Pin]──► Command Center
-│   ├── Capacity ────────────[⚙ Pin]──► Command Center
-│   └── Staffing
-│       ├── Team Overview ───[⚙ Pin]──► Command Center
-│       ├── Stylists by Level [⚙ Pin]──► Command Center
-│       └── Onboarding ──────[⚙ Pin]──► Command Center
-│
-├── Marketing Tab
-│   └── Website Traffic ─────[⚙ Pin]──► Command Center
-│
-└── Program Tab
-    └── Client Engine ───────[⚙ Pin]──► Command Center
+└── Sales Tab
+    └── Forecasting Sub-Tab
+        ├── ForecastingCard ─────[⚙ Pin Toggle]──► Command Center
+        ├── RevenueForecast (Month-End Projection)
+        └── HistoricalComparison
 ```
 
-## User Experience
+## Technical Details
 
-1. **Default State**: Command Center shows empty analytics section with helpful link to Analytics Hub
-2. **Customization**: Super Admins navigate to any Analytics Hub tab and click the gear icon (⚙) on cards they want to pin
-3. **Result**: Pinned cards appear on Command Center for all leadership roles
-4. **Flexibility**: Each card can be independently toggled on/off
+- **Import Addition**: Add `ForecastingCard` import to SalesTabContent.tsx
+- **Tab Content Update**: Insert `<ForecastingCard />` at the start of the "forecasting" TabsContent
+- **Visibility Toggle**: Already exists in header (elementKey: `week_ahead_forecast`)
+- **No Database Changes**: Uses existing visibility system
 
-## Technical Notes
+## Benefits
 
-- All visibility toggles use the existing `CommandCenterVisibilityToggle` component
-- All conditional rendering uses the existing `VisibilityGate` component
-- The `dashboard_element_visibility` table already supports this pattern
-- No database changes required
-- Element keys follow existing naming conventions (snake_case)
+1. **Consolidated**: All forecasting tools in one location (Analytics Hub)
+2. **Consistent**: Command Center displays the same component via pinning
+3. **User Control**: Super Admins can toggle forecasting visibility on Command Center
+4. **Rich Features**: 4 time periods, location filtering, click-to-drill-down all accessible from Analytics Hub
+
