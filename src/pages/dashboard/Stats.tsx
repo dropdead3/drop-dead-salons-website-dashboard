@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { usePhorestPerformanceMetrics, usePhorestConnection, useUserPhorestMapping } from '@/hooks/usePhorestSync';
 import { useUserSalesSummary } from '@/hooks/useSalesData';
 import { format, startOfWeek, startOfMonth, endOfMonth } from 'date-fns';
@@ -81,15 +82,27 @@ export default function Stats() {
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="bg-muted/50">
-            <TabsTrigger value="performance" className="font-display text-xs tracking-wide">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              My Performance
-            </TabsTrigger>
-            {canViewLeaderboard && (
-              <TabsTrigger value="leaderboard" className="font-display text-xs tracking-wide">
-                <Trophy className="w-4 h-4 mr-2" />
-                Team Leaderboard
+            <VisibilityGate 
+              elementKey="stats_performance_tab" 
+              elementName="My Performance" 
+              elementCategory="Page Tabs"
+            >
+              <TabsTrigger value="performance" className="font-display text-xs tracking-wide">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                My Performance
               </TabsTrigger>
+            </VisibilityGate>
+            {canViewLeaderboard && (
+              <VisibilityGate 
+                elementKey="stats_leaderboard_tab" 
+                elementName="Team Leaderboard" 
+                elementCategory="Page Tabs"
+              >
+                <TabsTrigger value="leaderboard" className="font-display text-xs tracking-wide">
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Team Leaderboard
+                </TabsTrigger>
+              </VisibilityGate>
             )}
           </TabsList>
 
