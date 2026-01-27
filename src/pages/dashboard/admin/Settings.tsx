@@ -104,7 +104,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -744,6 +744,12 @@ export default function Settings() {
       description: 'SMS templates & automation',
       icon: MessageSquare,
     },
+    'service-flows': {
+      id: 'service-flows',
+      label: 'Service Flows',
+      description: 'Automated emails & texts per service',
+      icon: Sparkles,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -850,8 +856,6 @@ export default function Settings() {
                   <SignaturePresetsManager />
                 </CardContent>
               </Card>
-
-              <ServiceCommunicationFlowsCard />
             </div>
           )}
 
@@ -865,8 +869,12 @@ export default function Settings() {
                 <CardContent>
                   <SmsTemplatesManager />
                 </CardContent>
-              </Card>
+                </Card>
+            </div>
+          )}
 
+          {activeCategory === 'service-flows' && (
+            <div className="space-y-6">
               <ServiceCommunicationFlowsCard />
             </div>
           )}
