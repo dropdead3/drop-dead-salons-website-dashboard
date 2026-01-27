@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import { useRoles } from '@/hooks/useRoles';
 import { useDashboardVisibility, useBulkUpdateVisibility, groupVisibilityByElement, groupByCategory } from '@/hooks/useDashboardVisibility';
 import { getIconByName } from '@/lib/iconResolver';
-import { NavigationAccessPanel } from './NavigationAccessPanel';
+import { SidebarLayoutEditor } from './SidebarLayoutEditor';
 import { PageTabsAccessPanel } from './PageTabsAccessPanel';
 import { WidgetsAccessPanel } from './WidgetsAccessPanel';
 import type { Database } from '@/integrations/supabase/types';
@@ -240,11 +240,8 @@ export function RoleAccessConfigurator() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="navigation">
-                <NavigationAccessPanel 
-                  role={selectedRole as AppRole}
-                  roleColor={selectedRoleData.color}
-                />
+              <TabsContent value="navigation" className="mt-0">
+                <SidebarLayoutEditor />
               </TabsContent>
 
               <TabsContent value="tabs">
