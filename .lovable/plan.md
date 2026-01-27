@@ -1,195 +1,323 @@
 
-
-# Smart Stylist Recommendations for Walk-In Dialog
+# Enhanced Walk-In Dialog with Multi-Service, Level Pricing, and Same-Day Restrictions
 
 ## Overview
 
-This plan enhances the "Assign to Stylist" dropdown in the Walk-In Dialog to:
-1. **Only show stylists working today** at the selected location
-2. **Calculate and display available time** next to each stylist's name (e.g., "Eric Day - 2h 30m available")
-3. **Filter out unavailable stylists** who have no time for the requested service duration
+This plan enhances the Walk-In Dialog with three major capabilities:
+1. **Multi-service selection** - Add multiple services to a single walk-in appointment
+2. **Level-based pricing** - Dynamically adjust prices based on the selected stylist's level
+3. **Same-day booking restrictions** - Gray out services that require lead time (e.g., extensions needing custom orders)
 
-## Current State
+Additionally, we'll add a **Services Editor** enhancement to manage the "Allow same day booking" setting per service.
 
-The `WalkInDialog` component currently:
-- Fetches **all active employee profiles** from `employee_profiles`
-- Filters by `location_ids` array if a location is selected
-- Does **NOT** check if the stylist is working today
-- Does **NOT** calculate availability based on existing appointments
+---
 
-## Data Sources for Availability
+## Database Changes
 
-| Source | Purpose |
-|--------|---------|
-| `employee_location_schedules` | Work days per location (e.g., `['Mon', 'Tue', 'Wed']`) |
-| `phorest_appointments` | Existing appointments for today (start_time, end_time, stylist_user_id) |
-| `phorest_services` | Service duration for the selected service |
-| `phorest_staff_mapping` | Ensures stylist is bookable (`show_on_calendar = true`) |
+### New Columns on `phorest_services`
 
-## Availability Calculation Logic
+| Column | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `allow_same_day_booking` | `BOOLEAN` | `true` | Whether service can be booked same-day |
+| `lead_time_days` | `INTEGER` | `0` | Minimum days of advance notice required |
+| `same_day_restriction_reason` | `TEXT` | `null` | Reason shown to user (e.g., "Extensions require 7-day custom order") |
 
-```text
-1. Get all stylists at the selected location
-2. Filter to those with today's day-of-week in their work_days
-3. For each remaining stylist:
-   a. Get their appointments for today at this location
-   b. Calculate busy time blocks
-   c. Find gaps between appointments (from now until end of day, e.g., 8 PM)
-   d. Sum total available minutes
-4. Only show stylists with available time >= service duration
-5. Display available time next to name
+```sql
+ALTER TABLE phorest_services
+ADD COLUMN allow_same_day_booking BOOLEAN DEFAULT true,
+ADD COLUMN lead_time_days INTEGER DEFAULT 0,
+ADD COLUMN same_day_restriction_reason TEXT;
 ```
 
-## Technical Implementation
+---
 
-### New Hook: `useStylistAvailability`
+## Part 1: Update Stylist Availability Hook
 
-Create a new hook at `src/hooks/useStylistAvailability.ts` that:
+### File: `src/hooks/useStylistAvailability.ts`
+
+Add `stylist_level` to the `StylistWithAvailability` interface and include it in all queries:
 
 ```typescript
-interface StylistWithAvailability {
+export interface StylistWithAvailability {
   user_id: string;
   full_name: string;
   display_name: string | null;
   availableMinutes: number;
   isWorkingToday: boolean;
-}
-
-export function useStylistAvailability(
-  locationId: string | undefined,
-  serviceDurationMinutes: number
-)
-```
-
-**Hook Logic:**
-
-1. Fetch stylists from `employee_profiles` where `is_active = true`
-2. Join with `employee_location_schedules` to get `work_days` per location
-3. Optionally join with `phorest_staff_mapping` to filter by `show_on_calendar`
-4. Filter to stylists where today's day-of-week is in their `work_days` for this location
-5. Fetch today's appointments from `phorest_appointments` for these stylists
-6. Calculate available time by finding gaps between appointments
-7. Return sorted list (most available first) with availability info
-
-### Availability Calculation Details
-
-Working hours assumption: 8:00 AM - 8:00 PM (configurable)
-
-```typescript
-function calculateAvailableMinutes(
-  appointments: { start_time: string; end_time: string }[],
-  dayStart: string = '08:00',
-  dayEnd: string = '20:00'
-): number {
-  // Sort appointments by start time
-  // Find gaps between: dayStart -> first appointment, between appointments, last appointment -> dayEnd
-  // Sum all gap durations
-  // Only count gaps >= 15 minutes as "available"
+  phorest_staff_id?: string;
+  stylist_level?: string | null;  // NEW
 }
 ```
 
-### WalkInDialog.tsx Updates
+Update the `employee_profiles` queries to select `stylist_level`:
+- Line 120: `select('user_id, full_name, display_name, stylist_level')`
+- Line 155: `select('user_id, full_name, display_name, stylist_level')`
 
-**Current stylist fetch (lines 55-76):**
-```typescript
-const { data: stylists } = useQuery({
-  queryKey: ['available-stylists', locationId],
-  queryFn: async () => {
-    // Basic fetch - no availability check
-  }
-});
-```
+Include `stylist_level` in the returned object (line 210).
 
-**Updated to use new hook:**
-```typescript
-// Get selected service duration
-const selectedService = services?.find(s => s.id === serviceId);
-const serviceDuration = selectedService?.duration_minutes || 60;
+---
 
-// Use smart availability hook
-const { data: availableStylists, isLoading: stylistsLoading } = useStylistAvailability(
-  locationId,
-  serviceDuration
-);
-```
+## Part 2: Enhanced Walk-In Dialog
 
-**Updated dropdown display (lines 205-212):**
-```typescript
-<SelectContent>
-  {availableStylists?.length === 0 && (
-    <div className="px-2 py-3 text-sm text-muted-foreground text-center">
-      No stylists available for this service today
-    </div>
-  )}
-  {availableStylists?.map((stylist) => (
-    <SelectItem key={stylist.user_id} value={stylist.user_id}>
-      <div className="flex items-center justify-between w-full">
-        <span>{stylist.display_name || stylist.full_name}</span>
-        <span className="text-xs text-muted-foreground ml-2">
-          {formatAvailability(stylist.availableMinutes)}
-        </span>
-      </div>
-    </SelectItem>
-  ))}
-</SelectContent>
-```
+### File: `src/components/dashboard/operations/WalkInDialog.tsx`
 
-### Format Availability Helper
+### 2.1 Multi-Service State
+
+Replace single `serviceId` with array:
 
 ```typescript
-function formatAvailability(minutes: number): string {
-  if (minutes >= 60) {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m free` : `${hours}h free`;
-  }
-  return `${minutes}m free`;
-}
+const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
 ```
 
-## UI Display Example
+### 2.2 Service Selection UI
+
+Replace the single-select dropdown with a multi-select interface similar to `QuickBookingPopover`:
 
 ```text
-┌─────────────────────────────────────────┐
-│ Assign to Stylist                       │
-│ ┌─────────────────────────────────────┐ │
-│ │ Select a stylist                  ▼ │ │
-│ └─────────────────────────────────────┘ │
-│   ┌─────────────────────────────────┐   │
-│   │ Eric Day          4h 30m free   │   │
-│   │ Sarah M.          2h 15m free   │   │
-│   │ Jordan T.         1h 30m free   │   │
-│   └─────────────────────────────────┘   │
-└─────────────────────────────────────────┘
++----------------------------------------+
+| Services                               |
+| +------------------------------------+ |
+| | [x] Full Highlight         $276    | |
+| | [x] Add-On Cut              $52    | |
+| | [ ] Wash + Blowout          $58    | |
+| | [DISABLED] 2 Row Initial Install   | |
+| |   "Requires 7-day custom order"    | |
+| +------------------------------------+ |
+|                                        |
+| Selected: 2 services                   |
+| Total Duration: 180 min                |
++----------------------------------------+
 ```
 
-**Visual details:**
-- Stylist name in normal weight on the left
-- Available time in muted, smaller text on the right
-- Stylists sorted by most available first
-- If no stylists available, show helpful message
+**Service list behavior:**
+- Services with `allow_same_day_booking = false` are **grayed out and disabled**
+- Disabled services show `same_day_restriction_reason` as subtitle
+- Selected services show checkmarks and contribute to total
 
-## Edge Cases
+### 2.3 Level-Based Pricing
 
-| Scenario | Handling |
-|----------|----------|
-| No location selected | Show all active stylists (no availability filtering) |
-| No service selected | Assume 60-minute default duration |
-| Stylist has no appointments | Full day available (up to 12 hours) |
-| Stylist fully booked | Not shown in list |
-| Today is a day off | Not shown in list |
+Import level pricing utilities:
+
+```typescript
+import { getLevelSlug, findLevelBasedPrice, getLevelNumber } from '@/utils/levelPricing';
+```
+
+Calculate dynamic price when stylist is selected:
+
+```typescript
+const selectedStylist = availableStylists?.find(s => s.user_id === stylistId);
+const levelSlug = getLevelSlug(selectedStylist?.stylist_level);
+
+const calculatedTotalPrice = useMemo(() => {
+  return selectedServiceDetails.reduce((sum, service) => {
+    if (levelSlug) {
+      const levelPrice = findLevelBasedPrice(service.name, levelSlug);
+      return sum + (levelPrice ?? service.price ?? 0);
+    }
+    return sum + (service.price ?? 0);
+  }, 0);
+}, [selectedServiceDetails, levelSlug]);
+```
+
+### 2.4 Updated Mutation
+
+Update `createWalkIn` to handle multiple services:
+
+```typescript
+// Combine service names
+const serviceNames = selectedServiceDetails.map(s => s.name).join(' + ');
+
+// Calculate total duration
+const totalDuration = selectedServiceDetails.reduce(
+  (sum, s) => sum + (s.duration_minutes || 60), 0
+);
+
+const { error } = await supabase
+  .from('phorest_appointments')
+  .insert({
+    phorest_id: `walk-in-${Date.now()}`,
+    appointment_date: today,
+    start_time: now,
+    end_time: calculateEndTime(now, totalDuration),
+    client_name: clientName || 'Walk-in',
+    service_name: serviceNames,
+    service_category: selectedServiceDetails[0]?.category || null,
+    total_price: calculatedTotalPrice,
+    stylist_user_id: stylistId || null,
+    // ...
+  });
+```
+
+### 2.5 UI Layout Updates
+
+Expand dialog width to accommodate multi-service list:
+
+```typescript
+<DialogContent className="sm:max-w-[500px]">
+```
+
+Add a **Running Total** section that updates dynamically:
+
+```text
++----------------------------------------+
+|                              Subtotal  |
+| Full Highlight (Level 3)      $152     |
+| Add-On Cut (Level 3)           $60     |
+|                              --------  |
+|                        Total: $212     |
++----------------------------------------+
+```
+
+---
+
+## Part 3: Services Manager Enhancement
+
+### File: `src/pages/dashboard/admin/ServicesManager.tsx`
+
+Add "Same-Day Booking" toggle to the service edit dialog:
+
+```text
++------------------------------------------+
+| Edit Service                             |
+|------------------------------------------|
+| Service Name: [Full Highlight          ] |
+| Description:  [All-over dimensional... ] |
+|                                          |
+| [ ] Allow Same-Day Booking               |
+|                                          |
+| Lead Time Required: [7] days             |
+|                                          |
+| Restriction Reason:                      |
+| [Extensions require custom order...    ] |
+|                                          |
+| Pricing by Level:                        |
+| Level 1: [$152]  Level 2: [$175]  ...    |
++------------------------------------------+
+```
+
+### New Component: Service Booking Settings Section
+
+```typescript
+<div className="space-y-4 border-t pt-4 mt-4">
+  <Label className="text-sm font-medium">Booking Settings</Label>
+  
+  <div className="flex items-center justify-between">
+    <div>
+      <Label>Allow Same-Day Booking</Label>
+      <p className="text-xs text-muted-foreground">
+        Enable this for services that can be booked on the same day
+      </p>
+    </div>
+    <Switch 
+      checked={editingService.allowSameDayBooking}
+      onCheckedChange={(checked) => /* update state */}
+    />
+  </div>
+
+  {!editingService.allowSameDayBooking && (
+    <>
+      <div className="space-y-2">
+        <Label>Lead Time Required (days)</Label>
+        <Input 
+          type="number" 
+          min="1"
+          value={editingService.leadTimeDays}
+          onChange={(e) => /* update state */}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Restriction Reason</Label>
+        <Textarea 
+          placeholder="e.g., Extensions require 7-day custom order"
+          value={editingService.restrictionReason}
+          onChange={(e) => /* update state */}
+        />
+      </div>
+    </>
+  )}
+</div>
+```
+
+---
+
+## Part 4: Service Query Updates
+
+### File: `src/hooks/usePhorestServices.ts`
+
+Ensure the service query includes the new booking restriction fields:
+
+```typescript
+const { data, error } = await supabase
+  .from('phorest_services')
+  .select('*, allow_same_day_booking, lead_time_days, same_day_restriction_reason')
+  .eq('is_active', true)
+  .order('category')
+  .order('name');
+```
+
+### Type Extension
+
+Update the `PhorestService` interface:
+
+```typescript
+export interface PhorestService {
+  id: string;
+  phorest_service_id: string;
+  phorest_branch_id: string;
+  name: string;
+  category: string | null;
+  duration_minutes: number;
+  price: number | null;
+  requires_qualification: boolean;
+  is_active: boolean;
+  // NEW fields
+  allow_same_day_booking: boolean;
+  lead_time_days: number;
+  same_day_restriction_reason: string | null;
+}
+```
+
+---
+
+## Visual Flow Summary
+
+```text
+Walk-In Dialog Flow:
+                                    
++------------------+    +------------------+    +------------------+
+|  Select Service  | -> |  Select Stylist  | -> |  Review & Submit |
+|  (multi-select)  |    |  (with level)    |    |  (with total)    |
++------------------+    +------------------+    +------------------+
+        |                       |                       |
+        v                       v                       v
+  - Gray out services     - Show availability     - Display level-based
+    with lead time          + free time             pricing breakdown
+  - Show restrictions     - Show stylist level    - Total price updates
+  - Calculate duration                              when stylist changes
+```
+
+---
 
 ## File Changes Summary
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/hooks/useStylistAvailability.ts` | Create | New hook for availability calculation |
-| `src/components/dashboard/operations/WalkInDialog.tsx` | Modify | Use new hook, update dropdown display |
+| `supabase/migrations/...` | Create | Add `allow_same_day_booking`, `lead_time_days`, `same_day_restriction_reason` columns |
+| `src/hooks/useStylistAvailability.ts` | Modify | Include `stylist_level` in returned data |
+| `src/hooks/usePhorestServices.ts` | Modify | Include new booking restriction fields |
+| `src/components/dashboard/operations/WalkInDialog.tsx` | Modify | Multi-service selection, level-based pricing, disabled services |
+| `src/pages/dashboard/admin/ServicesManager.tsx` | Modify | Add booking settings to service editor |
 
-## Future Enhancements
+---
 
-The hook architecture supports future additions:
-- **Time slot suggestions**: "Best slot: 2:00 PM - 3:30 PM"
-- **Conflict warnings**: Alert if walk-in would create a tight schedule
-- **Qualification filtering**: Only show stylists qualified for the selected service
+## Default Values for Existing Services
 
+After migration, services will default to:
+- `allow_same_day_booking = true` (all existing services remain bookable)
+- `lead_time_days = 0`
+- `same_day_restriction_reason = null`
+
+Extension services (e.g., "1 Row Initial Install", "2 Row Initial Install") should be manually updated via the Services Manager to:
+- `allow_same_day_booking = false`
+- `lead_time_days = 7`
+- `same_day_restriction_reason = "Extensions require custom order (7+ days)"`
