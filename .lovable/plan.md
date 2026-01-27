@@ -1,165 +1,158 @@
 
-# Improve Tab Hierarchy Visual Design
+# Remove Analytics from Command Center & Add "Show on Command Center" Toggles
 
-## Problem
+## Problem Analysis
 
-Currently, both the main Analytics tabs (Sales, Operations, Marketing, Program, Reports) and the sub-tabs within Reports (Sales, Staff, Clients, Operations, Financial) use identical styling:
-- Same `bg-muted` background
-- Same size and spacing
-- Same visual weight
+The Command Center dashboard (`DashboardHome.tsx`) currently displays several analytics cards for leadership:
 
-This makes it unclear that the second row is a **child** of the selected "Reports" tab.
+| Current Command Center Card | Element Key | Status |
+|----------------------------|-------------|--------|
+| AggregateSalesCard | `sales_overview` | To be removed (already consolidated in Analytics Hub Sales tab) |
+| NewBookingsCard | `new_bookings` | To be moved to Operations tab |
+| ForecastingCard | `week_ahead_forecast` | Already exists in Sales tab as `RevenueForecast` |
+| CapacityUtilizationCard | `capacity_utilization` | Already exists in Operations tab |
 
-## Solution Options
+**Goal:** Make the Analytics Hub the primary source for all analytics, with each card having a "Show on Command Center" toggle to let leadership customize their Command Center view.
 
-### Option A: Visual Differentiation via Styling (Recommended)
-
-Differentiate sub-tabs with lighter/more subtle styling:
-
-```text
-Main Tabs:    [$ Sales] [Operations] [Marketing] [Program] [■ Reports]  ← Full bg-muted pill style
-                                                                ↓
-Sub-tabs:      $ Sales   Staff   Clients   Operations   Financial      ← Underline style, no background
-                ─────
-```
-
-**Implementation:**
-- Keep main tabs with current solid pill style (`bg-muted`)
-- Change sub-tabs to use an underline/border-bottom style (no background)
-- Add a subtle left border or indentation to show hierarchy
-- Optionally add a small label like "Report Type" above sub-tabs
-
-### Option B: Contextual Label + Visual Grouping
-
-Add a section header and visual container to group sub-tabs:
+## Architecture
 
 ```text
-[$ Sales] [Operations] [Marketing] [Program] [■ Reports]
-
-┌─ Report Categories ────────────────────────────────┐
-│  [$ Sales] [Staff] [Clients] [Operations] [Financial]  │
-└────────────────────────────────────────────────────┘
+Analytics Hub (Primary Source)          Command Center (User-Customizable)
+┌─────────────────────────────┐         ┌─────────────────────────────┐
+│ Sales Tab                   │         │                             │
+│  ├─ KPIs (Revenue, etc)     │ ──[✓]──►│ AggregateSalesCard          │
+│  ├─ Top Performers          │         │                             │
+│  └─ Forecasting             │ ──[✓]──►│ ForecastingCard             │
+│                             │         │                             │
+│ Operations Tab              │         │                             │
+│  ├─ Overview                │         │                             │
+│  ├─ Appointments            │         │                             │
+│  │   └─ New Bookings        │ ──[✓]──►│ NewBookingsCard             │
+│  ├─ Capacity Utilization    │ ──[✓]──►│ CapacityUtilizationCard     │
+│  └─ Staffing                │         │                             │
+│                             │         │                             │
+│ Marketing Tab               │         │                             │
+│  └─ Website Analytics       │ ──[✓]──►│ WebsiteAnalyticsWidget      │
+└─────────────────────────────┘         └─────────────────────────────┘
+                                         
+[✓] = "Show on Command Center" toggle
 ```
 
-### Option C: Segmented Control for Sub-tabs
+## Implementation Plan
 
-Use a different component style entirely (like a segmented control or button group):
+### Phase 1: Remove Analytics Cards from Command Center
 
-```text
-[$ Sales] [Operations] [Marketing] [Program] [■ Reports]
+**File: `src/pages/dashboard/DashboardHome.tsx`**
 
-Export Type:  ●Sales  ○Staff  ○Clients  ○Operations  ○Financial
-```
+Remove these sections from the leadership area:
+1. `AggregateSalesCard` (lines 246-251)
+2. `NewBookingsCard` (lines 253-258)
+3. `ForecastingCard` (lines 260-265)
+4. `CapacityUtilizationCard` (lines 267-272)
 
-## Recommended Approach: Option A + Label
+Also remove their imports (lines 47-50).
 
-Combine visual differentiation with a contextual label for maximum clarity:
+### Phase 2: Add "Show on Command Center" Toggles to Analytics Hub Cards
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  [$ Sales] [Operations] [Marketing] [Program] [■ Reports]       │  ← Main tabs (pill style)
-│                                                                  │
-│  Report Category                                                 │  ← Section label
-│   $ Sales   Staff   Clients   Operations   Financial            │  ← Sub-tabs (underline style)
-│   ═══════                                                        │     with active underline
-└─────────────────────────────────────────────────────────────────┘
-```
+For each major section in the Analytics Hub, add a visibility toggle that allows Super Admins to opt-in cards to appear on Command Center.
 
-## Implementation Details
+**Files to Modify:**
 
-### File: `src/components/dashboard/analytics/ReportsTabContent.tsx`
+| File | Add Toggle For |
+|------|----------------|
+| `SalesTabContent.tsx` | Sales KPIs card, Forecasting section |
+| `OperationsTabContent.tsx` | New Bookings, Capacity Utilization |
+| `MarketingTabContent.tsx` | Website Analytics (if leadership has access) |
 
-**Changes:**
-1. Add a contextual label above the sub-tabs: "Report Category"
-2. Apply different styling to the TabsList - remove `bg-muted`, use transparent background
-3. Style TabsTriggers with underline indicator instead of background pill
+### Phase 3: Create Command Center Analytics Section (Optional Pinned Cards)
+
+Create a new section on Command Center that renders only the cards that have been "pinned" via visibility toggles. This uses the existing `VisibilityGate` system.
+
+**New Component: `CommandCenterAnalytics.tsx`**
+
+This component will:
+1. Check `dashboard_element_visibility` for which elements are visible
+2. Render only the pinned analytics cards
+3. Show a subtle "No analytics pinned" message if none are enabled
+
+### Phase 4: Add New Bookings to Operations Tab
+
+The `NewBookingsCard` content needs to be integrated into the Operations > Appointments sub-tab.
+
+**File: `src/components/dashboard/analytics/AppointmentsContent.tsx`**
+
+Add New Bookings metrics at the top of the appointments view.
+
+## Technical Implementation Details
+
+### Toggle Component Enhancement
+
+The existing `CommandCenterVisibilityToggle` component already handles the toggle logic. Each analytics section will include this toggle in its header.
 
 ```tsx
-<div className="space-y-6">
-  {/* Category Label + Sub-tabs */}
-  <div className="space-y-2">
-    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-      Report Category
-    </span>
-    <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-      <TabsList className="bg-transparent h-auto p-0 gap-4">
-        {reportCategories.map((cat) => (
-          <TabsTrigger 
-            key={cat.id} 
-            value={cat.id} 
-            className="gap-2 px-1 py-2 rounded-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary"
-          >
-            <cat.icon className="w-4 h-4" />
-            <span>{cat.label}</span>
-          </TabsTrigger>
-        ))}
-      </TabsList>
-      {/* ... TabsContent remains same ... */}
-    </Tabs>
-  </div>
+// Example usage in SalesTabContent.tsx
+<div className="flex items-center gap-2">
+  <CommandCenterVisibilityToggle 
+    elementKey="sales_overview" 
+    elementName="Sales Overview" 
+  />
+  <LastSyncIndicator syncType="sales" showAutoRefresh />
 </div>
 ```
 
-### Visual Comparison
+### Command Center Rendering
 
-| Element | Main Tabs | Sub-tabs |
-|---------|-----------|----------|
-| Background | `bg-muted` pill container | Transparent |
-| Active indicator | White/background fill | Underline border |
-| Spacing | Contained in pill | Inline with gaps |
-| Text style | Same | Same |
-| Icons | Yes | Yes |
-
-### Alternative: Create a SubTabsList Variant
-
-For reusability across Sales and Operations sub-tabs too, create a variant:
+The Command Center will use `VisibilityGate` to conditionally render cards:
 
 ```tsx
-// In tabs.tsx or as a new component
-const SubTabsList = React.forwardRef<...>(({ className, ...props }, ref) => (
-  <TabsPrimitive.List
-    ref={ref}
-    className={cn(
-      "inline-flex h-10 items-center gap-4 bg-transparent p-0 text-muted-foreground",
-      className,
-    )}
-    {...props}
-  />
-));
-
-const SubTabsTrigger = React.forwardRef<...>(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "inline-flex items-center gap-2 px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-all data-[state=active]:text-foreground data-[state=active]:border-primary",
-      className,
-    )}
-    {...props}
-  />
-));
+// In DashboardHome.tsx - simplified analytics section
+{isLeadership && (
+  <div className="space-y-6">
+    <VisibilityGate elementKey="sales_overview">
+      <AggregateSalesCard />
+    </VisibilityGate>
+    {/* Other cards will only render if visibility is enabled */}
+  </div>
+)}
 ```
+
+With this approach, cards are removed by default but can be re-added via the visibility system.
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/analytics/ReportsTabContent.tsx` | Add label, change sub-tab styling |
-| (Optional) `src/components/ui/tabs.tsx` | Add SubTabsList/SubTabsTrigger variants |
-| (Optional) `src/components/dashboard/analytics/SalesTabContent.tsx` | Apply same sub-tab style for consistency |
-| (Optional) `src/components/dashboard/analytics/OperationsTabContent.tsx` | Apply same sub-tab style for consistency |
+| `src/pages/dashboard/DashboardHome.tsx` | Remove analytics cards from default view |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Add visibility toggle for Sales KPIs |
+| `src/components/dashboard/analytics/OperationsTabContent.tsx` | Add toggles for New Bookings and Capacity |
+| `src/components/dashboard/analytics/AppointmentsContent.tsx` | Integrate New Bookings metrics |
+
+## Files to Keep (No Changes)
+
+| File | Reason |
+|------|--------|
+| `AggregateSalesCard.tsx` | Still used when visibility is enabled |
+| `ForecastingCard.tsx` | Still used when visibility is enabled |
+| `CapacityUtilizationCard.tsx` | Still used when visibility is enabled |
+| `NewBookingsCard.tsx` | Still used when visibility is enabled |
+| `CommandCenterVisibilityToggle.tsx` | Already correctly implemented |
+| `useDashboardVisibility.ts` | Already correctly implemented |
+
+## User Experience Flow
+
+1. **Default State:** Command Center shows no analytics cards (clean slate)
+2. **Customization:** User navigates to Analytics Hub > any tab
+3. **Enable Visibility:** Super Admin clicks the gear icon on any card and toggles "Show on Command Center"
+4. **Result:** Card now appears on their Command Center dashboard
 
 ## Benefits
 
-1. **Clear hierarchy** - Visually distinct parent/child relationship
-2. **Contextual label** - Explicit "Report Category" removes ambiguity
-3. **Consistent pattern** - Can apply same sub-tab style across all Analytics sections
-4. **No layout changes** - Keeps same content organization
-5. **Subtle but effective** - Doesn't add clutter, just clarifies relationship
+1. **Single Source of Truth:** Analytics Hub is the primary dashboard
+2. **User Control:** Leadership can customize their Command Center
+3. **Clean Dashboard:** Command Center isn't cluttered by default
+4. **Flexible:** New analytics can be added to Hub and optionally pinned
+5. **Existing Infrastructure:** Leverages the visibility system already in place
 
-## Summary
+## Database Considerations
 
-| Task | Description |
-|------|-------------|
-| Add section label | "Report Category" above sub-tabs |
-| Restyle sub-tabs | Underline style instead of pill style |
-| Apply to all sub-tabs | Consistent across Sales, Operations, Reports tabs |
+The `dashboard_element_visibility` table already supports this pattern. No database changes are required. The visibility entries for these elements likely already exist and will be updated to default to `is_visible: false` for the Command Center context.
