@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -34,12 +34,15 @@ import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
-import { CommandCenterAnalytics } from '@/components/dashboard/CommandCenterAnalytics';
 import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
 import { DashboardCustomizeMenu } from '@/components/dashboard/DashboardCustomizeMenu';
-import { useDashboardLayout } from '@/hooks/useDashboardLayout';
+import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId } from '@/hooks/useDashboardLayout';
 import { TodaysQueueSection } from '@/components/dashboard/TodaysQueueSection';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
+import { PinnedAnalyticsCard, type AnalyticsFilters } from '@/components/dashboard/PinnedAnalyticsCard';
+import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
+import { getDateRange, type DateRangeType } from '@/components/dashboard/sales/SalesBentoCard';
+import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -79,6 +82,10 @@ export default function DashboardHome() {
   const queryClient = useQueryClient();
   const { layout, hasCompletedSetup, isLoading: layoutLoading, templateKey } = useDashboardLayout();
   
+  // Analytics filter state (shared across all pinned analytics cards)
+  const [locationId, setLocationId] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<DateRangeType>('thisMonth');
+  
   // Birthday notifications for leadership
   useBirthdayNotifications();
   
@@ -102,6 +109,15 @@ export default function DashboardHome() {
   
   // Quick Actions should only show for stylists/assistants, or leadership who also have stylist roles
   const showQuickActions = hasStylistRole || (!isLeadership);
+  
+  // Compute analytics filters
+  const dateFilters = useMemo(() => getDateRange(dateRange), [dateRange]);
+  const analyticsFilters: AnalyticsFilters = useMemo(() => ({
+    locationId,
+    dateRange,
+    dateFrom: dateFilters.dateFrom,
+    dateTo: dateFilters.dateTo,
+  }), [locationId, dateRange, dateFilters]);
   
   const { data: announcements } = useQuery({
     queryKey: ['announcements'],
@@ -230,6 +246,9 @@ export default function DashboardHome() {
           toggleTask={toggleTask}
           deleteTask={deleteTask}
           isImpersonating={isImpersonating}
+          analyticsFilters={analyticsFilters}
+          onLocationChange={setLocationId}
+          onDateRangeChange={setDateRange}
         />
       </div>
     </DashboardLayout>
@@ -252,6 +271,9 @@ interface DashboardSectionsProps {
   toggleTask: any;
   deleteTask: any;
   isImpersonating: boolean;
+  analyticsFilters: AnalyticsFilters;
+  onLocationChange: (value: string) => void;
+  onDateRangeChange: (value: DateRangeType) => void;
 }
 
 function DashboardSections({
@@ -269,8 +291,28 @@ function DashboardSections({
   toggleTask,
   deleteTask,
   isImpersonating,
+  analyticsFilters,
+  onLocationChange,
+  onDateRangeChange,
 }: DashboardSectionsProps) {
-  // Build section components map
+  // Fetch visibility data to check if cards are pinned
+  const { data: visibilityData } = useDashboardVisibility();
+  const leadershipRoles = ['super_admin', 'admin', 'manager'];
+  
+  const isCardPinned = (cardId: string): boolean => {
+    if (!visibilityData) return false;
+    return leadershipRoles.some(role => 
+      visibilityData.find(v => v.element_key === cardId && v.role === role)?.is_visible ?? false
+    );
+  };
+  
+  // Check if there are any pinned analytics in the layout
+  const hasPinnedAnalytics = useMemo(() => {
+    const orderedIds = layout.sectionOrder?.length > 0 ? layout.sectionOrder : [];
+    return orderedIds.some(id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id)));
+  }, [layout.sectionOrder, visibilityData]);
+
+  // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
     quick_actions: showQuickActions && (
       <VisibilityGate elementKey="quick_actions">
@@ -319,8 +361,6 @@ function DashboardSections({
         </div>
       </VisibilityGate>
     ),
-    
-    command_center: isLeadership && <CommandCenterAnalytics />,
     
     operations_stats: (isReceptionist || isLeadership) && (
       <VisibilityGate 
@@ -552,11 +592,40 @@ function DashboardSections({
   const orderedSectionIds = layout.sectionOrder?.length > 0 
     ? layout.sectionOrder 
     : layout.sections;
+  
+  // Track if we've rendered the filter bar (only show once, before first pinned card)
+  let filterBarRendered = false;
 
   return (
     <>
       {orderedSectionIds.map(sectionId => {
-        // Only render if section is enabled
+        // Handle pinned analytics cards (prefixed with "pinned:")
+        if (isPinnedCardEntry(sectionId)) {
+          const cardId = getPinnedCardId(sectionId);
+          
+          // Only render if card is pinned (visible in visibility table) and user is leadership
+          if (!isLeadership || !isCardPinned(cardId)) return null;
+          
+          // Render filter bar before first pinned card
+          const showFilterBar = !filterBarRendered && hasPinnedAnalytics;
+          if (showFilterBar) filterBarRendered = true;
+          
+          return (
+            <React.Fragment key={sectionId}>
+              {showFilterBar && (
+                <AnalyticsFilterBar
+                  locationId={analyticsFilters.locationId}
+                  onLocationChange={onLocationChange}
+                  dateRange={analyticsFilters.dateRange}
+                  onDateRangeChange={onDateRangeChange}
+                />
+              )}
+              <PinnedAnalyticsCard cardId={cardId} filters={analyticsFilters} />
+            </React.Fragment>
+          );
+        }
+        
+        // Regular section: only render if section is enabled
         if (!layout.sections.includes(sectionId)) return null;
         
         const component = sectionComponents[sectionId as keyof typeof sectionComponents];
