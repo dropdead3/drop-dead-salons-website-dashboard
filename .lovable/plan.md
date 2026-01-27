@@ -1,104 +1,106 @@
 
-
-# Move Forecasting to Analytics Hub Sales Page
+# Add "Pin to Command Center" Toggles Directly on Cards
 
 ## Current State
 
-| Component | Location | Description |
-|-----------|----------|-------------|
-| `ForecastingCard` | Command Center (via CommandCenterAnalytics.tsx) | Full-featured: 4 time periods (Tomorrow/7/30/60 days), bar charts, location filter, click-to-view appointments |
-| `RevenueForecast` | Analytics Hub > Sales > Forecasting tab | Simpler: Month-end projection with progress bar and trend line |
-| `HistoricalComparison` | Analytics Hub > Sales > Forecasting tab | Year-over-year comparison |
+The visibility toggles are currently located in the **tab headers** (e.g., SalesTabContent.tsx lines 141-148). This means Super Admins need to look at the top of the page to find and toggle card visibility.
 
-## Problem
+## Goal
 
-The Analytics Hub's "Forecasting" sub-tab has a simpler `RevenueForecast` component, while the Command Center has the richer `ForecastingCard`. This creates redundancy and inconsistency.
+Move the toggles directly **onto each card's header**, making them contextually relevant and easier to discover. The gear icon will appear next to the card title.
 
-## Solution
+## Cards to Update
 
-Consolidate by adding the `ForecastingCard` to the Analytics Hub Sales > Forecasting tab as the primary forecasting tool, keeping `RevenueForecast` as a supplementary month-end projection view.
+| Card Component | Element Key | File |
+|---------------|-------------|------|
+| `ForecastingCard` | `week_ahead_forecast` | `src/components/dashboard/sales/ForecastingCard.tsx` |
+| `CapacityUtilizationCard` | `capacity_utilization` | `src/components/dashboard/sales/CapacityUtilizationCard.tsx` |
+| `NewBookingsCard` | `new_bookings` | `src/components/dashboard/NewBookingsCard.tsx` |
+| `AggregateSalesCard` | `sales_overview` | `src/components/dashboard/AggregateSalesCard.tsx` |
+| `WebsiteAnalyticsWidget` | `website_analytics` | `src/components/dashboard/WebsiteAnalyticsWidget.tsx` |
+| `ClientEngineOverview` | `client_engine_overview` | `src/components/dashboard/ClientEngineOverview.tsx` |
+| `OnboardingTrackerOverview` | `onboarding_overview` | `src/components/dashboard/OnboardingTrackerOverview.tsx` |
+| `StaffOverviewCard` | `team_overview` | `src/components/dashboard/StylistsOverviewCard.tsx` |
+| `StylistsOverviewCard` | `stylists_overview` | `src/components/dashboard/StylistsOverviewCard.tsx` |
 
-## Implementation Plan
+## Implementation
 
-### Phase 1: Enhance Forecasting Tab in Analytics Hub
+### Phase 1: Add Toggles to Card Headers
 
-**File: `src/components/dashboard/analytics/SalesTabContent.tsx`**
+For each card, add the `CommandCenterVisibilityToggle` component to the card header, next to the title.
 
-Update the Forecasting tab content (lines 432-443) to include:
-1. The full `ForecastingCard` component at the top
-2. Keep `RevenueForecast` as a secondary "Month-End Projection" card
-3. Keep `HistoricalComparison` for year-over-year insights
+**Example pattern (ForecastingCard header):**
 
-Changes:
-- Import `ForecastingCard` from `@/components/dashboard/sales/ForecastingCard`
-- Add `ForecastingCard` as the first element in the Forecasting tab
+```tsx
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
-### Phase 2: No Changes to CommandCenterAnalytics
+// In CardHeader:
+<div className="flex items-center justify-between">
+  <div className="flex items-center gap-2">
+    <CalendarRange className="w-5 h-5 text-primary" />
+    <CardTitle className="font-display text-base">Forecasting</CardTitle>
+    {/* Info button */}
+    <CommandCenterVisibilityToggle 
+      elementKey="week_ahead_forecast" 
+      elementName="Forecasting" 
+    />
+  </div>
+  {/* Location filter, etc. */}
+</div>
+```
 
-The `CommandCenterAnalytics.tsx` already handles `ForecastingCard` via the `week_ahead_forecast` visibility key. No changes needed - it will continue to render when pinned.
+### Phase 2: Remove Toggles from Tab Headers
 
-### Phase 3: Verify Visibility Toggle Exists
+After adding toggles to cards, remove the redundant toggles from:
+- `SalesTabContent.tsx` (lines 141-148)
+- `OperationsTabContent.tsx` (similar location)
+- `MarketingTabContent.tsx`
+- `ProgramTabContent.tsx`
 
-The visibility toggle for `week_ahead_forecast` is already in place (line 144-147 of SalesTabContent.tsx). This allows Super Admins to pin/unpin forecasting to the Command Center directly from the Sales tab header.
+This prevents duplicate toggles and clarifies where the toggle lives.
+
+## Visual Layout
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│  📊 Forecasting   ⓘ  ⚙   [Tomorrow▾]  [7 Days▾]  [Location▾]│
+│  ──────────────────────────────────────────────────────────  │
+│  │ Total │ Avg │ Appointments │                              │
+│  └───────┴─────┴──────────────┘                              │
+│  ▓▓▓ ▓▓▓▓ ▓▓ ▓▓▓▓▓  Bar Chart                               │
+└──────────────────────────────────────────────────────────────┘
+                  ↑
+              Gear icon (⚙) opens popover with "Show on Command Center" toggle
+```
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Add `ForecastingCard` to the Forecasting tab content |
+| File | Change |
+|------|--------|
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Add toggle to header |
+| `src/components/dashboard/sales/CapacityUtilizationCard.tsx` | Add toggle to header |
+| `src/components/dashboard/NewBookingsCard.tsx` | Add toggle to header |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Add toggle to header |
+| `src/components/dashboard/WebsiteAnalyticsWidget.tsx` | Add toggle to header |
+| `src/components/dashboard/ClientEngineOverview.tsx` | Add toggle to header |
+| `src/components/dashboard/OnboardingTrackerOverview.tsx` | Add toggle to header |
+| `src/components/dashboard/StylistsOverviewCard.tsx` | Add toggle to both cards |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Remove header toggles |
+| `src/components/dashboard/analytics/OperationsTabContent.tsx` | Remove header toggles |
+| `src/components/dashboard/analytics/MarketingTabContent.tsx` | Remove header toggle |
+| `src/components/dashboard/analytics/ProgramTabContent.tsx` | Remove header toggle |
 
-## Updated Forecasting Tab Layout
+## User Experience
 
-```text
-Analytics Hub > Sales > Forecasting Tab
-┌──────────────────────────────────────────────────────┐
-│  ForecastingCard                                     │
-│  ┌────────────────────────────────────────────────┐  │
-│  │ Tomorrow │ 7 Days │ 30 Days │ 60 Days          │  │
-│  │ Location Filter        [X bookings]            │  │
-│  │ ┌──────┬──────┬──────┐                         │  │
-│  │ │ Total│ Avg  │ Appts│  Summary KPIs           │  │
-│  │ └──────┴──────┴──────┘                         │  │
-│  │ ▓▓▓ ▓▓▓▓ ▓▓ ▓▓▓▓▓  Bar Chart with Peak        │  │
-│  │ Mon Tue Wed Thu Fri                            │  │
-│  └────────────────────────────────────────────────┘  │
-├──────────────────────────────────────────────────────┤
-│  RevenueForecast (Month-End Projection)              │
-│  ┌────────────────────────────────────────────────┐  │
-│  │ Progress toward monthly goal                   │  │
-│  │ ████████████░░░░░░░░  75% achieved             │  │
-│  │ Trend line with projection                     │  │
-│  └────────────────────────────────────────────────┘  │
-├──────────────────────────────────────────────────────┤
-│  HistoricalComparison (Year-over-Year)               │
-│  ┌────────────────────────────────────────────────┐  │
-│  │ Compare current period to same period last yr  │  │
-│  └────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────┘
-```
+1. Super Admin opens Analytics Hub
+2. Each card shows a gear icon (⚙) in its header
+3. Clicking the gear opens a popover: "Show on Command Center" toggle
+4. When toggled ON, the card appears on the Command Center dashboard
+5. When toggled OFF, the card is hidden from Command Center
 
-## Data Flow
+## Technical Notes
 
-```text
-Analytics Hub (Source of Truth)
-└── Sales Tab
-    └── Forecasting Sub-Tab
-        ├── ForecastingCard ─────[⚙ Pin Toggle]──► Command Center
-        ├── RevenueForecast (Month-End Projection)
-        └── HistoricalComparison
-```
-
-## Technical Details
-
-- **Import Addition**: Add `ForecastingCard` import to SalesTabContent.tsx
-- **Tab Content Update**: Insert `<ForecastingCard />` at the start of the "forecasting" TabsContent
-- **Visibility Toggle**: Already exists in header (elementKey: `week_ahead_forecast`)
-- **No Database Changes**: Uses existing visibility system
-
-## Benefits
-
-1. **Consolidated**: All forecasting tools in one location (Analytics Hub)
-2. **Consistent**: Command Center displays the same component via pinning
-3. **User Control**: Super Admins can toggle forecasting visibility on Command Center
-4. **Rich Features**: 4 time periods, location filtering, click-to-drill-down all accessible from Analytics Hub
-
+- Uses existing `CommandCenterVisibilityToggle` component (no changes needed)
+- Toggle only visible to Super Admins (built into the component)
+- Visibility state persists in `dashboard_element_visibility` table
+- No database changes required
