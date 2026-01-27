@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 export interface DashboardLayout {
   sections: string[];
+  sectionOrder: string[];  // All sections in display order (enabled + disabled)
   pinnedCards: string[];
   widgets: string[];
   hasCompletedSetup: boolean;
@@ -23,7 +24,8 @@ export interface DashboardTemplate {
 }
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['quick_actions', 'command_center', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['quick_actions', 'command_center', 'operations_stats', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['quick_actions', 'command_center', 'operations_stats', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,
@@ -110,6 +112,7 @@ export function useDashboardLayout() {
   const parsedLayout = userPrefs?.dashboard_layout as Record<string, unknown> | null;
   const savedLayout: DashboardLayout | null = parsedLayout ? {
     sections: (parsedLayout.sections as string[]) || [],
+    sectionOrder: (parsedLayout.sectionOrder as string[]) || (parsedLayout.sections as string[]) || [],
     pinnedCards: (parsedLayout.pinnedCards as string[]) || [],
     widgets: (parsedLayout.widgets as string[]) || [],
     hasCompletedSetup: (parsedLayout.hasCompletedSetup as boolean) || false,
@@ -119,7 +122,7 @@ export function useDashboardLayout() {
   
   // Use saved layout if exists, otherwise use role template, otherwise default
   const layout: DashboardLayout = savedLayout || 
-    (roleTemplate?.layout ? { ...roleTemplate.layout, hasCompletedSetup: false } : DEFAULT_LAYOUT);
+    (roleTemplate?.layout ? { ...roleTemplate.layout, sectionOrder: roleTemplate.layout.sectionOrder || roleTemplate.layout.sections, hasCompletedSetup: false } : DEFAULT_LAYOUT);
 
   return {
     layout,
@@ -142,6 +145,7 @@ export function useSaveDashboardLayout() {
 
       const layoutJson = {
         sections: layout.sections,
+        sectionOrder: layout.sectionOrder,
         pinnedCards: layout.pinnedCards,
         widgets: layout.widgets,
         hasCompletedSetup: layout.hasCompletedSetup,

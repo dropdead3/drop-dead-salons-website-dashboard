@@ -162,19 +162,19 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Compute ordered sections (enabled first in their order, then disabled)
+  // Compute ordered sections - use sectionOrder if available, otherwise derive from sections
   const orderedSections = useMemo(() => {
-    const savedOrder = layout.sections || [];
+    const savedOrder = layout.sectionOrder || layout.sections || [];
     const allIds = SECTIONS.map(s => s.id);
     
-    // Enabled sections in saved order
-    const enabled = savedOrder.filter(id => allIds.includes(id));
+    // Start with saved order (for sections that exist in SECTIONS)
+    const fromSavedOrder = savedOrder.filter(id => allIds.includes(id));
     
-    // Disabled sections (not in saved order)
-    const disabled = allIds.filter(id => !enabled.includes(id));
+    // Add any new sections not in saved order
+    const notInOrder = allIds.filter(id => !savedOrder.includes(id));
     
-    return [...enabled, ...disabled];
-  }, [layout.sections, SECTIONS]);
+    return [...fromSavedOrder, ...notInOrder];
+  }, [layout.sectionOrder, layout.sections, SECTIONS]);
 
   // Compute ordered widgets
   const orderedWidgets = useMemo(() => {
@@ -195,7 +195,8 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       ? layout.sections.filter(s => s !== sectionId)
       : [...layout.sections, sectionId];
     
-    saveLayout.mutate({ ...layout, sections });
+    // Preserve current order (don't remove from sectionOrder)
+    saveLayout.mutate({ ...layout, sections, sectionOrder: orderedSections });
   };
 
   const handleToggleWidget = (widgetId: string) => {
@@ -214,9 +215,9 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     const newIndex = orderedSections.indexOf(over.id as string);
     const newOrder = arrayMove(orderedSections, oldIndex, newIndex);
     
-    // Keep only enabled sections in the layout, but respect new order
+    // Save full order AND enabled sections
     const enabledSections = newOrder.filter(id => layout.sections.includes(id));
-    saveLayout.mutate({ ...layout, sections: enabledSections });
+    saveLayout.mutate({ ...layout, sections: enabledSections, sectionOrder: newOrder });
   };
 
   const handleWidgetDragEnd = (event: DragEndEvent) => {
