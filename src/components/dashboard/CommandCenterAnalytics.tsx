@@ -7,11 +7,21 @@ import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsW
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
 import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
+import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
+import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
+import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
+import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
+import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
+import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
+import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
+import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
+import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { Link } from 'react-router-dom';
 import { Settings2 } from 'lucide-react';
+import { format, subDays } from 'date-fns';
 
 /**
  * Command Center Analytics Section
@@ -24,6 +34,11 @@ export function CommandCenterAnalytics() {
   const { data: visibilityData, isLoading } = useDashboardVisibility();
   const { data: profile } = useEmployeeProfile();
   const roles = useEffectiveRoles();
+  
+  // Default date range for cards that need it
+  const today = new Date();
+  const dateFrom = format(subDays(today, 30), 'yyyy-MM-dd');
+  const dateTo = format(today, 'yyyy-MM-dd');
   
   // Top-level access: account owner (primary owner), super admin, and DOO (admin role) only
   const isTopLeadership = profile?.is_primary_owner || 
@@ -42,6 +57,7 @@ export function CommandCenterAnalytics() {
     return element?.is_visible ?? false;
   };
   
+  // Original cards
   const hasSalesOverview = isElementVisible('sales_overview');
   const hasNewBookings = isElementVisible('new_bookings');
   const hasForecast = isElementVisible('week_ahead_forecast');
@@ -52,9 +68,25 @@ export function CommandCenterAnalytics() {
   const hasTeamOverview = isElementVisible('team_overview');
   const hasStylistsOverview = isElementVisible('stylists_overview');
   
+  // New pinnable cards
+  const hasTopPerformers = isElementVisible('top_performers');
+  const hasRevenueBreakdown = isElementVisible('revenue_breakdown');
+  const hasClientFunnel = isElementVisible('client_funnel');
+  const hasTeamGoals = isElementVisible('team_goals');
+  const hasHiringCapacity = isElementVisible('hiring_capacity');
+  const hasStaffingTrends = isElementVisible('staffing_trends');
+  const hasStylistWorkload = isElementVisible('stylist_workload');
+  
   const hasAnyPinned = hasSalesOverview || hasNewBookings || hasForecast || hasCapacity || 
     hasWebsiteAnalytics || hasClientEngineOverview || hasOnboardingOverview || 
-    hasTeamOverview || hasStylistsOverview;
+    hasTeamOverview || hasStylistsOverview || hasTopPerformers || hasRevenueBreakdown ||
+    hasClientFunnel || hasTeamGoals || hasHiringCapacity ||
+    hasStaffingTrends || hasStylistWorkload;
+  
+  // Fetch data for cards that need it (only when pinned to avoid unnecessary API calls)
+  const { data: salesData } = useSalesMetrics({ dateFrom, dateTo });
+  const { data: performers, isLoading: isLoadingPerformers } = useSalesByStylist(dateFrom, dateTo);
+  const { workload, isLoading: isLoadingWorkload } = useStaffUtilization(undefined, '30days');
   
   // Show nothing if loading
   if (isLoading) return null;
@@ -78,12 +110,56 @@ export function CommandCenterAnalytics() {
     );
   }
   
+  // Transform performers data to match TopPerformersCard expected format
+  const performersForCard = performers?.map(p => ({
+    user_id: p.user_id,
+    name: p.name,
+    photo_url: p.photo_url,
+    totalRevenue: p.totalRevenue,
+  })) || [];
+  
   return (
     <div className="space-y-6">
       {/* Sales Overview */}
       {hasSalesOverview && (
         <VisibilityGate elementKey="sales_overview">
           <AggregateSalesCard />
+        </VisibilityGate>
+      )}
+      
+      {/* Top Performers & Revenue Breakdown - Side by side */}
+      {(hasTopPerformers || hasRevenueBreakdown) && (
+        <div className="grid lg:grid-cols-2 gap-6">
+          {hasTopPerformers && (
+            <VisibilityGate elementKey="top_performers">
+              <TopPerformersCard 
+                performers={performersForCard} 
+                isLoading={isLoadingPerformers} 
+              />
+            </VisibilityGate>
+          )}
+          {hasRevenueBreakdown && (
+            <VisibilityGate elementKey="revenue_breakdown">
+              <RevenueDonutChart 
+                serviceRevenue={salesData?.serviceRevenue || 0}
+                productRevenue={salesData?.productRevenue || 0}
+              />
+            </VisibilityGate>
+          )}
+        </div>
+      )}
+      
+      {/* Client Funnel */}
+      {hasClientFunnel && (
+        <VisibilityGate elementKey="client_funnel">
+          <ClientFunnelCard dateFrom={dateFrom} dateTo={dateTo} />
+        </VisibilityGate>
+      )}
+      
+      {/* Team Goals */}
+      {hasTeamGoals && (
+        <VisibilityGate elementKey="team_goals">
+          <TeamGoalsCard currentRevenue={salesData?.totalRevenue || 0} />
         </VisibilityGate>
       )}
       
@@ -105,6 +181,32 @@ export function CommandCenterAnalytics() {
       {hasCapacity && (
         <VisibilityGate elementKey="capacity_utilization">
           <CapacityUtilizationCard />
+        </VisibilityGate>
+      )}
+      
+      {/* Hiring & Staffing Cards */}
+      {(hasHiringCapacity || hasStaffingTrends) && (
+        <div className="grid lg:grid-cols-2 gap-6">
+          {hasHiringCapacity && (
+            <VisibilityGate elementKey="hiring_capacity">
+              <HiringCapacityCard />
+            </VisibilityGate>
+          )}
+          {hasStaffingTrends && (
+            <VisibilityGate elementKey="staffing_trends">
+              <StaffingTrendChart />
+            </VisibilityGate>
+          )}
+        </div>
+      )}
+      
+      {/* Stylist Workload */}
+      {hasStylistWorkload && (
+        <VisibilityGate elementKey="stylist_workload">
+          <StylistWorkloadCard 
+            workload={workload || []} 
+            isLoading={isLoadingWorkload} 
+          />
         </VisibilityGate>
       )}
       

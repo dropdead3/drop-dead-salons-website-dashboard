@@ -8,6 +8,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { format, parseISO } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 interface StaffingTrendChartProps {
   className?: string;
@@ -57,6 +58,10 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
           <CardTitle className="flex items-center gap-2 text-lg">
             <TrendingUp className="h-5 w-5 text-primary" />
             Staffing Trends
+            <CommandCenterVisibilityToggle 
+              elementKey="staffing_trends" 
+              elementName="Staffing Trends" 
+            />
           </CardTitle>
           <div className="flex gap-2">
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
