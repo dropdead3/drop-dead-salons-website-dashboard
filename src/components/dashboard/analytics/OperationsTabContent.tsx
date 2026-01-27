@@ -65,7 +65,7 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
   return (
     <div className="space-y-6">
       {/* Header Controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <CommandCenterVisibilityToggle 
           elementKey="new_bookings" 
           elementName="New Bookings" 
@@ -73,6 +73,18 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
         <CommandCenterVisibilityToggle 
           elementKey="capacity_utilization" 
           elementName="Capacity Utilization" 
+        />
+        <CommandCenterVisibilityToggle 
+          elementKey="team_overview" 
+          elementName="Team Overview" 
+        />
+        <CommandCenterVisibilityToggle 
+          elementKey="stylists_overview" 
+          elementName="Stylists by Level" 
+        />
+        <CommandCenterVisibilityToggle 
+          elementKey="onboarding_overview" 
+          elementName="Onboarding Overview" 
         />
       </div>
 

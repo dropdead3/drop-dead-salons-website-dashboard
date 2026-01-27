@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { format, subDays, startOfWeek, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface EnrollmentData {
@@ -202,11 +204,18 @@ export function ProgramTabContent({ filters }: ProgramTabContentProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        <CommandCenterVisibilityToggle 
+          elementKey="client_engine_overview" 
+          elementName="Client Engine Overview" 
+        />
         <Button variant="outline" size="icon" onClick={fetchData}>
           <RefreshCcw className="w-4 h-4" />
         </Button>
       </div>
+
+      {/* Client Engine Overview Card */}
+      <ClientEngineOverview />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

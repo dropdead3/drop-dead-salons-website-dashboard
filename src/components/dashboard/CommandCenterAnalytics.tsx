@@ -4,6 +4,9 @@ import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
 import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
+import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
+import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
+import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
@@ -44,8 +47,14 @@ export function CommandCenterAnalytics() {
   const hasForecast = isElementVisible('week_ahead_forecast');
   const hasCapacity = isElementVisible('capacity_utilization');
   const hasWebsiteAnalytics = isElementVisible('website_analytics') && isTopLeadership;
+  const hasClientEngineOverview = isElementVisible('client_engine_overview');
+  const hasOnboardingOverview = isElementVisible('onboarding_overview');
+  const hasTeamOverview = isElementVisible('team_overview');
+  const hasStylistsOverview = isElementVisible('stylists_overview');
   
-  const hasAnyPinned = hasSalesOverview || hasNewBookings || hasForecast || hasCapacity || hasWebsiteAnalytics;
+  const hasAnyPinned = hasSalesOverview || hasNewBookings || hasForecast || hasCapacity || 
+    hasWebsiteAnalytics || hasClientEngineOverview || hasOnboardingOverview || 
+    hasTeamOverview || hasStylistsOverview;
   
   // Show nothing if loading
   if (isLoading) return null;
@@ -103,6 +112,36 @@ export function CommandCenterAnalytics() {
       {hasWebsiteAnalytics && (
         <VisibilityGate elementKey="website_analytics">
           <WebsiteAnalyticsWidget />
+        </VisibilityGate>
+      )}
+      
+      {/* Client Engine Overview */}
+      {hasClientEngineOverview && (
+        <VisibilityGate elementKey="client_engine_overview">
+          <ClientEngineOverview />
+        </VisibilityGate>
+      )}
+      
+      {/* Team Overview Cards */}
+      {(hasTeamOverview || hasStylistsOverview) && (
+        <div className="grid lg:grid-cols-2 gap-6">
+          {hasTeamOverview && (
+            <VisibilityGate elementKey="team_overview">
+              <StaffOverviewCard />
+            </VisibilityGate>
+          )}
+          {hasStylistsOverview && (
+            <VisibilityGate elementKey="stylists_overview">
+              <StylistsOverviewCard />
+            </VisibilityGate>
+          )}
+        </div>
+      )}
+      
+      {/* Onboarding Overview */}
+      {hasOnboardingOverview && (
+        <VisibilityGate elementKey="onboarding_overview">
+          <OnboardingTrackerOverview />
         </VisibilityGate>
       )}
     </div>
