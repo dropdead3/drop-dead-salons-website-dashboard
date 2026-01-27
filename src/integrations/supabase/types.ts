@@ -980,6 +980,42 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_layout_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_name: string
+          id: string
+          is_default: boolean | null
+          layout: Json
+          role_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_name: string
+          id?: string
+          is_default?: boolean | null
+          layout: Json
+          role_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_default?: boolean | null
+          layout?: Json
+          role_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       day_rate_agreements: {
         Row: {
           content: string
@@ -4592,6 +4628,7 @@ export type Database = {
           created_at: string
           custom_theme: Json | null
           custom_typography: Json | null
+          dashboard_layout: Json | null
           id: string
           settings_layout: Json | null
           updated_at: string
@@ -4601,6 +4638,7 @@ export type Database = {
           created_at?: string
           custom_theme?: Json | null
           custom_typography?: Json | null
+          dashboard_layout?: Json | null
           id?: string
           settings_layout?: Json | null
           updated_at?: string
@@ -4610,6 +4648,7 @@ export type Database = {
           created_at?: string
           custom_theme?: Json | null
           custom_typography?: Json | null
+          dashboard_layout?: Json | null
           id?: string
           settings_layout?: Json | null
           updated_at?: string

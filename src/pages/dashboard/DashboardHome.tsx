@@ -24,6 +24,7 @@ import {
   Pencil,
   Hourglass,
   HandHelping,
+  Settings2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
@@ -41,6 +42,9 @@ import { WorkScheduleWidget } from '@/components/dashboard/WorkScheduleWidget';
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { CommandCenterAnalytics } from '@/components/dashboard/CommandCenterAnalytics';
+import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
+import { DashboardCustomizeMenu } from '@/components/dashboard/DashboardCustomizeMenu';
+import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -78,6 +82,7 @@ export default function DashboardHome() {
   const { data: approvalStatus } = useCurrentUserApprovalStatus();
   const { data: profile } = useEmployeeProfile();
   const queryClient = useQueryClient();
+  const { layout, hasCompletedSetup, isLoading: layoutLoading, templateKey } = useDashboardLayout();
   
   // Birthday notifications for leadership
   useBirthdayNotifications();
@@ -148,6 +153,20 @@ export default function DashboardHome() {
   
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
 
+  // Show setup wizard for first-time users
+  if (!hasCompletedSetup && !layoutLoading) {
+    return (
+      <DashboardLayout>
+        <DashboardSetupWizard 
+          roleTemplateKey={templateKey}
+          onComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+          }}
+        />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-8">
@@ -169,14 +188,17 @@ export default function DashboardHome() {
         <TodaysBirthdayBanner />
 
 
-        {/* Header */}
-        <div>
-          <h1 className="font-display text-3xl lg:text-4xl mb-2">
-            Welcome back, {firstName}
-          </h1>
-          <p className="text-muted-foreground font-sans">
-            Here's what's happening today
-          </p>
+        {/* Header with Customize Button */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="font-display text-3xl lg:text-4xl mb-2">
+              Welcome back, {firstName}
+            </h1>
+            <p className="text-muted-foreground font-sans">
+              Here's what's happening today
+            </p>
+          </div>
+          <DashboardCustomizeMenu variant="button" />
         </div>
 
         {/* Quick Actions - FIRST for stylists/assistants */}
