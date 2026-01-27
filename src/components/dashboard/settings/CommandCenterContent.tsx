@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -40,6 +41,9 @@ import {
 import { useRoles } from '@/hooks/useRoles';
 import { getIconByName } from '@/lib/iconResolver';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -63,8 +67,8 @@ export function CommandCenterContent() {
   const addMutation = useAddVisibilityElement();
   const deleteMutation = useDeleteVisibilityElement();
   const bulkMutation = useBulkUpdateVisibility();
-
-  // Process visibility data
+  const queryClient = useQueryClient();
+  const hasSyncedRef = useRef(false);
   const { groupedElements, allElements, categories, stats } = useMemo(() => {
     if (!visibilityData) {
       return { groupedElements: {}, allElements: [], categories: [], stats: { total: 0, visible: 0, hidden: 0 } };
@@ -168,15 +172,23 @@ export function CommandCenterContent() {
     });
   };
 
-  // Get role visibility stats
+  // Get unique element count (total elements that should exist for each role)
+  const uniqueElementCount = allElements.length;
+
+  // Get role visibility stats - now includes total possible elements
   const getRoleVisibilityStats = (roleName: string) => {
     const roleElements = allElements.filter(el => el.roles[roleName as AppRole] !== undefined);
     const visibleCount = roleElements.filter(el => el.roles[roleName as AppRole]).length;
-    return { visible: visibleCount, total: roleElements.length };
+    return { 
+      visible: visibleCount, 
+      total: roleElements.length,
+      incomplete: roleElements.length < uniqueElementCount
+    };
   };
 
-  // Bulk toggle for a role
-  const handleBulkToggle = (roleName: string, setVisible: boolean) => {
+  // Bulk toggle for a role - now handles missing entries
+  const handleBulkToggle = async (roleName: string, setVisible: boolean) => {
+    // Find elements that need updating (already have entries with different value)
     const updates = allElements
       .filter(el => el.roles[roleName as AppRole] !== undefined && el.roles[roleName as AppRole] !== setVisible)
       .map(el => ({
@@ -185,11 +197,64 @@ export function CommandCenterContent() {
         isVisible: setVisible,
       }));
     
+    // Find elements missing entries for this role
+    const missingElements = allElements.filter(el => el.roles[roleName as AppRole] === undefined);
+    
+    // Create missing entries with the target visibility
+    if (missingElements.length > 0) {
+      const inserts = missingElements.map(el => ({
+        element_key: el.element_key,
+        element_name: el.element_name,
+        element_category: el.element_category,
+        role: roleName as AppRole,
+        is_visible: setVisible,
+      }));
+      
+      const { error } = await supabase
+        .from('dashboard_element_visibility')
+        .insert(inserts);
+      
+      if (error) {
+        console.error('Failed to create missing entries:', error);
+        toast.error('Failed to update visibility settings');
+        setConfirmHideRole(null);
+        return;
+      }
+    }
+    
+    // Perform updates for existing entries
     if (updates.length > 0) {
       bulkMutation.mutate(updates);
+    } else if (missingElements.length > 0) {
+      // Just refresh the data since we inserted but didn't need to update
+      queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+      toast.success('Visibility settings updated');
     }
+    
     setConfirmHideRole(null);
   };
+
+  // Auto-sync missing entries on mount (runs once when data is ready)
+  useEffect(() => {
+    if (hasSyncedRef.current || visibilityLoading || rolesLoading || !visibilityData || roles.length === 0) {
+      return;
+    }
+
+    // Check if any role has incomplete entries
+    const hasIncompleteRoles = roles.some(role => {
+      const roleElementCount = allElements.filter(
+        el => el.roles[role.name as AppRole] !== undefined
+      ).length;
+      return roleElementCount < uniqueElementCount && uniqueElementCount > 0;
+    });
+
+    if (hasIncompleteRoles) {
+      hasSyncedRef.current = true;
+      syncMutation.mutate();
+    } else {
+      hasSyncedRef.current = true;
+    }
+  }, [visibilityLoading, rolesLoading, visibilityData, roles, allElements, uniqueElementCount, syncMutation]);
 
   const isLoading = visibilityLoading || rolesLoading;
 
@@ -412,9 +477,23 @@ export function CommandCenterContent() {
                         <Icon className="w-4 h-4" style={{ color: role.color }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-medium truncate">{role.display_name}</h3>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="text-sm font-medium truncate">{role.display_name}</h3>
+                          {stats.incomplete && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertCircle className="w-3 h-3 text-amber-500 flex-shrink-0 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Missing entries - click Show/Hide to sync</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
-                          {stats.visible} of {stats.total} visible
+                          {stats.visible} of {uniqueElementCount} visible
                         </p>
                       </div>
                     </div>
