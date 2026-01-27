@@ -1,88 +1,162 @@
 
-# Combine Top Performers & Revenue Mix into One Pinnable Card
+
+# Create Unified Sales Bento Box Card
 
 ## Overview
 
-Merge the "Top Performers" and "Revenue Mix" sections in the Analytics Hub sidebar into a single unified card. This creates one pinnable element that can be added to the Command Center as a cohesive "Sales Snapshot" widget.
+Combine all elements visible in the screenshot into a single, cohesive bento-box styled card that becomes one pinnable element for the Command Center. This includes:
+- Monthly Goal progress bar
+- 6 KPI metrics (Total Revenue, Services, Products, Transactions, Avg Ticket, Rev Tomorrow)
+- Sales Snapshot sidebar (Top Performers + Revenue Mix donut chart)
 
 ---
 
-## Current State
+## Current Layout (Separate Components)
 
-The sidebar currently has two separate cards:
-1. **Top Performers** (`top_performers` element key) - Shows top 3 stylists by revenue
-2. **Revenue Mix** (`revenue_breakdown` element key) - Shows service vs product donut chart
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ Monthly Goal Progress Bar (SalesGoalProgress component)             │
+└─────────────────────────────────────────────────────────────────────┘
 
-Each has its own:
-- Card wrapper with header
-- `CommandCenterVisibilityToggle` gear icon
-- Separate element key for pinning
+┌───────────────────────────────────────────────┐ ┌───────────────────┐
+│ 6 KPI Cards (PinnableCard: sales_kpi_grid)    │ │ SalesSnapshotCard │
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐           │ │ (PinnableCard:    │
+│ │Total Rev│ │Services │ │Products │           │ │  sales_snapshot)  │
+│ └─────────┘ └─────────┘ └─────────┘           │ │                   │
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐           │ │ - Top Performers  │
+│ │  Trans  │ │Avg Tick │ │Tomorrow │           │ │ - Revenue Mix     │
+│ └─────────┘ └─────────┘ └─────────┘           │ └───────────────────┘
+└───────────────────────────────────────────────┘
+```
 
 ---
 
-## Solution
+## Target Layout (Single Bento Card)
 
-Create a new combined card component that:
-1. Has a single `PinnableCard` wrapper with one element key (`sales_snapshot`)
-2. Contains both Top Performers and Revenue Mix sections inside
-3. Uses a clean visual separation between the two sections
-4. Removes the redundant individual Card wrappers from child components
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ⚙                                        SALES DASHBOARD                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ○ Monthly Goal  ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  4%  │
+│   $3,550 earned                                            $79,785 to go    │
+├─────────────────────────────────────────────────────────┬───────────────────┤
+│                                                         │                   │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌────────────┐ │ 🏆 TOP PERFORMERS │
+│  │      $           │ │      ✂          │ │    📦      │ │ ┌───────────────┐ │
+│  │   $3,550        │ │   $3,550        │ │    $0      │ │ │ 1. Name $3550 │ │
+│  │  Total Revenue  │ │    Services     │ │  Products  │ │ │ 2. Name $2100 │ │
+│  └─────────────────┘ └─────────────────┘ └────────────┘ │ │ 3. Name $1800 │ │
+│                                                         │ └───────────────┘ │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌────────────┐ │ ──────────────── │
+│  │      💳         │ │      🧾         │ │    📅      │ │ 📊 REVENUE MIX  │
+│  │      36         │ │     $99         │ │  $1,821    │ │                   │
+│  │  Transactions   │ │   Avg Ticket    │ │Rev Tomorrow│ │ [Donut] Services  │
+│  │                 │ │                 │ │ 19 bookings│ │         Products  │
+│  └─────────────────┘ └─────────────────┘ └────────────┘ │         Retail %  │
+│                                                         │                   │
+└─────────────────────────────────────────────────────────┴───────────────────┘
+```
 
 ---
 
 ## Implementation
 
-### File 1: Create `SalesSnapshotCard.tsx`
+### Step 1: Create `SalesBentoCard.tsx`
 
-New component that combines both sections into one card:
+A new unified component that combines all elements with a bento-box aesthetic:
+
+**File: `src/components/dashboard/sales/SalesBentoCard.tsx`**
 
 ```typescript
-// src/components/dashboard/sales/SalesSnapshotCard.tsx
-
-interface SalesSnapshotCardProps {
-  performers: Performer[];
-  isLoading?: boolean;
+interface SalesBentoCardProps {
+  // Goal Progress
+  currentRevenue: number;
+  goalTarget: number;
+  goalLabel?: string;
+  
+  // KPI Metrics
+  totalRevenue: number;
   serviceRevenue: number;
   productRevenue: number;
+  totalTransactions: number;
+  averageTicket: number;
+  tomorrowRevenue: number;
+  tomorrowBookings: number;
+  
+  // Top Performers
+  performers: Performer[];
+  isLoading?: boolean;
 }
 
-export function SalesSnapshotCard({
-  performers,
-  isLoading,
-  serviceRevenue,
-  productRevenue
-}: SalesSnapshotCardProps) {
+export function SalesBentoCard({ ... }: SalesBentoCardProps) {
   return (
-    <Card>
-      <CardHeader className="pb-2">
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-primary" />
-          <CardTitle className="font-display text-base">Sales Snapshot</CardTitle>
+          <LayoutDashboard className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display">Sales Dashboard</CardTitle>
         </div>
       </CardHeader>
+      
       <CardContent className="space-y-4">
-        {/* Top Performers Section */}
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Trophy className="w-4 h-4 text-chart-4" />
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Top Performers
-            </h4>
+        {/* Goal Progress Row */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              <span className="font-medium">{goalLabel}</span>
+            </div>
+            <span className="text-xs font-medium">{percentage}%</span>
           </div>
-          {/* Performer list content (inline, no card wrapper) */}
+          <Progress value={percentage} className="h-2" />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <BlurredAmount>${currentRevenue.toLocaleString()} earned</BlurredAmount>
+            <BlurredAmount>${remaining.toLocaleString()} to go</BlurredAmount>
+          </div>
         </div>
         
         <Separator />
         
-        {/* Revenue Mix Section */}
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <PieChartIcon className="w-4 h-4 text-chart-2" />
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Revenue Mix
-            </h4>
+        {/* Bento Grid: KPIs + Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Left: 3x2 KPI Grid */}
+          <div className="lg:col-span-3 grid grid-cols-3 gap-3">
+            {/* 6 KPI cells */}
+            <KPICell icon={DollarSign} value={totalRevenue} label="Total Revenue" />
+            <KPICell icon={Scissors} value={serviceRevenue} label="Services" />
+            <KPICell icon={ShoppingBag} value={productRevenue} label="Products" />
+            <KPICell icon={CreditCard} value={totalTransactions} label="Transactions" />
+            <KPICell icon={Receipt} value={averageTicket} label="Avg Ticket" />
+            <KPICell icon={CalendarClock} value={tomorrowRevenue} label="Rev Tomorrow" 
+                     subtitle={`${tomorrowBookings} bookings`} />
           </div>
-          {/* Donut chart content (inline, no card wrapper) */}
+          
+          {/* Right: Sidebar (Top Performers + Revenue Mix) */}
+          <div className="space-y-4 lg:border-l lg:pl-4 lg:border-border/50">
+            {/* Top Performers */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Trophy className="w-4 h-4 text-chart-4" />
+                <h4 className="text-xs font-medium text-muted-foreground uppercase">
+                  Top Performers
+                </h4>
+              </div>
+              {/* Performer list (compact) */}
+            </div>
+            
+            <Separator />
+            
+            {/* Revenue Mix Donut */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <PieChartIcon className="w-4 h-4 text-chart-2" />
+                <h4 className="text-xs font-medium text-muted-foreground uppercase">
+                  Revenue Mix
+                </h4>
+              </div>
+              {/* Donut chart + legend */}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -90,74 +164,61 @@ export function SalesSnapshotCard({
 }
 ```
 
-### File 2: Update `SalesTabContent.tsx`
+### Step 2: Update `SalesTabContent.tsx`
 
-Replace the two separate `PinnableCard` components with one:
+Replace the separate components with a single `PinnableCard` wrapper:
 
+**Current structure (lines 182-306):**
 ```typescript
-// Before (lines 294-314):
-<div className="space-y-4">
-  <PinnableCard elementKey="top_performers" ...>
-    ...
+<SalesGoalProgress ... />
+
+<div className="grid lg:grid-cols-4 gap-6">
+  <PinnableCard elementKey="sales_kpi_grid" ...>
+    {/* KPI Grid */}
   </PinnableCard>
-  <PinnableCard elementKey="revenue_breakdown" ...>
-    ...
+  
+  <PinnableCard elementKey="sales_snapshot" ...>
+    <SalesSnapshotCard ... />
   </PinnableCard>
 </div>
+```
 
-// After:
+**New structure:**
+```typescript
 <PinnableCard 
-  elementKey="sales_snapshot" 
-  elementName="Sales Snapshot" 
+  elementKey="sales_dashboard_bento" 
+  elementName="Sales Dashboard" 
   category="Analytics Hub - Sales"
 >
-  <SalesSnapshotCard
-    performers={stylistData || []}
-    isLoading={stylistLoading}
+  <SalesBentoCard
+    currentRevenue={metrics?.totalRevenue || 0}
+    goalTarget={currentGoal}
+    goalLabel={...}
+    totalRevenue={metrics?.totalRevenue || 0}
     serviceRevenue={metrics?.serviceRevenue || 0}
     productRevenue={metrics?.productRevenue || 0}
+    totalTransactions={metrics?.totalTransactions || 0}
+    averageTicket={metrics?.averageTicket || 0}
+    tomorrowRevenue={tomorrowData?.revenue || 0}
+    tomorrowBookings={tomorrowData?.appointmentCount || 0}
+    performers={stylistData || []}
+    isLoading={metricsLoading || stylistLoading}
   />
 </PinnableCard>
 ```
 
-### File 3: Update existing components (optional cleanup)
-
-The `TopPerformersCard` and `RevenueDonutChart` components can either:
-- **Option A**: Be refactored into "inline" variants without Card wrappers for use in the combined card
-- **Option B**: Keep as-is for backward compatibility if used elsewhere, and duplicate the content inline in `SalesSnapshotCard`
-
-I'll use **Option B** to avoid breaking other usages - the new `SalesSnapshotCard` will contain its own inline content.
-
 ---
 
-## Visual Layout
+## Visual Design: Bento Box Styling
 
-```text
-┌─────────────────────────────────┐
-│ ⚙ Sales Snapshot               │ ← Single gear icon for pinning
-├─────────────────────────────────┤
-│ 🏆 TOP PERFORMERS               │
-│ ┌─────────────────────────────┐ │
-│ │ 1. [Avatar] Name    $3,550  │ │
-│ │ 2. [Avatar] Name    $2,100  │ │
-│ │ 3. [Avatar] Name    $1,800  │ │
-│ └─────────────────────────────┘ │
-├─────────────────────────────────┤
-│ 📊 REVENUE MIX                  │
-│ [Donut Chart]  Services 100%    │
-│                Products 0%      │
-│                Retail % 0%      │
-└─────────────────────────────────┘
-```
-
----
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/dashboard/sales/SalesSnapshotCard.tsx` | **New** - Combined card component |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Replace two PinnableCards with one using SalesSnapshotCard |
+| Element | Style |
+|---------|-------|
+| Card Container | `rounded-xl border bg-card shadow-sm` |
+| Goal Progress | Full-width row at top with progress bar |
+| KPI Grid | 3x2 grid with subtle `bg-muted/30` backgrounds, `rounded-lg` corners |
+| Sidebar | Vertical border separator (`lg:border-l`) containing Top Performers + Revenue Mix |
+| Icons | Centered above each KPI value with color coding |
+| Typography | `font-display` for title, `tabular-nums` for values |
 
 ---
 
@@ -165,16 +226,29 @@ I'll use **Option B** to avoid breaking other usages - the new `SalesSnapshotCar
 
 | Before | After |
 |--------|-------|
-| `top_performers` | Merged into `sales_snapshot` |
-| `revenue_breakdown` | Merged into `sales_snapshot` |
+| `sales_kpi_grid` | Merged into `sales_dashboard_bento` |
+| `sales_snapshot` | Merged into `sales_dashboard_bento` |
+| `SalesGoalProgress` (not pinnable) | Now included in `sales_dashboard_bento` |
 
-The old element keys can remain in the database but will no longer be actively used. The new `sales_snapshot` key becomes the single pinnable element.
+---
+
+## Files to Create/Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/dashboard/sales/SalesBentoCard.tsx` | **New** - Unified bento card component |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Replace multiple components with single SalesBentoCard |
 
 ---
 
 ## Result
 
-- **One card** in the Analytics Hub sidebar containing both sections
-- **One gear icon** to pin the entire card to Command Center
-- **Cleaner UI** with visual separation via separator
-- **Single element key** (`sales_snapshot`) for visibility management
+- **One unified bento-box card** containing:
+  - Monthly Goal progress bar
+  - 6 KPI metrics in a clean grid
+  - Top Performers leaderboard
+  - Revenue Mix donut chart
+- **Single gear icon** (⚙) for pinning the entire dashboard to Command Center
+- **One element key** (`sales_dashboard_bento`) for visibility management
+- Clean, professional bento-box aesthetic with visual separation between sections
+
