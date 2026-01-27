@@ -1,77 +1,68 @@
 
-# Fix Role Context for View As Mode in Dashboard Customize Menu
+
+# Hide Revenue Analytics from Front Desk Dashboard
 
 ## Problem
 
-When viewing as "Front Desk" role, the Customize Dashboard menu shows incorrect sections:
-- "Command Center" appears (should be hidden for Front Desk)
-- "Today's Queue" appears but isn't properly enabled by default
+The "Quick Stats" section on the dashboard shows revenue metrics ("$0 This Week") to Front Desk users. Front Desk staff should not see sales/revenue analytics - only operational metrics (waiting, in service, completed, etc.).
 
-The root cause is in how `isLeadership` is calculated in `DashboardHome.tsx`:
+Screenshot shows Front Desk view with:
+- Today's Clients (OK to show)
+- **This Week: $0** (should be hidden)
+- New Clients (OK to show)
+- Rebooking Rate (OK to show)
 
-```typescript
-const isLeadership = profile?.is_super_admin || 
-    roles.includes('super_admin') || 
-    roles.includes('manager');
-```
+---
 
-The `profile?.is_super_admin` check uses the **actual user's profile**, not the effective (impersonated) roles. So when a super admin views as "Front Desk", `isLeadership` remains `true`.
+## Current Logic
+
+| Section | Visibility Condition | Shows Revenue? |
+|---------|---------------------|----------------|
+| Operations Quick Stats | `isReceptionist \|\| isLeadership` | Conditionally hidden via `hideRevenue` prop |
+| Quick Stats (personal) | `!isLeadership` | **Always shows revenue** |
+
+The Quick Stats section condition `!isLeadership` matches Front Desk users, showing them the "$0 This Week" revenue card.
 
 ---
 
 ## Solution
 
-Update the `isLeadership` calculation to respect View As mode by checking if impersonation is active.
+Change the Quick Stats visibility from `!isLeadership` to `hasStylistRole` so it only shows to stylists and stylist assistants who should see personal performance metrics.
 
 ### File: `src/pages/dashboard/DashboardHome.tsx`
 
-**Current code (lines 93-95):**
+**Line 301 - Current:**
 ```typescript
-const isLeadership = profile?.is_super_admin || 
-    roles.includes('super_admin') || 
-    roles.includes('manager');
+{!isLeadership && (
 ```
 
-**Updated code:**
+**Updated:**
 ```typescript
-// Import useViewAs hook at top of file
-import { useViewAs } from '@/contexts/ViewAsContext';
-
-// Inside component:
-const { isViewingAs } = useViewAs();
-
-// Leadership check - when viewing as another role, only use effective roles
-const isLeadership = isViewingAs 
-  ? roles.includes('super_admin') || roles.includes('manager')
-  : profile?.is_super_admin || roles.includes('super_admin') || roles.includes('manager');
+{hasStylistRole && (
 ```
 
 This ensures:
-1. When **not impersonating**: Uses both profile flag and roles (existing behavior)
-2. When **viewing as a role**: Only checks effective roles, ignoring actual profile
+- **Stylists/Assistants**: See personal Quick Stats (clients, revenue, rebooking)
+- **Front Desk**: See only Operations Quick Stats (waiting, in service, completed, no-shows) without revenue
+- **Leadership**: See Command Center analytics
 
 ---
 
-## Expected Result
+## Verification
 
-### When Super Admin views as "Front Desk":
-
-**Before fix:**
-| Section | Visible in Menu | Problem |
-|---------|-----------------|---------|
-| Command Center | Yes | Should be hidden |
-| Today's Queue | Yes (bottom) | Should be at top, enabled |
-
-**After fix:**
-| Section | Visible in Menu |
-|---------|-----------------|
-| Operations Stats | Yes |
+### Front Desk (Receptionist) will see:
+| Section | Visible |
+|---------|---------|
 | Today's Queue | Yes |
-| Schedule & Tasks | Yes |
-| Announcements | Yes |
-| Widgets | Yes |
+| Operations Quick Stats | Yes (without revenue card) |
+| Quick Stats (with $0 This Week) | **No** |
 
-Command Center will no longer appear since `isLeadership` will be `false` when viewing as Front Desk.
+### Stylist will see:
+| Section | Visible |
+|---------|---------|
+| Quick Actions | Yes |
+| Quick Stats (personal metrics) | Yes |
+| Client Engine | Yes |
 
 ---
 
@@ -79,4 +70,5 @@ Command Center will no longer appear since `isLeadership` will be `false` when v
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/DashboardHome.tsx` | Import `useViewAs`, update `isLeadership` calculation to respect impersonation mode |
+| `src/pages/dashboard/DashboardHome.tsx` | Line 301: Change `!isLeadership` to `hasStylistRole` |
+
