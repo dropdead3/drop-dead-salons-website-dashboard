@@ -1,8 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { 
@@ -10,16 +9,11 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle,
-  Info,
   BookOpen,
   ClipboardCheck,
   CreditCard,
   Camera,
 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -36,7 +30,6 @@ interface OnboardingStats {
 }
 
 export function OnboardingTrackerOverview() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<OnboardingStats>({
     total: 0,
@@ -220,32 +213,11 @@ export function OnboardingTrackerOverview() {
   return (
     <Card className="p-5 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-            <ClipboardCheck className="w-4 h-4 text-primary" />
-          </div>
-          <h3 className="font-medium text-sm">Onboarding Overview</h3>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7 rounded-full hover:bg-primary/10"
-                onClick={() => navigate('/dashboard/admin/onboarding-tracker')}
-              >
-                <Info className="w-4 h-4 text-primary" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
-              View full analytics
-            </TooltipContent>
-          </Tooltip>
-          <CommandCenterVisibilityToggle 
-            elementKey="onboarding_overview" 
-            elementName="Onboarding Overview" 
-          />
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+          <ClipboardCheck className="w-4 h-4 text-primary" />
         </div>
+        <h3 className="font-medium text-sm">Onboarding Overview</h3>
       </div>
 
       {/* Overall Progress */}

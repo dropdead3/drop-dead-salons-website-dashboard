@@ -5,7 +5,7 @@ import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUt
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
 import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
-import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
+
 import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
@@ -64,7 +64,7 @@ export function CommandCenterAnalytics() {
   const hasCapacity = isElementVisible('capacity_utilization');
   const hasWebsiteAnalytics = isElementVisible('website_analytics') && isTopLeadership;
   const hasClientEngineOverview = isElementVisible('client_engine_overview');
-  const hasOnboardingOverview = isElementVisible('onboarding_overview');
+  
   const hasTeamOverview = isElementVisible('team_overview');
   const hasStylistsOverview = isElementVisible('stylists_overview');
   
@@ -78,7 +78,7 @@ export function CommandCenterAnalytics() {
   const hasStylistWorkload = isElementVisible('stylist_workload');
   
   const hasAnyPinned = hasSalesOverview || hasNewBookings || hasForecast || hasCapacity || 
-    hasWebsiteAnalytics || hasClientEngineOverview || hasOnboardingOverview || 
+    hasWebsiteAnalytics || hasClientEngineOverview || 
     hasTeamOverview || hasStylistsOverview || hasTopPerformers || hasRevenueBreakdown ||
     hasClientFunnel || hasTeamGoals || hasHiringCapacity ||
     hasStaffingTrends || hasStylistWorkload;
@@ -240,12 +240,6 @@ export function CommandCenterAnalytics() {
         </div>
       )}
       
-      {/* Onboarding Overview */}
-      {hasOnboardingOverview && (
-        <VisibilityGate elementKey="onboarding_overview">
-          <OnboardingTrackerOverview />
-        </VisibilityGate>
-      )}
     </div>
   );
 }
