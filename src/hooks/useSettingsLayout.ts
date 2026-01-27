@@ -25,12 +25,12 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['business', 'locations', 'schedule', 'dayrate'],
+    categories: ['business', 'locations', 'schedule', 'dayrate', 'levels', 'onboarding', 'handbooks'],
   },
   {
     id: 'team',
     label: 'Access & Visibility',
-    categories: ['users', 'levels', 'onboarding', 'handbooks', 'role-access', 'visibility'],
+    categories: ['users', 'role-access', 'visibility'],
   },
   {
     id: 'platform',
