@@ -1,200 +1,269 @@
 
-# Scope Dashboard Dark Mode to Backend Only
+# Operations/Receptionist Check-In Workflow
 
-## Problem
+## Overview
 
-Currently, when a user toggles dark mode in the dashboard Settings (Appearance section), the `.dark` class is added to the `<html>` element. This affects **all pages** including the public website because:
+This plan creates a dedicated **Front Desk Command Center** for receptionists and operations staff. While the Schedule page provides full calendar functionality, this workflow focuses on the **today-only** arrival queue that receptionists need at a glance.
 
-1. `ThemeProvider` from `next-themes` wraps the entire app in `App.tsx:91`
-2. Tailwind is configured with `darkMode: ["class"]` targeting any `.dark` ancestor
-3. CSS variables in `index.css` define both light and dark variants (`:root` vs `.dark`)
+## Current State Analysis
 
-## Solution: Dashboard-Scoped Dark Mode
+| Component | What Exists |
+|-----------|-------------|
+| Schedule Page | Full calendar with Check In / Pay / Confirm action bar |
+| Action Workflow | Status transitions: booked -> confirmed -> checked_in -> completed |
+| Lead Sources | Walk-in and Phone Call tracked in LeadInbox |
+| Receptionist Permissions | `view_team_appointments`, `view_all_locations_calendar`, `create_appointments` |
+| Dashboard Template | "Operations View" with sections: `quick_stats`, `schedule`, `tasks`, `announcements` |
 
-Instead of applying `.dark` to the `<html>` element, we'll scope it to a wrapper around dashboard routes only. The public website will always remain in light mode.
+**Gap**: No dedicated "Today's Arrivals" view optimized for front desk workflow. Receptionists must navigate to full Schedule page and filter manually.
 
-### Architecture
+## Proposed Solution
+
+Create a **Today's Queue** dashboard section specifically designed for receptionist workflows:
 
 ```text
-Current (Global):
-┌─────────────────────────────────┐
-│ <html class="dark">             │ ← Theme class here affects ALL pages
-│   ├── Public Website            │ ← Incorrectly shows dark mode
-│   └── Dashboard                 │ ← Correctly shows dark mode
-└─────────────────────────────────┘
-
-New (Scoped):
-┌─────────────────────────────────┐
-│ <html>                          │ ← No theme class on root
-│   ├── Public Website            │ ← Always light mode
-│   └── <div class="dark">        │ ← Theme class scoped to dashboard
-│         └── Dashboard           │ ← Shows dark mode
-└─────────────────────────────────┘
++------------------------------------------+
+|  TODAY'S QUEUE - Mesa Location           |
+|  Jan 27, 2026 · 12 Appointments          |
++------------------------------------------+
+|  ARRIVALS                                |
+|  +-----------------+  +----------------+ |
+|  | 9:00 AM         |  | 9:30 AM        | |
+|  | Sarah J.        |  | Mike T.        | |
+|  | Full Highlights |  | Men's Cut      | |
+|  | with Eric D.    |  | with Amy L.    | |
+|  | [Confirmed ✓]   |  | [Check In]     | |
+|  +-----------------+  +----------------+ |
+|                                          |
+|  CHECKED IN (In Service)                 |
+|  +-----------------+  +----------------+ |
+|  | 8:30 AM         |  | 8:45 AM        | |
+|  | Lisa M.         |  | John K.        | |
+|  | Color Service   |  | Blowout        | |
+|  | ~45 min left    |  | ~15 min left   | |
+|  | [Pay & Checkout]|  | [Pay & Checkout]|
+|  +-----------------+  +----------------+ |
++------------------------------------------+
 ```
 
-## Implementation Steps
+## New Components
 
-### Step 1: Create Dashboard Theme Context
+### 1. TodaysQueueSection Component
 
-Create a new context specifically for dashboard theme management that:
-- Stores theme preference in localStorage with a dashboard-specific key
-- Provides `theme` and `setTheme` for dashboard components
-- Does NOT use `next-themes` (which targets the html element)
+**File**: `src/components/dashboard/TodaysQueueSection.tsx`
 
-**File: `src/contexts/DashboardThemeContext.tsx`**
+A dashboard widget showing:
+- **Arrivals Queue**: Upcoming appointments for today, sorted by time
+- **In Service**: Currently checked-in clients with estimated completion
+- **Quick Actions**: Check In, Pay, View Details buttons on each card
+- **Location Filter**: Dropdown for multi-location operations
+
+Key features:
+- Auto-refreshes every 30 seconds
+- Highlights late arrivals (15+ minutes past appointment time)
+- Shows stylist assignments and service details
+- Color-coded status badges (confirmed=green, waiting=amber, checked-in=blue)
+
+### 2. QueueCard Component
+
+**File**: `src/components/dashboard/operations/QueueCard.tsx`
+
+Individual arrival card with:
+- Client name and phone (click to copy)
+- Service name and estimated duration
+- Stylist assignment
+- Time remaining estimate (for checked-in clients)
+- Action buttons: Check In / Pay / View Notes
+
+### 3. Operations Quick Stats
+
+**File**: `src/components/dashboard/operations/OperationsQuickStats.tsx`
+
+Real-time stats bar showing:
+- **Waiting**: Count of confirmed clients not yet checked in
+- **In Service**: Count of checked-in clients
+- **Completed Today**: Finished appointments count
+- **No-Shows**: Count of no-shows for the day
+
+### 4. useTodaysQueue Hook
+
+**File**: `src/hooks/useTodaysQueue.ts`
+
+Data fetching hook that:
+- Fetches today's appointments for selected location
+- Groups by status (confirmed, checked_in, completed, etc.)
+- Calculates wait times and estimated completion
+- Provides status update mutations
+- Subscribes to realtime updates
+
+## Dashboard Integration
+
+### Update Operations Template
+
+Modify the seeded `operations` template in database to include `todays_queue`:
+
+```sql
+UPDATE dashboard_layout_templates 
+SET layout = '{"sections": ["operations_quick_stats", "todays_queue", "schedule", "tasks"], "widgets": ["schedule", "birthdays"]}'
+WHERE role_name = 'operations';
+```
+
+### Update DashboardHome Rendering
+
+Add conditional rendering for the new operations sections:
+
 ```tsx
-// Custom context for dashboard-only theme
-// Stores preference in localStorage: 'dashboard-theme'
-// Returns { theme, setTheme, resolvedTheme }
+{/* Operations Quick Stats - receptionist role */}
+{roles.includes('receptionist') && (
+  <VisibilityGate elementKey="operations_quick_stats">
+    <OperationsQuickStats locationId={selectedLocation} />
+  </VisibilityGate>
+)}
+
+{/* Today's Queue - receptionist/operations role */}
+{(roles.includes('receptionist') || layout.sections.includes('todays_queue')) && (
+  <VisibilityGate elementKey="todays_queue">
+    <TodaysQueueSection locationId={selectedLocation} />
+  </VisibilityGate>
+)}
 ```
 
-### Step 2: Update DashboardLayout to Apply Scoped Theme
+## User Flow
 
-Modify `DashboardLayout.tsx` to:
-1. Wrap its content in a div that receives the `.dark` class when dark mode is active
-2. Use the new `DashboardThemeContext` instead of `useTheme` from `next-themes`
-3. Apply the theme class to this wrapper div, not the html element
+### Receptionist Daily Workflow
 
-**File: `src/components/dashboard/DashboardLayout.tsx`**
-```tsx
-// Before: Uses global useTheme from next-themes
-const { resolvedTheme } = useTheme();
-
-// After: Uses dashboard-scoped context
-const { resolvedTheme } = useDashboardTheme();
-
-// Wrap entire dashboard content
-return (
-  <div className={cn(resolvedTheme === 'dark' && 'dark')}>
-    {/* existing dashboard content */}
-  </div>
-);
+```text
+1. Login -> Dashboard shows Today's Queue automatically
+2. See "Arrivals" section with upcoming clients
+3. Client walks in -> Click "Check In" on their card
+4. Card moves to "In Service" section with timer
+5. Service completes -> Click "Pay & Checkout" 
+6. Opens CheckoutSummarySheet (existing component)
+7. Complete payment -> Card disappears
 ```
 
-### Step 3: Update Dashboard Theme Toggle
+### Walk-In Handling
 
-Modify the Appearance section in Settings to use the new dashboard theme context:
-
-**File: `src/pages/dashboard/admin/Settings.tsx`**
-```tsx
-// Before: Uses setTheme from next-themes (global)
-const { theme, setTheme } = useTheme();
-
-// After: Uses dashboard-scoped context
-const { theme, setTheme } = useDashboardTheme();
-```
-
-### Step 4: Update Tailwind Config for Scoped Dark Mode
-
-Modify `tailwind.config.ts` to use a CSS selector that matches our scoped approach:
-
-**File: `tailwind.config.ts`**
-```ts
-// Already uses class strategy, but we need to ensure
-// the .dark class works when applied to a parent div, not just html
-darkMode: ["class"],  // No change needed - already scopes to any .dark ancestor
-```
-
-### Step 5: Ensure Public Website Ignores Dashboard Theme
-
-The public website `Layout.tsx` already doesn't have any theme toggle UI. After our changes:
-- Public pages will always render with light mode CSS variables
-- The `ThemeProvider` from `next-themes` can be removed or kept at "light" default
-- No changes needed to public components
-
-### Step 6: Update ThemeInitializer for Dashboard Scope
-
-Modify `ThemeInitializer.tsx` to only apply custom theme overrides within dashboard context:
-
-**File: `src/components/ThemeInitializer.tsx`**
-- Keep existing behavior for custom color/typography overrides
-- These CSS variable injections are fine as they're user-specific branding
-- The light/dark mode switch is what needs scoping (handled above)
+Add a "Quick Walk-In" button:
+1. Opens simplified booking dialog (pre-set to today)
+2. Select service and available stylist
+3. Create appointment in "checked_in" status immediately
+4. Client appears in "In Service" queue
 
 ## Files to Create
 
 | File | Purpose |
 |------|---------|
-| `src/contexts/DashboardThemeContext.tsx` | Dashboard-specific theme state and localStorage sync |
+| `src/components/dashboard/TodaysQueueSection.tsx` | Main queue dashboard section |
+| `src/components/dashboard/operations/QueueCard.tsx` | Individual appointment card |
+| `src/components/dashboard/operations/OperationsQuickStats.tsx` | Real-time stats bar |
+| `src/components/dashboard/operations/WalkInDialog.tsx` | Quick walk-in booking |
+| `src/hooks/useTodaysQueue.ts` | Data fetching and mutations |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/DashboardLayout.tsx` | Wrap content with scoped `.dark` class, use new context |
-| `src/pages/dashboard/admin/Settings.tsx` | Use `useDashboardTheme` instead of `useTheme` |
-| `src/App.tsx` | Add `DashboardThemeProvider` wrapper, optionally simplify global ThemeProvider |
+| `src/pages/dashboard/DashboardHome.tsx` | Add TodaysQueueSection and OperationsQuickStats rendering |
+| `src/hooks/useDashboardLayout.ts` | Add 'operations' sections to DEFAULT_LAYOUT sections array |
+
+## Database Changes
+
+Add `todays_queue` and `operations_quick_stats` to visibility elements:
+
+```sql
+INSERT INTO dashboard_element_visibility (element_key, element_name, element_category, role, is_visible)
+SELECT 'todays_queue', 'Today''s Queue', 'operations', r.name, 
+  CASE WHEN r.name IN ('receptionist', 'admin', 'manager', 'super_admin') THEN true ELSE false END
+FROM roles r
+ON CONFLICT DO NOTHING;
+
+INSERT INTO dashboard_element_visibility (element_key, element_name, element_category, role, is_visible)
+SELECT 'operations_quick_stats', 'Operations Quick Stats', 'operations', r.name,
+  CASE WHEN r.name IN ('receptionist', 'admin', 'manager', 'super_admin') THEN true ELSE false END
+FROM roles r
+ON CONFLICT DO NOTHING;
+```
+
+Update operations template:
+```sql
+UPDATE dashboard_layout_templates 
+SET layout = '{"sections": ["operations_quick_stats", "todays_queue", "schedule", "tasks"], "widgets": ["schedule", "birthdays"], "pinnedCards": []}'::jsonb
+WHERE role_name = 'operations';
+```
 
 ## Technical Details
 
-### DashboardThemeContext Implementation
+### useTodaysQueue Hook Implementation
 
-```tsx
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-type Theme = 'light' | 'dark' | 'system';
-
-interface DashboardThemeContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  resolvedTheme: 'light' | 'dark';
+```typescript
+interface QueueAppointment extends PhorestAppointment {
+  waitTimeMinutes: number;       // Minutes since arrival time (if late)
+  estimatedCompleteIn: number;   // Minutes until service ends
+  isLate: boolean;               // Past appointment time without check-in
 }
 
-const STORAGE_KEY = 'dashboard-theme';
-
-export function DashboardThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem(STORAGE_KEY) as Theme) || 'light';
-    }
-    return 'light';
-  });
-
-  const resolvedTheme = theme === 'system' 
-    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    : theme;
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem(STORAGE_KEY, newTheme);
+interface TodaysQueueData {
+  waiting: QueueAppointment[];      // Confirmed, not yet arrived
+  inService: QueueAppointment[];    // Checked in
+  completed: QueueAppointment[];    // Paid out
+  noShows: QueueAppointment[];      // Marked no-show
+  stats: {
+    waitingCount: number;
+    inServiceCount: number;
+    completedCount: number;
+    noShowCount: number;
+    totalRevenue: number;
   };
-
-  return (
-    <DashboardThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
-      {children}
-    </DashboardThemeContext.Provider>
-  );
 }
 ```
 
-### DashboardLayout Wrapper
+### Queue Card Status Logic
 
-```tsx
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { resolvedTheme } = useDashboardTheme();
-  
-  return (
-    <div className={cn(
-      "min-h-screen", 
-      resolvedTheme === 'dark' && 'dark'
-    )}>
-      {/* All existing sidebar, topnav, main content */}
-    </div>
-  );
-}
+```typescript
+// Status display logic
+const getCardStatus = (apt: QueueAppointment) => {
+  if (apt.status === 'confirmed') {
+    if (apt.isLate) return { label: 'Late', color: 'amber' };
+    return { label: 'Confirmed', color: 'green' };
+  }
+  if (apt.status === 'checked_in') {
+    return { label: `~${apt.estimatedCompleteIn}min left`, color: 'blue' };
+  }
+  return { label: apt.status, color: 'gray' };
+};
 ```
 
-## User Experience
+### Real-time Updates
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| User enables dark mode in dashboard | Entire app goes dark including public website | Only dashboard goes dark |
-| Public visitor browses website | May see dark mode if admin last set dark | Always sees light mode |
-| User logs out while in dark mode | Public pages remain dark until cleared | Public pages always light |
+Subscribe to appointment changes for live queue updates:
+
+```typescript
+const channel = supabase
+  .channel('queue-updates')
+  .on('postgres_changes', {
+    event: '*',
+    schema: 'public',
+    table: 'phorest_appointments',
+    filter: `appointment_date=eq.${format(new Date(), 'yyyy-MM-dd')}`,
+  }, () => {
+    refetch();
+  })
+  .subscribe();
+```
 
 ## Benefits
 
-1. **Brand Consistency**: Public website maintains intended light aesthetic
-2. **Independence**: Dashboard preferences don't affect customer experience
-3. **Clean Separation**: Backend staff can work in dark mode without affecting visitors
-4. **Existing Features Preserved**: Color themes (cream, rose, sage, ocean) continue working
+1. **Dedicated View**: Receptionists get exactly what they need without navigating full calendar
+2. **Visual Priority**: Late arrivals and in-service timers draw attention to action items
+3. **Quick Actions**: One-click check-in and checkout from dashboard
+4. **Walk-In Support**: Fast path for unscheduled arrivals
+5. **Real-time**: Live updates as status changes occur
+6. **Role-Appropriate**: Automatically shows for receptionist role, hidden for stylists
+
+## Future Enhancements
+
+- Add SMS notification trigger when client is next in queue
+- Integrate waitlist for when stylists are running behind
+- Add "Running Late" client notification button
+- Show stylist availability for walk-in routing
