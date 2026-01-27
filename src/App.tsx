@@ -69,13 +69,9 @@ import GraduationTracker from "./pages/dashboard/admin/GraduationTracker";
 import MyGraduation from "./pages/dashboard/MyGraduation";
 import DesignSystem from "./pages/dashboard/DesignSystem";
 import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
-import ProgramAnalytics from "./pages/dashboard/admin/ProgramAnalytics";
 import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
-import SalesDashboard from "./pages/dashboard/admin/SalesDashboard";
-import ReportsHub from "./pages/dashboard/admin/ReportsHub";
-import OperationalAnalytics from "./pages/dashboard/admin/OperationalAnalytics";
+import AnalyticsHub from "./pages/dashboard/admin/AnalyticsHub";
 import LeadManagement from "./pages/dashboard/admin/LeadManagement";
-import MarketingAnalytics from "./pages/dashboard/admin/MarketingAnalytics";
 import FeatureFlags from "./pages/dashboard/admin/FeatureFlags";
 import MyClients from "./pages/dashboard/MyClients";
 import Schedule from "./pages/dashboard/Schedule";
@@ -172,18 +168,21 @@ const App = () => (
               <Route path="/dashboard/admin/recruiting" element={<ProtectedRoute requiredPermission="manage_user_roles"><RecruitingPipeline /></ProtectedRoute>} />
               <Route path="/dashboard/admin/graduation-tracker" element={<ProtectedRoute requiredPermission="view_team_overview"><GraduationTracker /></ProtectedRoute>} />
               <Route path="/dashboard/admin/program-editor" element={<ProtectedRoute requiredPermission="manage_program_editor"><ProgramEditor /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/program-analytics" element={<ProtectedRoute requiredPermission="view_program_analytics"><ProgramAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/phorest" element={<ProtectedRoute requiredPermission="manage_settings"><PhorestSettings /></ProtectedRoute>} />
               <Route path="/dashboard/admin/day-rate-settings" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateSettings /></ProtectedRoute>} />
               <Route path="/dashboard/admin/day-rate-calendar" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateCalendar /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/sales" element={<ProtectedRoute requiredPermission="view_team_overview"><SalesDashboard /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/staff-utilization" element={<Navigate to="/dashboard/admin/operational-analytics?tab=staff-utilization" replace />} />
-              <Route path="/dashboard/admin/operational-analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><OperationalAnalytics /></ProtectedRoute>} />
+              {/* Analytics Hub - unified analytics page */}
+              <Route path="/dashboard/admin/analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><AnalyticsHub /></ProtectedRoute>} />
+              {/* Redirects for legacy analytics routes */}
+              <Route path="/dashboard/admin/sales" element={<Navigate to="/dashboard/admin/analytics?tab=sales" replace />} />
+              <Route path="/dashboard/admin/operational-analytics" element={<Navigate to="/dashboard/admin/analytics?tab=operations" replace />} />
+              <Route path="/dashboard/admin/staff-utilization" element={<Navigate to="/dashboard/admin/analytics?tab=operations&subtab=staff-utilization" replace />} />
+              <Route path="/dashboard/admin/marketing" element={<Navigate to="/dashboard/admin/analytics?tab=marketing" replace />} />
+              <Route path="/dashboard/admin/program-analytics" element={<Navigate to="/dashboard/admin/analytics?tab=program" replace />} />
+              <Route path="/dashboard/admin/reports" element={<Navigate to="/dashboard/admin/analytics?tab=reports" replace />} />
               <Route path="/dashboard/admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/marketing" element={<ProtectedRoute requiredPermission="view_marketing_analytics"><MarketingAnalytics /></ProtectedRoute>} />
               <Route path="/dashboard/admin/feature-flags" element={<ProtectedRoute requiredPermission="manage_settings"><FeatureFlags /></ProtectedRoute>} />
               <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
-              <Route path="/dashboard/admin/reports" element={<ProtectedRoute requiredPermission="view_team_overview"><ReportsHub /></ProtectedRoute>} />
 
 
               <Route path="*" element={<NotFound />} />

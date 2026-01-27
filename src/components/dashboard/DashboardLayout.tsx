@@ -148,10 +148,7 @@ const statsNavItems: NavItem[] = [
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats' },
   { href: '/dashboard/my-clients', label: 'My Clients', icon: Users, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
-  { href: '/dashboard/admin/sales', label: 'Sales Dashboard', icon: DollarSign, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/operational-analytics', label: 'Operational Analytics', icon: BarChart3, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/marketing', label: 'Marketing Analytics', icon: TrendingUp, permission: 'view_marketing_analytics' },
-  { href: '/dashboard/admin/reports', label: 'Reports Hub', icon: FileText, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
 ];
 
 // Manager-accessible admin items
