@@ -12,6 +12,7 @@ import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
+import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 
@@ -56,6 +57,16 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
   })) || [];
   
   switch (cardId) {
+    case 'operations_stats':
+      return (
+        <VisibilityGate 
+          elementKey="operations_quick_stats"
+          elementName="Operations Quick Stats"
+          elementCategory="operations"
+        >
+          <OperationsQuickStats locationId={locationFilter} />
+        </VisibilityGate>
+      );
     case 'sales_dashboard_bento':
       return (
         <VisibilityGate elementKey="sales_dashboard_bento">
