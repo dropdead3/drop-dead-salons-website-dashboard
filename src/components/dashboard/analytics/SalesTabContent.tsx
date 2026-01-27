@@ -53,7 +53,7 @@ import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
-import { SalesBentoCard } from '@/components/dashboard/sales/SalesBentoCard';
+import { SalesBentoCard, type DateRangeType } from '@/components/dashboard/sales/SalesBentoCard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface SalesTabContentProps {
@@ -178,15 +178,17 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </div>
       </div>
 
-      {/* Unified Sales Bento Card - Self-contained with internal filters */}
+      {/* Unified Sales Bento Card - Receives filters from parent */}
       <PinnableCard 
         elementKey="sales_dashboard_bento" 
         elementName="Sales Dashboard" 
         category="Analytics Hub - Sales"
       >
         <SalesBentoCard
-          initialLocationId={filters.locationId}
-          initialDateRange={filters.dateRange as 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth'}
+          locationId={filters.locationId}
+          dateRange={filters.dateRange as DateRangeType}
+          dateFrom={filters.dateFrom}
+          dateTo={filters.dateTo}
         />
       </PinnableCard>
 
