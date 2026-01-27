@@ -1,96 +1,101 @@
 
 
-# Restrict Today's Queue to Front Desk Only
+# Hide Revenue Analytics from Front Desk Users
 
 ## Overview
 
-This change restricts the "Today's Queue" section on the Command Center dashboard to only display for users with the **Front Desk** (`receptionist`) role. Currently, it shows for receptionists, admins, and all leadership roles.
+This change removes the "Today's Revenue" card from the Front Desk (`receptionist`) role's dashboard view. Front Desk users should only see operational metrics (Waiting, In Service, Completed, No-Shows) without any financial data.
 
 ---
 
 ## Current State
 
-The Today's Queue section is visible to:
-- `receptionist` (Front Desk)
-- `admin` (Director Of Operations)
-- `manager` 
-- `super_admin`
-- Other leadership roles
+The `OperationsQuickStats` component displays 5 cards:
+1. Waiting
+2. In Service
+3. Completed
+4. No-Shows
+5. **Today's Revenue** (problematic for Front Desk)
 
-This is controlled by the condition:
-```typescript
-{(isReceptionist || isLeadership) && (
-  <VisibilityGate elementKey="todays_queue" ...>
-    <TodaysQueueSection />
-  </VisibilityGate>
-)}
-```
-
-Where `isReceptionist` includes both `receptionist` AND `admin` roles.
+The revenue card is always rendered regardless of user role.
 
 ---
 
 ## Solution
 
-### File: `src/pages/dashboard/DashboardHome.tsx`
+### Approach: Pass a prop to hide revenue
 
-**Change 1: Add a dedicated Front Desk check**
+Add a `hideRevenue` prop to `OperationsQuickStats` and conditionally render the revenue card.
 
-Add a new flag specifically for front desk users (around line 100-101):
+### File Changes
 
+#### 1. `src/components/dashboard/operations/OperationsQuickStats.tsx`
+
+**Add prop to interface:**
 ```typescript
-// Current:
-const isReceptionist = roles.includes('receptionist') || roles.includes('admin');
-
-// Add new:
-const isFrontDesk = roles.includes('receptionist');
+interface OperationsQuickStatsProps {
+  locationId?: string;
+  hideRevenue?: boolean;  // NEW
+}
 ```
 
-**Change 2: Update Today's Queue visibility condition**
-
-Update lines 273-282 to use the new `isFrontDesk` flag:
-
+**Update component signature:**
 ```typescript
-// Before:
-{(isReceptionist || isLeadership) && (
-  <VisibilityGate 
-    elementKey="todays_queue"
-    elementName="Today's Queue"
-    elementCategory="operations"
-  >
-    <TodaysQueueSection />
-  </VisibilityGate>
-)}
+export function OperationsQuickStats({ locationId, hideRevenue }: OperationsQuickStatsProps) {
+```
 
-// After:
-{isFrontDesk && (
-  <VisibilityGate 
-    elementKey="todays_queue"
-    elementName="Today's Queue"
-    elementCategory="operations"
-  >
-    <TodaysQueueSection />
-  </VisibilityGate>
+**Conditionally render revenue card (lines 90-103):**
+```typescript
+{/* Revenue Card - Hidden for Front Desk */}
+{!hideRevenue && (
+  <Card className="p-4 bg-gradient-to-br from-green-50 ...">
+    {/* ... existing revenue card content ... */}
+  </Card>
 )}
+```
+
+**Update grid layout (line 75):**
+```typescript
+// Adjust grid columns based on whether revenue is shown
+<div className={`grid grid-cols-2 ${hideRevenue ? 'lg:grid-cols-4' : 'lg:grid-cols-5'} gap-4`}>
+```
+
+#### 2. `src/pages/dashboard/DashboardHome.tsx`
+
+**Pass prop when rendering for Front Desk (around line 272):**
+```typescript
+<OperationsQuickStats hideRevenue={isFrontDesk && !isLeadership} />
+```
+
+This ensures:
+- Front Desk (`receptionist` only) sees NO revenue
+- Admins, Managers, Super Admins see revenue
+- If someone has both roles, leadership wins (revenue shown)
+
+---
+
+## Visual Result
+
+**Front Desk view:**
+```text
++----------+----------+----------+----------+
+| Waiting  | In Svc   | Complete | No-Shows |
++----------+----------+----------+----------+
+```
+
+**Leadership/Admin view:**
+```text
++----------+----------+----------+----------+----------+
+| Waiting  | In Svc   | Complete | No-Shows | Revenue  |
++----------+----------+----------+----------+----------+
 ```
 
 ---
 
-## Impact Summary
+## Files Changed
 
-| Role | Before | After |
-|------|--------|-------|
-| `receptionist` (Front Desk) | ✅ Visible | ✅ Visible |
-| `admin` (Director of Ops) | ✅ Visible | ❌ Hidden |
-| `manager` | ✅ Visible | ❌ Hidden |
-| `super_admin` | ✅ Visible | ❌ Hidden |
-| `stylist` | ❌ Hidden | ❌ Hidden |
-
----
-
-## Notes
-
-- The **Operations Quick Stats** section will remain visible to receptionists and leadership per the existing `isReceptionist || isLeadership` logic (no change there unless requested)
-- Leadership users can still access the full schedule at `/dashboard/schedule` or the Operations page if needed
-- The `VisibilityGate` wrapper is preserved, allowing the section to still be toggled via the Visibility Console if needed in the future
+| File | Change |
+|------|--------|
+| `src/components/dashboard/operations/OperationsQuickStats.tsx` | Add `hideRevenue` prop, conditionally render revenue card, adjust grid |
+| `src/pages/dashboard/DashboardHome.tsx` | Pass `hideRevenue={isFrontDesk && !isLeadership}` prop |
 
