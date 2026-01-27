@@ -1,33 +1,42 @@
 
 
-# Widen Filter Dropdowns to Fit Content
+# Set Default Time Range Filter to "Today"
 
-## Problem
+## Overview
 
-The date range dropdown is truncating text - "Last 30 days" shows as "Last 30..." because the trigger width is set to only 150px.
+Change the default date range filter from "Last 30 days" to "Today" when the Analytics Hub loads.
 
-## Solution
+---
 
-Increase the width of both filter dropdowns to accommodate the longest text options:
-
-| Dropdown | Current Width | New Width | Longest Option |
-|----------|---------------|-----------|----------------|
-| Location | 180px | 200px | "All Locations" + icon |
-| Date Range | 150px | 180px | "Custom Range" / "Last 30 days" |
-
-## Changes
-
-**File: `src/pages/dashboard/admin/AnalyticsHub.tsx`**
+## Current Behavior
 
 ```typescript
-// Line 147 - Location dropdown
-<SelectTrigger className="w-[200px]">  // Was w-[180px]
-
-// Line 172 - Date Range dropdown  
-<SelectTrigger className="w-[180px]">  // Was w-[150px]
+const [dateRange, setDateRange] = useState<DateRangeType>('30d');
 ```
+
+The page defaults to showing the last 30 days of data.
+
+---
+
+## New Behavior
+
+```typescript
+const [dateRange, setDateRange] = useState<DateRangeType>('today');
+```
+
+The page will default to showing today's data.
+
+---
+
+## File to Modify
+
+| File | Line | Change |
+|------|------|--------|
+| `src/pages/dashboard/admin/AnalyticsHub.tsx` | 56 | Change `'30d'` to `'today'` |
+
+---
 
 ## Result
 
-Both dropdowns will display full text without truncation while maintaining a compact, proportional appearance.
+When users open the Analytics Hub, the date range filter will be pre-set to "Today", showing current day metrics immediately.
 
