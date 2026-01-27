@@ -3,7 +3,7 @@ import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/
 import { useOperationalAnalytics } from '@/hooks/useOperationalAnalytics';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useHistoricalCapacityUtilization } from '@/hooks/useHistoricalCapacityUtilization';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+
 
 // Existing content components
 import { OverviewContent } from '@/components/dashboard/analytics/OverviewContent';
@@ -64,30 +64,6 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
 
   return (
     <div className="space-y-6">
-      {/* Header Controls */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <CommandCenterVisibilityToggle 
-          elementKey="new_bookings" 
-          elementName="New Bookings" 
-        />
-        <CommandCenterVisibilityToggle 
-          elementKey="capacity_utilization" 
-          elementName="Capacity Utilization" 
-        />
-        <CommandCenterVisibilityToggle 
-          elementKey="team_overview" 
-          elementName="Team Overview" 
-        />
-        <CommandCenterVisibilityToggle 
-          elementKey="stylists_overview" 
-          elementName="Stylists by Level" 
-        />
-        <CommandCenterVisibilityToggle 
-          elementKey="onboarding_overview" 
-          elementName="Onboarding Overview" 
-        />
-      </div>
-
       {/* Sub-tabs */}
       <div className="space-y-2">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">

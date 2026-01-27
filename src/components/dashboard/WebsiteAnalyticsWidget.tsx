@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, TrendingDown, Minus, RefreshCw, Globe, Eye, Clock, MousePointerClick, Info } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -130,6 +131,10 @@ export function WebsiteAnalyticsWidget() {
                 View full analytics
               </TooltipContent>
             </UITooltip>
+            <CommandCenterVisibilityToggle 
+              elementKey="website_analytics" 
+              elementName="Website Traffic" 
+            />
           </div>
           <Button
             variant="ghost"

@@ -16,7 +16,6 @@ import { CampaignPerformanceTable } from '@/components/dashboard/marketing/Campa
 import { SourceBreakdownChart } from '@/components/dashboard/marketing/SourceBreakdownChart';
 import { MediumDistributionChart } from '@/components/dashboard/marketing/MediumDistributionChart';
 import { CampaignBudgetManager } from '@/components/dashboard/marketing/CampaignBudgetManager';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
@@ -57,11 +56,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
   return (
     <div className="space-y-6">
       {/* Header Controls */}
-      <div className="flex items-center justify-between">
-        <CommandCenterVisibilityToggle 
-          elementKey="website_analytics" 
-          elementName="Website Traffic" 
-        />
+      <div className="flex items-center justify-end">
         <Button variant="outline" onClick={() => setShowBudgetManager(true)}>
           <Settings2 className="h-4 w-4 mr-2" />
           Manage Campaigns

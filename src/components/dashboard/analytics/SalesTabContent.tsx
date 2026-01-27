@@ -138,14 +138,6 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
       {/* Header Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CommandCenterVisibilityToggle 
-            elementKey="sales_overview" 
-            elementName="Sales Overview" 
-          />
-          <CommandCenterVisibilityToggle 
-            elementKey="week_ahead_forecast" 
-            elementName="Forecasting" 
-          />
           <LastSyncIndicator syncType="sales" showAutoRefresh />
         </div>
         <div className="flex items-center gap-2">

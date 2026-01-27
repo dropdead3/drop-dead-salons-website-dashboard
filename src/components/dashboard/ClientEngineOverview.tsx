@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNavigate } from 'react-router-dom';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import type { Database } from '@/integrations/supabase/types';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
@@ -118,22 +119,26 @@ export function ClientEngineOverview() {
             <Target className="w-4 h-4" />
           </div>
           <h3 className="font-medium text-sm">Client Engine Overview</h3>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 rounded-full hover:bg-primary/10"
+                onClick={() => navigate('/dashboard/admin/client-engine-tracker')}
+              >
+                <Info className="w-4 h-4 text-primary" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              View full analytics
+            </TooltipContent>
+          </Tooltip>
+          <CommandCenterVisibilityToggle 
+            elementKey="client_engine_overview" 
+            elementName="Client Engine Overview" 
+          />
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 rounded-full hover:bg-primary/10"
-              onClick={() => navigate('/dashboard/admin/client-engine-tracker')}
-            >
-              <Info className="w-4 h-4 text-primary" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs">
-            View full analytics
-          </TooltipContent>
-        </Tooltip>
       </div>
 
       {/* Average Progress */}

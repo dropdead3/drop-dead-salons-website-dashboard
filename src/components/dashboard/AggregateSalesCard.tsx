@@ -19,6 +19,7 @@ import {
   CalendarClock,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
@@ -223,9 +224,15 @@ export function AggregateSalesCard() {
           <div className="w-10 h-10 bg-primary/10 flex items-center justify-center rounded-lg">
             <DollarSign className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <h2 className="font-display text-sm tracking-wide">SALES OVERVIEW</h2>
-            <p className="text-xs text-muted-foreground">All locations combined</p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h2 className="font-display text-sm tracking-wide">SALES OVERVIEW</h2>
+              <p className="text-xs text-muted-foreground">All locations combined</p>
+            </div>
+            <CommandCenterVisibilityToggle 
+              elementKey="sales_overview" 
+              elementName="Sales Overview" 
+            />
           </div>
           {hasNoData && (
             <Badge variant="outline" className="text-muted-foreground">

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { stylistLevels } from '@/data/servicePricing';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 export function StylistsOverviewCard() {
   // Fetch stylists with their levels to show counts
@@ -38,7 +39,13 @@ export function StylistsOverviewCard() {
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-sm tracking-wide">STYLISTS BY LEVEL</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-display text-sm tracking-wide">STYLISTS BY LEVEL</h2>
+          <CommandCenterVisibilityToggle 
+            elementKey="stylists_overview" 
+            elementName="Stylists by Level" 
+          />
+        </div>
         <Users className="w-4 h-4 text-muted-foreground" />
       </div>
       
@@ -130,7 +137,13 @@ export function StaffOverviewCard() {
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-sm tracking-wide">TEAM OVERVIEW</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-display text-sm tracking-wide">TEAM OVERVIEW</h2>
+          <CommandCenterVisibilityToggle 
+            elementKey="team_overview" 
+            elementName="Team Overview" 
+          />
+        </div>
         <MapPin className="w-4 h-4 text-muted-foreground" />
       </div>
       
