@@ -53,7 +53,7 @@ import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
-import { SalesSnapshotCard } from '@/components/dashboard/sales/SalesSnapshotCard';
+import { SalesBentoCard } from '@/components/dashboard/sales/SalesBentoCard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface SalesTabContentProps {
@@ -178,132 +178,33 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </div>
       </div>
 
-      {/* Goal Progress */}
-      <SalesGoalProgress 
-        current={metrics?.totalRevenue || 0} 
-        target={currentGoal}
-        label={
-          filters.locationId !== 'all' 
-            ? `${locations?.find(l => l.id === filters.locationId)?.name} Goal`
-            : filters.dateRange === 'thisMonth' || filters.dateRange === '30d' || filters.dateRange === 'lastMonth'
-              ? 'Monthly Goal'
-              : 'Weekly Goal'
-        }
-      />
-
-      {/* KPI Cards - Consolidated from Command Center */}
-      <div className="grid lg:grid-cols-4 gap-6">
-        {/* Main KPIs */}
-        <PinnableCard 
-          elementKey="sales_kpi_grid" 
-          elementName="Sales KPIs" 
-          category="Analytics Hub - Sales"
-          className="lg:col-span-3"
-        >
-          <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3">
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={metrics?.totalRevenue || 0}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Total Revenue</p>
-                <MetricInfoTooltip description="Sum of all service and product sales for the selected date range." />
-              </div>
-            </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <Scissors className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={metrics?.serviceRevenue || 0}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Services</p>
-                <MetricInfoTooltip description="Revenue from all service transactions (cuts, color, treatments, etc.)." />
-              </div>
-            </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-chart-2" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={metrics?.productRevenue || 0}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Products</p>
-                <MetricInfoTooltip description="Revenue from retail product sales only." />
-              </div>
-            </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-chart-3" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={metrics?.totalTransactions || 0}
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Transactions</p>
-                <MetricInfoTooltip description="Total number of completed sales transactions." />
-              </div>
-            </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-chart-4" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={Math.round(metrics?.averageTicket || 0)}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Avg Ticket</p>
-                <MetricInfoTooltip description="Total Revenue ÷ Transactions. Average spend per client visit." />
-              </div>
-            </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <CalendarClock className="w-4 h-4 sm:w-5 sm:h-5 text-chart-5" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={tomorrowData?.revenue || 0}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Rev. Tomorrow</p>
-                <MetricInfoTooltip description="Projected revenue from confirmed appointments scheduled for tomorrow." />
-              </div>
-              <span className="text-xs text-muted-foreground/70">
-                {tomorrowData?.appointmentCount || 0} bookings
-              </span>
-            </div>
-          </div>
-        </PinnableCard>
-
-        {/* Sidebar - Sales Snapshot (Top Performers + Revenue Mix) */}
-        <PinnableCard 
-          elementKey="sales_snapshot" 
-          elementName="Sales Snapshot" 
-          category="Analytics Hub - Sales"
-        >
-          <SalesSnapshotCard
-            performers={stylistData || []}
-            isLoading={stylistLoading}
-            serviceRevenue={metrics?.serviceRevenue || 0}
-            productRevenue={metrics?.productRevenue || 0}
-          />
-        </PinnableCard>
-      </div>
+      {/* Unified Sales Bento Card */}
+      <PinnableCard 
+        elementKey="sales_dashboard_bento" 
+        elementName="Sales Dashboard" 
+        category="Analytics Hub - Sales"
+      >
+        <SalesBentoCard
+          currentRevenue={metrics?.totalRevenue || 0}
+          goalTarget={currentGoal}
+          goalLabel={
+            filters.locationId !== 'all' 
+              ? `${locations?.find(l => l.id === filters.locationId)?.name} Goal`
+              : filters.dateRange === 'thisMonth' || filters.dateRange === '30d' || filters.dateRange === 'lastMonth'
+                ? 'Monthly Goal'
+                : 'Weekly Goal'
+          }
+          totalRevenue={metrics?.totalRevenue || 0}
+          serviceRevenue={metrics?.serviceRevenue || 0}
+          productRevenue={metrics?.productRevenue || 0}
+          totalTransactions={metrics?.totalTransactions || 0}
+          averageTicket={metrics?.averageTicket || 0}
+          tomorrowRevenue={tomorrowData?.revenue || 0}
+          tomorrowBookings={tomorrowData?.appointmentCount || 0}
+          performers={stylistData || []}
+          isLoading={metricsLoading || stylistLoading}
+        />
+      </PinnableCard>
 
       {/* Sub-tabs for detailed views */}
       <div className="space-y-2">
