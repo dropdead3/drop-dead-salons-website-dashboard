@@ -53,8 +53,7 @@ import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
-import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
-import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
+import { SalesSnapshotCard } from '@/components/dashboard/sales/SalesSnapshotCard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface SalesTabContentProps {
@@ -291,27 +290,19 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           </div>
         </PinnableCard>
 
-        {/* Sidebar - Top Performers & Revenue Mix */}
-        <div className="space-y-4">
-          <PinnableCard elementKey="top_performers" elementName="Top Performers" category="Analytics Hub - Sales">
-            <div className="flex items-center gap-1.5 mb-3">
-              <h3 className="font-display text-xs tracking-wide text-muted-foreground">TOP PERFORMERS</h3>
-              <MetricInfoTooltip description="Ranked by total service + product revenue for the selected period." />
-            </div>
-            <TopPerformersCard 
-              performers={stylistData || []} 
-              isLoading={stylistLoading} 
-            />
-          </PinnableCard>
-          <PinnableCard elementKey="revenue_breakdown" elementName="Revenue Mix" category="Analytics Hub - Sales">
-            <h3 className="font-display text-xs tracking-wide text-muted-foreground mb-3">REVENUE MIX</h3>
-            <RevenueDonutChart 
-              serviceRevenue={metrics?.serviceRevenue || 0} 
-              productRevenue={metrics?.productRevenue || 0}
-              size={70}
-            />
-          </PinnableCard>
-        </div>
+        {/* Sidebar - Sales Snapshot (Top Performers + Revenue Mix) */}
+        <PinnableCard 
+          elementKey="sales_snapshot" 
+          elementName="Sales Snapshot" 
+          category="Analytics Hub - Sales"
+        >
+          <SalesSnapshotCard
+            performers={stylistData || []}
+            isLoading={stylistLoading}
+            serviceRevenue={metrics?.serviceRevenue || 0}
+            productRevenue={metrics?.productRevenue || 0}
+          />
+        </PinnableCard>
       </div>
 
       {/* Sub-tabs for detailed views */}
