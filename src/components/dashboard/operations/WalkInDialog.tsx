@@ -215,104 +215,107 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-2">
+        <div className="flex-1 overflow-y-auto space-y-5 py-4 pr-1">
           {/* Client Info */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="clientName">Client Name</Label>
+              <Label htmlFor="clientName" className="text-sm font-medium">Client Name</Label>
               <Input
                 id="clientName"
                 placeholder="Guest"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
+                className="h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="clientPhone">Phone</Label>
+              <Label htmlFor="clientPhone" className="text-sm font-medium">Phone</Label>
               <Input
                 id="clientPhone"
                 placeholder="(555) 555-5555"
                 value={clientPhone}
                 onChange={handlePhoneChange}
+                className="h-11"
               />
             </div>
           </div>
           
           {/* Service Selection - Multi-select with restrictions */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              Services
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Services</Label>
               {selectedServiceIds.length > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  ({selectedServiceIds.length} selected • {totalDuration} min)
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                  {selectedServiceIds.length} selected • {totalDuration} min
                 </span>
               )}
-            </Label>
-            <ScrollArea className="h-[200px] border rounded-md bg-background">
-              <div className="p-2 space-y-3">
+            </div>
+            <ScrollArea className="h-[240px] border rounded-lg bg-card">
+              <div className="p-3 space-y-4">
                 {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
-                  <div key={category} className="space-y-1">
-                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide px-2">
+                  <div key={category} className="space-y-2">
+                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1 pb-1 border-b border-border/50">
                       {category}
                     </div>
-                    {categoryServices.map((service) => {
-                      const isSelected = selectedServiceIds.includes(service.id);
-                      const isDisabled = service.allow_same_day_booking === false;
-                      const price = getServicePrice(service);
-                      
-                      return (
-                        <div
-                          key={service.id}
-                          onClick={() => toggleService(service.id, service.allow_same_day_booking !== false)}
-                          className={cn(
-                            "flex items-center gap-3 px-2 py-2 rounded-md transition-colors",
-                            isDisabled 
-                              ? "opacity-50 cursor-not-allowed bg-muted/30" 
-                              : "cursor-pointer hover:bg-accent",
-                            isSelected && !isDisabled && "bg-primary/10"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-5 h-5 rounded border flex items-center justify-center shrink-0",
-                            isDisabled ? "border-muted-foreground/30 bg-muted" : "border-primary",
-                            isSelected && !isDisabled && "bg-primary border-primary"
-                          )}>
-                            {isDisabled ? (
-                              <Ban className="w-3 h-3 text-muted-foreground" />
-                            ) : isSelected ? (
-                              <Check className="w-3 h-3 text-primary-foreground" />
-                            ) : null}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
+                    <div className="space-y-1">
+                      {categoryServices.map((service) => {
+                        const isSelected = selectedServiceIds.includes(service.id);
+                        const isDisabled = service.allow_same_day_booking === false;
+                        const price = getServicePrice(service);
+                        
+                        return (
+                          <div
+                            key={service.id}
+                            onClick={() => toggleService(service.id, service.allow_same_day_booking !== false)}
+                            className={cn(
+                              "flex items-center gap-4 px-3 py-2.5 rounded-lg transition-all",
+                              isDisabled 
+                                ? "opacity-40 cursor-not-allowed" 
+                                : "cursor-pointer hover:bg-accent/50",
+                              isSelected && !isDisabled && "bg-primary/10 ring-1 ring-primary/20"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors",
+                              isDisabled ? "border-muted-foreground/20 bg-muted/50" : "border-muted-foreground/40",
+                              isSelected && !isDisabled && "bg-primary border-primary"
+                            )}>
+                              {isDisabled ? (
+                                <Ban className="w-3 h-3 text-muted-foreground/50" />
+                              ) : isSelected ? (
+                                <Check className="w-3 h-3 text-primary-foreground" />
+                              ) : null}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
                               <span className={cn(
-                                "text-sm truncate",
+                                "text-sm font-medium",
                                 isDisabled && "text-muted-foreground"
                               )}>
                                 {service.name}
                               </span>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-xs text-muted-foreground">
-                                  {service.duration_minutes}m
-                                </span>
-                                <span className={cn(
-                                  "text-sm font-medium",
-                                  isDisabled && "text-muted-foreground"
-                                )}>
-                                  ${price}
-                                </span>
-                              </div>
+                              {isDisabled && service.same_day_restriction_reason && (
+                                <p className="text-xs text-destructive/70 mt-0.5">
+                                  {service.same_day_restriction_reason}
+                                </p>
+                              )}
                             </div>
-                            {isDisabled && service.same_day_restriction_reason && (
-                              <p className="text-xs text-destructive/70 mt-0.5">
-                                {service.same_day_restriction_reason}
-                              </p>
-                            )}
+                            
+                            <div className="flex items-center gap-3 shrink-0 text-right">
+                              <span className="text-xs text-muted-foreground tabular-nums">
+                                {service.duration_minutes}m
+                              </span>
+                              <span className={cn(
+                                "text-sm font-semibold tabular-nums min-w-[52px]",
+                                isDisabled ? "text-muted-foreground" : "text-foreground"
+                              )}>
+                                ${price}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -321,21 +324,21 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           
           {/* Stylist Selection */}
           <div className="space-y-2">
-            <Label htmlFor="stylist">Assign to Stylist</Label>
+            <Label htmlFor="stylist" className="text-sm font-medium">Assign to Stylist</Label>
             <Select value={stylistId} onValueChange={setStylistId}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
                 <SelectValue placeholder={stylistsLoading ? "Loading..." : "Select a stylist"} />
               </SelectTrigger>
               <SelectContent>
                 {availableStylists?.length === 0 && !stylistsLoading && (
-                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                  <div className="px-3 py-4 text-sm text-muted-foreground text-center">
                     No stylists available for this service duration today
                   </div>
                 )}
                 {availableStylists?.map((stylist) => (
                   <SelectItem key={stylist.user_id} value={stylist.user_id}>
-                    <div className="flex items-center justify-between w-full gap-3">
-                      <span>{stylist.display_name || stylist.full_name}</span>
+                    <div className="flex items-center justify-between w-full gap-4">
+                      <span className="font-medium">{stylist.display_name || stylist.full_name}</span>
                       <span className="text-xs text-muted-foreground">
                         {formatAvailability(stylist.availableMinutes)}
                       </span>
@@ -348,27 +351,29 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
 
           {/* Price Summary */}
           {selectedServiceDetails.length > 0 && (
-            <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <DollarSign className="w-4 h-4" />
-                Price Summary
+            <div className="border rounded-xl p-4 bg-muted/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <DollarSign className="w-4 h-4 text-muted-foreground" />
+                  Price Summary
+                </div>
                 {levelNumber && (
-                  <span className="text-xs text-muted-foreground">
-                    (Level {levelNumber} pricing)
+                  <span className="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full">
+                    Level {levelNumber} pricing
                   </span>
                 )}
               </div>
-              <div className="space-y-1 text-sm">
+              <div className="space-y-1.5 text-sm">
                 {selectedServiceDetails.map((service) => (
                   <div key={service.id} className="flex justify-between text-muted-foreground">
-                    <span className="truncate mr-2">{service.name}</span>
-                    <span className="font-mono">${getServicePrice(service)}</span>
+                    <span className="truncate mr-3">{service.name}</span>
+                    <span className="font-mono tabular-nums">${getServicePrice(service)}</span>
                   </div>
                 ))}
-                <div className="flex justify-between font-medium pt-1 border-t">
-                  <span>Total</span>
-                  <span className="font-mono">${calculatedTotalPrice}</span>
-                </div>
+              </div>
+              <div className="flex justify-between font-semibold pt-2 border-t text-base">
+                <span>Total</span>
+                <span className="font-mono tabular-nums">${calculatedTotalPrice}</span>
               </div>
             </div>
           )}
