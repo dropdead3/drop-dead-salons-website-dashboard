@@ -142,7 +142,7 @@ export function CommandCenterAnalytics() {
       <div className="flex flex-wrap items-center gap-3">
         {/* Location Select */}
         <Select value={locationId} onValueChange={setLocationId}>
-          <SelectTrigger className="h-9 w-[160px] text-sm">
+          <SelectTrigger className="h-9 w-auto min-w-[180px] text-sm">
             <MapPin className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
             <SelectValue placeholder="All Locations" />
           </SelectTrigger>
@@ -156,7 +156,7 @@ export function CommandCenterAnalytics() {
         
         {/* Date Range Select */}
         <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>
-          <SelectTrigger className="h-9 w-[150px] text-sm">
+          <SelectTrigger className="h-9 w-auto min-w-[160px] text-sm">
             <Calendar className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
             <SelectValue />
           </SelectTrigger>
