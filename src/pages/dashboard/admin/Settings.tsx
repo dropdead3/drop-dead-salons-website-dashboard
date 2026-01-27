@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from 'next-themes';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -464,7 +464,7 @@ function UserCard({
 export default function Settings() {
   const { user, roles } = useAuth();
   const { toast } = useToast();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useDashboardTheme();
   const { colorTheme, setColorTheme, mounted: colorMounted } = useColorTheme();
   const { roleOptions: dynamicRoleOptions, isLoading: rolesLoading } = useRoleUtils();
   const location = useLocation();

@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -98,7 +99,7 @@ import {
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
-import { useTheme } from 'next-themes';
+// Dark mode is now scoped via DashboardThemeContext
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 
@@ -183,7 +184,7 @@ const websiteNavItems: NavItem[] = [
 
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -203,7 +204,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme } = useDashboardTheme();
   const { data: businessSettings } = useBusinessSettings();
   const { data: unreadCount = 0 } = useUnreadAnnouncements();
   const { percentage: profileCompletion } = useProfileCompletion();
@@ -1015,6 +1016,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </footer>
         </div>
       </main>
+    </div>
+  );
+}
+
+// Export wrapper component that applies scoped dark mode
+export function DashboardLayout(props: DashboardLayoutProps) {
+  const { resolvedTheme } = useDashboardTheme();
+  
+  return (
+    <div className={cn(resolvedTheme === 'dark' && 'dark')}>
+      <DashboardLayoutInner {...props} />
     </div>
   );
 }
