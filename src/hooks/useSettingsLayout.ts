@@ -33,6 +33,11 @@ export const SECTION_GROUPS = [
     categories: ['users', 'role-access', 'visibility'],
   },
   {
+    id: 'custom-programs',
+    label: 'Custom Programs',
+    categories: ['program'],
+  },
+  {
     id: 'platform',
     label: 'Platform',
     categories: ['system', 'integrations'],
@@ -40,7 +45,7 @@ export const SECTION_GROUPS = [
   {
     id: 'communications',
     label: 'Communications',
-    categories: ['email', 'program'],
+    categories: ['email'],
   },
 ];
 
