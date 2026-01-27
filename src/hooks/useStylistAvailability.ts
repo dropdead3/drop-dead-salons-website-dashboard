@@ -9,6 +9,7 @@ export interface StylistWithAvailability {
   availableMinutes: number;
   isWorkingToday: boolean;
   phorest_staff_id?: string;
+  stylist_level?: string | null;
 }
 
 interface Appointment {
@@ -117,7 +118,7 @@ export function useStylistAvailability(
         // Fallback: fetch all active stylists without availability filtering
         const { data: allStylists, error } = await supabase
           .from('employee_profiles')
-          .select('user_id, full_name, display_name')
+          .select('user_id, full_name, display_name, stylist_level')
           .eq('is_active', true)
           .order('full_name');
         
@@ -129,6 +130,7 @@ export function useStylistAvailability(
           display_name: s.display_name,
           availableMinutes: 720, // Default 12 hours
           isWorkingToday: true,
+          stylist_level: s.stylist_level,
         }));
       }
 
@@ -152,7 +154,7 @@ export function useStylistAvailability(
       // 2. Get employee profiles for working stylists
       const { data: profiles, error: profError } = await supabase
         .from('employee_profiles')
-        .select('user_id, full_name, display_name')
+        .select('user_id, full_name, display_name, stylist_level')
         .eq('is_active', true)
         .in('user_id', workingTodayUserIds as string[]);
       
@@ -211,6 +213,7 @@ export function useStylistAvailability(
           availableMinutes,
           isWorkingToday: true,
           phorest_staff_id: phorestStaffId,
+          stylist_level: profile.stylist_level,
         };
       });
 

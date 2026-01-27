@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,51 +17,121 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UserPlus, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { UserPlus, Loader2, Clock, Ban, Check, DollarSign } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useStylistAvailability, formatAvailability } from '@/hooks/useStylistAvailability';
+import { getLevelSlug, findLevelBasedPrice, getLevelNumber } from '@/utils/levelPricing';
+import { cn } from '@/lib/utils';
 
 interface WalkInDialogProps {
   locationId?: string;
   onSuccess?: () => void;
 }
 
+interface ServiceWithRestrictions {
+  id: string;
+  name: string;
+  category: string | null;
+  duration_minutes: number;
+  price: number | null;
+  allow_same_day_booking: boolean;
+  lead_time_days: number;
+  same_day_restriction_reason: string | null;
+}
+
 export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
   const [open, setOpen] = useState(false);
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
-  const [serviceId, setServiceId] = useState('');
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [stylistId, setStylistId] = useState('');
   const queryClient = useQueryClient();
 
-  // Fetch available services
+  // Fetch available services with same-day booking info
   const { data: services } = useQuery({
-    queryKey: ['phorest-services'],
+    queryKey: ['phorest-services-walkin'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('phorest_services')
-        .select('*')
+        .select('id, name, category, duration_minutes, price, allow_same_day_booking, lead_time_days, same_day_restriction_reason')
         .eq('is_active', true)
         .order('category')
         .order('name');
       
       if (error) throw error;
-      return data;
+      return data as ServiceWithRestrictions[];
     },
   });
 
-  // Get selected service duration for availability calculation
-  const selectedService = services?.find(s => s.id === serviceId);
-  const serviceDuration = selectedService?.duration_minutes || 60;
+  // Group services by category
+  const servicesByCategory = useMemo(() => {
+    if (!services) return {};
+    return services.reduce((acc, service) => {
+      const category = service.category || 'Other';
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(service);
+      return acc;
+    }, {} as Record<string, ServiceWithRestrictions[]>);
+  }, [services]);
+
+  // Get selected service details
+  const selectedServiceDetails = useMemo(() => {
+    if (!services) return [];
+    return services.filter(s => selectedServiceIds.includes(s.id));
+  }, [services, selectedServiceIds]);
+
+  // Calculate total duration for availability filtering
+  const totalDuration = useMemo(() => {
+    return selectedServiceDetails.reduce((sum, s) => sum + (s.duration_minutes || 60), 0);
+  }, [selectedServiceDetails]);
 
   // Fetch available stylists using the smart availability hook
   const { data: availableStylists, isLoading: stylistsLoading } = useStylistAvailability(
     locationId,
-    serviceDuration
+    totalDuration || 60
   );
+
+  // Get selected stylist for level-based pricing
+  const selectedStylist = availableStylists?.find(s => s.user_id === stylistId);
+  const levelSlug = getLevelSlug(selectedStylist?.stylist_level);
+  const levelNumber = getLevelNumber(selectedStylist?.stylist_level);
+
+  // Calculate total price with level-based pricing
+  const calculatedTotalPrice = useMemo(() => {
+    return selectedServiceDetails.reduce((sum, service) => {
+      if (levelSlug) {
+        const levelPrice = findLevelBasedPrice(service.name, levelSlug);
+        return sum + (levelPrice ?? service.price ?? 0);
+      }
+      return sum + (service.price ?? 0);
+    }, 0);
+  }, [selectedServiceDetails, levelSlug]);
+
+  // Get price for a specific service based on stylist level
+  const getServicePrice = (service: ServiceWithRestrictions): number => {
+    if (levelSlug) {
+      const levelPrice = findLevelBasedPrice(service.name, levelSlug);
+      return levelPrice ?? service.price ?? 0;
+    }
+    return service.price ?? 0;
+  };
+
+  // Toggle service selection
+  const toggleService = (serviceId: string, allowSameDay: boolean) => {
+    if (!allowSameDay) return; // Don't allow selecting restricted services
+    
+    setSelectedServiceIds(prev => {
+      if (prev.includes(serviceId)) {
+        return prev.filter(id => id !== serviceId);
+      }
+      return [...prev, serviceId];
+    });
+  };
 
   // Create walk-in appointment
   const createWalkIn = useMutation({
@@ -69,14 +139,12 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
       const today = format(new Date(), 'yyyy-MM-dd');
       const now = format(new Date(), 'HH:mm');
       
-      // Get service details
-      const service = services?.find(s => s.id === serviceId);
+      // Combine service names
+      const serviceNames = selectedServiceDetails.map(s => s.name).join(' + ');
       
-      
-      // Calculate end time (assume 60 minutes if no duration)
-      const durationMinutes = service?.duration_minutes || 60;
+      // Calculate end time
       const [hours, mins] = now.split(':').map(Number);
-      const endMinutes = hours * 60 + mins + durationMinutes;
+      const endMinutes = hours * 60 + mins + totalDuration;
       const endHour = Math.floor(endMinutes / 60);
       const endMin = endMinutes % 60;
       const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
@@ -90,10 +158,10 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           end_time: endTime,
           client_name: clientName || 'Walk-in',
           client_phone: clientPhone || null,
-          service_name: service?.name || 'Walk-in Service',
-          service_category: service?.category || null,
+          service_name: serviceNames,
+          service_category: selectedServiceDetails[0]?.category || null,
           status: 'checked_in',
-          total_price: service?.price || null,
+          total_price: calculatedTotalPrice,
           stylist_user_id: stylistId || null,
           location_id: locationId !== 'all' ? locationId : null,
           is_new_client: true,
@@ -116,7 +184,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
   const resetForm = () => {
     setClientName('');
     setClientPhone('');
-    setServiceId('');
+    setSelectedServiceIds([]);
     setStylistId('');
   };
 
@@ -139,7 +207,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           Quick Walk-In
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-display">Add Walk-In Client</DialogTitle>
           <DialogDescription>
@@ -147,44 +215,112 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="clientName">Client Name (optional)</Label>
-            <Input
-              id="clientName"
-              placeholder="Guest"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-            />
+        <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-2">
+          {/* Client Info */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="clientName">Client Name</Label>
+              <Input
+                id="clientName"
+                placeholder="Guest"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="clientPhone">Phone</Label>
+              <Input
+                id="clientPhone"
+                placeholder="(555) 555-5555"
+                value={clientPhone}
+                onChange={handlePhoneChange}
+              />
+            </div>
           </div>
           
-          <div className="grid gap-2">
-            <Label htmlFor="clientPhone">Phone Number (optional)</Label>
-            <Input
-              id="clientPhone"
-              placeholder="(555) 555-5555"
-              value={clientPhone}
-              onChange={handlePhoneChange}
-            />
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="service">Service</Label>
-            <Select value={serviceId} onValueChange={setServiceId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a service" />
-              </SelectTrigger>
-              <SelectContent>
-                {services?.map((service) => (
-                  <SelectItem key={service.id} value={service.id}>
-                    {service.name} {service.price ? `- $${service.price}` : ''}
-                  </SelectItem>
+          {/* Service Selection - Multi-select with restrictions */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              Services
+              {selectedServiceIds.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  ({selectedServiceIds.length} selected • {totalDuration} min)
+                </span>
+              )}
+            </Label>
+            <ScrollArea className="h-[200px] border rounded-md bg-background">
+              <div className="p-2 space-y-3">
+                {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
+                  <div key={category} className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide px-2">
+                      {category}
+                    </div>
+                    {categoryServices.map((service) => {
+                      const isSelected = selectedServiceIds.includes(service.id);
+                      const isDisabled = service.allow_same_day_booking === false;
+                      const price = getServicePrice(service);
+                      
+                      return (
+                        <div
+                          key={service.id}
+                          onClick={() => toggleService(service.id, service.allow_same_day_booking !== false)}
+                          className={cn(
+                            "flex items-center gap-3 px-2 py-2 rounded-md transition-colors",
+                            isDisabled 
+                              ? "opacity-50 cursor-not-allowed bg-muted/30" 
+                              : "cursor-pointer hover:bg-accent",
+                            isSelected && !isDisabled && "bg-primary/10"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-5 h-5 rounded border flex items-center justify-center shrink-0",
+                            isDisabled ? "border-muted-foreground/30 bg-muted" : "border-primary",
+                            isSelected && !isDisabled && "bg-primary border-primary"
+                          )}>
+                            {isDisabled ? (
+                              <Ban className="w-3 h-3 text-muted-foreground" />
+                            ) : isSelected ? (
+                              <Check className="w-3 h-3 text-primary-foreground" />
+                            ) : null}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={cn(
+                                "text-sm truncate",
+                                isDisabled && "text-muted-foreground"
+                              )}>
+                                {service.name}
+                              </span>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-xs text-muted-foreground">
+                                  {service.duration_minutes}m
+                                </span>
+                                <span className={cn(
+                                  "text-sm font-medium",
+                                  isDisabled && "text-muted-foreground"
+                                )}>
+                                  ${price}
+                                </span>
+                              </div>
+                            </div>
+                            {isDisabled && service.same_day_restriction_reason && (
+                              <p className="text-xs text-destructive/70 mt-0.5">
+                                {service.same_day_restriction_reason}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            </ScrollArea>
           </div>
           
-          <div className="grid gap-2">
+          {/* Stylist Selection */}
+          <div className="space-y-2">
             <Label htmlFor="stylist">Assign to Stylist</Label>
             <Select value={stylistId} onValueChange={setStylistId}>
               <SelectTrigger>
@@ -193,7 +329,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
               <SelectContent>
                 {availableStylists?.length === 0 && !stylistsLoading && (
                   <div className="px-2 py-3 text-sm text-muted-foreground text-center">
-                    No stylists available for this service today
+                    No stylists available for this service duration today
                   </div>
                 )}
                 {availableStylists?.map((stylist) => (
@@ -209,15 +345,42 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Price Summary */}
+          {selectedServiceDetails.length > 0 && (
+            <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <DollarSign className="w-4 h-4" />
+                Price Summary
+                {levelNumber && (
+                  <span className="text-xs text-muted-foreground">
+                    (Level {levelNumber} pricing)
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1 text-sm">
+                {selectedServiceDetails.map((service) => (
+                  <div key={service.id} className="flex justify-between text-muted-foreground">
+                    <span className="truncate mr-2">{service.name}</span>
+                    <span className="font-mono">${getServicePrice(service)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between font-medium pt-1 border-t">
+                  <span>Total</span>
+                  <span className="font-mono">${calculatedTotalPrice}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
           <Button 
             onClick={() => createWalkIn.mutate()}
-            disabled={createWalkIn.isPending}
+            disabled={createWalkIn.isPending || selectedServiceIds.length === 0}
           >
             {createWalkIn.isPending && (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

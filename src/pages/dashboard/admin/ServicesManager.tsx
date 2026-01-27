@@ -53,6 +53,8 @@ import {
   Check,
   X,
   Mail,
+  Clock,
+  CalendarX,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { services as initialServices, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
@@ -629,6 +631,66 @@ export default function ServicesManager() {
                                           </div>
                                         ))}
                                       </div>
+                                    </div>
+
+                                    {/* Same-Day Booking Settings */}
+                                    <div className="space-y-4 border-t pt-4 mt-4">
+                                      <div className="flex items-center gap-2">
+                                        <CalendarX className="w-4 h-4 text-muted-foreground" />
+                                        <Label className="text-sm font-medium">Booking Settings</Label>
+                                      </div>
+                                      
+                                      <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                          <Label>Allow Same-Day Booking</Label>
+                                          <p className="text-xs text-muted-foreground">
+                                            Enable for services that can be booked on the same day
+                                          </p>
+                                        </div>
+                                        <Switch 
+                                          checked={editingService.item.allowSameDayBooking !== false}
+                                          onCheckedChange={(checked) => setEditingService(prev => 
+                                            prev ? { ...prev, item: { ...prev.item, allowSameDayBooking: checked } } : null
+                                          )}
+                                        />
+                                      </div>
+
+                                      {editingService.item.allowSameDayBooking === false && (
+                                        <>
+                                          <div className="space-y-2">
+                                            <Label className="flex items-center gap-2">
+                                              <Clock className="w-4 h-4" />
+                                              Lead Time Required (days)
+                                            </Label>
+                                            <Input 
+                                              type="number" 
+                                              min="1"
+                                              value={editingService.item.leadTimeDays || 1}
+                                              onChange={(e) => setEditingService(prev => 
+                                                prev ? { ...prev, item: { ...prev.item, leadTimeDays: parseInt(e.target.value) || 1 } } : null
+                                              )}
+                                              className="w-24"
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                              Minimum days notice required to book this service
+                                            </p>
+                                          </div>
+                                          <div className="space-y-2">
+                                            <Label>Restriction Reason</Label>
+                                            <Textarea 
+                                              placeholder="e.g., Extensions require 7-day custom order"
+                                              value={editingService.item.restrictionReason || ''}
+                                              onChange={(e) => setEditingService(prev => 
+                                                prev ? { ...prev, item: { ...prev.item, restrictionReason: e.target.value } } : null
+                                              )}
+                                              rows={2}
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                              Shown to receptionists when this service cannot be booked same-day
+                                            </p>
+                                          </div>
+                                        </>
+                                      )}
                                     </div>
                                   </div>
                                 )}

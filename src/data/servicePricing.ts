@@ -15,6 +15,10 @@ export type ServiceItem = {
   description?: string;
   isPopular?: boolean;
   prices: Record<StylistLevel, string | null>;
+  // Same-day booking restrictions
+  allowSameDayBooking?: boolean;
+  leadTimeDays?: number;
+  restrictionReason?: string;
 };
 
 export type ServiceCategory = {

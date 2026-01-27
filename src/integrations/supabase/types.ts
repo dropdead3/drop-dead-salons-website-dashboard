@@ -2988,42 +2988,51 @@ export type Database = {
       }
       phorest_services: {
         Row: {
+          allow_same_day_booking: boolean | null
           category: string | null
           created_at: string | null
           duration_minutes: number
           id: string
           is_active: boolean | null
+          lead_time_days: number | null
           name: string
           phorest_branch_id: string
           phorest_service_id: string
           price: number | null
           requires_qualification: boolean | null
+          same_day_restriction_reason: string | null
           updated_at: string | null
         }
         Insert: {
+          allow_same_day_booking?: boolean | null
           category?: string | null
           created_at?: string | null
           duration_minutes?: number
           id?: string
           is_active?: boolean | null
+          lead_time_days?: number | null
           name: string
           phorest_branch_id: string
           phorest_service_id: string
           price?: number | null
           requires_qualification?: boolean | null
+          same_day_restriction_reason?: string | null
           updated_at?: string | null
         }
         Update: {
+          allow_same_day_booking?: boolean | null
           category?: string | null
           created_at?: string | null
           duration_minutes?: number
           id?: string
           is_active?: boolean | null
+          lead_time_days?: number | null
           name?: string
           phorest_branch_id?: string
           phorest_service_id?: string
           price?: number | null
           requires_qualification?: boolean | null
+          same_day_restriction_reason?: string | null
           updated_at?: string | null
         }
         Relationships: []
