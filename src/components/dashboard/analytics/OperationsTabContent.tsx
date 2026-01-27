@@ -64,8 +64,12 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header Controls */}
       <div className="flex items-center gap-2">
+        <CommandCenterVisibilityToggle 
+          elementKey="new_bookings" 
+          elementName="New Bookings" 
+        />
         <CommandCenterVisibilityToggle 
           elementKey="capacity_utilization" 
           elementName="Capacity Utilization" 
