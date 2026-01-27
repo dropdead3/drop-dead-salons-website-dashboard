@@ -1,9 +1,10 @@
+import { useState, useMemo } from 'react';
 import { VisibilityGate } from '@/components/visibility';
 import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
-import { SalesBentoCard } from '@/components/dashboard/sales/SalesBentoCard';
+import { SalesBentoCard, getDateRange, type DateRangeType } from '@/components/dashboard/sales/SalesBentoCard';
 
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
@@ -17,9 +18,25 @@ import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { Link } from 'react-router-dom';
-import { Settings2 } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { Settings2, MapPin, Calendar } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
+  today: 'Today',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+  thisWeek: 'This Week',
+  thisMonth: 'This Month',
+  lastMonth: 'Last Month',
+};
 
 /**
  * Command Center Analytics Section
@@ -33,11 +50,16 @@ export function CommandCenterAnalytics() {
   const { data: profile } = useEmployeeProfile();
   const roles = useEffectiveRoles();
   
-  // Default date range for cards that need it
-  const today = new Date();
-  const dateFrom = format(subDays(today, 30), 'yyyy-MM-dd');
-  const dateTo = format(today, 'yyyy-MM-dd');
+  // Shared filter state for all pinned analytics cards
+  const [locationId, setLocationId] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<DateRangeType>('thisMonth');
   
+  // Fetch locations for dropdown
+  const { data: locations } = useActiveLocations();
+  
+  // Calculate date filters from dateRange
+  const dateFilters = useMemo(() => getDateRange(dateRange), [dateRange]);
+  const locationFilter = locationId !== 'all' ? locationId : undefined;
   
   // Check if any analytics cards are visible for leadership roles
   const leadershipRoles = ['super_admin', 'admin', 'manager'];
@@ -73,8 +95,15 @@ export function CommandCenterAnalytics() {
     hasStaffingTrends || hasStylistWorkload;
   
   // Fetch data for cards that need it (only when pinned to avoid unnecessary API calls)
-  const { data: salesData } = useSalesMetrics({ dateFrom, dateTo });
-  const { data: performers, isLoading: isLoadingPerformers } = useSalesByStylist(dateFrom, dateTo);
+  const { data: salesData } = useSalesMetrics({ 
+    dateFrom: dateFilters.dateFrom, 
+    dateTo: dateFilters.dateTo,
+    locationId: locationFilter,
+  });
+  const { data: performers, isLoading: isLoadingPerformers } = useSalesByStylist(
+    dateFilters.dateFrom, 
+    dateFilters.dateTo
+  );
   const { workload, isLoading: isLoadingWorkload } = useStaffUtilization(undefined, '30days');
   
   // Show nothing if loading
@@ -109,10 +138,47 @@ export function CommandCenterAnalytics() {
   
   return (
     <div className="space-y-6">
+      {/* Shared Filter Bar - appears when any analytics cards are pinned */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Location Select */}
+        <Select value={locationId} onValueChange={setLocationId}>
+          <SelectTrigger className="h-9 w-[160px] text-sm">
+            <MapPin className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
+            <SelectValue placeholder="All Locations" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            {locations?.map(loc => (
+              <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        {/* Date Range Select */}
+        <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>
+          <SelectTrigger className="h-9 w-[150px] text-sm">
+            <Calendar className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(DATE_RANGE_LABELS) as DateRangeType[]).map((key) => (
+              <SelectItem key={key} value={key}>
+                {DATE_RANGE_LABELS[key]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
       {/* Sales Dashboard Bento (consolidated card) */}
       {hasSalesDashboard && (
         <VisibilityGate elementKey="sales_dashboard_bento">
-          <SalesBentoCard initialDateRange="thisMonth" />
+          <SalesBentoCard 
+            locationId={locationId}
+            dateRange={dateRange}
+            dateFrom={dateFilters.dateFrom}
+            dateTo={dateFilters.dateTo}
+          />
         </VisibilityGate>
       )}
       
@@ -148,7 +214,7 @@ export function CommandCenterAnalytics() {
       {/* Client Funnel */}
       {hasClientFunnel && (
         <VisibilityGate elementKey="client_funnel">
-          <ClientFunnelCard dateFrom={dateFrom} dateTo={dateTo} />
+          <ClientFunnelCard dateFrom={dateFilters.dateFrom} dateTo={dateFilters.dateTo} />
         </VisibilityGate>
       )}
       

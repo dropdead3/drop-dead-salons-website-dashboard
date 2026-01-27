@@ -1,15 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
   LayoutDashboard,
@@ -23,8 +16,6 @@ import {
   Trophy,
   PieChart as PieChartIcon,
   Loader2,
-  MapPin,
-  Calendar,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -35,11 +26,13 @@ import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
 
-type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+export type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
 interface SalesBentoCardProps {
-  initialLocationId?: string;
-  initialDateRange?: DateRangeType;
+  locationId?: string;
+  dateRange?: DateRangeType;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 // KPI Cell component for consistent styling
@@ -81,8 +74,8 @@ function KPICell({
   );
 }
 
-// Helper to compute date range
-function getDateRange(range: DateRangeType): { dateFrom: string; dateTo: string } {
+// Helper to compute date range - exported for reuse
+export function getDateRange(range: DateRangeType): { dateFrom: string; dateTo: string } {
   const now = new Date();
   const today = format(now, 'yyyy-MM-dd');
   
@@ -114,28 +107,23 @@ function getDateRange(range: DateRangeType): { dateFrom: string; dateTo: string 
   }
 }
 
-const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
-  today: 'Today',
-  '7d': 'Last 7 days',
-  '30d': 'Last 30 days',
-  thisWeek: 'This Week',
-  thisMonth: 'This Month',
-  lastMonth: 'Last Month',
-};
-
 export function SalesBentoCard({
-  initialLocationId = 'all',
-  initialDateRange = 'thisMonth',
+  locationId = 'all',
+  dateRange = 'thisMonth',
+  dateFrom,
+  dateTo,
 }: SalesBentoCardProps) {
-  // Internal filter state
-  const [locationId, setLocationId] = useState(initialLocationId);
-  const [dateRange, setDateRange] = useState<DateRangeType>(initialDateRange);
-
-  // Compute date filters
-  const dateFilters = useMemo(() => getDateRange(dateRange), [dateRange]);
+  // Compute date filters - use explicit dates if provided, otherwise calculate from dateRange
+  const dateFilters = useMemo(() => {
+    if (dateFrom && dateTo) {
+      return { dateFrom, dateTo };
+    }
+    return getDateRange(dateRange);
+  }, [dateFrom, dateTo, dateRange]);
+  
   const locationFilter = locationId !== 'all' ? locationId : undefined;
 
-  // Fetch data internally
+  // Fetch data based on props
   const { data: locations } = useLocations();
   const { goals } = useSalesGoals();
   const { data: tomorrowData } = useTomorrowRevenue();
@@ -217,43 +205,9 @@ export function SalesBentoCard({
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <LayoutDashboard className="w-5 h-5 text-primary" />
-            <CardTitle className="font-display">Sales Dashboard</CardTitle>
-          </div>
-          
-          {/* Inline Filters */}
-          <div className="flex items-center gap-2">
-            {/* Location Select */}
-            <Select value={locationId} onValueChange={setLocationId}>
-              <SelectTrigger className="h-8 w-[140px] text-xs">
-                <MapPin className="w-3 h-3 mr-1.5 text-muted-foreground shrink-0" />
-                <SelectValue placeholder="All Locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                {locations?.map(loc => (
-                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            {/* Date Range Select */}
-            <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>
-              <SelectTrigger className="h-8 w-[130px] text-xs">
-                <Calendar className="w-3 h-3 mr-1.5 text-muted-foreground shrink-0" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(DATE_RANGE_LABELS) as DateRangeType[]).map((key) => (
-                  <SelectItem key={key} value={key}>
-                    {DATE_RANGE_LABELS[key]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="flex items-center gap-2">
+          <LayoutDashboard className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display">Sales Dashboard</CardTitle>
         </div>
       </CardHeader>
       
