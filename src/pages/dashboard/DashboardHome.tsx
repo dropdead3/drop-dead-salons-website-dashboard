@@ -40,6 +40,7 @@ import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanne
 import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
 import { WorkScheduleWidget } from '@/components/dashboard/WorkScheduleWidget';
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { CommandCenterAnalytics } from '@/components/dashboard/CommandCenterAnalytics';
 import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
@@ -89,10 +90,14 @@ export default function DashboardHome() {
   // Birthday notifications for leadership
   useBirthdayNotifications();
   
+  // Check if viewing as another role
+  const { isViewingAs } = useViewAs();
+  
   // Leadership team: super admin and manager only (not regular admin or assistants)
-  const isLeadership = profile?.is_super_admin || 
-    roles.includes('super_admin') || 
-    roles.includes('manager');
+  // When viewing as another role, only use effective roles (ignore profile.is_super_admin)
+  const isLeadership = isViewingAs 
+    ? roles.includes('super_admin') || roles.includes('manager')
+    : profile?.is_super_admin || roles.includes('super_admin') || roles.includes('manager');
   
   // Check if user has stylist or stylist_assistant roles (for Quick Actions visibility)
   const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
