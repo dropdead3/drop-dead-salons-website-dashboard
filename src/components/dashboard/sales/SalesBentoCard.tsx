@@ -12,7 +12,7 @@ import {
   ShoppingBag,
   CreditCard,
   Receipt,
-  CalendarClock,
+  CalendarCheck,
   Trophy,
   PieChart as PieChartIcon,
   Loader2,
@@ -22,7 +22,6 @@ import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
-import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
 
@@ -126,7 +125,6 @@ export function SalesBentoCard({
   // Fetch data based on props
   const { data: locations } = useLocations();
   const { goals } = useSalesGoals();
-  const { data: tomorrowData } = useTomorrowRevenue();
   
   const { data: metrics, isLoading: metricsLoading } = useSalesMetrics({
     dateFrom: dateFilters.dateFrom,
@@ -167,8 +165,6 @@ export function SalesBentoCard({
   const productRevenue = metrics?.productRevenue || 0;
   const totalTransactions = metrics?.totalTransactions || 0;
   const averageTicket = metrics?.averageTicket || 0;
-  const tomorrowRevenue = tomorrowData?.revenue || 0;
-  const tomorrowBookings = tomorrowData?.appointmentCount || 0;
   const performers = stylistData || [];
 
   const percentage = useMemo(() => {
@@ -272,13 +268,13 @@ export function SalesBentoCard({
               tooltip="Total Revenue ÷ Transactions. Average spend per client visit."
             />
             <KPICell 
-              icon={CalendarClock} 
-              value={tomorrowRevenue} 
-              label="Rev Tomorrow" 
+              icon={CalendarCheck} 
+              value={totalRevenue} 
+              label="Expected Rev" 
               prefix="$"
               iconColor="text-chart-5"
-              subtitle={`${tomorrowBookings} bookings`}
-              tooltip="Projected revenue from confirmed appointments scheduled for tomorrow."
+              subtitle={`${totalTransactions} appointments`}
+              tooltip="Revenue calculated from booked appointments in the selected date range. This reflects scheduled services, not completed sales."
             />
           </div>
           
