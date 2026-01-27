@@ -60,7 +60,7 @@ import {
 import { SortableSectionItem } from './SortableSectionItem';
 import { SortableWidgetItem } from './SortableWidgetItem';
 import { SortablePinnedCardItem } from './SortablePinnedCardItem';
-import { useDashboardVisibility, useToggleDashboardVisibility } from '@/hooks/useDashboardVisibility';
+import { useDashboardVisibility, useToggleDashboardVisibility, useRegisterVisibilityElement } from '@/hooks/useDashboardVisibility';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -138,30 +138,29 @@ const WIDGETS = [
 ];
 
 // All analytics cards that can be pinned to Command Center
-// All analytics cards that can be pinned to Command Center
 const PINNABLE_CARDS = [
   // Sales & Revenue
-  { id: 'sales_dashboard_bento', label: 'Sales Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: 'sales_overview', label: 'Sales Overview', icon: <DollarSign className="w-4 h-4" /> },
-  { id: 'revenue_breakdown', label: 'Revenue Breakdown', icon: <PieChart className="w-4 h-4" /> },
-  { id: 'top_performers', label: 'Top Performers', icon: <Trophy className="w-4 h-4" /> },
+  { id: 'sales_dashboard_bento', label: 'Sales Dashboard', category: 'Sales', icon: <LayoutDashboard className="w-4 h-4" /> },
+  { id: 'sales_overview', label: 'Sales Overview', category: 'Sales', icon: <DollarSign className="w-4 h-4" /> },
+  { id: 'revenue_breakdown', label: 'Revenue Breakdown', category: 'Sales', icon: <PieChart className="w-4 h-4" /> },
+  { id: 'top_performers', label: 'Top Performers', category: 'Sales', icon: <Trophy className="w-4 h-4" /> },
   
   // Forecasting & Goals
-  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', icon: <TrendingUp className="w-4 h-4" /> },
-  { id: 'team_goals', label: 'Team Goals', icon: <Target className="w-4 h-4" /> },
-  { id: 'new_bookings', label: 'New Bookings', icon: <CalendarPlus className="w-4 h-4" /> },
+  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" /> },
+  { id: 'team_goals', label: 'Team Goals', category: 'Forecasting', icon: <Target className="w-4 h-4" /> },
+  { id: 'new_bookings', label: 'New Bookings', category: 'Forecasting', icon: <CalendarPlus className="w-4 h-4" /> },
   
   // Clients
-  { id: 'client_funnel', label: 'Client Funnel', icon: <Users className="w-4 h-4" /> },
+  { id: 'client_funnel', label: 'Client Funnel', category: 'Clients', icon: <Users className="w-4 h-4" /> },
   
   // Operations & Capacity
-  { id: 'operations_stats', label: 'Operations Stats', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: 'capacity_utilization', label: 'Capacity Utilization', icon: <Gauge className="w-4 h-4" /> },
-  { id: 'stylist_workload', label: 'Stylist Workload', icon: <Briefcase className="w-4 h-4" /> },
+  { id: 'operations_stats', label: 'Operations Stats', category: 'Operations', icon: <LayoutDashboard className="w-4 h-4" /> },
+  { id: 'capacity_utilization', label: 'Capacity Utilization', category: 'Operations', icon: <Gauge className="w-4 h-4" /> },
+  { id: 'stylist_workload', label: 'Stylist Workload', category: 'Operations', icon: <Briefcase className="w-4 h-4" /> },
   
   // Staffing
-  { id: 'staffing_trends', label: 'Staffing Trends', icon: <LineChart className="w-4 h-4" /> },
-  { id: 'hiring_capacity', label: 'Hiring Capacity', icon: <UserPlus className="w-4 h-4" /> },
+  { id: 'staffing_trends', label: 'Staffing Trends', category: 'Staffing', icon: <LineChart className="w-4 h-4" /> },
+  { id: 'hiring_capacity', label: 'Hiring Capacity', category: 'Staffing', icon: <UserPlus className="w-4 h-4" /> },
 ];
 
 interface DashboardCustomizeMenuProps {
@@ -190,6 +189,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   // Visibility data for pinned analytics
   const { data: visibilityData, isLoading: isLoadingVisibility } = useDashboardVisibility();
   const toggleVisibility = useToggleDashboardVisibility();
+  const registerElement = useRegisterVisibilityElement();
 
   // Sensors for drag and drop
   const sensors = useSensors(
@@ -286,6 +286,19 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const handleTogglePinnedCard = async (cardId: string) => {
     const isPinned = isCardPinned(cardId);
     const newIsVisible = !isPinned;
+    const card = PINNABLE_CARDS.find(c => c.id === cardId);
+    
+    // Check if element exists in visibility system
+    const elementExists = visibilityData?.some(v => v.element_key === cardId);
+    
+    // If turning ON and element doesn't exist, register it first
+    if (!elementExists && newIsVisible && card) {
+      await registerElement.mutateAsync({
+        elementKey: cardId,
+        elementName: card.label,
+        elementCategory: card.category,
+      });
+    }
     
     // Toggle visibility for all leadership roles
     for (const role of leadershipRoles) {
