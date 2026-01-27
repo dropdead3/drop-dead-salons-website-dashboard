@@ -73,6 +73,8 @@ import { DayRateSettingsContent } from '@/components/dashboard/settings/DayRateS
 import { RoleAccessConfigurator } from '@/components/dashboard/settings/RoleAccessConfigurator';
 import { SmsTemplatesManager } from '@/components/dashboard/SmsTemplatesManager';
 import { FormsTemplatesContent } from '@/components/dashboard/settings/FormsTemplatesContent';
+import { MetricsGlossaryContent } from '@/components/dashboard/settings/MetricsGlossaryContent';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
@@ -1054,161 +1056,171 @@ export default function Settings() {
           )}
 
           {activeCategory === 'system' && (
-            <div className="space-y-6">
-              {/* Appearance */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-5 h-5 text-primary" />
-                    <CardTitle className="font-display text-lg">APPEARANCE</CardTitle>
-                  </div>
-                  <CardDescription>Customize the dashboard appearance. Only affects the backend dashboard.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-8">
-                  {/* Color Theme Selection */}
-                  <div className="space-y-4">
-                    <Label className="text-sm font-medium">Color Theme</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {colorThemes.map((themeOption) => {
-                        const isSelected = colorMounted && colorTheme === themeOption.id;
-                        const isDark = resolvedTheme === 'dark';
-                        const preview = isDark ? themeOption.darkPreview : themeOption.lightPreview;
-                        
-                        return (
-                          <button
-                            key={themeOption.id}
-                            onClick={() => setColorTheme(themeOption.id)}
-                            className={cn(
-                              "relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
-                              isSelected
-                                ? "border-primary ring-2 ring-primary/20"
-                                : "border-border hover:border-primary/50"
-                            )}
-                          >
-                            <div className="flex items-center gap-1.5 w-full">
-                              <div 
-                                className="w-8 h-8 rounded-lg border border-border"
-                                style={{ backgroundColor: preview.bg }}
-                              />
-                              <div 
-                                className="w-8 h-8 rounded-lg border border-border"
-                                style={{ backgroundColor: preview.accent }}
-                              />
-                              <div 
-                                className="w-8 h-8 rounded-lg border border-border"
-                                style={{ backgroundColor: preview.primary }}
-                              />
-                            </div>
-                            
-                            <div className="space-y-0.5">
-                              <span className="text-sm font-medium">{themeOption.name}</span>
-                              <p className="text-xs text-muted-foreground">{themeOption.description}</p>
-                            </div>
-                            
-                            {isSelected && (
-                              <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                                <Check className="w-3 h-3 text-primary-foreground" />
+            <Tabs defaultValue="settings" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+                <TabsTrigger value="metrics">Metrics Glossary</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="settings" className="space-y-6 mt-0">
+                {/* Appearance */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Palette className="w-5 h-5 text-primary" />
+                      <CardTitle className="font-display text-lg">APPEARANCE</CardTitle>
+                    </div>
+                    <CardDescription>Customize the dashboard appearance. Only affects the backend dashboard.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-8">
+                    {/* Color Theme Selection */}
+                    <div className="space-y-4">
+                      <Label className="text-sm font-medium">Color Theme</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {colorThemes.map((themeOption) => {
+                          const isSelected = colorMounted && colorTheme === themeOption.id;
+                          const isDark = resolvedTheme === 'dark';
+                          const preview = isDark ? themeOption.darkPreview : themeOption.lightPreview;
+                          
+                          return (
+                            <button
+                              key={themeOption.id}
+                              onClick={() => setColorTheme(themeOption.id)}
+                              className={cn(
+                                "relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
+                                isSelected
+                                  ? "border-primary ring-2 ring-primary/20"
+                                  : "border-border hover:border-primary/50"
+                              )}
+                            >
+                              <div className="flex items-center gap-1.5 w-full">
+                                <div 
+                                  className="w-8 h-8 rounded-lg border border-border"
+                                  style={{ backgroundColor: preview.bg }}
+                                />
+                                <div 
+                                  className="w-8 h-8 rounded-lg border border-border"
+                                  style={{ backgroundColor: preview.accent }}
+                                />
+                                <div 
+                                  className="w-8 h-8 rounded-lg border border-border"
+                                  style={{ backgroundColor: preview.primary }}
+                                />
                               </div>
-                            )}
-                          </button>
-                        );
-                      })}
+                              
+                              <div className="space-y-0.5">
+                                <span className="text-sm font-medium">{themeOption.name}</span>
+                                <p className="text-xs text-muted-foreground">{themeOption.description}</p>
+                              </div>
+                              
+                              {isSelected && (
+                                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                  <Check className="w-3 h-3 text-primary-foreground" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Theme Mode Toggle */}
-                  <div className="space-y-4">
-                    <Label className="text-sm font-medium">Theme Mode</Label>
-                    <div className="grid grid-cols-3 gap-3">
-                      <button
-                        onClick={() => setTheme('light')}
-                        className={cn(
-                          "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                          mounted && theme === 'light'
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        )}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center">
-                          <Sun className="w-5 h-5 text-foreground" />
-                        </div>
-                        <span className="text-sm font-medium">Light</span>
-                        {mounted && theme === 'light' && (
-                          <Check className="w-4 h-4 text-primary" />
-                        )}
-                      </button>
-                      
-                      <button
-                        onClick={() => setTheme('dark')}
-                        className={cn(
-                          "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                          mounted && theme === 'dark'
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        )}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-foreground border border-border flex items-center justify-center">
-                          <Moon className="w-5 h-5 text-background" />
-                        </div>
-                        <span className="text-sm font-medium">Dark</span>
-                        {mounted && theme === 'dark' && (
-                          <Check className="w-4 h-4 text-primary" />
-                        )}
-                      </button>
-                      
-                      <button
-                        onClick={() => setTheme('system')}
-                        className={cn(
-                          "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                          mounted && theme === 'system'
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        )}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-foreground border border-border flex items-center justify-center">
-                          <Monitor className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <span className="text-sm font-medium">System</span>
-                        {mounted && theme === 'system' && (
-                          <Check className="w-4 h-4 text-primary" />
-                        )}
-                      </button>
+                    {/* Theme Mode Toggle */}
+                    <div className="space-y-4">
+                      <Label className="text-sm font-medium">Theme Mode</Label>
+                      <div className="grid grid-cols-3 gap-3">
+                        <button
+                          onClick={() => setTheme('light')}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                            mounted && theme === 'light'
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center">
+                            <Sun className="w-5 h-5 text-foreground" />
+                          </div>
+                          <span className="text-sm font-medium">Light</span>
+                          {mounted && theme === 'light' && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </button>
+                        
+                        <button
+                          onClick={() => setTheme('dark')}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                            mounted && theme === 'dark'
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-foreground border border-border flex items-center justify-center">
+                            <Moon className="w-5 h-5 text-background" />
+                          </div>
+                          <span className="text-sm font-medium">Dark</span>
+                          {mounted && theme === 'dark' && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </button>
+                        
+                        <button
+                          onClick={() => setTheme('system')}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                            mounted && theme === 'system'
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-foreground border border-border flex items-center justify-center">
+                            <Monitor className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <span className="text-sm font-medium">System</span>
+                          {mounted && theme === 'system' && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Notifications */}
-              <NotificationsCard />
+                {/* Notifications */}
+                <NotificationsCard />
 
-              {/* Security */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-primary" />
-                    <CardTitle className="font-display text-lg">SECURITY</CardTitle>
-                  </div>
-                  <CardDescription>Security and access settings.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-sans font-medium text-sm">Require Email Verification</p>
-                      <p className="text-xs text-muted-foreground">New users must verify email</p>
+                {/* Security */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-primary" />
+                      <CardTitle className="font-display text-lg">SECURITY</CardTitle>
                     </div>
-                    <Switch />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-sans font-medium text-sm">Restrict Sign-ups</p>
-                      <p className="text-xs text-muted-foreground">Only approved email domains</p>
+                    <CardDescription>Security and access settings.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-sans font-medium text-sm">Require Email Verification</p>
+                        <p className="text-xs text-muted-foreground">New users must verify email</p>
+                      </div>
+                      <Switch />
                     </div>
-                    <Switch />
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-sans font-medium text-sm">Restrict Sign-ups</p>
+                        <p className="text-xs text-muted-foreground">Only approved email domains</p>
+                      </div>
+                      <Switch />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            </div>
+              <TabsContent value="metrics" className="mt-0">
+                <MetricsGlossaryContent />
+              </TabsContent>
+            </Tabs>
           )}
 
           {activeCategory === 'program' && (
