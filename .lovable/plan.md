@@ -1,225 +1,235 @@
 
-# Build Text Messages Templates/Editor Card in Communications Section
+# Service Communication Flows Configuration
 
 ## Overview
 
-This plan adds a new "Text Messages" (SMS) settings card to the Communications section, following the same pattern established by the Email templates system. The implementation includes database tables, React hooks, and a simplified template editor optimized for SMS (160-character limit awareness, no HTML formatting).
+This implementation adds the ability to configure custom communication flows (email and SMS) for each service offered. Admins can define which templates are sent at specific trigger points (booking confirmation, reminder, follow-up) per service, with the option to use default templates or service-specific overrides.
+
+## Architecture
+
+The system follows a **junction table pattern** (consistent with `phorest_staff_services` and `role_permissions`) to link services to communication templates with trigger-based configuration.
+
+```text
++-------------------+       +---------------------------+       +------------------+
+| phorest_services  |       | service_communication_    |       | email_templates  |
+|-------------------|       |      flows                |       |------------------|
+| id (PK)           |<----->| service_id (FK)           |------>| id (PK)          |
+| name              |       | email_template_id (FK)    |       | template_key     |
+| category          |       | sms_template_id (FK)      |       | name             |
++-------------------+       | trigger_type              |       +------------------+
+                            | timing_offset_minutes     |
+                            | is_active                 |       +------------------+
+                            +---------------------------+       | sms_templates    |
+                                                                |------------------|
+                                                                | id (PK)          |
+                                                                | template_key     |
+                                                                | name             |
+                                                                +------------------+
+```
 
 ## Database Schema
 
-### 1. New Table: `sms_templates`
+### New Table: `service_communication_flows`
 
 | Column | Type | Default | Description |
 |--------|------|---------|-------------|
 | id | uuid | gen_random_uuid() | Primary key |
-| template_key | text | NOT NULL | Unique identifier (e.g., `appointment_reminder`) |
-| name | text | NOT NULL | Display name |
-| message_body | text | NOT NULL | SMS content with `{{variable}}` placeholders |
-| description | text | NULL | Admin notes about when template is used |
-| variables | text[] | '{}' | List of available variables |
-| is_active | boolean | true | Enable/disable template |
+| service_id | uuid | NOT NULL | FK to phorest_services.id |
+| trigger_type | text | NOT NULL | Event type: `booking_confirmed`, `reminder_24h`, `reminder_2h`, `follow_up_24h`, `follow_up_7d` |
+| email_template_id | uuid | NULL | FK to email_templates.id (optional) |
+| sms_template_id | uuid | NULL | FK to sms_templates.id (optional) |
+| timing_offset_minutes | integer | 0 | Minutes before/after trigger (negative = before) |
+| is_active | boolean | true | Enable/disable this flow |
 | created_at | timestamptz | now() | Creation timestamp |
-| updated_at | timestamptz | now() | Last modified timestamp |
-| character_count | integer | generated | Auto-calculated from message_body |
+| updated_at | timestamptz | now() | Last modified |
 
-### 2. RLS Policies
+### Trigger Types (Enum)
+
+| Value | Description |
+|-------|-------------|
+| `booking_confirmed` | Sent immediately when appointment is booked |
+| `reminder_24h` | Sent 24 hours before appointment |
+| `reminder_2h` | Sent 2 hours before appointment |
+| `follow_up_24h` | Sent 24 hours after appointment |
+| `follow_up_7d` | Sent 7 days after appointment |
+
+### RLS Policies
 
 ```sql
--- Enable RLS
-ALTER TABLE sms_templates ENABLE ROW LEVEL SECURITY;
-
--- Allow authenticated users to read active templates
-CREATE POLICY "Allow read for authenticated" ON sms_templates
+-- Authenticated users can read flows (needed for booking confirmations)
+CREATE POLICY "Allow read for authenticated" ON service_communication_flows
   FOR SELECT TO authenticated USING (true);
 
--- Allow admins to manage templates
-CREATE POLICY "Allow admin full access" ON sms_templates
+-- Admins can manage flows
+CREATE POLICY "Allow admin full access" ON service_communication_flows
   FOR ALL TO authenticated
   USING (public.is_coach_or_admin(auth.uid()));
-```
-
-### 3. Trigger for Updated Timestamp
-
-```sql
-CREATE TRIGGER update_sms_templates_updated_at
-  BEFORE UPDATE ON sms_templates
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 ```
 
 ## File Changes Summary
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/hooks/useSmsTemplates.ts` | Create | CRUD hooks for SMS templates |
-| `src/components/dashboard/SmsTemplatesManager.tsx` | Create | Template list and management UI |
-| `src/components/dashboard/SmsTemplateEditor.tsx` | Create | Simple text editor with character counter |
-| `src/hooks/useSettingsLayout.ts` | Modify | Add 'sms' category to Communications section |
-| `src/pages/dashboard/admin/Settings.tsx` | Modify | Add SMS card definition and content rendering |
+| `src/hooks/useServiceCommunicationFlows.ts` | Create | CRUD hooks for managing flows |
+| `src/components/dashboard/ServiceCommunicationFlowEditor.tsx` | Create | Dialog for configuring flows per service |
+| `src/components/dashboard/ServiceCommunicationFlowsList.tsx` | Create | Display configured flows in a table |
+| `src/pages/dashboard/admin/ServicesManager.tsx` | Modify | Add "Configure Communications" action to each service |
+| `src/hooks/useSettingsLayout.ts` | Modify | Add 'service-flows' as subcategory under Communications |
+| `src/pages/dashboard/admin/Settings.tsx` | Modify | Add Communications Flows overview card |
 
-## Implementation Details
+## Component Design
 
-### 1. SMS Templates Hook (`src/hooks/useSmsTemplates.ts`)
+### 1. Service Row Enhancement (ServicesManager.tsx)
 
-Follows the pattern of `useEmailTemplates.ts`:
-
-```typescript
-export interface SmsTemplate {
-  id: string;
-  template_key: string;
-  name: string;
-  message_body: string;
-  description: string | null;
-  variables: string[];
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-// Exports:
-// - useSmsTemplates() - Fetch all templates
-// - useSmsTemplate(key) - Fetch single template
-// - useUpdateSmsTemplate() - Update mutation
-// - useCreateSmsTemplate() - Create mutation
-// - useDeleteSmsTemplate() - Delete mutation
-```
-
-### 2. SMS Templates Manager (`src/components/dashboard/SmsTemplatesManager.tsx`)
-
-Simplified version of EmailTemplatesManager:
-- List of templates with active/inactive toggle
-- Edit, duplicate, delete actions
-- Character count display (shows segment count for >160 chars)
-- Preview with variable highlighting
-- Test SMS option (future - requires Twilio integration)
-
-Key UI features:
-- Real-time character counter with color coding:
-  - Green: 0-160 (1 SMS segment)
-  - Yellow: 161-320 (2 segments)
-  - Orange: 321-480 (3 segments)
-  - Red: 480+ (warning about costs)
-- Variable insertion dropdown
-- Template duplication
-
-### 3. SMS Template Editor (`src/components/dashboard/SmsTemplateEditor.tsx`)
-
-Simple textarea-based editor with:
-- Character counter with SMS segment indicator
-- Variable insertion menu (reuses email_variables)
-- Preview mode showing variable placeholders vs. sample data
-- Validation for required fields
+Each service row in the accordion gains a new action button:
 
 ```text
-+------------------------------------------+
-| Template Name: _________________________ |
-|                                          |
-| Message:                                 |
-| +--------------------------------------+ |
-| | Hi {{first_name}}, your appointment  | |
-| | at Drop Dead Gorgeous is confirmed   | |
-| | for {{appointment_date}} at          | |
-| | {{appointment_time}}. Reply STOP to  | |
-| | unsubscribe.                         | |
-| +--------------------------------------+ |
-| Characters: 142/160 (1 segment)   [Vars] |
-|                                          |
-| Description (optional):                  |
-| +--------------------------------------+ |
-| | Sent when appointment is booked      | |
-| +--------------------------------------+ |
-+------------------------------------------+
++-------------------------------------------+
+| Haircut & Blowout                    [★] [✎] [📧] |
+|                                           |
+| "Classic cut with styling"                |
++-------------------------------------------+
+         ↑ New icon button opens communication flow dialog
 ```
 
-### 4. Settings Layout Update (`src/hooks/useSettingsLayout.ts`)
+### 2. Communication Flow Editor Dialog
+
+```text
++--------------------------------------------------+
+| 📧 Communication Flows: Haircut & Blowout         |
+|--------------------------------------------------|
+| Trigger Point         | Email        | SMS      |
+|--------------------------------------------------|
+| ☑ Booking Confirmed   | [Confirm ▼]  | [Confirm ▼] |
+| ☑ Reminder (24h)      | [Reminder ▼] | [Reminder ▼] |
+| ☐ Reminder (2h)       | [None ▼]     | [Running ▼]  |
+| ☐ Follow-up (24h)     | [None ▼]     | [None ▼]     |
+| ☐ Follow-up (7d)      | [None ▼]     | [None ▼]     |
+|--------------------------------------------------|
+| [Preview Email] [Preview SMS]      [Cancel] [Save] |
++--------------------------------------------------+
+```
+
+**Features:**
+- Checkbox to enable/disable each trigger point
+- Dropdown selects from existing email/SMS templates
+- "None" option skips that channel for the trigger
+- Preview buttons show the selected template with sample data
+- Changes saved per-service
+
+### 3. Communications Settings Card
+
+A new card in Communications section showing an overview of all service flows:
+
+```text
++--------------------------------------------------+
+| SERVICE COMMUNICATION FLOWS                       |
+| Configure automated messages per service          |
+|--------------------------------------------------|
+| 12 services with custom flows                    |
+| 8 using default templates                        |
+|                                                  |
+| [View All Services →]                            |
++--------------------------------------------------+
+```
+
+Clicking "View All Services" navigates to `/dashboard/admin/services`.
+
+## Hook Design
+
+### `useServiceCommunicationFlows.ts`
 
 ```typescript
-// Add to DEFAULT_ICON_COLORS
-sms: '#22C55E', // Green for text messages
-
-// Update SECTION_GROUPS
-{
-  id: 'communications',
-  label: 'Communications',
-  categories: ['email', 'sms'],
+// Types
+interface ServiceCommunicationFlow {
+  id: string;
+  service_id: string;
+  trigger_type: 'booking_confirmed' | 'reminder_24h' | 'reminder_2h' | 'follow_up_24h' | 'follow_up_7d';
+  email_template_id: string | null;
+  sms_template_id: string | null;
+  timing_offset_minutes: number;
+  is_active: boolean;
+  // Joined data
+  email_template?: { id: string; name: string; template_key: string };
+  sms_template?: { id: string; name: string; template_key: string };
 }
+
+// Exports
+export function useServiceCommunicationFlows(serviceId?: string)
+export function useUpsertServiceFlow()
+export function useDeleteServiceFlow()
+export function useServicesWithFlowsCount()
 ```
 
-### 5. Settings Page Update (`src/pages/dashboard/admin/Settings.tsx`)
+## Integration with ServicesManager
 
-Add to SettingsCategory type:
+The existing ServicesManager displays services from the static `servicePricing.ts` file. To properly integrate:
+
+1. **Match by name**: Link `phorest_services` entries to their flows using service name matching (since ServicesManager uses static data)
+2. **Add action button**: Each service item gets a mail icon that opens the flow editor
+3. **Badge indicator**: Services with custom flows show a small badge
+
 ```typescript
-type SettingsCategory = '...' | 'sms' | null;
+// In service item row
+<Button
+  variant="ghost"
+  size="icon"
+  className="h-8 w-8"
+  onClick={(e) => {
+    e.stopPropagation();
+    setConfigureFlowsService(item);
+  }}
+>
+  <Mail className={cn(
+    "w-4 h-4",
+    hasCustomFlows && "text-primary"
+  )} />
+</Button>
 ```
 
-Add to categoriesMap:
+## Default Flow Configuration
+
+To simplify setup, the system provides "smart defaults":
+
+| Trigger | Default Email | Default SMS |
+|---------|---------------|-------------|
+| booking_confirmed | appointment_confirmation | appointment_confirmation |
+| reminder_24h | (none) | appointment_reminder |
+| reminder_2h | (none) | (none) |
+| follow_up_24h | (none) | (none) |
+| follow_up_7d | (none) | (none) |
+
+Services without explicit flow configuration inherit these defaults. Custom flows override defaults.
+
+## Technical Notes
+
+### Service ID Resolution
+
+Since `ServicesManager` uses static data from `servicePricing.ts`, we need to resolve to `phorest_services.id`:
+
 ```typescript
-sms: {
-  id: 'sms',
-  label: 'Text Messages',
-  description: 'SMS templates & automation',
-  icon: MessageSquare,
-}
+// Look up the phorest_services entry by name
+const { data: phorestService } = await supabase
+  .from('phorest_services')
+  .select('id')
+  .eq('name', serviceName)
+  .maybeSingle();
 ```
 
-Add content rendering:
-```typescript
-{activeCategory === 'sms' && (
-  <div className="space-y-6">
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-display text-lg">SMS TEMPLATES</CardTitle>
-        <CardDescription>Customize text message templates for automated notifications.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <SmsTemplatesManager />
-      </CardContent>
-    </Card>
-  </div>
-)}
-```
-
-## Seed Data
-
-Pre-populate common SMS templates:
-
-| Key | Name | Message |
-|-----|------|---------|
-| appointment_reminder | Appointment Reminder | Hi {{first_name}}, reminder: your appointment at {{location_name}} is {{appointment_date}} at {{appointment_time}}. Reply STOP to opt out. |
-| appointment_confirmation | Booking Confirmation | Hi {{first_name}}! Your appointment at Drop Dead Gorgeous is confirmed for {{appointment_date}} at {{appointment_time}}. See you soon! |
-| appointment_cancelled | Cancellation Notice | Hi {{first_name}}, your appointment on {{appointment_date}} has been cancelled. Please call us to reschedule. |
-| running_late | Running Late | Hi {{first_name}}, we're running a few minutes behind. Your stylist will be with you shortly. Thank you for your patience! |
-
-## Character Count Logic
-
-SMS messages are split into segments:
-- Standard SMS: 160 characters per segment
-- Unicode SMS: 70 characters per segment (when emojis/special chars are used)
-
-The editor will:
-1. Detect if message contains unicode characters
-2. Calculate segment count accordingly
-3. Display cost implications (more segments = higher cost)
-
-## Technical Details
-
-### Shared Variables
-
-SMS templates can reuse variables from the `email_variables` table. The variable insertion dropdown will fetch from the same source, filtered to categories relevant for SMS (client, appointment, business).
+This allows flows to work with the Phorest-synced services.
 
 ### Future Integration Points
 
-The database structure supports future Twilio integration:
-- Test SMS functionality (similar to test email)
-- Actual SMS sending via edge function
-- Delivery status tracking (would require additional tables)
+The database structure supports future automation:
+- Cron job fetches upcoming appointments, checks for flows, and triggers edge functions
+- Edge functions send emails/SMS using the configured templates
+- Delivery tracking via additional status columns
 
 ## Execution Order
 
-1. **Database Migration**: Create `sms_templates` table with RLS policies
-2. **Create Hooks**: `useSmsTemplates.ts` for data operations
-3. **Create Editor**: `SmsTemplateEditor.tsx` for editing interface
-4. **Create Manager**: `SmsTemplatesManager.tsx` for list/CRUD UI
-5. **Update Settings Layout**: Add 'sms' to Communications section
-6. **Update Settings Page**: Add card definition and content rendering
-7. **Seed Data**: Insert default templates
-
+1. **Database Migration**: Create `service_communication_flows` table with constraints
+2. **Create Hook**: `useServiceCommunicationFlows.ts`
+3. **Create Flow Editor**: `ServiceCommunicationFlowEditor.tsx`
+4. **Update ServicesManager**: Add configuration button per service
+5. **Update Settings**: Add overview card in Communications section
+6. **Seed Default Flows**: (Optional) Pre-configure common services with defaults
