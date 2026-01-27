@@ -269,7 +269,7 @@ export default function DashboardHome() {
             elementName="Operations Quick Stats"
             elementCategory="operations"
           >
-            <OperationsQuickStats hideRevenue={isFrontDesk && !isLeadership} />
+            <OperationsQuickStats hideRevenue={isFrontDesk} />
           </VisibilityGate>
         )}
 
