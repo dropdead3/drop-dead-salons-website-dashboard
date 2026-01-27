@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export const DEFAULT_ICON_COLORS: Record<string, string> = {
   business: '#D946EF',   // Fuchsia
   email: '#8B5CF6',      // Purple
+  sms: '#22C55E',        // Green for text messages
   users: '#3B82F6',      // Blue
   onboarding: '#F97316', // Orange
   integrations: '#10B981', // Emerald
@@ -45,7 +46,7 @@ export const SECTION_GROUPS = [
   {
     id: 'communications',
     label: 'Communications',
-    categories: ['email'],
+    categories: ['email', 'sms'],
   },
 ];
 
