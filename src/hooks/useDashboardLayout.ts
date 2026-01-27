@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 
 export interface DashboardLayout {
   sections: string[];
-  sectionOrder: string[];  // All sections in display order (enabled + disabled)
-  pinnedCards: string[];
+  sectionOrder: string[];  // All sections in display order (enabled + disabled), includes pinned: prefixed cards
+  pinnedCards: string[];   // Tracks which cards are pinned (for visibility)
   widgets: string[];
   hasCompletedSetup: boolean;
 }
@@ -23,13 +23,62 @@ export interface DashboardTemplate {
   updated_at: string;
 }
 
+// Helper functions for pinned card entries in sectionOrder
+export const isPinnedCardEntry = (id: string): boolean => id.startsWith('pinned:');
+export const getPinnedCardId = (id: string): string => id.replace('pinned:', '');
+export const toPinnedEntry = (cardId: string): string => `pinned:${cardId}`;
+
+// All available pinnable card IDs for reference
+export const PINNABLE_CARD_IDS = [
+  'sales_dashboard_bento',
+  'sales_overview',
+  'top_performers',
+  'revenue_breakdown',
+  'client_funnel',
+  'team_goals',
+  'new_bookings',
+  'week_ahead_forecast',
+  'capacity_utilization',
+  'hiring_capacity',
+  'staffing_trends',
+  'stylist_workload',
+];
+
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['quick_actions', 'command_center', 'operations_stats', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['quick_actions', 'command_center', 'operations_stats', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['quick_actions', 'operations_stats', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['quick_actions', 'operations_stats', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,
 };
+
+/**
+ * Migrate legacy layouts that use 'command_center' as a section.
+ * Converts them to inline pinned cards in sectionOrder.
+ */
+function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): DashboardLayout {
+  // If sectionOrder contains 'command_center', migrate to inline pinned cards
+  if (layout.sectionOrder?.includes('command_center')) {
+    const insertIndex = layout.sectionOrder.indexOf('command_center');
+    
+    // Remove command_center from sections and sectionOrder
+    const newSectionOrder = layout.sectionOrder.filter(id => id !== 'command_center');
+    const newSections = layout.sections.filter(id => id !== 'command_center');
+    
+    // Insert pinned cards at the command_center position
+    const pinnedEntries = pinnedCards.map(id => toPinnedEntry(id));
+    newSectionOrder.splice(insertIndex, 0, ...pinnedEntries);
+    
+    return { 
+      ...layout, 
+      sectionOrder: newSectionOrder, 
+      sections: newSections,
+      pinnedCards,
+    };
+  }
+  
+  return layout;
+}
 
 // Map roles to template role_name
 function getRoleTemplateKey(roles: string[], isLeadership: boolean): string {
@@ -110,7 +159,7 @@ export function useDashboardLayout() {
 
   // Determine the effective layout - safely parse JSON
   const parsedLayout = userPrefs?.dashboard_layout as Record<string, unknown> | null;
-  const savedLayout: DashboardLayout | null = parsedLayout ? {
+  const rawSavedLayout: DashboardLayout | null = parsedLayout ? {
     sections: (parsedLayout.sections as string[]) || [],
     sectionOrder: (parsedLayout.sectionOrder as string[]) || (parsedLayout.sections as string[]) || [],
     pinnedCards: (parsedLayout.pinnedCards as string[]) || [],
@@ -118,11 +167,14 @@ export function useDashboardLayout() {
     hasCompletedSetup: (parsedLayout.hasCompletedSetup as boolean) || false,
   } : null;
   
-  const hasCompletedSetup = savedLayout?.hasCompletedSetup ?? false;
+  const hasCompletedSetup = rawSavedLayout?.hasCompletedSetup ?? false;
   
   // Use saved layout if exists, otherwise use role template, otherwise default
-  const layout: DashboardLayout = savedLayout || 
+  const baseLayout: DashboardLayout = rawSavedLayout || 
     (roleTemplate?.layout ? { ...roleTemplate.layout, sectionOrder: roleTemplate.layout.sectionOrder || roleTemplate.layout.sections, hasCompletedSetup: false } : DEFAULT_LAYOUT);
+  
+  // Migrate legacy layouts that use command_center
+  const layout = migrateLayout(baseLayout, baseLayout.pinnedCards || []);
 
   return {
     layout,
