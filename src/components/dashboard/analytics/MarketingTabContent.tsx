@@ -17,6 +17,7 @@ import { SourceBreakdownChart } from '@/components/dashboard/marketing/SourceBre
 import { MediumDistributionChart } from '@/components/dashboard/marketing/MediumDistributionChart';
 import { CampaignBudgetManager } from '@/components/dashboard/marketing/CampaignBudgetManager';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface MarketingTabContentProps {
@@ -66,6 +67,9 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
           Manage Campaigns
         </Button>
       </div>
+
+      {/* Website Analytics Widget */}
+      <WebsiteAnalyticsWidget />
 
       {/* Summary KPI Cards - Row 1: Main Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

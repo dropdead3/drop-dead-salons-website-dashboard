@@ -35,14 +35,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
-import { StylistsOverviewCard, StaffOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
 import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
 import { WorkScheduleWidget } from '@/components/dashboard/WorkScheduleWidget';
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
-import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
-import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
-import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { CommandCenterAnalytics } from '@/components/dashboard/CommandCenterAnalytics';
 
@@ -90,13 +86,6 @@ export default function DashboardHome() {
   const isLeadership = profile?.is_super_admin || 
     roles.includes('super_admin') || 
     roles.includes('manager');
-  
-  // Top-level access: account owner (primary owner), super admin, and DOO (admin role) only
-  // Used for sensitive analytics like Website Traffic
-  const isTopLeadership = profile?.is_primary_owner || 
-    profile?.is_super_admin || 
-    roles.includes('super_admin') ||
-    roles.includes('admin');
   
   // Check if user has stylist or stylist_assistant roles (for Quick Actions visibility)
   const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
@@ -437,36 +426,6 @@ export default function DashboardHome() {
 
         {/* Widgets Section */}
         <WidgetsSection />
-
-        {/* Top Leadership-only: Website Analytics (account owner, super admin, DOO) */}
-        {isTopLeadership && (
-          <VisibilityGate elementKey="website_analytics">
-            <WebsiteAnalyticsWidget />
-          </VisibilityGate>
-        )}
-        
-        {isLeadership && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <VisibilityGate elementKey="client_engine_overview">
-              <ClientEngineOverview />
-            </VisibilityGate>
-            <VisibilityGate elementKey="onboarding_overview">
-              <OnboardingTrackerOverview />
-            </VisibilityGate>
-          </div>
-        )}
-
-        {/* Leadership-only: Team & Stylists Overview */}
-        {isLeadership && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <VisibilityGate elementKey="team_overview">
-              <StaffOverviewCard />
-            </VisibilityGate>
-            <VisibilityGate elementKey="stylists_overview">
-              <StylistsOverviewCard />
-            </VisibilityGate>
-          </div>
-        )}
 
 
       </div>
