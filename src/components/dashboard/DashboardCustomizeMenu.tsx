@@ -334,6 +334,26 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
           <Separator />
 
+          {/* Pinned Analytics Section - Leadership only */}
+          {roleContext?.isLeadership && (
+            <>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">PINNED ANALYTICS</h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Pin cards from the Analytics Hub using the ⚙ icon on hover
+                </p>
+                <Button variant="ghost" size="sm" className="w-full gap-2" asChild>
+                  <Link to="/dashboard/admin/analytics" onClick={() => setIsOpen(false)}>
+                    <BarChart3 className="w-4 h-4" />
+                    Open Analytics Hub
+                  </Link>
+                </Button>
+              </div>
+
+              <Separator />
+            </>
+          )}
+
           {/* Actions */}
           <div className="space-y-3">
             <Button 

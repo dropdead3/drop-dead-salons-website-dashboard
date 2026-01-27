@@ -12,6 +12,7 @@ import {
   CircleDollarSign
 } from 'lucide-react';
 import { useMarketingAnalytics } from '@/hooks/useMarketingAnalytics';
+import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { CampaignPerformanceTable } from '@/components/dashboard/marketing/CampaignPerformanceTable';
 import { SourceBreakdownChart } from '@/components/dashboard/marketing/SourceBreakdownChart';
 import { MediumDistributionChart } from '@/components/dashboard/marketing/MediumDistributionChart';
@@ -64,108 +65,45 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
       </div>
 
       {/* Website Analytics Widget */}
-      <WebsiteAnalyticsWidget />
+      <PinnableCard elementKey="website_analytics" elementName="Website Analytics" category="Analytics Hub - Marketing">
+        <WebsiteAnalyticsWidget />
+      </PinnableCard>
 
       {/* Summary KPI Cards - Row 1: Main Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <Card className="premium-card">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center">
-              <Megaphone className="h-5 w-5 text-muted-foreground mb-2" />
-              <span className="text-2xl font-bold tabular-nums">
-                {analytics?.summary.totalCampaigns ?? 0}
-              </span>
-              <span className="text-xs text-muted-foreground">Active Campaigns</span>
-            </div>
-          </CardContent>
-        </Card>
+      <PinnableCard elementKey="marketing_kpis" elementName="Marketing KPIs" category="Analytics Hub - Marketing">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <Card className="premium-card">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center">
+                <Megaphone className="h-5 w-5 text-muted-foreground mb-2" />
+                <span className="text-2xl font-bold tabular-nums">
+                  {analytics?.summary.totalCampaigns ?? 0}
+                </span>
+                <span className="text-xs text-muted-foreground">Active Campaigns</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="premium-card">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center">
-              <Users className="h-5 w-5 text-muted-foreground mb-2" />
-              <span className="text-2xl font-bold tabular-nums">
-                {analytics?.summary.totalLeads ?? 0}
-              </span>
-              <span className="text-xs text-muted-foreground">Marketing Leads</span>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="premium-card">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center">
+                <Users className="h-5 w-5 text-muted-foreground mb-2" />
+                <span className="text-2xl font-bold tabular-nums">
+                  {analytics?.summary.totalLeads ?? 0}
+                </span>
+                <span className="text-xs text-muted-foreground">Marketing Leads</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="premium-card">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center">
-              <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
-              <span className="text-2xl font-bold tabular-nums">
-                ${(analytics?.summary.totalRevenue ?? 0).toLocaleString()}
-              </span>
-              <span className="text-xs text-muted-foreground">Attributed Revenue</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="premium-card">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center">
-              <TrendingUp className="h-5 w-5 text-muted-foreground mb-2" />
-              <span className="text-2xl font-bold tabular-nums">
-                {(analytics?.summary.overallConversionRate ?? 0).toFixed(1)}%
-              </span>
-              <span className="text-xs text-muted-foreground">Conversion Rate</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="premium-card col-span-2 md:col-span-1">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center">
-              <Award className="h-5 w-5 text-muted-foreground mb-2" />
-              <span className="text-lg font-bold truncate max-w-full px-2">
-                {analytics?.summary.topCampaign || '—'}
-              </span>
-              <span className="text-xs text-muted-foreground">Top Campaign</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Summary KPI Cards - Row 2: ROI Metrics (only show if spend data exists) */}
-      {hasSpendData && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="premium-card">
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
                 <span className="text-2xl font-bold tabular-nums">
-                  ${(analytics?.summary.totalBudget ?? 0).toLocaleString()}
+                  ${(analytics?.summary.totalRevenue ?? 0).toLocaleString()}
                 </span>
-                <span className="text-xs text-muted-foreground">Total Budget</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="premium-card">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center">
-                <CircleDollarSign className="h-5 w-5 text-muted-foreground mb-2" />
-                <span className="text-2xl font-bold tabular-nums">
-                  ${(analytics?.summary.totalSpend ?? 0).toLocaleString()}
-                </span>
-                <span className="text-xs text-muted-foreground">Total Spend</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="premium-card">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center">
-                <Target className="h-5 w-5 text-muted-foreground mb-2" />
-                <span className="text-2xl font-bold tabular-nums">
-                  {analytics?.summary.avgCPL !== null 
-                    ? `$${analytics.summary.avgCPL.toFixed(2)}` 
-                    : '—'}
-                </span>
-                <span className="text-xs text-muted-foreground">Avg Cost Per Lead</span>
+                <span className="text-xs text-muted-foreground">Attributed Revenue</span>
               </div>
             </CardContent>
           </Card>
@@ -174,42 +112,117 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <TrendingUp className="h-5 w-5 text-muted-foreground mb-2" />
-                <span className={`text-2xl font-bold tabular-nums ${
-                  analytics?.summary.overallROAS !== null 
-                    ? analytics.summary.overallROAS >= 3 
-                      ? 'text-green-600 dark:text-green-400'
-                      : analytics.summary.overallROAS >= 1 
-                        ? 'text-amber-600 dark:text-amber-400'
-                        : 'text-red-600 dark:text-red-400'
-                    : ''
-                }`}>
-                  {analytics?.summary.overallROAS !== null 
-                    ? `${analytics.summary.overallROAS.toFixed(2)}x` 
-                    : '—'}
+                <span className="text-2xl font-bold tabular-nums">
+                  {(analytics?.summary.overallConversionRate ?? 0).toFixed(1)}%
                 </span>
-                <span className="text-xs text-muted-foreground">Overall ROAS</span>
+                <span className="text-xs text-muted-foreground">Conversion Rate</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="premium-card col-span-2 md:col-span-1">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center">
+                <Award className="h-5 w-5 text-muted-foreground mb-2" />
+                <span className="text-lg font-bold truncate max-w-full px-2">
+                  {analytics?.summary.topCampaign || '—'}
+                </span>
+                <span className="text-xs text-muted-foreground">Top Campaign</span>
               </div>
             </CardContent>
           </Card>
         </div>
+      </PinnableCard>
+
+      {/* Summary KPI Cards - Row 2: ROI Metrics (only show if spend data exists) */}
+      {hasSpendData && (
+        <PinnableCard elementKey="marketing_roi_metrics" elementName="ROI Metrics" category="Analytics Hub - Marketing">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="premium-card">
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center text-center">
+                  <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
+                  <span className="text-2xl font-bold tabular-nums">
+                    ${(analytics?.summary.totalBudget ?? 0).toLocaleString()}
+                  </span>
+                  <span className="text-xs text-muted-foreground">Total Budget</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="premium-card">
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center text-center">
+                  <CircleDollarSign className="h-5 w-5 text-muted-foreground mb-2" />
+                  <span className="text-2xl font-bold tabular-nums">
+                    ${(analytics?.summary.totalSpend ?? 0).toLocaleString()}
+                  </span>
+                  <span className="text-xs text-muted-foreground">Total Spend</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="premium-card">
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center text-center">
+                  <Target className="h-5 w-5 text-muted-foreground mb-2" />
+                  <span className="text-2xl font-bold tabular-nums">
+                    {analytics?.summary.avgCPL !== null 
+                      ? `$${analytics.summary.avgCPL.toFixed(2)}` 
+                      : '—'}
+                  </span>
+                  <span className="text-xs text-muted-foreground">Avg Cost Per Lead</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="premium-card">
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center text-center">
+                  <TrendingUp className="h-5 w-5 text-muted-foreground mb-2" />
+                  <span className={`text-2xl font-bold tabular-nums ${
+                    analytics?.summary.overallROAS !== null 
+                      ? analytics.summary.overallROAS >= 3 
+                        ? 'text-green-600 dark:text-green-400'
+                        : analytics.summary.overallROAS >= 1 
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-red-600 dark:text-red-400'
+                      : ''
+                  }`}>
+                    {analytics?.summary.overallROAS !== null 
+                      ? `${analytics.summary.overallROAS.toFixed(2)}x` 
+                      : '—'}
+                  </span>
+                  <span className="text-xs text-muted-foreground">Overall ROAS</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </PinnableCard>
       )}
 
       {/* Campaign Performance Table */}
-      <CampaignPerformanceTable 
-        campaigns={analytics?.campaigns ?? []} 
-        isLoading={isLoading} 
-      />
+      <PinnableCard elementKey="campaign_performance_table" elementName="Campaign Performance" category="Analytics Hub - Marketing">
+        <CampaignPerformanceTable 
+          campaigns={analytics?.campaigns ?? []} 
+          isLoading={isLoading} 
+        />
+      </PinnableCard>
 
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <SourceBreakdownChart 
-          sources={analytics?.sources ?? []} 
-          isLoading={isLoading} 
-        />
-        <MediumDistributionChart 
-          mediums={analytics?.mediums ?? []} 
-          isLoading={isLoading} 
-        />
+        <PinnableCard elementKey="source_breakdown_chart" elementName="Traffic Sources" category="Analytics Hub - Marketing">
+          <SourceBreakdownChart 
+            sources={analytics?.sources ?? []} 
+            isLoading={isLoading} 
+          />
+        </PinnableCard>
+        <PinnableCard elementKey="medium_distribution_chart" elementName="Marketing Mediums" category="Analytics Hub - Marketing">
+          <MediumDistributionChart 
+            mediums={analytics?.mediums ?? []} 
+            isLoading={isLoading} 
+          />
+        </PinnableCard>
       </div>
 
       {/* Campaign Budget Manager Sheet */}

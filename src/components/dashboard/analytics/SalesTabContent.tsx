@@ -30,6 +30,7 @@ import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
@@ -194,7 +195,12 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
       {/* KPI Cards - Consolidated from Command Center */}
       <div className="grid lg:grid-cols-4 gap-6">
         {/* Main KPIs */}
-        <div className="lg:col-span-3">
+        <PinnableCard 
+          elementKey="sales_kpi_grid" 
+          elementName="Sales KPIs" 
+          category="Analytics Hub - Sales"
+          className="lg:col-span-3"
+        >
           <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3">
             <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
               <div className="flex justify-center mb-2">
@@ -283,11 +289,11 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               </span>
             </div>
           </div>
-        </div>
+        </PinnableCard>
 
         {/* Sidebar - Top Performers & Revenue Mix */}
         <div className="space-y-4">
-          <div>
+          <PinnableCard elementKey="top_performers" elementName="Top Performers" category="Analytics Hub - Sales">
             <div className="flex items-center gap-1.5 mb-3">
               <h3 className="font-display text-xs tracking-wide text-muted-foreground">TOP PERFORMERS</h3>
               <MetricInfoTooltip description="Ranked by total service + product revenue for the selected period." />
@@ -296,15 +302,15 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               performers={stylistData || []} 
               isLoading={stylistLoading} 
             />
-          </div>
-          <div>
+          </PinnableCard>
+          <PinnableCard elementKey="revenue_breakdown" elementName="Revenue Mix" category="Analytics Hub - Sales">
             <h3 className="font-display text-xs tracking-wide text-muted-foreground mb-3">REVENUE MIX</h3>
             <RevenueDonutChart 
               serviceRevenue={metrics?.serviceRevenue || 0} 
               productRevenue={metrics?.productRevenue || 0}
               size={70}
             />
-          </div>
+          </PinnableCard>
         </div>
       </div>
 
@@ -334,128 +340,156 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
 
         <TabsContent value="overview" className="mt-6 space-y-6">
           {/* Revenue Trend */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display">Revenue Trend</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                {trendLoading ? (
-                  <div className="h-full flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis 
-                        dataKey="dateLabel" 
-                        tick={{ fontSize: 12 }} 
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis 
-                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                        tick={{ fontSize: 12 }}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <Tooltip 
-                        formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                        }}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="totalRevenue" 
-                        stroke="hsl(var(--primary))" 
-                        fill="hsl(var(--primary) / 0.2)"
-                        strokeWidth={2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <PinnableCard elementKey="revenue_trend_chart" elementName="Revenue Trend" category="Analytics Hub - Sales">
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display">Revenue Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  {trendLoading ? (
+                    <div className="h-full flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis 
+                          dataKey="dateLabel" 
+                          tick={{ fontSize: 12 }} 
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis 
+                          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                          tick={{ fontSize: 12 }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <Tooltip 
+                          formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="totalRevenue" 
+                          stroke="hsl(var(--primary))" 
+                          fill="hsl(var(--primary) / 0.2)"
+                          strokeWidth={2}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </PinnableCard>
 
           {/* Location Comparison */}
-          <LocationComparison 
-            locations={locationData || []} 
-            isLoading={locationLoading} 
-          />
+          <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
+            <LocationComparison 
+              locations={locationData || []} 
+              isLoading={locationLoading} 
+            />
+          </PinnableCard>
 
           {/* Product and Service Charts */}
           <div className="grid lg:grid-cols-2 gap-6">
-            <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
-            <ServicePopularityChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+            <PinnableCard elementKey="product_category_chart" elementName="Product Categories" category="Analytics Hub - Sales">
+              <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+            </PinnableCard>
+            <PinnableCard elementKey="service_popularity_chart" elementName="Service Popularity" category="Analytics Hub - Sales">
+              <ServicePopularityChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+            </PinnableCard>
           </div>
         </TabsContent>
 
         <TabsContent value="goals" className="mt-6 space-y-6">
-          <TeamGoalsCard currentRevenue={metrics?.totalRevenue || 0} />
-          <YearOverYearComparison locationId={locationFilter} />
+          <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Analytics Hub - Sales">
+            <TeamGoalsCard currentRevenue={metrics?.totalRevenue || 0} />
+          </PinnableCard>
+          <PinnableCard elementKey="yoy_comparison" elementName="Year-over-Year" category="Analytics Hub - Sales">
+            <YearOverYearComparison locationId={locationFilter} />
+          </PinnableCard>
         </TabsContent>
 
         <TabsContent value="staff" className="mt-6 space-y-6">
           {/* Stylist Leaderboard */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display">Staff Performance</CardTitle>
-              <CardDescription>Revenue by team member</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stylistLoading ? (
-                <div className="h-48 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {stylistData?.slice(0, 10).map((stylist, index) => (
-                    <StylistSalesRow
-                      key={stylist.staffId}
-                      stylist={stylist}
-                      rank={index + 1}
-                      maxRevenue={maxStylistRevenue}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <PinnableCard elementKey="staff_leaderboard" elementName="Staff Performance" category="Analytics Hub - Sales">
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display">Staff Performance</CardTitle>
+                <CardDescription>Revenue by team member</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {stylistLoading ? (
+                  <div className="h-48 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {stylistData?.slice(0, 10).map((stylist, index) => (
+                      <StylistSalesRow
+                        key={stylist.staffId}
+                        stylist={stylist}
+                        rank={index + 1}
+                        maxRevenue={maxStylistRevenue}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </PinnableCard>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <PeakHoursHeatmap dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
-            <ClientFunnelCard dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+            <PinnableCard elementKey="peak_hours_heatmap" elementName="Peak Hours Heatmap" category="Analytics Hub - Sales">
+              <PeakHoursHeatmap dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+            </PinnableCard>
+            <PinnableCard elementKey="client_funnel" elementName="Client Funnel" category="Analytics Hub - Sales">
+              <ClientFunnelCard dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+            </PinnableCard>
           </div>
         </TabsContent>
 
         <TabsContent value="forecasting" className="mt-6 space-y-6">
-          <ForecastingCard />
+          <PinnableCard elementKey="week_ahead_forecast" elementName="Forecasting" category="Analytics Hub - Sales">
+            <ForecastingCard />
+          </PinnableCard>
           <div className="grid lg:grid-cols-2 gap-6">
-            <RevenueForecast 
-              dailyData={chartData.map(d => ({ date: d.dateLabel, revenue: d.totalRevenue || 0 }))} 
-              monthlyTarget={goals?.monthlyTarget || 50000} 
-              isLoading={trendLoading}
-            />
-            <HistoricalComparison 
-              currentDateFrom={filters.dateFrom} 
-              currentDateTo={filters.dateTo} 
-              locationId={locationFilter}
-            />
+            <PinnableCard elementKey="revenue_forecast" elementName="Revenue Forecast" category="Analytics Hub - Sales">
+              <RevenueForecast 
+                dailyData={chartData.map(d => ({ date: d.dateLabel, revenue: d.totalRevenue || 0 }))} 
+                monthlyTarget={goals?.monthlyTarget || 50000} 
+                isLoading={trendLoading}
+              />
+            </PinnableCard>
+            <PinnableCard elementKey="historical_comparison" elementName="Historical Comparison" category="Analytics Hub - Sales">
+              <HistoricalComparison 
+                currentDateFrom={filters.dateFrom} 
+                currentDateTo={filters.dateTo} 
+                locationId={locationFilter}
+              />
+            </PinnableCard>
           </div>
         </TabsContent>
 
         <TabsContent value="commission" className="mt-6 space-y-6">
           <div className="grid lg:grid-cols-2 gap-6">
-            <CommissionCalculator 
-              serviceRevenue={metrics?.serviceRevenue || 0}
-              productRevenue={metrics?.productRevenue || 0}
-            />
-            <CommissionTiersEditor />
+            <PinnableCard elementKey="commission_calculator" elementName="Commission Calculator" category="Analytics Hub - Sales">
+              <CommissionCalculator 
+                serviceRevenue={metrics?.serviceRevenue || 0}
+                productRevenue={metrics?.productRevenue || 0}
+              />
+            </PinnableCard>
+            <PinnableCard elementKey="commission_tiers" elementName="Commission Tiers" category="Analytics Hub - Sales">
+              <CommissionTiersEditor />
+            </PinnableCard>
           </div>
         </TabsContent>
         </Tabs>
