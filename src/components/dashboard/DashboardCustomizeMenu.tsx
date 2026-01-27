@@ -89,21 +89,7 @@ const getSections = (): SectionConfig[] => [
     isVisible: (ctx) => ctx.hasStylistRole || !ctx.isLeadership,
   },
   { 
-    id: 'operations_stats', 
-    label: 'Operations Stats', 
-    icon: <LayoutDashboard className="w-4 h-4" />, 
-    description: 'Today\'s operations overview',
-    isVisible: (ctx) => ctx.isReceptionist || ctx.isLeadership,
-  },
-  { 
-    id: 'operations_stats', 
-    label: 'Operations Stats', 
-    icon: <LayoutDashboard className="w-4 h-4" />, 
-    description: 'Today\'s operations overview',
-    isVisible: (ctx) => ctx.isReceptionist || ctx.isLeadership,
-  },
-  { 
-    id: 'todays_queue', 
+    id: 'todays_queue',
     label: "Today's Queue", 
     icon: <Calendar className="w-4 h-4" />, 
     description: 'Appointment queue',
@@ -153,6 +139,7 @@ const WIDGETS = [
 
 // All analytics cards that can be pinned to Command Center
 const PINNABLE_CARDS = [
+  { id: 'operations_stats', label: 'Operations Stats', icon: <LayoutDashboard className="w-4 h-4" /> },
   { id: 'sales_dashboard_bento', label: 'Sales Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
   { id: 'sales_overview', label: 'Sales Overview', icon: <DollarSign className="w-4 h-4" /> },
   { id: 'top_performers', label: 'Top Performers', icon: <Trophy className="w-4 h-4" /> },

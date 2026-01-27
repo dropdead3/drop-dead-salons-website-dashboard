@@ -30,6 +30,7 @@ export const toPinnedEntry = (cardId: string): string => `pinned:${cardId}`;
 
 // All available pinnable card IDs for reference
 export const PINNABLE_CARD_IDS = [
+  'operations_stats',
   'sales_dashboard_bento',
   'sales_overview',
   'top_performers',
@@ -45,8 +46,8 @@ export const PINNABLE_CARD_IDS = [
 ];
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['quick_actions', 'operations_stats', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['quick_actions', 'operations_stats', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,

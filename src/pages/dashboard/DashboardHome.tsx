@@ -386,15 +386,7 @@ function DashboardSections({
       </VisibilityGate>
     ),
     
-    operations_stats: (isReceptionist || isLeadership) && (
-      <VisibilityGate 
-        elementKey="operations_quick_stats"
-        elementName="Operations Quick Stats"
-        elementCategory="operations"
-      >
-        <OperationsQuickStats hideRevenue={isFrontDesk && !isLeadership} />
-      </VisibilityGate>
-    ),
+    // operations_stats is now a pinnable analytics card, not a default section
     
     todays_queue: isFrontDesk && (
       <VisibilityGate 
