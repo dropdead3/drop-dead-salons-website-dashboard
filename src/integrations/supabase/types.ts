@@ -4140,6 +4140,64 @@ export type Database = {
         }
         Relationships: []
       }
+      service_communication_flows: {
+        Row: {
+          created_at: string
+          email_template_id: string | null
+          id: string
+          is_active: boolean
+          service_id: string
+          sms_template_id: string | null
+          timing_offset_minutes: number
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_template_id?: string | null
+          id?: string
+          is_active?: boolean
+          service_id: string
+          sms_template_id?: string | null
+          timing_offset_minutes?: number
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_template_id?: string | null
+          id?: string
+          is_active?: boolean
+          service_id?: string
+          sms_template_id?: string | null
+          timing_offset_minutes?: number
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_communication_flows_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_communication_flows_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_communication_flows_sms_template_id_fkey"
+            columns: ["sms_template_id"]
+            isOneToOne: false
+            referencedRelation: "sms_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signature_presets: {
         Row: {
           config: Json

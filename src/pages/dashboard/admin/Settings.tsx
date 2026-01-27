@@ -52,6 +52,8 @@ import {
   MapPin,
   Armchair,
   MessageSquare,
+  Sparkles,
+  Settings2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -69,6 +71,7 @@ import { LocationsSettingsContent } from '@/components/dashboard/settings/Locati
 import { DayRateSettingsContent } from '@/components/dashboard/settings/DayRateSettingsContent';
 import { RoleAccessConfigurator } from '@/components/dashboard/settings/RoleAccessConfigurator';
 import { SmsTemplatesManager } from '@/components/dashboard/SmsTemplatesManager';
+import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
@@ -354,6 +357,41 @@ function NotificationsCard() {
             <p className="text-xs text-muted-foreground">Email leadership team 3 days before</p>
           </div>
           <Switch defaultChecked />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Service Communication Flows Card
+function ServiceCommunicationFlowsCard() {
+  const { data: servicesWithFlowsCount, isLoading } = useServicesWithFlowsCount();
+  
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display text-lg">SERVICE COMMUNICATION FLOWS</CardTitle>
+        </div>
+        <CardDescription>Configure automated email and SMS messages per service.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="text-3xl font-display">
+              {isLoading ? '...' : servicesWithFlowsCount || 0}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              services with custom communication flows
+            </div>
+          </div>
+          <Button asChild variant="outline" className="w-full">
+            <a href="/dashboard/admin/services">
+              <Settings2 className="w-4 h-4 mr-2" />
+              Configure Service Flows
+            </a>
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -812,6 +850,8 @@ export default function Settings() {
                   <SignaturePresetsManager />
                 </CardContent>
               </Card>
+
+              <ServiceCommunicationFlowsCard />
             </div>
           )}
 
@@ -826,6 +866,8 @@ export default function Settings() {
                   <SmsTemplatesManager />
                 </CardContent>
               </Card>
+
+              <ServiceCommunicationFlowsCard />
             </div>
           )}
 
