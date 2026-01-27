@@ -100,6 +100,9 @@ export default function DashboardHome() {
   // Check if user has receptionist/operations role
   const isReceptionist = roles.includes('receptionist') || roles.includes('admin');
   
+  // Front Desk only (for Today's Queue)
+  const isFrontDesk = roles.includes('receptionist');
+  
   // Quick Actions should only show for stylists/assistants, or leadership who also have stylist roles
   const showQuickActions = hasStylistRole || (!isLeadership);
   
@@ -270,8 +273,8 @@ export default function DashboardHome() {
           </VisibilityGate>
         )}
 
-        {/* Today's Queue - Receptionist/Operations role */}
-        {(isReceptionist || isLeadership) && (
+        {/* Today's Queue - Front Desk only */}
+        {isFrontDesk && (
           <VisibilityGate 
             elementKey="todays_queue"
             elementName="Today's Queue"
