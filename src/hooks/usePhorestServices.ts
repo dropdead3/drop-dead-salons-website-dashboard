@@ -11,6 +11,10 @@ export interface PhorestService {
   price: number | null;
   requires_qualification: boolean;
   is_active: boolean;
+  // Same-day booking restrictions
+  allow_same_day_booking: boolean;
+  lead_time_days: number;
+  same_day_restriction_reason: string | null;
 }
 
 export function usePhorestServices(locationId?: string) {
