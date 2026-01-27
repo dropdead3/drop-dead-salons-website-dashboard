@@ -527,7 +527,12 @@ function SortableSection(props: Omit<Parameters<typeof SectionContainer>[0], 'se
   );
 }
 
-export function SidebarLayoutEditor() {
+interface SidebarLayoutEditorProps {
+  // When provided, hides internal role selector and uses this role
+  externalSelectedRole?: string;
+}
+
+export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEditorProps = {}) {
   const { data: layout, isLoading } = useSidebarLayout();
   const { data: roles = [] } = useRoles();
   const updateLayout = useUpdateSidebarLayout();
@@ -544,8 +549,10 @@ export function SidebarLayoutEditor() {
   const [newSectionName, setNewSectionName] = useState('');
   const [isAddingSection, setIsAddingSection] = useState(false);
   
-  // Role selection - "global" means editing the base visibility, otherwise role-specific
-  const [selectedRole, setSelectedRole] = useState<string>('global');
+  // Role selection - use external if provided, otherwise internal state
+  const [internalSelectedRole, setInternalSelectedRole] = useState<string>('global');
+  const selectedRole = externalSelectedRole ?? internalSelectedRole;
+  const setSelectedRole = externalSelectedRole !== undefined ? () => {} : setInternalSelectedRole;
   
   // Track active drag item and drop target for cross-section drag
   const [activeDragItem, setActiveDragItem] = useState<{ id: string; type: 'link' | 'section'; sectionId?: string } | null>(null);
@@ -999,75 +1006,98 @@ export function SidebarLayoutEditor() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Role Selector Tabs */}
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Visibility Mode
-          </p>
-          <Tabs value={selectedRole} onValueChange={setSelectedRole}>
-            <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50">
-              <TabsTrigger 
-                value="global" 
-                className="gap-1.5"
-              >
-                <Globe className="w-3.5 h-3.5" />
-                Global
-              </TabsTrigger>
-              {roles.map((role) => {
-                const RoleIcon = getRoleIcon(role);
-                const hasOverrides = localRoleVisibility[role.name]?.hiddenSections?.length || 
-                  Object.values(localRoleVisibility[role.name]?.hiddenLinks || {}).some(l => l.length > 0);
-                
-                return (
-                  <Tooltip key={role.id}>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <TabsTrigger 
-                          value={role.name} 
-                          className={cn(
-                            "gap-1.5",
-                            hasOverrides && "ring-1 ring-primary/50"
-                          )}
-                        >
-                          <RoleIcon className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">{role.display_name}</span>
-                          {hasOverrides && (
-                            <Badge variant="secondary" className="h-4 w-4 p-0 text-[9px] flex items-center justify-center">
-                              ✓
-                            </Badge>
-                          )}
-                        </TabsTrigger>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {role.display_name}
-                      {hasOverrides && ' (has overrides)'}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </TabsList>
-          </Tabs>
-          {selectedRole !== 'global' && (
-            <div className="flex items-center justify-between gap-2 bg-muted/50 rounded px-2 py-1">
-              <p className="text-xs text-muted-foreground">
-                Editing visibility for <strong>{roles.find(r => r.name === selectedRole)?.display_name || selectedRole}</strong>. 
-                Items hidden here will be hidden for users with this role.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 text-xs gap-1 shrink-0"
-                onClick={() => handleResetRoleToGlobal(selectedRole)}
-                disabled={!localRoleVisibility[selectedRole]?.hiddenSections?.length && 
-                  !Object.values(localRoleVisibility[selectedRole]?.hiddenLinks || {}).some(l => l.length > 0)}
-              >
-                <RotateCcw className="w-3 h-3" />
-                Reset to Global
-              </Button>
-            </div>
-          )}
-        </div>
+        {/* Role Selector Tabs - only show if not controlled externally */}
+        {externalSelectedRole === undefined && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Visibility Mode
+            </p>
+            <Tabs value={selectedRole} onValueChange={setInternalSelectedRole}>
+              <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50">
+                <TabsTrigger 
+                  value="global" 
+                  className="gap-1.5"
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  Global
+                </TabsTrigger>
+                {roles.map((role) => {
+                  const RoleIcon = getRoleIcon(role);
+                  const hasOverrides = localRoleVisibility[role.name]?.hiddenSections?.length || 
+                    Object.values(localRoleVisibility[role.name]?.hiddenLinks || {}).some(l => l.length > 0);
+                  
+                  return (
+                    <Tooltip key={role.id}>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <TabsTrigger 
+                            value={role.name} 
+                            className={cn(
+                              "gap-1.5",
+                              hasOverrides && "ring-1 ring-primary/50"
+                            )}
+                          >
+                            <RoleIcon className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">{role.display_name}</span>
+                            {hasOverrides && (
+                              <Badge variant="secondary" className="h-4 w-4 p-0 text-[9px] flex items-center justify-center">
+                                ✓
+                              </Badge>
+                            )}
+                          </TabsTrigger>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {role.display_name}
+                        {hasOverrides && ' (has overrides)'}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </TabsList>
+            </Tabs>
+            {selectedRole !== 'global' && (
+              <div className="flex items-center justify-between gap-2 bg-muted/50 rounded px-2 py-1">
+                <p className="text-xs text-muted-foreground">
+                  Editing visibility for <strong>{roles.find(r => r.name === selectedRole)?.display_name || selectedRole}</strong>. 
+                  Items hidden here will be hidden for users with this role.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs gap-1 shrink-0"
+                  onClick={() => handleResetRoleToGlobal(selectedRole)}
+                  disabled={!localRoleVisibility[selectedRole]?.hiddenSections?.length && 
+                    !Object.values(localRoleVisibility[selectedRole]?.hiddenLinks || {}).some(l => l.length > 0)}
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Reset to Global
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Role hint when controlled externally */}
+        {externalSelectedRole !== undefined && (
+          <div className="flex items-center justify-between gap-2 bg-muted/50 rounded px-3 py-2">
+            <p className="text-xs text-muted-foreground">
+              Editing navigation for <strong>{roles.find(r => r.name === selectedRole)?.display_name || selectedRole}</strong>. 
+              Items hidden here will be hidden for users with this role.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 text-xs gap-1 shrink-0"
+              onClick={() => handleResetRoleToGlobal(selectedRole)}
+              disabled={!localRoleVisibility[selectedRole]?.hiddenSections?.length && 
+                !Object.values(localRoleVisibility[selectedRole]?.hiddenLinks || {}).some(l => l.length > 0)}
+            >
+              <RotateCcw className="w-3 h-3" />
+              Reset to Global
+            </Button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Editor Panel */}

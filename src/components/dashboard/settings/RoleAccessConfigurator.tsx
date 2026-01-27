@@ -241,7 +241,7 @@ export function RoleAccessConfigurator() {
               </TabsList>
 
               <TabsContent value="navigation" className="mt-0">
-                <SidebarLayoutEditor />
+                <SidebarLayoutEditor externalSelectedRole={selectedRole} />
               </TabsContent>
 
               <TabsContent value="tabs">
