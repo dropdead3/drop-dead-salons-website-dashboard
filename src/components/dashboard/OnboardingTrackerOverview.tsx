@@ -19,6 +19,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -225,22 +226,26 @@ export function OnboardingTrackerOverview() {
             <ClipboardCheck className="w-4 h-4 text-primary" />
           </div>
           <h3 className="font-medium text-sm">Onboarding Overview</h3>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 rounded-full hover:bg-primary/10"
+                onClick={() => navigate('/dashboard/admin/onboarding-tracker')}
+              >
+                <Info className="w-4 h-4 text-primary" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              View full analytics
+            </TooltipContent>
+          </Tooltip>
+          <CommandCenterVisibilityToggle 
+            elementKey="onboarding_overview" 
+            elementName="Onboarding Overview" 
+          />
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 rounded-full hover:bg-primary/10"
-              onClick={() => navigate('/dashboard/admin/onboarding-tracker')}
-            >
-              <Info className="w-4 h-4 text-primary" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs">
-            View full analytics
-          </TooltipContent>
-        </Tooltip>
       </div>
 
       {/* Overall Progress */}

@@ -13,6 +13,7 @@ import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBrea
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Gauge, Clock, DollarSign, TrendingDown, Calendar, PieChart, Info } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { 
@@ -197,6 +198,10 @@ export function CapacityUtilizationCard() {
                   View full analytics
                 </TooltipContent>
               </UITooltip>
+              <CommandCenterVisibilityToggle 
+                elementKey="capacity_utilization" 
+                elementName="Capacity Utilization" 
+              />
             </div>
             <div className="flex items-center gap-2">
               <LocationSelect

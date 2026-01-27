@@ -13,6 +13,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { CalendarRange, TrendingUp, Calendar, Users, Info } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -260,6 +261,10 @@ export function ForecastingCard() {
                   View full analytics
                 </TooltipContent>
               </UITooltip>
+              <CommandCenterVisibilityToggle 
+                elementKey="week_ahead_forecast" 
+                elementName="Forecasting" 
+              />
             </div>
             <div className="flex items-center gap-2">
                 <LocationSelect

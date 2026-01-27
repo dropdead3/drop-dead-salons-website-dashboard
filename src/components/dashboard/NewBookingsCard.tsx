@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarPlus, CalendarRange } from 'lucide-react';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 export function NewBookingsCard() {
   const { data: newBookings, isLoading } = useNewBookings();
@@ -14,9 +15,15 @@ export function NewBookingsCard() {
         <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center rounded-lg">
           <CalendarPlus className="w-5 h-5 text-blue-600" />
         </div>
-        <div>
-          <h2 className="font-display text-sm tracking-wide">NEW BOOKINGS</h2>
-          <p className="text-xs text-muted-foreground">Appointments created</p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h2 className="font-display text-sm tracking-wide">NEW BOOKINGS</h2>
+            <p className="text-xs text-muted-foreground">Appointments created</p>
+          </div>
+          <CommandCenterVisibilityToggle 
+            elementKey="new_bookings" 
+            elementName="New Bookings" 
+          />
         </div>
       </div>
 
