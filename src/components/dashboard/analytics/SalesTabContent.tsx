@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import {
   AreaChart,
   Area,
@@ -314,11 +315,21 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </span>
         <Tabs value={subTab} onValueChange={onSubTabChange}>
           <SubTabsList>
-            <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
-            <SubTabsTrigger value="goals">Goals</SubTabsTrigger>
-            <SubTabsTrigger value="staff">Staff Performance</SubTabsTrigger>
-            <SubTabsTrigger value="forecasting">Forecasting</SubTabsTrigger>
-            <SubTabsTrigger value="commission">Commission</SubTabsTrigger>
+            <VisibilityGate elementKey="sales_overview_subtab" elementName="Overview" elementCategory="Page Tabs">
+              <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="sales_goals_subtab" elementName="Goals" elementCategory="Page Tabs">
+              <SubTabsTrigger value="goals">Goals</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="sales_staff_subtab" elementName="Staff Performance" elementCategory="Page Tabs">
+              <SubTabsTrigger value="staff">Staff Performance</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="sales_forecasting_subtab" elementName="Forecasting" elementCategory="Page Tabs">
+              <SubTabsTrigger value="forecasting">Forecasting</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="sales_commission_subtab" elementName="Commission" elementCategory="Page Tabs">
+              <SubTabsTrigger value="commission">Commission</SubTabsTrigger>
+            </VisibilityGate>
           </SubTabsList>
 
         <TabsContent value="overview" className="mt-6 space-y-6">

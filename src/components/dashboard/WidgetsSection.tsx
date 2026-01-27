@@ -9,6 +9,7 @@ import { WorkScheduleWidgetCompact } from './WorkScheduleWidgetCompact';
 import { AnniversaryWidget } from './AnniversaryWidget';
 import { ChangelogWidget } from './ChangelogWidget';
 import { DayRateWidget } from './DayRateWidget';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useDashboardLayout, useSaveDashboardLayout } from '@/hooks/useDashboardLayout';
 
 // Widget configuration - add more widgets here as needed
@@ -125,11 +126,21 @@ export function WidgetsSection({ defaultEnabledWidgets = ['changelog', 'birthday
           gridTemplateColumns: `repeat(${Math.min(enabledWidgets.length, 4)}, minmax(0, 1fr))`,
         }}
       >
-        {isWidgetEnabled('changelog') && <ChangelogWidget />}
-        {isWidgetEnabled('birthdays') && <BirthdayWidget />}
-        {isWidgetEnabled('anniversaries') && <AnniversaryWidget />}
-        {isWidgetEnabled('schedule') && <WorkScheduleWidgetCompact />}
-        {isWidgetEnabled('dayrate') && <DayRateWidget />}
+        <VisibilityGate elementKey="widget_changelog" elementName="What's New Widget" elementCategory="Dashboard Widgets">
+          {isWidgetEnabled('changelog') && <ChangelogWidget />}
+        </VisibilityGate>
+        <VisibilityGate elementKey="widget_birthdays" elementName="Team Birthdays Widget" elementCategory="Dashboard Widgets">
+          {isWidgetEnabled('birthdays') && <BirthdayWidget />}
+        </VisibilityGate>
+        <VisibilityGate elementKey="widget_anniversaries" elementName="Work Anniversaries Widget" elementCategory="Dashboard Widgets">
+          {isWidgetEnabled('anniversaries') && <AnniversaryWidget />}
+        </VisibilityGate>
+        <VisibilityGate elementKey="widget_schedule" elementName="My Schedule Widget" elementCategory="Dashboard Widgets">
+          {isWidgetEnabled('schedule') && <WorkScheduleWidgetCompact />}
+        </VisibilityGate>
+        <VisibilityGate elementKey="widget_dayrate" elementName="Day Rate Bookings Widget" elementCategory="Dashboard Widgets">
+          {isWidgetEnabled('dayrate') && <DayRateWidget />}
+        </VisibilityGate>
       </div>
     </div>
   );

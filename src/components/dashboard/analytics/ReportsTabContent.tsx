@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { 
   FileText, 
   Users, 
@@ -189,10 +190,17 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
         <Tabs value={activeCategory} onValueChange={setActiveCategory}>
           <SubTabsList>
             {reportCategories.map((cat) => (
-              <SubTabsTrigger key={cat.id} value={cat.id}>
-                <cat.icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{cat.label}</span>
-              </SubTabsTrigger>
+              <VisibilityGate 
+                key={cat.id}
+                elementKey={`reports_${cat.id}_subtab`} 
+                elementName={`${cat.label} Reports`} 
+                elementCategory="Page Tabs"
+              >
+                <SubTabsTrigger value={cat.id}>
+                  <cat.icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{cat.label}</span>
+                </SubTabsTrigger>
+              </VisibilityGate>
             ))}
           </SubTabsList>
 

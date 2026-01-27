@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useOperationalAnalytics } from '@/hooks/useOperationalAnalytics';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useHistoricalCapacityUtilization } from '@/hooks/useHistoricalCapacityUtilization';
@@ -71,11 +72,21 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
         </span>
         <Tabs value={subTab} onValueChange={onSubTabChange}>
           <SubTabsList>
-            <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
-            <SubTabsTrigger value="appointments">Appointments</SubTabsTrigger>
-            <SubTabsTrigger value="clients">Clients</SubTabsTrigger>
-            <SubTabsTrigger value="staffing">Staffing</SubTabsTrigger>
-            <SubTabsTrigger value="staff-utilization">Staff Utilization</SubTabsTrigger>
+            <VisibilityGate elementKey="operations_overview_subtab" elementName="Overview" elementCategory="Page Tabs">
+              <SubTabsTrigger value="overview">Overview</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="operations_appointments_subtab" elementName="Appointments" elementCategory="Page Tabs">
+              <SubTabsTrigger value="appointments">Appointments</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="operations_clients_subtab" elementName="Clients" elementCategory="Page Tabs">
+              <SubTabsTrigger value="clients">Clients</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="operations_staffing_subtab" elementName="Staffing" elementCategory="Page Tabs">
+              <SubTabsTrigger value="staffing">Staffing</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="operations_staff_utilization_subtab" elementName="Staff Utilization" elementCategory="Page Tabs">
+              <SubTabsTrigger value="staff-utilization">Staff Utilization</SubTabsTrigger>
+            </VisibilityGate>
           </SubTabsList>
 
         <TabsContent value="overview" className="mt-6">

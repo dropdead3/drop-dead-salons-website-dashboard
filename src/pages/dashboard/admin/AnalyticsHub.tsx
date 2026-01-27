@@ -4,6 +4,7 @@ import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subM
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -212,14 +213,20 @@ export default function AnalyticsHub() {
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="w-full md:w-auto flex-wrap h-auto gap-1 p-1">
             {analyticsCategories.map((cat) => (
-              <TabsTrigger 
-                key={cat.id} 
-                value={cat.id} 
-                className="gap-2 data-[state=active]:bg-background"
+              <VisibilityGate 
+                key={cat.id}
+                elementKey={`analytics_${cat.id}_tab`} 
+                elementName={cat.label} 
+                elementCategory="Page Tabs"
               >
-                <cat.icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{cat.label}</span>
-              </TabsTrigger>
+                <TabsTrigger 
+                  value={cat.id} 
+                  className="gap-2 data-[state=active]:bg-background"
+                >
+                  <cat.icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{cat.label}</span>
+                </TabsTrigger>
+              </VisibilityGate>
             ))}
           </TabsList>
 
