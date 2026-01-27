@@ -238,6 +238,15 @@ export function SalesBentoCard({
               tooltip="Sum of all service and product sales for the selected date range."
             />
             <KPICell 
+              icon={CalendarCheck} 
+              value={totalRevenue} 
+              label="Expected Rev" 
+              prefix="$"
+              iconColor="text-chart-5"
+              subtitle={`${totalTransactions} appointments`}
+              tooltip="Revenue calculated from booked appointments in the selected date range. This reflects scheduled services, not completed sales."
+            />
+            <KPICell 
               icon={Scissors} 
               value={serviceRevenue} 
               label="Services" 
@@ -266,15 +275,6 @@ export function SalesBentoCard({
               prefix="$"
               iconColor="text-chart-4"
               tooltip="Total Revenue ÷ Transactions. Average spend per client visit."
-            />
-            <KPICell 
-              icon={CalendarCheck} 
-              value={totalRevenue} 
-              label="Expected Rev" 
-              prefix="$"
-              iconColor="text-chart-5"
-              subtitle={`${totalTransactions} appointments`}
-              tooltip="Revenue calculated from booked appointments in the selected date range. This reflects scheduled services, not completed sales."
             />
           </div>
           
