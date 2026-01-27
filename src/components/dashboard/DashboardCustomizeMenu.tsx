@@ -21,6 +21,16 @@ import {
   Megaphone,
   Target,
   Armchair,
+  DollarSign,
+  Trophy,
+  PieChart,
+  Users,
+  TrendingUp,
+  Gauge,
+  UserPlus,
+  LineChart,
+  Briefcase,
+  CalendarPlus,
 } from 'lucide-react';
 import { 
   useDashboardLayout, 
@@ -46,6 +56,11 @@ import {
 } from '@dnd-kit/sortable';
 import { SortableSectionItem } from './SortableSectionItem';
 import { SortableWidgetItem } from './SortableWidgetItem';
+import { SortablePinnedCardItem } from './SortablePinnedCardItem';
+import { useDashboardVisibility, useToggleDashboardVisibility } from '@/hooks/useDashboardVisibility';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 export interface RoleContext {
   isLeadership: boolean;
@@ -133,6 +148,22 @@ const WIDGETS = [
   { id: 'dayrate', label: 'Day Rate Bookings', icon: <Armchair className="w-4 h-4" /> },
 ];
 
+// All analytics cards that can be pinned to Command Center
+const PINNABLE_CARDS = [
+  { id: 'sales_dashboard_bento', label: 'Sales Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+  { id: 'sales_overview', label: 'Sales Overview', icon: <DollarSign className="w-4 h-4" /> },
+  { id: 'top_performers', label: 'Top Performers', icon: <Trophy className="w-4 h-4" /> },
+  { id: 'revenue_breakdown', label: 'Revenue Breakdown', icon: <PieChart className="w-4 h-4" /> },
+  { id: 'client_funnel', label: 'Client Funnel', icon: <Users className="w-4 h-4" /> },
+  { id: 'team_goals', label: 'Team Goals', icon: <Target className="w-4 h-4" /> },
+  { id: 'new_bookings', label: 'New Bookings', icon: <CalendarPlus className="w-4 h-4" /> },
+  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', icon: <TrendingUp className="w-4 h-4" /> },
+  { id: 'capacity_utilization', label: 'Capacity Utilization', icon: <Gauge className="w-4 h-4" /> },
+  { id: 'hiring_capacity', label: 'Hiring Capacity', icon: <UserPlus className="w-4 h-4" /> },
+  { id: 'staffing_trends', label: 'Staffing Trends', icon: <LineChart className="w-4 h-4" /> },
+  { id: 'stylist_workload', label: 'Stylist Workload', icon: <Briefcase className="w-4 h-4" /> },
+];
+
 interface DashboardCustomizeMenuProps {
   variant?: 'icon' | 'button';
   roleContext?: RoleContext;
@@ -155,6 +186,10 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const saveLayout = useSaveDashboardLayout();
   const { can } = usePermission();
   const canManageVisibility = can('manage_visibility_console');
+  
+  // Visibility data for pinned analytics
+  const { data: visibilityData, isLoading: isLoadingVisibility } = useDashboardVisibility();
+  const toggleVisibility = useToggleDashboardVisibility();
 
   // Sensors for drag and drop
   const sensors = useSensors(
@@ -189,6 +224,39 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     
     return [...enabled, ...disabled];
   }, [layout.widgets]);
+  
+  // Check if a card is pinned (visible for all leadership roles)
+  const leadershipRoles: AppRole[] = ['super_admin', 'admin', 'manager'];
+  
+  const isCardPinned = (cardId: string): boolean => {
+    if (!visibilityData) return false;
+    return leadershipRoles.every(role => 
+      visibilityData.find(v => v.element_key === cardId && v.role === role)?.is_visible ?? false
+    );
+  };
+  
+  // Compute ordered pinned cards
+  const orderedPinnedCards = useMemo(() => {
+    const savedOrder = layout.pinnedCards || [];
+    const allIds = PINNABLE_CARDS.map(c => c.id);
+    
+    // Get pinned cards
+    const pinnedIds = allIds.filter(id => isCardPinned(id));
+    
+    // Order pinned cards by saved order, then add any not in order
+    const fromSavedOrder = savedOrder.filter(id => pinnedIds.includes(id));
+    const notInOrder = pinnedIds.filter(id => !savedOrder.includes(id));
+    
+    // Add unpinned cards at the end
+    const unpinnedIds = allIds.filter(id => !pinnedIds.includes(id));
+    
+    return [...fromSavedOrder, ...notInOrder, ...unpinnedIds];
+  }, [layout.pinnedCards, visibilityData]);
+  
+  // Check if there are any pinned cards
+  const hasPinnedCards = useMemo(() => {
+    return PINNABLE_CARDS.some(card => isCardPinned(card.id));
+  }, [visibilityData]);
 
   const handleToggleSection = (sectionId: string) => {
     const sections = layout.sections.includes(sectionId)
@@ -205,6 +273,30 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       : [...layout.widgets, widgetId];
     
     saveLayout.mutate({ ...layout, widgets });
+  };
+  
+  const handleTogglePinnedCard = async (cardId: string) => {
+    const isPinned = isCardPinned(cardId);
+    const newIsVisible = !isPinned;
+    
+    // Toggle visibility for all leadership roles
+    for (const role of leadershipRoles) {
+      await toggleVisibility.mutateAsync({
+        elementKey: cardId,
+        role,
+        isVisible: newIsVisible,
+      });
+    }
+    
+    // Update pinnedCards order if pinning
+    if (newIsVisible) {
+      const newPinnedCards = [...(layout.pinnedCards || []), cardId];
+      saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards });
+    } else {
+      // Remove from pinnedCards order
+      const newPinnedCards = (layout.pinnedCards || []).filter(id => id !== cardId);
+      saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards });
+    }
   };
 
   const handleSectionDragEnd = (event: DragEndEvent) => {
@@ -231,6 +323,21 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     // Keep only enabled widgets in the layout, but respect new order
     const enabledWidgets = newOrder.filter(id => layout.widgets.includes(id));
     saveLayout.mutate({ ...layout, widgets: enabledWidgets });
+  };
+  
+  const handlePinnedCardDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    // Only allow reordering pinned cards
+    const pinnedIds = orderedPinnedCards.filter(id => isCardPinned(id));
+    if (!pinnedIds.includes(active.id as string) || !pinnedIds.includes(over.id as string)) return;
+    
+    const oldIndex = pinnedIds.indexOf(active.id as string);
+    const newIndex = pinnedIds.indexOf(over.id as string);
+    const newOrder = arrayMove(pinnedIds, oldIndex, newIndex);
+    
+    saveLayout.mutate({ ...layout, pinnedCards: newOrder });
   };
 
   const handleResetToDefault = () => {
@@ -339,13 +446,49 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             <>
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-3">PINNED ANALYTICS</h3>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Pin cards from the Analytics Hub using the ⚙ icon on hover
-                </p>
+                {!isLoadingVisibility && (
+                  <>
+                    {hasPinnedCards ? (
+                      <DndContext 
+                        sensors={sensors} 
+                        collisionDetection={closestCenter} 
+                        onDragEnd={handlePinnedCardDragEnd}
+                      >
+                        <SortableContext 
+                          items={orderedPinnedCards} 
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="space-y-1 mb-4">
+                            {orderedPinnedCards.map(cardId => {
+                              const card = PINNABLE_CARDS.find(c => c.id === cardId);
+                              if (!card) return null;
+                              const isPinned = isCardPinned(cardId);
+                              return (
+                                <SortablePinnedCardItem
+                                  key={card.id}
+                                  id={card.id}
+                                  label={card.label}
+                                  icon={card.icon}
+                                  isPinned={isPinned}
+                                  onToggle={() => handleTogglePinnedCard(card.id)}
+                                  isLoading={toggleVisibility.isPending}
+                                />
+                              );
+                            })}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mb-4">
+                        No analytics cards pinned yet. Pin cards from the Analytics Hub.
+                      </p>
+                    )}
+                  </>
+                )}
                 <Button variant="ghost" size="sm" className="w-full gap-2" asChild>
                   <Link to="/dashboard/admin/analytics" onClick={() => setIsOpen(false)}>
                     <BarChart3 className="w-4 h-4" />
-                    Open Analytics Hub
+                    {hasPinnedCards ? 'Pin More Cards' : 'Open Analytics Hub'}
                   </Link>
                 </Button>
               </div>
