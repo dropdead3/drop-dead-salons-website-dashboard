@@ -66,7 +66,6 @@ import { BusinessSettingsDialog } from '@/components/dashboard/settings/Business
 import { ScheduleSettingsContent } from '@/components/dashboard/settings/ScheduleSettingsContent';
 import { LocationsSettingsContent } from '@/components/dashboard/settings/LocationsSettingsContent';
 import { DayRateSettingsContent } from '@/components/dashboard/settings/DayRateSettingsContent';
-import { SidebarLayoutEditor } from '@/components/dashboard/settings/SidebarLayoutEditor';
 import { RoleAccessConfigurator } from '@/components/dashboard/settings/RoleAccessConfigurator';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
@@ -1125,10 +1124,6 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              {/* Sidebar Layout - Super Admin Only */}
-              {roles.includes('super_admin') && (
-                <SidebarLayoutEditor />
-              )}
             </div>
           )}
 
