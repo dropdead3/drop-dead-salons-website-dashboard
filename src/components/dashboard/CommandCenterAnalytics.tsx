@@ -14,6 +14,7 @@ import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
+import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
@@ -38,6 +39,22 @@ const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   lastMonth: 'Last Month',
 };
 
+// Map of card IDs to their render components
+const CARD_COMPONENTS: Record<string, string> = {
+  'sales_dashboard_bento': 'SalesDashboard',
+  'sales_overview': 'SalesOverview',
+  'top_performers': 'TopPerformers',
+  'revenue_breakdown': 'RevenueBreakdown',
+  'client_funnel': 'ClientFunnel',
+  'team_goals': 'TeamGoals',
+  'new_bookings': 'NewBookings',
+  'week_ahead_forecast': 'Forecast',
+  'capacity_utilization': 'Capacity',
+  'hiring_capacity': 'HiringCapacity',
+  'staffing_trends': 'StaffingTrends',
+  'stylist_workload': 'StylistWorkload',
+};
+
 /**
  * Command Center Analytics Section
  * 
@@ -47,6 +64,7 @@ const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
  */
 export function CommandCenterAnalytics() {
   const { data: visibilityData, isLoading } = useDashboardVisibility();
+  const { layout } = useDashboardLayout();
   const { data: profile } = useEmployeeProfile();
   const roles = useEffectiveRoles();
   
@@ -72,27 +90,25 @@ export function CommandCenterAnalytics() {
     return element?.is_visible ?? false;
   };
   
-  // Original cards
-  const hasSalesOverview = isElementVisible('sales_overview');
-  const hasNewBookings = isElementVisible('new_bookings');
-  const hasForecast = isElementVisible('week_ahead_forecast');
-  const hasCapacity = isElementVisible('capacity_utilization');
+  // Get all visible card IDs
+  const allVisibleCardIds = useMemo(() => {
+    return Object.keys(CARD_COMPONENTS).filter(id => isElementVisible(id));
+  }, [visibilityData]);
   
+  // Order visible cards by user's preferred order (from pinnedCards)
+  const orderedVisibleCards = useMemo(() => {
+    const savedOrder = layout.pinnedCards || [];
+    
+    // Start with cards in saved order that are visible
+    const fromSavedOrder = savedOrder.filter(id => allVisibleCardIds.includes(id));
+    
+    // Add any visible cards not in saved order
+    const notInOrder = allVisibleCardIds.filter(id => !savedOrder.includes(id));
+    
+    return [...fromSavedOrder, ...notInOrder];
+  }, [layout.pinnedCards, allVisibleCardIds]);
   
-  // New pinnable cards
-  const hasSalesDashboard = isElementVisible('sales_dashboard_bento');
-  const hasTopPerformers = isElementVisible('top_performers');
-  const hasRevenueBreakdown = isElementVisible('revenue_breakdown');
-  const hasClientFunnel = isElementVisible('client_funnel');
-  const hasTeamGoals = isElementVisible('team_goals');
-  const hasHiringCapacity = isElementVisible('hiring_capacity');
-  const hasStaffingTrends = isElementVisible('staffing_trends');
-  const hasStylistWorkload = isElementVisible('stylist_workload');
-  
-  const hasAnyPinned = hasSalesOverview || hasNewBookings || hasForecast || hasCapacity || 
-    hasSalesDashboard || hasTopPerformers || hasRevenueBreakdown ||
-    hasClientFunnel || hasTeamGoals || hasHiringCapacity ||
-    hasStaffingTrends || hasStylistWorkload;
+  const hasAnyPinned = orderedVisibleCards.length > 0;
   
   // Fetch data for cards that need it (only when pinned to avoid unnecessary API calls)
   const { data: salesData } = useSalesMetrics({ 
@@ -136,6 +152,100 @@ export function CommandCenterAnalytics() {
     totalRevenue: p.totalRevenue,
   })) || [];
   
+  // Render a card by its ID
+  const renderCard = (cardId: string) => {
+    switch (cardId) {
+      case 'sales_dashboard_bento':
+        return (
+          <VisibilityGate key={cardId} elementKey="sales_dashboard_bento">
+            <SalesBentoCard 
+              locationId={locationId}
+              dateRange={dateRange}
+              dateFrom={dateFilters.dateFrom}
+              dateTo={dateFilters.dateTo}
+            />
+          </VisibilityGate>
+        );
+      case 'sales_overview':
+        return (
+          <VisibilityGate key={cardId} elementKey="sales_overview">
+            <AggregateSalesCard />
+          </VisibilityGate>
+        );
+      case 'top_performers':
+        return (
+          <VisibilityGate key={cardId} elementKey="top_performers">
+            <TopPerformersCard 
+              performers={performersForCard} 
+              isLoading={isLoadingPerformers} 
+            />
+          </VisibilityGate>
+        );
+      case 'revenue_breakdown':
+        return (
+          <VisibilityGate key={cardId} elementKey="revenue_breakdown">
+            <RevenueDonutChart 
+              serviceRevenue={salesData?.serviceRevenue || 0}
+              productRevenue={salesData?.productRevenue || 0}
+            />
+          </VisibilityGate>
+        );
+      case 'client_funnel':
+        return (
+          <VisibilityGate key={cardId} elementKey="client_funnel">
+            <ClientFunnelCard dateFrom={dateFilters.dateFrom} dateTo={dateFilters.dateTo} />
+          </VisibilityGate>
+        );
+      case 'team_goals':
+        return (
+          <VisibilityGate key={cardId} elementKey="team_goals">
+            <TeamGoalsCard currentRevenue={salesData?.totalRevenue || 0} />
+          </VisibilityGate>
+        );
+      case 'new_bookings':
+        return (
+          <VisibilityGate key={cardId} elementKey="new_bookings">
+            <NewBookingsCard />
+          </VisibilityGate>
+        );
+      case 'week_ahead_forecast':
+        return (
+          <VisibilityGate key={cardId} elementKey="week_ahead_forecast">
+            <ForecastingCard />
+          </VisibilityGate>
+        );
+      case 'capacity_utilization':
+        return (
+          <VisibilityGate key={cardId} elementKey="capacity_utilization">
+            <CapacityUtilizationCard />
+          </VisibilityGate>
+        );
+      case 'hiring_capacity':
+        return (
+          <VisibilityGate key={cardId} elementKey="hiring_capacity">
+            <HiringCapacityCard />
+          </VisibilityGate>
+        );
+      case 'staffing_trends':
+        return (
+          <VisibilityGate key={cardId} elementKey="staffing_trends">
+            <StaffingTrendChart />
+          </VisibilityGate>
+        );
+      case 'stylist_workload':
+        return (
+          <VisibilityGate key={cardId} elementKey="stylist_workload">
+            <StylistWorkloadCard 
+              workload={workload || []} 
+              isLoading={isLoadingWorkload} 
+            />
+          </VisibilityGate>
+        );
+      default:
+        return null;
+    }
+  };
+  
   return (
     <div className="space-y-6">
       {/* Shared Filter Bar - appears when any analytics cards are pinned */}
@@ -170,108 +280,8 @@ export function CommandCenterAnalytics() {
         </Select>
       </div>
       
-      {/* Sales Dashboard Bento (consolidated card) */}
-      {hasSalesDashboard && (
-        <VisibilityGate elementKey="sales_dashboard_bento">
-          <SalesBentoCard 
-            locationId={locationId}
-            dateRange={dateRange}
-            dateFrom={dateFilters.dateFrom}
-            dateTo={dateFilters.dateTo}
-          />
-        </VisibilityGate>
-      )}
-      
-      {/* Sales Overview (legacy) */}
-      {hasSalesOverview && (
-        <VisibilityGate elementKey="sales_overview">
-          <AggregateSalesCard />
-        </VisibilityGate>
-      )}
-      
-      {/* Top Performers & Revenue Breakdown - Side by side */}
-      {(hasTopPerformers || hasRevenueBreakdown) && (
-        <div className="grid lg:grid-cols-2 gap-6">
-          {hasTopPerformers && (
-            <VisibilityGate elementKey="top_performers">
-              <TopPerformersCard 
-                performers={performersForCard} 
-                isLoading={isLoadingPerformers} 
-              />
-            </VisibilityGate>
-          )}
-          {hasRevenueBreakdown && (
-            <VisibilityGate elementKey="revenue_breakdown">
-              <RevenueDonutChart 
-                serviceRevenue={salesData?.serviceRevenue || 0}
-                productRevenue={salesData?.productRevenue || 0}
-              />
-            </VisibilityGate>
-          )}
-        </div>
-      )}
-      
-      {/* Client Funnel */}
-      {hasClientFunnel && (
-        <VisibilityGate elementKey="client_funnel">
-          <ClientFunnelCard dateFrom={dateFilters.dateFrom} dateTo={dateFilters.dateTo} />
-        </VisibilityGate>
-      )}
-      
-      {/* Team Goals */}
-      {hasTeamGoals && (
-        <VisibilityGate elementKey="team_goals">
-          <TeamGoalsCard currentRevenue={salesData?.totalRevenue || 0} />
-        </VisibilityGate>
-      )}
-      
-      {/* New Bookings */}
-      {hasNewBookings && (
-        <VisibilityGate elementKey="new_bookings">
-          <NewBookingsCard />
-        </VisibilityGate>
-      )}
-      
-      {/* Forecasting */}
-      {hasForecast && (
-        <VisibilityGate elementKey="week_ahead_forecast">
-          <ForecastingCard />
-        </VisibilityGate>
-      )}
-      
-      {/* Capacity Utilization */}
-      {hasCapacity && (
-        <VisibilityGate elementKey="capacity_utilization">
-          <CapacityUtilizationCard />
-        </VisibilityGate>
-      )}
-      
-      {/* Hiring & Staffing Cards */}
-      {(hasHiringCapacity || hasStaffingTrends) && (
-        <div className="grid lg:grid-cols-2 gap-6">
-          {hasHiringCapacity && (
-            <VisibilityGate elementKey="hiring_capacity">
-              <HiringCapacityCard />
-            </VisibilityGate>
-          )}
-          {hasStaffingTrends && (
-            <VisibilityGate elementKey="staffing_trends">
-              <StaffingTrendChart />
-            </VisibilityGate>
-          )}
-        </div>
-      )}
-      
-      {/* Stylist Workload */}
-      {hasStylistWorkload && (
-        <VisibilityGate elementKey="stylist_workload">
-          <StylistWorkloadCard 
-            workload={workload || []} 
-            isLoading={isLoadingWorkload} 
-          />
-        </VisibilityGate>
-      )}
-      
+      {/* Render cards in user's preferred order */}
+      {orderedVisibleCards.map(cardId => renderCard(cardId))}
     </div>
   );
 }
