@@ -3,7 +3,7 @@ import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { StaffRevenueLeaderboard } from '@/components/dashboard/analytics/StaffRevenueLeaderboard';
 import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
-import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
+
 import { StaffWorkload } from '@/hooks/useStaffUtilization';
 
 interface StaffingContentProps {
@@ -21,10 +21,6 @@ export function StaffingContent({ workload, isLoading, locationId }: StaffingCon
         <StylistsOverviewCard />
       </div>
 
-      {/* Onboarding Tracker */}
-      <div className="mb-6">
-        <OnboardingTrackerOverview />
-      </div>
 
       {/* Hiring Capacity and Staffing Trends */}
       <div className="grid lg:grid-cols-2 gap-6 mb-6">

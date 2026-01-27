@@ -110,7 +110,7 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/onboarding': { label: 'Onboarding', icon: Users },
   '/dashboard/handbooks': { label: 'Handbooks', icon: FileText },
   '/dashboard/admin/birthdays': { label: 'Birthdays & Anniversaries', icon: Cake },
-  '/dashboard/admin/onboarding-tracker': { label: 'Onboarding Tracker', icon: Layers },
+  '/dashboard/admin/onboarding-tracker': { label: 'Onboarding Hub', icon: Layers },
   '/dashboard/admin/client-engine-tracker': { label: 'Client Engine Tracker', icon: Target },
   '/dashboard/admin/recruiting': { label: 'Recruiting Pipeline', icon: Briefcase },
   '/dashboard/admin/graduation-tracker': { label: 'Graduation Tracker', icon: GraduationCap },

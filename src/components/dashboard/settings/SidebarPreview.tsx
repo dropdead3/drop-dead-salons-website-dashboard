@@ -22,7 +22,7 @@ const LINK_CONFIG: Record<string, { label: string }> = {
   '/dashboard/onboarding': { label: 'Onboarding' },
   '/dashboard/handbooks': { label: 'Handbooks' },
   '/dashboard/admin/birthdays': { label: 'Birthdays & Anniversaries' },
-  '/dashboard/admin/onboarding-tracker': { label: 'Onboarding Tracker' },
+  '/dashboard/admin/onboarding-tracker': { label: 'Onboarding Hub' },
   '/dashboard/admin/client-engine-tracker': { label: 'Client Engine Tracker' },
   '/dashboard/admin/recruiting': { label: 'Recruiting Pipeline' },
   '/dashboard/admin/graduation-tracker': { label: 'Graduation Tracker' },
