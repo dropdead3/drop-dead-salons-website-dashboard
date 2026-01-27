@@ -297,8 +297,8 @@ export default function DashboardHome() {
           </VisibilityGate>
         )}
 
-        {/* Quick Stats - Non-leadership only */}
-        {!isLeadership && (
+        {/* Quick Stats - Stylists/Assistants only (personal performance metrics) */}
+        {hasStylistRole && (
           <VisibilityGate elementKey="quick_stats">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="p-4">
