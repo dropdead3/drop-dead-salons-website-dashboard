@@ -38,6 +38,7 @@ import {
   BookOpen,
   FileText
 } from 'lucide-react';
+import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -301,6 +302,9 @@ export default function TeamOverview() {
             Monitor stylist progress, view Weekly Wins, and add coaching notes.
           </p>
         </div>
+
+        {/* Client Engine Overview Card */}
+        <ClientEngineOverview />
 
         {/* Filters */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8">

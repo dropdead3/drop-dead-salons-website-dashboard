@@ -66,7 +66,7 @@ import { cn } from '@/lib/utils';
 import { format, differenceInDays, formatDistanceToNow } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 import { CoachNotesSection } from '@/components/dashboard/CoachNotesSection';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+
 
 type ProgramStatus = Database['public']['Enums']['program_status'];
 
@@ -351,10 +351,6 @@ export default function ClientEngineTracker() {
               Monitor team progress through the 75-day program
             </p>
           </div>
-          <CommandCenterVisibilityToggle 
-            elementKey="client_engine_overview" 
-            elementName="Client Engine" 
-          />
         </div>
 
         {/* Stats Cards */}
