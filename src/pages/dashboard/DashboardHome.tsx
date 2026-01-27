@@ -45,6 +45,8 @@ import { CommandCenterAnalytics } from '@/components/dashboard/CommandCenterAnal
 import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
 import { DashboardCustomizeMenu } from '@/components/dashboard/DashboardCustomizeMenu';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
+import { TodaysQueueSection } from '@/components/dashboard/TodaysQueueSection';
+import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -94,6 +96,9 @@ export default function DashboardHome() {
   
   // Check if user has stylist or stylist_assistant roles (for Quick Actions visibility)
   const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
+  
+  // Check if user has receptionist/operations role
+  const isReceptionist = roles.includes('receptionist') || roles.includes('admin');
   
   // Quick Actions should only show for stylists/assistants, or leadership who also have stylist roles
   const showQuickActions = hasStylistRole || (!isLeadership);
@@ -253,6 +258,28 @@ export default function DashboardHome() {
 
         {/* Pinned Analytics Section - Leadership Only */}
         {isLeadership && <CommandCenterAnalytics />}
+
+        {/* Operations Quick Stats - Receptionist/Admin role */}
+        {(isReceptionist || isLeadership) && (
+          <VisibilityGate 
+            elementKey="operations_quick_stats"
+            elementName="Operations Quick Stats"
+            elementCategory="operations"
+          >
+            <OperationsQuickStats />
+          </VisibilityGate>
+        )}
+
+        {/* Today's Queue - Receptionist/Operations role */}
+        {(isReceptionist || isLeadership) && (
+          <VisibilityGate 
+            elementKey="todays_queue"
+            elementName="Today's Queue"
+            elementCategory="operations"
+          >
+            <TodaysQueueSection />
+          </VisibilityGate>
+        )}
 
         {/* Quick Stats - Non-leadership only */}
         {!isLeadership && (
