@@ -1,8 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
   LayoutDashboard,
@@ -16,36 +23,23 @@ import {
   Trophy,
   PieChart as PieChartIcon,
   Loader2,
+  MapPin,
+  Calendar,
 } from 'lucide-react';
+import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
+import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
+import { useSalesGoals } from '@/hooks/useSalesGoals';
+import { useLocations } from '@/hooks/useLocations';
 
-interface Performer {
-  staffId: string;
-  name: string;
-  totalRevenue: number;
-  photoUrl?: string;
-}
+type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
 interface SalesBentoCardProps {
-  // Goal Progress
-  currentRevenue: number;
-  goalTarget: number;
-  goalLabel?: string;
-  
-  // KPI Metrics
-  totalRevenue: number;
-  serviceRevenue: number;
-  productRevenue: number;
-  totalTransactions: number;
-  averageTicket: number;
-  tomorrowRevenue: number;
-  tomorrowBookings: number;
-  
-  // Top Performers
-  performers: Performer[];
-  isLoading?: boolean;
+  initialLocationId?: string;
+  initialDateRange?: DateRangeType;
 }
 
 // KPI Cell component for consistent styling
@@ -87,28 +81,116 @@ function KPICell({
   );
 }
 
+// Helper to compute date range
+function getDateRange(range: DateRangeType): { dateFrom: string; dateTo: string } {
+  const now = new Date();
+  const today = format(now, 'yyyy-MM-dd');
+  
+  switch (range) {
+    case 'today':
+      return { dateFrom: today, dateTo: today };
+    case '7d':
+      return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: today };
+    case '30d':
+      return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: today };
+    case 'thisWeek':
+      return { 
+        dateFrom: format(startOfWeek(now, { weekStartsOn: 0 }), 'yyyy-MM-dd'), 
+        dateTo: format(endOfWeek(now, { weekStartsOn: 0 }), 'yyyy-MM-dd') 
+      };
+    case 'thisMonth':
+      return { 
+        dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
+        dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
+      };
+    case 'lastMonth':
+      const lastMonth = subMonths(now, 1);
+      return { 
+        dateFrom: format(startOfMonth(lastMonth), 'yyyy-MM-dd'), 
+        dateTo: format(endOfMonth(lastMonth), 'yyyy-MM-dd') 
+      };
+    default:
+      return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: today };
+  }
+}
+
+const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
+  today: 'Today',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+  thisWeek: 'This Week',
+  thisMonth: 'This Month',
+  lastMonth: 'Last Month',
+};
+
 export function SalesBentoCard({
-  currentRevenue,
-  goalTarget,
-  goalLabel = 'Monthly Goal',
-  totalRevenue,
-  serviceRevenue,
-  productRevenue,
-  totalTransactions,
-  averageTicket,
-  tomorrowRevenue,
-  tomorrowBookings,
-  performers,
-  isLoading,
+  initialLocationId = 'all',
+  initialDateRange = 'thisMonth',
 }: SalesBentoCardProps) {
+  // Internal filter state
+  const [locationId, setLocationId] = useState(initialLocationId);
+  const [dateRange, setDateRange] = useState<DateRangeType>(initialDateRange);
+
+  // Compute date filters
+  const dateFilters = useMemo(() => getDateRange(dateRange), [dateRange]);
+  const locationFilter = locationId !== 'all' ? locationId : undefined;
+
+  // Fetch data internally
+  const { data: locations } = useLocations();
+  const { goals } = useSalesGoals();
+  const { data: tomorrowData } = useTomorrowRevenue();
+  
+  const { data: metrics, isLoading: metricsLoading } = useSalesMetrics({
+    dateFrom: dateFilters.dateFrom,
+    dateTo: dateFilters.dateTo,
+    locationId: locationFilter,
+  });
+
+  const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(
+    dateFilters.dateFrom,
+    dateFilters.dateTo
+  );
+
+  const isLoading = metricsLoading || stylistLoading;
+
+  // Compute goal based on filters
+  const currentGoal = useMemo(() => {
+    const isMonthly = dateRange === 'thisMonth' || dateRange === '30d' || dateRange === 'lastMonth';
+    if (locationId !== 'all' && goals?.locationTargets?.[locationId]) {
+      return isMonthly 
+        ? goals.locationTargets[locationId].monthly 
+        : goals.locationTargets[locationId].weekly;
+    }
+    return isMonthly ? (goals?.monthlyTarget || 50000) : (goals?.weeklyTarget || 12500);
+  }, [dateRange, locationId, goals]);
+
+  const goalLabel = useMemo(() => {
+    const isMonthly = dateRange === 'thisMonth' || dateRange === '30d' || dateRange === 'lastMonth';
+    if (locationId !== 'all') {
+      const loc = locations?.find(l => l.id === locationId);
+      return `${loc?.name || 'Location'} Goal`;
+    }
+    return isMonthly ? 'Monthly Goal' : 'Weekly Goal';
+  }, [dateRange, locationId, locations]);
+
+  // Derived values
+  const totalRevenue = metrics?.totalRevenue || 0;
+  const serviceRevenue = metrics?.serviceRevenue || 0;
+  const productRevenue = metrics?.productRevenue || 0;
+  const totalTransactions = metrics?.totalTransactions || 0;
+  const averageTicket = metrics?.averageTicket || 0;
+  const tomorrowRevenue = tomorrowData?.revenue || 0;
+  const tomorrowBookings = tomorrowData?.appointmentCount || 0;
+  const performers = stylistData || [];
+
   const percentage = useMemo(() => {
-    if (!goalTarget || goalTarget === 0) return 0;
-    return Math.min(Math.round((currentRevenue / goalTarget) * 100), 100);
-  }, [currentRevenue, goalTarget]);
+    if (!currentGoal || currentGoal === 0) return 0;
+    return Math.min(Math.round((totalRevenue / currentGoal) * 100), 100);
+  }, [totalRevenue, currentGoal]);
 
   const remaining = useMemo(() => {
-    return Math.max(goalTarget - currentRevenue, 0);
-  }, [currentRevenue, goalTarget]);
+    return Math.max(currentGoal - totalRevenue, 0);
+  }, [totalRevenue, currentGoal]);
 
   const totalMixRevenue = serviceRevenue + productRevenue;
   const retailPercentage = totalMixRevenue > 0 
@@ -135,9 +217,43 @@ export function SalesBentoCard({
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <LayoutDashboard className="w-5 h-5 text-primary" />
-          <CardTitle className="font-display">Sales Dashboard</CardTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <LayoutDashboard className="w-5 h-5 text-primary" />
+            <CardTitle className="font-display">Sales Dashboard</CardTitle>
+          </div>
+          
+          {/* Inline Filters */}
+          <div className="flex items-center gap-2">
+            {/* Location Select */}
+            <Select value={locationId} onValueChange={setLocationId}>
+              <SelectTrigger className="h-8 w-[140px] text-xs">
+                <MapPin className="w-3 h-3 mr-1.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="All Locations" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {locations?.map(loc => (
+                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Date Range Select */}
+            <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>
+              <SelectTrigger className="h-8 w-[130px] text-xs">
+                <Calendar className="w-3 h-3 mr-1.5 text-muted-foreground shrink-0" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(DATE_RANGE_LABELS) as DateRangeType[]).map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {DATE_RANGE_LABELS[key]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
       
@@ -153,7 +269,7 @@ export function SalesBentoCard({
           </div>
           <Progress value={percentage} className="h-2" />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <BlurredAmount>${currentRevenue.toLocaleString()} earned</BlurredAmount>
+            <BlurredAmount>${totalRevenue.toLocaleString()} earned</BlurredAmount>
             <BlurredAmount>${remaining.toLocaleString()} to go</BlurredAmount>
           </div>
         </div>

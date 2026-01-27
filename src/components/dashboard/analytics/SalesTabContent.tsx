@@ -178,31 +178,15 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </div>
       </div>
 
-      {/* Unified Sales Bento Card */}
+      {/* Unified Sales Bento Card - Self-contained with internal filters */}
       <PinnableCard 
         elementKey="sales_dashboard_bento" 
         elementName="Sales Dashboard" 
         category="Analytics Hub - Sales"
       >
         <SalesBentoCard
-          currentRevenue={metrics?.totalRevenue || 0}
-          goalTarget={currentGoal}
-          goalLabel={
-            filters.locationId !== 'all' 
-              ? `${locations?.find(l => l.id === filters.locationId)?.name} Goal`
-              : filters.dateRange === 'thisMonth' || filters.dateRange === '30d' || filters.dateRange === 'lastMonth'
-                ? 'Monthly Goal'
-                : 'Weekly Goal'
-          }
-          totalRevenue={metrics?.totalRevenue || 0}
-          serviceRevenue={metrics?.serviceRevenue || 0}
-          productRevenue={metrics?.productRevenue || 0}
-          totalTransactions={metrics?.totalTransactions || 0}
-          averageTicket={metrics?.averageTicket || 0}
-          tomorrowRevenue={tomorrowData?.revenue || 0}
-          tomorrowBookings={tomorrowData?.appointmentCount || 0}
-          performers={stylistData || []}
-          isLoading={metricsLoading || stylistLoading}
+          initialLocationId={filters.locationId}
+          initialDateRange={filters.dateRange as 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth'}
         />
       </PinnableCard>
 
