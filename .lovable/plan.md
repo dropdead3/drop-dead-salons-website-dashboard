@@ -1,118 +1,168 @@
 
-# Fix Role Selector Redundancy in Role Access Configurator
+# Enable Role-Based Tab Control Across Application
 
-## Problem
+## Overview
 
-The screenshot shows **three overlapping role selectors**:
+This plan wraps all page tabs with the `VisibilityGate` component to enable automatic registration in the Role Access Configurator. Once wrapped, tabs will:
+1. Auto-register in the `dashboard_element_visibility` database table on first render
+2. Appear in the **Role Access → Page Tabs** panel for per-role visibility control
+3. Be controllable for each of the 8 system roles
 
-1. **Top Selector** (Card 1): Role buttons with visibility stats (Super Admin 20/22, Director Of Operations 34/37, etc.)
+## Naming Convention
 
-2. **Middle Section** (Card 2 Header): "SUPER ADMIN ACCESS" banner showing the selected role with "Copy from..." and "Reset" actions
+All tab element keys will follow the pattern: `{pageKey}_{tabId}_tab`
 
-3. **Nested Selector** (Inside SidebarLayoutEditor): "VISIBILITY MODE" tabs with Global, Super Admin, DOO, etc.
+**Examples:**
+- `stats_performance_tab` - My Stats → Performance tab
+- `analytics_sales_tab` - Analytics Hub → Sales tab
+- `sales_forecasting_subtab` - Sales → Forecasting sub-tab
 
-This creates a confusing UX where users see role selection in three places.
+## Pages & Tabs to Wrap
 
-## Root Cause
+### 1. My Stats Page (`src/pages/dashboard/Stats.tsx`)
 
-`SidebarLayoutEditor` was originally a standalone component with its own role selection. When embedded inside `RoleAccessConfigurator`, the parent added another role selector, creating duplication.
+| Tab | Element Key | Element Name |
+|-----|-------------|--------------|
+| My Performance | `stats_performance_tab` | My Performance |
+| Team Leaderboard | `stats_leaderboard_tab` | Team Leaderboard |
 
-## Solution
+### 2. Analytics Hub (`src/pages/dashboard/admin/AnalyticsHub.tsx`)
 
-Modify `SidebarLayoutEditor` to accept an optional `selectedRole` prop. When provided:
-- Use the external role instead of internal state
-- Hide its own role selector UI
-- Allow the parent `RoleAccessConfigurator` to control which role is being edited
+**Main Tabs:**
+| Tab | Element Key | Element Name |
+|-----|-------------|--------------|
+| Sales | `analytics_sales_tab` | Sales |
+| Operations | `analytics_operations_tab` | Operations |
+| Marketing | `analytics_marketing_tab` | Marketing |
+| Program | `analytics_program_tab` | Program |
+| Reports | `analytics_reports_tab` | Reports |
 
-This approach keeps `SidebarLayoutEditor` backwards compatible for standalone use while eliminating redundancy when embedded.
+### 3. Operations Sub-Tabs (`src/components/dashboard/analytics/OperationsTabContent.tsx`)
 
-## File Changes
+| Sub-Tab | Element Key | Element Name |
+|---------|-------------|--------------|
+| Overview | `operations_overview_subtab` | Overview |
+| Appointments | `operations_appointments_subtab` | Appointments |
+| Clients | `operations_clients_subtab` | Clients |
+| Staffing | `operations_staffing_subtab` | Staffing |
+| Staff Utilization | `operations_staff_utilization_subtab` | Staff Utilization |
 
-### 1. `src/components/dashboard/settings/SidebarLayoutEditor.tsx`
+### 4. Sales Sub-Tabs (`src/components/dashboard/analytics/SalesTabContent.tsx`)
 
-**Add props interface:**
+| Sub-Tab | Element Key | Element Name |
+|---------|-------------|--------------|
+| Overview | `sales_overview_subtab` | Overview |
+| Goals | `sales_goals_subtab` | Goals |
+| Staff Performance | `sales_staff_subtab` | Staff Performance |
+| Forecasting | `sales_forecasting_subtab` | Forecasting |
+| Commission | `sales_commission_subtab` | Commission |
+
+### 5. Reports Sub-Tabs (`src/components/dashboard/analytics/ReportsTabContent.tsx`)
+
+| Sub-Tab | Element Key | Element Name |
+|---------|-------------|--------------|
+| Sales | `reports_sales_subtab` | Sales Reports |
+| Staff | `reports_staff_subtab` | Staff Reports |
+| Clients | `reports_clients_subtab` | Client Reports |
+| Operations | `reports_operations_subtab` | Operations Reports |
+| Financial | `reports_financial_subtab` | Financial Reports |
+
+### 6. Day Rate Settings (`src/pages/dashboard/admin/DayRateSettings.tsx`)
+
+| Tab | Element Key | Element Name |
+|-----|-------------|--------------|
+| Chair Inventory | `dayrate_chairs_tab` | Chair Inventory |
+| Agreement | `dayrate_agreement_tab` | Agreement |
+
+### 7. Dashboard Widgets (`src/components/dashboard/WidgetsSection.tsx`)
+
+| Widget | Element Key | Element Name |
+|--------|-------------|--------------|
+| What's New | `widget_changelog` | What's New Widget |
+| Team Birthdays | `widget_birthdays` | Team Birthdays Widget |
+| Work Anniversaries | `widget_anniversaries` | Work Anniversaries Widget |
+| My Schedule | `widget_schedule` | My Schedule Widget |
+| Day Rate Bookings | `widget_dayrate` | Day Rate Bookings Widget |
+
+## Implementation Pattern
+
+For each tab, wrap the `TabsTrigger` with `VisibilityGate`:
+
 ```typescript
-interface SidebarLayoutEditorProps {
-  // When provided, hides internal role selector and uses this role
-  externalSelectedRole?: string;
-  onRoleChange?: (role: string) => void;
-}
+// Before
+<TabsTrigger value="sales">Sales</TabsTrigger>
 
-export function SidebarLayoutEditor({ 
-  externalSelectedRole, 
-  onRoleChange 
-}: SidebarLayoutEditorProps = {}) {
+// After
+<VisibilityGate 
+  elementKey="analytics_sales_tab" 
+  elementName="Sales" 
+  elementCategory="Page Tabs"
+>
+  <TabsTrigger value="sales">Sales</TabsTrigger>
+</VisibilityGate>
 ```
 
-**Use external role when provided:**
-```typescript
-// Role selection - use external if provided, otherwise internal state
-const [internalSelectedRole, setInternalSelectedRole] = useState<string>('global');
-const selectedRole = externalSelectedRole ?? internalSelectedRole;
+For widgets:
 
-const handleRoleChange = (role: string) => {
-  if (externalSelectedRole !== undefined) {
-    onRoleChange?.(role);
-  } else {
-    setInternalSelectedRole(role);
-  }
-};
+```typescript
+// Before
+{isWidgetEnabled('changelog') && <ChangelogWidget />}
+
+// After
+<VisibilityGate 
+  elementKey="widget_changelog" 
+  elementName="What's New Widget" 
+  elementCategory="Dashboard Widgets"
+>
+  {isWidgetEnabled('changelog') && <ChangelogWidget />}
+</VisibilityGate>
 ```
 
-**Conditionally hide role selector UI (lines 1002-1070):**
+## File Changes Summary
+
+| File | Changes |
+|------|---------|
+| `src/pages/dashboard/Stats.tsx` | Import VisibilityGate, wrap 2 tabs |
+| `src/pages/dashboard/admin/AnalyticsHub.tsx` | Import VisibilityGate, wrap 5 tabs in loop |
+| `src/components/dashboard/analytics/OperationsTabContent.tsx` | Import VisibilityGate, wrap 5 sub-tabs |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Import VisibilityGate, wrap 5 sub-tabs |
+| `src/components/dashboard/analytics/ReportsTabContent.tsx` | Import VisibilityGate, wrap 5 sub-tabs |
+| `src/pages/dashboard/admin/DayRateSettings.tsx` | Import VisibilityGate, wrap 2 tabs |
+| `src/components/dashboard/WidgetsSection.tsx` | Import VisibilityGate, wrap 5 widgets |
+
+## Future-Proofing
+
+Any new tabs added to the application should follow this pattern:
+
 ```typescript
-{/* Only show role selector if not controlled externally */}
-{externalSelectedRole === undefined && (
-  <div className="space-y-2">
-    <p className="text-xs font-medium ...">VISIBILITY MODE</p>
-    <Tabs value={selectedRole} onValueChange={handleRoleChange}>
-      {/* ... existing TabsList ... */}
-    </Tabs>
-    {/* ... role hint text ... */}
-  </div>
-)}
+<VisibilityGate 
+  elementKey="{pageKey}_{tabId}_tab" 
+  elementName="Tab Display Name" 
+  elementCategory="Page Tabs"
+>
+  <TabsTrigger value="tabId">Tab Display Name</TabsTrigger>
+</VisibilityGate>
 ```
 
-### 2. `src/components/dashboard/settings/RoleAccessConfigurator.tsx`
+Once wrapped and rendered by any user, the tab will automatically appear in **Settings → Role Access → Page Tabs** for visibility management.
 
-**Pass selected role to SidebarLayoutEditor:**
-```typescript
-<TabsContent value="navigation" className="mt-0">
-  <SidebarLayoutEditor 
-    externalSelectedRole={selectedRole === '' ? undefined : selectedRole}
-    onRoleChange={setSelectedRole}
-  />
-</TabsContent>
-```
+## Technical Details
 
-**Note:** The Role Access Configurator uses role names like `'super_admin'`, `'manager'`, etc. The SidebarLayoutEditor uses `'global'` for base visibility plus role names. We need to map between them:
-- When Role Access has a role selected, pass it to SidebarLayoutEditor
-- The SidebarLayoutEditor's "Global" mode becomes unnecessary when controlled externally (since each role inherits from global automatically)
+### How Auto-Registration Works
 
-## Simplified Alternative
+1. When `VisibilityGate` renders with `elementName` and `elementCategory` props, it calls `registerMutation.mutate()`
+2. This inserts a row into `dashboard_element_visibility` for each role
+3. The database trigger `sync_visibility_for_new_role` ensures new roles also get entries
 
-If the role mapping is complex, a simpler solution is to remove the middle redundant section (Card 2 header "SUPER ADMIN ACCESS") and let the top role selector feed into all three panels equally. The SidebarLayoutEditor would keep its own selector only for the Navigation tab.
+### Visibility Logic
 
-However, the cleanest UX is having ONE role selector at the top that controls all panels consistently.
+- Elements default to **visible** (`is_visible: true`) when first registered
+- Admins can toggle visibility per-role in the Role Access Configurator
+- If any of a user's roles has visibility enabled, the element shows (union logic)
 
-## Recommended Approach
+## Total Tabs/Widgets Being Registered
 
-**Option A: Control SidebarLayoutEditor Externally**
-- Modify SidebarLayoutEditor to accept `externalSelectedRole` prop
-- Hide its internal role selector when prop is provided
-- Parent controls the role, child displays the configuration
+- **Page Tabs**: 24 tabs across 6 pages/components
+- **Dashboard Widgets**: 5 widgets
+- **Total**: 29 controllable elements
 
-**Option B: Simplify RoleAccessConfigurator Header**
-- Remove the second card's header showing "SUPER ADMIN ACCESS"
-- Keep only the top role selector buttons
-- Let SidebarLayoutEditor show its own selector for Navigation tab (since it has "Global" mode)
-- PageTabs and Widgets panels use the top selector
-
-**Recommendation: Option A** provides the most unified experience, but Option B is simpler to implement.
-
-## File Summary
-
-| File | Action |
-|------|--------|
-| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Modify - Add `externalSelectedRole` prop, conditionally hide role selector |
-| `src/components/dashboard/settings/RoleAccessConfigurator.tsx` | Modify - Pass `externalSelectedRole` to SidebarLayoutEditor OR simplify header |
