@@ -58,7 +58,7 @@ export default function AnalyticsHub() {
   } = useUserLocationAccess();
   
   const [locationId, setLocationId] = useState<string>('');
-  const [dateRange, setDateRange] = useState<DateRangeType>('30d');
+  const [dateRange, setDateRange] = useState<DateRangeType>('today');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date }>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
