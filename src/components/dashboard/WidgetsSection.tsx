@@ -9,6 +9,7 @@ import { WorkScheduleWidgetCompact } from './WorkScheduleWidgetCompact';
 import { AnniversaryWidget } from './AnniversaryWidget';
 import { ChangelogWidget } from './ChangelogWidget';
 import { DayRateWidget } from './DayRateWidget';
+import { useDashboardLayout, useSaveDashboardLayout } from '@/hooks/useDashboardLayout';
 
 // Widget configuration - add more widgets here as needed
 const AVAILABLE_WIDGETS = [
@@ -27,15 +28,20 @@ interface WidgetsSectionProps {
 }
 
 export function WidgetsSection({ defaultEnabledWidgets = ['changelog', 'birthdays', 'anniversaries', 'schedule'] }: WidgetsSectionProps) {
-  const [enabledWidgets, setEnabledWidgets] = useState<WidgetId[]>(defaultEnabledWidgets);
+  const { layout } = useDashboardLayout();
+  const saveLayout = useSaveDashboardLayout();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // Use layout widgets if available, otherwise fall back to defaults
+  const enabledWidgets = (layout?.widgets?.length > 0 ? layout.widgets : defaultEnabledWidgets) as WidgetId[];
+
   const toggleWidget = (widgetId: WidgetId) => {
-    setEnabledWidgets(prev => 
-      prev.includes(widgetId) 
-        ? prev.filter(id => id !== widgetId)
-        : [...prev, widgetId]
-    );
+    const newWidgets = enabledWidgets.includes(widgetId)
+      ? enabledWidgets.filter(id => id !== widgetId)
+      : [...enabledWidgets, widgetId];
+    
+    // Persist to database
+    saveLayout.mutate({ ...layout, widgets: newWidgets });
   };
 
   const isWidgetEnabled = (widgetId: WidgetId) => enabledWidgets.includes(widgetId);
