@@ -29,13 +29,13 @@ export const SECTION_GROUPS = [
   },
   {
     id: 'team',
-    label: 'Team & Access',
-    categories: ['users', 'levels', 'onboarding', 'handbooks', 'role-access'],
+    label: 'Access & Visibility',
+    categories: ['users', 'levels', 'onboarding', 'handbooks', 'role-access', 'visibility'],
   },
   {
     id: 'platform',
     label: 'Platform',
-    categories: ['system', 'visibility', 'integrations'],
+    categories: ['system', 'integrations'],
   },
   {
     id: 'communications',
