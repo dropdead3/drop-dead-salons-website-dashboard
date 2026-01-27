@@ -206,7 +206,15 @@ export default function DashboardHome() {
               Here's what's happening today
             </p>
           </div>
-          <DashboardCustomizeMenu variant="button" />
+          <DashboardCustomizeMenu 
+            variant="button" 
+            roleContext={{
+              isLeadership,
+              hasStylistRole,
+              isFrontDesk,
+              isReceptionist,
+            }}
+          />
         </div>
 
         {/* Quick Actions - FIRST for stylists/assistants */}

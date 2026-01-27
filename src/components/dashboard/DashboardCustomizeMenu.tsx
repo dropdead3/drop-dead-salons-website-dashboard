@@ -47,21 +47,82 @@ import {
 import { SortableSectionItem } from './SortableSectionItem';
 import { SortableWidgetItem } from './SortableWidgetItem';
 
+export interface RoleContext {
+  isLeadership: boolean;
+  hasStylistRole: boolean;
+  isFrontDesk: boolean;
+  isReceptionist: boolean;
+}
+
 interface SectionConfig {
   id: string;
   label: string;
   icon: React.ReactNode;
   description?: string;
+  isVisible?: (ctx: RoleContext) => boolean;
 }
 
-const SECTIONS: SectionConfig[] = [
-  { id: 'quick_actions', label: 'Quick Actions', icon: <Sparkles className="w-4 h-4" />, description: 'Shortcuts to common tasks' },
-  { id: 'command_center', label: 'Command Center', icon: <BarChart3 className="w-4 h-4" />, description: 'Pinned analytics cards' },
-  { id: 'quick_stats', label: 'Quick Stats', icon: <LayoutDashboard className="w-4 h-4" />, description: 'Today\'s performance overview' },
-  { id: 'schedule_tasks', label: 'Schedule & Tasks', icon: <Calendar className="w-4 h-4" />, description: 'Daily schedule and to-dos' },
-  { id: 'announcements', label: 'Announcements', icon: <Megaphone className="w-4 h-4" />, description: 'Team updates and news' },
-  { id: 'client_engine', label: 'Client Engine', icon: <Target className="w-4 h-4" />, description: 'Drop Dead 75 program' },
-  { id: 'widgets', label: 'Widgets', icon: <Armchair className="w-4 h-4" />, description: 'Birthdays, anniversaries, etc.' },
+const getSections = (): SectionConfig[] => [
+  { 
+    id: 'quick_actions', 
+    label: 'Quick Actions', 
+    icon: <Sparkles className="w-4 h-4" />, 
+    description: 'Shortcuts to common tasks',
+    isVisible: (ctx) => ctx.hasStylistRole || !ctx.isLeadership,
+  },
+  { 
+    id: 'command_center', 
+    label: 'Command Center', 
+    icon: <BarChart3 className="w-4 h-4" />, 
+    description: 'Pinned analytics cards',
+    isVisible: (ctx) => ctx.isLeadership,
+  },
+  { 
+    id: 'operations_stats', 
+    label: 'Operations Stats', 
+    icon: <LayoutDashboard className="w-4 h-4" />, 
+    description: 'Today\'s operations overview',
+    isVisible: (ctx) => ctx.isReceptionist || ctx.isLeadership,
+  },
+  { 
+    id: 'todays_queue', 
+    label: "Today's Queue", 
+    icon: <Calendar className="w-4 h-4" />, 
+    description: 'Appointment queue',
+    isVisible: (ctx) => ctx.isFrontDesk,
+  },
+  { 
+    id: 'quick_stats', 
+    label: 'Quick Stats', 
+    icon: <LayoutDashboard className="w-4 h-4" />, 
+    description: 'Today\'s performance overview',
+    isVisible: (ctx) => ctx.hasStylistRole,
+  },
+  { 
+    id: 'schedule_tasks', 
+    label: 'Schedule & Tasks', 
+    icon: <Calendar className="w-4 h-4" />, 
+    description: 'Daily schedule and to-dos',
+  },
+  { 
+    id: 'announcements', 
+    label: 'Announcements', 
+    icon: <Megaphone className="w-4 h-4" />, 
+    description: 'Team updates and news',
+  },
+  { 
+    id: 'client_engine', 
+    label: 'Client Engine', 
+    icon: <Target className="w-4 h-4" />, 
+    description: 'Drop Dead 75 program',
+    isVisible: (ctx) => ctx.hasStylistRole,
+  },
+  { 
+    id: 'widgets', 
+    label: 'Widgets', 
+    icon: <Armchair className="w-4 h-4" />, 
+    description: 'Birthdays, anniversaries, etc.',
+  },
 ];
 
 const WIDGETS = [
@@ -74,10 +135,21 @@ const WIDGETS = [
 
 interface DashboardCustomizeMenuProps {
   variant?: 'icon' | 'button';
+  roleContext?: RoleContext;
 }
 
-export function DashboardCustomizeMenu({ variant = 'icon' }: DashboardCustomizeMenuProps) {
+export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Get sections filtered by role
+  const SECTIONS = useMemo(() => {
+    const allSections = getSections();
+    if (!roleContext) return allSections;
+    return allSections.filter(section => {
+      if (!section.isVisible) return true;
+      return section.isVisible(roleContext);
+    });
+  }, [roleContext]);
   const { layout, isLoading, roleTemplate } = useDashboardLayout();
   const resetToDefault = useResetToDefault();
   const saveLayout = useSaveDashboardLayout();
@@ -102,7 +174,7 @@ export function DashboardCustomizeMenu({ variant = 'icon' }: DashboardCustomizeM
     const disabled = allIds.filter(id => !enabled.includes(id));
     
     return [...enabled, ...disabled];
-  }, [layout.sections]);
+  }, [layout.sections, SECTIONS]);
 
   // Compute ordered widgets
   const orderedWidgets = useMemo(() => {
