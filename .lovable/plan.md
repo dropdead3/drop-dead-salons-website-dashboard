@@ -1,95 +1,168 @@
 
-# Move Service Communication Flows to Separate Settings Card
+# Display Client Name and Booking Status on Queue Cards
 
 ## Overview
 
-This plan moves the "Service Communication Flows" card from being embedded in the Email and SMS category views into its own standalone settings card titled "Service Flows" within the Communications section.
+This plan updates the `QueueCard` component to properly display the client's name and their booking confirmation status (confirmed, unconfirmed/booked, cancelled, etc.) based on the actual appointment data.
 
 ## Current State
 
-The `ServiceCommunicationFlowsCard` component is currently rendered at the bottom of both:
-- `activeCategory === 'email'` view (line 854)
-- `activeCategory === 'sms'` view (line 870)
+The `QueueCard` component has two issues:
+1. **Client Name**: Shows "Walk-in" when `client_name` is null - this is working correctly, but your test data happens to have null names
+2. **Status Badge**: The `getStatusBadge()` function always shows "Confirmed" for waiting/upcoming appointments, ignoring the actual `status` field from the database
 
-This creates duplication and doesn't give the feature its own prominent place in the settings grid.
+The database shows appointments with status values like: `booked`, `confirmed`, `unknown`, `cancelled`, `no_show`, `checked_in`, `completed`
 
 ## Changes Required
 
-### 1. Update Settings Layout (`src/hooks/useSettingsLayout.ts`)
+### 1. Update QueueCard Status Badge Logic
 
-Add `service-flows` as a new category in the Communications section:
+Modify `getStatusBadge()` in `src/components/dashboard/operations/QueueCard.tsx` to show the actual booking status:
 
-| Property | Value |
-|----------|-------|
-| Category ID | `service-flows` |
-| Section | Communications |
-| Icon Color | `#A855F7` (Purple - to complement email/sms) |
+| Status Value | Badge Display | Style |
+|--------------|---------------|-------|
+| `confirmed` | Confirmed | Green |
+| `booked` | Unconfirmed | Yellow/Amber |
+| `unknown` | Unconfirmed | Yellow/Amber |
+| `cancelled` | Cancelled | Red with strikethrough |
+| `no_show` | No-Show | Red |
+| `checked_in` | In Service | Blue (existing) |
 
-```typescript
-// Add to DEFAULT_ICON_COLORS
-'service-flows': '#A855F7', // Purple
+### 2. Visual Design
 
-// Update SECTION_GROUPS - communications section
-{
-  id: 'communications',
-  label: 'Communications',
-  categories: ['email', 'sms', 'service-flows'],
-}
-```
-
-### 2. Update Settings Page (`src/pages/dashboard/admin/Settings.tsx`)
-
-**a) Update SettingsCategory type:**
-```typescript
-type SettingsCategory = '...' | 'service-flows' | null;
-```
-
-**b) Add to categoriesMap:**
-```typescript
-'service-flows': {
-  id: 'service-flows',
-  label: 'Service Flows',
-  description: 'Automated emails & texts per service',
-  icon: Sparkles, // Already imported
-}
-```
-
-**c) Remove ServiceCommunicationFlowsCard from email and sms views:**
-- Remove line 854: `<ServiceCommunicationFlowsCard />`
-- Remove line 870: `<ServiceCommunicationFlowsCard />`
-
-**d) Add new category content rendering:**
-```typescript
-{activeCategory === 'service-flows' && (
-  <div className="space-y-6">
-    <ServiceCommunicationFlowsCard />
-  </div>
-)}
-```
-
-## Visual Result
-
-### Before (Communications Section)
 ```text
-+--------+  +---------------+
-| Email  |  | Text Messages |
-+--------+  +---------------+
++-------------------------------------------+
+| 12:00 PM                    [ Confirmed ] |  <-- Green badge
+|-------------------------------------------|
+| Sarah Johnson                       [NEW] |  <-- Client name
+| (555) 123-4567                            |
+|                                           |
+| 1 Row Initial Install                     |
+| with Eric T.                              |
+|                                           |
+| $228                                      |
+|                                           |
+| [ Check In Early ]                        |
++-------------------------------------------+
+
++-------------------------------------------+
+| 1:00 PM                   [ Unconfirmed ] |  <-- Amber badge
+|-------------------------------------------|
+| Walk-in                                   |  <-- Fallback when no name
+| ...                                       |
++-------------------------------------------+
+
++-------------------------------------------+
+| 2:00 PM                     [ Cancelled ] |  <-- Red badge
+|-------------------------------------------|
+| Jane Doe                                  |
+| ...                                       |
++-------------------------------------------+
 ```
 
-### After (Communications Section)
-```text
-+--------+  +---------------+  +---------------+
-| Email  |  | Text Messages |  | Service Flows |
-+--------+  +---------------+  +---------------+
+## Implementation Details
+
+### File: `src/components/dashboard/operations/QueueCard.tsx`
+
+**Update `getStatusBadge()` function (lines 58-92):**
+
+```typescript
+const getStatusBadge = () => {
+  // In-service appointments show time remaining
+  if (variant === 'inService') {
+    return (
+      <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+        <Clock className="w-3 h-3 mr-1" />
+        ~{appointment.estimatedCompleteIn}min left
+      </Badge>
+    );
+  }
+
+  // Late arrivals get priority warning
+  if (appointment.isLate) {
+    return (
+      <Badge variant="destructive" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+        <AlertCircle className="w-3 h-3 mr-1" />
+        {appointment.waitTimeMinutes}min late
+      </Badge>
+    );
+  }
+
+  // Show actual booking status based on appointment.status
+  switch (appointment.status) {
+    case 'confirmed':
+      return (
+        <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+          <CheckCircle2 className="w-3 h-3 mr-1" />
+          Confirmed
+        </Badge>
+      );
+    case 'cancelled':
+      return (
+        <Badge variant="destructive" className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+          <XCircle className="w-3 h-3 mr-1" />
+          Cancelled
+        </Badge>
+      );
+    case 'no_show':
+      return (
+        <Badge variant="destructive">
+          <AlertCircle className="w-3 h-3 mr-1" />
+          No-Show
+        </Badge>
+      );
+    case 'booked':
+    case 'unknown':
+    default:
+      // Unconfirmed appointments (booked but not confirmed)
+      return (
+        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700">
+          <Clock className="w-3 h-3 mr-1" />
+          Unconfirmed
+        </Badge>
+      );
+  }
+};
 ```
 
-The Service Flows card will display:
-- Count of services with custom flows
-- "Configure Service Flows" button linking to `/dashboard/admin/services`
+**Add XCircle import:**
+```typescript
+import { 
+  Clock, 
+  User, 
+  Phone, 
+  Scissors, 
+  CheckCircle2, 
+  DollarSign,
+  AlertCircle,
+  Copy,
+  Check,
+  XCircle,  // Add this
+} from 'lucide-react';
+```
+
+### Optional: Add strikethrough styling for cancelled appointments
+
+For cancelled appointments, apply a subtle visual indicator:
+
+```typescript
+<Card className={cn(
+  "p-4 transition-all duration-200 hover:shadow-md",
+  variant === 'inService' && "border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20",
+  appointment.isLate && variant === 'waiting' && "border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20",
+  appointment.status === 'cancelled' && "opacity-60 border-red-200 dark:border-red-900",
+)}>
+```
 
 ## File Changes Summary
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useSettingsLayout.ts` | Add `service-flows` to `DEFAULT_ICON_COLORS` and `SECTION_GROUPS` |
-| `src/pages/dashboard/admin/Settings.tsx` | Add to type, categoriesMap, remove from email/sms views, add standalone rendering |
+| `src/components/dashboard/operations/QueueCard.tsx` | Update `getStatusBadge()` to show actual status, add XCircle import, add cancelled styling |
+
+## Notes
+
+- The client name display already works correctly (`{appointment.client_name || 'Walk-in'}`)
+- Your current test data has all `client_name` values as null, which is why everything shows "Walk-in"
+- When Phorest syncs real appointments with client data, the names will display properly
+- Cancelled appointments should rarely appear in the queue, but the logic handles them gracefully
