@@ -1,158 +1,185 @@
 
-# Remove Analytics from Command Center & Add "Show on Command Center" Toggles
+# Move Remaining Command Center Cards to Analytics Hub
 
-## Problem Analysis
+## Current State Analysis
 
-The Command Center dashboard (`DashboardHome.tsx`) currently displays several analytics cards for leadership:
+The Command Center (`DashboardHome.tsx`) still contains these leadership-only widgets that should be moved to the Analytics Hub:
 
-| Current Command Center Card | Element Key | Status |
-|----------------------------|-------------|--------|
-| AggregateSalesCard | `sales_overview` | To be removed (already consolidated in Analytics Hub Sales tab) |
-| NewBookingsCard | `new_bookings` | To be moved to Operations tab |
-| ForecastingCard | `week_ahead_forecast` | Already exists in Sales tab as `RevenueForecast` |
-| CapacityUtilizationCard | `capacity_utilization` | Already exists in Operations tab |
-
-**Goal:** Make the Analytics Hub the primary source for all analytics, with each card having a "Show on Command Center" toggle to let leadership customize their Command Center view.
-
-## Architecture
-
-```text
-Analytics Hub (Primary Source)          Command Center (User-Customizable)
-┌─────────────────────────────┐         ┌─────────────────────────────┐
-│ Sales Tab                   │         │                             │
-│  ├─ KPIs (Revenue, etc)     │ ──[✓]──►│ AggregateSalesCard          │
-│  ├─ Top Performers          │         │                             │
-│  └─ Forecasting             │ ──[✓]──►│ ForecastingCard             │
-│                             │         │                             │
-│ Operations Tab              │         │                             │
-│  ├─ Overview                │         │                             │
-│  ├─ Appointments            │         │                             │
-│  │   └─ New Bookings        │ ──[✓]──►│ NewBookingsCard             │
-│  ├─ Capacity Utilization    │ ──[✓]──►│ CapacityUtilizationCard     │
-│  └─ Staffing                │         │                             │
-│                             │         │                             │
-│ Marketing Tab               │         │                             │
-│  └─ Website Analytics       │ ──[✓]──►│ WebsiteAnalyticsWidget      │
-└─────────────────────────────┘         └─────────────────────────────┘
-                                         
-[✓] = "Show on Command Center" toggle
-```
+| Widget | Current Location (Line) | Target Analytics Hub Tab | Element Key |
+|--------|------------------------|-------------------------|-------------|
+| `WebsiteAnalyticsWidget` | Lines 441-446 | Marketing | `website_analytics` |
+| `ClientEngineOverview` | Lines 450-452 | Program | `client_engine_overview` |
+| `OnboardingTrackerOverview` | Lines 453-455 | Operations > Staffing | `onboarding_overview` |
+| `StaffOverviewCard` (Team Overview) | Lines 462-464 | Operations > Staffing | `team_overview` |
+| `StylistsOverviewCard` | Lines 465-467 | Operations > Staffing | `stylists_overview` |
 
 ## Implementation Plan
 
-### Phase 1: Remove Analytics Cards from Command Center
+### Phase 1: Update Analytics Hub Tabs with New Content
+
+#### 1.1 Marketing Tab - Add Website Analytics
+
+**File: `src/components/dashboard/analytics/MarketingTabContent.tsx`**
+
+Add the `WebsiteAnalyticsWidget` at the top of the Marketing tab, above the KPI cards. The visibility toggle already exists (line 60-63).
+
+```tsx
+import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
+
+// Add below header controls, before KPI cards:
+<WebsiteAnalyticsWidget />
+```
+
+#### 1.2 Program Tab - Add Client Engine Overview
+
+**File: `src/components/dashboard/analytics/ProgramTabContent.tsx`**
+
+Add the `ClientEngineOverview` as a summary card and add a visibility toggle in the header.
+
+```tsx
+import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+
+// Add to header area:
+<CommandCenterVisibilityToggle 
+  elementKey="client_engine_overview" 
+  elementName="Client Engine Overview" 
+/>
+
+// Add ClientEngineOverview as a full-width card at the top of the content
+```
+
+#### 1.3 Operations Tab > Staffing - Add Team Cards
+
+**File: `src/components/dashboard/analytics/StaffingContent.tsx`**
+
+Add `StaffOverviewCard`, `StylistsOverviewCard`, and `OnboardingTrackerOverview` to the Staffing sub-tab.
+
+```tsx
+import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
+import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
+
+// Add as a 2-column grid section:
+<div className="grid lg:grid-cols-2 gap-6 mb-6">
+  <StaffOverviewCard />
+  <StylistsOverviewCard />
+</div>
+
+<OnboardingTrackerOverview />
+```
+
+#### 1.4 Operations Tab Header - Add Visibility Toggles
+
+**File: `src/components/dashboard/analytics/OperationsTabContent.tsx`**
+
+Add visibility toggles for the new elements.
+
+```tsx
+<CommandCenterVisibilityToggle 
+  elementKey="team_overview" 
+  elementName="Team Overview" 
+/>
+<CommandCenterVisibilityToggle 
+  elementKey="stylists_overview" 
+  elementName="Stylists by Level" 
+/>
+<CommandCenterVisibilityToggle 
+  elementKey="onboarding_overview" 
+  elementName="Onboarding Overview" 
+/>
+```
+
+### Phase 2: Update Command Center Analytics Component
+
+**File: `src/components/dashboard/CommandCenterAnalytics.tsx`**
+
+Add the new elements to the pinned analytics section, so they render when visibility is enabled.
+
+```tsx
+import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
+import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
+import { OnboardingTrackerOverview } from '@/components/dashboard/OnboardingTrackerOverview';
+import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
+
+// Add visibility checks:
+const hasClientEngineOverview = isElementVisible('client_engine_overview');
+const hasOnboardingOverview = isElementVisible('onboarding_overview');
+const hasTeamOverview = isElementVisible('team_overview');
+const hasStylistsOverview = isElementVisible('stylists_overview');
+
+// Update hasAnyPinned check to include all elements
+
+// Render conditionally:
+{hasClientEngineOverview && (
+  <VisibilityGate elementKey="client_engine_overview">
+    <ClientEngineOverview />
+  </VisibilityGate>
+)}
+// ... same pattern for other widgets
+```
+
+### Phase 3: Remove Elements from Command Center
 
 **File: `src/pages/dashboard/DashboardHome.tsx`**
 
-Remove these sections from the leadership area:
-1. `AggregateSalesCard` (lines 246-251)
-2. `NewBookingsCard` (lines 253-258)
-3. `ForecastingCard` (lines 260-265)
-4. `CapacityUtilizationCard` (lines 267-272)
+Remove the following sections (they will now be rendered via `CommandCenterAnalytics` when pinned):
 
-Also remove their imports (lines 47-50).
+1. **Lines 441-446**: Remove standalone `WebsiteAnalyticsWidget` (already in CommandCenterAnalytics)
+2. **Lines 448-457**: Remove `ClientEngineOverview` and `OnboardingTrackerOverview` grid
+3. **Lines 459-469**: Remove `StaffOverviewCard` and `StylistsOverviewCard` grid
 
-### Phase 2: Add "Show on Command Center" Toggles to Analytics Hub Cards
-
-For each major section in the Analytics Hub, add a visibility toggle that allows Super Admins to opt-in cards to appear on Command Center.
-
-**Files to Modify:**
-
-| File | Add Toggle For |
-|------|----------------|
-| `SalesTabContent.tsx` | Sales KPIs card, Forecasting section |
-| `OperationsTabContent.tsx` | New Bookings, Capacity Utilization |
-| `MarketingTabContent.tsx` | Website Analytics (if leadership has access) |
-
-### Phase 3: Create Command Center Analytics Section (Optional Pinned Cards)
-
-Create a new section on Command Center that renders only the cards that have been "pinned" via visibility toggles. This uses the existing `VisibilityGate` system.
-
-**New Component: `CommandCenterAnalytics.tsx`**
-
-This component will:
-1. Check `dashboard_element_visibility` for which elements are visible
-2. Render only the pinned analytics cards
-3. Show a subtle "No analytics pinned" message if none are enabled
-
-### Phase 4: Add New Bookings to Operations Tab
-
-The `NewBookingsCard` content needs to be integrated into the Operations > Appointments sub-tab.
-
-**File: `src/components/dashboard/analytics/AppointmentsContent.tsx`**
-
-Add New Bookings metrics at the top of the appointments view.
-
-## Technical Implementation Details
-
-### Toggle Component Enhancement
-
-The existing `CommandCenterVisibilityToggle` component already handles the toggle logic. Each analytics section will include this toggle in its header.
-
-```tsx
-// Example usage in SalesTabContent.tsx
-<div className="flex items-center gap-2">
-  <CommandCenterVisibilityToggle 
-    elementKey="sales_overview" 
-    elementName="Sales Overview" 
-  />
-  <LastSyncIndicator syncType="sales" showAutoRefresh />
-</div>
-```
-
-### Command Center Rendering
-
-The Command Center will use `VisibilityGate` to conditionally render cards:
-
-```tsx
-// In DashboardHome.tsx - simplified analytics section
-{isLeadership && (
-  <div className="space-y-6">
-    <VisibilityGate elementKey="sales_overview">
-      <AggregateSalesCard />
-    </VisibilityGate>
-    {/* Other cards will only render if visibility is enabled */}
-  </div>
-)}
-```
-
-With this approach, cards are removed by default but can be re-added via the visibility system.
+Also remove unused imports:
+- `WebsiteAnalyticsWidget` (line 43)
+- `OnboardingTrackerOverview` (line 44)
+- `ClientEngineOverview` (line 45)
+- `StylistsOverviewCard`, `StaffOverviewCard` (line 38)
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/dashboard/DashboardHome.tsx` | Remove analytics cards from default view |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Add visibility toggle for Sales KPIs |
-| `src/components/dashboard/analytics/OperationsTabContent.tsx` | Add toggles for New Bookings and Capacity |
-| `src/components/dashboard/analytics/AppointmentsContent.tsx` | Integrate New Bookings metrics |
+| `src/components/dashboard/analytics/MarketingTabContent.tsx` | Add `WebsiteAnalyticsWidget` at top |
+| `src/components/dashboard/analytics/ProgramTabContent.tsx` | Add `ClientEngineOverview` + visibility toggle |
+| `src/components/dashboard/analytics/StaffingContent.tsx` | Add team overview cards + onboarding |
+| `src/components/dashboard/analytics/OperationsTabContent.tsx` | Add visibility toggles for new elements |
+| `src/components/dashboard/CommandCenterAnalytics.tsx` | Add all new pinnable cards |
+| `src/pages/dashboard/DashboardHome.tsx` | Remove standalone widgets, clean up imports |
 
-## Files to Keep (No Changes)
+## Data Flow Diagram
 
-| File | Reason |
-|------|--------|
-| `AggregateSalesCard.tsx` | Still used when visibility is enabled |
-| `ForecastingCard.tsx` | Still used when visibility is enabled |
-| `CapacityUtilizationCard.tsx` | Still used when visibility is enabled |
-| `NewBookingsCard.tsx` | Still used when visibility is enabled |
-| `CommandCenterVisibilityToggle.tsx` | Already correctly implemented |
-| `useDashboardVisibility.ts` | Already correctly implemented |
+```text
+Analytics Hub (Source of Truth)
+├── Sales Tab
+│   ├── Sales KPIs ──────────[⚙ Pin]──► Command Center
+│   └── Forecasting ─────────[⚙ Pin]──► Command Center
+│
+├── Operations Tab
+│   ├── Appointments
+│   │   └── New Bookings ────[⚙ Pin]──► Command Center
+│   ├── Capacity ────────────[⚙ Pin]──► Command Center
+│   └── Staffing
+│       ├── Team Overview ───[⚙ Pin]──► Command Center
+│       ├── Stylists by Level [⚙ Pin]──► Command Center
+│       └── Onboarding ──────[⚙ Pin]──► Command Center
+│
+├── Marketing Tab
+│   └── Website Traffic ─────[⚙ Pin]──► Command Center
+│
+└── Program Tab
+    └── Client Engine ───────[⚙ Pin]──► Command Center
+```
 
-## User Experience Flow
+## User Experience
 
-1. **Default State:** Command Center shows no analytics cards (clean slate)
-2. **Customization:** User navigates to Analytics Hub > any tab
-3. **Enable Visibility:** Super Admin clicks the gear icon on any card and toggles "Show on Command Center"
-4. **Result:** Card now appears on their Command Center dashboard
+1. **Default State**: Command Center shows empty analytics section with helpful link to Analytics Hub
+2. **Customization**: Super Admins navigate to any Analytics Hub tab and click the gear icon (⚙) on cards they want to pin
+3. **Result**: Pinned cards appear on Command Center for all leadership roles
+4. **Flexibility**: Each card can be independently toggled on/off
 
-## Benefits
+## Technical Notes
 
-1. **Single Source of Truth:** Analytics Hub is the primary dashboard
-2. **User Control:** Leadership can customize their Command Center
-3. **Clean Dashboard:** Command Center isn't cluttered by default
-4. **Flexible:** New analytics can be added to Hub and optionally pinned
-5. **Existing Infrastructure:** Leverages the visibility system already in place
-
-## Database Considerations
-
-The `dashboard_element_visibility` table already supports this pattern. No database changes are required. The visibility entries for these elements likely already exist and will be updated to default to `is_visible: false` for the Command Center context.
+- All visibility toggles use the existing `CommandCenterVisibilityToggle` component
+- All conditional rendering uses the existing `VisibilityGate` component
+- The `dashboard_element_visibility` table already supports this pattern
+- No database changes required
+- Element keys follow existing naming conventions (snake_case)
