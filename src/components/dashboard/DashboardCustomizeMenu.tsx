@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { 
   Sheet, 
   SheetContent, 
@@ -27,11 +26,26 @@ import {
   useDashboardLayout, 
   useResetToDefault, 
   useSaveDashboardLayout,
-  DashboardLayout,
 } from '@/hooks/useDashboardLayout';
-import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors, 
+  DragEndEvent 
+} from '@dnd-kit/core';
+import { 
+  SortableContext, 
+  sortableKeyboardCoordinates, 
+  verticalListSortingStrategy, 
+  arrayMove 
+} from '@dnd-kit/sortable';
+import { SortableSectionItem } from './SortableSectionItem';
+import { SortableWidgetItem } from './SortableWidgetItem';
 
 interface SectionConfig {
   id: string;
@@ -70,6 +84,40 @@ export function DashboardCustomizeMenu({ variant = 'icon' }: DashboardCustomizeM
   const { can } = usePermission();
   const canManageVisibility = can('manage_visibility_console');
 
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // Compute ordered sections (enabled first in their order, then disabled)
+  const orderedSections = useMemo(() => {
+    const savedOrder = layout.sections || [];
+    const allIds = SECTIONS.map(s => s.id);
+    
+    // Enabled sections in saved order
+    const enabled = savedOrder.filter(id => allIds.includes(id));
+    
+    // Disabled sections (not in saved order)
+    const disabled = allIds.filter(id => !enabled.includes(id));
+    
+    return [...enabled, ...disabled];
+  }, [layout.sections]);
+
+  // Compute ordered widgets
+  const orderedWidgets = useMemo(() => {
+    const savedOrder = layout.widgets || [];
+    const allIds = WIDGETS.map(w => w.id);
+    
+    // Enabled widgets in saved order
+    const enabled = savedOrder.filter(id => allIds.includes(id));
+    
+    // Disabled widgets
+    const disabled = allIds.filter(id => !enabled.includes(id));
+    
+    return [...enabled, ...disabled];
+  }, [layout.widgets]);
+
   const handleToggleSection = (sectionId: string) => {
     const sections = layout.sections.includes(sectionId)
       ? layout.sections.filter(s => s !== sectionId)
@@ -84,6 +132,32 @@ export function DashboardCustomizeMenu({ variant = 'icon' }: DashboardCustomizeM
       : [...layout.widgets, widgetId];
     
     saveLayout.mutate({ ...layout, widgets });
+  };
+
+  const handleSectionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = orderedSections.indexOf(active.id as string);
+    const newIndex = orderedSections.indexOf(over.id as string);
+    const newOrder = arrayMove(orderedSections, oldIndex, newIndex);
+    
+    // Keep only enabled sections in the layout, but respect new order
+    const enabledSections = newOrder.filter(id => layout.sections.includes(id));
+    saveLayout.mutate({ ...layout, sections: enabledSections });
+  };
+
+  const handleWidgetDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = orderedWidgets.indexOf(active.id as string);
+    const newIndex = orderedWidgets.indexOf(over.id as string);
+    const newOrder = arrayMove(orderedWidgets, oldIndex, newIndex);
+    
+    // Keep only enabled widgets in the layout, but respect new order
+    const enabledWidgets = newOrder.filter(id => layout.widgets.includes(id));
+    saveLayout.mutate({ ...layout, widgets: enabledWidgets });
   };
 
   const handleResetToDefault = () => {
@@ -113,7 +187,7 @@ export function DashboardCustomizeMenu({ variant = 'icon' }: DashboardCustomizeM
             CUSTOMIZE DASHBOARD
           </SheetTitle>
           <SheetDescription>
-            Toggle sections and widgets to personalize your view
+            Drag to reorder, toggle to show/hide sections
           </SheetDescription>
         </SheetHeader>
 
@@ -121,35 +195,34 @@ export function DashboardCustomizeMenu({ variant = 'icon' }: DashboardCustomizeM
           {/* Sections */}
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-3">SECTIONS</h3>
-            <div className="space-y-3">
-              {SECTIONS.map((section) => (
-                <div 
-                  key={section.id}
-                  className={cn(
-                    'flex items-center justify-between p-3 rounded-lg transition-colors',
-                    layout.sections.includes(section.id) 
-                      ? 'bg-muted/50' 
-                      : 'bg-transparent'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="text-muted-foreground">
-                      {section.icon}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{section.label}</p>
-                      {section.description && (
-                        <p className="text-xs text-muted-foreground">{section.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <Switch
-                    checked={layout.sections.includes(section.id)}
-                    onCheckedChange={() => handleToggleSection(section.id)}
-                  />
+            <DndContext 
+              sensors={sensors} 
+              collisionDetection={closestCenter} 
+              onDragEnd={handleSectionDragEnd}
+            >
+              <SortableContext 
+                items={orderedSections} 
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-1">
+                  {orderedSections.map(sectionId => {
+                    const section = SECTIONS.find(s => s.id === sectionId);
+                    if (!section) return null;
+                    return (
+                      <SortableSectionItem
+                        key={section.id}
+                        id={section.id}
+                        label={section.label}
+                        description={section.description}
+                        icon={section.icon}
+                        isEnabled={layout.sections.includes(section.id)}
+                        onToggle={() => handleToggleSection(section.id)}
+                      />
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
 
           <Separator />
@@ -157,30 +230,33 @@ export function DashboardCustomizeMenu({ variant = 'icon' }: DashboardCustomizeM
           {/* Widgets */}
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-3">WIDGETS</h3>
-            <div className="space-y-3">
-              {WIDGETS.map((widget) => (
-                <div 
-                  key={widget.id}
-                  className={cn(
-                    'flex items-center justify-between p-3 rounded-lg transition-colors',
-                    layout.widgets.includes(widget.id) 
-                      ? 'bg-muted/50' 
-                      : 'bg-transparent'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="text-muted-foreground">
-                      {widget.icon}
-                    </div>
-                    <p className="text-sm font-medium">{widget.label}</p>
-                  </div>
-                  <Switch
-                    checked={layout.widgets.includes(widget.id)}
-                    onCheckedChange={() => handleToggleWidget(widget.id)}
-                  />
+            <DndContext 
+              sensors={sensors} 
+              collisionDetection={closestCenter} 
+              onDragEnd={handleWidgetDragEnd}
+            >
+              <SortableContext 
+                items={orderedWidgets} 
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-1">
+                  {orderedWidgets.map(widgetId => {
+                    const widget = WIDGETS.find(w => w.id === widgetId);
+                    if (!widget) return null;
+                    return (
+                      <SortableWidgetItem
+                        key={widget.id}
+                        id={widget.id}
+                        label={widget.label}
+                        icon={widget.icon}
+                        isEnabled={layout.widgets.includes(widget.id)}
+                        onToggle={() => handleToggleWidget(widget.id)}
+                      />
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
 
           <Separator />
