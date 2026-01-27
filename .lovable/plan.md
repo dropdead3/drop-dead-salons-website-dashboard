@@ -1,167 +1,167 @@
 
-# Move Filters to Command Center Level
+# Add Pinned Analytics Management to Customize Dashboard Drawer
 
 ## Overview
 
-The goal is to remove the location and time range filter controls from the `SalesBentoCard` component and instead place them at the `CommandCenterAnalytics` level. This way, when multiple analytics cards are pinned to the Command Center, a single set of filters at the top will control all of them simultaneously.
+Enable users to view, unpin, and rearrange pinned analytics cards directly from the "Customize Dashboard" drawer instead of requiring navigation to the Analytics Hub. This creates a unified dashboard configuration experience.
 
 ---
 
 ## Current State
 
-- **SalesBentoCard** has its own internal filter state (`locationId`, `dateRange`) and renders filter UI in its header
-- **CommandCenterAnalytics** has hardcoded date ranges (`dateFrom`, `dateTo` set to last 30 days) with no user-facing filter controls
-- Each analytics card operates independently with no shared filter context
+**How pinning works today:**
+- Analytics cards are pinned via the gear icon (CommandCenterVisibilityToggle) in the Analytics Hub
+- Pinned state is stored in the `dashboard_element_visibility` table with `is_visible: true` for leadership roles
+- The Customize Dashboard drawer shows a "PINNED ANALYTICS" section that only links to the Analytics Hub
+- There's no way to unpin or reorder cards from the drawer
+
+**Current drawer structure:**
+```text
+SECTIONS
+├── Command Center ☑
+├── Operations Stats ☑
+├── Announcements ☑
+└── ...
+
+WIDGETS
+├── What's New ☑
+├── Team Birthdays ☑
+└── ...
+
+PINNED ANALYTICS
+└── "Pin cards from the Analytics Hub..." → [Open Analytics Hub]
+```
 
 ---
 
 ## Solution
 
-1. **Remove filters from SalesBentoCard** - Make the card accept filter values as props (controlled mode) rather than managing its own state
-2. **Add filter controls to CommandCenterAnalytics** - Create a shared filter bar that appears when any analytics cards are pinned
-3. **Pass filters to all pinned cards** - All analytics components receive the same filter values from the parent
+Replace the static "PINNED ANALYTICS" section with a dynamic, interactive list that:
+1. Shows all currently pinned analytics cards
+2. Allows toggling (unpinning) each card via a switch
+3. Supports drag-and-drop reordering (order stored in user's layout)
+4. Still provides a link to the Analytics Hub for pinning new cards
 
 ---
 
-## Implementation
-
-### Step 1: Update `SalesBentoCard.tsx`
-
-Change from internal state management to accepting filters as props:
-
-```typescript
-// Before (internal state):
-const [locationId, setLocationId] = useState(initialLocationId);
-const [dateRange, setDateRange] = useState<DateRangeType>(initialDateRange);
-
-// After (props-driven):
-interface SalesBentoCardProps {
-  locationId?: string;
-  dateRange?: DateRangeType;
-  dateFrom?: string;
-  dateTo?: string;
-}
-```
-
-**Changes:**
-- Remove the `useState` for filters
-- Remove the `Select` dropdowns from the card header
-- Accept `locationId`, `dateRange`, `dateFrom`, `dateTo` as props
-- Keep internal `getDateRange()` helper for when `dateFrom/dateTo` not provided
-- Simplify the card header to just show title
-
-### Step 2: Update `CommandCenterAnalytics.tsx`
-
-Add filter state and UI at the top level:
-
-```typescript
-export function CommandCenterAnalytics() {
-  // Add filter state
-  const [locationId, setLocationId] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<DateRangeType>('thisMonth');
-  
-  // Fetch locations for dropdown
-  const { data: locations } = useActiveLocations();
-  
-  // Calculate date filters
-  const dateFilters = useMemo(() => getDateRange(dateRange), [dateRange]);
-  
-  // ... existing visibility checks ...
-  
-  return (
-    <div className="space-y-6">
-      {/* Filter Bar - only shown when cards are pinned */}
-      {hasAnyPinned && (
-        <div className="flex flex-wrap items-center gap-3 pb-2">
-          {/* Location Select */}
-          <Select value={locationId} onValueChange={setLocationId}>
-            <SelectTrigger className="h-9 w-[160px] text-sm">
-              <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="All Locations" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {locations?.map(loc => (
-                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {/* Date Range Select */}
-          <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>
-            <SelectTrigger className="h-9 w-[150px] text-sm">
-              <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="thisWeek">This Week</SelectItem>
-              <SelectItem value="thisMonth">This Month</SelectItem>
-              <SelectItem value="lastMonth">Last Month</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      
-      {/* Sales Dashboard Bento */}
-      {hasSalesDashboard && (
-        <VisibilityGate elementKey="sales_dashboard_bento">
-          <SalesBentoCard 
-            locationId={locationId}
-            dateRange={dateRange}
-            dateFrom={dateFilters.dateFrom}
-            dateTo={dateFilters.dateTo}
-          />
-        </VisibilityGate>
-      )}
-      
-      {/* Other pinned cards also receive filter props */}
-      ...
-    </div>
-  );
-}
-```
-
-### Step 3: Update `SalesTabContent.tsx`
-
-Pass parent filters to the SalesBentoCard:
-
-```typescript
-<SalesBentoCard
-  locationId={filters.locationId}
-  dateRange={filters.dateRange}
-  dateFrom={filters.dateFrom}
-  dateTo={filters.dateTo}
-/>
-```
-
----
-
-## Visual Layout
-
-### Command Center (with filters at top):
+## Visual Design
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ COMMAND CENTER                                                              │
-│ ┌────────────────┐ ┌─────────────────┐                                      │
-│ │ 📍 All Locs ▼  │ │ 📅 This Month ▼ │  ← Shared filters for all cards     │
-│ └────────────────┘ └─────────────────┘                                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────┐ │
-│ │ SALES DASHBOARD  ← No longer has its own filters                       │ │
-│ │ ○ Monthly Goal ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  4%   │ │
-│ │ ...                                                                     │ │
-│ └─────────────────────────────────────────────────────────────────────────┘ │
-│                                                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────┐ │
-│ │ OTHER PINNED CARD  ← Also uses the same shared filters                 │ │
-│ │ ...                                                                     │ │
-│ └─────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
+PINNED ANALYTICS
+├── ⋮⋮ Sales Dashboard        ☑
+├── ⋮⋮ Top Performers         ☑
+├── ⋮⋮ Revenue Breakdown      ☑
+└── ⋮⋮ Capacity Utilization   ☐  (disabled = unpinned)
+
+[Open Analytics Hub to pin more cards]
+```
+
+Each item has:
+- Drag handle (⋮⋮) for reordering
+- Icon representing the card type
+- Label (card name)
+- Toggle switch to unpin
+
+---
+
+## Implementation Steps
+
+### Step 1: Define Available Pinnable Cards Configuration
+
+Create a configuration array of all pinnable analytics cards with their metadata:
+
+```typescript
+const PINNABLE_CARDS = [
+  { id: 'sales_dashboard_bento', label: 'Sales Dashboard', icon: <LayoutDashboard /> },
+  { id: 'sales_overview', label: 'Sales Overview', icon: <DollarSign /> },
+  { id: 'top_performers', label: 'Top Performers', icon: <Trophy /> },
+  { id: 'revenue_breakdown', label: 'Revenue Breakdown', icon: <PieChart /> },
+  { id: 'client_funnel', label: 'Client Funnel', icon: <Users /> },
+  { id: 'team_goals', label: 'Team Goals', icon: <Target /> },
+  { id: 'new_bookings', label: 'New Bookings', icon: <CalendarPlus /> },
+  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', icon: <TrendingUp /> },
+  { id: 'capacity_utilization', label: 'Capacity Utilization', icon: <Gauge /> },
+  { id: 'hiring_capacity', label: 'Hiring Capacity', icon: <UserPlus /> },
+  { id: 'staffing_trends', label: 'Staffing Trends', icon: <LineChart /> },
+  { id: 'stylist_workload', label: 'Stylist Workload', icon: <Briefcase /> },
+];
+```
+
+### Step 2: Create SortablePinnedCardItem Component
+
+Create a new component similar to `SortableWidgetItem` for rendering draggable pinned card items:
+
+```typescript
+// src/components/dashboard/SortablePinnedCardItem.tsx
+interface SortablePinnedCardItemProps {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  isPinned: boolean;
+  onToggle: () => void;
+}
+```
+
+### Step 3: Update DashboardCustomizeMenu
+
+Replace the static "PINNED ANALYTICS" section with an interactive list:
+
+1. **Fetch visibility data** using `useDashboardVisibility()` hook
+2. **Determine which cards are pinned** by checking if `is_visible` is true for leadership roles
+3. **Compute ordered list** from `layout.pinnedCards` (user's saved order) + any newly pinned cards
+4. **Render sortable list** with toggle switches for unpinning
+5. **Handle toggle** by calling `useToggleDashboardVisibility` for all leadership roles
+6. **Handle drag end** by saving new order to `layout.pinnedCards`
+
+### Step 4: Update CommandCenterAnalytics to Respect Order
+
+The Command Center should render cards in the order specified by `layout.pinnedCards` rather than a fixed order:
+
+```typescript
+// Get user's preferred order
+const pinnedCardsOrder = layout.pinnedCards || [];
+
+// Sort visible cards by saved order
+const orderedPinnedCards = pinnedCardsOrder
+  .filter(cardId => isElementVisible(cardId))
+  .concat(
+    // Add any newly pinned cards not in saved order
+    allVisibleCards.filter(id => !pinnedCardsOrder.includes(id))
+  );
+```
+
+---
+
+## Data Flow
+
+### Unpinning a Card (from drawer)
+
+```text
+User toggles switch OFF
+      │
+      ▼
+DashboardCustomizeMenu calls useToggleDashboardVisibility
+      │
+      ▼
+Updates dashboard_element_visibility table (is_visible = false for leadership roles)
+      │
+      ▼
+React Query invalidates cache → CommandCenterAnalytics re-renders → Card disappears
+```
+
+### Reordering Cards (from drawer)
+
+```text
+User drags card to new position
+      │
+      ▼
+DashboardCustomizeMenu calls useSaveDashboardLayout with updated pinnedCards array
+      │
+      ▼
+Updates user_preferences.dashboard_layout JSON
+      │
+      ▼
+CommandCenterAnalytics uses new order to render cards
 ```
 
 ---
@@ -170,54 +170,76 @@ Pass parent filters to the SalesBentoCard:
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/sales/SalesBentoCard.tsx` | Remove internal filter state & UI, accept filters as props |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | Add filter state, filter UI bar, pass filters to cards |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Pass filter props from AnalyticsHub to SalesBentoCard |
+| `src/components/dashboard/SortablePinnedCardItem.tsx` | **NEW** - Sortable item component for pinned analytics cards |
+| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Add interactive pinned cards list with drag-and-drop and toggle |
+| `src/components/dashboard/CommandCenterAnalytics.tsx` | Respect pinnedCards order from layout when rendering |
+| `src/hooks/useDashboardLayout.ts` | Ensure pinnedCards is properly parsed and saved |
 
 ---
 
 ## Technical Details
 
-### Shared Helper Function
+### Determining Pinned Status
 
-The `getDateRange()` helper function that converts a `DateRangeType` to `{dateFrom, dateTo}` will be moved to a shared utility file or kept in the SalesBentoCard with a fallback for when explicit dates aren't provided:
+A card is considered "pinned" if all leadership roles (`super_admin`, `admin`, `manager`) have `is_visible: true` for that element key in `dashboard_element_visibility`:
 
 ```typescript
-// Use explicit dates if provided, otherwise calculate from dateRange
-const dateFilters = useMemo(() => {
-  if (dateFrom && dateTo) {
-    return { dateFrom, dateTo };
-  }
-  return getDateRange(dateRange || 'thisMonth');
-}, [dateFrom, dateTo, dateRange]);
+const isPinned = (elementKey: string) => {
+  const leadershipRoles = ['super_admin', 'admin', 'manager'];
+  return leadershipRoles.every(role => 
+    visibilityData?.find(v => v.element_key === elementKey && v.role === role)?.is_visible ?? false
+  );
+};
 ```
 
-### Props Interface
+### Saving Order to Layout
+
+When the user reorders pinned cards, save the new order to `layout.pinnedCards`:
 
 ```typescript
-interface SalesBentoCardProps {
-  locationId?: string;
-  dateRange?: 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
-  dateFrom?: string;
-  dateTo?: string;
-}
+const handlePinnedCardDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+  if (!over || active.id === over.id) return;
+  
+  const oldIndex = orderedPinnedCards.indexOf(active.id as string);
+  const newIndex = orderedPinnedCards.indexOf(over.id as string);
+  const newOrder = arrayMove(orderedPinnedCards, oldIndex, newIndex);
+  
+  saveLayout.mutate({ ...layout, pinnedCards: newOrder });
+};
+```
+
+### Unpinning a Card
+
+When the user toggles a card OFF, update the visibility table (not the layout):
+
+```typescript
+const handleUnpinCard = async (cardId: string) => {
+  const leadershipRoles: AppRole[] = ['super_admin', 'admin', 'manager'];
+  for (const role of leadershipRoles) {
+    await toggleVisibility.mutateAsync({
+      elementKey: cardId,
+      role,
+      isVisible: false,
+    });
+  }
+};
 ```
 
 ---
 
 ## Benefits
 
-1. **Unified Filtering** - All pinned analytics cards use the same filters
-2. **Cleaner Card UI** - Cards focus on displaying data, not filter controls
-3. **Consistent UX** - Filter bar matches the Analytics Hub pattern
-4. **Simpler Props** - Cards receive pre-calculated filter values
-5. **Scalable** - Easy to add more pinnable cards that respect the same filters
+1. **Unified Experience** - Manage all dashboard customization from one drawer
+2. **Quick Unpinning** - Remove cards without navigating to Analytics Hub
+3. **Custom Order** - Users can arrange pinned cards in their preferred sequence
+4. **Consistent UI** - Matches existing Sections and Widgets patterns in the drawer
+5. **Preserved Navigation** - Still provides link to Analytics Hub for discovering/pinning new cards
 
 ---
 
-## Result
+## Edge Cases
 
-- Filters appear at the Command Center level when any analytics cards are pinned
-- Changing filters updates all visible analytics cards simultaneously
-- The SalesBentoCard becomes purely a display component
-- Same card can be used in both Analytics Hub (with parent filters) and Command Center (with shared filters)
+- **No pinned cards**: Show helpful message "No analytics cards pinned yet" with link to Analytics Hub
+- **New cards pinned externally**: Cards pinned from Analytics Hub appear at the end of the list
+- **Order persistence**: Order is saved per-user in `user_preferences.dashboard_layout.pinnedCards`
