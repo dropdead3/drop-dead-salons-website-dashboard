@@ -13,7 +13,6 @@ const LINK_CONFIG: Record<string, { label: string }> = {
   '/dashboard/my-graduation': { label: 'My Graduation' },
   '/dashboard/stats': { label: 'My Stats' },
   '/dashboard/my-clients': { label: 'My Clients' },
-  '/dashboard/leaderboard': { label: 'Leaderboard' },
   '/dashboard/admin/sales': { label: 'Sales Dashboard' },
   '/dashboard/admin/operational-analytics': { label: 'Operational Analytics' },
   

@@ -1,14 +1,18 @@
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePhorestPerformanceMetrics, usePhorestConnection, useUserPhorestMapping } from '@/hooks/usePhorestSync';
 import { useUserSalesSummary } from '@/hooks/useSalesData';
 import { format, startOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { 
   TrendingUp,
-  Link2
+  Link2,
+  BarChart3,
+  Trophy
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -20,10 +24,20 @@ import { PerformanceTrendChart } from '@/components/dashboard/sales/PerformanceT
 import { ClientInsightsCard } from '@/components/dashboard/sales/ClientInsightsCard';
 import { ServiceMixChart } from '@/components/dashboard/sales/ServiceMixChart';
 import { StylistLocationRevenueChart } from '@/components/dashboard/sales/StylistLocationRevenueChart';
+import { LeaderboardContent } from '@/components/dashboard/LeaderboardContent';
 
 export default function Stats() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'performance';
   const [clientInsightsLocation, setClientInsightsLocation] = useState<string>('all');
+
+  // Check permission for leaderboard tab
+  const canViewLeaderboard = hasPermission('view_leaderboard');
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
 
   // Date ranges for sales data
   const today = new Date();
@@ -59,167 +73,189 @@ export default function Stats() {
               MY STATS
             </h1>
             <p className="text-muted-foreground font-sans">
-              Track your performance and sales metrics.
+              Track your performance and compare with the team.
             </p>
           </div>
         </div>
 
-        {/* Phorest Stats Card (if connected) */}
-        {myPhorestMetrics && (
-          <Card className="p-6 bg-primary/5 border-primary/20 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Link2 className="w-5 h-5 text-primary" />
-                <h2 className="font-display text-sm tracking-wide">PHOREST DATA - THIS WEEK</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <PhorestSyncButton syncType="reports" size="sm" />
-                <Badge variant="outline" className="text-primary border-primary">
-                  <span className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
-                  Live
-                </Badge>
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="text-center">
-                <p className="text-2xl font-display">{myPhorestMetrics.new_clients}</p>
-                <p className="text-xs text-muted-foreground">New Clients</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-display">${Number(myPhorestMetrics.total_revenue).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Revenue</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-display">{myPhorestMetrics.service_count}</p>
-                <p className="text-xs text-muted-foreground">Services</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-display">{Number(myPhorestMetrics.retention_rate).toFixed(0)}%</p>
-                <p className="text-xs text-muted-foreground">Retention</p>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Show connection prompt if not linked to Phorest */}
-        {!isLinkedToPhorest && phorestConnection?.connected && (
-          <Card className="p-4 bg-muted/50 border-dashed mt-6">
-            <p className="text-sm text-muted-foreground text-center">
-              Your account isn't linked to Phorest yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
-            </p>
-          </Card>
-        )}
-
-        {/* Personal Goals & Progress Section */}
-        {user && (
-          <div className="grid gap-6 md:grid-cols-2 mt-6">
-            <PersonalGoalsCard 
-              userId={user.id}
-              currentMonthlyRevenue={userMonthlySales?.totalRevenue || 0}
-              currentWeeklyRevenue={userWeeklySales?.totalRevenue || 0}
-            />
-            <TierProgressAlert 
-              currentRevenue={userMonthlySales?.totalRevenue || 0}
-            />
-          </div>
-        )}
-
-        {/* Performance Visualizations */}
-        {user && isLinkedToPhorest && (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
-            <div className="lg:col-span-2">
-              <PerformanceTrendChart userId={user.id} weeks={8} />
-            </div>
-            <ClientInsightsCard 
-              userId={user.id} 
-              locationId={clientInsightsLocation}
-              onLocationChange={setClientInsightsLocation}
-              showLocationFilter={true}
-            />
-          </div>
-        )}
-
-        {/* Location Revenue Comparison - for multi-branch stylists */}
-        {user && isLinkedToPhorest && (
-          <div className="mt-6">
-            <StylistLocationRevenueChart userId={user.id} months={3} />
-          </div>
-        )}
-
-        {/* Service Mix */}
-        {user && isLinkedToPhorest && (
-          <div className="grid gap-6 md:grid-cols-2 mt-6">
-            <ServiceMixChart userId={user.id} days={30} />
-            <SalesAchievements
-              totalRevenue={userMonthlySales?.totalRevenue || 0}
-              serviceRevenue={userMonthlySales?.serviceRevenue || 0}
-              productRevenue={userMonthlySales?.productRevenue || 0}
-              totalTransactions={userMonthlySales?.totalTransactions || 0}
-            />
-          </div>
-        )}
-
-        {/* Fallback for non-Phorest users */}
-        {user && !isLinkedToPhorest && (userMonthlySales?.totalRevenue || 0) > 0 && (
-          <div className="mt-6">
-            <SalesAchievements
-              totalRevenue={userMonthlySales?.totalRevenue || 0}
-              serviceRevenue={userMonthlySales?.serviceRevenue || 0}
-              productRevenue={userMonthlySales?.productRevenue || 0}
-              totalTransactions={userMonthlySales?.totalTransactions || 0}
-            />
-          </div>
-        )}
-
-        {/* Conversion Dashboard - Powered by Phorest */}
-        <Card className="p-6 mt-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              <h2 className="font-display text-sm tracking-wide">CONVERSION DASHBOARD</h2>
-            </div>
-            {isLinkedToPhorest && (
-              <Badge variant="outline" className="text-xs">
-                <Link2 className="w-3 h-3 mr-1" />
-                Phorest Data
-              </Badge>
+        {/* Main Tabs */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+          <TabsList className="bg-muted/50">
+            <TabsTrigger value="performance" className="font-display text-xs tracking-wide">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              My Performance
+            </TabsTrigger>
+            {canViewLeaderboard && (
+              <TabsTrigger value="leaderboard" className="font-display text-xs tracking-wide">
+                <Trophy className="w-4 h-4 mr-2" />
+                Team Leaderboard
+              </TabsTrigger>
             )}
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              label="Rebooking Rate"
-              value={myPhorestMetrics?.rebooking_rate 
-                ? `${Number(myPhorestMetrics.rebooking_rate).toFixed(0)}%` 
-                : '0%'
-              }
-            />
-            <StatCard
-              label="Retention Rate"
-              value={myPhorestMetrics?.retention_rate 
-                ? `${Number(myPhorestMetrics.retention_rate).toFixed(0)}%` 
-                : '0%'
-              }
-            />
-            <StatCard
-              label="Avg Ticket Value"
-              value={myPhorestMetrics?.average_ticket 
-                ? `$${Number(myPhorestMetrics.average_ticket).toLocaleString()}` 
-                : (userWeeklySales?.averageTicket 
-                  ? `$${userWeeklySales.averageTicket.toLocaleString()}` 
-                  : '$0')
-              }
-            />
-            <StatCard
-              label="New Clients"
-              value={myPhorestMetrics?.new_clients?.toString() || '0'}
-            />
-          </div>
-          {!isLinkedToPhorest && (
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              Link your Phorest account to see live conversion metrics
-            </p>
+          </TabsList>
+
+          {/* My Performance Tab */}
+          <TabsContent value="performance" className="space-y-6">
+            {/* Phorest Stats Card (if connected) */}
+            {myPhorestMetrics && (
+              <Card className="p-6 bg-primary/5 border-primary/20">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Link2 className="w-5 h-5 text-primary" />
+                    <h2 className="font-display text-sm tracking-wide">PHOREST DATA - THIS WEEK</h2>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <PhorestSyncButton syncType="reports" size="sm" />
+                    <Badge variant="outline" className="text-primary border-primary">
+                      <span className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
+                      Live
+                    </Badge>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-display">{myPhorestMetrics.new_clients}</p>
+                    <p className="text-xs text-muted-foreground">New Clients</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-display">${Number(myPhorestMetrics.total_revenue).toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Revenue</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-display">{myPhorestMetrics.service_count}</p>
+                    <p className="text-xs text-muted-foreground">Services</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-display">{Number(myPhorestMetrics.retention_rate).toFixed(0)}%</p>
+                    <p className="text-xs text-muted-foreground">Retention</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Show connection prompt if not linked to Phorest */}
+            {!isLinkedToPhorest && phorestConnection?.connected && (
+              <Card className="p-4 bg-muted/50 border-dashed">
+                <p className="text-sm text-muted-foreground text-center">
+                  Your account isn't linked to Phorest yet. <Link to="/dashboard/admin/phorest" className="text-primary underline">Set up staff mapping</Link> to see your stats automatically.
+                </p>
+              </Card>
+            )}
+
+            {/* Personal Goals & Progress Section */}
+            {user && (
+              <div className="grid gap-6 md:grid-cols-2">
+                <PersonalGoalsCard 
+                  userId={user.id}
+                  currentMonthlyRevenue={userMonthlySales?.totalRevenue || 0}
+                  currentWeeklyRevenue={userWeeklySales?.totalRevenue || 0}
+                />
+                <TierProgressAlert 
+                  currentRevenue={userMonthlySales?.totalRevenue || 0}
+                />
+              </div>
+            )}
+
+            {/* Performance Visualizations */}
+            {user && isLinkedToPhorest && (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  <PerformanceTrendChart userId={user.id} weeks={8} />
+                </div>
+                <ClientInsightsCard 
+                  userId={user.id} 
+                  locationId={clientInsightsLocation}
+                  onLocationChange={setClientInsightsLocation}
+                  showLocationFilter={true}
+                />
+              </div>
+            )}
+
+            {/* Location Revenue Comparison - for multi-branch stylists */}
+            {user && isLinkedToPhorest && (
+              <StylistLocationRevenueChart userId={user.id} months={3} />
+            )}
+
+            {/* Service Mix */}
+            {user && isLinkedToPhorest && (
+              <div className="grid gap-6 md:grid-cols-2">
+                <ServiceMixChart userId={user.id} days={30} />
+                <SalesAchievements
+                  totalRevenue={userMonthlySales?.totalRevenue || 0}
+                  serviceRevenue={userMonthlySales?.serviceRevenue || 0}
+                  productRevenue={userMonthlySales?.productRevenue || 0}
+                  totalTransactions={userMonthlySales?.totalTransactions || 0}
+                />
+              </div>
+            )}
+
+            {/* Fallback for non-Phorest users */}
+            {user && !isLinkedToPhorest && (userMonthlySales?.totalRevenue || 0) > 0 && (
+              <SalesAchievements
+                totalRevenue={userMonthlySales?.totalRevenue || 0}
+                serviceRevenue={userMonthlySales?.serviceRevenue || 0}
+                productRevenue={userMonthlySales?.productRevenue || 0}
+                totalTransactions={userMonthlySales?.totalTransactions || 0}
+              />
+            )}
+
+            {/* Conversion Dashboard - Powered by Phorest */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  <h2 className="font-display text-sm tracking-wide">CONVERSION DASHBOARD</h2>
+                </div>
+                {isLinkedToPhorest && (
+                  <Badge variant="outline" className="text-xs">
+                    <Link2 className="w-3 h-3 mr-1" />
+                    Phorest Data
+                  </Badge>
+                )}
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                  label="Rebooking Rate"
+                  value={myPhorestMetrics?.rebooking_rate 
+                    ? `${Number(myPhorestMetrics.rebooking_rate).toFixed(0)}%` 
+                    : '0%'
+                  }
+                />
+                <StatCard
+                  label="Retention Rate"
+                  value={myPhorestMetrics?.retention_rate 
+                    ? `${Number(myPhorestMetrics.retention_rate).toFixed(0)}%` 
+                    : '0%'
+                  }
+                />
+                <StatCard
+                  label="Avg Ticket Value"
+                  value={myPhorestMetrics?.average_ticket 
+                    ? `$${Number(myPhorestMetrics.average_ticket).toLocaleString()}` 
+                    : (userWeeklySales?.averageTicket 
+                      ? `$${userWeeklySales.averageTicket.toLocaleString()}` 
+                      : '$0')
+                  }
+                />
+                <StatCard
+                  label="New Clients"
+                  value={myPhorestMetrics?.new_clients?.toString() || '0'}
+                />
+              </div>
+              {!isLinkedToPhorest && (
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  Link your Phorest account to see live conversion metrics
+                </p>
+              )}
+            </Card>
+          </TabsContent>
+
+          {/* Team Leaderboard Tab */}
+          {canViewLeaderboard && (
+            <TabsContent value="leaderboard">
+              <LeaderboardContent />
+            </TabsContent>
           )}
-        </Card>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
