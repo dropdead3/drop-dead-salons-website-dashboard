@@ -12,7 +12,6 @@ import {
   ShoppingBag,
   CreditCard,
   Receipt,
-  CalendarCheck,
   Trophy,
   PieChart as PieChartIcon,
   Loader2,
@@ -235,16 +234,7 @@ export function SalesBentoCard({
               value={totalRevenue} 
               label="Total Revenue" 
               prefix="$"
-              tooltip="Sum of all service and product sales for the selected date range."
-            />
-            <KPICell 
-              icon={CalendarCheck} 
-              value={totalRevenue} 
-              label="Expected Rev" 
-              prefix="$"
-              iconColor="text-chart-5"
-              subtitle={`${totalTransactions} appointments`}
-              tooltip="Revenue calculated from booked appointments in the selected date range. This reflects scheduled services, not completed sales."
+              tooltip="Total expected revenue from all scheduled appointments in the selected date range."
             />
             <KPICell 
               icon={Scissors} 
@@ -254,7 +244,7 @@ export function SalesBentoCard({
               tooltip="Revenue from all service transactions (cuts, color, treatments, etc.)."
             />
             <KPICell 
-              icon={ShoppingBag} 
+              icon={ShoppingBag}
               value={productRevenue} 
               label="Products" 
               prefix="$"
