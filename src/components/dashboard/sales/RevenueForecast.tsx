@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { TrendingUp, TrendingDown, Target, CalendarDays, Loader2 } from 'lucide-react';
 import { format, getDaysInMonth, getDate, startOfMonth, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 interface RevenueForecastProps {
   dailyData: { date: string; revenue: number }[];
@@ -112,6 +113,10 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading }: Revenue
           <div className="flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-primary" />
             <CardTitle className="font-display">Revenue Forecast</CardTitle>
+            <CommandCenterVisibilityToggle 
+              elementKey="revenue_forecast" 
+              elementName="Revenue Forecast" 
+            />
           </div>
           <Badge variant={forecast.isOnTrack ? 'default' : 'secondary'}>
             <StatusIcon className={cn('w-3 h-3 mr-1', statusColor)} />

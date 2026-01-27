@@ -8,6 +8,7 @@ import { useHiringCapacity, LocationCapacity } from '@/hooks/useHiringCapacity';
 import { useHiringForecast } from '@/hooks/useHiringForecast';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 interface HiringCapacityCardProps {
   className?: string;
@@ -182,6 +183,10 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
           <CardTitle className="flex items-center gap-2 text-lg">
             <UserPlus className="h-5 w-5 text-primary" />
             Hiring Capacity
+            <CommandCenterVisibilityToggle 
+              elementKey="hiring_capacity" 
+              elementName="Hiring Capacity" 
+            />
           </CardTitle>
           <Button 
             variant="ghost" 

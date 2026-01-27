@@ -8,6 +8,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 interface StylistWorkloadCardProps {
   workload: StaffWorkload[];
@@ -68,6 +69,10 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
               Stylist Workload Distribution
+              <CommandCenterVisibilityToggle 
+                elementKey="stylist_workload" 
+                elementName="Stylist Workload" 
+              />
             </CardTitle>
           </div>
         </CardHeader>
@@ -91,6 +96,10 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
               Stylist Workload Distribution
+              <CommandCenterVisibilityToggle 
+                elementKey="stylist_workload" 
+                elementName="Stylist Workload" 
+              />
             </CardTitle>
             <Button
               variant="ghost"
@@ -145,6 +154,10 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="w-5 h-5 text-primary" />
             Stylist Workload Distribution
+            <CommandCenterVisibilityToggle 
+              elementKey="stylist_workload" 
+              elementName="Stylist Workload" 
+            />
           </CardTitle>
           <Button
             variant="ghost"

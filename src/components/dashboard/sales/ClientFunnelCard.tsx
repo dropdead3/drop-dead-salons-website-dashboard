@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Users, UserPlus, UserCheck, TrendingUp } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useClientFunnel } from '@/hooks/useSalesAnalytics';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 interface ClientFunnelCardProps {
   dateFrom: string;
@@ -38,6 +39,10 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId }: ClientFunnelC
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-chart-3" />
             <CardTitle className="font-display">Client Acquisition</CardTitle>
+            <CommandCenterVisibilityToggle 
+              elementKey="client_funnel" 
+              elementName="Client Funnel" 
+            />
           </div>
           <Badge variant="outline">{newClientPercent}% new</Badge>
         </div>

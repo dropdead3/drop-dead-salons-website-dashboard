@@ -17,6 +17,7 @@ import {
 import { Users, Target, Edit2, Trophy, Gift, Loader2, PartyPopper } from 'lucide-react';
 import { useTeamGoals } from '@/hooks/useTeamGoals';
 import { cn } from '@/lib/utils';
+import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
 interface TeamGoalsCardProps {
   currentRevenue: number;
@@ -111,6 +112,10 @@ export function TeamGoalsCard({
               <CardTitle className="font-display text-lg">Team Goal</CardTitle>
               <CardDescription className="capitalize">{period} Target</CardDescription>
             </div>
+            <CommandCenterVisibilityToggle 
+              elementKey="team_goals" 
+              elementName="Team Goals" 
+            />
           </div>
           <Button variant="ghost" size="sm" onClick={handleOpenEdit}>
             <Edit2 className="w-4 h-4" />
