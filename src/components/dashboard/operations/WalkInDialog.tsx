@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { UserPlus, Loader2, Clock, Ban, Check, DollarSign } from 'lucide-react';
+import { UserPlus, Loader2, Clock, Ban, Check, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -50,6 +50,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
   const [clientPhone, setClientPhone] = useState('');
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [stylistId, setStylistId] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch available services with same-day booking info
@@ -78,6 +79,15 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
       return acc;
     }, {} as Record<string, ServiceWithRestrictions[]>);
   }, [services]);
+
+  // Get category list with selection counts
+  const categories = useMemo(() => {
+    return Object.keys(servicesByCategory).map(category => {
+      const categoryServices = servicesByCategory[category];
+      const selectedCount = categoryServices.filter(s => selectedServiceIds.includes(s.id)).length;
+      return { name: category, count: categoryServices.length, selectedCount };
+    });
+  }, [servicesByCategory, selectedServiceIds]);
 
   // Get selected service details
   const selectedServiceDetails = useMemo(() => {
@@ -186,6 +196,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
     setClientPhone('');
     setSelectedServiceIds([]);
     setStylistId('');
+    setActiveCategory(null);
   };
 
   const formatPhoneNumber = (value: string) => {
@@ -240,10 +251,22 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
             </div>
           </div>
           
-          {/* Service Selection - Multi-select with restrictions */}
+          {/* Service Selection - Category-first navigation */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Services</Label>
+              <Label className="text-sm font-medium">
+                {activeCategory ? (
+                  <button 
+                    onClick={() => setActiveCategory(null)}
+                    className="flex items-center gap-1 hover:text-primary transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    {activeCategory}
+                  </button>
+                ) : (
+                  'Pick a Service Category'
+                )}
+              </Label>
               {selectedServiceIds.length > 0 && (
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   {selectedServiceIds.length} selected • {totalDuration} min
@@ -251,73 +274,89 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
               )}
             </div>
             <ScrollArea className="h-[240px] border rounded-lg bg-card">
-              <div className="p-3 space-y-4">
-                {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
-                  <div key={category} className="space-y-2">
-                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1 pb-1 border-b border-border/50">
-                      {category}
+              <div className="p-3 space-y-1">
+                {!activeCategory ? (
+                  // Category list view
+                  categories.map((category) => (
+                    <div
+                      key={category.name}
+                      onClick={() => setActiveCategory(category.name)}
+                      className="flex items-center justify-between px-3 py-3 rounded-lg cursor-pointer hover:bg-accent/50 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium">{category.name}</span>
+                        {category.selectedCount > 0 && (
+                          <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                            {category.selectedCount} selected
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span className="text-xs">{category.count} services</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      {categoryServices.map((service) => {
-                        const isSelected = selectedServiceIds.includes(service.id);
-                        const isDisabled = service.allow_same_day_booking === false;
-                        const price = getServicePrice(service);
+                  ))
+                ) : (
+                  // Services list view for active category
+                  servicesByCategory[activeCategory]?.map((service) => {
+                    const isSelected = selectedServiceIds.includes(service.id);
+                    const isDisabled = service.allow_same_day_booking === false;
+                    const price = getServicePrice(service);
+                    
+                    return (
+                      <div
+                        key={service.id}
+                        onClick={() => toggleService(service.id, service.allow_same_day_booking !== false)}
+                        className={cn(
+                          "flex items-center gap-4 px-3 py-2.5 rounded-lg transition-all",
+                          isDisabled 
+                            ? "opacity-40 cursor-not-allowed" 
+                            : "cursor-pointer hover:bg-accent/50",
+                          isSelected && !isDisabled && "bg-primary/10 ring-1 ring-primary/20"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors",
+                          isDisabled ? "border-muted-foreground/20 bg-muted/50" : "border-muted-foreground/40",
+                          isSelected && !isDisabled && "bg-primary border-primary"
+                        )}>
+                          {isDisabled ? (
+                            <Ban className="w-3 h-3 text-muted-foreground/50" />
+                          ) : isSelected ? (
+                            <Check className="w-3 h-3 text-primary-foreground" />
+                          ) : null}
+                        </div>
                         
-                        return (
-                          <div
-                            key={service.id}
-                            onClick={() => toggleService(service.id, service.allow_same_day_booking !== false)}
-                            className={cn(
-                              "flex items-center gap-4 px-3 py-2.5 rounded-lg transition-all",
-                              isDisabled 
-                                ? "opacity-40 cursor-not-allowed" 
-                                : "cursor-pointer hover:bg-accent/50",
-                              isSelected && !isDisabled && "bg-primary/10 ring-1 ring-primary/20"
-                            )}
-                          >
-                            <div className={cn(
-                              "w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors",
-                              isDisabled ? "border-muted-foreground/20 bg-muted/50" : "border-muted-foreground/40",
-                              isSelected && !isDisabled && "bg-primary border-primary"
-                            )}>
-                              {isDisabled ? (
-                                <Ban className="w-3 h-3 text-muted-foreground/50" />
-                              ) : isSelected ? (
-                                <Check className="w-3 h-3 text-primary-foreground" />
-                              ) : null}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <span className={cn(
-                                "text-sm font-medium",
-                                isDisabled && "text-muted-foreground"
-                              )}>
-                                {service.name}
-                              </span>
-                              {isDisabled && service.same_day_restriction_reason && (
-                                <p className="text-xs text-destructive/70 mt-0.5">
-                                  {service.same_day_restriction_reason}
-                                </p>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-3 shrink-0 text-right">
-                              <span className="text-xs text-muted-foreground tabular-nums">
-                                {service.duration_minutes}m
-                              </span>
-                              <span className={cn(
-                                "text-sm font-semibold tabular-nums min-w-[52px]",
-                                isDisabled ? "text-muted-foreground" : "text-foreground"
-                              )}>
-                                ${price}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+                        <div className="flex-1 min-w-0">
+                          <span className={cn(
+                            "text-sm font-medium",
+                            isDisabled && "text-muted-foreground"
+                          )}>
+                            {service.name}
+                          </span>
+                          {isDisabled && service.same_day_restriction_reason && (
+                            <p className="text-xs text-destructive/70 mt-0.5">
+                              {service.same_day_restriction_reason}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-3 shrink-0 text-right">
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {service.duration_minutes}m
+                          </span>
+                          <span className={cn(
+                            "text-sm font-semibold tabular-nums min-w-[52px]",
+                            isDisabled ? "text-muted-foreground" : "text-foreground"
+                          )}>
+                            ${price}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </ScrollArea>
           </div>
