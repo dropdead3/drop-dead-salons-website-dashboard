@@ -7,6 +7,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   business: '#D946EF',   // Fuchsia
   email: '#8B5CF6',      // Purple
   sms: '#22C55E',        // Green for text messages
+  'service-flows': '#A855F7', // Purple (for service communication flows)
   users: '#3B82F6',      // Blue
   onboarding: '#F97316', // Orange
   integrations: '#10B981', // Emerald
@@ -46,7 +47,7 @@ export const SECTION_GROUPS = [
   {
     id: 'communications',
     label: 'Communications',
-    categories: ['email', 'sms'],
+    categories: ['email', 'sms', 'service-flows'],
   },
 ];
 
