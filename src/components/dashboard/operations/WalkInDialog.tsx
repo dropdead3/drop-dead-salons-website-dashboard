@@ -207,7 +207,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           Quick Walk-In
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] flex flex-col overflow-visible">
         <DialogHeader>
           <DialogTitle className="font-display">Add Walk-In Client</DialogTitle>
           <DialogDescription>
