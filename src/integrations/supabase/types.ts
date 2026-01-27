@@ -4188,6 +4188,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          message_body: string
+          name: string
+          template_key: string
+          updated_at: string | null
+          variables: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_body: string
+          name: string
+          template_key: string
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_body?: string
+          name?: string
+          template_key?: string
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Relationships: []
+      }
       specialty_options: {
         Row: {
           created_at: string

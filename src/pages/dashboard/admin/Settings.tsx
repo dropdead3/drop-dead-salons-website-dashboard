@@ -51,6 +51,7 @@ import {
   CalendarDays,
   MapPin,
   Armchair,
+  MessageSquare,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
@@ -67,6 +68,7 @@ import { ScheduleSettingsContent } from '@/components/dashboard/settings/Schedul
 import { LocationsSettingsContent } from '@/components/dashboard/settings/LocationsSettingsContent';
 import { DayRateSettingsContent } from '@/components/dashboard/settings/DayRateSettingsContent';
 import { RoleAccessConfigurator } from '@/components/dashboard/settings/RoleAccessConfigurator';
+import { SmsTemplatesManager } from '@/components/dashboard/SmsTemplatesManager';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
@@ -99,7 +101,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -698,6 +700,12 @@ export default function Settings() {
       description: 'Navigation, tabs & widgets by role',
       icon: Shield,
     },
+    sms: {
+      id: 'sms',
+      label: 'Text Messages',
+      description: 'SMS templates & automation',
+      icon: MessageSquare,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -802,6 +810,20 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent>
                   <SignaturePresetsManager />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeCategory === 'sms' && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-display text-lg">SMS TEMPLATES</CardTitle>
+                  <CardDescription>Customize text message templates for automated notifications.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SmsTemplatesManager />
                 </CardContent>
               </Card>
             </div>
