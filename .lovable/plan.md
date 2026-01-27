@@ -1,119 +1,118 @@
 
-# Move Sidebar Navigation Configurator to Role Access
+# Fix Role Selector Redundancy in Role Access Configurator
 
-## Overview
+## Problem
 
-This plan moves the full-featured **Sidebar Navigation Configurator** (currently shown under System Settings for Super Admins) to the new **Role Access** settings section, and updates the relevant memory contexts to reflect this architectural change.
+The screenshot shows **three overlapping role selectors**:
 
-## Current State
+1. **Top Selector** (Card 1): Role buttons with visibility stats (Super Admin 20/22, Director Of Operations 34/37, etc.)
 
-| Component | Location | Capability |
-|-----------|----------|------------|
-| `SidebarLayoutEditor` | Settings → System (super_admin only) | Full drag-and-drop reordering, visibility toggles, role-based overrides, live preview |
-| `NavigationAccessPanel` | Settings → Role Access → Navigation tab | Simplified visibility-only toggles (no reordering, no live preview) |
+2. **Middle Section** (Card 2 Header): "SUPER ADMIN ACCESS" banner showing the selected role with "Copy from..." and "Reset" actions
 
-The screenshot shows the **SidebarLayoutEditor** with:
-- Role selector tabs (Global, Super Admin, DOO, Manager, etc.)
-- Section drag-and-drop reordering
-- Per-section visibility toggles with link counts
-- Live sidebar preview panel
+3. **Nested Selector** (Inside SidebarLayoutEditor): "VISIBILITY MODE" tabs with Global, Super Admin, DOO, etc.
 
-## Proposed Changes
+This creates a confusing UX where users see role selection in three places.
 
-### 1. Update RoleAccessConfigurator to Use SidebarLayoutEditor
+## Root Cause
 
-**File**: `src/components/dashboard/settings/RoleAccessConfigurator.tsx`
+`SidebarLayoutEditor` was originally a standalone component with its own role selection. When embedded inside `RoleAccessConfigurator`, the parent added another role selector, creating duplication.
 
-Replace the simplified `NavigationAccessPanel` in the Navigation tab with the full `SidebarLayoutEditor`:
+## Solution
 
+Modify `SidebarLayoutEditor` to accept an optional `selectedRole` prop. When provided:
+- Use the external role instead of internal state
+- Hide its own role selector UI
+- Allow the parent `RoleAccessConfigurator` to control which role is being edited
+
+This approach keeps `SidebarLayoutEditor` backwards compatible for standalone use while eliminating redundancy when embedded.
+
+## File Changes
+
+### 1. `src/components/dashboard/settings/SidebarLayoutEditor.tsx`
+
+**Add props interface:**
 ```typescript
-import { SidebarLayoutEditor } from './SidebarLayoutEditor';
+interface SidebarLayoutEditorProps {
+  // When provided, hides internal role selector and uses this role
+  externalSelectedRole?: string;
+  onRoleChange?: (role: string) => void;
+}
 
-// In the TabsContent for navigation:
-<TabsContent value="navigation" className="mt-0">
-  <SidebarLayoutEditor />
-</TabsContent>
+export function SidebarLayoutEditor({ 
+  externalSelectedRole, 
+  onRoleChange 
+}: SidebarLayoutEditorProps = {}) {
 ```
 
-This moves the full sidebar configuration UI (with reordering, live preview, and role tabs) into the Role Access hub.
-
-### 2. Remove SidebarLayoutEditor from System Settings
-
-**File**: `src/pages/dashboard/admin/Settings.tsx`
-
-Remove the conditional rendering of `SidebarLayoutEditor` under the `system` category:
-
+**Use external role when provided:**
 ```typescript
-// Remove this block (lines ~1128-1131):
-{/* Sidebar Layout - Super Admin Only */}
-{roles.includes('super_admin') && (
-  <SidebarLayoutEditor />
+// Role selection - use external if provided, otherwise internal state
+const [internalSelectedRole, setInternalSelectedRole] = useState<string>('global');
+const selectedRole = externalSelectedRole ?? internalSelectedRole;
+
+const handleRoleChange = (role: string) => {
+  if (externalSelectedRole !== undefined) {
+    onRoleChange?.(role);
+  } else {
+    setInternalSelectedRole(role);
+  }
+};
+```
+
+**Conditionally hide role selector UI (lines 1002-1070):**
+```typescript
+{/* Only show role selector if not controlled externally */}
+{externalSelectedRole === undefined && (
+  <div className="space-y-2">
+    <p className="text-xs font-medium ...">VISIBILITY MODE</p>
+    <Tabs value={selectedRole} onValueChange={handleRoleChange}>
+      {/* ... existing TabsList ... */}
+    </Tabs>
+    {/* ... role hint text ... */}
+  </div>
 )}
 ```
 
-This eliminates the duplicate placement and ensures the sidebar configurator lives exclusively in Role Access.
+### 2. `src/components/dashboard/settings/RoleAccessConfigurator.tsx`
 
-### 3. Remove Redundant NavigationAccessPanel
+**Pass selected role to SidebarLayoutEditor:**
+```typescript
+<TabsContent value="navigation" className="mt-0">
+  <SidebarLayoutEditor 
+    externalSelectedRole={selectedRole === '' ? undefined : selectedRole}
+    onRoleChange={setSelectedRole}
+  />
+</TabsContent>
+```
 
-**File**: `src/components/dashboard/settings/NavigationAccessPanel.tsx`
+**Note:** The Role Access Configurator uses role names like `'super_admin'`, `'manager'`, etc. The SidebarLayoutEditor uses `'global'` for base visibility plus role names. We need to map between them:
+- When Role Access has a role selected, pass it to SidebarLayoutEditor
+- The SidebarLayoutEditor's "Global" mode becomes unnecessary when controlled externally (since each role inherits from global automatically)
 
-Since the full `SidebarLayoutEditor` already handles per-role navigation visibility with a superior interface (including reordering and live preview), the simplified `NavigationAccessPanel` becomes redundant and can be deleted.
+## Simplified Alternative
 
-### 4. Update Imports in RoleAccessConfigurator
+If the role mapping is complex, a simpler solution is to remove the middle redundant section (Card 2 header "SUPER ADMIN ACCESS") and let the top role selector feed into all three panels equally. The SidebarLayoutEditor would keep its own selector only for the Navigation tab.
 
-**File**: `src/components/dashboard/settings/RoleAccessConfigurator.tsx`
+However, the cleanest UX is having ONE role selector at the top that controls all panels consistently.
 
-- Remove: `import { NavigationAccessPanel } from './NavigationAccessPanel';`
-- Add: `import { SidebarLayoutEditor } from './SidebarLayoutEditor';`
+## Recommended Approach
 
-### 5. Adjust Tab Structure (Optional Simplification)
+**Option A: Control SidebarLayoutEditor Externally**
+- Modify SidebarLayoutEditor to accept `externalSelectedRole` prop
+- Hide its internal role selector when prop is provided
+- Parent controls the role, child displays the configuration
 
-Since `SidebarLayoutEditor` already has its own internal role selector tabs, we have two options:
+**Option B: Simplify RoleAccessConfigurator Header**
+- Remove the second card's header showing "SUPER ADMIN ACCESS"
+- Keep only the top role selector buttons
+- Let SidebarLayoutEditor show its own selector for Navigation tab (since it has "Global" mode)
+- PageTabs and Widgets panels use the top selector
 
-**Option A (Recommended)**: Remove the role selector from `RoleAccessConfigurator` header when viewing the Navigation panel, since `SidebarLayoutEditor` has its own. The Role Access role selector would still apply to Page Tabs and Widgets panels.
-
-**Option B**: Modify `SidebarLayoutEditor` to accept a `selectedRole` prop to sync with the parent role selector. This requires more refactoring.
-
-For simplicity, **Option A** is recommended for this phase.
-
----
+**Recommendation: Option A** provides the most unified experience, but Option B is simpler to implement.
 
 ## File Summary
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/settings/RoleAccessConfigurator.tsx` | Modify - Import and render `SidebarLayoutEditor` instead of `NavigationAccessPanel` |
-| `src/pages/dashboard/admin/Settings.tsx` | Modify - Remove `SidebarLayoutEditor` from system settings |
-| `src/components/dashboard/settings/NavigationAccessPanel.tsx` | Delete - No longer needed |
-
----
-
-## Memory Context Updates
-
-The following memory entries will be updated to reflect the new architecture:
-
-### Update: `memory/auth/role-access-configurator-navigation-panel`
-
-**New Content**:
-> The 'Role Access Configurator' integrates the full 'SidebarLayoutEditor' for managing sidebar navigation. This editor supports drag-and-drop section and link reordering, per-role visibility overrides, custom section creation, and a live preview panel. Role selection is handled within the editor's own tabs (Global, Super Admin, DOO, etc.). This replaces the previous simplified visibility-only panel.
-
-### Update: `memory/auth/role-based-access-configurator-system`
-
-**New Content**:
-> The 'Role Access Configurator' (accessible at /dashboard/admin/settings?tab=role-access) is a unified hub for managing role-based visibility. It contains three panels: 1) Navigation Panel - the full SidebarLayoutEditor with drag-and-drop reordering and live preview; 2) Page Tabs Panel - manages internal page triggers; 3) Widgets Panel - manages dashboard widget visibility. The SidebarLayoutEditor was moved from System Settings to consolidate all role-based access controls in one location.
-
----
-
-## Benefits
-
-1. **Single Location**: All role-based access configuration in one place
-2. **Full Functionality**: Users get the complete sidebar editor (reordering, preview) rather than a simplified version
-3. **No Duplication**: Removes the duplicate sidebar editor from System Settings
-4. **Cleaner Architecture**: Role Access becomes the definitive hub for visibility and navigation control
-5. **Consistent UX**: The same comprehensive interface is now accessible via the Role Access card
-
----
-
-## Access Control
-
-The Role Access settings category should remain accessible to users with appropriate permissions (super_admin, admin roles with `manage_visibility_console` permission) to ensure proper access control is maintained.
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Modify - Add `externalSelectedRole` prop, conditionally hide role selector |
+| `src/components/dashboard/settings/RoleAccessConfigurator.tsx` | Modify - Pass `externalSelectedRole` to SidebarLayoutEditor OR simplify header |
