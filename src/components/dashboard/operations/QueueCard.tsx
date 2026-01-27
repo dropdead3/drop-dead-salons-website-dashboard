@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Clock, 
   User, 
@@ -13,6 +20,9 @@ import {
   Copy,
   Check,
   XCircle,
+  MoreVertical,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -24,6 +34,8 @@ interface QueueCardProps {
   variant: 'waiting' | 'inService' | 'upcoming';
   onCheckIn?: () => void;
   onPay?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   isUpdating?: boolean;
 }
 
@@ -32,6 +44,8 @@ export function QueueCard({
   variant,
   onCheckIn,
   onPay,
+  onEdit,
+  onDelete,
   isUpdating = false,
 }: QueueCardProps) {
   const [copied, setCopied] = useState(false);
@@ -120,12 +134,38 @@ export function QueueCard({
       appointment.status === 'cancelled' && "opacity-60 border-red-200 dark:border-red-900",
     )}>
       <div className="flex flex-col gap-3">
-        {/* Header: Time & Status */}
-        <div className="flex items-center justify-between">
+        {/* Header: Time, Status & Actions */}
+        <div className="flex items-center justify-between gap-2">
           <span className="font-display text-lg">
             {formatTime(appointment.start_time)}
           </span>
-          {getStatusBadge()}
+          <div className="flex items-center gap-2">
+            {getStatusBadge()}
+            {(onEdit || onDelete) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-popover">
+                  {onEdit && (
+                    <DropdownMenuItem onClick={onEdit}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+                  {onEdit && onDelete && <DropdownMenuSeparator />}
+                  {onDelete && (
+                    <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
         {/* Client Info */}

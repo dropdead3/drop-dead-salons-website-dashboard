@@ -27,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { QueueAppointment } from '@/hooks/useTodaysQueue';
 
 interface TodaysQueueSectionProps {
@@ -78,6 +79,31 @@ export function TodaysQueueSection({
   const handlePay = (appointment: QueueAppointment) => {
     setCheckoutAppointment(appointment);
     setCheckoutOpen(true);
+  };
+
+  const handleEdit = (appointment: QueueAppointment) => {
+    // For now, show a toast - could open an edit dialog in the future
+    toast.info(`Edit appointment for ${appointment.client_name || 'Walk-in'}`, {
+      description: 'Edit functionality coming soon',
+    });
+  };
+
+  const handleDelete = async (appointmentId: string) => {
+    if (!confirm('Are you sure you want to delete this appointment?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('phorest_appointments')
+        .delete()
+        .eq('id', appointmentId);
+      
+      if (error) throw error;
+      
+      toast.success('Appointment deleted');
+      queryClient.invalidateQueries({ queryKey: ['todays-queue'] });
+    } catch (error) {
+      toast.error('Failed to delete appointment');
+    }
   };
 
   const handleCheckoutConfirm = () => {
@@ -169,6 +195,8 @@ export function TodaysQueueSection({
                         appointment={apt}
                         variant="waiting"
                         onCheckIn={() => handleCheckIn(apt.id)}
+                        onEdit={() => handleEdit(apt)}
+                        onDelete={() => handleDelete(apt.id)}
                         isUpdating={updateStatus.isPending}
                       />
                     ))}
@@ -194,6 +222,8 @@ export function TodaysQueueSection({
                         appointment={apt}
                         variant="inService"
                         onPay={() => handlePay(apt)}
+                        onEdit={() => handleEdit(apt)}
+                        onDelete={() => handleDelete(apt.id)}
                         isUpdating={updateStatus.isPending}
                       />
                     ))}
@@ -219,6 +249,8 @@ export function TodaysQueueSection({
                         appointment={apt}
                         variant="upcoming"
                         onCheckIn={() => handleCheckIn(apt.id)}
+                        onEdit={() => handleEdit(apt)}
+                        onDelete={() => handleDelete(apt.id)}
                         isUpdating={updateStatus.isPending}
                       />
                     ))}
