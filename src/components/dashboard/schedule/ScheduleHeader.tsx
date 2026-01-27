@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Check,
   Settings,
+  FlaskConical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,6 +52,8 @@ interface ScheduleHeaderProps {
   canCreate?: boolean;
   calendarFilters: CalendarFilterState;
   onCalendarFiltersChange: (filters: CalendarFilterState) => void;
+  demoMode?: boolean;
+  onDemoModeToggle?: () => void;
 }
 
 export function ScheduleHeader({
@@ -68,6 +71,8 @@ export function ScheduleHeader({
   canCreate = false,
   calendarFilters,
   onCalendarFiltersChange,
+  demoMode = false,
+  onDemoModeToggle,
 }: ScheduleHeaderProps) {
   const navigate = useNavigate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -244,6 +249,31 @@ export function ScheduleHeader({
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* Demo Mode Toggle */}
+          {onDemoModeToggle && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={demoMode ? "default" : "ghost"}
+                  size="sm"
+                  onClick={onDemoModeToggle}
+                  className={cn(
+                    "gap-1.5",
+                    demoMode 
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
+                      : "text-background/70 hover:text-background hover:bg-background/10"
+                  )}
+                >
+                  <FlaskConical className="h-4 w-4" />
+                  {demoMode ? 'Demo On' : 'Demo'}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{demoMode ? 'Disable demo mode' : 'Enable demo mode with sample appointments'}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Settings Icon */}
           <Tooltip>
