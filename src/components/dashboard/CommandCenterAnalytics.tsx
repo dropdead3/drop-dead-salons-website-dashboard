@@ -3,7 +3,7 @@ import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
-
+import { SalesBentoCard } from '@/components/dashboard/sales/SalesBentoCard';
 
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
@@ -58,6 +58,7 @@ export function CommandCenterAnalytics() {
   
   
   // New pinnable cards
+  const hasSalesDashboard = isElementVisible('sales_dashboard_bento');
   const hasTopPerformers = isElementVisible('top_performers');
   const hasRevenueBreakdown = isElementVisible('revenue_breakdown');
   const hasClientFunnel = isElementVisible('client_funnel');
@@ -67,7 +68,7 @@ export function CommandCenterAnalytics() {
   const hasStylistWorkload = isElementVisible('stylist_workload');
   
   const hasAnyPinned = hasSalesOverview || hasNewBookings || hasForecast || hasCapacity || 
-    hasTopPerformers || hasRevenueBreakdown ||
+    hasSalesDashboard || hasTopPerformers || hasRevenueBreakdown ||
     hasClientFunnel || hasTeamGoals || hasHiringCapacity ||
     hasStaffingTrends || hasStylistWorkload;
   
@@ -108,7 +109,14 @@ export function CommandCenterAnalytics() {
   
   return (
     <div className="space-y-6">
-      {/* Sales Overview */}
+      {/* Sales Dashboard Bento (consolidated card) */}
+      {hasSalesDashboard && (
+        <VisibilityGate elementKey="sales_dashboard_bento">
+          <SalesBentoCard initialDateRange="thisMonth" />
+        </VisibilityGate>
+      )}
+      
+      {/* Sales Overview (legacy) */}
       {hasSalesOverview && (
         <VisibilityGate elementKey="sales_overview">
           <AggregateSalesCard />
