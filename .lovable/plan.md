@@ -1,187 +1,165 @@
 
-# Analytics & Reports Hub: Unified Data Dashboard
+# Improve Tab Hierarchy Visual Design
 
-## Overview
+## Problem
 
-Transform the Reports Hub into a **unified Analytics & Reports center** that consolidates all analytics pages as tabs within a single cohesive experience. This eliminates navigation fragmentation and creates a single source of truth for business intelligence.
+Currently, both the main Analytics tabs (Sales, Operations, Marketing, Program, Reports) and the sub-tabs within Reports (Sales, Staff, Clients, Operations, Financial) use identical styling:
+- Same `bg-muted` background
+- Same size and spacing
+- Same visual weight
 
-## Current State
+This makes it unclear that the second row is a **child** of the selected "Reports" tab.
 
-| Page | Route | Purpose |
-|------|-------|---------|
-| Sales Dashboard | `/dashboard/admin/sales` | Revenue, stylist performance |
-| Operational Analytics | `/dashboard/admin/operational-analytics` | Appointments, capacity, clients |
-| Marketing Analytics | `/dashboard/admin/marketing` | Campaigns, leads, ROI |
-| Reports Hub | `/dashboard/admin/reports` | PDF/CSV exports |
-| Program Analytics | `/dashboard/admin/program-analytics` | Client Engine metrics |
+## Solution Options
 
-**Problem:** 5 separate pages with overlapping filters, redundant navigation, and inconsistent layouts.
+### Option A: Visual Differentiation via Styling (Recommended)
 
-## Proposed Architecture
+Differentiate sub-tabs with lighter/more subtle styling:
 
 ```text
-/dashboard/admin/analytics ← New unified route (or rename /reports to /analytics)
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│  ANALYTICS & REPORTS                        [Location ▾] [Date Range]  │
-├─────────────────────────────────────────────────────────────────────────┤
-│  [Sales] [Operations] [Marketing] [Program] [Reports]                   │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │  Selected Tab Content                                            │   │
-│  │  (e.g., Sales: Revenue charts, stylist leaderboard, trends)      │   │
-│  │                                                                   │   │
-│  │  Each tab can have its own sub-tabs if needed                    │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+Main Tabs:    [$ Sales] [Operations] [Marketing] [Program] [■ Reports]  ← Full bg-muted pill style
+                                                                ↓
+Sub-tabs:      $ Sales   Staff   Clients   Operations   Financial      ← Underline style, no background
+                ─────
 ```
 
-## Tab Structure
+**Implementation:**
+- Keep main tabs with current solid pill style (`bg-muted`)
+- Change sub-tabs to use an underline/border-bottom style (no background)
+- Add a subtle left border or indentation to show hierarchy
+- Optionally add a small label like "Report Type" above sub-tabs
 
-| Tab | Content Source | Sub-tabs (if any) |
-|-----|---------------|-------------------|
-| **Sales** | Current SalesDashboard.tsx | Overview, Goals, Staff Performance, Forecasting |
-| **Operations** | Current OperationalAnalytics.tsx | Overview, Appointments, Clients, Staffing, Utilization |
-| **Marketing** | Current MarketingAnalytics.tsx | Overview, Campaigns, Sources |
-| **Program** | Current ProgramAnalytics.tsx | Enrollment, Completion, Cohorts |
-| **Reports** | Current ReportsHub exports | Sales, Staff, Clients, Operations, Financial |
+### Option B: Contextual Label + Visual Grouping
 
-## Navigation Changes
+Add a section header and visual container to group sub-tabs:
 
-### Before (Current Sidebar)
 ```text
-Stats & Leaderboard
-├── My Stats
-├── My Clients
-├── Leaderboard
-├── Sales Dashboard        ← Separate page
-├── Operational Analytics  ← Separate page
-├── Marketing Analytics    ← Separate page
-└── Reports Hub           ← Separate page
+[$ Sales] [Operations] [Marketing] [Program] [■ Reports]
+
+┌─ Report Categories ────────────────────────────────┐
+│  [$ Sales] [Staff] [Clients] [Operations] [Financial]  │
+└────────────────────────────────────────────────────┘
 ```
 
-### After (Renamed Section)
+### Option C: Segmented Control for Sub-tabs
+
+Use a different component style entirely (like a segmented control or button group):
+
 ```text
-Stats & Analytics
-├── My Stats
-├── My Clients
-├── Leaderboard
-└── Analytics Hub         ← Single unified entry point
+[$ Sales] [Operations] [Marketing] [Program] [■ Reports]
+
+Export Type:  ●Sales  ○Staff  ○Clients  ○Operations  ○Financial
 ```
 
-## Implementation Approach
+## Recommended Approach: Option A + Label
 
-### Phase 1: Create Unified Analytics Page
+Combine visual differentiation with a contextual label for maximum clarity:
 
-1. **Rename and repurpose ReportsHub.tsx** → `AnalyticsHub.tsx`
-2. **Update route** from `/dashboard/admin/reports` to `/dashboard/admin/analytics`
-3. **Create shared filter bar** with location and date range that passes to all tabs
-4. **Implement tab-based navigation** using URL params (`?tab=sales`, `?tab=operations`, etc.)
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│  [$ Sales] [Operations] [Marketing] [Program] [■ Reports]       │  ← Main tabs (pill style)
+│                                                                  │
+│  Report Category                                                 │  ← Section label
+│   $ Sales   Staff   Clients   Operations   Financial            │  ← Sub-tabs (underline style)
+│   ═══════                                                        │     with active underline
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### Phase 2: Extract Tab Content Components
+## Implementation Details
 
-Move the content from each current page into dedicated tab content components:
+### File: `src/components/dashboard/analytics/ReportsTabContent.tsx`
 
-| Current File | Becomes |
-|--------------|---------|
-| `SalesDashboard.tsx` | `src/components/dashboard/analytics/SalesTabContent.tsx` |
-| `OperationalAnalytics.tsx` | Already modular → Keep as `OperationalAnalytics` content components |
-| `MarketingAnalytics.tsx` | `src/components/dashboard/analytics/MarketingTabContent.tsx` |
-| `ProgramAnalytics.tsx` | `src/components/dashboard/analytics/ProgramTabContent.tsx` |
-| `ReportsHub.tsx` (exports) | `src/components/dashboard/analytics/ReportsTabContent.tsx` |
+**Changes:**
+1. Add a contextual label above the sub-tabs: "Report Category"
+2. Apply different styling to the TabsList - remove `bg-muted`, use transparent background
+3. Style TabsTriggers with underline indicator instead of background pill
 
-### Phase 3: Update Routing and Navigation
+```tsx
+<div className="space-y-6">
+  {/* Category Label + Sub-tabs */}
+  <div className="space-y-2">
+    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      Report Category
+    </span>
+    <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+      <TabsList className="bg-transparent h-auto p-0 gap-4">
+        {reportCategories.map((cat) => (
+          <TabsTrigger 
+            key={cat.id} 
+            value={cat.id} 
+            className="gap-2 px-1 py-2 rounded-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary"
+          >
+            <cat.icon className="w-4 h-4" />
+            <span>{cat.label}</span>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {/* ... TabsContent remains same ... */}
+    </Tabs>
+  </div>
+</div>
+```
 
-1. **Add redirect routes** for old URLs to preserve bookmarks:
-   - `/dashboard/admin/sales` → `/dashboard/admin/analytics?tab=sales`
-   - `/dashboard/admin/operational-analytics` → `/dashboard/admin/analytics?tab=operations`
-   - `/dashboard/admin/marketing` → `/dashboard/admin/analytics?tab=marketing`
-   - `/dashboard/admin/program-analytics` → `/dashboard/admin/analytics?tab=program`
-   - `/dashboard/admin/reports` → `/dashboard/admin/analytics?tab=reports`
+### Visual Comparison
 
-2. **Update sidebar navigation** to single "Analytics Hub" entry
+| Element | Main Tabs | Sub-tabs |
+|---------|-----------|----------|
+| Background | `bg-muted` pill container | Transparent |
+| Active indicator | White/background fill | Underline border |
+| Spacing | Contained in pill | Inline with gaps |
+| Text style | Same | Same |
+| Icons | Yes | Yes |
 
-3. **Rename sidebar section** from "Stats & Leaderboard" to "Stats & Analytics"
+### Alternative: Create a SubTabsList Variant
 
-## Files to Create
+For reusability across Sales and Operations sub-tabs too, create a variant:
 
-| File | Purpose |
-|------|---------|
-| `src/pages/dashboard/admin/AnalyticsHub.tsx` | New unified page with tab navigation |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Extracted sales content |
-| `src/components/dashboard/analytics/MarketingTabContent.tsx` | Extracted marketing content |
-| `src/components/dashboard/analytics/ProgramTabContent.tsx` | Extracted program content |
-| `src/components/dashboard/analytics/ReportsTabContent.tsx` | Export functionality |
+```tsx
+// In tabs.tsx or as a new component
+const SubTabsList = React.forwardRef<...>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn(
+      "inline-flex h-10 items-center gap-4 bg-transparent p-0 text-muted-foreground",
+      className,
+    )}
+    {...props}
+  />
+));
+
+const SubTabsTrigger = React.forwardRef<...>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "inline-flex items-center gap-2 px-1 py-2 text-sm font-medium border-b-2 border-transparent transition-all data-[state=active]:text-foreground data-[state=active]:border-primary",
+      className,
+    )}
+    {...props}
+  />
+));
+```
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/App.tsx` | Add new route, add redirects for old routes |
-| `src/components/dashboard/DashboardLayout.tsx` | Update sidebar nav items, rename section |
-| `src/hooks/useSidebarLayout.ts` | Update default link order |
-
-## Files to Keep (For Now)
-
-The original page files can be kept as simple redirects or removed after confirming the new structure works. This provides a safe migration path.
-
-## Shared Components
-
-The new Analytics Hub will leverage these existing components:
-
-- **Filter Bar**: Location selector + Date range tabs (already exist in each page)
-- **Command Center Toggle**: For visibility management
-- **Tab-specific Content**: Reuse all existing charts, cards, and visualizations
+| `src/components/dashboard/analytics/ReportsTabContent.tsx` | Add label, change sub-tab styling |
+| (Optional) `src/components/ui/tabs.tsx` | Add SubTabsList/SubTabsTrigger variants |
+| (Optional) `src/components/dashboard/analytics/SalesTabContent.tsx` | Apply same sub-tab style for consistency |
+| (Optional) `src/components/dashboard/analytics/OperationsTabContent.tsx` | Apply same sub-tab style for consistency |
 
 ## Benefits
 
-1. **Single entry point** - One place for all business intelligence
-2. **Consistent filtering** - Location and date range apply across all tabs
-3. **Reduced navigation** - Fewer sidebar items, cleaner menu
-4. **Better discoverability** - Users see all analytics options at once
-5. **Easier maintenance** - Shared layout and filter logic
-6. **URL deep-linking** - `?tab=sales&subtab=forecasting` preserves state
-
-## Technical Details
-
-### URL State Management
-```tsx
-const [searchParams, setSearchParams] = useSearchParams();
-const activeTab = searchParams.get('tab') || 'sales';
-const subTab = searchParams.get('subtab') || 'overview';
-```
-
-### Shared Filter Context (Optional Enhancement)
-```tsx
-interface AnalyticsFilters {
-  locationId: string;
-  dateRange: '7d' | '30d' | '90d' | 'mtd' | 'ytd';
-  dateFrom?: Date;
-  dateTo?: Date;
-}
-
-// Passed to all tab content components
-<SalesTabContent filters={filters} />
-<OperationsTabContent filters={filters} />
-```
-
-### Tab Definition
-```tsx
-const analyticsCategories = [
-  { id: 'sales', label: 'Sales', icon: DollarSign },
-  { id: 'operations', label: 'Operations', icon: BarChart3 },
-  { id: 'marketing', label: 'Marketing', icon: TrendingUp },
-  { id: 'program', label: 'Program', icon: Target },
-  { id: 'reports', label: 'Reports', icon: FileText },
-];
-```
+1. **Clear hierarchy** - Visually distinct parent/child relationship
+2. **Contextual label** - Explicit "Report Category" removes ambiguity
+3. **Consistent pattern** - Can apply same sub-tab style across all Analytics sections
+4. **No layout changes** - Keeps same content organization
+5. **Subtle but effective** - Doesn't add clutter, just clarifies relationship
 
 ## Summary
 
-This consolidation creates a premium, unified analytics experience while:
-- Reusing all existing visualization components
-- Maintaining backward compatibility with redirects
-- Simplifying the navigation structure
-- Providing a consistent user experience across all analytics domains
+| Task | Description |
+|------|-------------|
+| Add section label | "Report Category" above sub-tabs |
+| Restyle sub-tabs | Underline style instead of pill style |
+| Apply to all sub-tabs | Consistent across Sales, Operations, Reports tabs |
