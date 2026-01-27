@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -18,7 +18,7 @@ import {
   Calendar as CalendarIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useActiveLocations } from '@/hooks/useLocations';
+import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 
 // Tab content components
 import { SalesTabContent } from '@/components/dashboard/analytics/SalesTabContent';
@@ -49,14 +49,30 @@ export default function AnalyticsHub() {
   const activeTab = searchParams.get('tab') || 'sales';
   const subTab = searchParams.get('subtab') || undefined;
   
-  const [locationId, setLocationId] = useState<string>('all');
+  // Location access control
+  const { 
+    accessibleLocations, 
+    canViewAggregate, 
+    defaultLocationId,
+    isLoading: locationAccessLoading 
+  } = useUserLocationAccess();
+  
+  const [locationId, setLocationId] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRangeType>('30d');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date }>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
   
-  const { data: locations = [] } = useActiveLocations();
+  // Set default location when access data loads
+  useEffect(() => {
+    if (!locationAccessLoading && !locationId) {
+      setLocationId(defaultLocationId);
+    }
+  }, [locationAccessLoading, defaultLocationId, locationId]);
+  
+  // Determine if we should show the location selector
+  const showLocationSelector = canViewAggregate || accessibleLocations.length > 1;
 
   // Calculate date filters based on selected range
   const dateFilters = useMemo(() => {
@@ -125,19 +141,31 @@ export default function AnalyticsHub() {
           
           {/* Shared Filter Bar */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Location Filter */}
-            <Select value={locationId} onValueChange={setLocationId}>
-              <SelectTrigger className="w-[180px]">
-                <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="All Locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                {locations.map(loc => (
-                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Location Filter - conditionally rendered based on access */}
+            {showLocationSelector && (
+              <Select value={locationId} onValueChange={setLocationId}>
+                <SelectTrigger className="w-[180px]">
+                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="Select Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {canViewAggregate && (
+                    <SelectItem value="all">All Locations</SelectItem>
+                  )}
+                  {accessibleLocations.map(loc => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            
+            {/* Single location badge (when only one location assigned) */}
+            {!showLocationSelector && accessibleLocations.length === 1 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md text-sm h-9">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <span>{accessibleLocations[0].name}</span>
+              </div>
+            )}
 
             {/* Date Range Select */}
             <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>

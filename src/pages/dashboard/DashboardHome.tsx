@@ -43,6 +43,7 @@ import { PinnedAnalyticsCard, type AnalyticsFilters } from '@/components/dashboa
 import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
 import { getDateRange, type DateRangeType } from '@/components/dashboard/sales/SalesBentoCard';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
+import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -82,9 +83,24 @@ export default function DashboardHome() {
   const queryClient = useQueryClient();
   const { layout, hasCompletedSetup, isLoading: layoutLoading, templateKey } = useDashboardLayout();
   
+  // Location access control
+  const { 
+    accessibleLocations, 
+    canViewAggregate, 
+    defaultLocationId,
+    isLoading: locationAccessLoading 
+  } = useUserLocationAccess();
+  
   // Analytics filter state (shared across all pinned analytics cards)
-  const [locationId, setLocationId] = useState<string>('all');
+  const [locationId, setLocationId] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRangeType>('thisMonth');
+  
+  // Set default location when access data loads
+  useEffect(() => {
+    if (!locationAccessLoading && !locationId) {
+      setLocationId(defaultLocationId);
+    }
+  }, [locationAccessLoading, defaultLocationId, locationId]);
   
   // Birthday notifications for leadership
   useBirthdayNotifications();
@@ -249,6 +265,8 @@ export default function DashboardHome() {
           analyticsFilters={analyticsFilters}
           onLocationChange={setLocationId}
           onDateRangeChange={setDateRange}
+          accessibleLocations={accessibleLocations}
+          canViewAggregate={canViewAggregate}
         />
       </div>
     </DashboardLayout>
@@ -274,6 +292,10 @@ interface DashboardSectionsProps {
   analyticsFilters: AnalyticsFilters;
   onLocationChange: (value: string) => void;
   onDateRangeChange: (value: DateRangeType) => void;
+  /** Locations the user can access (for filter bar) */
+  accessibleLocations: { id: string; name: string }[];
+  /** Whether user can see "All Locations" aggregate option */
+  canViewAggregate: boolean;
 }
 
 function DashboardSections({
@@ -294,6 +316,8 @@ function DashboardSections({
   analyticsFilters,
   onLocationChange,
   onDateRangeChange,
+  accessibleLocations,
+  canViewAggregate,
 }: DashboardSectionsProps) {
   // Fetch visibility data to check if cards are pinned
   const { data: visibilityData } = useDashboardVisibility();
@@ -618,6 +642,8 @@ function DashboardSections({
                   onLocationChange={onLocationChange}
                   dateRange={analyticsFilters.dateRange}
                   onDateRangeChange={onDateRangeChange}
+                  accessibleLocations={accessibleLocations}
+                  canViewAggregate={canViewAggregate}
                 />
               )}
               <PinnedAnalyticsCard cardId={cardId} filters={analyticsFilters} />
