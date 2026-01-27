@@ -138,20 +138,30 @@ const WIDGETS = [
 ];
 
 // All analytics cards that can be pinned to Command Center
+// All analytics cards that can be pinned to Command Center
 const PINNABLE_CARDS = [
-  { id: 'operations_stats', label: 'Operations Stats', icon: <LayoutDashboard className="w-4 h-4" /> },
+  // Sales & Revenue
   { id: 'sales_dashboard_bento', label: 'Sales Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
   { id: 'sales_overview', label: 'Sales Overview', icon: <DollarSign className="w-4 h-4" /> },
-  { id: 'top_performers', label: 'Top Performers', icon: <Trophy className="w-4 h-4" /> },
   { id: 'revenue_breakdown', label: 'Revenue Breakdown', icon: <PieChart className="w-4 h-4" /> },
-  { id: 'client_funnel', label: 'Client Funnel', icon: <Users className="w-4 h-4" /> },
+  { id: 'top_performers', label: 'Top Performers', icon: <Trophy className="w-4 h-4" /> },
+  
+  // Forecasting & Goals
+  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', icon: <TrendingUp className="w-4 h-4" /> },
   { id: 'team_goals', label: 'Team Goals', icon: <Target className="w-4 h-4" /> },
   { id: 'new_bookings', label: 'New Bookings', icon: <CalendarPlus className="w-4 h-4" /> },
-  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', icon: <TrendingUp className="w-4 h-4" /> },
+  
+  // Clients
+  { id: 'client_funnel', label: 'Client Funnel', icon: <Users className="w-4 h-4" /> },
+  
+  // Operations & Capacity
+  { id: 'operations_stats', label: 'Operations Stats', icon: <LayoutDashboard className="w-4 h-4" /> },
   { id: 'capacity_utilization', label: 'Capacity Utilization', icon: <Gauge className="w-4 h-4" /> },
-  { id: 'hiring_capacity', label: 'Hiring Capacity', icon: <UserPlus className="w-4 h-4" /> },
-  { id: 'staffing_trends', label: 'Staffing Trends', icon: <LineChart className="w-4 h-4" /> },
   { id: 'stylist_workload', label: 'Stylist Workload', icon: <Briefcase className="w-4 h-4" /> },
+  
+  // Staffing
+  { id: 'staffing_trends', label: 'Staffing Trends', icon: <LineChart className="w-4 h-4" /> },
+  { id: 'hiring_capacity', label: 'Hiring Capacity', icon: <UserPlus className="w-4 h-4" /> },
 ];
 
 interface DashboardCustomizeMenuProps {
