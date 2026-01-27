@@ -17,6 +17,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   schedule: '#0EA5E9',   // Sky blue
   locations: '#EF4444',  // Red
   dayrate: '#F97316',    // Orange (chair rental)
+  'role-access': '#8B5CF6', // Purple (Shield icon theme)
 };
 
 // Section groups for organized layout
@@ -29,7 +30,7 @@ export const SECTION_GROUPS = [
   {
     id: 'team',
     label: 'Team & Access',
-    categories: ['users', 'levels', 'onboarding', 'handbooks'],
+    categories: ['users', 'levels', 'onboarding', 'handbooks', 'role-access'],
   },
   {
     id: 'platform',
