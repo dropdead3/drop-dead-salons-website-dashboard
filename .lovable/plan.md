@@ -1,294 +1,75 @@
 
-# Role-Based Navigation & Access Configurator
 
-## Overview
+# Fix: Add Role Access to Settings Grid
 
-This plan creates a unified, role-centric system for managing navigation links, page tabs, and dashboard widget visibility. Admins will select a role first, then configure everything that role can see - creating a complete, customized experience for each of the 8 roles.
+## Problem
 
-## Current Architecture Summary
+The "Role Access" settings card is not visible in the settings grid because it's missing from two key configuration objects in `useSettingsLayout.ts`:
 
-After reviewing the codebase, here's what exists:
+1. **`SECTION_GROUPS`** - Controls which categories appear in the grid
+2. **`DEFAULT_ICON_COLORS`** - Defines the icon color for each category
 
-| System | Storage | What It Controls |
-|--------|---------|------------------|
-| Sidebar Layout Editor | `business_settings.sidebar_layout` (JSON) | Section order, link visibility per role |
-| Visibility Console | `dashboard_element_visibility` table | Dashboard widgets/charts per role |
-| Permission System | `user_permissions` table | Feature-level access (view_leaderboard, etc.) |
+While the category is properly defined in Settings.tsx and renders correctly when accessed, it simply can't be clicked because it never appears in the grid.
 
-**Key Finding**: The SidebarLayoutEditor already supports role-specific overrides via `roleVisibility` in the JSON config. The Visibility Console uses a database table for widgets. These systems aren't unified.
+## Solution
 
-## Proposed Solution
+Update `src/hooks/useSettingsLayout.ts` to include `role-access` in the appropriate section group and add its default icon color.
 
-### 1. Unified Role Access Hub
+## Changes
 
-Create a single "Role Access" settings tab that consolidates three panels:
+### File: `src/hooks/useSettingsLayout.ts`
 
-```text
-+----------------------------------------------------------+
-|  ROLE ACCESS CONFIGURATOR                                 |
-+----------------------------------------------------------+
-|  [Super Admin] [DOO] [Manager] [Ops Asst] [Receptionist]  |
-|  [Stylist] [Stylist Asst] [Admin Asst]                    |
-+----------------------------------------------------------+
-|  ← STYLIST ACCESS                    [Copy From] [Reset]  |
-+----------------------------------------------------------+
-|  [Navigation] [Page Tabs] [Widgets]                       |
-+----------------------------------------------------------+
-|                                                           |
-|  Panel content based on selected sub-tab                  |
-|                                                           |
-+----------------------------------------------------------+
-```
-
-### 2. Three Configuration Panels
-
-**Panel 1: Navigation Access**
-- Simplified version of SidebarLayoutEditor focused on visibility only (no drag-and-drop)
-- Checkboxes for each section and link
-- Shows current visibility state for selected role
-
-**Panel 2: Page Tabs Access**
-- New panel for controlling page-level tabs
-- Groups tabs by page (Stats, Analytics Hub, Settings, etc.)
-- Uses the existing `dashboard_element_visibility` table with new element keys
-- Element key convention: `{pageKey}_{tabId}_tab` (e.g., `stats_leaderboard_tab`)
-
-**Panel 3: Widgets Access**
-- Simplified version of Visibility Console
-- Shows dashboard elements filtered to selected role
-- Toggle switches for visibility
-
-### 3. Page Tab Registration
-
-Update pages to register their tabs with the visibility system:
-
-**Stats.tsx** - Team Leaderboard tab
-```typescript
-<VisibilityGate 
-  elementKey="stats_leaderboard_tab"
-  elementName="Team Leaderboard Tab"
-  elementCategory="Page Tabs"
->
-  <TabsTrigger value="leaderboard">Team Leaderboard</TabsTrigger>
-</VisibilityGate>
-```
-
-**AnalyticsHub.tsx** - Category tabs (Sales, Operations, Marketing, Reports)
-
-**Settings.tsx** - Admin-only tabs
-
----
-
-## Files to Create
-
-### 1. `src/components/dashboard/settings/RoleAccessConfigurator.tsx`
-
-Main component with role selector and sub-tab navigation:
+**1. Add `role-access` to `DEFAULT_ICON_COLORS`:**
 
 ```typescript
-// Structure
-- Role selector (tabs with icons/colors from useRoles())
-- Sub-tabs: Navigation | Page Tabs | Widgets
-- Panel content based on selected sub-tab
-- Actions: Copy From Role, Reset to Default
+export const DEFAULT_ICON_COLORS: Record<string, string> = {
+  business: '#D946EF',
+  email: '#8B5CF6',
+  users: '#3B82F6',
+  onboarding: '#F97316',
+  integrations: '#10B981',
+  system: '#6B7280',
+  program: '#EC4899',
+  levels: '#14B8A6',
+  handbooks: '#EAB308',
+  visibility: '#6366F1',
+  schedule: '#0EA5E9',
+  locations: '#EF4444',
+  dayrate: '#F97316',
+  'role-access': '#8B5CF6',  // Purple (matches Shield icon theme)
+};
 ```
 
-### 2. `src/components/dashboard/settings/NavigationAccessPanel.tsx`
+**2. Add `role-access` to `SECTION_GROUPS`:**
 
-Simplified navigation visibility editor:
+The most logical placement is in the "Team & Access" section since it deals with role-based access:
 
 ```typescript
-// Shows:
-- All sections from DEFAULT_SECTION_ORDER
-- Links grouped by section
-- Checkboxes for show/hide
-- Reads/writes to roleVisibility in sidebar_layout
+export const SECTION_GROUPS = [
+  {
+    id: 'operations',
+    label: 'Business Operations',
+    categories: ['business', 'locations', 'schedule', 'dayrate'],
+  },
+  {
+    id: 'team',
+    label: 'Team & Access',
+    categories: ['users', 'levels', 'onboarding', 'handbooks', 'role-access'],
+  },
+  {
+    id: 'platform',
+    label: 'Platform',
+    categories: ['system', 'visibility', 'integrations'],
+  },
+  {
+    id: 'communications',
+    label: 'Communications',
+    categories: ['email', 'program'],
+  },
+];
 ```
 
-### 3. `src/components/dashboard/settings/PageTabsAccessPanel.tsx`
+## Result
 
-New panel for page tab visibility:
+After this fix, the "Role Access" card will appear in the Settings grid under the "Team & Access" section, allowing admins to click it and access the Role Access Configurator.
 
-```typescript
-// Shows:
-- Tabs grouped by page
-- Auto-discovered from dashboard_element_visibility where category = 'Page Tabs'
-- Toggle switches for each tab
-```
-
-### 4. `src/components/dashboard/settings/WidgetsAccessPanel.tsx`
-
-Simplified widget visibility panel:
-
-```typescript
-// Shows:
-- Widgets grouped by category (excluding 'Page Tabs')
-- Toggle switches for visibility
-- Bulk actions: Show All, Hide All
-```
-
----
-
-## Files to Modify
-
-### 1. `src/pages/dashboard/admin/Settings.tsx`
-
-Add "Role Access" to the settings categories:
-
-```typescript
-// Add to SECTION_CONFIG or equivalent:
-{
-  id: 'role-access',
-  label: 'Role Access',
-  description: 'Configure navigation and visibility by role',
-  icon: Shield,
-}
-```
-
-### 2. `src/pages/dashboard/Stats.tsx`
-
-Wrap the Team Leaderboard tab with VisibilityGate:
-
-```typescript
-// Before
-{canViewLeaderboard && (
-  <TabsTrigger value="leaderboard">Team Leaderboard</TabsTrigger>
-)}
-
-// After
-{canViewLeaderboard && (
-  <VisibilityGate 
-    elementKey="stats_leaderboard_tab"
-    elementName="Team Leaderboard"
-    elementCategory="Page Tabs"
-  >
-    <TabsTrigger value="leaderboard">
-      <Trophy className="w-4 h-4 mr-2" />
-      Team Leaderboard
-    </TabsTrigger>
-  </VisibilityGate>
-)}
-```
-
-### 3. `src/pages/dashboard/admin/AnalyticsHub.tsx`
-
-Wrap analytics category tabs with VisibilityGate for role-based control.
-
-### 4. `src/hooks/useDashboardVisibility.ts`
-
-Add helper hooks:
-
-```typescript
-// Get tab visibility for a specific role
-export function useTabVisibilityByRole(role: string) {
-  const { data: visibilityData } = useDashboardVisibility();
-  
-  return useMemo(() => {
-    if (!visibilityData) return {};
-    
-    return visibilityData
-      .filter(v => v.role === role && v.element_category === 'Page Tabs')
-      .reduce((acc, v) => {
-        acc[v.element_key] = v.is_visible;
-        return acc;
-      }, {} as Record<string, boolean>);
-  }, [visibilityData, role]);
-}
-```
-
-### 5. `src/components/visibility/VisibilityGate.tsx`
-
-Update to properly handle TabsTrigger children:
-
-```typescript
-// When used on tabs, return null to completely hide the tab
-// rather than rendering an empty element
-if (!isVisible) {
-  return null;  // Ensures tab disappears completely
-}
-```
-
----
-
-## Technical Details
-
-### Role Selector
-
-Uses roles from database with dynamic icons and colors:
-
-```typescript
-const { data: roles = [] } = useRoles();
-
-// Render role tabs
-{roles.map((role) => {
-  const Icon = getIconByName(role.icon);
-  return (
-    <button
-      key={role.id}
-      onClick={() => setSelectedRole(role.name)}
-      className={cn(
-        "flex items-center gap-2 px-4 py-2 rounded-lg",
-        selectedRole === role.name && "ring-2",
-      )}
-      style={{ 
-        borderColor: role.color,
-        backgroundColor: selectedRole === role.name ? `${role.color}20` : undefined 
-      }}
-    >
-      <Icon className="w-4 h-4" style={{ color: role.color }} />
-      {role.display_name}
-    </button>
-  );
-})}
-```
-
-### Tab Visibility Resolution
-
-When a user has multiple roles, tabs are visible if **any** role grants access (union logic). This matches the existing visibility console behavior.
-
-### Auto-Registration
-
-Tabs wrapped in VisibilityGate auto-register on first render:
-1. Check if element exists in database
-2. If not, create entries for all active roles (default visible)
-3. Admins can then hide specific tabs per role in the configurator
-
----
-
-## Page Tabs to Register
-
-| Page | Tab Key | Display Name |
-|------|---------|--------------|
-| My Stats | `stats_leaderboard_tab` | Team Leaderboard |
-| Analytics Hub | `analytics_sales_tab` | Sales |
-| Analytics Hub | `analytics_operations_tab` | Operations |
-| Analytics Hub | `analytics_marketing_tab` | Marketing |
-| Analytics Hub | `analytics_reports_tab` | Reports |
-| Settings | `settings_role_access_tab` | Role Access |
-
----
-
-## File Summary
-
-| File | Action |
-|------|--------|
-| `src/components/dashboard/settings/RoleAccessConfigurator.tsx` | Create |
-| `src/components/dashboard/settings/NavigationAccessPanel.tsx` | Create |
-| `src/components/dashboard/settings/PageTabsAccessPanel.tsx` | Create |
-| `src/components/dashboard/settings/WidgetsAccessPanel.tsx` | Create |
-| `src/pages/dashboard/admin/Settings.tsx` | Modify - Add Role Access tab |
-| `src/pages/dashboard/Stats.tsx` | Modify - Wrap leaderboard tab |
-| `src/pages/dashboard/admin/AnalyticsHub.tsx` | Modify - Wrap category tabs |
-| `src/hooks/useDashboardVisibility.ts` | Modify - Add helper hooks |
-| `src/components/visibility/VisibilityGate.tsx` | Modify - Handle tab children |
-
----
-
-## Benefits
-
-1. **Role-Centric**: Select a role first, then see everything that role can access
-2. **Unified Hub**: Navigation, tabs, and widgets in one place
-3. **8 Roles Supported**: Super Admin, DOO, Admin Assistant, Manager, Operations Assistant, Receptionist, Stylist, Stylist Assistant
-4. **Auto-Discovery**: New tabs auto-register via VisibilityGate
-5. **Existing Infrastructure**: Leverages current database tables and hooks
-6. **No Breaking Changes**: Backward compatible with existing configurations
