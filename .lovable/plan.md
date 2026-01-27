@@ -1,168 +1,195 @@
 
-# Display Client Name and Booking Status on Queue Cards
+
+# Smart Stylist Recommendations for Walk-In Dialog
 
 ## Overview
 
-This plan updates the `QueueCard` component to properly display the client's name and their booking confirmation status (confirmed, unconfirmed/booked, cancelled, etc.) based on the actual appointment data.
+This plan enhances the "Assign to Stylist" dropdown in the Walk-In Dialog to:
+1. **Only show stylists working today** at the selected location
+2. **Calculate and display available time** next to each stylist's name (e.g., "Eric Day - 2h 30m available")
+3. **Filter out unavailable stylists** who have no time for the requested service duration
 
 ## Current State
 
-The `QueueCard` component has two issues:
-1. **Client Name**: Shows "Walk-in" when `client_name` is null - this is working correctly, but your test data happens to have null names
-2. **Status Badge**: The `getStatusBadge()` function always shows "Confirmed" for waiting/upcoming appointments, ignoring the actual `status` field from the database
+The `WalkInDialog` component currently:
+- Fetches **all active employee profiles** from `employee_profiles`
+- Filters by `location_ids` array if a location is selected
+- Does **NOT** check if the stylist is working today
+- Does **NOT** calculate availability based on existing appointments
 
-The database shows appointments with status values like: `booked`, `confirmed`, `unknown`, `cancelled`, `no_show`, `checked_in`, `completed`
+## Data Sources for Availability
 
-## Changes Required
+| Source | Purpose |
+|--------|---------|
+| `employee_location_schedules` | Work days per location (e.g., `['Mon', 'Tue', 'Wed']`) |
+| `phorest_appointments` | Existing appointments for today (start_time, end_time, stylist_user_id) |
+| `phorest_services` | Service duration for the selected service |
+| `phorest_staff_mapping` | Ensures stylist is bookable (`show_on_calendar = true`) |
 
-### 1. Update QueueCard Status Badge Logic
-
-Modify `getStatusBadge()` in `src/components/dashboard/operations/QueueCard.tsx` to show the actual booking status:
-
-| Status Value | Badge Display | Style |
-|--------------|---------------|-------|
-| `confirmed` | Confirmed | Green |
-| `booked` | Unconfirmed | Yellow/Amber |
-| `unknown` | Unconfirmed | Yellow/Amber |
-| `cancelled` | Cancelled | Red with strikethrough |
-| `no_show` | No-Show | Red |
-| `checked_in` | In Service | Blue (existing) |
-
-### 2. Visual Design
+## Availability Calculation Logic
 
 ```text
-+-------------------------------------------+
-| 12:00 PM                    [ Confirmed ] |  <-- Green badge
-|-------------------------------------------|
-| Sarah Johnson                       [NEW] |  <-- Client name
-| (555) 123-4567                            |
-|                                           |
-| 1 Row Initial Install                     |
-| with Eric T.                              |
-|                                           |
-| $228                                      |
-|                                           |
-| [ Check In Early ]                        |
-+-------------------------------------------+
-
-+-------------------------------------------+
-| 1:00 PM                   [ Unconfirmed ] |  <-- Amber badge
-|-------------------------------------------|
-| Walk-in                                   |  <-- Fallback when no name
-| ...                                       |
-+-------------------------------------------+
-
-+-------------------------------------------+
-| 2:00 PM                     [ Cancelled ] |  <-- Red badge
-|-------------------------------------------|
-| Jane Doe                                  |
-| ...                                       |
-+-------------------------------------------+
+1. Get all stylists at the selected location
+2. Filter to those with today's day-of-week in their work_days
+3. For each remaining stylist:
+   a. Get their appointments for today at this location
+   b. Calculate busy time blocks
+   c. Find gaps between appointments (from now until end of day, e.g., 8 PM)
+   d. Sum total available minutes
+4. Only show stylists with available time >= service duration
+5. Display available time next to name
 ```
 
-## Implementation Details
+## Technical Implementation
 
-### File: `src/components/dashboard/operations/QueueCard.tsx`
+### New Hook: `useStylistAvailability`
 
-**Update `getStatusBadge()` function (lines 58-92):**
+Create a new hook at `src/hooks/useStylistAvailability.ts` that:
 
 ```typescript
-const getStatusBadge = () => {
-  // In-service appointments show time remaining
-  if (variant === 'inService') {
-    return (
-      <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-        <Clock className="w-3 h-3 mr-1" />
-        ~{appointment.estimatedCompleteIn}min left
-      </Badge>
-    );
-  }
+interface StylistWithAvailability {
+  user_id: string;
+  full_name: string;
+  display_name: string | null;
+  availableMinutes: number;
+  isWorkingToday: boolean;
+}
 
-  // Late arrivals get priority warning
-  if (appointment.isLate) {
-    return (
-      <Badge variant="destructive" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-        <AlertCircle className="w-3 h-3 mr-1" />
-        {appointment.waitTimeMinutes}min late
-      </Badge>
-    );
-  }
-
-  // Show actual booking status based on appointment.status
-  switch (appointment.status) {
-    case 'confirmed':
-      return (
-        <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-          <CheckCircle2 className="w-3 h-3 mr-1" />
-          Confirmed
-        </Badge>
-      );
-    case 'cancelled':
-      return (
-        <Badge variant="destructive" className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-          <XCircle className="w-3 h-3 mr-1" />
-          Cancelled
-        </Badge>
-      );
-    case 'no_show':
-      return (
-        <Badge variant="destructive">
-          <AlertCircle className="w-3 h-3 mr-1" />
-          No-Show
-        </Badge>
-      );
-    case 'booked':
-    case 'unknown':
-    default:
-      // Unconfirmed appointments (booked but not confirmed)
-      return (
-        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700">
-          <Clock className="w-3 h-3 mr-1" />
-          Unconfirmed
-        </Badge>
-      );
-  }
-};
+export function useStylistAvailability(
+  locationId: string | undefined,
+  serviceDurationMinutes: number
+)
 ```
 
-**Add XCircle import:**
-```typescript
-import { 
-  Clock, 
-  User, 
-  Phone, 
-  Scissors, 
-  CheckCircle2, 
-  DollarSign,
-  AlertCircle,
-  Copy,
-  Check,
-  XCircle,  // Add this
-} from 'lucide-react';
-```
+**Hook Logic:**
 
-### Optional: Add strikethrough styling for cancelled appointments
+1. Fetch stylists from `employee_profiles` where `is_active = true`
+2. Join with `employee_location_schedules` to get `work_days` per location
+3. Optionally join with `phorest_staff_mapping` to filter by `show_on_calendar`
+4. Filter to stylists where today's day-of-week is in their `work_days` for this location
+5. Fetch today's appointments from `phorest_appointments` for these stylists
+6. Calculate available time by finding gaps between appointments
+7. Return sorted list (most available first) with availability info
 
-For cancelled appointments, apply a subtle visual indicator:
+### Availability Calculation Details
+
+Working hours assumption: 8:00 AM - 8:00 PM (configurable)
 
 ```typescript
-<Card className={cn(
-  "p-4 transition-all duration-200 hover:shadow-md",
-  variant === 'inService' && "border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20",
-  appointment.isLate && variant === 'waiting' && "border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20",
-  appointment.status === 'cancelled' && "opacity-60 border-red-200 dark:border-red-900",
-)}>
+function calculateAvailableMinutes(
+  appointments: { start_time: string; end_time: string }[],
+  dayStart: string = '08:00',
+  dayEnd: string = '20:00'
+): number {
+  // Sort appointments by start time
+  // Find gaps between: dayStart -> first appointment, between appointments, last appointment -> dayEnd
+  // Sum all gap durations
+  // Only count gaps >= 15 minutes as "available"
+}
 ```
+
+### WalkInDialog.tsx Updates
+
+**Current stylist fetch (lines 55-76):**
+```typescript
+const { data: stylists } = useQuery({
+  queryKey: ['available-stylists', locationId],
+  queryFn: async () => {
+    // Basic fetch - no availability check
+  }
+});
+```
+
+**Updated to use new hook:**
+```typescript
+// Get selected service duration
+const selectedService = services?.find(s => s.id === serviceId);
+const serviceDuration = selectedService?.duration_minutes || 60;
+
+// Use smart availability hook
+const { data: availableStylists, isLoading: stylistsLoading } = useStylistAvailability(
+  locationId,
+  serviceDuration
+);
+```
+
+**Updated dropdown display (lines 205-212):**
+```typescript
+<SelectContent>
+  {availableStylists?.length === 0 && (
+    <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+      No stylists available for this service today
+    </div>
+  )}
+  {availableStylists?.map((stylist) => (
+    <SelectItem key={stylist.user_id} value={stylist.user_id}>
+      <div className="flex items-center justify-between w-full">
+        <span>{stylist.display_name || stylist.full_name}</span>
+        <span className="text-xs text-muted-foreground ml-2">
+          {formatAvailability(stylist.availableMinutes)}
+        </span>
+      </div>
+    </SelectItem>
+  ))}
+</SelectContent>
+```
+
+### Format Availability Helper
+
+```typescript
+function formatAvailability(minutes: number): string {
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m free` : `${hours}h free`;
+  }
+  return `${minutes}m free`;
+}
+```
+
+## UI Display Example
+
+```text
+┌─────────────────────────────────────────┐
+│ Assign to Stylist                       │
+│ ┌─────────────────────────────────────┐ │
+│ │ Select a stylist                  ▼ │ │
+│ └─────────────────────────────────────┘ │
+│   ┌─────────────────────────────────┐   │
+│   │ Eric Day          4h 30m free   │   │
+│   │ Sarah M.          2h 15m free   │   │
+│   │ Jordan T.         1h 30m free   │   │
+│   └─────────────────────────────────┘   │
+└─────────────────────────────────────────┘
+```
+
+**Visual details:**
+- Stylist name in normal weight on the left
+- Available time in muted, smaller text on the right
+- Stylists sorted by most available first
+- If no stylists available, show helpful message
+
+## Edge Cases
+
+| Scenario | Handling |
+|----------|----------|
+| No location selected | Show all active stylists (no availability filtering) |
+| No service selected | Assume 60-minute default duration |
+| Stylist has no appointments | Full day available (up to 12 hours) |
+| Stylist fully booked | Not shown in list |
+| Today is a day off | Not shown in list |
 
 ## File Changes Summary
 
-| File | Changes |
-|------|---------|
-| `src/components/dashboard/operations/QueueCard.tsx` | Update `getStatusBadge()` to show actual status, add XCircle import, add cancelled styling |
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/hooks/useStylistAvailability.ts` | Create | New hook for availability calculation |
+| `src/components/dashboard/operations/WalkInDialog.tsx` | Modify | Use new hook, update dropdown display |
 
-## Notes
+## Future Enhancements
 
-- The client name display already works correctly (`{appointment.client_name || 'Walk-in'}`)
-- Your current test data has all `client_name` values as null, which is why everything shows "Walk-in"
-- When Phorest syncs real appointments with client data, the names will display properly
-- Cancelled appointments should rarely appear in the queue, but the logic handles them gracefully
+The hook architecture supports future additions:
+- **Time slot suggestions**: "Best slot: 2:00 PM - 3:30 PM"
+- **Conflict warnings**: Alert if walk-in would create a tight schedule
+- **Qualification filtering**: Only show stylists qualified for the selected service
+
