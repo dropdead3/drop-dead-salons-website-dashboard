@@ -22,6 +22,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useStylistAvailability, formatAvailability } from '@/hooks/useStylistAvailability';
 
 interface WalkInDialogProps {
   locationId?: string;
@@ -52,28 +53,15 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
     },
   });
 
-  // Fetch available stylists
-  const { data: stylists } = useQuery({
-    queryKey: ['available-stylists', locationId],
-    queryFn: async () => {
-      let query = supabase
-        .from('employee_profiles')
-        .select('user_id, full_name, display_name, location_ids')
-        .eq('is_active', true);
+  // Get selected service duration for availability calculation
+  const selectedService = services?.find(s => s.id === serviceId);
+  const serviceDuration = selectedService?.duration_minutes || 60;
 
-      const { data, error } = await query;
-      if (error) throw error;
-      
-      // Filter by location if specified
-      if (locationId && locationId !== 'all') {
-        return data.filter(s => 
-          s.location_ids?.includes(locationId)
-        );
-      }
-      return data;
-    },
-    enabled: !!locationId,
-  });
+  // Fetch available stylists using the smart availability hook
+  const { data: availableStylists, isLoading: stylistsLoading } = useStylistAvailability(
+    locationId,
+    serviceDuration
+  );
 
   // Create walk-in appointment
   const createWalkIn = useMutation({
@@ -200,12 +188,22 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
             <Label htmlFor="stylist">Assign to Stylist</Label>
             <Select value={stylistId} onValueChange={setStylistId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a stylist" />
+                <SelectValue placeholder={stylistsLoading ? "Loading..." : "Select a stylist"} />
               </SelectTrigger>
               <SelectContent>
-                {stylists?.map((stylist) => (
+                {availableStylists?.length === 0 && !stylistsLoading && (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                    No stylists available for this service today
+                  </div>
+                )}
+                {availableStylists?.map((stylist) => (
                   <SelectItem key={stylist.user_id} value={stylist.user_id}>
-                    {stylist.display_name || stylist.full_name}
+                    <div className="flex items-center justify-between w-full gap-3">
+                      <span>{stylist.display_name || stylist.full_name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatAvailability(stylist.availableMinutes)}
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
