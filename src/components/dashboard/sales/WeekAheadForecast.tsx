@@ -145,7 +145,7 @@ export function WeekAheadForecast() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CalendarRange className="w-5 h-5 text-primary" />
-              <CardTitle className="font-display text-base">Week Ahead</CardTitle>
+              <CardTitle className="font-display text-base">Revenue Forecast</CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <LocationSelect
