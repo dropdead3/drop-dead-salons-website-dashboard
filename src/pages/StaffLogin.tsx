@@ -170,7 +170,7 @@ export default function StaffLogin() {
 
       {/* Login form */}
       <div className="flex-1 flex items-center justify-center px-6 pb-20">
-        <div className="w-full max-w-md p-8 rounded-3xl border border-[hsl(35,30%,75%)/0.5] bg-[hsl(35,30%,95%)/0.3] backdrop-blur-sm shadow-[0_0_40px_-10px_hsl(35,30%,70%)/0.3]">
+        <div className="w-full max-w-md p-8 rounded-3xl border-2 border-[hsl(35,30%,65%)/0.8] bg-[hsl(35,30%,95%)/0.3] backdrop-blur-sm shadow-[0_0_40px_-10px_hsl(35,30%,70%)/0.3]">
           <div className="w-full max-w-sm mx-auto space-y-8">
           {/* Logo */}
           <div className="text-center">
