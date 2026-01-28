@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { format, startOfMonth, subDays, startOfWeek } from 'date-fns';
 import { VisibilityGate } from '@/components/visibility';
-import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
+import { AggregateSalesCard, DateRange as SalesDateRange } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
@@ -17,6 +17,19 @@ import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 
 export type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+
+// Map dashboard date range to Sales Overview date range
+function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
+  const mapping: Record<DateRangeType, SalesDateRange> = {
+    'today': 'today',
+    '7d': '7d',
+    '30d': '30d',
+    'thisWeek': 'thisWeek',
+    'thisMonth': 'mtd',
+    'lastMonth': '30d',
+  };
+  return mapping[dashboardRange] || 'today';
+}
 
 // Helper function to get date range
 export function getDateRange(dateRange: DateRangeType): { dateFrom: string; dateTo: string } {
@@ -105,7 +118,11 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'sales_overview':
       return (
         <VisibilityGate elementKey="sales_overview">
-          <AggregateSalesCard />
+          <AggregateSalesCard 
+            externalDateRange={mapToSalesDateRange(filters.dateRange)}
+            externalDateFilters={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
+            hideInternalFilter={true}
+          />
         </VisibilityGate>
       );
     case 'top_performers':
