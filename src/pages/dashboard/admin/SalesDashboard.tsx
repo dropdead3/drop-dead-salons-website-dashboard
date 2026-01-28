@@ -447,10 +447,12 @@ export default function SalesDashboard() {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="compare" className="flex-1 md:flex-none">
-              <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
-              Compare
-            </TabsTrigger>
+            {(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
+              <TabsTrigger value="compare" className="flex-1 md:flex-none">
+                <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
+                Compare
+              </TabsTrigger>
+            )}
             <TabsTrigger value="analytics" className="flex-1 md:flex-none">
               <BarChart3 className="w-4 h-4 mr-1 hidden sm:inline" />
               Analytics
@@ -779,13 +781,15 @@ export default function SalesDashboard() {
             )}
           </TabsContent>
 
-          {/* Compare Tab */}
-          <TabsContent value="compare" className="space-y-6">
-            <LocationComparison 
-              locations={locationData || []} 
-              isLoading={locationLoading}
-            />
-          </TabsContent>
+          {/* Compare Tab - only show when 2+ locations */}
+          {(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
+            <TabsContent value="compare" className="space-y-6">
+              <LocationComparison 
+                locations={locationData || []} 
+                isLoading={locationLoading}
+              />
+            </TabsContent>
+          )}
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
