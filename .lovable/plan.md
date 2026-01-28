@@ -1,173 +1,148 @@
 
 
-# Redesign Revenue KPI to Show Breakdown
+# Consolidate Sales Cards: Keep Sales Overview, Remove Sales Dashboard
 
 ## Overview
 
-Redesign the "Total Revenue" metric to visually communicate that it is the sum of Services + Products revenue, making the relationship between these numbers clear at a glance.
+The project has two redundant sales cards:
+1. **Sales Dashboard** (`SalesBentoCard`) - Recently enhanced with Rev/Hour and Revenue Breakdown
+2. **Sales Overview** (`AggregateSalesCard`) - More feature-rich with sparklines, location tables, trend indicators, CSV export
+
+We will consolidate into **Sales Overview** by porting the new features and removing the redundant card.
 
 ---
 
-## Current Layout
+## What Sales Overview Already Has (Keep)
 
-```
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│  $1,424      │ │  $1,424      │ │  $0          │
-│ Total Revenue│ │  Services    │ │  Products    │
-└──────────────┘ └──────────────┘ └──────────────┘
-```
-
-All three metrics appear at the same level, making it unclear that Services + Products = Total.
-
----
-
-## New Design
-
-A single "Revenue" card that shows the total prominently with a breakdown underneath:
-
-```
-┌────────────────────────────────────────────────┐
-│              $                                 │
-│           $1,424                               │
-│        Total Revenue                           │
-│  ┌──────────────────┐ ┌──────────────────┐     │
-│  │  ✂ $1,424        │ │  🛍 $0            │     │
-│  │  Services  (100%)│ │  Products  (0%)   │     │
-│  └──────────────────┘ └──────────────────┘     │
-└────────────────────────────────────────────────┘
-```
+| Feature | Description |
+|---------|-------------|
+| Multiple date ranges | Today, Yesterday, 7d, 30d, MTD, YTD, Last Year, Last 365 Days |
+| Trend indicators | Period-over-period comparison with arrows |
+| Location breakdown table | Revenue by location with sparklines |
+| Rev. Tomorrow | Projected revenue from booked appointments |
+| CSV Export | Download location data |
+| Last Sync indicator | Shows data freshness |
+| Top Performers sidebar | Leaderboard with avatars |
+| Revenue Mix donut | Visual service/product split |
+| Goal progress bar | Weekly/Monthly/Yearly adaptive |
 
 ---
 
-## Technical Implementation
+## What to Port from Sales Dashboard
 
-### 1. Create New "RevenueBreakdownCell" Component
+| Feature | Action |
+|---------|--------|
+| Rev/Hour KPI | Add as 7th KPI cell using `totalServiceHours` from the hook |
 
-Replace the three separate KPICells with a single composite component:
+Note: The Revenue Breakdown cell design from Sales Dashboard won't be ported since Sales Overview already shows Services/Products as separate KPIs with trend indicators - a more informative layout.
+
+---
+
+## Technical Changes
+
+### 1. Add Rev/Hour to Sales Overview
+
+**File: `src/components/dashboard/AggregateSalesCard.tsx`**
+
+Import the `Clock` icon and add the Rev/Hour calculation:
 
 ```typescript
-function RevenueBreakdownCell({
-  totalRevenue,
-  serviceRevenue,
-  productRevenue,
-}: {
-  totalRevenue: number;
-  serviceRevenue: number;
-  productRevenue: number;
-}) {
-  const total = serviceRevenue + productRevenue;
-  const servicePercent = total > 0 ? Math.round((serviceRevenue / total) * 100) : 0;
-  const productPercent = total > 0 ? Math.round((productRevenue / total) * 100) : 0;
-  
-  return (
-    <div className="col-span-2 sm:col-span-3 p-4 bg-muted/30 rounded-lg">
-      {/* Main Total */}
-      <div className="text-center mb-4">
-        <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
-        <AnimatedBlurredAmount 
-          value={totalRevenue}
-          prefix="$"
-          className="text-2xl sm:text-3xl font-display tabular-nums"
-        />
-        <div className="flex items-center gap-1 justify-center mt-1">
-          <p className="text-sm text-muted-foreground">Total Revenue</p>
-          <MetricInfoTooltip description="..." />
-        </div>
-      </div>
-      
-      {/* Breakdown Row */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Services */}
-        <div className="text-center p-3 bg-background/50 rounded-md border border-border/30">
-          <div className="flex items-center justify-center gap-1.5 mb-1">
-            <Scissors className="w-3.5 h-3.5 text-primary" />
-            <span className="text-xs text-muted-foreground">Services</span>
-          </div>
-          <AnimatedBlurredAmount 
-            value={serviceRevenue}
-            prefix="$"
-            className="text-lg font-display tabular-nums"
-          />
-          <span className="text-xs text-muted-foreground/70">{servicePercent}%</span>
-        </div>
-        
-        {/* Products */}
-        <div className="text-center p-3 bg-background/50 rounded-md border border-border/30">
-          <div className="flex items-center justify-center gap-1.5 mb-1">
-            <ShoppingBag className="w-3.5 h-3.5 text-chart-2" />
-            <span className="text-xs text-muted-foreground">Products</span>
-          </div>
-          <AnimatedBlurredAmount 
-            value={productRevenue}
-            prefix="$"
-            className="text-lg font-display tabular-nums"
-          />
-          <span className="text-xs text-muted-foreground/70">{productPercent}%</span>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { Clock } from 'lucide-react';
+
+// Add after line 113 (isLoading declaration)
+const revenuePerHour = useMemo(() => {
+  const serviceHours = metrics?.totalServiceHours || 0;
+  if (serviceHours === 0) return 0;
+  return metrics.totalRevenue / serviceHours;
+}, [metrics]);
 ```
 
-### 2. Update KPI Grid Layout
-
-Change from 6 equal cells to:
-- 1 full-width Revenue Breakdown card (spans 2-3 columns)
-- 3 remaining KPI cells (Transactions, Avg Ticket, Rev/Hour)
+Add a new KPI cell after "Rev. Tomorrow" (around line 402):
 
 ```typescript
-{/* Left: KPI Grid */}
-<div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-  {/* Revenue Breakdown - Full Width */}
-  <RevenueBreakdownCell 
-    totalRevenue={totalRevenue}
-    serviceRevenue={serviceRevenue}
-    productRevenue={productRevenue}
+<div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+  <div className="flex justify-center mb-2">
+    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-chart-5" />
+  </div>
+  <AnimatedBlurredAmount 
+    value={Math.round(revenuePerHour)}
+    prefix="$"
+    className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
   />
-  
-  {/* Remaining KPIs */}
-  <KPICell icon={CreditCard} value={totalTransactions} label="Transactions" />
-  <KPICell icon={Receipt} value={averageTicket} label="Avg Ticket" prefix="$" />
-  <KPICell icon={Clock} value={revenuePerHour} label="Rev/Hour" prefix="$" />
+  <div className="flex items-center gap-1 justify-center mt-1">
+    <p className="text-xs text-muted-foreground">Rev/Hour</p>
+    <MetricInfoTooltip description="Total Revenue ÷ Service Hours. Average revenue per hour of stylist work." />
+  </div>
 </div>
 ```
 
----
+### 2. Remove Sales Dashboard from Pinnable Options
 
-## Updated Layout Visual
+**File: `src/components/dashboard/DashboardCustomizeMenu.tsx`**
 
+Remove the `sales_dashboard_bento` entry from `PINNABLE_CARDS` array (line 143).
+
+**File: `src/hooks/useDashboardLayout.ts`**
+
+Remove `'sales_dashboard_bento'` from `PINNABLE_CARD_IDS` array (line 34).
+
+### 3. Remove Rendering Logic for Sales Dashboard
+
+**File: `src/components/dashboard/CommandCenterAnalytics.tsx`**
+
+Remove the `case 'sales_dashboard_bento':` block (lines 158-167) and the `SalesBentoCard` import.
+
+**File: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
+
+Remove the `case 'sales_dashboard_bento':` block (lines 70-79) and the `SalesBentoCard` import.
+
+### 4. Update Analytics Hub Sales Tab
+
+**File: `src/components/dashboard/analytics/SalesTabContent.tsx`**
+
+Replace the `SalesBentoCard` usage with `AggregateSalesCard`:
+
+```typescript
+<PinnableCard 
+  elementKey="sales_overview" 
+  elementName="Sales Overview" 
+  category="Analytics Hub - Sales"
+>
+  <AggregateSalesCard />
+</PinnableCard>
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    REVENUE BREAKDOWN                     │
-│                       $1,424                             │
-│                    Total Revenue                         │
-│    ┌─────────────────┐    ┌─────────────────┐           │
-│    │  ✂ $1,424       │    │  🛍 $0           │           │
-│    │  Services 100%  │    │  Products 0%    │           │
-│    └─────────────────┘    └─────────────────┘           │
-├─────────────────┬─────────────────┬─────────────────────┤
-│   Transactions  │   Avg Ticket    │    Rev/Hour         │
-│       12        │     $119        │      $95            │
-└─────────────────┴─────────────────┴─────────────────────┘
-```
+
+### 5. Delete Sales Dashboard Component
+
+**File to delete:** `src/components/dashboard/sales/SalesBentoCard.tsx`
 
 ---
 
-## Benefits
+## Updated KPI Grid in Sales Overview
 
-| Before | After |
-|--------|-------|
-| 3 separate equal cards | Clear parent-child relationship |
-| Unclear relationship | Visual hierarchy shows breakdown |
-| Redundant "Revenue Mix" in sidebar | Integrated percentage display |
-| 6 KPI cells | 4 logical groupings (cleaner) |
+After adding Rev/Hour, the grid will have 7 KPIs:
+
+| Position | Metric | Icon |
+|----------|--------|------|
+| 1 | Total Revenue | DollarSign |
+| 2 | Services | Scissors |
+| 3 | Products | ShoppingBag |
+| 4 | Transactions | CreditCard |
+| 5 | Avg Ticket | Receipt |
+| 6 | Rev. Tomorrow | CalendarClock |
+| 7 | **Rev/Hour** | Clock |
 
 ---
 
-## Files to Modify
+## Files Summary
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `src/components/dashboard/sales/SalesBentoCard.tsx` | Add `RevenueBreakdownCell` component; update grid layout |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Add Rev/Hour KPI |
+| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Remove sales_dashboard_bento from PINNABLE_CARDS |
+| `src/hooks/useDashboardLayout.ts` | Remove sales_dashboard_bento from PINNABLE_CARD_IDS |
+| `src/components/dashboard/CommandCenterAnalytics.tsx` | Remove SalesBentoCard case and import |
+| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Remove SalesBentoCard case and import |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Replace SalesBentoCard with AggregateSalesCard |
+| `src/components/dashboard/sales/SalesBentoCard.tsx` | **Delete** |
 
