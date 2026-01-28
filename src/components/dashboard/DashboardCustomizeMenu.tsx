@@ -145,7 +145,7 @@ const PINNABLE_CARDS = [
   { id: 'top_performers', label: 'Top Performers', category: 'Sales', icon: <Trophy className="w-4 h-4" /> },
   
   // Forecasting & Goals
-  { id: 'week_ahead_forecast', label: 'Week Ahead Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" /> },
+  { id: 'week_ahead_forecast', label: 'Revenue Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" /> },
   { id: 'team_goals', label: 'Team Goals', category: 'Forecasting', icon: <Target className="w-4 h-4" /> },
   { id: 'new_bookings', label: 'New Bookings', category: 'Forecasting', icon: <CalendarPlus className="w-4 h-4" /> },
   
