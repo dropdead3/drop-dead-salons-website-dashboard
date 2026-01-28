@@ -267,7 +267,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                         />
                         <Area 
                           type="monotone" 
-                          dataKey="totalRevenue" 
+                          dataKey="revenue" 
                           stroke="hsl(var(--primary))" 
                           fill="hsl(var(--primary) / 0.2)"
                           strokeWidth={2}
