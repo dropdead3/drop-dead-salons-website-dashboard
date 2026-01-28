@@ -15,6 +15,7 @@ import {
   Trophy,
   PieChart as PieChartIcon,
   Loader2,
+  Clock,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -22,9 +23,53 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
-import { useLocations } from '@/hooks/useLocations';
+import { useLocations, type Location, type HoursJson } from '@/hooks/useLocations';
 
 export type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+
+// Day name mapping for hours_json lookup (Sunday = 0)
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+
+// Calculate total operating hours for a date range
+function calculateOperatingHours(
+  locations: Location[],
+  locationId: string | undefined,
+  dateFrom: string,
+  dateTo: string
+): number {
+  // Get applicable location(s)
+  const targetLocations = locationId
+    ? locations.filter(l => l.id === locationId)
+    : locations.filter(l => l.is_active);
+  
+  if (targetLocations.length === 0) return 0;
+  
+  let totalHours = 0;
+  const start = new Date(dateFrom);
+  const end = new Date(dateTo);
+  
+  // Iterate through each day in range
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dayOfWeek = d.getDay(); // 0 = Sunday
+    const dayName = DAY_NAMES[dayOfWeek];
+    
+    for (const loc of targetLocations) {
+      const hoursJson = loc.hours_json as HoursJson | null;
+      if (!hoursJson) continue;
+      
+      const dayHours = hoursJson[dayName];
+      
+      if (dayHours && !dayHours.closed && dayHours.open && dayHours.close) {
+        const [openH, openM] = dayHours.open.split(':').map(Number);
+        const [closeH, closeM] = dayHours.close.split(':').map(Number);
+        const hours = ((closeH * 60 + closeM) - (openH * 60 + openM)) / 60;
+        totalHours += Math.max(0, hours);
+      }
+    }
+  }
+  
+  return totalHours;
+}
 
 interface SalesBentoCardProps {
   locationId?: string;
@@ -180,6 +225,22 @@ export function SalesBentoCard({
     ? Math.round((productRevenue / totalMixRevenue) * 100) 
     : 0;
 
+  // Calculate operating hours and revenue per hour
+  const operatingHours = useMemo(() => {
+    if (!locations) return 0;
+    return calculateOperatingHours(
+      locations,
+      locationFilter,
+      dateFilters.dateFrom,
+      dateFilters.dateTo
+    );
+  }, [locations, locationFilter, dateFilters]);
+
+  const revenuePerHour = useMemo(() => {
+    if (operatingHours === 0) return 0;
+    return totalRevenue / operatingHours;
+  }, [totalRevenue, operatingHours]);
+
   const donutData = useMemo(() => [
     { name: 'Services', value: serviceRevenue, color: 'hsl(var(--primary))' },
     { name: 'Products', value: productRevenue, color: 'hsl(var(--chart-2))' },
@@ -265,6 +326,14 @@ export function SalesBentoCard({
               prefix="$"
               iconColor="text-chart-4"
               tooltip="Total Revenue ÷ Transactions. Average spend per client visit."
+            />
+            <KPICell 
+              icon={Clock} 
+              value={Math.round(revenuePerHour)} 
+              label="Rev/Hour" 
+              prefix="$"
+              iconColor="text-chart-5"
+              tooltip="Total Revenue ÷ Operating Hours. Average revenue generated per hour of operation."
             />
           </div>
           
