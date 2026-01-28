@@ -1,46 +1,39 @@
 
+
 # Fix Font on Location Comparison Card Header
 
 ## Problem
 
-The filter information badge and total revenue badge in the Location Comparison card header are inheriting the `font-display` (Termina) font from the parent `CardTitle`. They should use the default body font (Aeonin Pro) to match other cards.
+The filter information badge ("ALL LOCAT... · TODAY") and total revenue badge ("$1,896 TOTAL") are using **Termina** (font-display) when they should use **Aeonik Pro** (default body font) to match other cards.
 
 ---
 
-## Current Code (Line 98-112)
+## Root Cause
+
+In `src/components/dashboard/sales/LocationComparison.tsx`, the `font-display` class is on the parent `CardTitle`, causing all children to inherit Termina:
 
 ```tsx
 <CardTitle className="font-display text-sm flex items-center justify-between">
   <span>LOCATION COMPARISON</span>
   <div className="flex items-center gap-2">
-    {filterContext && (
-      <AnalyticsFilterBadge ... />
-    )}
-    <Badge variant="outline" className="font-normal">
-      ${totalRevenue.toLocaleString()} total
-    </Badge>
+    {filterContext && <AnalyticsFilterBadge ... />}
+    <Badge ...>$1,896 total</Badge>
   </div>
 </CardTitle>
 ```
-
-The `font-display` class on `CardTitle` applies Termina font to **all children**, including the filter badge and total badge.
 
 ---
 
 ## Solution
 
-Move `font-display` from the parent `CardTitle` to only the title text span, so the badges use the default body font:
+Move `font-display` from the parent `CardTitle` to only the title text `<span>`:
 
 ```tsx
 <CardTitle className="text-sm flex items-center justify-between">
   <span className="font-display">LOCATION COMPARISON</span>
   <div className="flex items-center gap-2">
-    {filterContext && (
-      <AnalyticsFilterBadge ... />
-    )}
-    <Badge variant="outline" className="font-normal">
-      ${totalRevenue.toLocaleString()} total
-    </Badge>
+    {filterContext && <AnalyticsFilterBadge ... />}
+    <Badge ...>$1,896 total</Badge>
   </div>
 </CardTitle>
 ```
@@ -59,8 +52,7 @@ Move `font-display` from the parent `CardTitle` to only the title text span, so 
 
 | Element | Before | After |
 |---------|--------|-------|
-| "LOCATION COMPARISON" | Termina | Termina (unchanged) |
-| Filter badge (location + date) | Termina | Aeonin Pro |
-| "$5,446 total" badge | Termina | Aeonin Pro |
+| "LOCATION COMPARISON" title | Termina | Termina (unchanged) |
+| Filter badge (ALL LOCAT... · TODAY) | Termina | Aeonik Pro |
+| "$1,896 TOTAL" badge | Termina | Aeonik Pro |
 
-This matches the typography pattern used in other analytics cards.
