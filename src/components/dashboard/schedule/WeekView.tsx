@@ -26,6 +26,7 @@ interface WeekViewProps {
   onAppointmentClick: (appointment: PhorestAppointment) => void;
   onSlotClick?: (date: Date, time: string) => void;
   selectedLocationId?: string;
+  onDayDoubleClick?: (date: Date) => void;
 }
 
 // Phorest-style status colors
@@ -249,6 +250,7 @@ export function WeekView({
   hoursEnd = 20,
   onAppointmentClick,
   selectedLocationId,
+  onDayDoubleClick,
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -332,9 +334,10 @@ export function WeekView({
                   <div 
                     key={day.toISOString()} 
                     className={cn(
-                      'py-3 px-2 text-center border-l border-border/50',
+                      'py-3 px-2 text-center border-l border-border/50 cursor-pointer select-none',
                       dayIsToday && 'bg-primary/10'
                     )}
+                    onDoubleClick={() => onDayDoubleClick?.(day)}
                   >
                     <div className={cn(
                       'text-[10px] uppercase tracking-wider font-medium',

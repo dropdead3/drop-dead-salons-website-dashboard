@@ -253,6 +253,12 @@ export default function Schedule() {
     setView('day');
   };
 
+  // Handler for double-clicking a day in week view
+  const handleDayDoubleClick = (date: Date) => {
+    setCurrentDate(date);
+    setView('day');
+  };
+
   const handleNewBooking = () => {
     setBookingDefaults({});
     setBookingOpen(true);
@@ -347,6 +353,7 @@ export default function Schedule() {
                   onAppointmentClick={handleAppointmentClick}
                   onSlotClick={handleSlotClick}
                   selectedLocationId={selectedLocation}
+                  onDayDoubleClick={handleDayDoubleClick}
                 />
               )}
               
