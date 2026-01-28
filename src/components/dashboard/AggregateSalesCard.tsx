@@ -20,6 +20,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
@@ -130,6 +131,13 @@ export function AggregateSalesCard({
   const { data: comparison, isLoading: comparisonLoading } = useSalesComparison(dateFilters.dateFrom, dateFilters.dateTo);
   const { data: tomorrowData } = useTomorrowRevenue();
   const { goals } = useSalesGoals();
+  const { data: locations } = useActiveLocations();
+
+  // Location display logic
+  const isAllLocations = !filterContext?.locationId || filterContext.locationId === 'all';
+  const selectedLocationName = !isAllLocations 
+    ? locations?.find(loc => loc.id === filterContext.locationId)?.name 
+    : null;
 
   const isLoading = metricsLoading || locationLoading;
 
@@ -264,7 +272,9 @@ export function AggregateSalesCard({
           <div className="flex items-center gap-2">
             <div>
               <h2 className="font-display text-sm tracking-wide">SALES OVERVIEW</h2>
-              <p className="text-xs text-muted-foreground">All locations combined</p>
+              <p className="text-xs text-muted-foreground">
+                {isAllLocations ? 'All locations combined' : selectedLocationName || 'Loading...'}
+              </p>
             </div>
             <CommandCenterVisibilityToggle 
               elementKey="sales_overview" 
@@ -466,86 +476,88 @@ export function AggregateSalesCard({
         </div>
       </div>
 
-      {/* By Location Table */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <Building2 className="w-4 h-4 text-muted-foreground" />
-          <h3 className="font-display text-xs tracking-wide text-muted-foreground">BY LOCATION</h3>
+      {/* By Location Table - only show when viewing all locations */}
+      {isAllLocations && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Building2 className="w-4 h-4 text-muted-foreground" />
+            <h3 className="font-display text-xs tracking-wide text-muted-foreground">BY LOCATION</h3>
+          </div>
+          
+          {locationData && locationData.length > 0 ? (
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-display text-xs">Location</TableHead>
+                    <TableHead className="font-display text-xs text-center">Revenue</TableHead>
+                    <TableHead className="font-display text-xs text-center hidden md:table-cell w-[120px]">Trend</TableHead>
+                    <TableHead className="font-display text-xs text-center hidden sm:table-cell">Services</TableHead>
+                    <TableHead className="font-display text-xs text-center hidden sm:table-cell">Products</TableHead>
+                    <TableHead className="font-display text-xs text-center hidden md:table-cell">Transactions</TableHead>
+                    <TableHead className="font-display text-xs text-center">Avg Ticket</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {locationData.map((location, idx) => {
+                    const avgTicket = location.totalTransactions > 0 
+                      ? location.totalRevenue / location.totalTransactions 
+                      : 0;
+                    return (
+                      <TableRow 
+                        key={location.location_id || idx}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleViewDetails(location.location_id)}
+                      >
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{location.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center font-display">
+                          <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
+                        </TableCell>
+                        <TableCell className="text-center hidden md:table-cell">
+                          {!hideNumbers && (
+                            <TrendSparkline 
+                              data={getLocationTrend(location.location_id).map(d => d.value)} 
+                              width={100}
+                              height={24}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center hidden sm:table-cell">
+                          <BlurredAmount>${location.serviceRevenue.toLocaleString()}</BlurredAmount>
+                        </TableCell>
+                        <TableCell className="text-center hidden sm:table-cell">
+                          <BlurredAmount>${location.productRevenue.toLocaleString()}</BlurredAmount>
+                        </TableCell>
+                        <TableCell className="text-center hidden md:table-cell">
+                          <BlurredAmount>{location.totalTransactions}</BlurredAmount>
+                        </TableCell>
+                        <TableCell className="text-center font-display">
+                          <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
+                        </TableCell>
+                        <TableCell>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/20">
+              <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No location data available</p>
+              <p className="text-xs mt-1">Sync sales to see breakdown by location</p>
+            </div>
+          )}
         </div>
-        
-        {locationData && locationData.length > 0 ? (
-          <div className="rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="font-display text-xs">Location</TableHead>
-                  <TableHead className="font-display text-xs text-center">Revenue</TableHead>
-                  <TableHead className="font-display text-xs text-center hidden md:table-cell w-[120px]">Trend</TableHead>
-                  <TableHead className="font-display text-xs text-center hidden sm:table-cell">Services</TableHead>
-                  <TableHead className="font-display text-xs text-center hidden sm:table-cell">Products</TableHead>
-                  <TableHead className="font-display text-xs text-center hidden md:table-cell">Transactions</TableHead>
-                  <TableHead className="font-display text-xs text-center">Avg Ticket</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {locationData.map((location, idx) => {
-                  const avgTicket = location.totalTransactions > 0 
-                    ? location.totalRevenue / location.totalTransactions 
-                    : 0;
-                  return (
-                    <TableRow 
-                      key={location.location_id || idx}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleViewDetails(location.location_id)}
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                          <span className="truncate">{location.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center font-display">
-                        <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
-                      </TableCell>
-                      <TableCell className="text-center hidden md:table-cell">
-                        {!hideNumbers && (
-                          <TrendSparkline 
-                            data={getLocationTrend(location.location_id).map(d => d.value)} 
-                            width={100}
-                            height={24}
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center hidden sm:table-cell">
-                        <BlurredAmount>${location.serviceRevenue.toLocaleString()}</BlurredAmount>
-                      </TableCell>
-                      <TableCell className="text-center hidden sm:table-cell">
-                        <BlurredAmount>${location.productRevenue.toLocaleString()}</BlurredAmount>
-                      </TableCell>
-                      <TableCell className="text-center hidden md:table-cell">
-                        <BlurredAmount>{location.totalTransactions}</BlurredAmount>
-                      </TableCell>
-                      <TableCell className="text-center font-display">
-                        <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
-                      </TableCell>
-                      <TableCell>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/20">
-            <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No location data available</p>
-            <p className="text-xs mt-1">Sync sales to see breakdown by location</p>
-          </div>
-        )}
-      </div>
+      )}
     </Card>
   );
 }
