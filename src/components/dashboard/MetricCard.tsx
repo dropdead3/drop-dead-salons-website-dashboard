@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, DollarSign, TrendingUp, Trophy, Rocket, ClipboardCheck, BarChart3 } from "lucide-react";
+import { Copy, Check, DollarSign, TrendingUp, Trophy, Rocket, ClipboardCheck, BarChart3, Calendar } from "lucide-react";
 import { useState } from "react";
 import { MetricDefinition, MetricCategory } from "@/data/metricsGlossary";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ const categoryIcons: Record<MetricCategory, React.ElementType> = {
   client_engine: Rocket,
   onboarding: ClipboardCheck,
   performance: BarChart3,
+  operations: Calendar,
 };
 
 const categoryColors: Record<MetricCategory, string> = {
@@ -22,6 +23,7 @@ const categoryColors: Record<MetricCategory, string> = {
   client_engine: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
   onboarding: 'bg-teal-500/10 text-teal-600 dark:text-teal-400',
   performance: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+  operations: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
 };
 
 interface MetricCardProps {

@@ -4,7 +4,8 @@ export type MetricCategory =
   | 'leaderboard'
   | 'client_engine'
   | 'onboarding'
-  | 'performance';
+  | 'performance'
+  | 'operations';
 
 export interface MetricDefinition {
   id: string;
@@ -25,6 +26,7 @@ export const categoryLabels: Record<MetricCategory, string> = {
   client_engine: 'Client Engine',
   onboarding: 'Onboarding',
   performance: 'Performance',
+  operations: 'Operations',
 };
 
 export const categoryIcons: Record<MetricCategory, string> = {
@@ -34,6 +36,7 @@ export const categoryIcons: Record<MetricCategory, string> = {
   client_engine: 'Rocket',
   onboarding: 'ClipboardCheck',
   performance: 'BarChart3',
+  operations: 'Calendar',
 };
 
 export const metricsGlossary: MetricDefinition[] = [
@@ -462,6 +465,19 @@ export const metricsGlossary: MetricDefinition[] = [
     updateFrequency: 'Weekly',
     example: 'VIP: 45, At-Risk: 12',
     relatedMetrics: ['retention-rate'],
+  },
+
+  // Operations
+  {
+    id: 'rebook-rate-operational',
+    name: 'Rebook Rate (Operational)',
+    category: 'operations',
+    description: 'Percentage of completed appointments where the client booked their next visit at checkout.',
+    formula: '(Appointments with rebooking ÷ Completed appointments) × 100',
+    dataSource: 'phorest_appointments',
+    updateFrequency: 'Real-time',
+    example: '72%',
+    relatedMetrics: ['retention-rate', 'rebooking-rate'],
   },
 ];
 

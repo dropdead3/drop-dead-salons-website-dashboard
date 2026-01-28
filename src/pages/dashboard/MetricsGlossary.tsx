@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Search, BookOpen, DollarSign, TrendingUp, Trophy, Rocket, ClipboardCheck, BarChart3 } from "lucide-react";
+import { Search, BookOpen, DollarSign, TrendingUp, Trophy, Rocket, ClipboardCheck, BarChart3, Calendar } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { DataHealthSection } from "@/components/dashboard/DataHealthSection";
 import { 
@@ -22,6 +22,7 @@ const categoryIcons: Record<MetricCategory, React.ElementType> = {
   client_engine: Rocket,
   onboarding: ClipboardCheck,
   performance: BarChart3,
+  operations: Calendar,
 };
 
 const categories: MetricCategory[] = [
@@ -31,6 +32,7 @@ const categories: MetricCategory[] = [
   'client_engine',
   'onboarding',
   'performance',
+  'operations',
 ];
 
 export default function MetricsGlossary() {
@@ -61,6 +63,7 @@ export default function MetricsGlossary() {
       client_engine: [],
       onboarding: [],
       performance: [],
+      operations: [],
     };
     
     filteredMetrics.forEach(metric => {

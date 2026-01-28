@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
-import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign } from 'lucide-react';
+import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import {
   Sheet,
   SheetContent,
@@ -20,7 +21,7 @@ interface CheckoutSummarySheetProps {
   appointment: PhorestAppointment | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (tipAmount: number) => void;
+  onConfirm: (tipAmount: number, rebooked: boolean) => void;
   isUpdating?: boolean;
   taxRate: number;
   businessSettings: BusinessSettings | null;
@@ -50,6 +51,7 @@ export function CheckoutSummarySheet({
 }: CheckoutSummarySheetProps) {
   const [tipAmount, setTipAmount] = useState<number>(0);
   const [customTip, setCustomTip] = useState<string>('');
+  const [rebooked, setRebooked] = useState<boolean>(false);
 
   if (!appointment) return null;
 
@@ -270,10 +272,11 @@ export function CheckoutSummarySheet({
   };
 
   const handleConfirm = () => {
-    onConfirm(tipAmount);
+    onConfirm(tipAmount, rebooked);
     // Reset state for next use
     setTipAmount(0);
     setCustomTip('');
+    setRebooked(false);
   };
 
   return (
@@ -433,6 +436,24 @@ export function CheckoutSummarySheet({
               </div>
             </>
           )}
+
+          <Separator />
+
+          {/* Rebook Toggle */}
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <CalendarCheck className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Client Rebooked?</p>
+                <p className="text-xs text-muted-foreground">Did client book their next appointment?</p>
+              </div>
+            </div>
+            <Switch
+              checked={rebooked}
+              onCheckedChange={setRebooked}
+              aria-label="Client rebooked"
+            />
+          </div>
 
           <Separator />
 

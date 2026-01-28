@@ -8,7 +8,8 @@ import {
   Clock,
   BarChart3,
   CalendarPlus,
-  CalendarRange
+  CalendarRange,
+  CalendarCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNewBookings } from '@/hooks/useNewBookings';
@@ -52,6 +53,8 @@ interface AppointmentsContentProps {
     cancelledCount: number;
     noShowRate: number;
     cancellationRate: number;
+    rebookedCount: number;
+    rebookRate: number;
   };
   dailyVolume: DailyVolume[];
   statusBreakdown: StatusBreakdown[];
@@ -95,7 +98,7 @@ export function AppointmentsContent({
         category="Analytics Hub - Operations"
         className="mb-6"
       >
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
           <Card className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -172,6 +175,22 @@ export function AppointmentsContent({
               <div>
                 <p className="font-display text-2xl">{summary.cancellationRate.toFixed(1)}%</p>
                 <p className="text-xs text-muted-foreground">Cancellation Rate</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                <CalendarCheck className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className={cn(
+                  "font-display text-2xl",
+                  summary.rebookRate >= 75 && "text-emerald-600"
+                )}>
+                  {summary.rebookRate.toFixed(1)}%
+                </p>
+                <p className="text-xs text-muted-foreground">Rebook Rate</p>
               </div>
             </div>
           </Card>

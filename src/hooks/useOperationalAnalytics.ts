@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO, differenceInDays, addDays } from 'date-fns';
 
@@ -249,20 +250,55 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
     },
   });
 
-  // Calculate summary stats
-  const summary = {
-    totalAppointments: volumeQuery.data?.reduce((sum, d) => sum + d.count, 0) || 0,
-    completedAppointments: volumeQuery.data?.reduce((sum, d) => sum + d.completed, 0) || 0,
-    noShowCount: volumeQuery.data?.reduce((sum, d) => sum + d.noShow, 0) || 0,
-    cancelledCount: volumeQuery.data?.reduce((sum, d) => sum + d.cancelled, 0) || 0,
-  };
+  // Calculate summary stats including rebook rate
+  const summary = useMemo(() => {
+    const totalAppointments = volumeQuery.data?.reduce((sum, d) => sum + d.count, 0) || 0;
+    const completedAppointments = volumeQuery.data?.reduce((sum, d) => sum + d.completed, 0) || 0;
+    const noShowCount = volumeQuery.data?.reduce((sum, d) => sum + d.noShow, 0) || 0;
+    const cancelledCount = volumeQuery.data?.reduce((sum, d) => sum + d.cancelled, 0) || 0;
+    
+    const noShowRate = totalAppointments > 0 
+      ? (noShowCount / totalAppointments) * 100 
+      : 0;
+    const cancellationRate = totalAppointments > 0 
+      ? (cancelledCount / totalAppointments) * 100 
+      : 0;
 
-  const noShowRate = summary.totalAppointments > 0 
-    ? (summary.noShowCount / summary.totalAppointments) * 100 
-    : 0;
-  const cancellationRate = summary.totalAppointments > 0 
-    ? (summary.cancelledCount / summary.totalAppointments) * 100 
-    : 0;
+    return {
+      totalAppointments,
+      completedAppointments,
+      noShowCount,
+      cancelledCount,
+      noShowRate,
+      cancellationRate,
+    };
+  }, [volumeQuery.data]);
+
+  // Fetch rebook rate data
+  const rebookQuery = useQuery({
+    queryKey: ['operational-analytics-rebook', locationId, startDateStr, endDateStr],
+    queryFn: async () => {
+      let query = supabase
+        .from('phorest_appointments')
+        .select('rebooked_at_checkout')
+        .eq('status', 'completed')
+        .gte('appointment_date', startDateStr)
+        .lte('appointment_date', endDateStr);
+
+      if (locationId) {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const completed = data?.length || 0;
+      const rebooked = data?.filter(a => a.rebooked_at_checkout).length || 0;
+      const rebookRate = completed > 0 ? (rebooked / completed) * 100 : 0;
+
+      return { completedCount: completed, rebookedCount: rebooked, rebookRate };
+    },
+  });
 
   return {
     dailyVolume: volumeQuery.data || [],
@@ -271,9 +307,9 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
     retention: retentionQuery.data,
     summary: {
       ...summary,
-      noShowRate,
-      cancellationRate,
+      rebookedCount: rebookQuery.data?.rebookedCount || 0,
+      rebookRate: rebookQuery.data?.rebookRate || 0,
     },
-    isLoading: volumeQuery.isLoading || heatmapQuery.isLoading || statusQuery.isLoading || retentionQuery.isLoading,
+    isLoading: volumeQuery.isLoading || heatmapQuery.isLoading || statusQuery.isLoading || retentionQuery.isLoading || rebookQuery.isLoading,
   };
 }
