@@ -1,159 +1,144 @@
 
-# Add Filter Context Badge to All Analytics Cards
+# Unify Sales Overview Card Filters
 
-## Overview
+## Problem
 
-Display a filter context badge (showing the current location and date range) in the top-right corner of every analytics card affected by the location and time range filters. This provides visual clarity about what data scope is being shown.
+The Sales Overview card currently has **duplicate time range filters**:
+1. Page-level filter bar (location + date range) in Analytics Hub
+2. Card-level filter selector inside the AggregateSalesCard itself
 
----
-
-## Current State
-
-| Component | Has `filterContext` prop | Shows Badge |
-|-----------|-------------------------|-------------|
-| `AggregateSalesCard` | ✅ Yes | ❌ No (has logic but doesn't render) |
-| `LocationComparison` | ❌ No | ❌ No |
-| `ProductCategoryChart` | ❌ No | ❌ No |
-| `ServicePopularityChart` | ❌ No | ❌ No |
-| `HistoricalComparison` | ❌ No | ❌ No |
-| `TeamGoalsCard` | ✅ Yes | ✅ Yes |
-| `ClientFunnelCard` | ✅ Yes | ✅ Yes |
-| `PeakHoursHeatmap` | ❌ No | ❌ No |
-| `YearOverYearComparison` | ❌ No | ❌ No |
-| `RevenueForecast` | ❌ No | ❌ No |
+This causes confusion and the filters could potentially show different data. Additionally, when the card is pinned to Command Center, it doesn't inherit the Command Center's filter bar - it uses its own internal filter.
 
 ---
 
-## Proposed Changes
+## Solution
 
-### 1. Update LocationComparison Component
+Make the AggregateSalesCard always use **external filters** when rendered in:
+1. Analytics Hub (from the page-level filter bar)
+2. Command Center (from the Command Center's filter bar)
 
-Add `filterContext` prop and render the `AnalyticsFilterBadge` in the card header.
+The card will display the `AnalyticsFilterBadge` showing what filters are applied instead of having its own filter dropdown.
 
-**File:** `src/components/dashboard/sales/LocationComparison.tsx`
+---
 
-```tsx
-// Add import
-import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+## Architecture
 
-// Update interface
-interface LocationComparisonProps {
-  locations: LocationData[];
-  isLoading?: boolean;
-  filterContext?: FilterContext;  // Add this
-}
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  ANALYTICS HUB                                              │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ Filter Bar: [Location ▼] [Date Range ▼]               │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                            ↓ passes filterContext           │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ AggregateSalesCard (hideInternalFilter=true)          │  │
+│  │ Shows: AnalyticsFilterBadge + data                    │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 
-// Update component signature
-export function LocationComparison({ locations, isLoading, filterContext }: LocationComparisonProps) {
-
-// In CardHeader, update CardTitle to include badge
-<CardTitle className="font-display text-sm flex items-center justify-between">
-  <span>LOCATION COMPARISON</span>
-  <div className="flex items-center gap-2">
-    {filterContext && (
-      <AnalyticsFilterBadge 
-        locationId={filterContext.locationId} 
-        dateRange={filterContext.dateRange} 
-      />
-    )}
-    <Badge variant="outline" className="font-normal">
-      ${totalRevenue.toLocaleString()} total
-    </Badge>
-  </div>
-</CardTitle>
+┌─────────────────────────────────────────────────────────────┐
+│  COMMAND CENTER                                             │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ Filter Bar: [Location ▼] [Date Range ▼]               │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                            ↓ passes filterContext           │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ AggregateSalesCard (hideInternalFilter=true)          │  │
+│  │ Shows: AnalyticsFilterBadge + data                    │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 2. Update ProductCategoryChart Component
+---
 
-**File:** `src/components/dashboard/sales/ProductCategoryChart.tsx`
+## Changes Required
 
-```tsx
-// Add import
-import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+### 1. Update SalesTabContent (Analytics Hub)
 
-// Update interface
-interface ProductCategoryChartProps {
-  dateFrom: string;
-  dateTo: string;
-  locationId?: string;
-  filterContext?: FilterContext;  // Add this
-}
-
-// In header, add badge next to existing Badge
-<div className="flex items-center gap-2">
-  {filterContext && (
-    <AnalyticsFilterBadge 
-      locationId={filterContext.locationId} 
-      dateRange={filterContext.dateRange} 
-    />
-  )}
-  <Badge variant="outline">${totalRevenue.toLocaleString()}</Badge>
-</div>
-```
-
-### 3. Update ServicePopularityChart Component
-
-**File:** `src/components/dashboard/sales/ServicePopularityChart.tsx`
-
-Same pattern - add `filterContext` prop and render badge in header.
-
-### 4. Update HistoricalComparison Component
-
-**File:** `src/components/dashboard/sales/HistoricalComparison.tsx`
-
-Add `filterContext` prop and render badge in the card header.
-
-### 5. Update PeakHoursHeatmap Component
-
-**File:** `src/components/dashboard/sales/PeakHoursHeatmap.tsx`
-
-Add `filterContext` prop and render badge in header.
-
-### 6. Update YearOverYearComparison Component
-
-**File:** `src/components/dashboard/sales/YearOverYearComparison.tsx`
-
-Add `filterContext` prop and render badge in header.
-
-### 7. Update RevenueForecast Component
-
-**File:** `src/components/dashboard/sales/RevenueForecast.tsx`
-
-Add `filterContext` prop and render badge in header.
-
-### 8. Update SalesTabContent to Pass filterContext
+Pass external date filters and `hideInternalFilter={true}` to the AggregateSalesCard.
 
 **File:** `src/components/dashboard/analytics/SalesTabContent.tsx`
 
-Pass the `filterContext` prop to all child components:
+Current:
+```tsx
+<AggregateSalesCard 
+  filterContext={{
+    locationId: filters.locationId,
+    dateRange: filters.dateRange,
+  }}
+/>
+```
+
+Updated:
+```tsx
+<AggregateSalesCard 
+  externalDateRange={filters.dateRange as any}
+  externalDateFilters={{
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo,
+  }}
+  hideInternalFilter={true}
+  filterContext={{
+    locationId: filters.locationId,
+    dateRange: filters.dateRange,
+  }}
+/>
+```
+
+### 2. Update CommandCenterAnalytics
+
+Pass the Command Center's filter context to AggregateSalesCard when it's rendered.
+
+**File:** `src/components/dashboard/CommandCenterAnalytics.tsx`
+
+Current:
+```tsx
+case 'sales_overview':
+  return (
+    <VisibilityGate key={cardId} elementKey="sales_overview">
+      <AggregateSalesCard />
+    </VisibilityGate>
+  );
+```
+
+Updated:
+```tsx
+case 'sales_overview':
+  return (
+    <VisibilityGate key={cardId} elementKey="sales_overview">
+      <AggregateSalesCard 
+        externalDateRange={dateRange}
+        externalDateFilters={dateFilters}
+        hideInternalFilter={true}
+        filterContext={{
+          locationId: locationId,
+          dateRange: dateRange,
+        }}
+      />
+    </VisibilityGate>
+  );
+```
+
+### 3. Update AggregateSalesCard
+
+The component already supports `hideInternalFilter` and `filterContext` props - we just need to ensure it works correctly by:
+
+1. Showing `AnalyticsFilterBadge` in the header when `filterContext` is provided
+2. Hiding the internal date selector when `hideInternalFilter={true}`
+
+Currently the badge only shows when BOTH `filterContext` AND `hideInternalFilter` are truthy (line 291-296). This is already correct, but we need to ensure it always shows when external filters are used.
+
+**File:** `src/components/dashboard/AggregateSalesCard.tsx`
+
+Move the AnalyticsFilterBadge to always show when filterContext is provided (simplify the condition):
 
 ```tsx
-// Create filterContext once at the top
-const filterContext = {
-  locationId: filters.locationId,
-  dateRange: filters.dateRange,
-};
-
-// Pass to all components
-<LocationComparison 
-  locations={locationData || []} 
-  isLoading={locationLoading}
-  filterContext={filterContext}  // Add this
-/>
-
-<ProductCategoryChart 
-  dateFrom={filters.dateFrom} 
-  dateTo={filters.dateTo}
-  filterContext={filterContext}  // Add this
-/>
-
-<ServicePopularityChart 
-  dateFrom={filters.dateFrom} 
-  dateTo={filters.dateTo}
-  filterContext={filterContext}  // Add this
-/>
-
-// ... same for all other cards
+{filterContext && (
+  <AnalyticsFilterBadge 
+    locationId={filterContext.locationId} 
+    dateRange={filterContext.dateRange as DateRangeType} 
+  />
+)}
 ```
 
 ---
@@ -162,77 +147,73 @@ const filterContext = {
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/sales/LocationComparison.tsx` | Add filterContext prop and render badge |
-| `src/components/dashboard/sales/ProductCategoryChart.tsx` | Add filterContext prop and render badge |
-| `src/components/dashboard/sales/ServicePopularityChart.tsx` | Add filterContext prop and render badge |
-| `src/components/dashboard/sales/HistoricalComparison.tsx` | Add filterContext prop and render badge |
-| `src/components/dashboard/sales/PeakHoursHeatmap.tsx` | Add filterContext prop and render badge |
-| `src/components/dashboard/sales/YearOverYearComparison.tsx` | Add filterContext prop and render badge |
-| `src/components/dashboard/sales/RevenueForecast.tsx` | Add filterContext prop and render badge |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Pass filterContext to all child components |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Pass `externalDateRange`, `externalDateFilters`, and `hideInternalFilter={true}` to AggregateSalesCard |
+| `src/components/dashboard/CommandCenterAnalytics.tsx` | Pass filter props to AggregateSalesCard in the `sales_overview` case |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Simplify badge display logic - always show when `filterContext` is provided |
 
 ---
 
 ## Visual Result
 
-Each card will show the applied filters in the top-right corner:
-
+### Analytics Hub - Sales Tab
 ```text
-┌────────────────────────────────────────────────────────────────┐
-│  LOCATION COMPARISON     📍 All Locations · 📅 Today  $5,446  │
-├────────────────────────────────────────────────────────────────┤
-│  [Card content...]                                             │
-└────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│  [📍 All Locations ▼] [📅 Today ▼]    ← Page-level filters         │
+├────────────────────────────────────────────────────────────────────┤
+│  💵 SALES OVERVIEW                                                 │
+│  All locations combined                                            │
+│                                                                    │
+│  [📍 All Locations · Today]  [Synced 31 min ago] [⟳] [📥] [ⓘ]     │
+│                     ↑                                              │
+│         Filter badge (no dropdown selector)                        │
+│                                                                    │
+│  ┌────────────────────────────────────────────────────────────┐   │
+│  │              $1,896  Total Revenue                         │   │
+│  └────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
-The badge displays:
-- **MapPin icon** + Location name (or "All Locations")
-- **Separator** (·)
-- **Calendar icon** + Date range label (e.g., "Today", "Last 7 days")
+### Command Center - Pinned Card
+```text
+┌────────────────────────────────────────────────────────────────────┐
+│  [📍 All Locations ▼] [📅 This Month ▼]  ← Command Center filters  │
+├────────────────────────────────────────────────────────────────────┤
+│  💵 SALES OVERVIEW                                                 │
+│  All locations combined                                            │
+│                                                                    │
+│  [📍 All Locations · This Month]  [Synced ...] [⟳] [📥] [ⓘ]       │
+│                     ↑                                              │
+│         Same badge pattern, controlled by parent                   │
+└────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Technical Details
 
-### Badge Positioning Pattern
+### Type Compatibility
 
-All cards follow the same header pattern:
-
-```tsx
-<CardHeader>
-  <CardTitle className="... flex items-center justify-between">
-    <span>[Card Title]</span>
-    <div className="flex items-center gap-2">
-      {filterContext && (
-        <AnalyticsFilterBadge 
-          locationId={filterContext.locationId} 
-          dateRange={filterContext.dateRange} 
-        />
-      )}
-      {/* Other badges/buttons */}
-    </div>
-  </CardTitle>
-</CardHeader>
-```
-
-### FilterContext Type
-
-Already defined in `AnalyticsFilterBadge.tsx`:
-
+The `externalDateRange` prop accepts the `DateRange` type from AggregateSalesCard:
 ```typescript
-export interface FilterContext {
-  locationId: string;
-  dateRange: DateRangeType;
-}
+type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'ytd' | 'lastYear' | 'last365';
 ```
+
+The Analytics Hub uses:
+```typescript
+type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'lastMonth' | 'custom';
+```
+
+Some values overlap (today, yesterday, 7d, 30d, thisWeek). For non-overlapping values like 'thisMonth', the component will fallback to its internal logic for calculating date ranges.
+
+The Command Center uses a subset that matches well.
 
 ---
 
-## User Experience
+## Benefits
 
 | Benefit | Description |
 |---------|-------------|
-| **Clarity** | Users instantly know which filters are applied to each card |
-| **Consistency** | Same badge pattern across all analytics cards |
-| **Context** | When cards are pinned to dashboard, the badge shows what data scope is displayed |
-| **Non-intrusive** | Small, muted badge doesn't distract from the data |
+| **Single source of truth** | Filters are controlled at the page/section level, not duplicated on each card |
+| **Consistent experience** | Same card behavior in Analytics Hub and Command Center |
+| **Clear context** | AnalyticsFilterBadge shows exactly what data is being displayed |
+| **Less confusion** | No more mismatched filters between page-level and card-level |
