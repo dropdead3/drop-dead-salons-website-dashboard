@@ -184,7 +184,12 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         elementName="Sales Overview" 
         category="Analytics Hub - Sales"
       >
-        <AggregateSalesCard />
+        <AggregateSalesCard 
+          filterContext={{
+            locationId: filters.locationId,
+            dateRange: filters.dateRange,
+          }}
+        />
       </PinnableCard>
 
       {/* Sub-tabs for detailed views */}
