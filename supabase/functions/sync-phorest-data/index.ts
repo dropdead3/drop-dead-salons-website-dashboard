@@ -664,70 +664,94 @@ async function syncSalesTransactions(
       let purchases: any[] = [];
       
       // Try multiple endpoints in order of preference
-      // 1. Try /transaction endpoint (some API versions support this)
+      // Phorest API has various endpoint formats depending on account permissions
+      
+      // 1. Try /purchase/search POST endpoint (requires POST with date filter)
       try {
-        console.log(`Trying /transaction endpoint for branch ${branchId}...`);
-        const transactionData = await phorestRequest(
-          `/branch/${branchId}/transaction?from_date=${dateFrom}&to_date=${dateTo}&size=500`,
+        console.log(`Trying /purchase/search POST endpoint for branch ${branchId}...`);
+        const purchaseData = await phorestPostRequest(
+          `/branch/${branchId}/purchase/search`,
           businessId,
           username,
-          password
+          password,
+          { 
+            startDate: dateFrom, 
+            endDate: dateTo,
+            page: 0,
+            size: 500
+          }
         );
-        purchases = transactionData._embedded?.transactions || transactionData.transactions || 
-                   transactionData._embedded?.purchases || transactionData.data || [];
-        console.log(`/transaction endpoint returned ${purchases.length} records`);
+        purchases = purchaseData._embedded?.purchases || purchaseData.purchases || 
+                   purchaseData.page?.content || purchaseData.content || [];
+        console.log(`/purchase/search endpoint returned ${purchases.length} records`);
       } catch (e1: any) {
-        console.log(`/transaction endpoint failed: ${e1.message}`);
+        console.log(`/purchase/search endpoint failed: ${e1.message}`);
         
-        // 2. Try /sale endpoint
+        // 2. Try CSV export job approach
         try {
-          console.log(`Trying /sale endpoint for branch ${branchId}...`);
-          const saleData = await phorestRequest(
-            `/branch/${branchId}/sale?from_date=${dateFrom}&to_date=${dateTo}&size=500`,
-            businessId,
-            username,
-            password
-          );
-          purchases = saleData._embedded?.sales || saleData.sales || 
-                     saleData._embedded?.transactions || saleData.data || [];
-          console.log(`/sale endpoint returned ${purchases.length} records`);
+          console.log(`Trying CSV export job for branch ${branchId}...`);
+          purchases = await fetchSalesViaCsvExport(branchId, businessId, username, password, dateFrom, dateTo);
+          console.log(`CSV export returned ${purchases.length} records`);
         } catch (e2: any) {
-          console.log(`/sale endpoint failed: ${e2.message}`);
+          console.log(`CSV export failed: ${e2.message}`);
           
-          // 3. Try CSV export job approach
+          // 3. Try /report/sales endpoint 
           try {
-            console.log(`Trying CSV export job for branch ${branchId}...`);
-            purchases = await fetchSalesViaCsvExport(branchId, businessId, username, password, dateFrom, dateTo);
-            console.log(`CSV export returned ${purchases.length} records`);
+            console.log(`Trying /report/sales endpoint for branch ${branchId}...`);
+            const reportData = await phorestRequest(
+              `/branch/${branchId}/report/sales?startDate=${dateFrom}&endDate=${dateTo}`,
+              businessId,
+              username,
+              password
+            );
+            const salesItems = reportData.items || reportData.data || reportData._embedded?.items || [];
+            purchases = salesItems.map((item: any) => ({
+              purchaseId: item.id || item.transactionId || `${branchId}-${item.date}-${Math.random()}`,
+              staffId: item.staffId,
+              purchaseDate: item.date || item.saleDate,
+              total: item.total || item.amount || item.revenue,
+              items: [{
+                type: item.type || 'service',
+                name: item.name || item.description || 'Sale',
+                price: item.total || item.amount || item.revenue,
+                quantity: item.quantity || 1,
+              }]
+            }));
+            console.log(`/report/sales endpoint returned ${purchases.length} records`);
           } catch (e3: any) {
-            console.log(`CSV export failed: ${e3.message}`);
+            console.log(`/report/sales endpoint failed: ${e3.message}`);
             
-            // 4. Final fallback: Try /report/sales endpoint
+            // 4. Try /staffperformance for aggregated sales data
             try {
-              console.log(`Trying /report/sales endpoint for branch ${branchId}...`);
-              const reportData = await phorestRequest(
-                `/branch/${branchId}/report/sales?from_date=${dateFrom}&to_date=${dateTo}`,
+              console.log(`Trying /staffperformance endpoint for branch ${branchId}...`);
+              const perfData = await phorestRequest(
+                `/branch/${branchId}/staffperformance?startDate=${dateFrom}&endDate=${dateTo}`,
                 businessId,
                 username,
                 password
               );
-              // Transform report data into transaction-like format
-              const salesItems = reportData.items || reportData.data || reportData._embedded?.items || [];
-              purchases = salesItems.map((item: any) => ({
-                purchaseId: item.id || item.transactionId || `${branchId}-${item.date}-${Math.random()}`,
-                staffId: item.staffId,
-                purchaseDate: item.date || item.saleDate,
-                total: item.total || item.amount || item.revenue,
-                items: [{
-                  type: item.type || 'service',
-                  name: item.name || item.description || 'Sale',
-                  price: item.total || item.amount || item.revenue,
-                  quantity: item.quantity || 1,
-                }]
-              }));
-              console.log(`/report/sales endpoint returned ${purchases.length} records`);
+              const staffPerf = perfData._embedded?.staffPerformances || perfData.staffPerformances || perfData.data || [];
+              // staffperformance gives aggregates per staff, not individual transactions
+              // But we can still track retail revenue per staff
+              for (const perf of staffPerf) {
+                if (perf.productRevenue > 0 || perf.retailRevenue > 0) {
+                  purchases.push({
+                    purchaseId: `${branchId}-${perf.staffId}-${dateFrom}-retail`,
+                    staffId: perf.staffId,
+                    purchaseDate: dateFrom,
+                    total: perf.productRevenue || perf.retailRevenue || 0,
+                    items: [{
+                      type: 'product',
+                      name: 'Retail Products (aggregated)',
+                      price: perf.productRevenue || perf.retailRevenue || 0,
+                      quantity: 1,
+                    }]
+                  });
+                }
+              }
+              console.log(`/staffperformance endpoint found ${purchases.length} retail entries`);
             } catch (e4: any) {
-              console.log(`All sales endpoints failed for branch ${branchId}. Last error: ${e4.message}`);
+              console.log(`All sales endpoints failed for branch ${branchId}. API permissions may not include transaction data export.`);
             }
           }
         }
@@ -920,8 +944,10 @@ async function fetchSalesViaCsvExport(
   dateFrom: string,
   dateTo: string
 ): Promise<any[]> {
-  // Job types to try in order - Phorest documentation suggests various types
-  const jobTypesToTry = ['TRANSACTION', 'TRANSACTIONS', 'SALES', 'PURCHASES', 'TRANSACTIONS_CSV'];
+  // Valid CSV export job types per Phorest API documentation:
+  // TRANSACTIONS_CSV is the main one for transaction data
+  // Other valid types: SUNDRIES_CSV, CLIENT_COURSES_CSV, DATEV_CSV
+  const jobTypesToTry = ['TRANSACTIONS_CSV'];
   
   let lastError: Error | null = null;
   
