@@ -43,9 +43,9 @@ function HideNumbersConfirmDialog({
               <p>Are you sure you want to show all numbers?</p>
               <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                 <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-amber-700 dark:text-amber-400">
-                  This is to prevent sensitive financial data from being displayed 
-                  when staff log in at the front desk or shared workstations.
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  This feature is to prevent sensitive financial data from being displayed 
+                  if logging in at the front desk or shared workstations.
                 </p>
               </div>
             </div>
