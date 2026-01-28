@@ -1,168 +1,238 @@
 
-
-# Replace Location Comparison Bars with Donut Chart
+# Add Filter Context Badge to All Analytics Cards
 
 ## Overview
 
-Remove the redundant horizontal bar comparison and replace it with a compact donut chart that visually represents each location's share of total revenue.
+Display a filter context badge (showing the current location and date range) in the top-right corner of every analytics card affected by the location and time range filters. This provides visual clarity about what data scope is being shown.
 
 ---
 
-## Current Problem
+## Current State
 
-| Element | Issue |
-|---------|-------|
-| Side-by-side cards | Already show share % with progress bars |
-| Bottom horizontal bars | Repeat the same data, scaled to max revenue instead of total |
-| User confusion | "What do these bars mean?" - not immediately clear |
-
----
-
-## Proposed Solution
-
-Replace the bottom bars (lines 145-166) with a centered donut chart showing revenue share per location.
-
-### Visual Layout
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│  LOCATION COMPARISON                      $1,896 TOTAL  │
-├─────────────────────────────────────────────────────────┤
-│  ┌────────────────────┐  ┌────────────────────────────┐ │
-│  │ North Mesa         │  │ Val Vista Lakes            │ │
-│  │ $1,176    [Leader] │  │ $720             [-63%]    │ │
-│  │ ████████████░░ 62% │  │ █████████░░░░░░░ 38%       │ │
-│  │ 8 Svcs │ 0 Prod    │  │ 11 Svcs │ 0 Prod           │ │
-│  └────────────────────┘  └────────────────────────────┘ │
-│                                                         │
-│              ┌─────────────────────┐                    │
-│              │     DONUT CHART     │                    │
-│              │   ● North Mesa 62%  │                    │
-│              │   ● Val Vista  38%  │                    │
-│              └─────────────────────┘                    │
-└─────────────────────────────────────────────────────────┘
-```
+| Component | Has `filterContext` prop | Shows Badge |
+|-----------|-------------------------|-------------|
+| `AggregateSalesCard` | ✅ Yes | ❌ No (has logic but doesn't render) |
+| `LocationComparison` | ❌ No | ❌ No |
+| `ProductCategoryChart` | ❌ No | ❌ No |
+| `ServicePopularityChart` | ❌ No | ❌ No |
+| `HistoricalComparison` | ❌ No | ❌ No |
+| `TeamGoalsCard` | ✅ Yes | ✅ Yes |
+| `ClientFunnelCard` | ✅ Yes | ✅ Yes |
+| `PeakHoursHeatmap` | ❌ No | ❌ No |
+| `YearOverYearComparison` | ❌ No | ❌ No |
+| `RevenueForecast` | ❌ No | ❌ No |
 
 ---
 
-## Implementation Details
+## Proposed Changes
 
-### 1. Add Recharts PieChart Import
+### 1. Update LocationComparison Component
 
-```typescript
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-} from 'recharts';
-```
+Add `filterContext` prop and render the `AnalyticsFilterBadge` in the card header.
 
-### 2. Define Color Palette
-
-Use existing chart color tokens from the design system:
-
-```typescript
-const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
-```
-
-### 3. Prepare Chart Data
-
-```typescript
-const chartData = useMemo(() => {
-  return sortedLocations.map((location, idx) => ({
-    name: location.name,
-    value: location.totalRevenue,
-    percentage: totalRevenue > 0 
-      ? ((location.totalRevenue / totalRevenue) * 100).toFixed(0)
-      : 0,
-    color: COLORS[idx % COLORS.length],
-  }));
-}, [sortedLocations, totalRevenue]);
-```
-
-### 4. Replace Bottom Bars with Donut Chart
-
-Remove lines 145-166 and replace with:
+**File:** `src/components/dashboard/sales/LocationComparison.tsx`
 
 ```tsx
-{/* Revenue Share Donut Chart */}
-<div className="flex items-center justify-center gap-6">
-  <div className="w-32 h-32">
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          innerRadius={35}
-          outerRadius={50}
-          paddingAngle={2}
-          dataKey="value"
-        >
-          {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip 
-          formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-          contentStyle={{ 
-            backgroundColor: 'hsl(var(--background))', 
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+// Add import
+import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+
+// Update interface
+interface LocationComparisonProps {
+  locations: LocationData[];
+  isLoading?: boolean;
+  filterContext?: FilterContext;  // Add this
+}
+
+// Update component signature
+export function LocationComparison({ locations, isLoading, filterContext }: LocationComparisonProps) {
+
+// In CardHeader, update CardTitle to include badge
+<CardTitle className="font-display text-sm flex items-center justify-between">
+  <span>LOCATION COMPARISON</span>
+  <div className="flex items-center gap-2">
+    {filterContext && (
+      <AnalyticsFilterBadge 
+        locationId={filterContext.locationId} 
+        dateRange={filterContext.dateRange} 
+      />
+    )}
+    <Badge variant="outline" className="font-normal">
+      ${totalRevenue.toLocaleString()} total
+    </Badge>
   </div>
-  
-  {/* Legend */}
-  <div className="space-y-2">
-    {chartData.map((entry) => (
-      <div key={entry.name} className="flex items-center gap-2 text-sm">
-        <div 
-          className="w-3 h-3 rounded-full" 
-          style={{ backgroundColor: entry.color }} 
-        />
-        <span className="text-muted-foreground">{entry.name}</span>
-        <span className="font-display">{entry.percentage}%</span>
-      </div>
-    ))}
-  </div>
+</CardTitle>
+```
+
+### 2. Update ProductCategoryChart Component
+
+**File:** `src/components/dashboard/sales/ProductCategoryChart.tsx`
+
+```tsx
+// Add import
+import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+
+// Update interface
+interface ProductCategoryChartProps {
+  dateFrom: string;
+  dateTo: string;
+  locationId?: string;
+  filterContext?: FilterContext;  // Add this
+}
+
+// In header, add badge next to existing Badge
+<div className="flex items-center gap-2">
+  {filterContext && (
+    <AnalyticsFilterBadge 
+      locationId={filterContext.locationId} 
+      dateRange={filterContext.dateRange} 
+    />
+  )}
+  <Badge variant="outline">${totalRevenue.toLocaleString()}</Badge>
 </div>
 ```
 
+### 3. Update ServicePopularityChart Component
+
+**File:** `src/components/dashboard/sales/ServicePopularityChart.tsx`
+
+Same pattern - add `filterContext` prop and render badge in header.
+
+### 4. Update HistoricalComparison Component
+
+**File:** `src/components/dashboard/sales/HistoricalComparison.tsx`
+
+Add `filterContext` prop and render badge in the card header.
+
+### 5. Update PeakHoursHeatmap Component
+
+**File:** `src/components/dashboard/sales/PeakHoursHeatmap.tsx`
+
+Add `filterContext` prop and render badge in header.
+
+### 6. Update YearOverYearComparison Component
+
+**File:** `src/components/dashboard/sales/YearOverYearComparison.tsx`
+
+Add `filterContext` prop and render badge in header.
+
+### 7. Update RevenueForecast Component
+
+**File:** `src/components/dashboard/sales/RevenueForecast.tsx`
+
+Add `filterContext` prop and render badge in header.
+
+### 8. Update SalesTabContent to Pass filterContext
+
+**File:** `src/components/dashboard/analytics/SalesTabContent.tsx`
+
+Pass the `filterContext` prop to all child components:
+
+```tsx
+// Create filterContext once at the top
+const filterContext = {
+  locationId: filters.locationId,
+  dateRange: filters.dateRange,
+};
+
+// Pass to all components
+<LocationComparison 
+  locations={locationData || []} 
+  isLoading={locationLoading}
+  filterContext={filterContext}  // Add this
+/>
+
+<ProductCategoryChart 
+  dateFrom={filters.dateFrom} 
+  dateTo={filters.dateTo}
+  filterContext={filterContext}  // Add this
+/>
+
+<ServicePopularityChart 
+  dateFrom={filters.dateFrom} 
+  dateTo={filters.dateTo}
+  filterContext={filterContext}  // Add this
+/>
+
+// ... same for all other cards
+```
+
 ---
 
-## File to Modify
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/sales/LocationComparison.tsx` | Add Recharts imports, add chart data memo, replace bar section with donut chart |
+| `src/components/dashboard/sales/LocationComparison.tsx` | Add filterContext prop and render badge |
+| `src/components/dashboard/sales/ProductCategoryChart.tsx` | Add filterContext prop and render badge |
+| `src/components/dashboard/sales/ServicePopularityChart.tsx` | Add filterContext prop and render badge |
+| `src/components/dashboard/sales/HistoricalComparison.tsx` | Add filterContext prop and render badge |
+| `src/components/dashboard/sales/PeakHoursHeatmap.tsx` | Add filterContext prop and render badge |
+| `src/components/dashboard/sales/YearOverYearComparison.tsx` | Add filterContext prop and render badge |
+| `src/components/dashboard/sales/RevenueForecast.tsx` | Add filterContext prop and render badge |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Pass filterContext to all child components |
+
+---
+
+## Visual Result
+
+Each card will show the applied filters in the top-right corner:
+
+```text
+┌────────────────────────────────────────────────────────────────┐
+│  LOCATION COMPARISON     📍 All Locations · 📅 Today  $5,446  │
+├────────────────────────────────────────────────────────────────┤
+│  [Card content...]                                             │
+└────────────────────────────────────────────────────────────────┘
+```
+
+The badge displays:
+- **MapPin icon** + Location name (or "All Locations")
+- **Separator** (·)
+- **Calendar icon** + Date range label (e.g., "Today", "Last 7 days")
+
+---
+
+## Technical Details
+
+### Badge Positioning Pattern
+
+All cards follow the same header pattern:
+
+```tsx
+<CardHeader>
+  <CardTitle className="... flex items-center justify-between">
+    <span>[Card Title]</span>
+    <div className="flex items-center gap-2">
+      {filterContext && (
+        <AnalyticsFilterBadge 
+          locationId={filterContext.locationId} 
+          dateRange={filterContext.dateRange} 
+        />
+      )}
+      {/* Other badges/buttons */}
+    </div>
+  </CardTitle>
+</CardHeader>
+```
+
+### FilterContext Type
+
+Already defined in `AnalyticsFilterBadge.tsx`:
+
+```typescript
+export interface FilterContext {
+  locationId: string;
+  dateRange: DateRangeType;
+}
+```
 
 ---
 
 ## User Experience
 
-| Before | After |
-|--------|-------|
-| Confusing horizontal bars | Clear donut showing proportions |
-| Redundant data display | Single unified visualization |
-| "What does this mean?" | Instantly recognizable pie/donut format |
-
----
-
-## Why Donut Over Pie
-
-- **Donut** is more modern and less visually heavy
-- Center can potentially show total revenue in the future
-- Works better in compact spaces
-- Matches the aesthetic of other charts in the dashboard
-
+| Benefit | Description |
+|---------|-------------|
+| **Clarity** | Users instantly know which filters are applied to each card |
+| **Consistency** | Same badge pattern across all analytics cards |
+| **Context** | When cards are pinned to dashboard, the badge shows what data scope is displayed |
+| **Non-intrusive** | Small, muted badge doesn't distract from the data |
