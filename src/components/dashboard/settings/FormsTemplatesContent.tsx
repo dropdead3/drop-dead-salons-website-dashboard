@@ -8,7 +8,7 @@ export function FormsTemplatesContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Forms & Agreements</h2>
+        <h2 className="text-2xl tracking-tight">Forms & Agreements</h2>
         <p className="text-muted-foreground">
           Create client-facing forms, link them to services, and track signatures
         </p>
