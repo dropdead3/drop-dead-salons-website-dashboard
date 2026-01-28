@@ -3,13 +3,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  Minus,
   TrendingUp,
   TrendingDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
+
+const COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
 
 interface LocationData {
   location_id: string;
@@ -39,6 +51,17 @@ export function LocationComparison({ locations, isLoading }: LocationComparisonP
   const totalRevenue = useMemo(() => {
     return locations.reduce((sum, l) => sum + l.totalRevenue, 0);
   }, [locations]);
+
+  const chartData = useMemo(() => {
+    return sortedLocations.map((location, idx) => ({
+      name: location.name,
+      value: location.totalRevenue,
+      percentage: totalRevenue > 0 
+        ? ((location.totalRevenue / totalRevenue) * 100).toFixed(0)
+        : 0,
+      color: COLORS[idx % COLORS.length],
+    }));
+  }, [sortedLocations, totalRevenue]);
 
   if (isLoading) {
     return (
@@ -142,27 +165,49 @@ export function LocationComparison({ locations, isLoading }: LocationComparisonP
           })}
         </div>
 
-        {/* Revenue bar comparison */}
-        <div className="space-y-2">
-          {sortedLocations.map((location) => {
-            const widthPercent = (location.totalRevenue / maxRevenue) * 100;
-            return (
-              <div key={location.location_id} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium">{location.name}</span>
-                  <span className="text-muted-foreground">
-                    ${location.totalRevenue.toLocaleString()}
-                  </span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary rounded-full transition-all duration-500"
-                    style={{ width: `${widthPercent}%` }}
-                  />
-                </div>
+        {/* Revenue Share Donut Chart */}
+        <div className="flex items-center justify-center gap-6">
+          <div className="w-32 h-32">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={35}
+                  outerRadius={50}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--background))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          
+          {/* Legend */}
+          <div className="space-y-2">
+            {chartData.map((entry) => (
+              <div key={entry.name} className="flex items-center gap-2 text-sm">
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: entry.color }} 
+                />
+                <span className="text-muted-foreground">{entry.name}</span>
+                <span className="font-display">{entry.percentage}%</span>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>
