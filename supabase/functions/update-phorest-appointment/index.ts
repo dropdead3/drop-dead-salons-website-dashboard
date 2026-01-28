@@ -13,6 +13,7 @@ interface UpdateRequest {
   status?: 'CONFIRMED' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
   notes?: string;
   rebooked_at_checkout?: boolean;
+  tip_amount?: number;
 }
 
 // Map our local status names to Phorest status names
@@ -90,14 +91,14 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const updateData: UpdateRequest = await req.json();
-    const { appointment_id, status, notes, rebooked_at_checkout } = updateData;
+    const { appointment_id, status, notes, rebooked_at_checkout, tip_amount } = updateData;
 
     if (!appointment_id) {
       throw new Error("Missing required field: appointment_id");
     }
 
-    if (!status && notes === undefined && rebooked_at_checkout === undefined) {
-      throw new Error("At least one of status, notes, or rebooked_at_checkout must be provided");
+    if (!status && notes === undefined && rebooked_at_checkout === undefined && tip_amount === undefined) {
+      throw new Error("At least one of status, notes, rebooked_at_checkout, or tip_amount must be provided");
     }
 
     console.log(`Updating appointment ${appointment_id}: status=${status}, notes=${notes ? 'yes' : 'no'}`);
@@ -146,6 +147,10 @@ serve(async (req) => {
 
     if (rebooked_at_checkout !== undefined) {
       localUpdate.rebooked_at_checkout = rebooked_at_checkout;
+    }
+
+    if (tip_amount !== undefined) {
+      localUpdate.tip_amount = tip_amount;
     }
 
     const { error: updateError, data: updatedAppointment } = await supabase

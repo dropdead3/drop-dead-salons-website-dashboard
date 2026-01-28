@@ -479,6 +479,17 @@ export const metricsGlossary: MetricDefinition[] = [
     example: '72%',
     relatedMetrics: ['retention-rate', 'rebooking-rate'],
   },
+  {
+    id: 'client-experience-score',
+    name: 'Client Experience Score',
+    category: 'operations',
+    description: 'Composite score measuring client satisfaction through rebooking, tipping, retention, and retail engagement. Lower scores indicate stylists who may need coaching.',
+    formula: '(Rebook Rate × 0.35) + (Tip Rate × 0.30) + (Retention Rate × 0.20) + (Retail Rate × 0.15)',
+    dataSource: 'phorest_appointments, phorest_performance_metrics, phorest_transaction_items',
+    updateFrequency: 'Real-time',
+    example: '72 (Strong)',
+    relatedMetrics: ['rebook-rate-operational', 'retention-rate'],
+  },
 ];
 
 export function getMetricsByCategory(category: MetricCategory): MetricDefinition[] {

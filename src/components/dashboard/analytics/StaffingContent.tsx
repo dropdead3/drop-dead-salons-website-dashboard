@@ -3,6 +3,7 @@ import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { StaffRevenueLeaderboard } from '@/components/dashboard/analytics/StaffRevenueLeaderboard';
 import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
+import { StylistExperienceCard } from '@/components/dashboard/analytics/StylistExperienceCard';
 
 import { StaffWorkload } from '@/hooks/useStaffUtilization';
 
@@ -10,9 +11,10 @@ interface StaffingContentProps {
   workload: StaffWorkload[];
   isLoading: boolean;
   locationId?: string;
+  dateRange?: 'tomorrow' | '7days' | '30days' | '90days';
 }
 
-export function StaffingContent({ workload, isLoading, locationId }: StaffingContentProps) {
+export function StaffingContent({ workload, isLoading, locationId, dateRange = '30days' }: StaffingContentProps) {
   return (
     <>
       {/* Team Overview Cards */}
@@ -36,6 +38,12 @@ export function StaffingContent({ workload, isLoading, locationId }: StaffingCon
 
       {/* Staff Revenue Leaderboard */}
       <StaffRevenueLeaderboard locationId={locationId} />
+
+      {/* Client Experience Scorecard */}
+      <StylistExperienceCard 
+        locationId={locationId} 
+        dateRange={dateRange}
+      />
     </>
   );
 }

@@ -2733,6 +2733,7 @@ export type Database = {
           start_time: string
           status: string
           stylist_user_id: string | null
+          tip_amount: number | null
           total_price: number | null
           updated_at: string
         }
@@ -2755,6 +2756,7 @@ export type Database = {
           start_time: string
           status?: string
           stylist_user_id?: string | null
+          tip_amount?: number | null
           total_price?: number | null
           updated_at?: string
         }
@@ -2777,6 +2779,7 @@ export type Database = {
           start_time?: string
           status?: string
           stylist_user_id?: string | null
+          tip_amount?: number | null
           total_price?: number | null
           updated_at?: string
         }
