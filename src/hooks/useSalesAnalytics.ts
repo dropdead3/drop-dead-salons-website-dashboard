@@ -79,18 +79,19 @@ export function useProductCategoryBreakdown(dateFrom?: string, dateTo?: string, 
   });
 }
 
-// Service popularity analysis
+// Service popularity analysis - uses phorest_appointments for service data
 export function useServicePopularity(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({
     queryKey: ['service-popularity', dateFrom, dateTo, locationId],
     queryFn: async () => {
       let query = supabase
-        .from('phorest_sales_transactions')
-        .select('item_name, item_category, total_amount, unit_price')
-        .eq('item_type', 'service');
+        .from('phorest_appointments')
+        .select('service_name, total_price, location_id')
+        .not('service_name', 'is', null)
+        .not('total_price', 'is', null);
 
-      if (dateFrom) query = query.gte('transaction_date', dateFrom);
-      if (dateTo) query = query.lte('transaction_date', dateTo);
+      if (dateFrom) query = query.gte('appointment_date', dateFrom);
+      if (dateTo) query = query.lte('appointment_date', dateTo);
       if (locationId) query = query.eq('location_id', locationId);
 
       const { data, error } = await query;
@@ -99,18 +100,19 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
       // Aggregate by service name
       const byService: Record<string, ServicePopularityData> = {};
       data?.forEach(row => {
-        const name = row.item_name;
+        const name = row.service_name;
+        if (!name) return;
         if (!byService[name]) {
           byService[name] = {
             name,
-            category: row.item_category,
+            category: null, // appointments don't have category
             frequency: 0,
             totalRevenue: 0,
             avgPrice: 0,
           };
         }
         byService[name].frequency += 1;
-        byService[name].totalRevenue += Number(row.total_amount) || 0;
+        byService[name].totalRevenue += Number(row.total_price) || 0;
       });
 
       // Calculate averages

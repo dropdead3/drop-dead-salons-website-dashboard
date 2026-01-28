@@ -68,8 +68,13 @@ export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterConte
       </CardHeader>
       <CardContent>
         {topCategories.length === 0 ? (
-          <div className="h-[250px] flex items-center justify-center text-muted-foreground">
-            No product sales data available
+          <div className="h-[250px] flex flex-col items-center justify-center text-muted-foreground gap-2">
+            <ShoppingBag className="w-8 h-8 opacity-50" />
+            <p className="text-center">
+              No product sales data available
+              <br />
+              <span className="text-xs">Product data syncs from Phorest sales transactions</span>
+            </p>
           </div>
         ) : (
           <>
