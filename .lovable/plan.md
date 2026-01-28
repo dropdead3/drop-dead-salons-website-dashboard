@@ -1,59 +1,107 @@
 
-# Fix Toggle Text Visibility in Dark Mode for Forecasting Card
+# Add Double-Click to Navigate to Day View
 
-## Problem
+## Overview
 
-The selected time range toggle in the Forecasting card shows dark text on a dark background in dark mode, making it unreadable.
+Add the ability to double-click on a day column header in the Week view to navigate directly to the Day view for that specific date.
 
-**Root cause:**
-- The toggle items use `data-[state=on]:bg-background` for the selected state
-- The base `toggleVariants` in `toggle.tsx` uses `data-[state=on]:text-accent-foreground`
-- In dark mode:
-  - `--background` = `0 0% 4%` (very dark/black)
-  - `--accent-foreground` = `0 0% 4%` (also very dark/black)
-- **Result:** Dark text on dark background = invisible
+---
 
-## Solution
+## Current Behavior
 
-Add an explicit text color class to the selected state in the `ToggleGroupItem` components within `ForecastingCard.tsx` to ensure proper contrast in both light and dark modes.
+- The Week view displays 7 day columns with headers showing the day name (MON, TUE, etc.), date number, and appointment count
+- Users must use the view toggle in the toolbar to switch between Week and Day views
+- There's no quick way to jump to a specific day's detailed view
 
-Change from:
-```tsx
-data-[state=on]:bg-background data-[state=on]:shadow-sm
+---
+
+## Proposed Behavior
+
+- Double-clicking on any day column header in Week view will:
+  1. Set the calendar's current date to that day
+  2. Switch the view from "week" to "day"
+- This provides a natural, intuitive way to drill down into a specific day
+
+---
+
+## Technical Implementation
+
+### 1. Update WeekView Component
+
+**File:** `src/components/dashboard/schedule/WeekView.tsx`
+
+Add a new prop for the double-click handler:
+
+```typescript
+interface WeekViewProps {
+  currentDate: Date;
+  appointments: PhorestAppointment[];
+  hoursStart?: number;
+  hoursEnd?: number;
+  onAppointmentClick: (appointment: PhorestAppointment) => void;
+  onSlotClick?: (date: Date, time: string) => void;
+  selectedLocationId?: string;
+  onDayDoubleClick?: (date: Date) => void;  // NEW PROP
+}
 ```
 
-To:
+Attach the handler to the day header cell (the div containing day name, date, and appointment count):
+
 ```tsx
-data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm
+<div 
+  key={day.toISOString()} 
+  className={cn(
+    'py-3 px-2 text-center border-l border-border/50 cursor-pointer select-none',
+    dayIsToday && 'bg-primary/10'
+  )}
+  onDoubleClick={() => onDayDoubleClick?.(day)}
+>
+  {/* existing header content */}
+</div>
 ```
 
-The `text-foreground` class uses `--foreground` which is:
-- Light mode: `0 0% 8%` (dark text)
-- Dark mode: `40 20% 92%` (light cream text)
+### 2. Update Schedule Page
 
-This ensures proper contrast against the background in both modes.
+**File:** `src/pages/dashboard/Schedule.tsx`
 
-## File to Modify
+Create a handler function and pass it to WeekView:
 
-| File | Change |
-|------|--------|
-| `src/components/dashboard/sales/ForecastingCard.tsx` | Add `data-[state=on]:text-foreground` to all four `ToggleGroupItem` components (lines 290, 293, 296, 299) |
-
-## Implementation
-
-Update each `ToggleGroupItem` className from:
 ```tsx
-className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:shadow-sm"
+// Handler for double-clicking a day in week view
+const handleDayDoubleClick = (date: Date) => {
+  setCurrentDate(date);
+  setView('day');
+};
+
+// In the render:
+<WeekView
+  currentDate={currentDate}
+  appointments={displayAppointments}
+  hoursStart={preferences.hours_start}
+  hoursEnd={preferences.hours_end}
+  onAppointmentClick={handleAppointmentClick}
+  onSlotClick={handleSlotClick}
+  selectedLocationId={selectedLocation}
+  onDayDoubleClick={handleDayDoubleClick}  // NEW PROP
+/>
 ```
 
-To:
-```tsx
-className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
-```
+---
 
-## Result
+## Files to Modify
 
-After this fix:
-- **Light mode:** Selected toggle shows dark text on light background ✓
-- **Dark mode:** Selected toggle shows light cream text on dark background ✓
-- Proper contrast and readability in both themes
+| File | Changes |
+|------|---------|
+| `src/components/dashboard/schedule/WeekView.tsx` | Add `onDayDoubleClick` prop to interface, add `cursor-pointer select-none` classes and `onDoubleClick` handler to day header cells |
+| `src/pages/dashboard/Schedule.tsx` | Create `handleDayDoubleClick` function, pass it to WeekView component |
+
+---
+
+## User Experience
+
+| Action | Result |
+|--------|--------|
+| Double-click on "TUE 27" header | Switches to Day view showing Tuesday, January 27 |
+| Double-click on "SAT 31" header | Switches to Day view showing Saturday, January 31 |
+
+The cursor will change to pointer on hover over the day headers to indicate they're interactive, and `select-none` prevents accidental text selection during double-click.
