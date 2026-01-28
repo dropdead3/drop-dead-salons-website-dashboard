@@ -35,7 +35,7 @@ const analyticsCategories = [
   { id: 'reports', label: 'Reports', icon: FileText },
 ];
 
-export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'lastMonth' | 'custom';
+export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth' | 'custom';
 
 export interface AnalyticsFilters {
   locationId: string;
@@ -97,6 +97,11 @@ export default function AnalyticsHub() {
       case 'thisMonth':
         return { 
           dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
+          dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
+        };
+      case 'todayToEom':
+        return { 
+          dateFrom: format(now, 'yyyy-MM-dd'), 
           dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
         };
       case 'lastMonth':
@@ -181,6 +186,7 @@ export default function AnalyticsHub() {
                 <SelectItem value="90d">Last 90 days</SelectItem>
                 <SelectItem value="thisWeek">This Week</SelectItem>
                 <SelectItem value="thisMonth">This Month</SelectItem>
+                <SelectItem value="todayToEom">Today to EOM</SelectItem>
                 <SelectItem value="lastMonth">Last Month</SelectItem>
                 <SelectItem value="custom">Custom Range</SelectItem>
               </SelectContent>
