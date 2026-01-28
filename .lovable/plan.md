@@ -1,80 +1,107 @@
 
 
-# Add "Show/hide $" Label to Eye Icon Toggle
+# Fix Forecasting Bar Chart Appearance Consistency
 
-## Overview
+## Problem
 
-Add a text label "Show/hide $" next to the hide numbers eye icon in the dashboard header to make the feature more discoverable and self-explanatory.
+In the Forecasting chart, bars have inconsistent appearances in dark mode. The Tuesday bar appears darker than others because it has **only unconfirmed revenue** (no confirmed revenue stacked on top). 
 
----
+The current implementation uses:
+- Unconfirmed revenue bar: `fillOpacity={0.3}` (very light/faded)
+- Confirmed revenue bar: `fillOpacity={0.85}` (solid)
 
-## Current vs New Layout
+When a day has no confirmed appointments, only the faded 30% opacity bar shows, creating visual inconsistency.
 
-```text
-CURRENT:
-┌─────────────────────────────────────────────────────────┐
-│  [👁]  [Super Admin]  [View As ▼]  [🔄]  [🔔]  [👤]    │
-└─────────────────────────────────────────────────────────┘
+## Solution
 
-NEW:
-┌─────────────────────────────────────────────────────────┐
-│  [👁 Show/hide $]  [Super Admin]  [View As ▼]  ...     │
-└─────────────────────────────────────────────────────────┘
-```
+Adjust the bar opacity logic so all bars appear consistent regardless of their confirmed/unconfirmed mix:
 
----
-
-## Changes Required
-
-### File: `src/components/dashboard/DashboardLayout.tsx`
-
-Update the `HideNumbersToggle` component (lines 708-732) to include the label text next to the icon:
-
-```tsx
-const HideNumbersToggle = () => {
-  const { hideNumbers, toggleHideNumbers } = useHideNumbers();
-  
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
-          onClick={toggleHideNumbers}
-        >
-          {hideNumbers ? (
-            <EyeOff className="w-4 h-4" />
-          ) : (
-            <Eye className="w-4 h-4" />
-          )}
-          <span className="text-xs">Show/hide $</span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {hideNumbers ? 'Show numbers' : 'Hide numbers'}
-      </TooltipContent>
-    </Tooltip>
-  );
-};
-```
-
----
-
-## Key Changes
-
-| Change | From | To |
-|--------|------|-----|
-| Button size | `size="icon"` | `size="sm"` |
-| Button width | `w-8` (fixed icon size) | Auto width with `gap-1.5` |
-| Content | Icon only | Icon + "Show/hide $" text |
-| Text styling | N/A | `text-xs` for compact appearance |
-
----
+1. **Increase unconfirmed bar opacity** from 0.3 to 0.5 so it's more visible when standalone
+2. **Adjust confirmed bar opacity** to 0.9 for better layering
+3. **For peak bars**, keep full opacity (1.0)
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/DashboardLayout.tsx` | Update `HideNumbersToggle` component to include label text |
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Adjust `fillOpacity` values for both Bar components |
+
+## Code Changes
+
+### Update ForecastingCard.tsx (lines 389-420)
+
+**Current:**
+```tsx
+{/* Unconfirmed revenue - bottom of stack, lighter opacity */}
+<Bar 
+  dataKey="unconfirmedRevenue" 
+  stackId="revenue"
+  radius={[0, 0, 0, 0]}
+>
+  {chartData.map((entry, index) => (
+    <Cell 
+      key={`unconfirmed-${index}`}
+      fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
+      fillOpacity={0.3}
+    />
+  ))}
+</Bar>
+{/* Confirmed revenue - top of stack, solid */}
+<Bar 
+  dataKey="confirmedRevenue" 
+  stackId="revenue"
+  radius={[4, 4, 0, 0]}
+>
+  ...
+  {chartData.map((entry, index) => (
+    <Cell 
+      key={`confirmed-${index}`}
+      fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
+      fillOpacity={entry.isPeak ? 1 : 0.85}
+    />
+  ))}
+</Bar>
+```
+
+**Updated:**
+```tsx
+{/* Unconfirmed revenue - bottom of stack */}
+<Bar 
+  dataKey="unconfirmedRevenue" 
+  stackId="revenue"
+  radius={[0, 0, 0, 0]}
+>
+  {chartData.map((entry, index) => (
+    <Cell 
+      key={`unconfirmed-${index}`}
+      fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
+      fillOpacity={entry.isPeak ? 0.6 : 0.5}
+    />
+  ))}
+</Bar>
+{/* Confirmed revenue - top of stack, solid */}
+<Bar 
+  dataKey="confirmedRevenue" 
+  stackId="revenue"
+  radius={[4, 4, 0, 0]}
+>
+  ...
+  {chartData.map((entry, index) => (
+    <Cell 
+      key={`confirmed-${index}`}
+      fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
+      fillOpacity={entry.isPeak ? 1 : 0.9}
+    />
+  ))}
+</Bar>
+```
+
+## Visual Result
+
+All bars will now appear with consistent opacity whether they contain:
+- Only confirmed revenue
+- Only unconfirmed revenue  
+- A mix of both
+
+The unconfirmed portion will be slightly lighter than confirmed (50% vs 90% opacity), but still visible and consistent across all bars.
 
