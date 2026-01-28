@@ -1,58 +1,59 @@
 
-# Fix Forecasting Card Bar Colors in Dark/Light Mode
+# Fix Toggle Text Visibility in Dark Mode for Forecasting Card
 
 ## Problem
 
-The first bar in the forecasting chart appears **black in dark mode** instead of the expected color. This happens because:
+The selected time range toggle in the Forecasting card shows dark text on a dark background in dark mode, making it unreadable.
 
-1. The peak bar uses `hsl(var(--chart-2))` for its fill color
-2. **`--chart-2` is NOT defined** in the CSS variables
-3. When a CSS variable is undefined, `hsl(var(--chart-2))` becomes invalid, causing the browser to render a default color (often black)
-
-The session replay confirms: "The first sector is filled with `hsl(var(--primary))`" but actually for peak bars it's using `--chart-2` which doesn't exist.
+**Root cause:**
+- The toggle items use `data-[state=on]:bg-background` for the selected state
+- The base `toggleVariants` in `toggle.tsx` uses `data-[state=on]:text-accent-foreground`
+- In dark mode:
+  - `--background` = `0 0% 4%` (very dark/black)
+  - `--accent-foreground` = `0 0% 4%` (also very dark/black)
+- **Result:** Dark text on dark background = invisible
 
 ## Solution
 
-Add the missing chart color CSS variables (`--chart-1` through `--chart-5`) to the theme definitions in `src/index.css`. This will provide proper colors for data visualization in both light and dark modes.
+Add an explicit text color class to the selected state in the `ToggleGroupItem` components within `ForecastingCard.tsx` to ensure proper contrast in both light and dark modes.
 
-## Technical Details
-
-### 1. Add Chart Color Variables to index.css
-
-**Light Mode (`:root, .theme-cream`)** - add after line 131 (after `--success`):
-```css
-/* Chart colors for data visualization */
---chart-1: 0 0% 25%;           /* Dark charcoal for primary bars */
---chart-2: 145 60% 40%;         /* Green for peak/success highlights */
---chart-3: 217 91% 60%;         /* Blue */
---chart-4: 43 96% 50%;          /* Amber/Gold */
---chart-5: 280 87% 55%;         /* Purple */
+Change from:
+```tsx
+data-[state=on]:bg-background data-[state=on]:shadow-sm
 ```
 
-**Dark Mode (`.dark.theme-cream`)** - add after line 213 (after `--success-foreground`):
-```css
-/* Chart colors for data visualization */
---chart-1: 40 25% 75%;          /* Warm tan - visible on dark background */
---chart-2: 145 55% 55%;          /* Bright green for peak/success */
---chart-3: 217 85% 65%;          /* Bright blue */
---chart-4: 43 95% 60%;           /* Bright amber */
---chart-5: 280 75% 70%;          /* Bright purple */
+To:
+```tsx
+data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm
 ```
 
-### 2. Update Other Themes (Rose, Sage, Ocean)
+The `text-foreground` class uses `--foreground` which is:
+- Light mode: `0 0% 8%` (dark text)
+- Dark mode: `40 20% 92%` (light cream text)
 
-Add corresponding `--chart-1` through `--chart-5` variables to each theme's light and dark mode definitions for consistency.
+This ensures proper contrast against the background in both modes.
 
-## Files to Modify
+## File to Modify
 
 | File | Change |
 |------|--------|
-| `src/index.css` | Add `--chart-1` through `--chart-5` to all theme definitions (Cream, Rose, Sage, Ocean - both light and dark modes) |
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Add `data-[state=on]:text-foreground` to all four `ToggleGroupItem` components (lines 290, 293, 296, 299) |
 
-## Expected Result
+## Implementation
+
+Update each `ToggleGroupItem` className from:
+```tsx
+className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:shadow-sm"
+```
+
+To:
+```tsx
+className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+```
+
+## Result
 
 After this fix:
-- **Light mode**: Bars will be dark charcoal (`--chart-1`), peak bars bright green (`--chart-2`)
-- **Dark mode**: Bars will be warm tan (`--chart-1`), peak bars bright green (`--chart-2`)
-- All chart colors will have proper contrast against their respective backgrounds
-- No more black bars due to undefined CSS variables
+- **Light mode:** Selected toggle shows dark text on light background ✓
+- **Dark mode:** Selected toggle shows light cream text on dark background ✓
+- Proper contrast and readability in both themes
