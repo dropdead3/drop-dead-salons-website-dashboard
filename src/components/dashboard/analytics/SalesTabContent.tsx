@@ -184,26 +184,6 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </div>
       </div>
 
-      {/* Sales Overview Card */}
-      <PinnableCard 
-        elementKey="sales_overview" 
-        elementName="Sales Overview" 
-        category="Analytics Hub - Sales"
-      >
-        <AggregateSalesCard 
-          externalDateRange={filters.dateRange as any}
-          externalDateFilters={{
-            dateFrom: filters.dateFrom,
-            dateTo: filters.dateTo,
-          }}
-          hideInternalFilter={true}
-          filterContext={{
-            locationId: filters.locationId,
-            dateRange: filters.dateRange,
-          }}
-        />
-      </PinnableCard>
-
       {/* Sub-tabs for detailed views */}
       <div className="space-y-2">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -229,6 +209,26 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           </SubTabsList>
 
         <TabsContent value="overview" className="mt-6 space-y-6">
+          {/* Sales Overview Card */}
+          <PinnableCard 
+            elementKey="sales_overview" 
+            elementName="Sales Overview" 
+            category="Analytics Hub - Sales"
+          >
+            <AggregateSalesCard 
+              externalDateRange={filters.dateRange as any}
+              externalDateFilters={{
+                dateFrom: filters.dateFrom,
+                dateTo: filters.dateTo,
+              }}
+              hideInternalFilter={true}
+              filterContext={{
+                locationId: filters.locationId,
+                dateRange: filters.dateRange,
+              }}
+            />
+          </PinnableCard>
+
           {/* Revenue Trend */}
           <PinnableCard elementKey="revenue_trend_chart" elementName="Revenue Trend" category="Analytics Hub - Sales">
             <Card>
