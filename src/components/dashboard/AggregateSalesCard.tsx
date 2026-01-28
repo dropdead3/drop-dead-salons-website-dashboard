@@ -288,7 +288,7 @@ export function AggregateSalesCard({
           )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {filterContext && hideInternalFilter && (
+          {filterContext && (
             <AnalyticsFilterBadge 
               locationId={filterContext.locationId} 
               dateRange={filterContext.dateRange as any} 

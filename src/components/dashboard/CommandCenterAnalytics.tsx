@@ -191,7 +191,15 @@ export function CommandCenterAnalytics() {
       case 'sales_overview':
         return (
           <VisibilityGate key={cardId} elementKey="sales_overview">
-            <AggregateSalesCard />
+            <AggregateSalesCard 
+              externalDateRange={dateRange as any}
+              externalDateFilters={dateFilters}
+              hideInternalFilter={true}
+              filterContext={{
+                locationId: locationId,
+                dateRange: dateRange,
+              }}
+            />
           </VisibilityGate>
         );
       case 'top_performers':
