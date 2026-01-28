@@ -1,185 +1,211 @@
 
-# Segment Announcements by Location
+
+# Add Filter Context Display to Analytics Cards
 
 ## Overview
 
-Implement announcement segmentation to support both **company-wide** and **location-specific** announcements. Users will see:
-1. All company-wide announcements (regardless of their assigned location)
-2. Location-specific announcements that match their assigned location(s)
+Add a compact filter context indicator in the top-right corner of each analytics card showing the current location and date range being applied. This makes it immediately clear what data is being displayed without needing to scroll up to the filter bar.
 
 ---
 
-## Current State
-
-- **Announcements table**: No `location_id` column - all announcements are visible to everyone
-- **User location assignments**: Stored in `employee_profiles.location_id` (single) and `employee_profiles.location_ids` (array)
-- **Location access hook**: `useUserLocationAccess` already provides `assignedLocationIds` array
-
----
-
-## Implementation Plan
-
-### 1. Database Schema Update
-
-Add a nullable `location_id` column to the `announcements` table:
-- `NULL` = Company-wide announcement (visible to all users)
-- UUID value = Location-specific announcement (visible only to users at that location)
-
-```sql
-ALTER TABLE public.announcements 
-ADD COLUMN location_id uuid REFERENCES public.locations(id) ON DELETE SET NULL;
-
-COMMENT ON COLUMN public.announcements.location_id IS 
-  'NULL for company-wide announcements; set to a location UUID to restrict visibility';
-```
-
-### 2. Admin UI: Announcement Form Update
-
-**File: `src/pages/dashboard/admin/Announcements.tsx`**
-
-Add a location selector to the `AnnouncementForm` component:
-
-- Import `useActiveLocations` hook
-- Add new state: `locationId` (string | null)
-- Add a dropdown with options:
-  - "All Locations (Company-Wide)" - value: empty/null
-  - Each active location listed by name
-- Pass `location_id` in create/update mutations
+## Design
 
 ```text
-Form Layout:
-┌─────────────────────────────────────────────────────────┐
-│  Title: [__________________________________________]    │
-│  Content: [_______________________________________]     │
-│                                                         │
-│  Priority: [Normal ▼]    Expires: [Date picker]        │
-│                                                         │
-│  Audience: [All Locations (Company-Wide) ▼]            │  <-- NEW FIELD
-│            Options:                                     │
-│            - All Locations (Company-Wide)               │
-│            - Dallas                                     │
-│            - Austin                                     │
-│            - Houston                                    │
-│                                                         │
-│  [☐] Pin to top                                        │
-│  [Create Announcement]                                  │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  📊 SALES OVERVIEW                           📍 Dallas · Today │
+│  All locations combined                                         │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                      [Card content]                         ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### 3. Announcement Queries: Location Filtering
+The badge displays:
+- **Location icon + name**: "All Locations" or specific location name (e.g., "Dallas")  
+- **Separator dot** (·)
+- **Date range label**: "Today", "This Week", "Last 30 days", etc.
 
-Update all announcement fetch queries to filter based on user's assigned locations.
+Compact, muted styling so it doesn't compete with the main card content.
 
-**Files to update:**
-- `src/pages/dashboard/DashboardHome.tsx` (main dashboard)
-- `src/components/dashboard/SidebarAnnouncementsWidget.tsx` (sidebar widget)
-- `src/components/dashboard/NotificationsPanel.tsx` (notification dropdown)
-- `src/hooks/useUnreadAnnouncements.ts` (unread count)
+---
 
-**Filter logic:**
-```sql
--- Show announcements where:
--- 1. location_id IS NULL (company-wide), OR
--- 2. location_id is in the user's assigned locations
+## Implementation Approach
 
-.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`)
+### Option 1: Create a Reusable Component
+
+Create a new `AnalyticsFilterBadge` component that can be placed in the top-right of any analytics card header.
+
+### Files to Create/Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/dashboard/AnalyticsFilterBadge.tsx` | **NEW** - Compact badge showing current filter context |
+| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Pass filters to cards that support displaying them |
+| Individual card components (as needed) | Add the badge to card headers |
+
+---
+
+## New Component: AnalyticsFilterBadge
+
+```tsx
+// src/components/dashboard/AnalyticsFilterBadge.tsx
+import { MapPin, Calendar } from 'lucide-react';
+import { useActiveLocations } from '@/hooks/useLocations';
+import type { DateRangeType } from './PinnedAnalyticsCard';
+
+const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
+  today: 'Today',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+  thisWeek: 'This Week',
+  thisMonth: 'This Month',
+  lastMonth: 'Last Month',
+};
+
+interface AnalyticsFilterBadgeProps {
+  locationId: string;
+  dateRange: DateRangeType;
+  className?: string;
+}
+
+export function AnalyticsFilterBadge({ 
+  locationId, 
+  dateRange,
+  className 
+}: AnalyticsFilterBadgeProps) {
+  const { data: locations } = useActiveLocations();
+  
+  // Resolve location name
+  const locationName = locationId === 'all' 
+    ? 'All Locations'
+    : locations?.find(l => l.id === locationId)?.name || 'Unknown';
+  
+  const dateLabel = DATE_RANGE_LABELS[dateRange] || dateRange;
+  
+  return (
+    <div className={cn(
+      "flex items-center gap-1.5 text-xs text-muted-foreground",
+      className
+    )}>
+      <MapPin className="w-3 h-3" />
+      <span>{locationName}</span>
+      <span className="text-muted-foreground/50">·</span>
+      <Calendar className="w-3 h-3" />
+      <span>{dateLabel}</span>
+    </div>
+  );
+}
 ```
 
-For super admins and users with `view_all_locations_analytics` permission, show all announcements.
+---
 
-### 4. Admin View: Show All Announcements
+## Integration Pattern
 
-**File: `src/pages/dashboard/admin/Announcements.tsx`**
+### Option A: Inject at PinnedAnalyticsCard Level (Recommended)
 
-The admin management page should continue to show ALL announcements (for editing purposes) but display a location badge on each card to indicate targeting.
+Wrap each card with a container that adds the badge in the top-right corner:
+
+```tsx
+// In PinnedAnalyticsCard.tsx
+return (
+  <div className="relative">
+    <div className="absolute top-4 right-4 z-10">
+      <AnalyticsFilterBadge 
+        locationId={filters.locationId} 
+        dateRange={filters.dateRange} 
+      />
+    </div>
+    {/* Card content */}
+  </div>
+);
+```
+
+**Pros**: Single implementation point, all pinned cards get the badge automatically  
+**Cons**: May overlap with card-specific controls (date pickers, visibility toggles)
+
+### Option B: Pass Props to Individual Cards
+
+Pass the filters to each card component and let them render the badge in their header.
+
+**Pros**: Cards control exact badge placement  
+**Cons**: Requires updating each card component
+
+---
+
+## Recommended Approach: Hybrid
+
+1. **Create the `AnalyticsFilterBadge` component** for reusability
+2. **Update `PinnedAnalyticsCard`** to pass `filterContext` prop to card components
+3. **Update key cards** (Sales Overview, Operations Stats, Top Performers, etc.) to display the badge in their header area
+
+This gives cards control over badge placement while keeping the filter data flow centralized.
 
 ---
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| **Database Migration** | Add `location_id` column to `announcements` table |
-| `src/pages/dashboard/admin/Announcements.tsx` | Add location selector to form; display location badge on cards |
-| `src/pages/dashboard/DashboardHome.tsx` | Filter announcements by user's assigned locations |
-| `src/components/dashboard/SidebarAnnouncementsWidget.tsx` | Filter announcements by user's assigned locations |
-| `src/components/dashboard/NotificationsPanel.tsx` | Filter announcements by user's assigned locations |
-| `src/hooks/useUnreadAnnouncements.ts` | Filter unread count by user's assigned locations |
-| `src/components/dashboard/AnnouncementsBento.tsx` | Update interface to include location_id; optionally show location badge |
+| File | Change |
+|------|--------|
+| `src/components/dashboard/AnalyticsFilterBadge.tsx` | **NEW**: Reusable filter context badge component |
+| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Export DATE_RANGE_LABELS; pass filter props to card components |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Add badge to header area |
+| `src/components/dashboard/operations/OperationsQuickStats.tsx` | Add badge after section title |
+| `src/components/dashboard/sales/TopPerformersCard.tsx` | Add badge to header |
+| `src/components/dashboard/sales/ClientFunnelCard.tsx` | Add badge to header |
+| `src/components/dashboard/NewBookingsCard.tsx` | Add badge to header |
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Add badge to header (if internal filters are hidden) |
+| `src/components/dashboard/sales/CapacityUtilizationCard.tsx` | Add badge to header |
+| Other pinned card components as needed | Add badge |
 
 ---
 
 ## Technical Details
 
-### Query Pattern for Filtered Announcements
+### Props Update Pattern
 
-```typescript
-// In components that fetch announcements
-import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
-import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+For cards that need filter context display:
 
-// Inside component:
-const { assignedLocationIds, canViewAllLocations } = useUserLocationAccess();
-
-const { data: announcements } = useQuery({
-  queryKey: ['announcements', user?.id, assignedLocationIds],
-  queryFn: async () => {
-    let query = supabase
-      .from('announcements')
-      .select('*')
-      .eq('is_active', true)
-      .or('expires_at.is.null,expires_at.gt.now()');
-
-    // Super admins see all; others filter by location
-    if (!canViewAllLocations && assignedLocationIds.length > 0) {
-      query = query.or(
-        `location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`
-      );
-    }
-
-    const { data, error } = await query
-      .order('is_pinned', { ascending: false })
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data;
-  },
-});
-```
-
-### AnnouncementForm Props Update
-
-```typescript
-interface AnnouncementFormProps {
+```tsx
+interface CardProps {
   // ... existing props
-  locationId: string | null;
-  setLocationId: (v: string | null) => void;
+  
+  // Optional filter context for pinned dashboard display
+  filterContext?: {
+    locationId: string;
+    dateRange: DateRangeType;
+  };
 }
 ```
 
-### Location Badge on Announcement Cards
+### Badge Placement in Card Headers
 
-Add a visual indicator showing which location an announcement targets:
-- "Company-Wide" badge for `location_id = null`
-- Location name badge for location-specific announcements
+Most cards have a header structure like:
+
+```tsx
+<div className="flex items-center justify-between mb-4">
+  <div className="flex items-center gap-2">
+    <Icon />
+    <h2>CARD TITLE</h2>
+  </div>
+  {/* Add badge here */}
+  {filterContext && (
+    <AnalyticsFilterBadge 
+      locationId={filterContext.locationId}
+      dateRange={filterContext.dateRange}
+    />
+  )}
+</div>
+```
 
 ---
 
 ## User Experience
 
-| User Type | What They See |
-|-----------|---------------|
-| **Super Admin** | All announcements (company-wide + all locations) |
-| **User assigned to Dallas** | Company-wide + Dallas-only announcements |
-| **User assigned to multiple locations** | Company-wide + announcements for all their locations |
-| **Leadership (when creating)** | Can target company-wide OR any specific location |
+When viewing pinned analytics cards on the dashboard:
 
----
+- Each card will display a small badge like: **📍 Dallas · Today**
+- The badge confirms what filters are active for that card's data
+- Users can still adjust filters via the unified filter bar at the top
+- Badges update automatically when filters change
 
-## Summary of Changes
-
-1. **Database**: Add `location_id` column (nullable FK to locations)
-2. **Admin Form**: Add "Audience" location selector dropdown
-3. **Dashboard/Widget/Notifications**: Filter announcements by user's assigned locations
-4. **Unread Count**: Calculate based on filtered announcements only
-5. **Admin List View**: Show location badge on each announcement card
