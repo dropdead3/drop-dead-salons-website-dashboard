@@ -1,41 +1,38 @@
 
 
-# Enhanced New Bookings Card - Detailed Breakdown
+# Hide Numbers - Default Hidden on Login with Confirmation Dialog
 
 ## Overview
 
-Redesign the New Bookings card to show:
-1. **Total Appointments Booked Today** (hero metric)
-2. **New Client Bookings** (breakdown)
-3. **Returning Client Bookings** (breakdown)
-4. **Last 30 Days vs Previous 30 Days** comparison with trend indicator
+Implement two changes to the Hide Numbers privacy feature:
+1. **Default to hidden on login** - Numbers should always start hidden when a user logs in
+2. **Confirmation dialog when clicking blurred numbers** - When clicking any blurred number, show a confirmation prompt before revealing all numbers
 
 ---
 
-## Proposed Layout
+## Current Behavior vs New Behavior
 
 ```text
+CURRENT:
 ┌─────────────────────────────────────────────────────────────────┐
-│  📅  NEW BOOKINGS                                               │
-│      Appointments created                                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│                          16                                     │
-│                     Booked Today                                │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────────┐    ┌─────────────────────┐            │
-│  │   👤  4             │    │   🔄  12            │            │
-│  │   New Clients       │    │   Returning Clients │            │
-│  └─────────────────────┘    └─────────────────────┘            │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │   Last 30 Days: 124        ▲ +12% vs Previous 30 Days   │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                 │
+│  Login → Load preference from database (could be shown/hidden)  │
+│  Click blurred number → Just shows tooltip: "Click eye icon"    │
+└─────────────────────────────────────────────────────────────────┘
+
+NEW:
+┌─────────────────────────────────────────────────────────────────┐
+│  Login → Always start with numbers HIDDEN (regardless of DB)    │
+│  Click blurred number → Opens confirmation dialog:              │
+│    ┌─────────────────────────────────────────────────────┐     │
+│    │  "Reveal Financial Data?"                            │     │
+│    │                                                      │     │
+│    │  Are you sure you want to show numbers?              │     │
+│    │                                                      │     │
+│    │  ⚠️ This is to prevent sensitive data from being     │     │
+│    │  displayed when staff log in at the front desk.      │     │
+│    │                                                      │     │
+│    │         [Cancel]    [Yes, Show Numbers]              │     │
+│    └─────────────────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -43,205 +40,163 @@ Redesign the New Bookings card to show:
 
 ## Technical Implementation
 
-### 1. Update useNewBookings Hook
+### 1. Update HideNumbersContext - Default to Hidden
 
-**File:** `src/hooks/useNewBookings.ts`
+**File:** `src/contexts/HideNumbersContext.tsx`
 
-Expand the query to include:
-- The `is_new_client` field to categorize bookings
-- A 30-day window for current period
-- A previous 30-day window for comparison
+Change the initial state and login behavior:
 
 ```typescript
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { format, startOfDay, endOfDay, subDays } from 'date-fns';
-
-export function useNewBookings() {
-  const today = new Date();
-  const todayStart = format(startOfDay(today), "yyyy-MM-dd'T'HH:mm:ss");
-  const todayEnd = format(endOfDay(today), "yyyy-MM-dd'T'HH:mm:ss");
+export function HideNumbersProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  // Start hidden by default (changed from false to true)
+  const [hideNumbers, setHideNumbers] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // 30-day ranges
-  const thirtyDaysAgo = format(startOfDay(subDays(today, 30)), "yyyy-MM-dd'T'HH:mm:ss");
-  const sixtyDaysAgo = format(startOfDay(subDays(today, 60)), "yyyy-MM-dd'T'HH:mm:ss");
-  const thirtyOneDaysAgo = format(endOfDay(subDays(today, 31)), "yyyy-MM-dd'T'HH:mm:ss");
+  // Add state for confirmation dialog
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  return useQuery({
-    queryKey: ['new-bookings', format(today, 'yyyy-MM-dd')],
-    queryFn: async () => {
-      // Fetch appointments created today with is_new_client flag
-      const { data: todayBookings, error: todayError } = await supabase
-        .from('phorest_appointments')
-        .select('id, total_price, created_at, is_new_client')
-        .gte('created_at', todayStart)
-        .lte('created_at', todayEnd)
-        .not('status', 'eq', 'cancelled');
+  // On login/mount, always start hidden (ignore database preference)
+  useEffect(() => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+    
+    // Always hide on login - this is the security feature
+    setHideNumbers(true);
+    setIsLoading(false);
+  }, [user]);
 
-      if (todayError) throw todayError;
+  // New function to request unhide (shows confirmation)
+  const requestUnhide = () => {
+    if (hideNumbers) {
+      setShowConfirmDialog(true);
+    }
+  };
 
-      // Fetch last 30 days bookings
-      const { data: last30DaysBookings, error: last30Error } = await supabase
-        .from('phorest_appointments')
-        .select('id, created_at, is_new_client')
-        .gte('created_at', thirtyDaysAgo)
-        .lte('created_at', todayEnd)
-        .not('status', 'eq', 'cancelled');
+  // Called when user confirms in dialog
+  const confirmUnhide = async () => {
+    setHideNumbers(false);
+    setShowConfirmDialog(false);
+    
+    // Optionally persist to database
+    if (user) {
+      try {
+        await supabase
+          .from('employee_profiles')
+          .update({ hide_numbers: false })
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.error('Error saving preference:', err);
+      }
+    }
+  };
 
-      if (last30Error) throw last30Error;
-
-      // Fetch previous 30 days (31-60 days ago)
-      const { data: prev30DaysBookings, error: prev30Error } = await supabase
-        .from('phorest_appointments')
-        .select('id, created_at')
-        .gte('created_at', sixtyDaysAgo)
-        .lte('created_at', thirtyOneDaysAgo)
-        .not('status', 'eq', 'cancelled');
-
-      if (prev30Error) throw prev30Error;
-
-      const bookedToday = todayBookings || [];
-      const last30Days = last30DaysBookings || [];
-      const prev30Days = prev30DaysBookings || [];
-
-      // Break down today's bookings
-      const newClientToday = bookedToday.filter(apt => apt.is_new_client).length;
-      const returningClientToday = bookedToday.filter(apt => !apt.is_new_client).length;
-
-      // Calculate 30-day comparison
-      const last30Count = last30Days.length;
-      const prev30Count = prev30Days.length;
-      const percentChange = prev30Count > 0 
-        ? Math.round(((last30Count - prev30Count) / prev30Count) * 100)
-        : 0;
-
-      return {
-        bookedToday: bookedToday.length,
-        newClientToday,
-        returningClientToday,
-        last30Days: last30Count,
-        prev30Days: prev30Count,
-        percentChange,
-      };
-    },
-    staleTime: 1000 * 60 * 5,
-  });
+  // ...rest of component with dialog state in context
 }
 ```
 
-### 2. Update NewBookingsCard Component
+### 2. Update Context Interface
 
-**File:** `src/components/dashboard/NewBookingsCard.tsx`
+Add new methods for the confirmation flow:
 
-Redesign the layout to show the new breakdown structure:
+```typescript
+interface HideNumbersContextType {
+  hideNumbers: boolean;
+  toggleHideNumbers: () => void;
+  requestUnhide: () => void;  // NEW: Request to unhide (triggers dialog)
+  showConfirmDialog: boolean;  // NEW: Dialog visibility state
+  setShowConfirmDialog: (show: boolean) => void;  // NEW: Control dialog
+  confirmUnhide: () => void;  // NEW: Confirm unhide action
+  isLoading: boolean;
+}
+```
+
+### 3. Add Confirmation Dialog to BlurredAmount
+
+**File:** `src/contexts/HideNumbersContext.tsx`
+
+Update the `BlurredAmount` component to trigger confirmation on click:
 
 ```tsx
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { useNewBookings } from '@/hooks/useNewBookings';
-import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
-
-export function NewBookingsCard() {
-  const { data, isLoading } = useNewBookings();
-
-  // Trend icon based on percent change
-  const TrendIcon = data?.percentChange > 0 ? TrendingUp 
-    : data?.percentChange < 0 ? TrendingDown 
-    : Minus;
-  const trendColor = data?.percentChange > 0 ? 'text-green-500' 
-    : data?.percentChange < 0 ? 'text-red-500' 
-    : 'text-muted-foreground';
-
+export function BlurredAmount({ 
+  children, 
+  className,
+  as: Component = 'span'
+}: BlurredAmountProps) {
+  const { hideNumbers, requestUnhide } = useHideNumbers();
+  
+  if (!hideNumbers) {
+    return <Component className={className}>{children}</Component>;
+  }
+  
   return (
-    <Card className="p-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center rounded-lg">
-          <CalendarPlus className="w-5 h-5 text-blue-600" />
-        </div>
-        <div className="flex items-center gap-2">
-          <div>
-            <h2 className="font-display text-sm tracking-wide">NEW BOOKINGS</h2>
-            <p className="text-xs text-muted-foreground">Appointments created</p>
-          </div>
-          <CommandCenterVisibilityToggle elementKey="new_bookings" elementName="New Bookings" />
-        </div>
-      </div>
-
-      {/* Hero: Total Booked Today */}
-      <div className="text-center mb-6">
-        {isLoading ? (
-          <Skeleton className="h-12 w-16 mx-auto" />
-        ) : (
-          <p className="text-4xl font-display tabular-nums">{data?.bookedToday || 0}</p>
-        )}
-        <div className="flex items-center gap-1 justify-center mt-1">
-          <p className="text-sm text-muted-foreground">Booked Today</p>
-          <MetricInfoTooltip description="Total new appointments created today (by creation date)." />
-        </div>
-      </div>
-
-      {/* Breakdown: New vs Returning */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="text-center p-4 bg-muted/30 rounded-lg">
-          <div className="flex justify-center mb-2">
-            <UserPlus className="w-5 h-5 text-emerald-600" />
-          </div>
-          {isLoading ? (
-            <Skeleton className="h-7 w-10 mx-auto" />
-          ) : (
-            <p className="text-xl font-display tabular-nums">{data?.newClientToday || 0}</p>
-          )}
-          <div className="flex items-center gap-1 justify-center mt-1">
-            <p className="text-xs text-muted-foreground">New Clients</p>
-            <MetricInfoTooltip description="Bookings today from first-time clients." />
-          </div>
-        </div>
-
-        <div className="text-center p-4 bg-muted/30 rounded-lg">
-          <div className="flex justify-center mb-2">
-            <RefreshCw className="w-5 h-5 text-purple-600" />
-          </div>
-          {isLoading ? (
-            <Skeleton className="h-7 w-10 mx-auto" />
-          ) : (
-            <p className="text-xl font-display tabular-nums">{data?.returningClientToday || 0}</p>
-          )}
-          <div className="flex items-center gap-1 justify-center mt-1">
-            <p className="text-xs text-muted-foreground">Returning Clients</p>
-            <MetricInfoTooltip description="Bookings today from repeat clients." />
-          </div>
-        </div>
-      </div>
-
-      {/* 30-Day Comparison */}
-      <div className="p-4 bg-muted/20 rounded-lg border border-border/50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Last 30 Days:</span>
-            {isLoading ? (
-              <Skeleton className="h-5 w-10" />
-            ) : (
-              <span className="font-display tabular-nums">{data?.last30Days || 0}</span>
-            )}
-          </div>
-          {!isLoading && (
-            <div className={`flex items-center gap-1 ${trendColor}`}>
-              <TrendIcon className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {data?.percentChange > 0 ? '+' : ''}{data?.percentChange}%
-              </span>
-              <span className="text-xs text-muted-foreground ml-1">vs prev 30d</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </Card>
+    <Component 
+      className={cn(className, 'blur-md select-none cursor-pointer')} 
+      tabIndex={0}
+      onClick={requestUnhide}
+      onKeyDown={(e) => e.key === 'Enter' && requestUnhide()}
+      title="Click to reveal"
+    >
+      {children}
+    </Component>
   );
 }
 ```
+
+### 4. Add Global Confirmation Dialog Component
+
+Create a new component or add to the context file:
+
+```tsx
+export function HideNumbersConfirmDialog() {
+  const { showConfirmDialog, setShowConfirmDialog, confirmUnhide } = useHideNumbers();
+  
+  return (
+    <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="font-display">Reveal Financial Data?</AlertDialogTitle>
+          <AlertDialogDescription className="space-y-2">
+            <p>Are you sure you want to show all numbers?</p>
+            <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg mt-3">
+              <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                This is to prevent sensitive financial data from being displayed 
+                when staff log in at the front desk or shared workstations.
+              </p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmUnhide}>
+            Yes, Show Numbers
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+```
+
+### 5. Render Dialog in Provider
+
+Add the dialog to the provider so it's globally available:
+
+```tsx
+return (
+  <HideNumbersContext.Provider value={{ ... }}>
+    {children}
+    <HideNumbersConfirmDialog />
+  </HideNumbersContext.Provider>
+);
+```
+
+### 6. Update Header Toggle (Optional Enhancement)
+
+The header eye icon can still toggle directly OR also show confirmation when revealing. For simplicity, the header toggle can bypass confirmation (trusted action) since the user is explicitly clicking the reveal icon.
 
 ---
 
@@ -249,38 +204,29 @@ export function NewBookingsCard() {
 
 | File | Change |
 |------|--------|
-| `src/hooks/useNewBookings.ts` | Expand queries to include `is_new_client`, 30-day and previous 30-day windows |
-| `src/components/dashboard/NewBookingsCard.tsx` | Redesign layout with hero metric, new/returning breakdown, and 30-day comparison |
+| `src/contexts/HideNumbersContext.tsx` | Default to hidden, add confirmation dialog state and component, update BlurredAmount click handler |
+| `src/components/ui/AnimatedBlurredAmount.tsx` | Update to use `requestUnhide` on click instead of just showing tooltip |
 
 ---
 
-## Data Flow
+## User Flow
 
-```text
-useNewBookings Hook
-├── Query 1: Today's bookings (with is_new_client)
-│   ├── Total count → bookedToday
-│   ├── New clients → newClientToday  
-│   └── Returning → returningClientToday
-│
-├── Query 2: Last 30 days bookings
-│   └── Count → last30Days
-│
-└── Query 3: Previous 30 days (31-60 days ago)
-    └── Count → prev30Days
-    └── Calculate → percentChange
-```
+1. **Login** → Numbers are automatically hidden (blurred)
+2. **See blurred number** → User clicks on any blurred value
+3. **Confirmation dialog appears** → Shows warning about front desk visibility
+4. **User confirms** → All numbers become visible
+5. **User cancels** → Numbers stay hidden
+
+The header eye icon remains as a quick toggle for trusted users who understand they're revealing data.
 
 ---
 
-## New Metrics Added
+## Security Benefit
 
-| Metric | Description |
-|--------|-------------|
-| `bookedToday` | Total appointments created today |
-| `newClientToday` | Today's bookings from first-time clients |
-| `returningClientToday` | Today's bookings from repeat clients |
-| `last30Days` | Total bookings created in last 30 days |
-| `prev30Days` | Total bookings created 31-60 days ago |
-| `percentChange` | Percentage difference between periods |
+This prevents the scenario where:
+- A manager logs in at the front desk to check something
+- Walks away momentarily
+- Other staff or clients can see sensitive revenue/commission data on screen
+
+By always starting hidden and requiring confirmation, there's an intentional "speed bump" before exposing financial data.
 
