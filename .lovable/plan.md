@@ -1,145 +1,168 @@
 
 
-# Location Comparison: Single-Location Optimization
+# Replace Location Comparison Bars with Donut Chart
 
 ## Overview
 
-Ensure the Location Comparison component and its associated UI elements are completely hidden for single-location accounts. The component already has a guard clause, but we need to also hide the tab trigger and the pinnable wrapper to provide a cleaner experience.
+Remove the redundant horizontal bar comparison and replace it with a compact donut chart that visually represents each location's share of total revenue.
 
 ---
 
-## Current State
+## Current Problem
 
-| Element | Location | Current Behavior |
-|---------|----------|------------------|
-| `LocationComparison` component | `sales/LocationComparison.tsx:60-62` | Returns `null` when less than 2 locations |
-| "Compare" tab trigger | `SalesDashboard.tsx:450-453` | Always visible |
-| `PinnableCard` wrapper | `SalesTabContent.tsx:272-277` | Still renders wrapper when component returns null |
+| Element | Issue |
+|---------|-------|
+| Side-by-side cards | Already show share % with progress bars |
+| Bottom horizontal bars | Repeat the same data, scaled to max revenue instead of total |
+| User confusion | "What do these bars mean?" - not immediately clear |
 
 ---
 
-## Proposed Changes
+## Proposed Solution
 
-### 1. Hide "Compare" Tab in SalesDashboard
+Replace the bottom bars (lines 145-166) with a centered donut chart showing revenue share per location.
 
-Conditionally render the "Compare" `TabsTrigger` only when there are 2+ active locations.
+### Visual Layout
 
-**File:** `src/pages/dashboard/admin/SalesDashboard.tsx`
-
-```tsx
-// Line 450-453 - Wrap in conditional
-{(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
-  <TabsTrigger value="compare" className="flex-1 md:flex-none">
-    <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
-    Compare
-  </TabsTrigger>
-)}
+```text
+┌─────────────────────────────────────────────────────────┐
+│  LOCATION COMPARISON                      $1,896 TOTAL  │
+├─────────────────────────────────────────────────────────┤
+│  ┌────────────────────┐  ┌────────────────────────────┐ │
+│  │ North Mesa         │  │ Val Vista Lakes            │ │
+│  │ $1,176    [Leader] │  │ $720             [-63%]    │ │
+│  │ ████████████░░ 62% │  │ █████████░░░░░░░ 38%       │ │
+│  │ 8 Svcs │ 0 Prod    │  │ 11 Svcs │ 0 Prod           │ │
+│  └────────────────────┘  └────────────────────────────┘ │
+│                                                         │
+│              ┌─────────────────────┐                    │
+│              │     DONUT CHART     │                    │
+│              │   ● North Mesa 62%  │                    │
+│              │   ● Val Vista  38%  │                    │
+│              └─────────────────────┘                    │
+└─────────────────────────────────────────────────────────┘
 ```
 
-Also wrap the `TabsContent` for "compare" (lines 782-788) in the same conditional to prevent an empty tab panel from being accessible via URL or other means.
-
 ---
 
-### 2. Hide PinnableCard Wrapper in Analytics Hub
+## Implementation Details
 
-Conditionally render the entire `PinnableCard` for Location Comparison only when there are 2+ locations with data.
+### 1. Add Recharts PieChart Import
 
-**File:** `src/components/dashboard/analytics/SalesTabContent.tsx`
-
-```tsx
-// Line 271-277 - Wrap in conditional
-{(locationData?.length ?? 0) >= 2 && (
-  <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
-    <LocationComparison 
-      locations={locationData || []} 
-      isLoading={locationLoading} 
-    />
-  </PinnableCard>
-)}
+```typescript
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
 ```
 
-This prevents the pinnable affordance (push-pin icon, hover states) from appearing when the inner component would be empty anyway.
+### 2. Define Color Palette
+
+Use existing chart color tokens from the design system:
+
+```typescript
+const COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
+```
+
+### 3. Prepare Chart Data
+
+```typescript
+const chartData = useMemo(() => {
+  return sortedLocations.map((location, idx) => ({
+    name: location.name,
+    value: location.totalRevenue,
+    percentage: totalRevenue > 0 
+      ? ((location.totalRevenue / totalRevenue) * 100).toFixed(0)
+      : 0,
+    color: COLORS[idx % COLORS.length],
+  }));
+}, [sortedLocations, totalRevenue]);
+```
+
+### 4. Replace Bottom Bars with Donut Chart
+
+Remove lines 145-166 and replace with:
+
+```tsx
+{/* Revenue Share Donut Chart */}
+<div className="flex items-center justify-center gap-6">
+  <div className="w-32 h-32">
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={chartData}
+          cx="50%"
+          cy="50%"
+          innerRadius={35}
+          outerRadius={50}
+          paddingAngle={2}
+          dataKey="value"
+        >
+          {chartData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.color} />
+          ))}
+        </Pie>
+        <Tooltip 
+          formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+          contentStyle={{ 
+            backgroundColor: 'hsl(var(--background))', 
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '8px',
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+  
+  {/* Legend */}
+  <div className="space-y-2">
+    {chartData.map((entry) => (
+      <div key={entry.name} className="flex items-center gap-2 text-sm">
+        <div 
+          className="w-3 h-3 rounded-full" 
+          style={{ backgroundColor: entry.color }} 
+        />
+        <span className="text-muted-foreground">{entry.name}</span>
+        <span className="font-display">{entry.percentage}%</span>
+      </div>
+    ))}
+  </div>
+</div>
+```
 
 ---
 
-## Files to Modify
+## File to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/dashboard/admin/SalesDashboard.tsx` | Conditionally render "Compare" tab trigger and content based on location count |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Conditionally render PinnableCard wrapper based on location data count |
-
----
-
-## Technical Details
-
-### SalesDashboard.tsx Changes
-
-**Tab Trigger (around line 450):**
-```tsx
-// Before
-<TabsTrigger value="compare" className="flex-1 md:flex-none">
-  <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
-  Compare
-</TabsTrigger>
-
-// After
-{(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
-  <TabsTrigger value="compare" className="flex-1 md:flex-none">
-    <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
-    Compare
-  </TabsTrigger>
-)}
-```
-
-**Tab Content (around line 782):**
-```tsx
-// Before
-<TabsContent value="compare" className="space-y-6">
-  <LocationComparison ... />
-</TabsContent>
-
-// After
-{(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
-  <TabsContent value="compare" className="space-y-6">
-    <LocationComparison ... />
-  </TabsContent>
-)}
-```
-
-### SalesTabContent.tsx Changes
-
-**PinnableCard wrapper (around line 271):**
-```tsx
-// Before
-<PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
-  <LocationComparison locations={locationData || []} isLoading={locationLoading} />
-</PinnableCard>
-
-// After
-{(locationData?.length ?? 0) >= 2 && (
-  <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
-    <LocationComparison locations={locationData || []} isLoading={locationLoading} />
-  </PinnableCard>
-)}
-```
+| `src/components/dashboard/sales/LocationComparison.tsx` | Add Recharts imports, add chart data memo, replace bar section with donut chart |
 
 ---
 
 ## User Experience
 
-| Scenario | Result |
-|----------|--------|
-| Account with 2+ active locations | Full experience - Compare tab visible, PinnableCard available |
-| Account with 1 location | No "Compare" tab, no Location Comparison card in Analytics Hub |
-| Location data still loading | Component shows loading state (handled by existing `isLoading` prop) |
+| Before | After |
+|--------|-------|
+| Confusing horizontal bars | Clear donut showing proportions |
+| Redundant data display | Single unified visualization |
+| "What does this mean?" | Instantly recognizable pie/donut format |
 
 ---
 
-## Why This Approach
+## Why Donut Over Pie
 
-1. **Guard at multiple levels:** Hiding both the tab trigger AND the content ensures users can't accidentally navigate to an empty view
-2. **Clean pinnable experience:** Wrapping the entire `PinnableCard` prevents empty pin affordances in the Analytics Hub
-3. **Uses existing data:** Leverages `locations` array already fetched in both components, no additional queries needed
-4. **Future-proof:** New locations added to an account will automatically enable the comparison features
+- **Donut** is more modern and less visually heavy
+- Center can potentially show total revenue in the future
+- Works better in compact spaces
+- Matches the aesthetic of other charts in the dashboard
 
