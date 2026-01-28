@@ -312,45 +312,72 @@ export function AggregateSalesCard() {
                 />
               )}
             </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <Scissors className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            {/* Revenue Breakdown Cell */}
+            <div className="p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="w-3 h-3 text-primary" />
+                </div>
+                <span className="text-xs text-muted-foreground">Revenue Mix</span>
+                <MetricInfoTooltip description="Breakdown of revenue between services and retail products." />
               </div>
-              <AnimatedBlurredAmount 
-                value={displayMetrics.serviceRevenue}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
-                <p className="text-xs text-muted-foreground">Services</p>
-                <MetricInfoTooltip description="Revenue from all service transactions (cuts, color, treatments, etc.) excluding retail products." />
+              <div className="space-y-2">
+                {/* Services */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <span className="text-xs text-muted-foreground">Services</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <AnimatedBlurredAmount 
+                      value={displayMetrics.serviceRevenue}
+                      prefix="$"
+                      className="text-sm font-display tabular-nums"
+                    />
+                    <span className="text-xs text-muted-foreground/70 w-10 text-right">
+                      {displayMetrics.totalRevenue > 0 
+                        ? Math.round((displayMetrics.serviceRevenue / displayMetrics.totalRevenue) * 100) 
+                        : 0}%
+                    </span>
+                  </div>
+                </div>
+                {/* Products */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-chart-2" />
+                    <span className="text-xs text-muted-foreground">Products</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <AnimatedBlurredAmount 
+                      value={displayMetrics.productRevenue}
+                      prefix="$"
+                      className="text-sm font-display tabular-nums"
+                    />
+                    <span className="text-xs text-muted-foreground/70 w-10 text-right">
+                      {displayMetrics.totalRevenue > 0 
+                        ? Math.round((displayMetrics.productRevenue / displayMetrics.totalRevenue) * 100) 
+                        : 0}%
+                    </span>
+                  </div>
+                </div>
+                {/* Trend indicators */}
+                {showTrendIndicators && (
+                  <div className="pt-2 border-t border-border/50 grid grid-cols-2 gap-2">
+                    <div className="text-center">
+                      <SalesTrendIndicator 
+                        current={comparison.current.serviceRevenue} 
+                        previous={comparison.previous.serviceRevenue} 
+                      />
+                    </div>
+                    <div className="text-center">
+                      <SalesTrendIndicator 
+                        current={comparison.current.productRevenue} 
+                        previous={comparison.previous.productRevenue} 
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              {showTrendIndicators && (
-                <SalesTrendIndicator 
-                  current={comparison.current.serviceRevenue} 
-                  previous={comparison.previous.serviceRevenue} 
-                />
-              )}
-            </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-chart-2" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={displayMetrics.productRevenue}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
-                <p className="text-xs text-muted-foreground">Products</p>
-                <MetricInfoTooltip description="Revenue from retail product sales only, excluding service charges." />
-              </div>
-              {showTrendIndicators && (
-                <SalesTrendIndicator 
-                  current={comparison.current.productRevenue} 
-                  previous={comparison.previous.productRevenue} 
-                />
-              )}
             </div>
             <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
               <div className="flex justify-center mb-2">
