@@ -197,6 +197,15 @@ export function useUserSalesSummary(userId: string | undefined, dateFrom?: strin
   });
 }
 
+// Helper to calculate appointment duration in hours
+function getAppointmentDurationHours(startTime: string, endTime: string): number {
+  const [startH, startM] = startTime.split(':').map(Number);
+  const [endH, endM] = endTime.split(':').map(Number);
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+  return Math.max(0, (endMinutes - startMinutes) / 60);
+}
+
 // Get aggregated sales metrics for dashboard from appointments (since sales API is not available)
 export function useSalesMetrics(filters: SalesFilters = {}) {
   return useQuery({
@@ -204,7 +213,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('id, total_price, service_name, phorest_staff_id, location_id, appointment_date')
+        .select('id, total_price, service_name, phorest_staff_id, location_id, appointment_date, start_time, end_time')
         .not('total_price', 'is', null);
 
       if (filters.dateFrom) {
@@ -231,6 +240,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
           averageTicket: 0,
           totalDiscounts: 0,
           unmappedStaffRecords: 0,
+          totalServiceHours: 0,
           dataSource: 'appointments' as const,
         };
       }
@@ -238,6 +248,14 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       const totalRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
       const totalServices = data.length;
       const uniqueStaff = new Set(data.map(d => d.phorest_staff_id).filter(Boolean));
+      
+      // Calculate total service hours from appointment durations
+      const totalServiceHours = data.reduce((sum, apt) => {
+        if (apt.start_time && apt.end_time) {
+          return sum + getAppointmentDurationHours(apt.start_time, apt.end_time);
+        }
+        return sum;
+      }, 0);
 
       return {
         totalRevenue,
@@ -249,6 +267,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         averageTicket: totalServices > 0 ? totalRevenue / totalServices : 0,
         totalDiscounts: 0,
         unmappedStaffRecords: 0,
+        totalServiceHours,
         dataSource: 'appointments' as const,
       };
     },
