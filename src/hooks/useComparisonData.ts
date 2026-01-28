@@ -1,0 +1,286 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { format, subYears, startOfYear, endOfYear, startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, subWeeks } from 'date-fns';
+
+export type CompareMode = 'time' | 'location' | 'category' | 'yoy';
+
+export interface PeriodData {
+  totalRevenue: number;
+  serviceRevenue: number;
+  productRevenue: number;
+  totalTransactions: number;
+  averageTicket: number;
+}
+
+export interface PercentChanges {
+  totalRevenue: number;
+  serviceRevenue: number;
+  productRevenue: number;
+  totalTransactions: number;
+  averageTicket: number;
+}
+
+export interface LocationBreakdown {
+  locationId: string;
+  name: string;
+  totalRevenue: number;
+  serviceRevenue: number;
+  productRevenue: number;
+  totalTransactions: number;
+  share: number;
+}
+
+export interface CategoryBreakdown {
+  category: string;
+  periodA: number;
+  periodB: number;
+  change: number;
+  changePercent: number;
+}
+
+export interface ComparisonResult {
+  periodA: PeriodData;
+  periodB: PeriodData;
+  changes: PercentChanges;
+  difference: {
+    revenue: number;
+    services: number;
+    products: number;
+    transactions: number;
+    avgTicket: number;
+  };
+  locationBreakdown?: LocationBreakdown[];
+  categoryBreakdown?: CategoryBreakdown[];
+}
+
+interface ComparisonParams {
+  mode: CompareMode;
+  periodA: { dateFrom: string; dateTo: string };
+  periodB: { dateFrom: string; dateTo: string };
+  locationIds?: string[];
+}
+
+// Calculate percent change
+const calcChange = (curr: number, prev: number) =>
+  prev === 0 ? (curr > 0 ? 100 : 0) : ((curr - prev) / prev) * 100;
+
+// Aggregate sales data from array
+const aggregateSales = (data: any[]): Omit<PeriodData, 'averageTicket'> => {
+  return (data || []).reduce(
+    (acc, d) => ({
+      totalRevenue: acc.totalRevenue + (Number(d.total_revenue) || 0),
+      serviceRevenue: acc.serviceRevenue + (Number(d.service_revenue) || 0),
+      productRevenue: acc.productRevenue + (Number(d.product_revenue) || 0),
+      totalTransactions: acc.totalTransactions + (d.total_transactions || 0),
+    }),
+    { totalRevenue: 0, serviceRevenue: 0, productRevenue: 0, totalTransactions: 0 }
+  );
+};
+
+export function useComparisonData(params: ComparisonParams) {
+  const { mode, periodA, periodB, locationIds } = params;
+
+  return useQuery({
+    queryKey: ['comparison-data', mode, periodA, periodB, locationIds],
+    queryFn: async (): Promise<ComparisonResult> => {
+      // Fetch Period A data
+      let queryA = supabase
+        .from('phorest_daily_sales_summary')
+        .select('total_revenue, service_revenue, product_revenue, total_transactions, location_id')
+        .gte('summary_date', periodA.dateFrom)
+        .lte('summary_date', periodA.dateTo);
+
+      if (locationIds && locationIds.length > 0) {
+        queryA = queryA.in('location_id', locationIds);
+      }
+
+      const { data: dataA } = await queryA;
+
+      // Fetch Period B data
+      let queryB = supabase
+        .from('phorest_daily_sales_summary')
+        .select('total_revenue, service_revenue, product_revenue, total_transactions, location_id')
+        .gte('summary_date', periodB.dateFrom)
+        .lte('summary_date', periodB.dateTo);
+
+      if (locationIds && locationIds.length > 0) {
+        queryB = queryB.in('location_id', locationIds);
+      }
+
+      const { data: dataB } = await queryB;
+
+      // Aggregate totals
+      const aggregatedA = aggregateSales(dataA || []);
+      const aggregatedB = aggregateSales(dataB || []);
+
+      const avgTicketA = aggregatedA.totalTransactions > 0
+        ? aggregatedA.totalRevenue / aggregatedA.totalTransactions
+        : 0;
+      const avgTicketB = aggregatedB.totalTransactions > 0
+        ? aggregatedB.totalRevenue / aggregatedB.totalTransactions
+        : 0;
+
+      const result: ComparisonResult = {
+        periodA: { ...aggregatedA, averageTicket: avgTicketA },
+        periodB: { ...aggregatedB, averageTicket: avgTicketB },
+        changes: {
+          totalRevenue: calcChange(aggregatedA.totalRevenue, aggregatedB.totalRevenue),
+          serviceRevenue: calcChange(aggregatedA.serviceRevenue, aggregatedB.serviceRevenue),
+          productRevenue: calcChange(aggregatedA.productRevenue, aggregatedB.productRevenue),
+          totalTransactions: calcChange(aggregatedA.totalTransactions, aggregatedB.totalTransactions),
+          averageTicket: calcChange(avgTicketA, avgTicketB),
+        },
+        difference: {
+          revenue: aggregatedA.totalRevenue - aggregatedB.totalRevenue,
+          services: aggregatedA.serviceRevenue - aggregatedB.serviceRevenue,
+          products: aggregatedA.productRevenue - aggregatedB.productRevenue,
+          transactions: aggregatedA.totalTransactions - aggregatedB.totalTransactions,
+          avgTicket: avgTicketA - avgTicketB,
+        },
+      };
+
+      // Location breakdown for location mode
+      if (mode === 'location') {
+        const { data: locations } = await supabase
+          .from('locations')
+          .select('id, name');
+
+        const locationMap = new Map(locations?.map(l => [l.id, l.name]) || []);
+        const byLocation: Record<string, LocationBreakdown> = {};
+
+        (dataA || []).forEach(row => {
+          const locId = row.location_id || 'unknown';
+          if (!byLocation[locId]) {
+            byLocation[locId] = {
+              locationId: locId,
+              name: locationMap.get(locId) || 'Unknown Location',
+              totalRevenue: 0,
+              serviceRevenue: 0,
+              productRevenue: 0,
+              totalTransactions: 0,
+              share: 0,
+            };
+          }
+          byLocation[locId].totalRevenue += Number(row.total_revenue) || 0;
+          byLocation[locId].serviceRevenue += Number(row.service_revenue) || 0;
+          byLocation[locId].productRevenue += Number(row.product_revenue) || 0;
+          byLocation[locId].totalTransactions += row.total_transactions || 0;
+        });
+
+        // Calculate shares
+        const totalRevenue = Object.values(byLocation).reduce((sum, l) => sum + l.totalRevenue, 0);
+        Object.values(byLocation).forEach(l => {
+          l.share = totalRevenue > 0 ? (l.totalRevenue / totalRevenue) * 100 : 0;
+        });
+
+        result.locationBreakdown = Object.values(byLocation).sort((a, b) => b.totalRevenue - a.totalRevenue);
+      }
+
+      // Category breakdown for category mode
+      if (mode === 'category') {
+        // Fetch category data for both periods
+        let catQueryA = supabase
+          .from('phorest_sales_transactions')
+          .select('item_category, total_amount')
+          .gte('transaction_date', periodA.dateFrom)
+          .lte('transaction_date', periodA.dateTo);
+
+        let catQueryB = supabase
+          .from('phorest_sales_transactions')
+          .select('item_category, total_amount')
+          .gte('transaction_date', periodB.dateFrom)
+          .lte('transaction_date', periodB.dateTo);
+
+        const [{ data: catDataA }, { data: catDataB }] = await Promise.all([
+          catQueryA,
+          catQueryB,
+        ]);
+
+        // Aggregate by category for both periods
+        const catAggA: Record<string, number> = {};
+        const catAggB: Record<string, number> = {};
+
+        (catDataA || []).forEach(row => {
+          const cat = row.item_category || 'Uncategorized';
+          catAggA[cat] = (catAggA[cat] || 0) + (Number(row.total_amount) || 0);
+        });
+
+        (catDataB || []).forEach(row => {
+          const cat = row.item_category || 'Uncategorized';
+          catAggB[cat] = (catAggB[cat] || 0) + (Number(row.total_amount) || 0);
+        });
+
+        // Combine categories
+        const allCategories = new Set([...Object.keys(catAggA), ...Object.keys(catAggB)]);
+        const categoryBreakdown: CategoryBreakdown[] = [];
+
+        allCategories.forEach(cat => {
+          const a = catAggA[cat] || 0;
+          const b = catAggB[cat] || 0;
+          categoryBreakdown.push({
+            category: cat,
+            periodA: a,
+            periodB: b,
+            change: a - b,
+            changePercent: calcChange(a, b),
+          });
+        });
+
+        result.categoryBreakdown = categoryBreakdown.sort((a, b) => b.periodA - a.periodA);
+      }
+
+      return result;
+    },
+    enabled: !!periodA.dateFrom && !!periodA.dateTo && !!periodB.dateFrom && !!periodB.dateTo,
+  });
+}
+
+// Helper to get preset date ranges
+export function getPresetPeriods(preset: string): { periodA: { dateFrom: string; dateTo: string }; periodB: { dateFrom: string; dateTo: string } } {
+  const today = new Date();
+  
+  switch (preset) {
+    case 'thisMonth-lastMonth': {
+      const thisMonthStart = startOfMonth(today);
+      const thisMonthEnd = endOfMonth(today);
+      const lastMonthStart = startOfMonth(subMonths(today, 1));
+      const lastMonthEnd = endOfMonth(subMonths(today, 1));
+      return {
+        periodA: { dateFrom: format(thisMonthStart, 'yyyy-MM-dd'), dateTo: format(thisMonthEnd, 'yyyy-MM-dd') },
+        periodB: { dateFrom: format(lastMonthStart, 'yyyy-MM-dd'), dateTo: format(lastMonthEnd, 'yyyy-MM-dd') },
+      };
+    }
+    case 'thisWeek-lastWeek': {
+      const thisWeekStart = startOfWeek(today, { weekStartsOn: 0 });
+      const thisWeekEnd = endOfWeek(today, { weekStartsOn: 0 });
+      const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 0 });
+      const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 0 });
+      return {
+        periodA: { dateFrom: format(thisWeekStart, 'yyyy-MM-dd'), dateTo: format(thisWeekEnd, 'yyyy-MM-dd') },
+        periodB: { dateFrom: format(lastWeekStart, 'yyyy-MM-dd'), dateTo: format(lastWeekEnd, 'yyyy-MM-dd') },
+      };
+    }
+    case 'thisYear-lastYear': {
+      const thisYearStart = startOfYear(today);
+      const thisYearEnd = endOfYear(today);
+      const lastYearStart = startOfYear(subYears(today, 1));
+      const lastYearEnd = endOfYear(subYears(today, 1));
+      return {
+        periodA: { dateFrom: format(thisYearStart, 'yyyy-MM-dd'), dateTo: format(thisYearEnd, 'yyyy-MM-dd') },
+        periodB: { dateFrom: format(lastYearStart, 'yyyy-MM-dd'), dateTo: format(lastYearEnd, 'yyyy-MM-dd') },
+      };
+    }
+    case 'q1-q1LastYear': {
+      const q1Start = new Date(today.getFullYear(), 0, 1);
+      const q1End = new Date(today.getFullYear(), 2, 31);
+      const q1LastYearStart = new Date(today.getFullYear() - 1, 0, 1);
+      const q1LastYearEnd = new Date(today.getFullYear() - 1, 2, 31);
+      return {
+        periodA: { dateFrom: format(q1Start, 'yyyy-MM-dd'), dateTo: format(q1End, 'yyyy-MM-dd') },
+        periodB: { dateFrom: format(q1LastYearStart, 'yyyy-MM-dd'), dateTo: format(q1LastYearEnd, 'yyyy-MM-dd') },
+      };
+    }
+    default:
+      return getPresetPeriods('thisMonth-lastMonth');
+  }
+}
