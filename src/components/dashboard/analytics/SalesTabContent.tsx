@@ -102,6 +102,9 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
     return isMonthly ? (goals?.monthlyTarget || 50000) : (goals?.weeklyTarget || 12500);
   }, [filters.dateRange, filters.locationId, goals]);
 
+  // Detect single-day ranges for prompt display
+  const isSingleDayRange = filters.dateRange === 'today' || filters.dateRange === 'yesterday';
+
   // Format trend data for chart
   const chartData = useMemo(() => {
     const data = trendData?.overall || trendData || [];
@@ -236,44 +239,59 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                 <CardTitle className="font-display">Revenue Trend</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px]">
+                <div className="h-[300px] relative">
                   {trendLoading ? (
                     <div className="h-full flex items-center justify-center">
                       <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                        <XAxis 
-                          dataKey="dateLabel" 
-                          tick={{ fontSize: 12 }} 
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <YAxis 
-                          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                          tick={{ fontSize: 12 }}
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <Tooltip 
-                          formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--background))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
-                          }}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="revenue" 
-                          stroke="hsl(var(--primary))" 
-                          fill="hsl(var(--primary) / 0.2)"
-                          strokeWidth={2}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    <>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                          <XAxis 
+                            dataKey="dateLabel" 
+                            tick={{ fontSize: 12 }} 
+                            tickLine={false}
+                            axisLine={false}
+                          />
+                          <YAxis 
+                            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                            tick={{ fontSize: 12 }}
+                            tickLine={false}
+                            axisLine={false}
+                          />
+                          <Tooltip 
+                            formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--background))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                            }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="revenue" 
+                            stroke="hsl(var(--primary))" 
+                            fill="hsl(var(--primary) / 0.2)"
+                            strokeWidth={2}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                      
+                      {/* Single day prompt */}
+                      {isSingleDayRange && chartData.length <= 1 && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="bg-card/95 backdrop-blur-sm border rounded-lg px-4 py-3 text-center max-w-xs shadow-sm">
+                            <p className="text-sm text-muted-foreground">
+                              <span className="font-medium text-foreground">Single data point</span>
+                              <br />
+                              Adjust the date range filter above to see revenue trends over time
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </CardContent>
