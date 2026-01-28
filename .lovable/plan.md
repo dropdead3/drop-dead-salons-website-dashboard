@@ -1,95 +1,167 @@
 
-# Fix Revenue per Hour Calculation
 
-## The Problem
+# Redesign Revenue KPI to Show Breakdown
 
-The current "Rev/Hour" metric divides revenue by **location operating hours**, but the correct formula is:
+## Overview
 
-```text
-Revenue per Hour = Total Revenue ÷ Total Hours Worked (service durations)
+Redesign the "Total Revenue" metric to visually communicate that it is the sum of Services + Products revenue, making the relationship between these numbers clear at a glance.
+
+---
+
+## Current Layout
+
+```
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│  $1,424      │ │  $1,424      │ │  $0          │
+│ Total Revenue│ │  Services    │ │  Products    │
+└──────────────┘ └──────────────┘ └──────────────┘
+```
+
+All three metrics appear at the same level, making it unclear that Services + Products = Total.
+
+---
+
+## New Design
+
+A single "Revenue" card that shows the total prominently with a breakdown underneath:
+
+```
+┌────────────────────────────────────────────────┐
+│              $                                 │
+│           $1,424                               │
+│        Total Revenue                           │
+│  ┌──────────────────┐ ┌──────────────────┐     │
+│  │  ✂ $1,424        │ │  🛍 $0            │     │
+│  │  Services  (100%)│ │  Products  (0%)   │     │
+│  └──────────────────┘ └──────────────────┘     │
+└────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Correct Formula
+## Technical Implementation
 
-| Component | Source |
-|-----------|--------|
-| Total Revenue | Sum of `total_price` from appointments |
-| Total Hours Worked | Sum of (end_time - start_time) for each appointment |
+### 1. Create New "RevenueBreakdownCell" Component
 
-This gives you revenue generated per hour of actual stylist service time.
-
----
-
-## Technical Changes
-
-### 1. Update `useSalesMetrics` Hook
-
-**File: `src/hooks/useSalesData.ts`**
-
-Modify the query to include `start_time` and `end_time`, then calculate total service hours:
+Replace the three separate KPICells with a single composite component:
 
 ```typescript
-// Add to the select query
-.select('id, total_price, service_name, phorest_staff_id, location_id, appointment_date, start_time, end_time')
-
-// Add helper function
-function getAppointmentDurationHours(startTime: string, endTime: string): number {
-  const [startH, startM] = startTime.split(':').map(Number);
-  const [endH, endM] = endTime.split(':').map(Number);
-  const startMinutes = startH * 60 + startM;
-  const endMinutes = endH * 60 + endM;
-  return Math.max(0, (endMinutes - startMinutes) / 60);
+function RevenueBreakdownCell({
+  totalRevenue,
+  serviceRevenue,
+  productRevenue,
+}: {
+  totalRevenue: number;
+  serviceRevenue: number;
+  productRevenue: number;
+}) {
+  const total = serviceRevenue + productRevenue;
+  const servicePercent = total > 0 ? Math.round((serviceRevenue / total) * 100) : 0;
+  const productPercent = total > 0 ? Math.round((productRevenue / total) * 100) : 0;
+  
+  return (
+    <div className="col-span-2 sm:col-span-3 p-4 bg-muted/30 rounded-lg">
+      {/* Main Total */}
+      <div className="text-center mb-4">
+        <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
+        <AnimatedBlurredAmount 
+          value={totalRevenue}
+          prefix="$"
+          className="text-2xl sm:text-3xl font-display tabular-nums"
+        />
+        <div className="flex items-center gap-1 justify-center mt-1">
+          <p className="text-sm text-muted-foreground">Total Revenue</p>
+          <MetricInfoTooltip description="..." />
+        </div>
+      </div>
+      
+      {/* Breakdown Row */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Services */}
+        <div className="text-center p-3 bg-background/50 rounded-md border border-border/30">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <Scissors className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs text-muted-foreground">Services</span>
+          </div>
+          <AnimatedBlurredAmount 
+            value={serviceRevenue}
+            prefix="$"
+            className="text-lg font-display tabular-nums"
+          />
+          <span className="text-xs text-muted-foreground/70">{servicePercent}%</span>
+        </div>
+        
+        {/* Products */}
+        <div className="text-center p-3 bg-background/50 rounded-md border border-border/30">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <ShoppingBag className="w-3.5 h-3.5 text-chart-2" />
+            <span className="text-xs text-muted-foreground">Products</span>
+          </div>
+          <AnimatedBlurredAmount 
+            value={productRevenue}
+            prefix="$"
+            className="text-lg font-display tabular-nums"
+          />
+          <span className="text-xs text-muted-foreground/70">{productPercent}%</span>
+        </div>
+      </div>
+    </div>
+  );
 }
-
-// Calculate total service hours
-const totalServiceHours = data.reduce((sum, apt) => {
-  if (apt.start_time && apt.end_time) {
-    return sum + getAppointmentDurationHours(apt.start_time, apt.end_time);
-  }
-  return sum;
-}, 0);
-
-// Return new field
-return {
-  ...existingFields,
-  totalServiceHours,
-};
 ```
 
-### 2. Update `SalesBentoCard` Component
+### 2. Update KPI Grid Layout
 
-**File: `src/components/dashboard/sales/SalesBentoCard.tsx`**
-
-Remove the operating hours calculation and use the new `totalServiceHours` from the hook:
+Change from 6 equal cells to:
+- 1 full-width Revenue Breakdown card (spans 2-3 columns)
+- 3 remaining KPI cells (Transactions, Avg Ticket, Rev/Hour)
 
 ```typescript
-// Remove: calculateOperatingHours function (lines 30-72)
-// Remove: operatingHours useMemo (lines 229-237)
-
-// Update revenuePerHour calculation
-const revenuePerHour = useMemo(() => {
-  const serviceHours = metrics?.totalServiceHours || 0;
-  if (serviceHours === 0) return 0;
-  return totalRevenue / serviceHours;
-}, [totalRevenue, metrics?.totalServiceHours]);
-
-// Update tooltip to reflect new formula
-tooltip="Total Revenue ÷ Service Hours. Average revenue generated per hour of stylist work."
+{/* Left: KPI Grid */}
+<div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+  {/* Revenue Breakdown - Full Width */}
+  <RevenueBreakdownCell 
+    totalRevenue={totalRevenue}
+    serviceRevenue={serviceRevenue}
+    productRevenue={productRevenue}
+  />
+  
+  {/* Remaining KPIs */}
+  <KPICell icon={CreditCard} value={totalTransactions} label="Transactions" />
+  <KPICell icon={Receipt} value={averageTicket} label="Avg Ticket" prefix="$" />
+  <KPICell icon={Clock} value={revenuePerHour} label="Rev/Hour" prefix="$" />
+</div>
 ```
 
 ---
 
-## Example Calculation
+## Updated Layout Visual
 
-| Day | Appointments | Total Duration | Revenue |
-|-----|--------------|----------------|---------|
-| Mon | 5 services   | 6.5 hours      | $850    |
-| Tue | 4 services   | 5.0 hours      | $720    |
-| **Total** | 9 services | **11.5 hours** | **$1,570** |
+```
+┌─────────────────────────────────────────────────────────┐
+│                    REVENUE BREAKDOWN                     │
+│                       $1,424                             │
+│                    Total Revenue                         │
+│    ┌─────────────────┐    ┌─────────────────┐           │
+│    │  ✂ $1,424       │    │  🛍 $0           │           │
+│    │  Services 100%  │    │  Products 0%    │           │
+│    └─────────────────┘    └─────────────────┘           │
+├─────────────────┬─────────────────┬─────────────────────┤
+│   Transactions  │   Avg Ticket    │    Rev/Hour         │
+│       12        │     $119        │      $95            │
+└─────────────────┴─────────────────┴─────────────────────┘
+```
 
-**Rev/Hour = $1,570 ÷ 11.5 = $137/hr**
+---
+
+## Benefits
+
+| Before | After |
+|--------|-------|
+| 3 separate equal cards | Clear parent-child relationship |
+| Unclear relationship | Visual hierarchy shows breakdown |
+| Redundant "Revenue Mix" in sidebar | Integrated percentage display |
+| 6 KPI cells | 4 logical groupings (cleaner) |
 
 ---
 
@@ -97,5 +169,5 @@ tooltip="Total Revenue ÷ Service Hours. Average revenue generated per hour of s
 
 | File | Change |
 |------|--------|
-| `src/hooks/useSalesData.ts` | Add `start_time`, `end_time` to query; calculate and return `totalServiceHours` |
-| `src/components/dashboard/sales/SalesBentoCard.tsx` | Remove operating hours logic; use `totalServiceHours` from metrics; update tooltip |
+| `src/components/dashboard/sales/SalesBentoCard.tsx` | Add `RevenueBreakdownCell` component; update grid layout |
+
