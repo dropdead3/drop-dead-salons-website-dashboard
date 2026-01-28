@@ -212,9 +212,17 @@ export function usePhorestCalendar() {
 
   // Update appointment status mutation
   const updateStatus = useMutation({
-    mutationFn: async ({ appointmentId, status }: { appointmentId: string; status: AppointmentStatus }) => {
+    mutationFn: async ({ appointmentId, status, rebooked_at_checkout }: { 
+      appointmentId: string; 
+      status: AppointmentStatus;
+      rebooked_at_checkout?: boolean;
+    }) => {
       const response = await supabase.functions.invoke('update-phorest-appointment', {
-        body: { appointment_id: appointmentId, status: status.toUpperCase() },
+        body: { 
+          appointment_id: appointmentId, 
+          status: status.toUpperCase(),
+          ...(rebooked_at_checkout !== undefined && { rebooked_at_checkout }),
+        },
       });
       
       if (response.error) throw response.error;

@@ -2727,6 +2727,7 @@ export type Database = {
           phorest_client_id: string | null
           phorest_id: string
           phorest_staff_id: string | null
+          rebooked_at_checkout: boolean | null
           service_category: string | null
           service_name: string | null
           start_time: string
@@ -2748,6 +2749,7 @@ export type Database = {
           phorest_client_id?: string | null
           phorest_id: string
           phorest_staff_id?: string | null
+          rebooked_at_checkout?: boolean | null
           service_category?: string | null
           service_name?: string | null
           start_time: string
@@ -2769,6 +2771,7 @@ export type Database = {
           phorest_client_id?: string | null
           phorest_id?: string
           phorest_staff_id?: string | null
+          rebooked_at_checkout?: boolean | null
           service_category?: string | null
           service_name?: string | null
           start_time?: string
