@@ -103,7 +103,7 @@ export function CommandCenterAnalytics() {
   
   // Shared filter state for all pinned analytics cards
   const [locationId, setLocationId] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<DateRangeType>('thisMonth');
+  const [dateRange, setDateRange] = useState<DateRangeType>('today');
   
   // Fetch locations for dropdown
   const { data: locations } = useActiveLocations();

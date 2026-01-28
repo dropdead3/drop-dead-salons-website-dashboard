@@ -249,7 +249,7 @@ function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
 
 export function ForecastingCard() {
   const navigate = useNavigate();
-  const [period, setPeriod] = useState<ForecastPeriod>('7days');
+  const [period, setPeriod] = useState<ForecastPeriod>('tomorrow');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);

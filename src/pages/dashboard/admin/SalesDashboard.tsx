@@ -84,7 +84,7 @@ const CHART_COLORS = [
 ];
 
 export default function SalesDashboard() {
-  const [dateRange, setDateRange] = useState<DateRange>('30d');
+  const [dateRange, setDateRange] = useState<DateRange>('today');
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('overview');
   const [phorestStaffFilter, setPhorestStaffFilter] = useState<'all' | 'mapped' | 'unmapped'>('all');

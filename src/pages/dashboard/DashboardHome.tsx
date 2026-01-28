@@ -95,7 +95,7 @@ export default function DashboardHome() {
   
   // Analytics filter state (shared across all pinned analytics cards)
   const [locationId, setLocationId] = useState<string>('');
-  const [dateRange, setDateRange] = useState<DateRangeType>('thisMonth');
+  const [dateRange, setDateRange] = useState<DateRangeType>('today');
   
   // Set default location when access data loads
   useEffect(() => {
