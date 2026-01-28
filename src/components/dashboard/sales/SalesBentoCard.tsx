@@ -73,6 +73,70 @@ function KPICell({
   );
 }
 
+// Revenue Breakdown component showing total with services/products split
+function RevenueBreakdownCell({
+  totalRevenue,
+  serviceRevenue,
+  productRevenue,
+}: {
+  totalRevenue: number;
+  serviceRevenue: number;
+  productRevenue: number;
+}) {
+  const total = serviceRevenue + productRevenue;
+  const servicePercent = total > 0 ? Math.round((serviceRevenue / total) * 100) : 0;
+  const productPercent = total > 0 ? Math.round((productRevenue / total) * 100) : 0;
+  
+  return (
+    <div className="col-span-2 sm:col-span-3 p-4 bg-muted/30 rounded-lg">
+      {/* Main Total */}
+      <div className="text-center mb-4">
+        <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
+        <AnimatedBlurredAmount 
+          value={totalRevenue}
+          prefix="$"
+          className="text-2xl sm:text-3xl font-display tabular-nums"
+        />
+        <div className="flex items-center gap-1 justify-center mt-1">
+          <p className="text-sm text-muted-foreground">Total Revenue</p>
+          <MetricInfoTooltip description="Total expected revenue from all scheduled appointments in the selected date range." />
+        </div>
+      </div>
+      
+      {/* Breakdown Row */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Services */}
+        <div className="text-center p-3 bg-background/50 rounded-md border border-border/30">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <Scissors className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs text-muted-foreground">Services</span>
+          </div>
+          <AnimatedBlurredAmount 
+            value={serviceRevenue}
+            prefix="$"
+            className="text-lg font-display tabular-nums"
+          />
+          <span className="text-xs text-muted-foreground/70 block">{servicePercent}%</span>
+        </div>
+        
+        {/* Products */}
+        <div className="text-center p-3 bg-background/50 rounded-md border border-border/30">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <ShoppingBag className="w-3.5 h-3.5 text-chart-2" />
+            <span className="text-xs text-muted-foreground">Products</span>
+          </div>
+          <AnimatedBlurredAmount 
+            value={productRevenue}
+            prefix="$"
+            className="text-lg font-display tabular-nums"
+          />
+          <span className="text-xs text-muted-foreground/70 block">{productPercent}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Helper to compute date range - exported for reuse
 export function getDateRange(range: DateRangeType): { dateFrom: string; dateTo: string } {
   const now = new Date();
@@ -235,30 +299,16 @@ export function SalesBentoCard({
         
         {/* Bento Grid: KPIs + Sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Left: 3x2 KPI Grid */}
+          {/* Left: KPI Grid */}
           <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <KPICell 
-              icon={DollarSign} 
-              value={totalRevenue} 
-              label="Total Revenue" 
-              prefix="$"
-              tooltip="Total expected revenue from all scheduled appointments in the selected date range."
+            {/* Revenue Breakdown - Full Width */}
+            <RevenueBreakdownCell 
+              totalRevenue={totalRevenue}
+              serviceRevenue={serviceRevenue}
+              productRevenue={productRevenue}
             />
-            <KPICell 
-              icon={Scissors} 
-              value={serviceRevenue} 
-              label="Services" 
-              prefix="$"
-              tooltip="Revenue from all service transactions (cuts, color, treatments, etc.)."
-            />
-            <KPICell 
-              icon={ShoppingBag}
-              value={productRevenue} 
-              label="Products" 
-              prefix="$"
-              iconColor="text-chart-2"
-              tooltip="Revenue from retail product sales only."
-            />
+            
+            {/* Remaining KPIs */}
             <KPICell 
               icon={CreditCard} 
               value={totalTransactions} 
