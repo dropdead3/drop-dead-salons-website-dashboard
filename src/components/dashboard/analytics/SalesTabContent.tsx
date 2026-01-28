@@ -268,13 +268,15 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             </Card>
           </PinnableCard>
 
-          {/* Location Comparison */}
-          <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
-            <LocationComparison 
-              locations={locationData || []} 
-              isLoading={locationLoading} 
-            />
-          </PinnableCard>
+          {/* Location Comparison - only show when 2+ locations */}
+          {(locationData?.length ?? 0) >= 2 && (
+            <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
+              <LocationComparison 
+                locations={locationData || []} 
+                isLoading={locationLoading} 
+              />
+            </PinnableCard>
+          )}
 
           {/* Product and Service Charts */}
           <div className="grid lg:grid-cols-2 gap-6">
