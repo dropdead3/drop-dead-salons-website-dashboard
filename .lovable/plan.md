@@ -1,144 +1,55 @@
 
-# Sync Sales Overview Date Filter with Dashboard Filter Bar
 
-## The Problem
+# Rename "Week Ahead Forecast" to "Revenue Forecast"
 
-Currently there are two independent date filters visible when Sales Overview is on the dashboard:
-1. **Top Filter Bar** - Controls all pinned analytics cards
-2. **Card's Internal Filter** - Only controls this specific card
+## Overview
 
-This creates confusion when they show different values (e.g., "This Month" at top vs "Today" on card).
+Update all instances of "Week Ahead Forecast" and "Week Ahead" labels to "Revenue Forecast" for consistency across the dashboard customization menu and component headers.
 
-## The Solution
+---
 
-Make the Sales Overview card accept the shared filter from the dashboard, while keeping its internal filter as a fallback for standalone use in the Analytics Hub.
+## Changes Required
 
-## Visual Before/After
+### 1. Dashboard Customize Menu Label
 
-```text
-BEFORE (Conflicting filters):
-┌─────────────────────────────────────────────────────────────┐
-│  📍 All Locations  📅 This Month                            │  ← Top filter
-└─────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────┐
-│  $ SALES OVERVIEW               📅 Today ▼                  │  ← Card has its own filter
-│                                                             │
-│            $1,424                                           │  ← Which date does this use?
-│         Total Revenue                                       │
-└─────────────────────────────────────────────────────────────┘
+**File:** `src/components/dashboard/DashboardCustomizeMenu.tsx`
 
-AFTER (Synced):
-┌─────────────────────────────────────────────────────────────┐
-│  📍 All Locations  📅 This Month                            │  ← Single source of truth
-└─────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────┐
-│  $ SALES OVERVIEW                                           │  ← No conflicting filter
-│                                                             │
-│            $1,424                                           │  ← Uses "This Month"
-│         Total Revenue                                       │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Technical Implementation
-
-### 1. Update AggregateSalesCard to Accept Optional Filters
-
-**File: `src/components/dashboard/AggregateSalesCard.tsx`**
-
-Add optional props for external filter control:
-
+Update line 148:
 ```typescript
-interface AggregateSalesCardProps {
-  // When provided, use these instead of internal state
-  externalDateRange?: DateRange;
-  externalDateFilters?: { dateFrom: string; dateTo: string };
-  // Hide the internal date selector when using external filters
-  hideInternalFilter?: boolean;
-}
+// FROM:
+{ id: 'week_ahead_forecast', label: 'Week Ahead Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" /> },
 
-export function AggregateSalesCard({ 
-  externalDateRange,
-  externalDateFilters,
-  hideInternalFilter = false,
-}: AggregateSalesCardProps = {}) {
-  // Internal state as fallback
-  const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
-  
-  // Use external if provided, otherwise internal
-  const dateRange = externalDateRange ?? internalDateRange;
-  const setDateRange = externalDateRange ? undefined : setInternalDateRange;
-  
-  // Use external filters if provided
-  const dateFilters = externalDateFilters ?? calculateDateFilters(dateRange);
-  
-  // ... rest of component
-}
+// TO:
+{ id: 'week_ahead_forecast', label: 'Revenue Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" /> },
 ```
 
-### 2. Update Date Selector Visibility
+### 2. Component Card Title
 
-In the header section, conditionally show the date picker:
+**File:** `src/components/dashboard/sales/WeekAheadForecast.tsx`
 
+Update line 148:
 ```typescript
-{!hideInternalFilter && (
-  <Select value={dateRange} onValueChange={(v: DateRange) => setDateRange?.(v)}>
-    {/* ... options ... */}
-  </Select>
-)}
+// FROM:
+<CardTitle className="font-display text-base">Week Ahead</CardTitle>
+
+// TO:
+<CardTitle className="font-display text-base">Revenue Forecast</CardTitle>
 ```
 
-### 3. Pass Filters from PinnedAnalyticsCard
-
-**File: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
-
-Update the `sales_overview` case to pass the shared filters:
-
-```typescript
-case 'sales_overview':
-  return (
-    <VisibilityGate elementKey="sales_overview">
-      <AggregateSalesCard 
-        externalDateRange={mapDateRangeType(filters.dateRange)}
-        externalDateFilters={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
-        hideInternalFilter={true}
-      />
-    </VisibilityGate>
-  );
-```
-
-### 4. Add Date Range Type Mapping
-
-The dashboard uses `DateRangeType` while the card uses `DateRange`. Add a mapping function:
-
-```typescript
-// In PinnedAnalyticsCard.tsx
-function mapDateRangeType(dashboardRange: DateRangeType): DateRange {
-  const mapping: Record<DateRangeType, DateRange> = {
-    'today': 'today',
-    '7d': '7d',
-    '30d': '30d',
-    'thisWeek': 'thisWeek',
-    'thisMonth': 'mtd',  // Dashboard "This Month" → Card "MTD"
-    'lastMonth': '30d',  // Approximate mapping
-  };
-  return mapping[dashboardRange] || 'today';
-}
-```
-
-### 5. Ensure Analytics Hub Still Works Independently
-
-When the card is rendered in the Analytics Hub (not as a pinned card), it should still have its internal filter. No changes needed there since we're only passing props when rendered via `PinnedAnalyticsCard`.
+---
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/AggregateSalesCard.tsx` | Add props for external filter control, conditionally hide internal selector |
-| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Pass shared filters to AggregateSalesCard |
+| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Change label from "Week Ahead Forecast" to "Revenue Forecast" |
+| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Change CardTitle from "Week Ahead" to "Revenue Forecast" |
 
-## UX Benefits
+---
 
-1. Single point of control when on dashboard
-2. Changing top filter updates all pinned cards including Sales Overview
-3. No conflicting visual indicators
-4. Card still works independently in Analytics Hub with its full filter options
+## Notes
+
+- The internal `id` key (`week_ahead_forecast`) remains unchanged to avoid breaking existing user layouts stored in the database
+- Other references use "Forecasting" as the element name which is appropriate for visibility toggles
+- The filename `WeekAheadForecast.tsx` can remain as-is since it's internal and not user-facing
+
