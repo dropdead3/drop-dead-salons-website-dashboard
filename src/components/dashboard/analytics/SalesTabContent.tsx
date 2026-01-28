@@ -54,6 +54,7 @@ import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
+import { CompareTabContent } from '@/components/dashboard/sales/compare/CompareTabContent';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface SalesTabContentProps {
@@ -200,6 +201,9 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             <VisibilityGate elementKey="sales_goals_subtab" elementName="Goals" elementCategory="Page Tabs">
               <SubTabsTrigger value="goals">Goals</SubTabsTrigger>
             </VisibilityGate>
+            <VisibilityGate elementKey="sales_compare_subtab" elementName="Compare" elementCategory="Page Tabs">
+              <SubTabsTrigger value="compare">Compare</SubTabsTrigger>
+            </VisibilityGate>
             <VisibilityGate elementKey="sales_staff_subtab" elementName="Staff Performance" elementCategory="Page Tabs">
               <SubTabsTrigger value="staff">Staff Performance</SubTabsTrigger>
             </VisibilityGate>
@@ -324,8 +328,14 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Analytics Hub - Sales">
             <TeamGoalsCard currentRevenue={metrics?.totalRevenue || 0} />
           </PinnableCard>
-          <PinnableCard elementKey="yoy_comparison" elementName="Year-over-Year" category="Analytics Hub - Sales">
-            <YearOverYearComparison locationId={locationFilter} filterContext={filterContext} />
+        </TabsContent>
+
+        <TabsContent value="compare" className="mt-6">
+          <PinnableCard elementKey="comparison_builder" elementName="Comparison Builder" category="Analytics Hub - Sales">
+            <CompareTabContent 
+              filters={filters}
+              filterContext={filterContext}
+            />
           </PinnableCard>
         </TabsContent>
 
