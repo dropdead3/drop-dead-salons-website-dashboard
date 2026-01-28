@@ -55,6 +55,7 @@ interface Announcement {
   created_at: string;
   link_url: string | null;
   link_label: string | null;
+  location_id: string | null;
 }
 
 const priorityColors: Record<Priority, string> = {
@@ -87,6 +88,8 @@ export default function DashboardHome() {
     accessibleLocations, 
     canViewAggregate, 
     defaultLocationId,
+    assignedLocationIds,
+    canViewAllLocations,
     isLoading: locationAccessLoading 
   } = useUserLocationAccess();
   
@@ -135,12 +138,19 @@ export default function DashboardHome() {
   }), [locationId, dateRange, dateFilters]);
   
   const { data: announcements } = useQuery({
-    queryKey: ['announcements'],
+    queryKey: ['announcements', assignedLocationIds, canViewAllLocations],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('announcements')
         .select('*')
-        .eq('is_active', true)
+        .eq('is_active', true);
+
+      // Filter by location if user doesn't have full access
+      if (!canViewAllLocations && assignedLocationIds.length > 0) {
+        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`);
+      }
+
+      const { data, error } = await query
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(3);

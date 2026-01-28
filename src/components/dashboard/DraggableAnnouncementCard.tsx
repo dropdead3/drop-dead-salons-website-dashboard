@@ -12,8 +12,11 @@ import {
   Info,
   AlertCircle,
   Bell,
-  ExternalLink
+  ExternalLink,
+  Globe,
+  MapPin,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
@@ -55,6 +58,7 @@ interface DraggableAnnouncementCardProps {
   onEdit: (announcement: Announcement) => void;
   onDelete: (id: string) => void;
   isDraggable?: boolean;
+  locationName?: string | null;
 }
 
 export function DraggableAnnouncementCard({
@@ -64,6 +68,7 @@ export function DraggableAnnouncementCard({
   onEdit,
   onDelete,
   isDraggable = false,
+  locationName,
 }: DraggableAnnouncementCardProps) {
   const {
     attributes,
@@ -100,7 +105,7 @@ export function DraggableAnnouncementCard({
           </div>
         )}
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
             {announcement.is_pinned && (
               <Pin className="w-4 h-4 text-foreground" />
             )}
@@ -111,6 +116,20 @@ export function DraggableAnnouncementCard({
             {!announcement.is_active && (
               <span className="text-xs bg-muted px-2 py-0.5">Inactive</span>
             )}
+            {/* Location badge */}
+            <Badge variant="outline" className="text-[10px] gap-1 py-0.5">
+              {locationName ? (
+                <>
+                  <MapPin className="w-3 h-3" />
+                  {locationName}
+                </>
+              ) : (
+                <>
+                  <Globe className="w-3 h-3" />
+                  Company-Wide
+                </>
+              )}
+            </Badge>
           </div>
           <h3 className="font-display text-lg mb-2">{announcement.title}</h3>
           <p className="text-sm text-muted-foreground font-sans whitespace-pre-wrap">

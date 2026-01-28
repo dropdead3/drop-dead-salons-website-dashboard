@@ -78,6 +78,7 @@ export type Database = {
           is_pinned: boolean | null
           link_label: string | null
           link_url: string | null
+          location_id: string | null
           priority: string | null
           sort_order: number | null
           title: string
@@ -93,6 +94,7 @@ export type Database = {
           is_pinned?: boolean | null
           link_label?: string | null
           link_url?: string | null
+          location_id?: string | null
           priority?: string | null
           sort_order?: number | null
           title: string
@@ -108,12 +110,21 @@ export type Database = {
           is_pinned?: boolean | null
           link_label?: string | null
           link_url?: string | null
+          location_id?: string | null
           priority?: string | null
           sort_order?: number | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "announcements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       appointment_notes: {
         Row: {

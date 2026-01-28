@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { cn } from '@/lib/utils';
 import { Megaphone, ChevronRight, Pin, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
@@ -18,6 +19,7 @@ interface Announcement {
   created_at: string;
   link_url: string | null;
   link_label: string | null;
+  location_id: string | null;
 }
 
 const priorityColors: Record<Priority, string> = {
@@ -44,18 +46,29 @@ export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsW
   const queryClient = useQueryClient();
   const [isExpanded, setIsExpanded] = useState(false);
   const lastAnnouncementIdRef = useRef<string | null>(null);
+  
+  // Get user's location access
+  const { assignedLocationIds, canViewAllLocations } = useUserLocationAccess();
 
-  // Fetch active announcements
+  // Fetch active announcements filtered by location
   const { data: announcements = [] } = useQuery({
-    queryKey: ['sidebar-announcements', user?.id],
+    queryKey: ['sidebar-announcements', user?.id, assignedLocationIds, canViewAllLocations],
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('announcements')
-        .select('id, title, content, priority, is_pinned, created_at, link_url, link_label')
+        .select('id, title, content, priority, is_pinned, created_at, link_url, link_label, location_id')
         .eq('is_active', true)
-        .or('expires_at.is.null,expires_at.gt.now()')
+        .or('expires_at.is.null,expires_at.gt.now()');
+
+      // Filter by location if user doesn't have full access
+      if (!canViewAllLocations && assignedLocationIds.length > 0) {
+        // Show company-wide (null) OR user's assigned locations
+        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`);
+      }
+
+      const { data, error } = await query
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(3);

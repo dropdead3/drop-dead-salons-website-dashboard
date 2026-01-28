@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { Bell, Check, ExternalLink, Megaphone, Hand, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +23,7 @@ interface Announcement {
   priority: string | null;
   is_pinned: boolean | null;
   created_at: string;
+  location_id: string | null;
 }
 
 interface UserNotification {
@@ -42,6 +44,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { assignedLocationIds, canViewAllLocations } = useUserLocationAccess();
 
   // Subscribe to realtime announcements and notifications changes
   useEffect(() => {
@@ -75,15 +78,22 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
     };
   }, [queryClient, user?.id]);
 
-  // Fetch recent announcements
+  // Fetch recent announcements filtered by location
   const { data: announcements, isLoading: loadingAnnouncements } = useQuery({
-    queryKey: ['notifications-announcements', user?.id],
+    queryKey: ['notifications-announcements', user?.id, assignedLocationIds, canViewAllLocations],
     queryFn: async () => {
-      const { data: announcementsData, error: announcementsError } = await supabase
+      let query = supabase
         .from('announcements')
         .select('*')
         .eq('is_active', true)
-        .or('expires_at.is.null,expires_at.gt.now()')
+        .or('expires_at.is.null,expires_at.gt.now()');
+
+      // Filter by location if user doesn't have full access
+      if (!canViewAllLocations && assignedLocationIds.length > 0) {
+        query = query.or(`location_id.is.null,location_id.in.(${assignedLocationIds.join(',')})`);
+      }
+
+      const { data: announcementsData, error: announcementsError } = await query
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(10);
