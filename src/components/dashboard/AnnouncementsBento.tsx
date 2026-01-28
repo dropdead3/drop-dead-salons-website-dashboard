@@ -24,6 +24,7 @@ interface Announcement {
   created_at: string;
   link_url: string | null;
   link_label: string | null;
+  location_id: string | null;
 }
 
 interface AnnouncementsBentoProps {

@@ -22,6 +22,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { 
   Plus, 
   Megaphone, 
@@ -31,9 +32,12 @@ import {
   Info,
   AlertCircle,
   Bell,
+  Globe,
+  MapPin,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
@@ -68,6 +72,7 @@ interface Announcement {
   link_url: string | null;
   link_label: string | null;
   sort_order: number;
+  location_id: string | null;
 }
 
 const priorityConfig: Record<Priority, { label: string; icon: React.ReactNode; color: string }> = {
@@ -99,8 +104,12 @@ export default function Announcements() {
   const [expiresAt, setExpiresAt] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [linkLabel, setLinkLabel] = useState('');
+  const [locationId, setLocationId] = useState<string | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Fetch all active locations for the audience selector
+  const { data: locations = [] } = useActiveLocations();
 
   const { data: announcements, isLoading } = useQuery({
     queryKey: ['admin-announcements'],
@@ -262,6 +271,7 @@ export default function Announcements() {
     setExpiresAt('');
     setLinkUrl('');
     setLinkLabel('');
+    setLocationId(null);
   };
 
   const handleCreate = () => {
@@ -282,6 +292,7 @@ export default function Announcements() {
       link_url: linkUrl || null,
       link_label: linkLabel || null,
       sort_order: isPinned ? maxSortOrder + 1 : 0,
+      location_id: locationId,
     });
   };
 
@@ -296,6 +307,7 @@ export default function Announcements() {
       expires_at: expiresAt || null,
       link_url: linkUrl || null,
       link_label: linkLabel || null,
+      location_id: locationId,
     });
   };
 
@@ -308,6 +320,13 @@ export default function Announcements() {
     setExpiresAt(announcement.expires_at?.split('T')[0] || '');
     setLinkUrl(announcement.link_url || '');
     setLinkLabel(announcement.link_label || '');
+    setLocationId(announcement.location_id);
+  };
+  
+  // Get location name by ID for display
+  const getLocationName = (locId: string | null) => {
+    if (!locId) return null;
+    return locations.find(l => l.id === locId)?.name || locId;
   };
 
   const toggleActive = (announcement: Announcement) => {
@@ -360,6 +379,9 @@ export default function Announcements() {
                 setLinkUrl={setLinkUrl}
                 linkLabel={linkLabel}
                 setLinkLabel={setLinkLabel}
+                locationId={locationId}
+                setLocationId={setLocationId}
+                locations={locations}
                 onSubmit={handleCreate}
                 isLoading={createMutation.isPending}
                 submitLabel="Create Announcement"
@@ -409,6 +431,7 @@ export default function Announcements() {
                           onEdit={openEdit}
                           onDelete={(id) => deleteMutation.mutate(id)}
                           isDraggable={true}
+                          locationName={getLocationName(announcement.location_id)}
                         />
                       ))}
                     </div>
@@ -435,6 +458,7 @@ export default function Announcements() {
                       onEdit={openEdit}
                       onDelete={(id) => deleteMutation.mutate(id)}
                       isDraggable={false}
+                      locationName={getLocationName(announcement.location_id)}
                     />
                   ))}
                 </div>
@@ -464,6 +488,9 @@ export default function Announcements() {
               setLinkUrl={setLinkUrl}
               linkLabel={linkLabel}
               setLinkLabel={setLinkLabel}
+              locationId={locationId}
+              setLocationId={setLocationId}
+              locations={locations}
               onSubmit={handleUpdate}
               isLoading={updateMutation.isPending}
               submitLabel="Save Changes"
@@ -490,6 +517,9 @@ interface AnnouncementFormProps {
   setLinkUrl: (v: string) => void;
   linkLabel: string;
   setLinkLabel: (v: string) => void;
+  locationId: string | null;
+  setLocationId: (v: string | null) => void;
+  locations: { id: string; name: string }[];
   onSubmit: () => void;
   isLoading: boolean;
   submitLabel: string;
@@ -510,6 +540,9 @@ function AnnouncementForm({
   setLinkUrl,
   linkLabel,
   setLinkLabel,
+  locationId,
+  setLocationId,
+  locations,
   onSubmit,
   isLoading,
   submitLabel,
@@ -562,6 +595,41 @@ function AnnouncementForm({
             onChange={(e) => setExpiresAt(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Audience</Label>
+        <Select 
+          value={locationId || 'all'} 
+          onValueChange={(v) => setLocationId(v === 'all' ? null : v)}
+        >
+          <SelectTrigger>
+            <div className="flex items-center gap-2">
+              {locationId ? (
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <Globe className="w-4 h-4 text-muted-foreground" />
+              )}
+              <SelectValue placeholder="Select audience" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4" />
+                All Locations (Company-Wide)
+              </div>
+            </SelectItem>
+            {locations.map((loc) => (
+              <SelectItem key={loc.id} value={loc.id}>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {loc.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
