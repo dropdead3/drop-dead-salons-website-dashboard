@@ -31,7 +31,6 @@ export const toPinnedEntry = (cardId: string): string => `pinned:${cardId}`;
 // All available pinnable card IDs for reference
 export const PINNABLE_CARD_IDS = [
   'operations_stats',
-  'sales_dashboard_bento',
   'sales_overview',
   'top_performers',
   'revenue_breakdown',

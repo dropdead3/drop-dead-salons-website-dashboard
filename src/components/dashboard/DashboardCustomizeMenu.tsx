@@ -140,7 +140,6 @@ const WIDGETS = [
 // All analytics cards that can be pinned to Command Center
 const PINNABLE_CARDS = [
   // Sales & Revenue
-  { id: 'sales_dashboard_bento', label: 'Sales Dashboard', category: 'Sales', icon: <LayoutDashboard className="w-4 h-4" /> },
   { id: 'sales_overview', label: 'Sales Overview', category: 'Sales', icon: <DollarSign className="w-4 h-4" /> },
   { id: 'revenue_breakdown', label: 'Revenue Breakdown', category: 'Sales', icon: <PieChart className="w-4 h-4" /> },
   { id: 'top_performers', label: 'Top Performers', category: 'Sales', icon: <Trophy className="w-4 h-4" /> },

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
+import { format, startOfMonth, subDays, startOfWeek } from 'date-fns';
 import { VisibilityGate } from '@/components/visibility';
 import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
-import { SalesBentoCard, getDateRange, type DateRangeType } from '@/components/dashboard/sales/SalesBentoCard';
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
@@ -15,6 +15,41 @@ import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard'
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
+
+export type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+
+// Helper function to get date range
+export function getDateRange(dateRange: DateRangeType): { dateFrom: string; dateTo: string } {
+  const now = new Date();
+  switch (dateRange) {
+    case 'today':
+      return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+    case '7d':
+      return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+    case '30d':
+      return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+    case 'thisWeek':
+      return { 
+        dateFrom: format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'), 
+        dateTo: format(now, 'yyyy-MM-dd') 
+      };
+    case 'thisMonth':
+      return { 
+        dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
+        dateTo: format(now, 'yyyy-MM-dd') 
+      };
+    case 'lastMonth': {
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { 
+        dateFrom: format(lastMonth, 'yyyy-MM-dd'), 
+        dateTo: format(lastDay, 'yyyy-MM-dd') 
+      };
+    }
+    default:
+      return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+  }
+}
 
 export interface AnalyticsFilters {
   locationId: string;
@@ -65,17 +100,6 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
           elementCategory="operations"
         >
           <OperationsQuickStats locationId={locationFilter} />
-        </VisibilityGate>
-      );
-    case 'sales_dashboard_bento':
-      return (
-        <VisibilityGate elementKey="sales_dashboard_bento">
-          <SalesBentoCard 
-            locationId={filters.locationId}
-            dateRange={filters.dateRange}
-            dateFrom={filters.dateFrom}
-            dateTo={filters.dateTo}
-          />
         </VisibilityGate>
       );
     case 'sales_overview':

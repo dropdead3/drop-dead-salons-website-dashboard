@@ -39,9 +39,8 @@ import { DashboardCustomizeMenu } from '@/components/dashboard/DashboardCustomiz
 import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId } from '@/hooks/useDashboardLayout';
 import { TodaysQueueSection } from '@/components/dashboard/TodaysQueueSection';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
-import { PinnedAnalyticsCard, type AnalyticsFilters } from '@/components/dashboard/PinnedAnalyticsCard';
+import { PinnedAnalyticsCard, getDateRange, type AnalyticsFilters, type DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
-import { getDateRange, type DateRangeType } from '@/components/dashboard/sales/SalesBentoCard';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 
