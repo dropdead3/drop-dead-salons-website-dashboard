@@ -17,6 +17,7 @@ import {
   Info,
   ChevronRight,
   CalendarClock,
+  Clock,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
@@ -111,6 +112,13 @@ export function AggregateSalesCard() {
   const { goals } = useSalesGoals();
 
   const isLoading = metricsLoading || locationLoading;
+
+  // Calculate revenue per hour
+  const revenuePerHour = (() => {
+    const serviceHours = metrics?.totalServiceHours || 0;
+    if (serviceHours === 0) return 0;
+    return (metrics?.totalRevenue || 0) / serviceHours;
+  })();
 
   // Calculate goal based on date range
   const currentGoal = (() => {
@@ -399,6 +407,20 @@ export function AggregateSalesCard() {
               <span className="text-xs text-muted-foreground/70">
                 {tomorrowData?.appointmentCount || 0} bookings
               </span>
+            </div>
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+              <div className="flex justify-center mb-2">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-chart-1" />
+              </div>
+              <AnimatedBlurredAmount 
+                value={Math.round(revenuePerHour)}
+                prefix="$"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+              />
+              <div className="flex items-center gap-1 justify-center mt-1">
+                <p className="text-xs text-muted-foreground">Rev/Hour</p>
+                <MetricInfoTooltip description="Total Revenue ÷ Service Hours. Average revenue per hour of stylist work." />
+              </div>
             </div>
           </div>
 

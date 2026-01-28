@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useActiveLocations } from '@/hooks/useLocations';
-import type { DateRangeType } from '@/components/dashboard/sales/SalesBentoCard';
+import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 
 const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   today: 'Today',

@@ -33,6 +33,7 @@ import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCen
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 
 // Sub-components
 import { SalesGoalsDialog } from '@/components/dashboard/sales/SalesGoalsDialog';
@@ -53,7 +54,6 @@ import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
-import { SalesBentoCard, type DateRangeType } from '@/components/dashboard/sales/SalesBentoCard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface SalesTabContentProps {
@@ -178,18 +178,13 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </div>
       </div>
 
-      {/* Unified Sales Bento Card - Receives filters from parent */}
+      {/* Sales Overview Card */}
       <PinnableCard 
-        elementKey="sales_dashboard_bento" 
-        elementName="Sales Dashboard" 
+        elementKey="sales_overview" 
+        elementName="Sales Overview" 
         category="Analytics Hub - Sales"
       >
-        <SalesBentoCard
-          locationId={filters.locationId}
-          dateRange={filters.dateRange as DateRangeType}
-          dateFrom={filters.dateFrom}
-          dateTo={filters.dateTo}
-        />
+        <AggregateSalesCard />
       </PinnableCard>
 
       {/* Sub-tabs for detailed views */}

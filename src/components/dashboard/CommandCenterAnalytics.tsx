@@ -4,8 +4,6 @@ import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
-import { SalesBentoCard, getDateRange, type DateRangeType } from '@/components/dashboard/sales/SalesBentoCard';
-
 import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCard';
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
@@ -22,6 +20,7 @@ import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { Link } from 'react-router-dom';
 import { Settings2, MapPin, Calendar } from 'lucide-react';
+import { format, startOfMonth, subDays, startOfWeek } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -29,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
 const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   today: 'Today',
@@ -39,9 +40,41 @@ const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   lastMonth: 'Last Month',
 };
 
+// Helper function to get date range
+function getDateRange(dateRange: DateRangeType): { dateFrom: string; dateTo: string } {
+  const now = new Date();
+  switch (dateRange) {
+    case 'today':
+      return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+    case '7d':
+      return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+    case '30d':
+      return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+    case 'thisWeek':
+      return { 
+        dateFrom: format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'), 
+        dateTo: format(now, 'yyyy-MM-dd') 
+      };
+    case 'thisMonth':
+      return { 
+        dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
+        dateTo: format(now, 'yyyy-MM-dd') 
+      };
+    case 'lastMonth': {
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { 
+        dateFrom: format(lastMonth, 'yyyy-MM-dd'), 
+        dateTo: format(lastDay, 'yyyy-MM-dd') 
+      };
+    }
+    default:
+      return { dateFrom: format(subDays(now, 30), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+  }
+}
+
 // Map of card IDs to their render components
 const CARD_COMPONENTS: Record<string, string> = {
-  'sales_dashboard_bento': 'SalesDashboard',
   'sales_overview': 'SalesOverview',
   'top_performers': 'TopPerformers',
   'revenue_breakdown': 'RevenueBreakdown',
@@ -155,17 +188,6 @@ export function CommandCenterAnalytics() {
   // Render a card by its ID
   const renderCard = (cardId: string) => {
     switch (cardId) {
-      case 'sales_dashboard_bento':
-        return (
-          <VisibilityGate key={cardId} elementKey="sales_dashboard_bento">
-            <SalesBentoCard 
-              locationId={locationId}
-              dateRange={dateRange}
-              dateFrom={dateFilters.dateFrom}
-              dateTo={dateFilters.dateTo}
-            />
-          </VisibilityGate>
-        );
       case 'sales_overview':
         return (
           <VisibilityGate key={cardId} elementKey="sales_overview">
