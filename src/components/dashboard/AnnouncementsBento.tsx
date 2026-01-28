@@ -1,17 +1,27 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Pin, 
   Pencil, 
   ChevronDown,
   ExternalLink,
   Plus,
+  Globe,
+  MapPin,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useActiveLocations } from '@/hooks/useLocations';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -49,26 +59,54 @@ const normalizeUrl = (url: string): string => {
 
 export function AnnouncementsBento({ announcements, isLeadership }: AnnouncementsBentoProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [locationFilter, setLocationFilter] = useState<string>('all');
+  const { data: locations = [] } = useActiveLocations();
   
-  const hasAnnouncements = announcements && announcements.length > 0;
-  const displayedAnnouncements = announcements?.slice(0, 3) || [];
-  const totalCount = announcements?.length || 0;
+  // Filter announcements based on location selection
+  const filteredAnnouncements = useMemo(() => {
+    if (!announcements) return [];
+    if (locationFilter === 'all') return announcements;
+    if (locationFilter === 'company-wide') {
+      return announcements.filter(a => a.location_id === null);
+    }
+    return announcements.filter(a => a.location_id === locationFilter);
+  }, [announcements, locationFilter]);
+  
+  const hasAnnouncements = filteredAnnouncements.length > 0;
+  const displayedAnnouncements = filteredAnnouncements.slice(0, 3);
+  const totalCount = filteredAnnouncements.length;
 
   return (
     <Card className="p-6">
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <div className="flex items-center justify-between mb-4">
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
-              <ChevronDown 
-                className={cn(
-                  "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                  isExpanded && "rotate-180"
-                )} 
-              />
-            </button>
-          </CollapsibleTrigger>
+          <div className="flex items-center gap-3">
+            <CollapsibleTrigger asChild>
+              <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
+                <ChevronDown 
+                  className={cn(
+                    "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                    isExpanded && "rotate-180"
+                  )} 
+                />
+              </button>
+            </CollapsibleTrigger>
+            
+            {/* Location Filter Dropdown */}
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger className="h-7 w-[130px] text-xs">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="company-wide">Company-Wide</SelectItem>
+                {locations.map(loc => (
+                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           
           <div className="flex items-center gap-3">
             {isLeadership && (
@@ -129,9 +167,23 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                   </p>
                   
                   <div className="flex items-center justify-between mt-auto">
-                    <p className="text-xs text-muted-foreground/60">
-                      {format(new Date(announcement.created_at), 'MMM d')}
-                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+                      <span>{format(new Date(announcement.created_at), 'MMM d')}</span>
+                      <span>·</span>
+                      <span className="flex items-center gap-1">
+                        {announcement.location_id ? (
+                          <>
+                            <MapPin className="w-3 h-3" />
+                            {locations.find(l => l.id === announcement.location_id)?.name || 'Location'}
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="w-3 h-3" />
+                            All
+                          </>
+                        )}
+                      </span>
+                    </div>
                     
                     {announcement.link_url && announcement.link_label && (
                       <a 
