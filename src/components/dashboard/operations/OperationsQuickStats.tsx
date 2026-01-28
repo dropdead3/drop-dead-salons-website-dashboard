@@ -8,13 +8,15 @@ import {
 } from 'lucide-react';
 import { useTodaysQueue } from '@/hooks/useTodaysQueue';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface OperationsQuickStatsProps {
   locationId?: string;
   hideRevenue?: boolean;
+  filterContext?: FilterContext;
 }
 
-export function OperationsQuickStats({ locationId, hideRevenue }: OperationsQuickStatsProps) {
+export function OperationsQuickStats({ locationId, hideRevenue, filterContext }: OperationsQuickStatsProps) {
   const { data: queueData, isLoading } = useTodaysQueue(locationId);
 
   const stats = [
@@ -72,7 +74,15 @@ export function OperationsQuickStats({ locationId, hideRevenue }: OperationsQuic
 
   return (
     <div className="space-y-4">
-      <h2 className="font-display text-sm tracking-wide">TODAY'S OPERATIONS</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-sm tracking-wide">TODAY'S OPERATIONS</h2>
+        {filterContext && (
+          <AnalyticsFilterBadge 
+            locationId={filterContext.locationId} 
+            dateRange={filterContext.dateRange} 
+          />
+        )}
+      </div>
       <div className={`grid grid-cols-2 ${hideRevenue ? 'lg:grid-cols-4' : 'lg:grid-cols-5'} gap-4`}>
         {stats.map((stat) => (
           <Card key={stat.label} className="p-4">

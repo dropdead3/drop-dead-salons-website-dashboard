@@ -5,17 +5,20 @@ import { PieChartIcon } from 'lucide-react';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface RevenueDonutChartProps {
   serviceRevenue: number;
   productRevenue: number;
   size?: number;
+  filterContext?: FilterContext;
 }
 
 export function RevenueDonutChart({ 
   serviceRevenue, 
   productRevenue,
-  size = 80 
+  size = 80,
+  filterContext,
 }: RevenueDonutChartProps) {
   const { hideNumbers } = useHideNumbers();
   
@@ -32,13 +35,21 @@ export function RevenueDonutChart({
   const servicePercent = total > 0 ? Math.round((serviceRevenue / total) * 100) : 0;
 
   const headerContent = (
-    <div className="flex items-center gap-2">
-      <PieChartIcon className="w-5 h-5 text-chart-2" />
-      <CardTitle className="font-display text-base">Revenue Breakdown</CardTitle>
-      <CommandCenterVisibilityToggle 
-        elementKey="revenue_breakdown" 
-        elementName="Revenue Breakdown" 
-      />
+    <div className="flex items-center justify-between w-full">
+      <div className="flex items-center gap-2">
+        <PieChartIcon className="w-5 h-5 text-chart-2" />
+        <CardTitle className="font-display text-base">Revenue Breakdown</CardTitle>
+        <CommandCenterVisibilityToggle 
+          elementKey="revenue_breakdown" 
+          elementName="Revenue Breakdown" 
+        />
+      </div>
+      {filterContext && (
+        <AnalyticsFilterBadge 
+          locationId={filterContext.locationId} 
+          dateRange={filterContext.dateRange} 
+        />
+      )}
     </div>
   );
 

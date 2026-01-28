@@ -4,8 +4,13 @@ import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus } fr
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
-export function NewBookingsCard() {
+interface NewBookingsCardProps {
+  filterContext?: FilterContext;
+}
+
+export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
   const { data, isLoading } = useNewBookings();
 
   // Trend icon based on percent change
@@ -19,17 +24,25 @@ export function NewBookingsCard() {
   return (
     <Card className="p-6">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center rounded-lg">
-          <CalendarPlus className="w-5 h-5 text-blue-600" />
-        </div>
-        <div className="flex items-center gap-2">
-          <div>
-            <h2 className="font-display text-sm tracking-wide">NEW BOOKINGS</h2>
-            <p className="text-xs text-muted-foreground">Appointments created</p>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center rounded-lg">
+            <CalendarPlus className="w-5 h-5 text-blue-600" />
           </div>
-          <CommandCenterVisibilityToggle elementKey="new_bookings" elementName="New Bookings" />
+          <div className="flex items-center gap-2">
+            <div>
+              <h2 className="font-display text-sm tracking-wide">NEW BOOKINGS</h2>
+              <p className="text-xs text-muted-foreground">Appointments created</p>
+            </div>
+            <CommandCenterVisibilityToggle elementKey="new_bookings" elementName="New Bookings" />
+          </div>
         </div>
+        {filterContext && (
+          <AnalyticsFilterBadge 
+            locationId={filterContext.locationId} 
+            dateRange={filterContext.dateRange} 
+          />
+        )}
       </div>
 
       {/* Hero: Total Booked Today */}

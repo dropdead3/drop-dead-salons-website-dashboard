@@ -50,6 +50,7 @@ import { RevenueDonutChart } from './sales/RevenueDonutChart';
 import { SalesGoalProgress } from './sales/SalesGoalProgress';
 import { LastSyncIndicator } from './sales/LastSyncIndicator';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'ytd' | 'lastYear' | 'last365';
 
@@ -59,12 +60,18 @@ interface AggregateSalesCardProps {
   externalDateFilters?: { dateFrom: string; dateTo: string };
   // Hide the internal date selector when using external filters
   hideInternalFilter?: boolean;
+  // Optional filter context for pinned card display
+  filterContext?: {
+    locationId: string;
+    dateRange: string;
+  };
 }
 
 export function AggregateSalesCard({ 
   externalDateRange,
   externalDateFilters,
   hideInternalFilter = false,
+  filterContext,
 }: AggregateSalesCardProps = {}) {
   const navigate = useNavigate();
   const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
@@ -271,6 +278,12 @@ export function AggregateSalesCard({
           )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {filterContext && hideInternalFilter && (
+            <AnalyticsFilterBadge 
+              locationId={filterContext.locationId} 
+              dateRange={filterContext.dateRange as any} 
+            />
+          )}
           <LastSyncIndicator syncType="sales" showAutoRefresh />
           {!hideInternalFilter && (
             <Select value={dateRange} onValueChange={(v: DateRange) => setInternalDateRange(v)}>

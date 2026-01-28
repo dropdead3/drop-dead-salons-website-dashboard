@@ -15,6 +15,7 @@ import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard'
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
+import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 export type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
@@ -30,6 +31,8 @@ function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
   };
   return mapping[dashboardRange] || 'today';
 }
+
+export { type FilterContext };
 
 // Helper function to get date range
 export function getDateRange(dateRange: DateRangeType): { dateFrom: string; dateTo: string } {
@@ -84,6 +87,12 @@ interface PinnedAnalyticsCardProps {
 export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProps) {
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
   
+  // Create filter context for cards that display it
+  const filterContext: FilterContext = {
+    locationId: filters.locationId,
+    dateRange: filters.dateRange,
+  };
+  
   // Fetch data for cards that need it
   const { data: salesData } = useSalesMetrics({ 
     dateFrom: filters.dateFrom, 
@@ -112,7 +121,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
           elementName="Operations Quick Stats"
           elementCategory="operations"
         >
-          <OperationsQuickStats locationId={locationFilter} />
+          <OperationsQuickStats locationId={locationFilter} filterContext={filterContext} />
         </VisibilityGate>
       );
     case 'sales_overview':
@@ -122,6 +131,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
             externalDateRange={mapToSalesDateRange(filters.dateRange)}
             externalDateFilters={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
             hideInternalFilter={true}
+            filterContext={filterContext}
           />
         </VisibilityGate>
       );
@@ -130,7 +140,8 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
         <VisibilityGate elementKey="top_performers">
           <TopPerformersCard 
             performers={performersForCard} 
-            isLoading={isLoadingPerformers} 
+            isLoading={isLoadingPerformers}
+            filterContext={filterContext}
           />
         </VisibilityGate>
       );
@@ -140,25 +151,33 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
           <RevenueDonutChart 
             serviceRevenue={salesData?.serviceRevenue || 0}
             productRevenue={salesData?.productRevenue || 0}
+            filterContext={filterContext}
           />
         </VisibilityGate>
       );
     case 'client_funnel':
       return (
         <VisibilityGate elementKey="client_funnel">
-          <ClientFunnelCard dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+          <ClientFunnelCard 
+            dateFrom={filters.dateFrom} 
+            dateTo={filters.dateTo}
+            filterContext={filterContext}
+          />
         </VisibilityGate>
       );
     case 'team_goals':
       return (
         <VisibilityGate elementKey="team_goals">
-          <TeamGoalsCard currentRevenue={salesData?.totalRevenue || 0} />
+          <TeamGoalsCard 
+            currentRevenue={salesData?.totalRevenue || 0}
+            filterContext={filterContext}
+          />
         </VisibilityGate>
       );
     case 'new_bookings':
       return (
         <VisibilityGate elementKey="new_bookings">
-          <NewBookingsCard />
+          <NewBookingsCard filterContext={filterContext} />
         </VisibilityGate>
       );
     case 'week_ahead_forecast':

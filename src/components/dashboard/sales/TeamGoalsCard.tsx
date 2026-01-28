@@ -18,17 +18,20 @@ import { Users, Target, Edit2, Trophy, Gift, Loader2, PartyPopper } from 'lucide
 import { useTeamGoals } from '@/hooks/useTeamGoals';
 import { cn } from '@/lib/utils';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface TeamGoalsCardProps {
   currentRevenue: number;
   period?: 'weekly' | 'monthly' | 'quarterly';
   className?: string;
+  filterContext?: FilterContext;
 }
 
 export function TeamGoalsCard({ 
   currentRevenue, 
   period = 'monthly',
-  className 
+  className,
+  filterContext,
 }: TeamGoalsCardProps) {
   const { goals, isLoading, updateGoals, isUpdating } = useTeamGoals();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -117,9 +120,17 @@ export function TeamGoalsCard({
               elementName="Team Goals" 
             />
           </div>
-          <Button variant="ghost" size="sm" onClick={handleOpenEdit}>
-            <Edit2 className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange} 
+              />
+            )}
+            <Button variant="ghost" size="sm" onClick={handleOpenEdit}>
+              <Edit2 className="w-4 h-4" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Main progress */}

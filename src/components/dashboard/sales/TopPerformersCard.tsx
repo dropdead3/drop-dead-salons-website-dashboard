@@ -5,6 +5,7 @@ import { Trophy, Medal } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface Performer {
   user_id: string;
@@ -17,6 +18,7 @@ interface TopPerformersCardProps {
   performers: Performer[];
   isLoading?: boolean;
   showInfoTooltip?: boolean;
+  filterContext?: FilterContext;
 }
 
 const getRankIcon = (rank: number) => {
@@ -45,15 +47,23 @@ const getRankBg = (rank: number) => {
   }
 };
 
-export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false }: TopPerformersCardProps) {
+export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false, filterContext }: TopPerformersCardProps) {
   const headerContent = (
-    <div className="flex items-center gap-2">
-      <Trophy className="w-5 h-5 text-chart-4" />
-      <CardTitle className="font-display text-base">Top Performers</CardTitle>
-      <CommandCenterVisibilityToggle 
-        elementKey="top_performers" 
-        elementName="Top Performers" 
-      />
+    <div className="flex items-center justify-between w-full">
+      <div className="flex items-center gap-2">
+        <Trophy className="w-5 h-5 text-chart-4" />
+        <CardTitle className="font-display text-base">Top Performers</CardTitle>
+        <CommandCenterVisibilityToggle 
+          elementKey="top_performers" 
+          elementName="Top Performers" 
+        />
+      </div>
+      {filterContext && (
+        <AnalyticsFilterBadge 
+          locationId={filterContext.locationId} 
+          dateRange={filterContext.dateRange} 
+        />
+      )}
     </div>
   );
 
