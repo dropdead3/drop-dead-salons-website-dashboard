@@ -51,14 +51,29 @@ import { SalesGoalProgress } from './sales/SalesGoalProgress';
 import { LastSyncIndicator } from './sales/LastSyncIndicator';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
-type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'ytd' | 'lastYear' | 'last365';
+export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'ytd' | 'lastYear' | 'last365';
 
-export function AggregateSalesCard() {
+interface AggregateSalesCardProps {
+  // When provided, use these instead of internal state
+  externalDateRange?: DateRange;
+  externalDateFilters?: { dateFrom: string; dateTo: string };
+  // Hide the internal date selector when using external filters
+  hideInternalFilter?: boolean;
+}
+
+export function AggregateSalesCard({ 
+  externalDateRange,
+  externalDateFilters,
+  hideInternalFilter = false,
+}: AggregateSalesCardProps = {}) {
   const navigate = useNavigate();
-  const [dateRange, setDateRange] = useState<DateRange>('today');
+  const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
   const { hideNumbers } = useHideNumbers();
 
-  const dateFilters = (() => {
+  // Use external if provided, otherwise internal
+  const dateRange = externalDateRange ?? internalDateRange;
+
+  const dateFilters = externalDateFilters ?? (() => {
     const now = new Date();
     switch (dateRange) {
       case 'today':
@@ -257,22 +272,24 @@ export function AggregateSalesCard() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <LastSyncIndicator syncType="sales" showAutoRefresh />
-          <Select value={dateRange} onValueChange={(v: DateRange) => setDateRange(v)}>
-            <SelectTrigger className="w-[130px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="yesterday">Yesterday</SelectItem>
-              <SelectItem value="thisWeek">This Week</SelectItem>
-              <SelectItem value="7d">Last 7 Days</SelectItem>
-              <SelectItem value="30d">Last 30 Days</SelectItem>
-              <SelectItem value="mtd">Month To Date</SelectItem>
-              <SelectItem value="ytd">Year To Date</SelectItem>
-              <SelectItem value="lastYear">Last Year</SelectItem>
-              <SelectItem value="last365">Last 365 Days</SelectItem>
-            </SelectContent>
-          </Select>
+          {!hideInternalFilter && (
+            <Select value={dateRange} onValueChange={(v: DateRange) => setInternalDateRange(v)}>
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="yesterday">Yesterday</SelectItem>
+                <SelectItem value="thisWeek">This Week</SelectItem>
+                <SelectItem value="7d">Last 7 Days</SelectItem>
+                <SelectItem value="30d">Last 30 Days</SelectItem>
+                <SelectItem value="mtd">Month To Date</SelectItem>
+                <SelectItem value="ytd">Year To Date</SelectItem>
+                <SelectItem value="lastYear">Last Year</SelectItem>
+                <SelectItem value="last365">Last 365 Days</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Button variant="outline" size="sm" className="h-8" onClick={handleExportCSV}>
             <Download className="w-4 h-4" />
           </Button>
