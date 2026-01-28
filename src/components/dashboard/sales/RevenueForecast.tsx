@@ -7,14 +7,16 @@ import { TrendingUp, TrendingDown, Target, CalendarDays, Loader2 } from 'lucide-
 import { format, getDaysInMonth, getDate, startOfMonth, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface RevenueForecastProps {
   dailyData: { date: string; revenue: number }[];
   monthlyTarget: number;
   isLoading?: boolean;
+  filterContext?: FilterContext;
 }
 
-export function RevenueForecast({ dailyData, monthlyTarget, isLoading }: RevenueForecastProps) {
+export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterContext }: RevenueForecastProps) {
   const forecast = useMemo(() => {
     if (!dailyData?.length) return null;
 
@@ -118,10 +120,18 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading }: Revenue
               elementName="Revenue Forecast" 
             />
           </div>
-          <Badge variant={forecast.isOnTrack ? 'default' : 'secondary'}>
-            <StatusIcon className={cn('w-3 h-3 mr-1', statusColor)} />
-            {forecast.isOnTrack ? 'On Track' : 'Behind'}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange} 
+              />
+            )}
+            <Badge variant={forecast.isOnTrack ? 'default' : 'secondary'}>
+              <StatusIcon className={cn('w-3 h-3 mr-1', statusColor)} />
+              {forecast.isOnTrack ? 'On Track' : 'Behind'}
+            </Badge>
+          </div>
         </div>
         <CardDescription>Month-end projection based on current trend</CardDescription>
       </CardHeader>

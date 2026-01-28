@@ -17,12 +17,14 @@ import { format, subYears, getMonth, getYear } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface YearOverYearComparisonProps {
   locationId?: string;
+  filterContext?: FilterContext;
 }
 
-export function YearOverYearComparison({ locationId }: YearOverYearComparisonProps) {
+export function YearOverYearComparison({ locationId, filterContext }: YearOverYearComparisonProps) {
   const currentYear = getYear(new Date());
   const lastYear = currentYear - 1;
 
@@ -144,10 +146,18 @@ export function YearOverYearComparison({ locationId }: YearOverYearComparisonPro
             <CalendarRange className="w-5 h-5 text-primary" />
             <CardTitle className="font-display">Year-over-Year</CardTitle>
           </div>
-          <Badge variant={isUp ? 'default' : 'secondary'}>
-            <TrendIcon className={cn('w-3 h-3 mr-1', isUp ? 'text-chart-2' : 'text-destructive')} />
-            {isUp ? '+' : ''}{comparison.change.toFixed(1)}%
-          </Badge>
+          <div className="flex items-center gap-2">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange} 
+              />
+            )}
+            <Badge variant={isUp ? 'default' : 'secondary'}>
+              <TrendIcon className={cn('w-3 h-3 mr-1', isUp ? 'text-chart-2' : 'text-destructive')} />
+              {isUp ? '+' : ''}{comparison.change.toFixed(1)}%
+            </Badge>
+          </div>
         </div>
         <CardDescription>{currentYear} vs {lastYear} comparison</CardDescription>
       </CardHeader>

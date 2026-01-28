@@ -14,11 +14,13 @@ import {
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { format, subMonths, subYears, startOfMonth, endOfMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface HistoricalComparisonProps {
   currentDateFrom: string;
   currentDateTo: string;
   locationId?: string;
+  filterContext?: FilterContext;
 }
 
 type ComparisonPeriod = 'lastMonth' | 'lastYear';
@@ -26,7 +28,8 @@ type ComparisonPeriod = 'lastMonth' | 'lastYear';
 export function HistoricalComparison({ 
   currentDateFrom, 
   currentDateTo,
-  locationId 
+  locationId,
+  filterContext
 }: HistoricalComparisonProps) {
   const [period, setPeriod] = useState<ComparisonPeriod>('lastMonth');
   const [showComparison, setShowComparison] = useState(true);
@@ -111,6 +114,12 @@ export function HistoricalComparison({
             PERIOD COMPARISON
           </CardTitle>
           <div className="flex items-center gap-2">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange} 
+              />
+            )}
             <div className="flex rounded-lg border overflow-hidden">
               <Button
                 variant={period === 'lastMonth' ? 'default' : 'ghost'}

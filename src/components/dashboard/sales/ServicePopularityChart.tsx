@@ -13,14 +13,16 @@ import {
 } from 'recharts';
 import { useServicePopularity } from '@/hooks/useSalesAnalytics';
 import { useState } from 'react';
+import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface ServicePopularityChartProps {
   dateFrom: string;
   dateTo: string;
   locationId?: string;
+  filterContext?: FilterContext;
 }
 
-export function ServicePopularityChart({ dateFrom, dateTo, locationId }: ServicePopularityChartProps) {
+export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterContext }: ServicePopularityChartProps) {
   const { data, isLoading } = useServicePopularity(dateFrom, dateTo, locationId);
   const [sortBy, setSortBy] = useState<'frequency' | 'revenue'>('frequency');
 
@@ -49,7 +51,13 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId }: Service
             <Scissors className="w-5 h-5 text-primary" />
             <CardTitle className="font-display">Service Popularity</CardTitle>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange} 
+              />
+            )}
             <Badge variant="outline">{totalServices} services</Badge>
             <Badge variant="secondary">${totalRevenue.toLocaleString()}</Badge>
           </div>

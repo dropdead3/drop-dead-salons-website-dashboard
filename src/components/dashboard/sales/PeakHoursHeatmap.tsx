@@ -4,17 +4,19 @@ import { Loader2, Clock, TrendingUp } from 'lucide-react';
 import { usePeakHoursAnalysis } from '@/hooks/useSalesAnalytics';
 import { cn } from '@/lib/utils';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
+import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface PeakHoursHeatmapProps {
   dateFrom: string;
   dateTo: string;
   locationId?: string;
+  filterContext?: FilterContext;
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 8); // 8 AM to 7 PM
 
-export function PeakHoursHeatmap({ dateFrom, dateTo, locationId }: PeakHoursHeatmapProps) {
+export function PeakHoursHeatmap({ dateFrom, dateTo, locationId, filterContext }: PeakHoursHeatmapProps) {
   const { data, isLoading } = usePeakHoursAnalysis(dateFrom, dateTo, locationId);
   const { hideNumbers } = useHideNumbers();
 
@@ -67,12 +69,20 @@ export function PeakHoursHeatmap({ dateFrom, dateTo, locationId }: PeakHoursHeat
             <Clock className="w-5 h-5 text-chart-4" />
             <CardTitle className="font-display">Peak Hours</CardTitle>
           </div>
-          {peakTime.count > 0 && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              {DAYS[peakTime.day]} {peakTime.hour > 12 ? peakTime.hour - 12 : peakTime.hour}{peakTime.hour >= 12 ? 'pm' : 'am'}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange} 
+              />
+            )}
+            {peakTime.count > 0 && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" />
+                {DAYS[peakTime.day]} {peakTime.hour > 12 ? peakTime.hour - 12 : peakTime.hour}{peakTime.hour >= 12 ? 'pm' : 'am'}
+              </Badge>
+            )}
+          </div>
         </div>
         <CardDescription>Transaction volume by day and hour</CardDescription>
       </CardHeader>

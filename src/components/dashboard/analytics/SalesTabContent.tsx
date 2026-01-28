@@ -70,6 +70,12 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
 
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
 
+  // Create filterContext for child components
+  const filterContext = {
+    locationId: filters.locationId,
+    dateRange: filters.dateRange,
+  };
+
   const { data: metrics, isLoading: metricsLoading } = useSalesMetrics({
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
@@ -273,7 +279,8 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
               <LocationComparison 
                 locations={locationData || []} 
-                isLoading={locationLoading} 
+                isLoading={locationLoading}
+                filterContext={filterContext}
               />
             </PinnableCard>
           )}
@@ -281,10 +288,10 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           {/* Product and Service Charts */}
           <div className="grid lg:grid-cols-2 gap-6">
             <PinnableCard elementKey="product_category_chart" elementName="Product Categories" category="Analytics Hub - Sales">
-              <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+              <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
             </PinnableCard>
             <PinnableCard elementKey="service_popularity_chart" elementName="Service Popularity" category="Analytics Hub - Sales">
-              <ServicePopularityChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+              <ServicePopularityChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
             </PinnableCard>
           </div>
         </TabsContent>
@@ -294,7 +301,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             <TeamGoalsCard currentRevenue={metrics?.totalRevenue || 0} />
           </PinnableCard>
           <PinnableCard elementKey="yoy_comparison" elementName="Year-over-Year" category="Analytics Hub - Sales">
-            <YearOverYearComparison locationId={locationFilter} />
+            <YearOverYearComparison locationId={locationFilter} filterContext={filterContext} />
           </PinnableCard>
         </TabsContent>
 
@@ -329,10 +336,10 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
 
           <div className="grid lg:grid-cols-2 gap-6">
             <PinnableCard elementKey="peak_hours_heatmap" elementName="Peak Hours Heatmap" category="Analytics Hub - Sales">
-              <PeakHoursHeatmap dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+              <PeakHoursHeatmap dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
             </PinnableCard>
             <PinnableCard elementKey="client_funnel" elementName="Client Funnel" category="Analytics Hub - Sales">
-              <ClientFunnelCard dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+              <ClientFunnelCard dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
             </PinnableCard>
           </div>
         </TabsContent>
@@ -347,6 +354,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                 dailyData={chartData.map(d => ({ date: d.dateLabel, revenue: d.totalRevenue || 0 }))} 
                 monthlyTarget={goals?.monthlyTarget || 50000} 
                 isLoading={trendLoading}
+                filterContext={filterContext}
               />
             </PinnableCard>
             <PinnableCard elementKey="historical_comparison" elementName="Historical Comparison" category="Analytics Hub - Sales">
@@ -354,6 +362,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                 currentDateFrom={filters.dateFrom} 
                 currentDateTo={filters.dateTo} 
                 locationId={locationFilter}
+                filterContext={filterContext}
               />
             </PinnableCard>
           </div>
