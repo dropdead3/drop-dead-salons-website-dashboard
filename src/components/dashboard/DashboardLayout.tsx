@@ -713,8 +713,8 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         <TooltipTrigger asChild>
           <Button 
             variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            size="sm"
+            className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={toggleHideNumbers}
           >
             {hideNumbers ? (
@@ -722,6 +722,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             ) : (
               <Eye className="w-4 h-4" />
             )}
+            <span className="text-xs">Show/hide $</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
