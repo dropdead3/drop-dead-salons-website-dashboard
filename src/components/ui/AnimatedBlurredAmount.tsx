@@ -20,7 +20,7 @@ export function AnimatedBlurredAmount({
   decimals = 0,
   className = '',
 }: AnimatedBlurredAmountProps) {
-  const { hideNumbers } = useHideNumbers();
+  const { hideNumbers, requestUnhide } = useHideNumbers();
   const [displayValue, setDisplayValue] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const previousValue = useRef(0);
@@ -92,14 +92,29 @@ export function AnimatedBlurredAmount({
     ? displayValue.toFixed(decimals)
     : Math.round(displayValue).toLocaleString();
 
+  const handleClick = () => {
+    if (hideNumbers) {
+      requestUnhide();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && hideNumbers) {
+      requestUnhide();
+    }
+  };
+
   return (
     <span
       ref={elementRef}
       className={cn(
         className,
-        hideNumbers && 'blur-md select-none transition-all duration-200'
+        hideNumbers && 'blur-md select-none cursor-pointer transition-all duration-200'
       )}
-      title={hideNumbers ? 'Click the eye icon in the header to reveal' : undefined}
+      title={hideNumbers ? 'Click to reveal' : undefined}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={hideNumbers ? 0 : undefined}
     >
       {prefix}{formattedValue}{suffix}
     </span>
