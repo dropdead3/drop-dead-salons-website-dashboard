@@ -4,14 +4,16 @@ import { Loader2, Users, UserPlus, UserCheck, TrendingUp } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useClientFunnel } from '@/hooks/useSalesAnalytics';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface ClientFunnelCardProps {
   dateFrom: string;
   dateTo: string;
   locationId?: string;
+  filterContext?: FilterContext;
 }
 
-export function ClientFunnelCard({ dateFrom, dateTo, locationId }: ClientFunnelCardProps) {
+export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }: ClientFunnelCardProps) {
   const { data, isLoading } = useClientFunnel(dateFrom, dateTo, locationId);
 
   const chartData = data ? [
@@ -44,7 +46,15 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId }: ClientFunnelC
               elementName="Client Funnel" 
             />
           </div>
-          <Badge variant="outline">{newClientPercent}% new</Badge>
+          <div className="flex items-center gap-2">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange} 
+              />
+            )}
+            <Badge variant="outline">{newClientPercent}% new</Badge>
+          </div>
         </div>
         <CardDescription>New vs returning client revenue split</CardDescription>
       </CardHeader>
