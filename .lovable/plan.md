@@ -1,83 +1,64 @@
 
 
-# Optimize Sales Overview: Location-Aware Display
+# Location Comparison: Single-Location Optimization
 
 ## Overview
 
-Update the Sales Overview component to be location-aware. When "All Locations" is selected, show the full breakdown table. When a single location is selected, hide the "By Location" table and update the header sub-text to show the selected location name.
+Ensure the Location Comparison component and its associated UI elements are completely hidden for single-location accounts. The component already has a guard clause, but we need to also hide the tab trigger and the pinnable wrapper to provide a cleaner experience.
 
 ---
 
-## Current Behavior
+## Current State
 
-- The header always shows "All locations combined" (line 267)
-- The "BY LOCATION" table always renders (lines 470-548)
-- The component receives `filterContext.locationId` but doesn't use it for conditional rendering
-- Sales data is already filtered by location via `useSalesMetrics`, but the location breakdown table always fetches all locations
-
----
-
-## Proposed Behavior
-
-| Filter Selection | Header Sub-text | "By Location" Table |
-|------------------|-----------------|---------------------|
-| "All Locations" | "All locations combined" | **Visible** |
-| Specific location (e.g., "North Mesa") | "North Mesa" | **Hidden** |
+| Element | Location | Current Behavior |
+|---------|----------|------------------|
+| `LocationComparison` component | `sales/LocationComparison.tsx:60-62` | Returns `null` when less than 2 locations |
+| "Compare" tab trigger | `SalesDashboard.tsx:450-453` | Always visible |
+| `PinnableCard` wrapper | `SalesTabContent.tsx:272-277` | Still renders wrapper when component returns null |
 
 ---
 
-## Implementation
+## Proposed Changes
 
-### 1. Update AggregateSalesCard Props
+### 1. Hide "Compare" Tab in SalesDashboard
 
-The component already receives `filterContext` with `locationId`. We need to:
-- Add a mechanism to look up the location name for display
-- Use `filterContext.locationId` to determine visibility of the "By Location" section
+Conditionally render the "Compare" `TabsTrigger` only when there are 2+ active locations.
 
-### 2. Fetch Location Name for Display
-
-Add a simple lookup using the existing `useActiveLocations` hook:
-
-```typescript
-const { data: locations } = useActiveLocations();
-
-// Determine if viewing all locations or a specific one
-const isAllLocations = !filterContext?.locationId || filterContext.locationId === 'all';
-const selectedLocationName = !isAllLocations 
-  ? locations?.find(loc => loc.id === filterContext.locationId)?.name 
-  : null;
-```
-
-### 3. Update Header Sub-text (Line 267)
-
-Change from static text to conditional:
+**File:** `src/pages/dashboard/admin/SalesDashboard.tsx`
 
 ```tsx
-// Before
-<p className="text-xs text-muted-foreground">All locations combined</p>
-
-// After
-<p className="text-xs text-muted-foreground">
-  {isAllLocations ? 'All locations combined' : selectedLocationName || 'Loading...'}
-</p>
-```
-
-### 4. Conditionally Render "By Location" Section (Lines 469-548)
-
-Wrap the entire section in a conditional:
-
-```tsx
-{/* By Location Table - only show when viewing all locations */}
-{isAllLocations && (
-  <div>
-    <div className="flex items-center gap-2 mb-4">
-      <Building2 className="w-4 h-4 text-muted-foreground" />
-      <h3 className="font-display text-xs tracking-wide text-muted-foreground">BY LOCATION</h3>
-    </div>
-    {/* ... rest of the table ... */}
-  </div>
+// Line 450-453 - Wrap in conditional
+{(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
+  <TabsTrigger value="compare" className="flex-1 md:flex-none">
+    <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
+    Compare
+  </TabsTrigger>
 )}
 ```
+
+Also wrap the `TabsContent` for "compare" (lines 782-788) in the same conditional to prevent an empty tab panel from being accessible via URL or other means.
+
+---
+
+### 2. Hide PinnableCard Wrapper in Analytics Hub
+
+Conditionally render the entire `PinnableCard` for Location Comparison only when there are 2+ locations with data.
+
+**File:** `src/components/dashboard/analytics/SalesTabContent.tsx`
+
+```tsx
+// Line 271-277 - Wrap in conditional
+{(locationData?.length ?? 0) >= 2 && (
+  <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
+    <LocationComparison 
+      locations={locationData || []} 
+      isLoading={locationLoading} 
+    />
+  </PinnableCard>
+)}
+```
+
+This prevents the pinnable affordance (push-pin icon, hover states) from appearing when the inner component would be empty anyway.
 
 ---
 
@@ -85,47 +66,61 @@ Wrap the entire section in a conditional:
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/AggregateSalesCard.tsx` | Add location lookup, update header text, conditionally render "By Location" section |
+| `src/pages/dashboard/admin/SalesDashboard.tsx` | Conditionally render "Compare" tab trigger and content based on location count |
+| `src/components/dashboard/analytics/SalesTabContent.tsx` | Conditionally render PinnableCard wrapper based on location data count |
 
 ---
 
 ## Technical Details
 
-### Import Addition
+### SalesDashboard.tsx Changes
 
-```typescript
-import { useActiveLocations } from '@/hooks/useLocations';
-```
-
-### New Variables (after existing hook calls ~line 132)
-
-```typescript
-const { data: locations } = useActiveLocations();
-
-// Location display logic
-const isAllLocations = !filterContext?.locationId || filterContext.locationId === 'all';
-const selectedLocationName = !isAllLocations 
-  ? locations?.find(loc => loc.id === filterContext.locationId)?.name 
-  : null;
-```
-
-### Header Update (Line 267)
-
+**Tab Trigger (around line 450):**
 ```tsx
-<p className="text-xs text-muted-foreground">
-  {isAllLocations ? 'All locations combined' : selectedLocationName || 'Loading...'}
-</p>
+// Before
+<TabsTrigger value="compare" className="flex-1 md:flex-none">
+  <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
+  Compare
+</TabsTrigger>
+
+// After
+{(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
+  <TabsTrigger value="compare" className="flex-1 md:flex-none">
+    <GitCompare className="w-4 h-4 mr-1 hidden sm:inline" />
+    Compare
+  </TabsTrigger>
+)}
 ```
 
-### By Location Section (Lines 469-548)
-
-Wrap entire section:
-
+**Tab Content (around line 782):**
 ```tsx
-{isAllLocations && (
-  <div>
-    {/* existing content */}
-  </div>
+// Before
+<TabsContent value="compare" className="space-y-6">
+  <LocationComparison ... />
+</TabsContent>
+
+// After
+{(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
+  <TabsContent value="compare" className="space-y-6">
+    <LocationComparison ... />
+  </TabsContent>
+)}
+```
+
+### SalesTabContent.tsx Changes
+
+**PinnableCard wrapper (around line 271):**
+```tsx
+// Before
+<PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
+  <LocationComparison locations={locationData || []} isLoading={locationLoading} />
+</PinnableCard>
+
+// After
+{(locationData?.length ?? 0) >= 2 && (
+  <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
+    <LocationComparison locations={locationData || []} isLoading={locationLoading} />
+  </PinnableCard>
 )}
 ```
 
@@ -133,9 +128,18 @@ Wrap entire section:
 
 ## User Experience
 
-| Action | Result |
-|--------|--------|
-| Select "All Locations" | Full card with "BY LOCATION" breakdown table visible |
-| Select "North Mesa" | Card shows only North Mesa data, header says "North Mesa", table hidden |
-| Select "Val Vista Lakes" | Card shows only Val Vista data, header updates, table hidden |
+| Scenario | Result |
+|----------|--------|
+| Account with 2+ active locations | Full experience - Compare tab visible, PinnableCard available |
+| Account with 1 location | No "Compare" tab, no Location Comparison card in Analytics Hub |
+| Location data still loading | Component shows loading state (handled by existing `isLoading` prop) |
+
+---
+
+## Why This Approach
+
+1. **Guard at multiple levels:** Hiding both the tab trigger AND the content ensures users can't accidentally navigate to an empty view
+2. **Clean pinnable experience:** Wrapping the entire `PinnableCard` prevents empty pin affordances in the Analytics Hub
+3. **Uses existing data:** Leverages `locations` array already fetched in both components, no additional queries needed
+4. **Future-proof:** New locations added to an account will automatically enable the comparison features
 
