@@ -191,6 +191,12 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         category="Analytics Hub - Sales"
       >
         <AggregateSalesCard 
+          externalDateRange={filters.dateRange as any}
+          externalDateFilters={{
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+          }}
+          hideInternalFilter={true}
           filterContext={{
             locationId: filters.locationId,
             dateRange: filters.dateRange,
