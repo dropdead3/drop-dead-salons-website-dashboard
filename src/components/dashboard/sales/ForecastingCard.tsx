@@ -4,14 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useForecastRevenue, ForecastPeriod, DayForecast, WeekForecast } from '@/hooks/useForecastRevenue';
+import { useYearlyGoalProgress } from '@/hooks/useYearlyGoalProgress';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { CalendarRange, TrendingUp, Calendar, Users, Info } from 'lucide-react';
+import { CalendarRange, TrendingUp, TrendingDown, Calendar, Users, Info, Target } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { cn } from '@/lib/utils';
@@ -30,6 +32,7 @@ import {
 
 const PERIOD_LABELS: Record<ForecastPeriod, string> = {
   'tomorrow': 'Tomorrow',
+  'todayToEom': 'Today to EOM',
   '7days': '7 Days',
   '30days': '30 Days',
   '60days': '60 Days',
@@ -37,6 +40,7 @@ const PERIOD_LABELS: Record<ForecastPeriod, string> = {
 
 const PERIOD_TOTAL_LABELS: Record<ForecastPeriod, string> = {
   'tomorrow': 'Tomorrow Total',
+  'todayToEom': 'Month Total',
   '7days': '7-Day Total',
   '30days': '30-Day Total',
   '60days': '60-Day Total',
@@ -44,6 +48,7 @@ const PERIOD_TOTAL_LABELS: Record<ForecastPeriod, string> = {
 
 const PERIOD_AVG_LABELS: Record<ForecastPeriod, string> = {
   'tomorrow': 'Projected',
+  'todayToEom': 'Daily Avg',
   '7days': 'Daily Avg',
   '30days': 'Weekly Avg',
   '60days': 'Weekly Avg',
@@ -67,10 +72,13 @@ function AboveBarLabel({ x, y, width, value }: any) {
 }
 
 // Custom X-axis tick for daily view
-function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick }: any) {
+function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isToday }: any) {
   const [isHovered, setIsHovered] = useState(false);
   const day = days.find((d: DayForecast) => d.dayName === payload.value);
   if (!day) return null;
+  
+  const dayIndex = days.findIndex((d: DayForecast) => d.dayName === payload.value);
+  const isTodayHighlight = isToday && dayIndex === 0;
   
   return (
     <g 
@@ -87,10 +95,10 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick }: any) {
         <text 
           x={0} y={0} dy={12} 
           textAnchor="middle" 
-          className="fill-foreground text-[11px]"
-          style={{ fontWeight: 500 }}
+          className={cn("text-[11px]", isTodayHighlight ? "fill-chart-2" : "fill-foreground")}
+          style={{ fontWeight: isTodayHighlight ? 600 : 500 }}
         >
-          {day.dayName}
+          {isTodayHighlight ? 'Today' : day.dayName}
         </text>
         <text 
           x={0} y={0} dy={26} 
@@ -150,6 +158,95 @@ function WeeklyXAxisTick({ x, y, payload, weeks, peakWeekStart }: any) {
   );
 }
 
+// Yearly Goal Progress Section
+function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
+  const { data: goalData, isLoading } = useYearlyGoalProgress(locationId);
+
+  if (isLoading) {
+    return <Skeleton className="h-32 w-full" />;
+  }
+
+  if (!goalData) return null;
+
+  const {
+    ytdRevenue,
+    yearlyGoal,
+    percentComplete,
+    expectedPercent,
+    isOnTrack,
+    aheadBehindAmount,
+    requiredMonthlyPace,
+    remainingMonths,
+  } = goalData;
+
+  const statusColor = isOnTrack ? 'text-chart-2' : 'text-chart-4';
+  const StatusIcon = isOnTrack ? TrendingUp : TrendingDown;
+
+  return (
+    <div className="space-y-3 p-4 bg-muted/20 rounded-lg border border-border/50">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium">Yearly Goal Progress</span>
+        </div>
+        <Badge variant={isOnTrack ? 'default' : 'secondary'} className="text-xs">
+          <StatusIcon className={cn('w-3 h-3 mr-1', statusColor)} />
+          {isOnTrack ? 'On Track' : 'Behind'}
+        </Badge>
+      </div>
+
+      {/* Progress bar with expected marker */}
+      <div className="space-y-2">
+        <div className="relative">
+          <Progress 
+            value={Math.min(percentComplete, 100)} 
+            className="h-3"
+            indicatorClassName={isOnTrack ? 'bg-chart-2' : 'bg-chart-4'}
+          />
+          {/* Expected progress marker */}
+          <div 
+            className="absolute top-0 h-full w-0.5 bg-foreground/60"
+            style={{ left: `${Math.min(expectedPercent, 100)}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>{percentComplete.toFixed(1)}% achieved</span>
+          <span>Expected: {expectedPercent.toFixed(1)}%</span>
+        </div>
+      </div>
+
+      {/* Revenue stats */}
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">
+          <BlurredAmount>${ytdRevenue.toLocaleString()}</BlurredAmount> earned
+        </span>
+        <span className="text-muted-foreground">
+          <BlurredAmount>${yearlyGoal.toLocaleString()}</BlurredAmount> goal
+        </span>
+      </div>
+
+      {/* Ahead/Behind indicator */}
+      <div className={cn(
+        'p-2 rounded-lg text-sm flex items-center justify-between',
+        isOnTrack ? 'bg-chart-2/10' : 'bg-chart-4/10'
+      )}>
+        <span className={statusColor}>
+          {isOnTrack ? (
+            <>+<BlurredAmount>${Math.abs(aheadBehindAmount).toLocaleString()}</BlurredAmount> ahead of pace</>
+          ) : (
+            <>-<BlurredAmount>${Math.abs(aheadBehindAmount).toLocaleString()}</BlurredAmount> behind pace</>
+          )}
+        </span>
+        {!isOnTrack && remainingMonths > 0 && (
+          <span className="text-xs text-muted-foreground">
+            Need <BlurredAmount>${Math.round(requiredMonthlyPace).toLocaleString()}</BlurredAmount>/mo
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ForecastingCard() {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<ForecastPeriod>('7days');
@@ -169,6 +266,7 @@ export function ForecastingCard() {
 
   const showWeeklyChart = period === '30days' || period === '60days';
   const showChart = period !== 'tomorrow';
+  const isEomPeriod = period === 'todayToEom';
 
   if (isLoading) {
     return (
@@ -202,13 +300,14 @@ export function ForecastingCard() {
   const { days, weeks, totalRevenue, totalAppointments, averageDaily, averageWeekly, peakDay, peakWeek } = data;
 
   // Chart data for daily view
-  const dailyChartData = days.map(day => ({
+  const dailyChartData = days.map((day, index) => ({
     name: day.dayName,
     confirmedRevenue: day.confirmedRevenue,
     unconfirmedRevenue: day.unconfirmedRevenue,
     totalRevenue: day.revenue,
     appointments: day.appointmentCount,
     isPeak: peakDay?.date === day.date,
+    isToday: isEomPeriod && index === 0,
   }));
 
   // Chart data for weekly view
@@ -232,8 +331,8 @@ export function ForecastingCard() {
   const totalTooltip = `Sum of projected revenue from all scheduled appointments over the ${PERIOD_LABELS[period].toLowerCase()}.`;
   const avgTooltip = period === 'tomorrow' 
     ? 'Total projected revenue for tomorrow.'
-    : (period === '7days' 
-      ? `${PERIOD_TOTAL_LABELS[period]} ÷ 7. Average projected daily revenue.`
+    : (period === '7days' || period === 'todayToEom'
+      ? `${PERIOD_TOTAL_LABELS[period]} ÷ ${days.length}. Average projected daily revenue.`
       : `${PERIOD_TOTAL_LABELS[period]} ÷ ${weeks.length || 1}. Average projected weekly revenue.`);
   const apptTooltip = `Total count of scheduled appointments for the ${PERIOD_LABELS[period].toLowerCase()}.`;
 
@@ -289,6 +388,9 @@ export function ForecastingCard() {
               >
                 <ToggleGroupItem value="tomorrow" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
                   Tomorrow
+                </ToggleGroupItem>
+                <ToggleGroupItem value="todayToEom" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  EOM
                 </ToggleGroupItem>
                 <ToggleGroupItem value="7days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
                   7 Days
@@ -357,7 +459,7 @@ export function ForecastingCard() {
                     dataKey="name" 
                     tick={showWeeklyChart 
                       ? <WeeklyXAxisTick weeks={weeks} peakWeekStart={peakWeek?.weekStart} />
-                      : <DailyXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} />
+                      : <DailyXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} isToday={isEomPeriod} />
                     }
                     tickLine={false}
                     axisLine={false}
@@ -392,13 +494,16 @@ export function ForecastingCard() {
                     stackId="revenue"
                     radius={[0, 0, 0, 0]}
                   >
-                    {chartData.map((entry, index) => (
-                      <Cell 
-                        key={`unconfirmed-${index}`}
-                        fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
-                        fillOpacity={entry.isPeak ? 0.6 : 0.5}
-                      />
-                    ))}
+                    {chartData.map((entry, index) => {
+                      const isToday = 'isToday' in entry && entry.isToday;
+                      return (
+                        <Cell 
+                          key={`unconfirmed-${index}`}
+                          fill={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
+                          fillOpacity={entry.isPeak ? 0.6 : (isToday ? 0.7 : 0.5)}
+                        />
+                      );
+                    })}
                   </Bar>
                   {/* Confirmed revenue - top of stack, solid */}
                   <Bar 
@@ -410,13 +515,16 @@ export function ForecastingCard() {
                       dataKey="totalRevenue"
                       content={AboveBarLabel}
                     />
-                    {chartData.map((entry, index) => (
-                      <Cell 
-                        key={`confirmed-${index}`}
-                        fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
-                        fillOpacity={entry.isPeak ? 1 : 0.9}
-                      />
-                    ))}
+                    {chartData.map((entry, index) => {
+                      const isToday = 'isToday' in entry && entry.isToday;
+                      return (
+                        <Cell 
+                          key={`confirmed-${index}`}
+                          fill={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
+                          fillOpacity={entry.isPeak ? 1 : (isToday ? 1 : 0.9)}
+                        />
+                      );
+                    })}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -456,6 +564,11 @@ export function ForecastingCard() {
             </div>
           )}
 
+          {/* Yearly Goal Progress - Only show for EOM period */}
+          {isEomPeriod && (
+            <YearlyGoalProgressSection locationId={selectedLocation} />
+          )}
+
           {/* Peak Day/Week Callout */}
           {showWeeklyChart && peakWeek && peakWeek.revenue > 0 && (
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
@@ -467,7 +580,7 @@ export function ForecastingCard() {
               </span>
             </div>
           )}
-          {!showWeeklyChart && period !== 'tomorrow' && peakDay && peakDay.revenue > 0 && (
+          {!showWeeklyChart && period !== 'tomorrow' && !isEomPeriod && peakDay && peakDay.revenue > 0 && (
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground">
                 Busiest day: <span className="font-medium text-foreground">{format(parseISO(peakDay.date), 'EEEE')}</span>
