@@ -302,10 +302,7 @@ export function AggregateSalesCard() {
           <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
             {/* Total Revenue - Hero */}
             <div className="text-center mb-4 sm:mb-6">
-              <div className="flex justify-center mb-2">
-                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-              </div>
-              <AnimatedBlurredAmount 
+              <AnimatedBlurredAmount
                 value={displayMetrics.totalRevenue}
                 prefix="$"
                 className="text-3xl sm:text-4xl md:text-5xl font-display tabular-nums"
