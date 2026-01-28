@@ -2,58 +2,123 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { AlertTriangle } from 'lucide-react';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface HideNumbersContextType {
   hideNumbers: boolean;
   toggleHideNumbers: () => void;
+  requestUnhide: () => void;
   isLoading: boolean;
 }
 
 const HideNumbersContext = createContext<HideNumbersContextType | undefined>(undefined);
 
+// Internal dialog component that uses context
+function HideNumbersConfirmDialog({ 
+  open, 
+  onOpenChange, 
+  onConfirm 
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void; 
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="font-display">Reveal Financial Data?</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3">
+              <p>Are you sure you want to show all numbers?</p>
+              <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  This is to prevent sensitive financial data from being displayed 
+                  when staff log in at the front desk or shared workstations.
+                </p>
+              </div>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            Yes, Show Numbers
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 export function HideNumbersProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [hideNumbers, setHideNumbers] = useState(false);
+  // Start hidden by default for security
+  const [hideNumbers, setHideNumbers] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  // Load preference from database on mount
+  // On login/mount, always start hidden (security feature)
   useEffect(() => {
     if (!user) {
       setIsLoading(false);
       return;
     }
-
-    const loadPreference = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('employee_profiles')
-          .select('hide_numbers')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!error && data) {
-          setHideNumbers(data.hide_numbers ?? false);
-        }
-      } catch (err) {
-        console.error('Error loading hide_numbers preference:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPreference();
+    
+    // Always hide on login - this is the security feature
+    setHideNumbers(true);
+    setIsLoading(false);
   }, [user]);
 
+  // Request to unhide - shows confirmation dialog
+  const requestUnhide = () => {
+    if (hideNumbers) {
+      setShowConfirmDialog(true);
+    }
+  };
+
+  // Called when user confirms in dialog
+  const confirmUnhide = async () => {
+    setHideNumbers(false);
+    setShowConfirmDialog(false);
+    
+    // Persist to database
+    if (user) {
+      try {
+        await supabase
+          .from('employee_profiles')
+          .update({ hide_numbers: false })
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.error('Error saving hide_numbers preference:', err);
+      }
+    }
+  };
+
+  // Toggle for header eye icon (bypasses confirmation since it's explicit)
   const toggleHideNumbers = async () => {
     if (!user) return;
 
     const newValue = !hideNumbers;
+    
+    // If revealing, show confirmation dialog instead
+    if (hideNumbers) {
+      setShowConfirmDialog(true);
+      return;
+    }
+    
+    // If hiding, do it directly
     setHideNumbers(newValue);
 
     // Persist to database
@@ -70,8 +135,13 @@ export function HideNumbersProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <HideNumbersContext.Provider value={{ hideNumbers, toggleHideNumbers, isLoading }}>
+    <HideNumbersContext.Provider value={{ hideNumbers, toggleHideNumbers, requestUnhide, isLoading }}>
       {children}
+      <HideNumbersConfirmDialog 
+        open={showConfirmDialog} 
+        onOpenChange={setShowConfirmDialog}
+        onConfirm={confirmUnhide}
+      />
     </HideNumbersContext.Provider>
   );
 }
@@ -84,7 +154,7 @@ export function useHideNumbers() {
   return context;
 }
 
-// Utility component for blurring dollar amounts with tooltip hint
+// Utility component for blurring dollar amounts with click-to-reveal
 interface BlurredAmountProps {
   children: ReactNode;
   className?: string;
@@ -96,23 +166,22 @@ export function BlurredAmount({
   className,
   as: Component = 'span'
 }: BlurredAmountProps) {
-  const { hideNumbers } = useHideNumbers();
+  const { hideNumbers, requestUnhide } = useHideNumbers();
   
   if (!hideNumbers) {
     return <Component className={className}>{children}</Component>;
   }
   
   return (
-    <Tooltip delayDuration={300}>
-      <TooltipTrigger asChild>
-        <Component className={cn(className, 'blur-md select-none cursor-help')} tabIndex={0}>
-          {children}
-        </Component>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="text-xs z-[100]">
-        Click the eye icon in the top menu to reveal
-      </TooltipContent>
-    </Tooltip>
+    <Component 
+      className={cn(className, 'blur-md select-none cursor-pointer transition-all duration-200')} 
+      tabIndex={0}
+      onClick={requestUnhide}
+      onKeyDown={(e) => e.key === 'Enter' && requestUnhide()}
+      title="Click to reveal"
+    >
+      {children}
+    </Component>
   );
 }
 
