@@ -4,11 +4,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
-  Megaphone, 
   Pin, 
   Pencil, 
   ChevronDown,
   ExternalLink,
+  Plus,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -71,14 +71,23 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
           
           <div className="flex items-center gap-3">
             {isLeadership && (
-              <Link 
-                to="/dashboard/admin/announcements" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Pencil className="w-4 h-4" />
-              </Link>
+              <>
+                <Link 
+                  to="/dashboard/admin/announcements" 
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title="Manage announcements"
+                >
+                  <Pencil className="w-4 h-4" />
+                </Link>
+                <Link 
+                  to="/dashboard/admin/announcements?create=true" 
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title="Create new announcement"
+                >
+                  <Plus className="w-4 h-4" />
+                </Link>
+              </>
             )}
-            <Megaphone className="w-4 h-4 text-muted-foreground" />
             {totalCount > 3 && (
               <Button variant="ghost" size="sm" asChild className="text-xs h-7">
                 <Link to="/dashboard/admin/announcements">
