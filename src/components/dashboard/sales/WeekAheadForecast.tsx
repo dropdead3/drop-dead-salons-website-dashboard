@@ -235,7 +235,7 @@ export function WeekAheadForecast() {
                     return day ? format(parseISO(day.date), 'EEEE, MMM d') : label;
                   }}
                 />
-                {/* Unconfirmed revenue - bottom of stack, lighter opacity */}
+                {/* Unconfirmed revenue - bottom of stack */}
                 <Bar 
                   dataKey="unconfirmedRevenue" 
                   stackId="revenue"
@@ -245,7 +245,7 @@ export function WeekAheadForecast() {
                     <Cell 
                       key={`unconfirmed-${index}`}
                       fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
-                      fillOpacity={0.3}
+                      fillOpacity={entry.isPeak ? 0.6 : 0.5}
                     />
                   ))}
                 </Bar>
@@ -263,7 +263,7 @@ export function WeekAheadForecast() {
                     <Cell 
                       key={`confirmed-${index}`}
                       fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
-                      fillOpacity={entry.isPeak ? 1 : 0.85}
+                      fillOpacity={entry.isPeak ? 1 : 0.9}
                     />
                   ))}
                 </Bar>
