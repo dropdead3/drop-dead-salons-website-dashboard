@@ -264,7 +264,7 @@ export default function Schedule() {
     setBookingOpen(true);
   };
 
-  const handleStatusChange = (status: any, options?: { rebooked_at_checkout?: boolean }) => {
+  const handleStatusChange = (status: any, options?: { rebooked_at_checkout?: boolean; tip_amount?: number }) => {
     if (selectedAppointment) {
       updateStatus({ appointmentId: selectedAppointment.id, status, ...options });
     }
@@ -279,9 +279,10 @@ export default function Schedule() {
     }
   };
   const handleCheckoutConfirm = (tipAmount: number, rebooked: boolean) => {
-    // Tip amount is logged for future reporting
-    console.log('Checkout completed with tip:', tipAmount, 'rebooked:', rebooked);
-    handleStatusChange('completed', { rebooked_at_checkout: rebooked });
+    handleStatusChange('completed', { 
+      rebooked_at_checkout: rebooked, 
+      tip_amount: tipAmount 
+    });
     setCheckoutOpen(false);
     setSelectedAppointment(null);
   };

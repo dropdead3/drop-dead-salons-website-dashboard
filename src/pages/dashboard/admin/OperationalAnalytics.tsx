@@ -143,6 +143,7 @@ export default function OperationalAnalytics() {
               workload={workload}
               isLoading={utilizationLoading}
               locationId={locationFilter}
+              dateRange={dateRange}
             />
           </TabsContent>
 
