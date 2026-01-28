@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, endOfMonth, differenceInDays } from 'date-fns';
 
-export type ForecastPeriod = 'tomorrow' | '7days' | '30days' | '60days';
+export type ForecastPeriod = 'tomorrow' | '7days' | '30days' | '60days' | 'todayToEom';
 
 export interface AppointmentSummary {
   id: string;
@@ -47,20 +47,32 @@ export interface ForecastData {
   peakWeek: WeekForecast | null;
 }
 
-const PERIOD_DAYS: Record<ForecastPeriod, number> = {
+const PERIOD_DAYS: Record<Exclude<ForecastPeriod, 'todayToEom'>, number> = {
   'tomorrow': 1,
   '7days': 7,
   '30days': 30,
   '60days': 60,
 };
 
+// Helper to get day count for a period
+function getDayCount(period: ForecastPeriod): number {
+  if (period === 'todayToEom') {
+    const today = new Date();
+    return differenceInDays(endOfMonth(today), today) + 1;
+  }
+  return PERIOD_DAYS[period];
+}
+
 export function useForecastRevenue(period: ForecastPeriod, locationId?: string) {
   const today = new Date();
-  const dayCount = PERIOD_DAYS[period];
+  const dayCount = getDayCount(period);
   
-  // Generate date range starting from tomorrow
+  // For todayToEom, start from today; for others, start from tomorrow
+  const startFromToday = period === 'todayToEom';
+  
+  // Generate date range
   const dates = Array.from({ length: dayCount }, (_, i) => {
-    const date = addDays(today, i + 1);
+    const date = addDays(today, startFromToday ? i : i + 1);
     return {
       date: format(date, 'yyyy-MM-dd'),
       dayName: format(date, 'EEE'),
