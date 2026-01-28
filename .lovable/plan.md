@@ -1,142 +1,95 @@
 
+# Fix Revenue per Hour Calculation
 
-# Add "Revenue per Hour" KPI to Sales Dashboard
+## The Problem
 
-## Overview
-
-Add a new "Rev/Hour" metric card to the Sales Dashboard that calculates and displays revenue generated per operating hour for the selected date range.
-
----
-
-## Formula
+The current "Rev/Hour" metric divides revenue by **location operating hours**, but the correct formula is:
 
 ```text
-Revenue per Hour = Total Revenue ÷ Total Operating Hours
+Revenue per Hour = Total Revenue ÷ Total Hours Worked (service durations)
 ```
 
-Where **Total Operating Hours** is calculated by:
-1. Counting each day in the selected date range
-2. For each day, looking up the location's scheduled hours from `hours_json`
-3. Summing all operating hours (excluding closed days)
+---
+
+## Correct Formula
+
+| Component | Source |
+|-----------|--------|
+| Total Revenue | Sum of `total_price` from appointments |
+| Total Hours Worked | Sum of (end_time - start_time) for each appointment |
+
+This gives you revenue generated per hour of actual stylist service time.
 
 ---
 
-## Data Requirements
+## Technical Changes
 
-| Data | Source |
-|------|--------|
-| Total Revenue | Already available from `useSalesMetrics` hook |
-| Operating Hours | Calculate from `locations.hours_json` based on date range |
+### 1. Update `useSalesMetrics` Hook
 
----
+**File: `src/hooks/useSalesData.ts`**
 
-## Technical Implementation
-
-### 1. Create Utility Function
-
-Add a helper function to calculate total operating hours for a date range:
+Modify the query to include `start_time` and `end_time`, then calculate total service hours:
 
 ```typescript
-function calculateOperatingHours(
-  locations: Location[],
-  locationId: string | undefined,
-  dateFrom: string,
-  dateTo: string
-): number {
-  // Get applicable location(s)
-  const targetLocations = locationId && locationId !== 'all'
-    ? locations.filter(l => l.id === locationId)
-    : locations.filter(l => l.is_active);
-  
-  // Iterate through each day in range
-  let totalHours = 0;
-  const start = new Date(dateFrom);
-  const end = new Date(dateTo);
-  
-  for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
-    const dayOfWeek = d.getDay(); // 0 = Sunday
-    
-    for (const loc of targetLocations) {
-      const dayName = DAY_NAMES[dayOfWeek];
-      const dayHours = loc.hours_json?.[dayName];
-      
-      if (dayHours && !dayHours.closed && dayHours.open && dayHours.close) {
-        const [openH, openM] = dayHours.open.split(':').map(Number);
-        const [closeH, closeM] = dayHours.close.split(':').map(Number);
-        const hours = ((closeH * 60 + closeM) - (openH * 60 + openM)) / 60;
-        totalHours += Math.max(0, hours);
-      }
-    }
-  }
-  
-  return totalHours;
+// Add to the select query
+.select('id, total_price, service_name, phorest_staff_id, location_id, appointment_date, start_time, end_time')
+
+// Add helper function
+function getAppointmentDurationHours(startTime: string, endTime: string): number {
+  const [startH, startM] = startTime.split(':').map(Number);
+  const [endH, endM] = endTime.split(':').map(Number);
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+  return Math.max(0, (endMinutes - startMinutes) / 60);
 }
+
+// Calculate total service hours
+const totalServiceHours = data.reduce((sum, apt) => {
+  if (apt.start_time && apt.end_time) {
+    return sum + getAppointmentDurationHours(apt.start_time, apt.end_time);
+  }
+  return sum;
+}, 0);
+
+// Return new field
+return {
+  ...existingFields,
+  totalServiceHours,
+};
 ```
 
-### 2. Add Calculation to SalesBentoCard
+### 2. Update `SalesBentoCard` Component
 
 **File: `src/components/dashboard/sales/SalesBentoCard.tsx`**
 
+Remove the operating hours calculation and use the new `totalServiceHours` from the hook:
+
 ```typescript
-// Import Clock icon
-import { Clock } from 'lucide-react';
+// Remove: calculateOperatingHours function (lines 30-72)
+// Remove: operatingHours useMemo (lines 229-237)
 
-// Calculate operating hours
-const operatingHours = useMemo(() => {
-  if (!locations) return 0;
-  return calculateOperatingHours(
-    locations,
-    locationFilter,
-    dateFilters.dateFrom,
-    dateFilters.dateTo
-  );
-}, [locations, locationFilter, dateFilters]);
-
-// Calculate revenue per hour
+// Update revenuePerHour calculation
 const revenuePerHour = useMemo(() => {
-  if (operatingHours === 0) return 0;
-  return totalRevenue / operatingHours;
-}, [totalRevenue, operatingHours]);
-```
+  const serviceHours = metrics?.totalServiceHours || 0;
+  if (serviceHours === 0) return 0;
+  return totalRevenue / serviceHours;
+}, [totalRevenue, metrics?.totalServiceHours]);
 
-### 3. Add KPI Cell
-
-Add as the 6th KPI card in the grid:
-
-```typescript
-<KPICell 
-  icon={Clock} 
-  value={Math.round(revenuePerHour)} 
-  label="Rev/Hour" 
-  prefix="$"
-  iconColor="text-chart-5"
-  tooltip="Total Revenue ÷ Operating Hours. Average revenue generated per hour of operation."
-/>
+// Update tooltip to reflect new formula
+tooltip="Total Revenue ÷ Service Hours. Average revenue generated per hour of stylist work."
 ```
 
 ---
 
-## Updated KPI Grid (6 cards)
+## Example Calculation
 
-| Position | Metric | Icon |
-|----------|--------|------|
-| 1 | Total Revenue | DollarSign |
-| 2 | Services | Scissors |
-| 3 | Products | ShoppingBag |
-| 4 | Transactions | CreditCard |
-| 5 | Avg Ticket | Receipt |
-| 6 | **Rev/Hour** | Clock |
+| Day | Appointments | Total Duration | Revenue |
+|-----|--------------|----------------|---------|
+| Mon | 5 services   | 6.5 hours      | $850    |
+| Tue | 4 services   | 5.0 hours      | $720    |
+| **Total** | 9 services | **11.5 hours** | **$1,570** |
 
----
-
-## Edge Cases
-
-| Scenario | Handling |
-|----------|----------|
-| No operating hours (closed all days) | Display $0 |
-| "All Locations" selected | Sum hours across all active locations |
-| Single location selected | Use that location's hours only |
-| Location has no hours_json | Skip that location in calculation |
+**Rev/Hour = $1,570 ÷ 11.5 = $137/hr**
 
 ---
 
@@ -144,5 +97,5 @@ Add as the 6th KPI card in the grid:
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/sales/SalesBentoCard.tsx` | Add operating hours calculation, add Rev/Hour KPICell |
-
+| `src/hooks/useSalesData.ts` | Add `start_time`, `end_time` to query; calculate and return `totalServiceHours` |
+| `src/components/dashboard/sales/SalesBentoCard.tsx` | Remove operating hours logic; use `totalServiceHours` from metrics; update tooltip |
