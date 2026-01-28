@@ -1,211 +1,170 @@
 
 
-# Add Filter Context Display to Analytics Cards
+# Add Announcement Filtering & Audience Display
 
 ## Overview
 
-Add a compact filter context indicator in the top-right corner of each analytics card showing the current location and date range being applied. This makes it immediately clear what data is being displayed without needing to scroll up to the filter bar.
+Add filtering controls to view announcements by location (company-wide, or specific locations), and display an audience badge on each announcement card showing who it applies to.
 
 ---
 
-## Design
+## Current State
+
+- Announcements already have a `location_id` column (nullable - `NULL` = company-wide)
+- The admin page already shows location badges on announcement cards via `DraggableAnnouncementCard`
+- The dashboard `AnnouncementsBento` component fetches announcements based on user's location access but doesn't have user-facing filter controls
+- No audience badge is displayed on the dashboard announcement cards
+
+---
+
+## Changes Required
+
+### 1. Add Filter Dropdown to AnnouncementsBento Header
+
+Add a small filter dropdown next to the "ANNOUNCEMENTS" title that allows filtering:
+- **All** (default) - shows company-wide + user's location-specific
+- **Company-Wide** - shows only company-wide announcements (where `location_id` is null)
+- **[Location Name]** - shows only that location's announcements
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│  📊 SALES OVERVIEW                           📍 Dallas · Today │
-│  All locations combined                                         │
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │                      [Card content]                         ││
-│  └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  ANNOUNCEMENTS ∧   [All ▼]                        [✏️] [+]  View All│
+└─────────────────────────────────────────────────────────────────────┘
+                      ↓
+                   ┌──────────────────┐
+                   │ All              │
+                   │ Company-Wide     │
+                   │ ──────────────── │
+                   │ Mesa             │
+                   │ Gilbert          │
+                   └──────────────────┘
 ```
 
-The badge displays:
-- **Location icon + name**: "All Locations" or specific location name (e.g., "Dallas")  
-- **Separator dot** (·)
-- **Date range label**: "Today", "This Week", "Last 30 days", etc.
+### 2. Add Audience Badge to Each Announcement Card
 
-Compact, muted styling so it doesn't compete with the main card content.
+Display a small badge on each announcement card showing its audience:
+- **Globe icon + "All"** for company-wide announcements
+- **MapPin icon + Location Name** for location-specific announcements
 
----
+The badge will appear near the date at the bottom of each card.
 
-## Implementation Approach
-
-### Option 1: Create a Reusable Component
-
-Create a new `AnalyticsFilterBadge` component that can be placed in the top-right of any analytics card header.
-
-### Files to Create/Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/dashboard/AnalyticsFilterBadge.tsx` | **NEW** - Compact badge showing current filter context |
-| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Pass filters to cards that support displaying them |
-| Individual card components (as needed) | Add the badge to card headers |
+```text
+┌─────────────────────────────────────────────────┐
+│  📌 Dead Fest! October 13                       │
+│  Get your tickets!                              │
+│                                                 │
+│  Jan 23           🌐 All        [Get Tickets →] │
+└─────────────────────────────────────────────────┘
+```
 
 ---
 
-## New Component: AnalyticsFilterBadge
+## Technical Implementation
 
-```tsx
-// src/components/dashboard/AnalyticsFilterBadge.tsx
-import { MapPin, Calendar } from 'lucide-react';
-import { useActiveLocations } from '@/hooks/useLocations';
-import type { DateRangeType } from './PinnedAnalyticsCard';
+### File: `src/components/dashboard/AnnouncementsBento.tsx`
 
-const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
-  today: 'Today',
-  '7d': 'Last 7 days',
-  '30d': 'Last 30 days',
-  thisWeek: 'This Week',
-  thisMonth: 'This Month',
-  lastMonth: 'Last Month',
-};
+**1. Add imports:**
+- Import `Globe`, `MapPin` from lucide-react
+- Import `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue` from UI components
+- Import `useActiveLocations` from hooks
 
-interface AnalyticsFilterBadgeProps {
-  locationId: string;
-  dateRange: DateRangeType;
-  className?: string;
-}
+**2. Add filter state and location data:**
+```typescript
+const [locationFilter, setLocationFilter] = useState<string>('all');
+const { data: locations = [] } = useActiveLocations();
+```
 
-export function AnalyticsFilterBadge({ 
-  locationId, 
-  dateRange,
-  className 
-}: AnalyticsFilterBadgeProps) {
-  const { data: locations } = useActiveLocations();
-  
-  // Resolve location name
-  const locationName = locationId === 'all' 
-    ? 'All Locations'
-    : locations?.find(l => l.id === locationId)?.name || 'Unknown';
-  
-  const dateLabel = DATE_RANGE_LABELS[dateRange] || dateRange;
-  
-  return (
-    <div className={cn(
-      "flex items-center gap-1.5 text-xs text-muted-foreground",
-      className
-    )}>
-      <MapPin className="w-3 h-3" />
-      <span>{locationName}</span>
-      <span className="text-muted-foreground/50">·</span>
-      <Calendar className="w-3 h-3" />
-      <span>{dateLabel}</span>
-    </div>
-  );
+**3. Add props for location resolution:**
+```typescript
+interface AnnouncementsBentoProps {
+  announcements: Announcement[] | undefined;
+  isLeadership: boolean;
+  locations?: { id: string; name: string }[]; // For resolving location names
 }
 ```
 
----
-
-## Integration Pattern
-
-### Option A: Inject at PinnedAnalyticsCard Level (Recommended)
-
-Wrap each card with a container that adds the badge in the top-right corner:
-
-```tsx
-// In PinnedAnalyticsCard.tsx
-return (
-  <div className="relative">
-    <div className="absolute top-4 right-4 z-10">
-      <AnalyticsFilterBadge 
-        locationId={filters.locationId} 
-        dateRange={filters.dateRange} 
-      />
-    </div>
-    {/* Card content */}
-  </div>
-);
+**4. Filter announcements client-side based on selection:**
+```typescript
+const filteredAnnouncements = useMemo(() => {
+  if (!announcements) return [];
+  if (locationFilter === 'all') return announcements;
+  if (locationFilter === 'company-wide') {
+    return announcements.filter(a => a.location_id === null);
+  }
+  return announcements.filter(a => a.location_id === locationFilter);
+}, [announcements, locationFilter]);
 ```
 
-**Pros**: Single implementation point, all pinned cards get the badge automatically  
-**Cons**: May overlap with card-specific controls (date pickers, visibility toggles)
+**5. Add filter dropdown in header (before leadership icons):**
+```tsx
+<Select value={locationFilter} onValueChange={setLocationFilter}>
+  <SelectTrigger className="h-7 w-[120px] text-xs">
+    <SelectValue placeholder="All" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all">All</SelectItem>
+    <SelectItem value="company-wide">Company-Wide</SelectItem>
+    {locations.map(loc => (
+      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+```
 
-### Option B: Pass Props to Individual Cards
+**6. Add audience badge to each announcement card:**
+```tsx
+<div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+  <span>{format(new Date(announcement.created_at), 'MMM d')}</span>
+  <span>·</span>
+  <span className="flex items-center gap-1">
+    {announcement.location_id ? (
+      <>
+        <MapPin className="w-3 h-3" />
+        {locations?.find(l => l.id === announcement.location_id)?.name || 'Location'}
+      </>
+    ) : (
+      <>
+        <Globe className="w-3 h-3" />
+        All
+      </>
+    )}
+  </span>
+</div>
+```
 
-Pass the filters to each card component and let them render the badge in their header.
+### File: `src/pages/dashboard/DashboardHome.tsx`
 
-**Pros**: Cards control exact badge placement  
-**Cons**: Requires updating each card component
-
----
-
-## Recommended Approach: Hybrid
-
-1. **Create the `AnalyticsFilterBadge` component** for reusability
-2. **Update `PinnedAnalyticsCard`** to pass `filterContext` prop to card components
-3. **Update key cards** (Sales Overview, Operations Stats, Top Performers, etc.) to display the badge in their header area
-
-This gives cards control over badge placement while keeping the filter data flow centralized.
+Pass locations data to `AnnouncementsBento`:
+```tsx
+<AnnouncementsBento 
+  announcements={announcements} 
+  isLeadership={isLeadership}
+  locations={accessibleLocations}
+/>
+```
 
 ---
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/components/dashboard/AnalyticsFilterBadge.tsx` | **NEW**: Reusable filter context badge component |
-| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Export DATE_RANGE_LABELS; pass filter props to card components |
-| `src/components/dashboard/AggregateSalesCard.tsx` | Add badge to header area |
-| `src/components/dashboard/operations/OperationsQuickStats.tsx` | Add badge after section title |
-| `src/components/dashboard/sales/TopPerformersCard.tsx` | Add badge to header |
-| `src/components/dashboard/sales/ClientFunnelCard.tsx` | Add badge to header |
-| `src/components/dashboard/NewBookingsCard.tsx` | Add badge to header |
-| `src/components/dashboard/sales/ForecastingCard.tsx` | Add badge to header (if internal filters are hidden) |
-| `src/components/dashboard/sales/CapacityUtilizationCard.tsx` | Add badge to header |
-| Other pinned card components as needed | Add badge |
-
----
-
-## Technical Details
-
-### Props Update Pattern
-
-For cards that need filter context display:
-
-```tsx
-interface CardProps {
-  // ... existing props
-  
-  // Optional filter context for pinned dashboard display
-  filterContext?: {
-    locationId: string;
-    dateRange: DateRangeType;
-  };
-}
-```
-
-### Badge Placement in Card Headers
-
-Most cards have a header structure like:
-
-```tsx
-<div className="flex items-center justify-between mb-4">
-  <div className="flex items-center gap-2">
-    <Icon />
-    <h2>CARD TITLE</h2>
-  </div>
-  {/* Add badge here */}
-  {filterContext && (
-    <AnalyticsFilterBadge 
-      locationId={filterContext.locationId}
-      dateRange={filterContext.dateRange}
-    />
-  )}
-</div>
-```
+| File | Changes |
+|------|---------|
+| `src/components/dashboard/AnnouncementsBento.tsx` | Add filter dropdown, add audience badge to cards, accept locations prop |
+| `src/pages/dashboard/DashboardHome.tsx` | Pass locations to AnnouncementsBento |
 
 ---
 
 ## User Experience
 
-When viewing pinned analytics cards on the dashboard:
+| Filter Selection | What User Sees |
+|------------------|----------------|
+| **All** (default) | All announcements the user has access to (company-wide + their locations) |
+| **Company-Wide** | Only announcements with no location restriction |
+| **Mesa** | Only announcements targeted specifically to Mesa |
 
-- Each card will display a small badge like: **📍 Dallas · Today**
-- The badge confirms what filters are active for that card's data
-- Users can still adjust filters via the unified filter bar at the top
-- Badges update automatically when filters change
+Each announcement card displays a small badge showing:
+- 🌐 **All** - for company-wide announcements
+- 📍 **Mesa** - for Mesa-specific announcements
+
+This makes it immediately clear who each announcement is intended for.
 
