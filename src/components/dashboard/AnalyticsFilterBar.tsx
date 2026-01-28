@@ -15,6 +15,7 @@ const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   '30d': 'Last 30 days',
   thisWeek: 'This Week',
   thisMonth: 'This Month',
+  todayToEom: 'Today to EOM',
   lastMonth: 'Last Month',
 };
 

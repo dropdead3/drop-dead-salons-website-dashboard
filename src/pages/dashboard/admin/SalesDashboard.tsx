@@ -73,7 +73,7 @@ import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExp
 import { PhorestStaffRow, PhorestStaffData } from '@/components/dashboard/sales/PhorestStaffRow';
 import { StaffMatchingSuggestions, MatchSuggestion } from '@/components/dashboard/sales/StaffMatchingSuggestions';
 
-type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth';
 
 const CHART_COLORS = [
   'hsl(var(--primary))',
@@ -118,6 +118,11 @@ export default function SalesDashboard() {
       case 'thisMonth':
         return { 
           dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
+          dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
+        };
+      case 'todayToEom':
+        return { 
+          dateFrom: format(now, 'yyyy-MM-dd'), 
           dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
         };
       case 'lastMonth':
@@ -306,6 +311,7 @@ export default function SalesDashboard() {
                 <SelectItem value="30d">Last 30 days</SelectItem>
                 <SelectItem value="thisWeek">This Week</SelectItem>
                 <SelectItem value="thisMonth">This Month</SelectItem>
+                <SelectItem value="todayToEom">Today to EOM</SelectItem>
                 <SelectItem value="lastMonth">Last Month</SelectItem>
               </SelectContent>
             </Select>

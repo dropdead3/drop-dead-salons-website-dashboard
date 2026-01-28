@@ -24,7 +24,7 @@ import { useActiveLocations } from '@/hooks/useLocations';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
-import { format, subDays, startOfWeek, startOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
+import { format, subDays, startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -53,7 +53,7 @@ import { LastSyncIndicator } from './sales/LastSyncIndicator';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
-export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'ytd' | 'lastYear' | 'last365';
+export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'ytd' | 'lastYear' | 'last365';
 
 interface AggregateSalesCardProps {
   // When provided, use these instead of internal state
@@ -102,6 +102,11 @@ export function AggregateSalesCard({
         return { 
           dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
           dateTo: format(now, 'yyyy-MM-dd') 
+        };
+      case 'todayToEom':
+        return { 
+          dateFrom: format(now, 'yyyy-MM-dd'), 
+          dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
         };
       case 'ytd':
         return { 
@@ -351,7 +356,7 @@ export function AggregateSalesCard({
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
                 <MetricInfoTooltip description="Sum of all service and product sales for the selected date range, synced from Phorest daily summaries." />
               </div>
-              {dateRange === 'today' && (
+              {(dateRange === 'today' || dateRange === 'todayToEom') && (
                 <div className="flex items-center justify-center gap-1.5 mt-2">
                   <Badge variant="outline" className="text-xs font-normal bg-warning/10 text-warning border-warning/30">
                     <Clock className="w-3 h-3 mr-1" />
@@ -362,7 +367,7 @@ export function AggregateSalesCard({
                       <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="max-w-[200px] text-xs">
-                      Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added throughout the day.
+                      Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.
                     </TooltipContent>
                   </Tooltip>
                 </div>

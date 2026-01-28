@@ -17,7 +17,7 @@ import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
-export type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+export type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth';
 
 // Map dashboard date range to Sales Overview date range
 function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
@@ -27,6 +27,7 @@ function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
     '30d': '30d',
     'thisWeek': 'thisWeek',
     'thisMonth': 'mtd',
+    'todayToEom': 'todayToEom',
     'lastMonth': '30d',
   };
   return mapping[dashboardRange] || 'today';
