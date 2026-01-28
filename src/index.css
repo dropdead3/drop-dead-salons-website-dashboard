@@ -130,6 +130,13 @@
     --success: 145 40% 85%;
     --success-foreground: 145 50% 30%;
 
+    /* Chart colors for data visualization */
+    --chart-1: 0 0% 25%;
+    --chart-2: 145 60% 40%;
+    --chart-3: 217 91% 60%;
+    --chart-4: 43 96% 50%;
+    --chart-5: 280 87% 55%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
@@ -212,6 +219,13 @@
     --success: 145 35% 25%;
     --success-foreground: 145 45% 75%;
 
+    /* Chart colors for data visualization */
+    --chart-1: 40 25% 75%;
+    --chart-2: 145 55% 55%;
+    --chart-3: 217 85% 65%;
+    --chart-4: 43 95% 60%;
+    --chart-5: 280 75% 70%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 20% 92%;
 
@@ -258,6 +272,13 @@
     --gold: 38 70% 38%;
     --gold-foreground: 45 100% 97%;
 
+    /* Chart colors for data visualization */
+    --chart-1: 350 20% 30%;
+    --chart-2: 145 60% 40%;
+    --chart-3: 217 91% 60%;
+    --chart-4: 43 96% 50%;
+    --chart-5: 280 87% 55%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
@@ -302,6 +323,13 @@
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 100% 97%;
+
+    /* Chart colors for data visualization */
+    --chart-1: 350 25% 75%;
+    --chart-2: 145 55% 55%;
+    --chart-3: 217 85% 65%;
+    --chart-4: 43 95% 60%;
+    --chart-5: 280 75% 70%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -349,6 +377,13 @@
     --gold: 38 70% 38%;
     --gold-foreground: 45 100% 97%;
 
+    /* Chart colors for data visualization */
+    --chart-1: 145 20% 30%;
+    --chart-2: 145 60% 40%;
+    --chart-3: 217 91% 60%;
+    --chart-4: 43 96% 50%;
+    --chart-5: 280 87% 55%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
@@ -393,6 +428,13 @@
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 100% 97%;
+
+    /* Chart colors for data visualization */
+    --chart-1: 145 20% 75%;
+    --chart-2: 145 55% 55%;
+    --chart-3: 217 85% 65%;
+    --chart-4: 43 95% 60%;
+    --chart-5: 280 75% 70%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -440,6 +482,13 @@
     --gold: 38 70% 38%;
     --gold-foreground: 45 100% 97%;
 
+    /* Chart colors for data visualization */
+    --chart-1: 210 25% 30%;
+    --chart-2: 145 60% 40%;
+    --chart-3: 217 91% 60%;
+    --chart-4: 43 96% 50%;
+    --chart-5: 280 87% 55%;
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
@@ -484,6 +533,13 @@
 
     --gold: 42 75% 45%;
     --gold-foreground: 45 100% 97%;
+
+    /* Chart colors for data visualization */
+    --chart-1: 210 25% 75%;
+    --chart-2: 145 55% 55%;
+    --chart-3: 217 85% 65%;
+    --chart-4: 43 95% 60%;
+    --chart-5: 280 75% 70%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
