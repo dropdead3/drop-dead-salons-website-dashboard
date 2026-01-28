@@ -1,170 +1,58 @@
 
+# Fix Forecasting Card Bar Colors in Dark/Light Mode
 
-# Add Announcement Filtering & Audience Display
+## Problem
 
-## Overview
+The first bar in the forecasting chart appears **black in dark mode** instead of the expected color. This happens because:
 
-Add filtering controls to view announcements by location (company-wide, or specific locations), and display an audience badge on each announcement card showing who it applies to.
+1. The peak bar uses `hsl(var(--chart-2))` for its fill color
+2. **`--chart-2` is NOT defined** in the CSS variables
+3. When a CSS variable is undefined, `hsl(var(--chart-2))` becomes invalid, causing the browser to render a default color (often black)
 
----
+The session replay confirms: "The first sector is filled with `hsl(var(--primary))`" but actually for peak bars it's using `--chart-2` which doesn't exist.
 
-## Current State
+## Solution
 
-- Announcements already have a `location_id` column (nullable - `NULL` = company-wide)
-- The admin page already shows location badges on announcement cards via `DraggableAnnouncementCard`
-- The dashboard `AnnouncementsBento` component fetches announcements based on user's location access but doesn't have user-facing filter controls
-- No audience badge is displayed on the dashboard announcement cards
+Add the missing chart color CSS variables (`--chart-1` through `--chart-5`) to the theme definitions in `src/index.css`. This will provide proper colors for data visualization in both light and dark modes.
 
----
+## Technical Details
 
-## Changes Required
+### 1. Add Chart Color Variables to index.css
 
-### 1. Add Filter Dropdown to AnnouncementsBento Header
-
-Add a small filter dropdown next to the "ANNOUNCEMENTS" title that allows filtering:
-- **All** (default) - shows company-wide + user's location-specific
-- **Company-Wide** - shows only company-wide announcements (where `location_id` is null)
-- **[Location Name]** - shows only that location's announcements
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│  ANNOUNCEMENTS ∧   [All ▼]                        [✏️] [+]  View All│
-└─────────────────────────────────────────────────────────────────────┘
-                      ↓
-                   ┌──────────────────┐
-                   │ All              │
-                   │ Company-Wide     │
-                   │ ──────────────── │
-                   │ Mesa             │
-                   │ Gilbert          │
-                   └──────────────────┘
+**Light Mode (`:root, .theme-cream`)** - add after line 131 (after `--success`):
+```css
+/* Chart colors for data visualization */
+--chart-1: 0 0% 25%;           /* Dark charcoal for primary bars */
+--chart-2: 145 60% 40%;         /* Green for peak/success highlights */
+--chart-3: 217 91% 60%;         /* Blue */
+--chart-4: 43 96% 50%;          /* Amber/Gold */
+--chart-5: 280 87% 55%;         /* Purple */
 ```
 
-### 2. Add Audience Badge to Each Announcement Card
-
-Display a small badge on each announcement card showing its audience:
-- **Globe icon + "All"** for company-wide announcements
-- **MapPin icon + Location Name** for location-specific announcements
-
-The badge will appear near the date at the bottom of each card.
-
-```text
-┌─────────────────────────────────────────────────┐
-│  📌 Dead Fest! October 13                       │
-│  Get your tickets!                              │
-│                                                 │
-│  Jan 23           🌐 All        [Get Tickets →] │
-└─────────────────────────────────────────────────┘
+**Dark Mode (`.dark.theme-cream`)** - add after line 213 (after `--success-foreground`):
+```css
+/* Chart colors for data visualization */
+--chart-1: 40 25% 75%;          /* Warm tan - visible on dark background */
+--chart-2: 145 55% 55%;          /* Bright green for peak/success */
+--chart-3: 217 85% 65%;          /* Bright blue */
+--chart-4: 43 95% 60%;           /* Bright amber */
+--chart-5: 280 75% 70%;          /* Bright purple */
 ```
 
----
+### 2. Update Other Themes (Rose, Sage, Ocean)
 
-## Technical Implementation
-
-### File: `src/components/dashboard/AnnouncementsBento.tsx`
-
-**1. Add imports:**
-- Import `Globe`, `MapPin` from lucide-react
-- Import `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue` from UI components
-- Import `useActiveLocations` from hooks
-
-**2. Add filter state and location data:**
-```typescript
-const [locationFilter, setLocationFilter] = useState<string>('all');
-const { data: locations = [] } = useActiveLocations();
-```
-
-**3. Add props for location resolution:**
-```typescript
-interface AnnouncementsBentoProps {
-  announcements: Announcement[] | undefined;
-  isLeadership: boolean;
-  locations?: { id: string; name: string }[]; // For resolving location names
-}
-```
-
-**4. Filter announcements client-side based on selection:**
-```typescript
-const filteredAnnouncements = useMemo(() => {
-  if (!announcements) return [];
-  if (locationFilter === 'all') return announcements;
-  if (locationFilter === 'company-wide') {
-    return announcements.filter(a => a.location_id === null);
-  }
-  return announcements.filter(a => a.location_id === locationFilter);
-}, [announcements, locationFilter]);
-```
-
-**5. Add filter dropdown in header (before leadership icons):**
-```tsx
-<Select value={locationFilter} onValueChange={setLocationFilter}>
-  <SelectTrigger className="h-7 w-[120px] text-xs">
-    <SelectValue placeholder="All" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="all">All</SelectItem>
-    <SelectItem value="company-wide">Company-Wide</SelectItem>
-    {locations.map(loc => (
-      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-    ))}
-  </SelectContent>
-</Select>
-```
-
-**6. Add audience badge to each announcement card:**
-```tsx
-<div className="flex items-center gap-2 text-xs text-muted-foreground/60">
-  <span>{format(new Date(announcement.created_at), 'MMM d')}</span>
-  <span>·</span>
-  <span className="flex items-center gap-1">
-    {announcement.location_id ? (
-      <>
-        <MapPin className="w-3 h-3" />
-        {locations?.find(l => l.id === announcement.location_id)?.name || 'Location'}
-      </>
-    ) : (
-      <>
-        <Globe className="w-3 h-3" />
-        All
-      </>
-    )}
-  </span>
-</div>
-```
-
-### File: `src/pages/dashboard/DashboardHome.tsx`
-
-Pass locations data to `AnnouncementsBento`:
-```tsx
-<AnnouncementsBento 
-  announcements={announcements} 
-  isLeadership={isLeadership}
-  locations={accessibleLocations}
-/>
-```
-
----
+Add corresponding `--chart-1` through `--chart-5` variables to each theme's light and dark mode definitions for consistency.
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/components/dashboard/AnnouncementsBento.tsx` | Add filter dropdown, add audience badge to cards, accept locations prop |
-| `src/pages/dashboard/DashboardHome.tsx` | Pass locations to AnnouncementsBento |
+| File | Change |
+|------|--------|
+| `src/index.css` | Add `--chart-1` through `--chart-5` to all theme definitions (Cream, Rose, Sage, Ocean - both light and dark modes) |
 
----
+## Expected Result
 
-## User Experience
-
-| Filter Selection | What User Sees |
-|------------------|----------------|
-| **All** (default) | All announcements the user has access to (company-wide + their locations) |
-| **Company-Wide** | Only announcements with no location restriction |
-| **Mesa** | Only announcements targeted specifically to Mesa |
-
-Each announcement card displays a small badge showing:
-- 🌐 **All** - for company-wide announcements
-- 📍 **Mesa** - for Mesa-specific announcements
-
-This makes it immediately clear who each announcement is intended for.
-
+After this fix:
+- **Light mode**: Bars will be dark charcoal (`--chart-1`), peak bars bright green (`--chart-2`)
+- **Dark mode**: Bars will be warm tan (`--chart-1`), peak bars bright green (`--chart-2`)
+- All chart colors will have proper contrast against their respective backgrounds
+- No more black bars due to undefined CSS variables
