@@ -8,7 +8,6 @@ import {
   DollarSign, 
   Scissors, 
   ShoppingBag, 
-  TrendingUp, 
   Receipt,
   CreditCard,
   MapPin,
@@ -16,7 +15,6 @@ import {
   Download,
   Info,
   ChevronRight,
-  CalendarClock,
   Clock,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -119,6 +117,15 @@ export function AggregateSalesCard() {
     if (serviceHours === 0) return 0;
     return (metrics?.totalRevenue || 0) / serviceHours;
   })();
+
+  // Calculate revenue breakdown percentages
+  const totalRevenueSum = (metrics?.serviceRevenue || 0) + (metrics?.productRevenue || 0);
+  const servicePercent = totalRevenueSum > 0 
+    ? Math.round(((metrics?.serviceRevenue || 0) / totalRevenueSum) * 100) 
+    : 0;
+  const productPercent = totalRevenueSum > 0 
+    ? Math.round(((metrics?.productRevenue || 0) / totalRevenueSum) * 100) 
+    : 0;
 
   // Calculate goal based on date range
   const currentGoal = (() => {
@@ -291,135 +298,110 @@ export function AggregateSalesCard() {
       <div className="grid lg:grid-cols-4 gap-6 mb-6">
         {/* KPIs with Trends */}
         <div className="lg:col-span-3">
-          <div className="grid gap-3 lg:gap-4 grid-cols-2 sm:grid-cols-3">
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+          {/* Hero: Total Revenue with Breakdown */}
+          <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
+            {/* Total Revenue - Hero */}
+            <div className="text-center mb-4 sm:mb-6">
               <div className="flex justify-center mb-2">
-                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
               <AnimatedBlurredAmount 
                 value={displayMetrics.totalRevenue}
                 prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+                className="text-3xl sm:text-4xl md:text-5xl font-display tabular-nums"
               />
-              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
-                <p className="text-xs text-muted-foreground">Total Revenue</p>
+              <div className="flex items-center gap-1 justify-center mt-2">
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
                 <MetricInfoTooltip description="Sum of all service and product sales for the selected date range, synced from Phorest daily summaries." />
               </div>
               {showTrendIndicators && (
-                <SalesTrendIndicator 
-                  current={comparison.current.totalRevenue}
-                  previous={comparison.previous.totalRevenue} 
-                />
+                <div className="mt-2">
+                  <SalesTrendIndicator 
+                    current={comparison.current.totalRevenue}
+                    previous={comparison.previous.totalRevenue} 
+                  />
+                </div>
               )}
             </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <Scissors className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={displayMetrics.serviceRevenue}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
-                <p className="text-xs text-muted-foreground">Services</p>
-                <MetricInfoTooltip description="Revenue from all service transactions (cuts, color, treatments, etc.) excluding retail products." />
-              </div>
-              {showTrendIndicators && (
-                <SalesTrendIndicator 
-                  current={comparison.current.serviceRevenue} 
-                  previous={comparison.previous.serviceRevenue} 
+            
+            {/* Services & Products Sub-cards */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              {/* Services */}
+              <div className="text-center p-3 sm:p-4 bg-background/50 rounded-lg border border-border/30">
+                <div className="flex items-center justify-center gap-1.5 mb-2">
+                  <Scissors className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-xs text-muted-foreground">Services</span>
+                </div>
+                <AnimatedBlurredAmount 
+                  value={displayMetrics.serviceRevenue}
+                  prefix="$"
+                  className="text-xl sm:text-2xl font-display tabular-nums"
                 />
-              )}
-            </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-chart-2" />
+                <p className="text-xs text-muted-foreground/70 mt-1">{servicePercent}%</p>
               </div>
-              <AnimatedBlurredAmount 
-                value={displayMetrics.productRevenue}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
-                <p className="text-xs text-muted-foreground">Products</p>
-                <MetricInfoTooltip description="Revenue from retail product sales only, excluding service charges." />
-              </div>
-              {showTrendIndicators && (
-                <SalesTrendIndicator 
-                  current={comparison.current.productRevenue} 
-                  previous={comparison.previous.productRevenue} 
+              
+              {/* Products */}
+              <div className="text-center p-3 sm:p-4 bg-background/50 rounded-lg border border-border/30">
+                <div className="flex items-center justify-center gap-1.5 mb-2">
+                  <ShoppingBag className="w-3.5 h-3.5 text-chart-2" />
+                  <span className="text-xs text-muted-foreground">Products</span>
+                </div>
+                <AnimatedBlurredAmount 
+                  value={displayMetrics.productRevenue}
+                  prefix="$"
+                  className="text-xl sm:text-2xl font-display tabular-nums"
                 />
-              )}
+                <p className="text-xs text-muted-foreground/70 mt-1">{productPercent}%</p>
+              </div>
             </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+          </div>
+          
+          {/* Secondary KPIs Row */}
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-4">
+            {/* Transactions */}
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-2">
                 <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-chart-3" />
               </div>
               <AnimatedBlurredAmount 
                 value={displayMetrics.totalTransactions}
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
               />
-              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
+              <div className="flex items-center gap-1 justify-center mt-1">
                 <p className="text-xs text-muted-foreground">Transactions</p>
-                <MetricInfoTooltip description="Total number of completed sales transactions. One client visit = one transaction." />
+                <MetricInfoTooltip description="Total number of completed sales transactions." />
               </div>
-              {showTrendIndicators && (
-                <SalesTrendIndicator 
-                  current={comparison.current.totalTransactions} 
-                  previous={comparison.previous.totalTransactions} 
-                />
-              )}
             </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+            
+            {/* Avg Ticket */}
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-2">
                 <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-chart-4" />
               </div>
               <AnimatedBlurredAmount 
-                value={isFinite(displayMetrics.averageTicket) ? Math.round(displayMetrics.averageTicket) : 0}
+                value={Math.round(displayMetrics.averageTicket)}
                 prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1 mb-1">
-                <p className="text-xs text-muted-foreground">Avg Ticket</p>
-                <MetricInfoTooltip description="Total Revenue ÷ Transactions. Average spend per client visit." />
-              </div>
-              {showTrendIndicators && (
-                <SalesTrendIndicator 
-                  current={comparison.current.averageTicket} 
-                  previous={comparison.previous.averageTicket} 
-                />
-              )}
-            </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
-              <div className="flex justify-center mb-2">
-                <CalendarClock className="w-4 h-4 sm:w-5 sm:h-5 text-chart-5" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={tomorrowData?.revenue || 0}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
               />
               <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Rev. Tomorrow</p>
-                <MetricInfoTooltip description="Projected revenue from confirmed and booked appointments scheduled for tomorrow." />
+                <p className="text-xs text-muted-foreground">Avg Ticket</p>
+                <MetricInfoTooltip description="Total Revenue ÷ Transactions." />
               </div>
-              <span className="text-xs text-muted-foreground/70">
-                {tomorrowData?.appointmentCount || 0} bookings
-              </span>
             </div>
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg min-w-0">
+            
+            {/* Rev/Hour */}
+            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
               <div className="flex justify-center mb-2">
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-chart-1" />
               </div>
               <AnimatedBlurredAmount 
                 value={Math.round(revenuePerHour)}
                 prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums truncate block"
+                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
               />
               <div className="flex items-center gap-1 justify-center mt-1">
                 <p className="text-xs text-muted-foreground">Rev/Hour</p>
-                <MetricInfoTooltip description="Total Revenue ÷ Service Hours. Average revenue per hour of stylist work." />
+                <MetricInfoTooltip description="Total Revenue ÷ Service Hours." />
               </div>
             </div>
           </div>
