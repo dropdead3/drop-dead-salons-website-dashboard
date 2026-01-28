@@ -96,8 +96,8 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="font-display text-sm flex items-center justify-between">
-          <span>LOCATION COMPARISON</span>
+        <CardTitle className="text-sm flex items-center justify-between">
+          <span className="font-display">LOCATION COMPARISON</span>
           <div className="flex items-center gap-2">
             {filterContext && (
               <AnalyticsFilterBadge 
