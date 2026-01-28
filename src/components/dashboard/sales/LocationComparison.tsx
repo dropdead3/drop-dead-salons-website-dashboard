@@ -14,6 +14,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts';
+import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -37,9 +38,10 @@ interface LocationData {
 interface LocationComparisonProps {
   locations: LocationData[];
   isLoading?: boolean;
+  filterContext?: FilterContext;
 }
 
-export function LocationComparison({ locations, isLoading }: LocationComparisonProps) {
+export function LocationComparison({ locations, isLoading, filterContext }: LocationComparisonProps) {
   const sortedLocations = useMemo(() => {
     return [...locations].sort((a, b) => b.totalRevenue - a.totalRevenue);
   }, [locations]);
@@ -96,9 +98,17 @@ export function LocationComparison({ locations, isLoading }: LocationComparisonP
       <CardHeader className="pb-3">
         <CardTitle className="font-display text-sm flex items-center justify-between">
           <span>LOCATION COMPARISON</span>
-          <Badge variant="outline" className="font-normal">
-            ${totalRevenue.toLocaleString()} total
-          </Badge>
+          <div className="flex items-center gap-2">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange} 
+              />
+            )}
+            <Badge variant="outline" className="font-normal">
+              ${totalRevenue.toLocaleString()} total
+            </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

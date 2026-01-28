@@ -12,6 +12,7 @@ import {
   Cell,
 } from 'recharts';
 import { useProductCategoryBreakdown, ProductCategoryData } from '@/hooks/useSalesAnalytics';
+import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 const COLORS = [
   'hsl(var(--primary))',
@@ -26,9 +27,10 @@ interface ProductCategoryChartProps {
   dateFrom: string;
   dateTo: string;
   locationId?: string;
+  filterContext?: FilterContext;
 }
 
-export function ProductCategoryChart({ dateFrom, dateTo, locationId }: ProductCategoryChartProps) {
+export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterContext }: ProductCategoryChartProps) {
   const { data, isLoading } = useProductCategoryBreakdown(dateFrom, dateTo, locationId);
 
   const topCategories = data?.slice(0, 6) || [];
@@ -52,7 +54,15 @@ export function ProductCategoryChart({ dateFrom, dateTo, locationId }: ProductCa
             <ShoppingBag className="w-5 h-5 text-chart-2" />
             <CardTitle className="font-display">Product Categories</CardTitle>
           </div>
-          <Badge variant="outline">${totalRevenue.toLocaleString()}</Badge>
+          <div className="flex items-center gap-2">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange} 
+              />
+            )}
+            <Badge variant="outline">${totalRevenue.toLocaleString()}</Badge>
+          </div>
         </div>
         <CardDescription>Revenue breakdown by product category</CardDescription>
       </CardHeader>
