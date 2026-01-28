@@ -287,16 +287,16 @@ export function ForecastingCard() {
                 onValueChange={(v) => v && setPeriod(v as ForecastPeriod)}
                 className="bg-muted/50 p-1 rounded-lg"
               >
-                <ToggleGroupItem value="tomorrow" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                <ToggleGroupItem value="tomorrow" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
                   Tomorrow
                 </ToggleGroupItem>
-                <ToggleGroupItem value="7days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                <ToggleGroupItem value="7days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
                   7 Days
                 </ToggleGroupItem>
-                <ToggleGroupItem value="30days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                <ToggleGroupItem value="30days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
                   30 Days
                 </ToggleGroupItem>
-                <ToggleGroupItem value="60days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                <ToggleGroupItem value="60days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
                   60 Days
                 </ToggleGroupItem>
               </ToggleGroup>
