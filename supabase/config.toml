@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.check-staffing-levels]
 verify_jwt = false
+
+[functions.calculate-preferred-stylists]
+verify_jwt = false
