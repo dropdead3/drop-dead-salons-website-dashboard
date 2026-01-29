@@ -54,6 +54,14 @@ const PERIOD_AVG_LABELS: Record<ForecastPeriod, string> = {
   '60days': 'Weekly Avg',
 };
 
+const PERIOD_DESCRIPTIONS: Record<ForecastPeriod, string> = {
+  'tomorrow': 'Projected revenue from scheduled appointments occurring tomorrow',
+  'todayToEom': 'Projected revenue from scheduled appointments through end of month',
+  '7days': 'Projected revenue from scheduled appointments over the next 7 days',
+  '30days': 'Projected revenue from scheduled appointments over the next 30 days',
+  '60days': 'Projected revenue from scheduled appointments over the next 60 days',
+};
+
 // Label positioned above each bar for revenue
 function AboveBarLabel({ x, y, width, value }: any) {
   if (value === undefined || value === null || value === 0) return null;
@@ -391,7 +399,7 @@ export function ForecastingCard() {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <CardDescription>Projected revenue from scheduled appointments</CardDescription>
+              <CardDescription>{PERIOD_DESCRIPTIONS[period]}</CardDescription>
               <ToggleGroup 
                 type="single" 
                 value={period} 
