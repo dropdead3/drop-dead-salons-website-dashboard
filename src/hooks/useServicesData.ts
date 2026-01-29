@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
 export interface Service {
@@ -25,9 +26,12 @@ export interface Service {
  * Main services hook using the normalized services table
  * This replaces phorest_services queries
  */
-export function useServicesData(locationId?: string) {
+export function useServicesData(locationId?: string, organizationId?: string) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = organizationId || effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['services-data', locationId],
+    queryKey: ['services-data', locationId, orgId],
     queryFn: async () => {
       let query = supabase
         .from('services')
@@ -35,6 +39,11 @@ export function useServicesData(locationId?: string) {
         .eq('is_active', true)
         .order('category')
         .order('name');
+
+      // Apply organization filter
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
 
       if (locationId) {
         query = query.eq('location_id', locationId);

@@ -36,6 +36,8 @@ interface SidebarNavContentProps {
   managerNavItems: NavItem[];
   websiteNavItems: NavItem[];
   adminOnlyNavItems: NavItem[];
+  platformNavItems?: NavItem[];
+  isPlatformUser?: boolean;
   unreadCount: number;
   roles: string[];
   effectiveIsCoach: boolean;
@@ -59,6 +61,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     managerNavItems,
     websiteNavItems,
     adminOnlyNavItems,
+    platformNavItems = [],
+    isPlatformUser = false,
     unreadCount,
     roles,
     effectiveIsCoach,
@@ -86,7 +90,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     manager: managerNavItems,
     website: websiteNavItems,
     adminOnly: adminOnlyNavItems,
-  }), [mainNavItems, growthNavItems, statsNavItems, getHelpNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems]);
+    platform: platformNavItems,
+  }), [mainNavItems, growthNavItems, statsNavItems, getHelpNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
 
   // Create a map of all nav items by href (for custom sections that can contain any link)
   const allNavItemsByHref = useMemo(() => {
@@ -99,13 +104,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       ...managerNavItems,
       ...websiteNavItems,
       ...adminOnlyNavItems,
+      ...platformNavItems,
     ];
     const map: Record<string, NavItem> = {};
     allItems.forEach(item => {
       map[item.href] = item;
     });
     return map;
-  }, [mainNavItems, growthNavItems, statsNavItems, getHelpNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems]);
+  }, [mainNavItems, growthNavItems, statsNavItems, getHelpNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
 
   // Apply custom link ordering to nav items
   const getOrderedItems = (sectionId: string, items: NavItem[]): NavItem[] => {
@@ -463,6 +469,11 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             
             if (sectionId === 'adminOnly') {
               shouldShow = (roles.includes('admin') || roles.includes('super_admin')) && filteredItems.length > 0;
+            }
+            
+            // Platform section only visible to platform users
+            if (sectionId === 'platform') {
+              shouldShow = isPlatformUser && filteredItems.length > 0;
             }
           }
           

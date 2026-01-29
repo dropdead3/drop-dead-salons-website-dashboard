@@ -11,6 +11,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ViewAsProvider } from "./contexts/ViewAsContext";
 import { HideNumbersProvider } from "./contexts/HideNumbersContext";
 import { DashboardThemeProvider } from "./contexts/DashboardThemeContext";
+import { OrganizationProvider } from "./contexts/OrganizationContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ThemeInitializer } from "./components/ThemeInitializer";
 
@@ -102,15 +103,16 @@ const App = () => (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeInitializer />
-          <DashboardThemeProvider>
-            <ViewAsProvider>
-              <HideNumbersProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    <CustomCursor />
-                    <ScrollToTop />
+          <OrganizationProvider>
+            <DashboardThemeProvider>
+              <ViewAsProvider>
+                <HideNumbersProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <BrowserRouter>
+                      <CustomCursor />
+                      <ScrollToTop />
                     <Routes>
                       {/* Public routes */}
                       <Route path="/" element={<Index />} />
@@ -199,13 +201,14 @@ const App = () => (
                       <Route path="/dashboard/platform/import" element={<ProtectedRoute requireAnyPlatformRole><PlatformImport /></ProtectedRoute>} />
                       <Route path="/dashboard/platform/settings" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSettings /></ProtectedRoute>} />
 
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </BrowserRouter>
-                </TooltipProvider>
-              </HideNumbersProvider>
-            </ViewAsProvider>
-          </DashboardThemeProvider>
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </BrowserRouter>
+                  </TooltipProvider>
+                </HideNumbersProvider>
+              </ViewAsProvider>
+            </DashboardThemeProvider>
+          </OrganizationProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
