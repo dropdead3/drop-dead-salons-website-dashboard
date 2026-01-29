@@ -158,15 +158,21 @@ export function getTodayHours(hoursJson: HoursJson | null): { open: string; clos
   return { open: dayHours.open, close: dayHours.close };
 }
 
-export function useLocations() {
+export function useLocations(organizationId?: string) {
   return useQuery({
-    queryKey: ['locations'],
+    queryKey: ['locations', organizationId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('locations')
         .select('*')
         .order('display_order', { ascending: true });
 
+      // If organizationId provided, filter by it
+      if (organizationId) {
+        query = query.eq('organization_id' as never, organizationId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as unknown as Location[];
     },
@@ -175,16 +181,22 @@ export function useLocations() {
 }
 
 // For public components - only active locations
-export function useActiveLocations() {
+export function useActiveLocations(organizationId?: string) {
   return useQuery({
-    queryKey: ['locations', 'active'],
+    queryKey: ['locations', 'active', organizationId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('locations')
         .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
+      // If organizationId provided, filter by it
+      if (organizationId) {
+        query = query.eq('organization_id' as never, organizationId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as unknown as Location[];
     },

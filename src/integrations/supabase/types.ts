@@ -178,6 +178,7 @@ export type Database = {
           imported_at: string | null
           location_id: string | null
           notes: string | null
+          organization_id: string | null
           original_price: number | null
           payment_method: string | null
           rebooked_at_checkout: boolean | null
@@ -208,6 +209,7 @@ export type Database = {
           imported_at?: string | null
           location_id?: string | null
           notes?: string | null
+          organization_id?: string | null
           original_price?: number | null
           payment_method?: string | null
           rebooked_at_checkout?: boolean | null
@@ -238,6 +240,7 @@ export type Database = {
           imported_at?: string | null
           location_id?: string | null
           notes?: string | null
+          organization_id?: string | null
           original_price?: number | null
           payment_method?: string | null
           rebooked_at_checkout?: boolean | null
@@ -265,6 +268,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -931,6 +941,7 @@ export type Database = {
           location_id: string | null
           mobile: string | null
           notes: string | null
+          organization_id: string | null
           phone: string | null
           preferred_stylist_id: string | null
           total_spend: number | null
@@ -953,6 +964,7 @@ export type Database = {
           location_id?: string | null
           mobile?: string | null
           notes?: string | null
+          organization_id?: string | null
           phone?: string | null
           preferred_stylist_id?: string | null
           total_spend?: number | null
@@ -975,6 +987,7 @@ export type Database = {
           location_id?: string | null
           mobile?: string | null
           notes?: string | null
+          organization_id?: string | null
           phone?: string | null
           preferred_stylist_id?: string | null
           total_spend?: number | null
@@ -987,6 +1000,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -1641,6 +1661,7 @@ export type Database = {
           is_super_admin: boolean | null
           location_id: string | null
           location_ids: string[] | null
+          organization_id: string | null
           phone: string | null
           photo_url: string | null
           planned_departure_date: string | null
@@ -1684,6 +1705,7 @@ export type Database = {
           is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null
+          organization_id?: string | null
           phone?: string | null
           photo_url?: string | null
           planned_departure_date?: string | null
@@ -1727,6 +1749,7 @@ export type Database = {
           is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null
+          organization_id?: string | null
           phone?: string | null
           photo_url?: string | null
           planned_departure_date?: string | null
@@ -1739,7 +1762,15 @@ export type Database = {
           user_id?: string
           work_days?: string[] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employee_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feature_flags: {
         Row: {
@@ -2675,6 +2706,7 @@ export type Database = {
           lunch_minutes: number | null
           major_crossroads: string | null
           name: string
+          organization_id: string | null
           phone: string
           phorest_branch_id: string | null
           show_on_website: boolean
@@ -2704,6 +2736,7 @@ export type Database = {
           lunch_minutes?: number | null
           major_crossroads?: string | null
           name: string
+          organization_id?: string | null
           phone: string
           phorest_branch_id?: string | null
           show_on_website?: boolean
@@ -2733,6 +2766,7 @@ export type Database = {
           lunch_minutes?: number | null
           major_crossroads?: string | null
           name?: string
+          organization_id?: string | null
           phone?: string
           phorest_branch_id?: string | null
           show_on_website?: boolean
@@ -2741,7 +2775,15 @@ export type Database = {
           tax_rate?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "locations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketing_campaigns: {
         Row: {
@@ -2977,6 +3019,95 @@ export type Database = {
           start_time?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      organization_admins: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_admins_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          activated_at: string | null
+          created_at: string | null
+          id: string
+          legal_name: string | null
+          logo_url: string | null
+          name: string
+          onboarding_stage: string | null
+          primary_contact_email: string | null
+          primary_contact_phone: string | null
+          settings: Json | null
+          slug: string
+          source_software: string | null
+          status: string | null
+          subscription_tier: string | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          name: string
+          onboarding_stage?: string | null
+          primary_contact_email?: string | null
+          primary_contact_phone?: string | null
+          settings?: Json | null
+          slug: string
+          source_software?: string | null
+          status?: string | null
+          subscription_tier?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          name?: string
+          onboarding_stage?: string | null
+          primary_contact_email?: string | null
+          primary_contact_phone?: string | null
+          settings?: Json | null
+          slug?: string
+          source_software?: string | null
+          status?: string | null
+          subscription_tier?: string | null
+          timezone?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -3677,6 +3808,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "employee_profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      platform_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip_address: unknown
+          organization_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: unknown
+          organization_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: unknown
+          organization_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4736,6 +4914,7 @@ export type Database = {
           lead_time_days: number | null
           location_id: string | null
           name: string
+          organization_id: string | null
           price: number | null
           requires_qualification: boolean | null
           same_day_restriction_reason: string | null
@@ -4756,6 +4935,7 @@ export type Database = {
           lead_time_days?: number | null
           location_id?: string | null
           name: string
+          organization_id?: string | null
           price?: number | null
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
@@ -4776,6 +4956,7 @@ export type Database = {
           lead_time_days?: number | null
           location_id?: string | null
           name?: string
+          organization_id?: string | null
           price?: number | null
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
@@ -4787,6 +4968,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -5447,22 +5635,33 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          organization_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          organization_id?: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          organization_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       website_analytics_cache: {
         Row: {
@@ -5724,6 +5923,7 @@ export type Database = {
           slot_start: string
         }[]
       }
+      get_user_organization: { Args: { _user_id: string }; Returns: string }
       has_platform_role: {
         Args: { _role: string; _user_id: string }
         Returns: boolean
@@ -5736,7 +5936,21 @@ export type Database = {
         Returns: boolean
       }
       is_coach_or_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_org_admin: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_platform_user: { Args: { _user_id: string }; Returns: boolean }
+      log_platform_action: {
+        Args: {
+          _action: string
+          _details?: Json
+          _entity_id?: string
+          _entity_type?: string
+          _org_id: string
+        }
+        Returns: string
+      }
       reschedule_booking: {
         Args: {
           p_appointment_id: string
@@ -5763,6 +5977,10 @@ export type Database = {
         }[]
       }
       update_preferred_stylists: { Args: never; Returns: number }
+      user_belongs_to_org: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
