@@ -219,6 +219,7 @@ export function useTriggerPhorestSync() {
       queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
       queryClient.invalidateQueries({ queryKey: ['phorest-staff-mappings'] });
       queryClient.invalidateQueries({ queryKey: ['phorest-services'] });
+      queryClient.invalidateQueries({ queryKey: ['my-clients-full'] });
       
       const count = data?.synced || data?.total || 0;
       toast({
@@ -232,6 +233,35 @@ export function useTriggerPhorestSync() {
       toast({
         title: 'Sync failed',
         description: error.message || 'Failed to sync Phorest data',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useCalculatePreferredStylists() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('calculate-preferred-stylists');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['my-clients-full'] });
+      queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
+      
+      toast({
+        title: 'Calculation complete',
+        description: `Updated ${data?.updated_count || 0} client assignments based on appointment history.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Calculation failed',
+        description: error.message || 'Failed to calculate preferred stylists',
         variant: 'destructive',
       });
     },

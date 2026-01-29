@@ -5162,6 +5162,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_preferred_stylists: {
+        Args: never
+        Returns: {
+          appointment_count: number
+          client_id: string
+          preferred_user_id: string
+        }[]
+      }
       can_approve_admin_role: { Args: { _user_id: string }; Returns: boolean }
       can_view_all_clients: { Args: { _user_id: string }; Returns: boolean }
       can_view_leaderboard: { Args: { _user_id: string }; Returns: boolean }
@@ -5174,6 +5182,7 @@ export type Database = {
         Returns: boolean
       }
       is_coach_or_admin: { Args: { _user_id: string }; Returns: boolean }
+      update_preferred_stylists: { Args: never; Returns: number }
     }
     Enums: {
       app_role:

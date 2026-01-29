@@ -1376,6 +1376,19 @@ serve(async (req: Request) => {
       try {
         results.clients = await syncClients(supabase, businessId, username, password);
         await logSync(supabase, 'clients', 'success', results.clients.synced);
+        
+        // Auto-calculate preferred stylists after client sync
+        try {
+          const { data: updateCount, error: calcError } = await supabase.rpc('update_preferred_stylists');
+          if (calcError) {
+            console.error('Failed to calculate preferred stylists:', calcError.message);
+          } else {
+            console.log(`Updated ${updateCount} clients with calculated preferred stylist`);
+            results.clients.preferred_stylists_updated = updateCount;
+          }
+        } catch (calcErr: any) {
+          console.error('Preferred stylist calculation failed:', calcErr.message);
+        }
       } catch (error: any) {
         results.clients = { error: error.message };
         await logSync(supabase, 'clients', 'failed', 0, error.message);
