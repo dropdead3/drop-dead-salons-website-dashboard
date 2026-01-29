@@ -1,135 +1,177 @@
 
 
-# Allow Front Desk (Receptionist) and Leadership Roles to View All Clients
+# Calculate Preferred Stylist from Appointment History
 
 ## Overview
 
-Update the RLS policies and page logic to allow users with leadership roles (admin, manager, super_admin) **and the receptionist (front desk) role** to view all clients in the system, while stylists continue to see only clients assigned to them.
+Create a database function and edge function to analyze appointment history and automatically assign `preferred_stylist_id` to clients based on which stylist they see most frequently.
 
 ---
 
-## Current State
+## Current Data State
 
-| Component | Current Behavior |
-|-----------|-----------------|
-| RLS Policy | Stylists only see clients where `auth.uid() = preferred_stylist_id` |
-| Admin RLS Policy | Admins can manage clients via `is_coach_or_admin()` function |
-| MyClients.tsx | Always filters `.eq('preferred_stylist_id', user?.id)` |
-| Result | All 504 clients have `preferred_stylist_id = NULL`, so nobody sees any clients |
+| Table | Records | Issue |
+|-------|---------|-------|
+| `phorest_clients` | 504 | All have `preferred_stylist_id = NULL` |
+| `phorest_appointments` | 123 | Only 14 have `phorest_client_id` linked |
+| `phorest_staff_mapping` | 2 | Links `phorest_staff_id` → `user_id` |
+
+**Root Cause**: Phorest API doesn't reliably return `preferredStaffId` for clients, and most appointments aren't linked to client records.
 
 ---
 
-## Solution
+## Solution Architecture
 
-### 1. Create a New Database Function
+### Phase 1: Improve Appointment-Client Linking
 
-Create a helper function to check if a user can view all clients:
+First, we need to ensure appointments are properly linked to clients during sync.
+
+**Update `sync-phorest-data` edge function:**
+- When syncing appointments, perform a lookup against `phorest_clients` using the client ID from the Phorest appointment response
+- Populate `phorest_client_id` in `phorest_appointments` for historical correlation
+
+### Phase 2: Calculate Preferred Stylist
+
+**Create database function:**
 
 ```sql
-CREATE OR REPLACE FUNCTION public.can_view_all_clients(_user_id uuid)
-RETURNS boolean
+CREATE OR REPLACE FUNCTION public.calculate_preferred_stylists()
+RETURNS TABLE(client_id uuid, preferred_user_id uuid, appointment_count bigint)
 LANGUAGE sql
-STABLE SECURITY DEFINER
+STABLE
 SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.user_roles
-    WHERE user_id = _user_id
-      AND role IN ('admin', 'manager', 'super_admin', 'receptionist')
+  WITH client_stylist_counts AS (
+    SELECT 
+      c.id as client_id,
+      sm.user_id as stylist_user_id,
+      COUNT(*) as appointment_count,
+      ROW_NUMBER() OVER (
+        PARTITION BY c.id 
+        ORDER BY COUNT(*) DESC, MAX(a.appointment_date) DESC
+      ) as rn
+    FROM phorest_clients c
+    INNER JOIN phorest_appointments a 
+      ON c.phorest_client_id = a.phorest_client_id
+    INNER JOIN phorest_staff_mapping sm 
+      ON a.phorest_staff_id = sm.phorest_staff_id
+    WHERE a.phorest_client_id IS NOT NULL
+      AND sm.user_id IS NOT NULL
+    GROUP BY c.id, sm.user_id
   )
-  OR EXISTS (
-    SELECT 1
-    FROM public.employee_profiles
-    WHERE user_id = _user_id
-      AND is_super_admin = true
-  )
+  SELECT 
+    client_id,
+    stylist_user_id as preferred_user_id,
+    appointment_count
+  FROM client_stylist_counts
+  WHERE rn = 1
 $$;
 ```
 
-### 2. Update RLS Policy on `phorest_clients`
-
-Replace the current restrictive policy with one that allows:
-- Stylists to see their own clients (via `preferred_stylist_id`)
-- Leadership + receptionist to see **all** clients
+**Create update function:**
 
 ```sql
--- Drop existing restrictive policy
-DROP POLICY IF EXISTS "Stylists can view their own clients" ON public.phorest_clients;
-
--- Create new inclusive policy
-CREATE POLICY "Users can view clients based on role"
-ON public.phorest_clients
-FOR SELECT
-USING (
-  auth.uid() = preferred_stylist_id 
-  OR public.can_view_all_clients(auth.uid())
-);
+CREATE OR REPLACE FUNCTION public.update_preferred_stylists()
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  updated_count integer := 0;
+BEGIN
+  UPDATE phorest_clients c
+  SET preferred_stylist_id = cps.preferred_user_id
+  FROM (SELECT * FROM calculate_preferred_stylists()) cps
+  WHERE c.id = cps.client_id
+    AND (c.preferred_stylist_id IS NULL OR c.preferred_stylist_id != cps.preferred_user_id);
+  
+  GET DIAGNOSTICS updated_count = ROW_COUNT;
+  RETURN updated_count;
+END;
+$$;
 ```
 
-### 3. Update `MyClients.tsx` Page Logic
+### Phase 3: Edge Function for Manual Trigger
 
-Modify the data fetching query to conditionally remove the `preferred_stylist_id` filter for users who can view all clients.
+**Create `calculate-preferred-stylists` edge function:**
 
-**File:** `src/pages/dashboard/MyClients.tsx`
+```typescript
+// supabase/functions/calculate-preferred-stylists/index.ts
 
-**Changes:**
-1. Import `useAuth` roles
-2. Check if user has a role that allows viewing all clients
-3. Conditionally apply or skip the `preferred_stylist_id` filter
-
-```tsx
-// Add role check at the top of the component
-const { user, roles } = useAuth();
-
-// Determine if user can see all clients
-const canViewAllClients = roles.some(role => 
-  ['admin', 'manager', 'super_admin', 'receptionist'].includes(role)
-);
-
-// Update the query to conditionally filter
-const { data: clients, isLoading } = useQuery({
-  queryKey: ['my-clients-full', user?.id, canViewAllClients],
-  queryFn: async () => {
-    let query = supabase
-      .from('phorest_clients')
-      .select('*')
-      .order('total_spend', { ascending: false });
-    
-    // Only filter by preferred_stylist_id for stylists
-    if (!canViewAllClients) {
-      query = query.eq('preferred_stylist_id', user?.id);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data;
-  },
-  enabled: !!user?.id,
+serve(async (req) => {
+  // Call the database function to update preferred stylists
+  const { data, error } = await supabase.rpc('update_preferred_stylists');
+  
+  return new Response(JSON.stringify({
+    success: !error,
+    updated_count: data,
+    message: `Updated ${data} client records with calculated preferred stylist`
+  }));
 });
+```
+
+### Phase 4: Add to Client Sync Workflow
+
+**Update existing sync logic:**
+
+After clients sync completes, automatically trigger the preferred stylist calculation:
+
+```typescript
+// In sync-phorest-data, after syncClients completes:
+if (syncType === 'clients' || syncType === 'all') {
+  // Calculate preferred stylists from appointment history
+  const { data: updateCount } = await supabase.rpc('update_preferred_stylists');
+  console.log(`Updated ${updateCount} clients with calculated preferred stylist`);
+}
 ```
 
 ---
 
-## Files to Modify
+## Files to Create/Modify
 
-| File | Changes |
-|------|---------|
-| Database Migration | Add `can_view_all_clients()` function + update RLS policy |
-| `src/pages/dashboard/MyClients.tsx` | Add role-based query logic |
+| File | Action | Purpose |
+|------|--------|---------|
+| Database Migration | Create | Add `calculate_preferred_stylists()` and `update_preferred_stylists()` functions |
+| `supabase/functions/calculate-preferred-stylists/index.ts` | Create | Standalone edge function for manual trigger |
+| `supabase/functions/sync-phorest-data/index.ts` | Modify | Auto-run calculation after client sync |
+| `src/hooks/usePhorestSync.ts` | Modify | Add mutation for calculate preferred stylists |
+
+---
+
+## Calculation Logic
+
+The algorithm determines preferred stylist by:
+
+1. **Count appointments** per client-stylist pair
+2. **Rank by frequency** - stylist with most appointments wins
+3. **Tie-breaker** - if equal, prefer stylist from most recent appointment
+4. **Update only if different** - avoid unnecessary writes
+
+---
+
+## UI Integration
+
+Add a button in the My Clients page header or Phorest Settings to manually trigger recalculation:
+
+```tsx
+<Button onClick={() => calculatePreferredStylists.mutate()}>
+  <RefreshCw className="w-4 h-4 mr-2" />
+  Recalculate Assignments
+</Button>
+```
 
 ---
 
 ## Result
 
-| Role | What They See |
-|------|---------------|
-| Admin | All 504 clients |
-| Manager | All 504 clients |
-| Super Admin | All 504 clients |
-| Receptionist (Front Desk) | All 504 clients |
-| Stylist | Only clients where `preferred_stylist_id` matches their ID |
-| Stylist Assistant | Only clients where `preferred_stylist_id` matches their ID |
+After implementation:
 
-This provides operational flexibility for front desk staff to look up any client while maintaining privacy for stylist-specific views.
+| Role | Behavior |
+|------|----------|
+| Stylists | See clients who visit them most frequently |
+| Leadership/Front Desk | See all clients (via existing RLS) |
+| System | Auto-updates assignments during sync |
+
+This ensures stylists see the clients they actually work with, based on real appointment data rather than relying on Phorest's unreliable `preferredStaffId` field.
 
