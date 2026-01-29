@@ -103,7 +103,7 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod
         <text 
           x={0} y={0} dy={12} 
           textAnchor="middle" 
-          className={cn("text-[11px]", (isTodayHighlight || isTomorrowHighlight) ? "fill-chart-2" : "fill-foreground")}
+          className="text-[11px] fill-foreground"
           style={{ fontWeight: (isTodayHighlight || isTomorrowHighlight) ? 600 : 500 }}
         >
           {getDisplayLabel()}
