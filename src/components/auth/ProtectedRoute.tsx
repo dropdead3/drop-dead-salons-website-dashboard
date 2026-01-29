@@ -3,15 +3,26 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { Loader2 } from 'lucide-react';
 
+type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireCoach?: boolean;
   requiredPermission?: string;
   requireSuperAdmin?: boolean;
+  requirePlatformRole?: PlatformRole;
+  requireAnyPlatformRole?: boolean;
 }
 
-export function ProtectedRoute({ children, requireCoach = false, requiredPermission, requireSuperAdmin = false }: ProtectedRouteProps) {
-  const { user, loading, isCoach, hasPermission, permissions, roles } = useAuth();
+export function ProtectedRoute({ 
+  children, 
+  requireCoach = false, 
+  requiredPermission, 
+  requireSuperAdmin = false,
+  requirePlatformRole,
+  requireAnyPlatformRole = false,
+}: ProtectedRouteProps) {
+  const { user, loading, isCoach, hasPermission, permissions, roles, platformRoles, hasPlatformRole, isPlatformUser } = useAuth();
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   const location = useLocation();
 
@@ -25,17 +36,30 @@ export function ProtectedRoute({ children, requireCoach = false, requiredPermiss
   }
 
   if (!user) {
+    // Redirect to platform login if trying to access platform routes
+    if (location.pathname.startsWith('/dashboard/platform')) {
+      return <Navigate to="/platform-login" state={{ from: location }} replace />;
+    }
     return <Navigate to="/staff-login" state={{ from: location }} replace />;
   }
 
   // Wait for roles to be loaded before checking permissions
   // If user exists but roles haven't loaded yet, show loading
-  if (roles.length === 0 && requiredPermission) {
+  if (roles.length === 0 && requiredPermission && !isPlatformUser) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-foreground" />
       </div>
     );
+  }
+
+  // Check platform role requirements
+  if (requireAnyPlatformRole && !isPlatformUser) {
+    return <Navigate to="/platform-login" replace />;
+  }
+
+  if (requirePlatformRole && !hasPlatformRole(requirePlatformRole)) {
+    return <Navigate to="/dashboard/platform/overview" replace />;
   }
 
   // Check super admin access
@@ -44,7 +68,8 @@ export function ProtectedRoute({ children, requireCoach = false, requiredPermiss
   }
 
   // Check permission-based access (only if permissions exist for the user's roles)
-  if (requiredPermission && permissions.length > 0 && !hasPermission(requiredPermission)) {
+  // Platform users bypass permission checks for platform routes
+  if (requiredPermission && !isPlatformUser && permissions.length > 0 && !hasPermission(requiredPermission)) {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
+type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
 interface AuthContextType {
   user: User | null;
@@ -11,10 +12,13 @@ interface AuthContextType {
   loading: boolean;
   roles: AppRole[];
   permissions: string[];
+  platformRoles: PlatformRole[];
+  isPlatformUser: boolean;
   isCoach: boolean;
   hasPermission: (permissionName: string) => boolean;
   hasAnyPermission: (permissionNames: string[]) => boolean;
   hasAllPermissions: (permissionNames: string[]) => boolean;
+  hasPlatformRole: (role: PlatformRole) => boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<{ error: Error | null; data?: { user: User | null } }>;
   signOut: () => Promise<void>;
@@ -31,8 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [platformRoles, setPlatformRoles] = useState<PlatformRole[]>([]);
 
   const isCoach = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
+  const isPlatformUser = platformRoles.length > 0;
 
   const fetchRoles = async (userId: string) => {
     try {
@@ -49,6 +55,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return (data?.map(r => r.role) || []) as AppRole[];
     } catch (err) {
       console.error('Error fetching roles:', err);
+      return [];
+    }
+  };
+
+  const fetchPlatformRoles = async (userId: string): Promise<PlatformRole[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('platform_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error fetching platform roles:', error);
+        return [];
+      }
+
+      return (data?.map(r => r.role) || []) as PlatformRole[];
+    } catch (err) {
+      console.error('Error fetching platform roles:', err);
       return [];
     }
   };
@@ -118,6 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return permissionNames.every(name => permissions.includes(name));
   }, [permissions]);
 
+  const hasPlatformRole = useCallback((role: PlatformRole): boolean => {
+    return platformRoles.includes(role);
+  }, [platformRoles]);
+
   useEffect(() => {
     let mounted = true;
 
@@ -134,9 +163,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Use setTimeout to avoid Supabase deadlock on concurrent requests
           setTimeout(async () => {
             if (!mounted) return;
-            const userRoles = await fetchRoles(session.user.id);
+            const [userRoles, userPlatformRoles] = await Promise.all([
+              fetchRoles(session.user.id),
+              fetchPlatformRoles(session.user.id)
+            ]);
             if (mounted) {
               setRoles(userRoles);
+              setPlatformRoles(userPlatformRoles);
               // Fetch permissions based on roles
               const userPermissions = await fetchPermissions(userRoles);
               if (mounted) {
@@ -148,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setRoles([]);
           setPermissions([]);
+          setPlatformRoles([]);
           setLoading(false);
         }
       }
@@ -162,9 +196,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchRoles(session.user.id).then(async (userRoles) => {
+        Promise.all([
+          fetchRoles(session.user.id),
+          fetchPlatformRoles(session.user.id)
+        ]).then(async ([userRoles, userPlatformRoles]) => {
           if (mounted) {
             setRoles(userRoles);
+            setPlatformRoles(userPlatformRoles);
             const userPermissions = await fetchPermissions(userRoles);
             if (mounted) {
               setPermissions(userPermissions);
@@ -213,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setRoles([]);
     setPermissions([]);
+    setPlatformRoles([]);
   };
 
   const resetPassword = async (email: string) => {
@@ -224,22 +263,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        roles,
-        permissions,
-        isCoach,
-        hasPermission,
-        hasAnyPermission,
-        hasAllPermissions,
-        signIn,
-        signUp,
-        signOut,
-        refreshRoles,
-        refreshPermissions,
-        resetPassword,
+        value={{
+          user,
+          session,
+          loading,
+          roles,
+          permissions,
+          platformRoles,
+          isPlatformUser,
+          isCoach,
+          hasPermission,
+          hasAnyPermission,
+          hasAllPermissions,
+          hasPlatformRole,
+          signIn,
+          signUp,
+          signOut,
+          refreshRoles,
+          refreshPermissions,
+          resetPassword,
       }}
     >
       {children}
