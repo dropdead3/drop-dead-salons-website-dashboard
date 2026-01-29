@@ -161,6 +161,128 @@ export type Database = {
           },
         ]
       }
+      appointments: {
+        Row: {
+          appointment_date: string
+          client_email: string | null
+          client_id: string | null
+          client_name: string | null
+          client_notes: string | null
+          client_phone: string | null
+          created_at: string | null
+          duration_minutes: number | null
+          end_time: string
+          external_id: string | null
+          id: string
+          import_source: string | null
+          imported_at: string | null
+          location_id: string | null
+          notes: string | null
+          original_price: number | null
+          payment_method: string | null
+          rebooked_at_checkout: boolean | null
+          service_category: string | null
+          service_id: string | null
+          service_name: string | null
+          staff_name: string | null
+          staff_user_id: string | null
+          start_time: string
+          status: string | null
+          tip_amount: number | null
+          total_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_date: string
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          client_notes?: string | null
+          client_phone?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          end_time: string
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          location_id?: string | null
+          notes?: string | null
+          original_price?: number | null
+          payment_method?: string | null
+          rebooked_at_checkout?: boolean | null
+          service_category?: string | null
+          service_id?: string | null
+          service_name?: string | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+          start_time: string
+          status?: string | null
+          tip_amount?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_date?: string
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          client_notes?: string | null
+          client_phone?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          end_time?: string
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          location_id?: string | null
+          notes?: string | null
+          original_price?: number | null
+          payment_method?: string | null
+          rebooked_at_checkout?: boolean | null
+          service_category?: string | null
+          service_id?: string | null
+          service_name?: string | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+          start_time?: string
+          status?: string | null
+          tip_amount?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_staff_user_id_fkey"
+            columns: ["staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       assistant_assignments: {
         Row: {
           assistant_id: string
@@ -789,6 +911,90 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "phorest_clients"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          average_spend: number | null
+          created_at: string | null
+          email: string | null
+          external_id: string | null
+          first_name: string
+          id: string
+          import_source: string | null
+          imported_at: string | null
+          is_active: boolean | null
+          is_vip: boolean | null
+          last_name: string
+          last_visit_date: string | null
+          location_id: string | null
+          mobile: string | null
+          notes: string | null
+          phone: string | null
+          preferred_stylist_id: string | null
+          total_spend: number | null
+          updated_at: string | null
+          visit_count: number | null
+        }
+        Insert: {
+          average_spend?: number | null
+          created_at?: string | null
+          email?: string | null
+          external_id?: string | null
+          first_name: string
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          is_active?: boolean | null
+          is_vip?: boolean | null
+          last_name: string
+          last_visit_date?: string | null
+          location_id?: string | null
+          mobile?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_stylist_id?: string | null
+          total_spend?: number | null
+          updated_at?: string | null
+          visit_count?: number | null
+        }
+        Update: {
+          average_spend?: number | null
+          created_at?: string | null
+          email?: string | null
+          external_id?: string | null
+          first_name?: string
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          is_active?: boolean | null
+          is_vip?: boolean | null
+          last_name?: string
+          last_visit_date?: string | null
+          location_id?: string | null
+          mobile?: string | null
+          notes?: string | null
+          phone?: string | null
+          preferred_stylist_id?: string | null
+          total_spend?: number | null
+          updated_at?: string | null
+          visit_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_preferred_stylist_id_fkey"
+            columns: ["preferred_stylist_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -2037,6 +2243,141 @@ export type Database = {
           target_role?: string | null
           target_user_id?: string | null
           target_user_name?: string | null
+        }
+        Relationships: []
+      }
+      import_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          entity_type: string
+          error_count: number | null
+          errors: Json | null
+          file_name: string | null
+          file_size: number | null
+          id: string
+          location_id: string | null
+          processed_rows: number | null
+          skip_count: number | null
+          source_type: string
+          started_at: string | null
+          status: string | null
+          success_count: number | null
+          summary: Json | null
+          template_id: string | null
+          total_rows: number | null
+          updated_at: string | null
+          warnings: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          entity_type: string
+          error_count?: number | null
+          errors?: Json | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          location_id?: string | null
+          processed_rows?: number | null
+          skip_count?: number | null
+          source_type: string
+          started_at?: string | null
+          status?: string | null
+          success_count?: number | null
+          summary?: Json | null
+          template_id?: string | null
+          total_rows?: number | null
+          updated_at?: string | null
+          warnings?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          entity_type?: string
+          error_count?: number | null
+          errors?: Json | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          location_id?: string | null
+          processed_rows?: number | null
+          skip_count?: number | null
+          source_type?: string
+          started_at?: string | null
+          status?: string | null
+          success_count?: number | null
+          summary?: Json | null
+          template_id?: string | null
+          total_rows?: number | null
+          updated_at?: string | null
+          warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_jobs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_jobs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "import_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_templates: {
+        Row: {
+          column_mappings: Json
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          entity_type: string
+          id: string
+          is_active: boolean | null
+          is_system_template: boolean | null
+          name: string
+          source_type: string
+          transformation_rules: Json | null
+          updated_at: string | null
+          validation_rules: Json | null
+        }
+        Insert: {
+          column_mappings?: Json
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          entity_type: string
+          id?: string
+          is_active?: boolean | null
+          is_system_template?: boolean | null
+          name: string
+          source_type: string
+          transformation_rules?: Json | null
+          updated_at?: string | null
+          validation_rules?: Json | null
+        }
+        Update: {
+          column_mappings?: Json
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          entity_type?: string
+          id?: string
+          is_active?: boolean | null
+          is_system_template?: boolean | null
+          name?: string
+          source_type?: string
+          transformation_rules?: Json | null
+          updated_at?: string | null
+          validation_rules?: Json | null
         }
         Relationships: []
       }
@@ -4355,6 +4696,77 @@ export type Database = {
           },
         ]
       }
+      services: {
+        Row: {
+          allow_same_day_booking: boolean | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          duration_minutes: number
+          external_id: string | null
+          id: string
+          import_source: string | null
+          imported_at: string | null
+          is_active: boolean | null
+          lead_time_days: number | null
+          location_id: string | null
+          name: string
+          price: number | null
+          requires_qualification: boolean | null
+          same_day_restriction_reason: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          allow_same_day_booking?: boolean | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          is_active?: boolean | null
+          lead_time_days?: number | null
+          location_id?: string | null
+          name: string
+          price?: number | null
+          requires_qualification?: boolean | null
+          same_day_restriction_reason?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          allow_same_day_booking?: boolean | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          is_active?: boolean | null
+          lead_time_days?: number | null
+          location_id?: string | null
+          name?: string
+          price?: number | null
+          requires_qualification?: boolean | null
+          same_day_restriction_reason?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signature_presets: {
         Row: {
           config: Json
@@ -4507,6 +4919,67 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      staff_service_qualifications: {
+        Row: {
+          created_at: string | null
+          custom_price: number | null
+          external_id: string | null
+          id: string
+          import_source: string | null
+          imported_at: string | null
+          is_active: boolean | null
+          location_id: string | null
+          service_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          custom_price?: number | null
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          is_active?: boolean | null
+          location_id?: string | null
+          service_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          custom_price?: number | null
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          is_active?: boolean | null
+          location_id?: string | null
+          service_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_service_qualifications_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_service_qualifications_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_service_qualifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       staff_strikes: {
         Row: {
@@ -5173,7 +5646,60 @@ export type Database = {
       can_approve_admin_role: { Args: { _user_id: string }; Returns: boolean }
       can_view_all_clients: { Args: { _user_id: string }; Returns: boolean }
       can_view_leaderboard: { Args: { _user_id: string }; Returns: boolean }
+      check_booking_conflicts: {
+        Args: {
+          p_date: string
+          p_end_time: string
+          p_exclude_appointment_id?: string
+          p_location_id?: string
+          p_staff_user_id: string
+          p_start_time: string
+        }
+        Returns: {
+          conflict_appointment_id: string
+          conflict_client_name: string
+          conflict_end_time: string
+          conflict_start_time: string
+          conflict_type: string
+          has_conflict: boolean
+        }[]
+      }
+      create_booking: {
+        Args: {
+          p_appointment_date: string
+          p_client_email?: string
+          p_client_id?: string
+          p_client_name?: string
+          p_client_phone?: string
+          p_end_time: string
+          p_location_id: string
+          p_notes?: string
+          p_service_id?: string
+          p_service_name?: string
+          p_staff_user_id: string
+          p_start_time: string
+          p_total_price?: number
+        }
+        Returns: {
+          appointment_id: string
+          error_message: string
+          success: boolean
+        }[]
+      }
       current_user_is_coach: { Args: never; Returns: boolean }
+      get_staff_availability: {
+        Args: {
+          p_date: string
+          p_location_id?: string
+          p_slot_duration_minutes?: number
+          p_staff_user_id: string
+        }
+        Returns: {
+          is_available: boolean
+          slot_end: string
+          slot_start: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -5182,6 +5708,31 @@ export type Database = {
         Returns: boolean
       }
       is_coach_or_admin: { Args: { _user_id: string }; Returns: boolean }
+      reschedule_booking: {
+        Args: {
+          p_appointment_id: string
+          p_new_date: string
+          p_new_end_time: string
+          p_new_staff_user_id?: string
+          p_new_start_time: string
+        }
+        Returns: {
+          error_message: string
+          success: boolean
+        }[]
+      }
+      update_booking_status: {
+        Args: {
+          p_appointment_id: string
+          p_notes?: string
+          p_status: string
+          p_tip_amount?: number
+        }
+        Returns: {
+          error_message: string
+          success: boolean
+        }[]
+      }
       update_preferred_stylists: { Args: never; Returns: number }
     }
     Enums: {
