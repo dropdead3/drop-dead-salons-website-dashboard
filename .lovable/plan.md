@@ -2,6 +2,26 @@
 
 # Standalone Salon Software Migration Plan
 
+## ✅ Completed (Phase 1-3 Core)
+- Schema normalization: `appointments`, `clients`, `services` tables created
+- Data migrated from `phorest_*` tables with `external_id` and `import_source` tracking
+- Internal booking engine: availability calculator, conflict detection, create/update functions
+- Import system: `import_templates`, `import_jobs` tables + `import-data` edge function
+- Data Import Wizard UI at `/dashboard/admin/import`
+- New hooks: `useCalendar`, `useClientsData`, `useServicesData`
+
+## 🔄 In Progress
+- Refactoring existing components to use new normalized tables
+- Analytics hooks migration
+
+## 📋 Remaining Tasks
+- Complete calendar component refactor
+- Build manual checkout/sales recording flow
+- Refactor analytics to use internal tables
+- Service catalog management UI
+- Phorest cleanup (after full migration)
+
+
 ## Executive Summary
 
 Transform the current Phorest-dependent salon management system into a fully standalone platform with built-in data migration capabilities. This enables salons using any software (Phorest, Mindbody, Boulevard, Vagaro, Square, or custom systems) to migrate their historical data and begin using this platform independently.
