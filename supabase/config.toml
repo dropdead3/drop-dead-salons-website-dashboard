@@ -50,3 +50,15 @@ verify_jwt = false
 
 [functions.calculate-preferred-stylists]
 verify_jwt = false
+
+[functions.create-booking]
+verify_jwt = false
+
+[functions.update-booking]
+verify_jwt = false
+
+[functions.check-availability]
+verify_jwt = false
+
+[functions.import-data]
+verify_jwt = false
