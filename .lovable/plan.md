@@ -1,129 +1,72 @@
 
 
-# Add "Today to EOM" Date Range Filter
+# Show "Tomorrow" Label on Forecasting Chart
 
 ## Overview
 
-Add a new date range option "Today to EOM" (End of Month) to the analytics filter dropdown. This option will span from today's date through the last day of the current month, providing a forward-looking view of expected revenue based on scheduled appointments.
+Update the Forecasting card's X-axis tick component to display "Tomorrow" for the day following "Today" when viewing multi-day forecast periods (like "EOM", "7 Days", etc.).
 
 ---
 
-## Files to Modify
+## Problem
 
-### 1. Update DateRangeType Definition
+Currently, the chart shows:
+- **Today** → Correctly labeled "Today"
+- **Next day** → Shows weekday abbreviation like "Thu" instead of "Tomorrow"
 
-**Files affected:**
-- `src/pages/dashboard/admin/AnalyticsHub.tsx` (primary definition)
-- `src/components/dashboard/AnalyticsFilterBadge.tsx` (badge labels)
-- `src/components/dashboard/AnalyticsFilterBar.tsx` (filter bar labels)
-- `src/components/dashboard/PinnedAnalyticsCard.tsx` (pinned card mapping)
-- `src/pages/dashboard/admin/SalesDashboard.tsx` (sales dashboard)
-- `src/components/dashboard/AggregateSalesCard.tsx` (sales card)
+## Solution
 
-**Change:** Add `'todayToEom'` to the union type in each file.
+Modify the `DailyXAxisTick` component in `ForecastingCard.tsx` to detect when a day is tomorrow (index === 1 when starting from today) and display "Tomorrow" instead of the weekday abbreviation.
 
 ---
 
-### 2. Add Date Calculation Logic
+## File to Modify
 
-**File: `src/pages/dashboard/admin/AnalyticsHub.tsx`**
+**`src/components/dashboard/sales/ForecastingCard.tsx`**
 
-Add new case in the `dateFilters` useMemo switch statement:
+### Change in `DailyXAxisTick` component (around line 75-121)
 
-```text
-case 'todayToEom':
-  return { 
-    dateFrom: format(now, 'yyyy-MM-dd'), 
-    dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
-  };
+Update the rendering logic to:
+1. Add a new prop `isTomorrow` or compute it inside the tick
+2. Check if the current day is tomorrow (second day when `isEomPeriod`)
+3. Display "Tomorrow" instead of the weekday name
+
+**Current logic (line 101):**
+```tsx
+{isTodayHighlight ? 'Today' : day.dayName}
 ```
 
----
-
-### 3. Add Dropdown Option
-
-**File: `src/pages/dashboard/admin/AnalyticsHub.tsx` (line ~184)**
-
-Insert between "This Month" and "Last Month":
-
-```text
-<SelectItem value="todayToEom">Today to EOM</SelectItem>
+**Updated logic:**
+```tsx
+{isTodayHighlight ? 'Today' : isTomorrow ? 'Tomorrow' : day.dayName}
 ```
 
-**File: `src/pages/dashboard/admin/SalesDashboard.tsx` (line ~309)**
+### Update in chart data creation (around line 303-311)
 
-Add the same option to the sales dashboard filter.
-
----
-
-### 4. Update Label Mappings
-
-**File: `src/components/dashboard/AnalyticsFilterBadge.tsx`**
-
-```text
-const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
-  // existing...
-  todayToEom: 'Today to EOM',
-};
+Add `isTomorrow` flag to the chart data:
+```tsx
+const dailyChartData = days.map((day, index) => ({
+  name: day.dayName,
+  confirmedRevenue: day.confirmedRevenue,
+  unconfirmedRevenue: day.unconfirmedRevenue,
+  totalRevenue: day.revenue,
+  appointments: day.appointmentCount,
+  isPeak: peakDay?.date === day.date,
+  isToday: isEomPeriod && index === 0,
+  isTomorrow: isEomPeriod && index === 1, // NEW
+}));
 ```
 
-**File: `src/components/dashboard/AnalyticsFilterBar.tsx`**
+### Update `DailyXAxisTick` to receive and use the `isTomorrow` prop
 
-```text
-const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
-  // existing...
-  todayToEom: 'Today to EOM',
-};
-```
-
----
-
-### 5. Update Pinned Card Mapping
-
-**File: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
-
-Add mapping for the new range:
-
-```text
-function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
-  const mapping: Record<DateRangeType, SalesDateRange> = {
-    // existing...
-    'todayToEom': 'todayToEom',
-  };
-  return mapping[dashboardRange] || 'today';
-}
-```
-
----
-
-### 6. Update AggregateSalesCard
-
-**File: `src/components/dashboard/AggregateSalesCard.tsx`**
-
-- Add `'todayToEom'` to the DateRange type
-- Handle the date calculation in the `useMemo` that computes date filters
-- Show "Expected Revenue" badge for this range (like 'today')
-
----
-
-## Summary of Changes
-
-| File | Change |
-|------|--------|
-| `AnalyticsHub.tsx` | Add type, date logic, and dropdown option |
-| `AnalyticsFilterBadge.tsx` | Add type and label mapping |
-| `AnalyticsFilterBar.tsx` | Add type and label mapping |
-| `PinnedAnalyticsCard.tsx` | Add type and date range mapping |
-| `SalesDashboard.tsx` | Add type and dropdown option |
-| `AggregateSalesCard.tsx` | Add type, date calculation, and Expected Revenue badge logic |
+Pass the additional prop from the XAxis tick and update the label rendering accordingly.
 
 ---
 
 ## Result
 
 After implementation:
-- Users can select "Today to EOM" from any date range dropdown
-- Shows revenue from today through end of current month
-- Displays "Expected Revenue" indicator (since it includes future appointments)
-- Works consistently across Analytics Hub, Sales Dashboard, and pinned cards
+- **Today to EOM view**: Shows "Today", "Tomorrow", "Fri", "Sat", etc.
+- **7 Days view**: Shows "Tomorrow", "Thu", "Fri", etc. (since 7 Days starts from tomorrow)
+- Consistent, user-friendly labels that make the timeline more intuitive
 
