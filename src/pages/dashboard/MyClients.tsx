@@ -36,7 +36,7 @@ type SortField = 'total_spend' | 'visit_count' | 'last_visit' | 'name';
 type SortDirection = 'asc' | 'desc';
 
 export default function MyClients() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('total_spend');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -45,19 +45,29 @@ export default function MyClients() {
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
 
+  // Determine if user can see all clients (leadership + front desk)
+  const canViewAllClients = roles.some(role => 
+    ['admin', 'manager', 'super_admin', 'receptionist'].includes(role)
+  );
+
   // Fetch locations for the filter dropdown
   const { data: locations } = useLocations();
 
   // Fetch clients from the dedicated phorest_clients table
   const { data: clients, isLoading } = useQuery({
-    queryKey: ['my-clients-full', user?.id],
+    queryKey: ['my-clients-full', user?.id, canViewAllClients],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('phorest_clients')
         .select('*')
-        .eq('preferred_stylist_id', user?.id)
         .order('total_spend', { ascending: false });
 
+      // Only filter by preferred_stylist_id for stylists
+      if (!canViewAllClients) {
+        query = query.eq('preferred_stylist_id', user?.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

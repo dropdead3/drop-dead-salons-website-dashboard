@@ -5163,6 +5163,7 @@ export type Database = {
     }
     Functions: {
       can_approve_admin_role: { Args: { _user_id: string }; Returns: boolean }
+      can_view_all_clients: { Args: { _user_id: string }; Returns: boolean }
       can_view_leaderboard: { Args: { _user_id: string }; Returns: boolean }
       current_user_is_coach: { Args: never; Returns: boolean }
       has_role: {
