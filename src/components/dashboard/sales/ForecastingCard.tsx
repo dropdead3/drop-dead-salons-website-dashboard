@@ -72,13 +72,21 @@ function AboveBarLabel({ x, y, width, value }: any) {
 }
 
 // Custom X-axis tick for daily view
-function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isToday }: any) {
+function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod }: any) {
   const [isHovered, setIsHovered] = useState(false);
   const day = days.find((d: DayForecast) => d.dayName === payload.value);
   if (!day) return null;
   
   const dayIndex = days.findIndex((d: DayForecast) => d.dayName === payload.value);
-  const isTodayHighlight = isToday && dayIndex === 0;
+  const isTodayHighlight = isEomPeriod && dayIndex === 0;
+  const isTomorrowHighlight = isEomPeriod && dayIndex === 1;
+  
+  // Determine the label to display
+  const getDisplayLabel = () => {
+    if (isTodayHighlight) return 'Today';
+    if (isTomorrowHighlight) return 'Tomorrow';
+    return day.dayName;
+  };
   
   return (
     <g 
@@ -95,10 +103,10 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isToday }: 
         <text 
           x={0} y={0} dy={12} 
           textAnchor="middle" 
-          className={cn("text-[11px]", isTodayHighlight ? "fill-chart-2" : "fill-foreground")}
-          style={{ fontWeight: isTodayHighlight ? 600 : 500 }}
+          className={cn("text-[11px]", (isTodayHighlight || isTomorrowHighlight) ? "fill-chart-2" : "fill-foreground")}
+          style={{ fontWeight: (isTodayHighlight || isTomorrowHighlight) ? 600 : 500 }}
         >
-          {isTodayHighlight ? 'Today' : day.dayName}
+          {getDisplayLabel()}
         </text>
         <text 
           x={0} y={0} dy={26} 
@@ -459,7 +467,7 @@ export function ForecastingCard() {
                     dataKey="name" 
                     tick={showWeeklyChart 
                       ? <WeeklyXAxisTick weeks={weeks} peakWeekStart={peakWeek?.weekStart} />
-                      : <DailyXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} isToday={isEomPeriod} />
+                      : <DailyXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} isEomPeriod={isEomPeriod} />
                     }
                     tickLine={false}
                     axisLine={false}
