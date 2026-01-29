@@ -72,14 +72,17 @@ function AboveBarLabel({ x, y, width, value }: any) {
 }
 
 // Custom X-axis tick for daily view
-function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod }: any) {
+function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod, is7DaysPeriod }: any) {
   const [isHovered, setIsHovered] = useState(false);
   const day = days.find((d: DayForecast) => d.dayName === payload.value);
   if (!day) return null;
   
   const dayIndex = days.findIndex((d: DayForecast) => d.dayName === payload.value);
+  
+  // For EOM: index 0 = Today, index 1 = Tomorrow
+  // For 7 Days: index 0 = Tomorrow (starts from tomorrow)
   const isTodayHighlight = isEomPeriod && dayIndex === 0;
-  const isTomorrowHighlight = isEomPeriod && dayIndex === 1;
+  const isTomorrowHighlight = (isEomPeriod && dayIndex === 1) || (is7DaysPeriod && dayIndex === 0);
   
   // Determine the label to display
   const getDisplayLabel = () => {
@@ -275,6 +278,7 @@ export function ForecastingCard() {
   const showWeeklyChart = period === '30days' || period === '60days';
   const showChart = period !== 'tomorrow';
   const isEomPeriod = period === 'todayToEom';
+  const is7DaysPeriod = period === '7days';
 
   if (isLoading) {
     return (
@@ -467,7 +471,7 @@ export function ForecastingCard() {
                     dataKey="name" 
                     tick={showWeeklyChart 
                       ? <WeeklyXAxisTick weeks={weeks} peakWeekStart={peakWeek?.weekStart} />
-                      : <DailyXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} isEomPeriod={isEomPeriod} />
+                      : <DailyXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} isEomPeriod={isEomPeriod} is7DaysPeriod={is7DaysPeriod} />
                     }
                     tickLine={false}
                     axisLine={false}
