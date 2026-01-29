@@ -3680,6 +3680,30 @@ export type Database = {
           },
         ]
       }
+      platform_roles: {
+        Row: {
+          created_at: string | null
+          granted_by: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       program_achievements: {
         Row: {
           achievement_type: string
@@ -5700,6 +5724,10 @@ export type Database = {
           slot_start: string
         }[]
       }
+      has_platform_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -5708,6 +5736,7 @@ export type Database = {
         Returns: boolean
       }
       is_coach_or_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_platform_user: { Args: { _user_id: string }; Returns: boolean }
       reschedule_booking: {
         Args: {
           p_appointment_id: string

@@ -24,6 +24,7 @@ import Extensions from "./pages/Extensions";
 import Policies from "./pages/Policies";
 import NotFound from "./pages/NotFound";
 import StaffLogin from "./pages/StaffLogin";
+import PlatformLogin from "./pages/PlatformLogin";
 
 // Dashboard pages
 import DashboardHome from "./pages/dashboard/DashboardHome";
@@ -120,6 +121,7 @@ const App = () => (
                       <Route path="/extensions" element={<Extensions />} />
                       <Route path="/policies" element={<Policies />} />
                       <Route path="/staff-login" element={<StaffLogin />} />
+                      <Route path="/platform-login" element={<PlatformLogin />} />
                       <Route path="/book" element={<PublicBooking />} />
                       <Route path="/day-rate" element={<DayRateBooking />} />
 
@@ -190,12 +192,12 @@ const App = () => (
                       <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
 
-                      {/* Platform Admin routes */}
-                      <Route path="/dashboard/platform/overview" element={<ProtectedRoute requiredPermission="view_platform_admin"><PlatformOverview /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/accounts" element={<ProtectedRoute requiredPermission="view_platform_admin"><PlatformAccounts /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/accounts/:orgId" element={<ProtectedRoute requiredPermission="view_platform_admin"><AccountDetail /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/import" element={<ProtectedRoute requiredPermission="perform_migrations"><PlatformImport /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/settings" element={<ProtectedRoute requiredPermission="manage_organizations"><PlatformSettings /></ProtectedRoute>} />
+                      {/* Platform Admin routes - require platform roles */}
+                      <Route path="/dashboard/platform/overview" element={<ProtectedRoute requireAnyPlatformRole><PlatformOverview /></ProtectedRoute>} />
+                      <Route path="/dashboard/platform/accounts" element={<ProtectedRoute requireAnyPlatformRole><PlatformAccounts /></ProtectedRoute>} />
+                      <Route path="/dashboard/platform/accounts/:orgId" element={<ProtectedRoute requireAnyPlatformRole><AccountDetail /></ProtectedRoute>} />
+                      <Route path="/dashboard/platform/import" element={<ProtectedRoute requireAnyPlatformRole><PlatformImport /></ProtectedRoute>} />
+                      <Route path="/dashboard/platform/settings" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSettings /></ProtectedRoute>} />
 
                       <Route path="*" element={<NotFound />} />
                     </Routes>
