@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEffectiveUserId } from './useEffectiveUser';
 import { toast } from 'sonner';
 
@@ -116,10 +117,14 @@ export const STATUS_CONFIG: Record<AppointmentStatus, {
  * Main calendar hook using the normalized appointments table
  * This replaces usePhorestCalendar for the standalone system
  */
-export function useCalendar() {
+export function useCalendar(organizationId?: string) {
   const { hasPermission } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
   const effectiveUserId = useEffectiveUserId();
   const queryClient = useQueryClient();
+  
+  // Use passed org or effective org from context
+  const orgId = organizationId || effectiveOrganization?.id;
   
   // Calendar state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -174,7 +179,7 @@ export function useCalendar() {
 
   // Fetch appointments from normalized table
   const { data: appointments = [], isLoading, refetch } = useQuery({
-    queryKey: ['appointments', dateRange, filters, effectiveUserId, canViewAll, canViewTeam],
+    queryKey: ['appointments', dateRange, filters, effectiveUserId, canViewAll, canViewTeam, orgId],
     queryFn: async () => {
       let query = supabase
         .from('appointments')
@@ -190,6 +195,11 @@ export function useCalendar() {
         .lte('appointment_date', dateRange.end)
         .order('appointment_date')
         .order('start_time');
+
+      // Apply organization filter
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
 
       // Apply status filter
       if (filters.showCancelled) {

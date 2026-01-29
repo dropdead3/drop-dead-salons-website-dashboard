@@ -17,7 +17,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { useOrganizations, type Organization } from '@/hooks/useOrganizations';
+import { useOrganizations, type Organization, logPlatformAction } from '@/hooks/useOrganizations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 interface OrganizationSwitcherProps {
@@ -33,6 +33,15 @@ export function OrganizationSwitcher({ className, compact = false }: Organizatio
   const handleSelect = (org: Organization | null) => {
     setSelectedOrganization(org);
     setOpen(false);
+    
+    // Log the context switch for audit
+    if (org) {
+      logPlatformAction(org.id, 'org_viewed', 'organization', org.id, {
+        organization_name: org.name,
+        organization_slug: org.slug,
+        action: 'context_switch',
+      });
+    }
   };
 
   const activeOrgs = organizations.filter(o => o.status === 'active');

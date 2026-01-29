@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -33,6 +34,8 @@ import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
+import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
+import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { isTestAccount } from '@/utils/testAccounts';
@@ -96,6 +99,9 @@ import {
   BookOpen,
   TrendingUp,
   LayoutGrid,
+  Terminal,
+  Building2,
+  Upload,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -180,6 +186,14 @@ const websiteNavItems: NavItem[] = [
   { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: LayoutGrid, permission: 'manage_homepage_stylists' },
 ];
 
+// Platform admin nav items - only for platform team members
+const platformNavItems: NavItem[] = [
+  { href: '/dashboard/platform/overview', label: 'Platform Overview', icon: Terminal },
+  { href: '/dashboard/platform/accounts', label: 'Salon Accounts', icon: Building2 },
+  { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
+  { href: '/dashboard/platform/settings', label: 'Platform Settings', icon: Settings },
+];
+
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
 function DashboardLayoutInner({ children }: DashboardLayoutProps) {
@@ -198,7 +212,8 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   }, [sidebarCollapsed]);
   
   const toggleSidebarCollapsed = () => setSidebarCollapsed(prev => !prev);
-  const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut } = useAuth();
+  const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut, isPlatformUser } = useAuth();
+  const { isImpersonating } = useOrganizationContext();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
@@ -750,6 +765,8 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           managerNavItems={managerNavItems}
           websiteNavItems={websiteNavItems}
           adminOnlyNavItems={adminOnlyNavItems}
+          platformNavItems={platformNavItems}
+          isPlatformUser={isPlatformUser}
           unreadCount={unreadCount}
           roles={roles}
           effectiveIsCoach={effectiveIsCoach}
@@ -780,6 +797,8 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
               managerNavItems={managerNavItems}
               websiteNavItems={websiteNavItems}
               adminOnlyNavItems={adminOnlyNavItems}
+              platformNavItems={platformNavItems}
+              isPlatformUser={isPlatformUser}
               unreadCount={unreadCount}
               roles={roles}
               effectiveIsCoach={effectiveIsCoach}
@@ -924,6 +943,14 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         )}
       </AnimatePresence>
 
+      {/* Platform Organization Context Banner */}
+      <div className={cn(
+        "transition-[padding-left] duration-200 ease-in-out",
+        sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
+      )}>
+        <PlatformContextBanner />
+      </div>
+
       {/* Desktop Top Bar */}
       <div className={cn(
         "hidden lg:block sticky top-0 z-30 transition-[padding-left] duration-200 ease-in-out",
@@ -960,6 +987,8 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           
           {/* Right side - User controls */}
           <div className="flex items-center gap-3">
+          {/* Organization Switcher - Platform users only */}
+          {isPlatformUser && <OrganizationSwitcher compact />}
           {/* Hide Numbers Toggle */}
           <HideNumbersToggle />
           <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>

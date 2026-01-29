@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
 export interface Client {
@@ -40,21 +41,31 @@ export function useClientsData(options?: {
   stylistId?: string;
   includeInactive?: boolean;
   limit?: number;
+  organizationId?: string;
 }) {
   const { user, roles } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
   
   // Determine if user can see all clients
   const canViewAllClients = roles.some(role => 
     ['admin', 'manager', 'super_admin', 'receptionist'].includes(role)
   );
 
+  // Use passed org or effective org from context
+  const orgId = options?.organizationId || effectiveOrganization?.id;
+
   return useQuery({
-    queryKey: ['clients-data', options?.locationId, options?.stylistId, options?.includeInactive, user?.id, canViewAllClients],
+    queryKey: ['clients-data', options?.locationId, options?.stylistId, options?.includeInactive, user?.id, canViewAllClients, orgId],
     queryFn: async () => {
       let query = supabase
         .from('clients')
         .select('*')
         .order('total_spend', { ascending: false });
+
+      // Apply organization filter
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
 
       // Filter by active status
       if (!options?.includeInactive) {

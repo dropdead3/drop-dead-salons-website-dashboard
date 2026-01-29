@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
@@ -62,19 +63,23 @@ export function useUpdateEmployeeProfile() {
   });
 }
 
-export function useTeamDirectory(locationFilter?: string, options?: { includeTestAccounts?: boolean }) {
+export function useTeamDirectory(locationFilter?: string, options?: { includeTestAccounts?: boolean; organizationId?: string }) {
   const { roles, loading: authLoading } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
   const isAdminOrSuperAdmin = roles.includes('admin') || roles.includes('super_admin');
   
   // Only admins/super admins can see test accounts, and only when explicitly requested
   const shouldIncludeTestAccounts = options?.includeTestAccounts && isAdminOrSuperAdmin;
+
+  // Use passed org or effective org from context
+  const orgId = options?.organizationId || effectiveOrganization?.id;
 
   // When requesting test accounts, wait for roles to be loaded before running query
   // This prevents the query from running with shouldIncludeTestAccounts=false before roles load
   const shouldWaitForRoles = options?.includeTestAccounts && roles.length === 0 && !authLoading === false;
 
   return useQuery({
-    queryKey: ['team-directory', locationFilter, shouldIncludeTestAccounts, roles.join(',')],
+    queryKey: ['team-directory', locationFilter, shouldIncludeTestAccounts, roles.join(','), orgId],
     // Don't run query until auth is loaded AND roles are available (when needed for test accounts)
     enabled: !authLoading && !(options?.includeTestAccounts && roles.length === 0),
     queryFn: async () => {
@@ -83,6 +88,11 @@ export function useTeamDirectory(locationFilter?: string, options?: { includeTes
         .select('*')
         .eq('is_active', true)
         .order('full_name');
+
+      // Apply organization filter
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
 
       if (locationFilter && locationFilter !== 'all') {
         query = query.eq('location_id', locationFilter);

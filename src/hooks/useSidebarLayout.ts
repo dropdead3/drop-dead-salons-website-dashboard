@@ -12,6 +12,7 @@ export const DEFAULT_SECTION_ORDER = [
   'manager',
   'website',
   'adminOnly',
+  'platform',
 ];
 
 // Section labels for display
@@ -24,6 +25,7 @@ export const SECTION_LABELS: Record<string, string> = {
   manager: 'Management',
   website: 'Website',
   adminOnly: 'Super Admin',
+  platform: 'Platform Admin',
 };
 
 // Default link order for each section
@@ -78,6 +80,12 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/admin/roles',
     '/dashboard/admin/settings',
     '/dashboard/admin/feature-flags',
+  ],
+  platform: [
+    '/dashboard/platform/overview',
+    '/dashboard/platform/accounts',
+    '/dashboard/platform/import',
+    '/dashboard/platform/settings',
   ],
 };
 

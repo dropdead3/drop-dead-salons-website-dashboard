@@ -100,10 +100,16 @@ export function useCreateOrganization() {
       if (error) throw error;
       return data as Organization;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
       queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
       toast.success('Organization created successfully');
+      
+      // Log the creation for audit
+      logPlatformAction(data.id, 'org_created', 'organization', data.id, {
+        name: data.name,
+        slug: data.slug,
+      });
     },
     onError: (error) => {
       toast.error('Failed to create organization', {
