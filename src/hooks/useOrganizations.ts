@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
-// Define types locally since the DB types haven't synced yet
 export interface Organization {
   id: string;
   name: string;
@@ -15,7 +15,8 @@ export interface Organization {
   primary_contact_phone: string | null;
   source_software: string | null;
   logo_url: string | null;
-  settings: Record<string, unknown>;
+  settings: Json;
+  timezone: string;
   created_at: string;
   activated_at: string | null;
   updated_at: string;
@@ -30,7 +31,8 @@ export interface OrganizationInsert {
   source_software?: string | null;
   subscription_tier?: string;
   logo_url?: string | null;
-  settings?: Record<string, unknown>;
+  settings?: Json;
+  timezone?: string;
 }
 
 export function useOrganizations() {
@@ -38,12 +40,12 @@ export function useOrganizations() {
     queryKey: ['organizations'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('organizations' as never)
+        .from('organizations')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as unknown as Organization[];
+      return data as Organization[];
     },
   });
 }
@@ -54,15 +56,33 @@ export function useOrganization(id: string | undefined) {
     queryFn: async () => {
       if (!id) return null;
       const { data, error } = await supabase
-        .from('organizations' as never)
+        .from('organizations')
         .select('*')
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      return data as unknown as Organization;
+      return data as Organization;
     },
     enabled: !!id,
+  });
+}
+
+export function useOrganizationBySlug(slug: string | undefined) {
+  return useQuery({
+    queryKey: ['organization-slug', slug],
+    queryFn: async () => {
+      if (!slug) return null;
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (error) throw error;
+      return data as Organization;
+    },
+    enabled: !!slug,
   });
 }
 
@@ -72,16 +92,17 @@ export function useCreateOrganization() {
   return useMutation({
     mutationFn: async (org: OrganizationInsert) => {
       const { data, error } = await supabase
-        .from('organizations' as never)
-        .insert(org as never)
+        .from('organizations')
+        .insert([org])
         .select()
         .single();
 
       if (error) throw error;
-      return data as unknown as Organization;
+      return data as Organization;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
       toast.success('Organization created successfully');
     },
     onError: (error) => {
@@ -96,20 +117,21 @@ export function useUpdateOrganization() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Organization> & { id: string }) => {
+    mutationFn: async ({ id, ...updates }: Partial<Omit<Organization, 'id'>> & { id: string }) => {
       const { data, error } = await supabase
-        .from('organizations' as never)
-        .update(updates as never)
+        .from('organizations')
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data as unknown as Organization;
+      return data as Organization;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
       queryClient.invalidateQueries({ queryKey: ['organization', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
       toast.success('Organization updated successfully');
     },
     onError: (error) => {
@@ -126,7 +148,7 @@ export function useDeleteOrganization() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('organizations' as never)
+        .from('organizations')
         .delete()
         .eq('id', id);
 
@@ -134,6 +156,7 @@ export function useDeleteOrganization() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
       toast.success('Organization deleted successfully');
     },
     onError: (error) => {
@@ -157,25 +180,63 @@ export function useOrganizationWithStats(id: string | undefined) {
     queryFn: async (): Promise<OrganizationWithStats | null> => {
       if (!id) return null;
 
+      // Fetch organization first
       const { data: orgData, error: orgError } = await supabase
-        .from('organizations' as never)
+        .from('organizations')
         .select('*')
         .eq('id', id)
         .single();
 
       if (orgError) throw orgError;
 
-      const org = orgData as unknown as Organization;
+      // Use raw queries to avoid TS deep instantiation issues
+      const { count: locationCount } = await supabase
+        .from('locations')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id' as never, id);
 
-      // Return with placeholder counts - these will work once types sync
+      const { count: adminCount } = await supabase
+        .from('organization_admins')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', id);
+
+      const { data: importsData } = await supabase
+        .from('import_jobs')
+        .select('id, status')
+        .eq('organization_id' as never, id);
+
+      const org = orgData as Organization;
+      const imports = (importsData || []) as { id: string; status: string }[];
+
       return {
         ...org,
-        locationCount: 0,
-        adminCount: 0,
-        importCount: 0,
-        completedImports: 0,
+        locationCount: locationCount || 0,
+        adminCount: adminCount || 0,
+        importCount: imports.length,
+        completedImports: imports.filter(i => i.status === 'completed').length,
       };
     },
     enabled: !!id,
   });
+}
+
+// Log a platform action for audit trail
+export async function logPlatformAction(
+  organizationId: string | null,
+  action: string,
+  entityType?: string,
+  entityId?: string,
+  details?: Record<string, unknown>
+) {
+  const { error } = await supabase.rpc('log_platform_action', {
+    _org_id: organizationId,
+    _action: action,
+    _entity_type: entityType || null,
+    _entity_id: entityId || null,
+    _details: (details || {}) as Json,
+  });
+
+  if (error) {
+    console.error('Failed to log platform action:', error);
+  }
 }
