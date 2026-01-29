@@ -1,303 +1,262 @@
 
-# Software Overview Dashboard (Admin Portal)
 
-## Purpose
+# Platform Login & Platform Team Roles
 
-Create a centralized admin portal for the **import team** to manage multiple salon businesses that use this software platform. This transforms the single-organization system into a multi-tenant SaaS model with:
+## Overview
 
-- Salon account provisioning and management
-- Data migration/import tracking per salon
-- Integration status monitoring
-- Account health metrics
+Create a dedicated login experience for your internal development/support team who manage the software platform. This establishes a clear separation between:
+
+- **Salon Team**: Stylists, managers, admins who use the software for their salon business
+- **Platform Team**: Your internal dev, support, and migration team who manage salon accounts
 
 ---
 
-## Architecture Change: Multi-Tenant Foundation
+## What We'll Build
 
-Currently, the system is a **single-organization, multi-location** platform. To support an import team managing **multiple independent salons**, we need to introduce an `organizations` table at the top of the hierarchy.
+### 1. New Platform Roles
 
-### New Database Structure
+| Role | Purpose | Access Level |
+|------|---------|--------------|
+| `platform_owner` | Company founders/leadership | Full platform access, billing, security |
+| `platform_admin` | Senior dev/ops team | Full platform access, user management |
+| `platform_support` | Import/migration team | View all orgs, perform migrations, support tasks |
+| `platform_developer` | Development team | View access, testing, debugging |
+
+These are stored separately from salon roles using a `platform_roles` table (not the `app_role` enum).
+
+### 2. Dedicated Platform Login Page
+
+A separate login at `/platform-login` with:
+- Platform-specific branding (different from salon branding)
+- Direct redirect to Platform Admin Hub after login
+- No role selection (platform users don't self-select roles)
+- "Go to Salon Login" link for salon staff
+
+### 3. Platform Team Management
+
+The "Manage Team" button on Platform Settings will allow:
+- Inviting new platform team members
+- Assigning platform roles
+- Viewing platform team activity
+
+---
+
+## Architecture
+
+### Database Schema
 
 ```text
-organizations (NEW - top-level tenant)
-├── locations (existing - now linked to organization)
-├── clients (via location_id)
-├── appointments (via location_id)
-├── services (via location_id)
-├── employee_profiles (via organization_id)
-└── import_jobs (add organization_id)
+platform_roles (NEW TABLE)
+├── id: uuid
+├── user_id: uuid (FK to auth.users)
+├── role: text (platform_owner, platform_admin, platform_support, platform_developer)
+├── created_at: timestamptz
+├── granted_by: uuid
+└── UNIQUE(user_id, role)
 ```
 
-### Schema Changes
+This is separate from `user_roles` which stores salon-level roles.
 
-| Table | Change |
-|-------|--------|
-| `organizations` | **NEW** - Primary tenant entity with salon business details |
-| `organization_admins` | **NEW** - Users who can manage a specific organization |
-| `locations` | Add `organization_id` FK |
-| `employee_profiles` | Add `organization_id` FK |
-| `import_jobs` | Add `organization_id` FK |
-| `business_settings` | Rename/repurpose to `organization_settings` |
-
----
-
-## New Tables
-
-### organizations
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | uuid | Primary key |
-| `name` | text | Business/DBA name |
-| `legal_name` | text | Official legal name |
-| `slug` | text | URL-friendly identifier (unique) |
-| `status` | enum | `pending`, `active`, `suspended`, `churned` |
-| `subscription_tier` | text | Pricing tier/plan |
-| `onboarding_stage` | text | `new`, `importing`, `training`, `live` |
-| `primary_contact_email` | text | Main contact |
-| `primary_contact_phone` | text | Phone number |
-| `source_software` | text | Previous software (Phorest, Mindbody, etc.) |
-| `created_at` | timestamptz | Account creation |
-| `activated_at` | timestamptz | When they went live |
-| `settings` | jsonb | Org-level config |
-
-### organization_admins
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `organization_id` | uuid | FK to organizations |
-| `user_id` | uuid | FK to auth.users |
-| `role` | text | `owner`, `admin`, `support` |
-| `created_at` | timestamptz | When added |
-
----
-
-## Software Overview Dashboard Pages
-
-### 1. Main Hub: `/dashboard/platform/overview`
-
-A command center for the import team showing:
-
-**Stats Grid (Bento Style)**
-- Total Active Salons
-- Salons in Onboarding
-- Pending Migrations
-- Active Users Across Platform
-- Monthly Active Locations
-
-**Recent Activity Feed**
-- New sign-ups
-- Completed migrations
-- Support escalations
-- Account status changes
-
-**Quick Actions**
-- Create New Salon Account
-- Start Migration
-- View All Accounts
-
-### 2. Accounts List: `/dashboard/platform/accounts`
-
-Filterable/searchable table of all salon organizations:
-
-| Column | Description |
-|--------|-------------|
-| Salon Name | Business name with avatar |
-| Status | Active, Onboarding, Suspended badge |
-| Locations | Count of locations |
-| Users | Active user count |
-| Source | Previous software |
-| Migration Stage | Progress indicator |
-| Created | Account age |
-| Actions | View, Import, Configure |
-
-**Filters**: Status, Onboarding Stage, Source Software, Date Range
-
-### 3. Salon Detail: `/dashboard/platform/accounts/:orgId`
-
-Deep dive into a single salon account:
-
-**Tabs**:
-- **Overview** - Key metrics, health status
-- **Locations** - Manage locations for this org
-- **Users** - Staff accounts under this org
-- **Imports** - Migration history specific to this org
-- **Settings** - Org-level configuration
-- **Activity Log** - Audit trail
-
-### 4. Data Import Hub: `/dashboard/platform/import` (Enhanced)
-
-Builds on existing `/dashboard/admin/import` but with organization context:
-
-- Select target organization before importing
-- Track migration progress per org
-- Rollback/retry capabilities
-- Import templates per source software
-
----
-
-## User Interface Components
-
-### New Components to Create
-
-| Component | Purpose |
-|-----------|---------|
-| `PlatformLayout.tsx` | Wrapper for platform admin pages |
-| `OrganizationSelector.tsx` | Dropdown to switch org context |
-| `AccountsTable.tsx` | Data table for salon accounts |
-| `AccountDetailCard.tsx` | Summary card for org details |
-| `MigrationProgressCard.tsx` | Visual migration status |
-| `CreateOrganizationDialog.tsx` | New account wizard |
-| `OnboardingChecklist.tsx` | Track onboarding steps |
-
-### New Hooks
-
-| Hook | Purpose |
-|------|---------|
-| `useOrganizations` | CRUD for organizations |
-| `useOrganizationStats` | Platform-wide analytics |
-| `useOrganizationContext` | Current org selection |
-| `useImportsByOrg` | Import jobs filtered by org |
-
----
-
-## Permissions & Access Control
-
-### New Permissions
-
-| Permission | Description |
-|------------|-------------|
-| `view_platform_admin` | Access platform overview |
-| `manage_organizations` | Create/edit salon accounts |
-| `view_all_organizations` | See all salons (vs just assigned) |
-| `perform_migrations` | Execute data imports |
-
-### Access Levels
-
-| Role | Access |
-|------|--------|
-| Platform Super Admin | Full access to all orgs |
-| Platform Support | View all + limited actions |
-| Org Owner | Only their organization |
-| Org Admin | Only their organization |
-
----
-
-## Implementation Phases
-
-### Phase 1: Database Foundation
-1. Create `organizations` table with status/onboarding fields
-2. Create `organization_admins` junction table
-3. Add `organization_id` to existing tables (nullable for migration)
-4. Create RLS policies for organization-scoped access
-5. Migrate current data to a default "primary" organization
-
-### Phase 2: Core UI
-1. Create `PlatformOverview.tsx` page with stats grid
-2. Create `AccountsList.tsx` with sortable/filterable table
-3. Create `CreateOrganizationDialog.tsx` wizard
-4. Add platform admin routes to `App.tsx`
-5. Add navigation items for platform admins
-
-### Phase 3: Account Management
-1. Create `AccountDetail.tsx` with tabbed interface
-2. Create `OrganizationSettings.tsx` component
-3. Create `OrganizationUsers.tsx` management
-4. Implement organization-scoped import wizard
-
-### Phase 4: Enhanced Data Import
-1. Update `DataImportWizard` to accept organization context
-2. Update `import-data` edge function for org scoping
-3. Add migration progress tracking per organization
-4. Build rollback/retry functionality
-
----
-
-## Navigation Structure
+### Authentication Flow
 
 ```text
-PLATFORM ADMIN (new section for platform users)
-├── Overview      → /dashboard/platform/overview
-├── Salon Accounts → /dashboard/platform/accounts
-├── Migrations    → /dashboard/platform/import
-└── Platform Settings → /dashboard/platform/settings
+/platform-login                     /staff-login
+      │                                   │
+      ▼                                   ▼
+  [Sign In]                          [Sign In]
+      │                                   │
+      ▼                                   ▼
+ Check platform_roles              Check user_roles
+      │                                   │
+      ▼                                   ▼
+/dashboard/platform/overview       /dashboard
 ```
 
-This section only appears for users with `view_platform_admin` permission.
+### Permission Mapping
+
+| Platform Role | Permissions Granted |
+|--------------|---------------------|
+| `platform_owner` | All platform permissions + billing |
+| `platform_admin` | view_platform_admin, manage_organizations, perform_migrations |
+| `platform_support` | view_platform_admin, view_all_organizations, perform_migrations |
+| `platform_developer` | view_platform_admin, view_all_organizations |
 
 ---
 
-## Files to Create
+## Files to Create/Modify
+
+### New Files
 
 | File | Purpose |
 |------|---------|
-| `src/pages/dashboard/platform/Overview.tsx` | Main dashboard |
-| `src/pages/dashboard/platform/Accounts.tsx` | Accounts list |
-| `src/pages/dashboard/platform/AccountDetail.tsx` | Single account view |
-| `src/pages/dashboard/platform/PlatformSettings.tsx` | Platform config |
-| `src/components/platform/AccountsTable.tsx` | Reusable table |
-| `src/components/platform/CreateOrganizationDialog.tsx` | Create wizard |
-| `src/components/platform/OrganizationSelector.tsx` | Context switcher |
-| `src/components/platform/MigrationProgressCard.tsx` | Progress visual |
-| `src/components/platform/OnboardingChecklist.tsx` | Onboarding steps |
-| `src/hooks/useOrganizations.ts` | Organization CRUD |
-| `src/hooks/useOrganizationStats.ts` | Platform analytics |
-| `src/contexts/OrganizationContext.tsx` | Org context provider |
+| `src/pages/PlatformLogin.tsx` | Dedicated platform team login page |
+| `src/hooks/usePlatformRoles.ts` | CRUD for platform team roles |
+| `src/components/platform/PlatformTeamManager.tsx` | Team management UI |
+| `src/components/platform/InvitePlatformUserDialog.tsx` | Invite new platform users |
+
+### Modified Files
+
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add `/platform-login` route |
+| `src/contexts/AuthContext.tsx` | Add `platformRoles` state, `isPlatformUser` check |
+| `src/components/auth/ProtectedRoute.tsx` | Add `requirePlatformRole` prop |
+| `src/pages/dashboard/platform/PlatformSettings.tsx` | Wire up team management |
 
 ---
 
-## Database Migration
+## Implementation Steps
+
+### Phase 1: Database Schema
+
+1. Create `platform_roles` table with appropriate columns
+2. Create RLS policies (only platform admins can manage)
+3. Create `is_platform_user()` helper function
+4. Create `has_platform_role()` check function
+5. Seed initial platform owner (your account)
+
+### Phase 2: Authentication Updates
+
+1. Create `usePlatformRoles` hook to fetch platform roles
+2. Update `AuthContext` to include:
+   - `platformRoles: string[]` state
+   - `isPlatformUser: boolean` computed property
+   - `hasPlatformRole(role: string): boolean` helper
+3. Update `ProtectedRoute` to support `requirePlatformRole` prop
+
+### Phase 3: Platform Login Page
+
+1. Create `/platform-login` page with platform branding
+2. Login-only (no self-registration for platform team)
+3. After login:
+   - Check if user has any platform role
+   - If yes → redirect to `/dashboard/platform/overview`
+   - If no → show error "Not authorized for platform access"
+4. Add link to salon login for convenience
+
+### Phase 4: Platform Team Management
+
+1. Build team management UI in Platform Settings
+2. Ability to:
+   - View all platform team members
+   - Invite new team members (email invite)
+   - Assign/remove platform roles
+   - View activity log
+3. Only `platform_owner` and `platform_admin` can manage team
+
+---
+
+## Visual Design
+
+### Platform Login Page
+
+The platform login will have:
+- Dark/professional theme (vs salon's warm cream theme)
+- Your company logo (not salon logo)
+- "Platform Administration" heading
+- Clean, minimal design
+- Footer link: "Salon staff? Login here →"
+
+### Platform Team List
+
+| Member | Email | Role | Status | Actions |
+|--------|-------|------|--------|---------|
+| Avatar | john@company.com | Platform Admin | Active | Edit, Remove |
+| Avatar | sarah@company.com | Platform Support | Active | Edit, Remove |
+
+---
+
+## Security Considerations
+
+1. **Separate role storage**: Platform roles in `platform_roles` table, salon roles in `user_roles`
+2. **No self-registration**: Platform users can only be invited
+3. **RLS protection**: Only existing platform admins can add new platform users
+4. **Audit logging**: All role changes logged to `platform_audit_log`
+5. **Session awareness**: Platform login sets a session flag for context
+
+---
+
+## Migration for Current Users
+
+Since you're currently using `super_admin` for platform access:
+
+1. Create the new `platform_roles` table
+2. Add your account as `platform_owner`
+3. Platform permissions will check `platform_roles` first
+4. Existing `super_admin` logic remains for salon-level access
+
+This allows a user to have both:
+- `platform_admin` role (for platform access)
+- `super_admin` salon role (when assisting a specific salon)
+
+---
+
+## Technical Details
+
+### Database Migration SQL
 
 ```sql
--- Create organization status enum
-CREATE TYPE organization_status AS ENUM ('pending', 'active', 'suspended', 'churned');
-CREATE TYPE onboarding_stage AS ENUM ('new', 'importing', 'training', 'live');
-
--- Main organizations table
-CREATE TABLE organizations (
+-- Platform roles table (separate from salon app_role enum)
+CREATE TABLE public.platform_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  legal_name TEXT,
-  slug TEXT UNIQUE NOT NULL,
-  status organization_status DEFAULT 'pending',
-  onboarding_stage onboarding_stage DEFAULT 'new',
-  subscription_tier TEXT DEFAULT 'standard',
-  primary_contact_email TEXT,
-  primary_contact_phone TEXT,
-  source_software TEXT, -- phorest, mindbody, boulevard, etc.
-  logo_url TEXT,
-  settings JSONB DEFAULT '{}',
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('platform_owner', 'platform_admin', 'platform_support', 'platform_developer')),
   created_at TIMESTAMPTZ DEFAULT now(),
-  activated_at TIMESTAMPTZ,
-  CONSTRAINT organizations_slug_check CHECK (slug ~ '^[a-z0-9-]+$')
+  granted_by UUID REFERENCES auth.users(id),
+  UNIQUE(user_id, role)
 );
-
--- Organization admins (platform team + org owners)
-CREATE TABLE organization_admins (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  role TEXT DEFAULT 'admin', -- 'owner', 'admin', 'support'
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(organization_id, user_id)
-);
-
--- Add organization_id to existing tables
-ALTER TABLE locations ADD COLUMN organization_id UUID REFERENCES organizations(id);
-ALTER TABLE import_jobs ADD COLUMN organization_id UUID REFERENCES organizations(id);
 
 -- Enable RLS
-ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE organization_admins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.platform_roles ENABLE ROW LEVEL SECURITY;
+
+-- Helper function to check platform role
+CREATE OR REPLACE FUNCTION public.has_platform_role(_user_id uuid, _role text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.platform_roles
+    WHERE user_id = _user_id AND role = _role
+  )
+$$;
+
+-- Check if user is any type of platform user
+CREATE OR REPLACE FUNCTION public.is_platform_user(_user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.platform_roles WHERE user_id = _user_id
+  )
+$$;
 ```
 
----
+### AuthContext Updates
 
-## Summary
+```typescript
+// New state
+const [platformRoles, setPlatformRoles] = useState<string[]>([]);
 
-This plan creates a two-tier admin system:
+// New computed
+const isPlatformUser = platformRoles.length > 0;
 
-1. **Platform Level** - For your internal import/support team to manage all salon customers
-2. **Organization Level** - For salon owners/admins to manage their specific business
+// New helper
+const hasPlatformRole = (role: string) => platformRoles.includes(role);
+```
 
-The Data Import Wizard becomes organization-aware, allowing the import team to select which salon they're importing data for, track progress per customer, and manage the full onboarding lifecycle from signup to "live" status.
+### ProtectedRoute Enhancement
+
+```typescript
+interface ProtectedRouteProps {
+  // ... existing props
+  requirePlatformRole?: string; // NEW - e.g., 'platform_admin'
+  requireAnyPlatformRole?: boolean; // NEW - any platform access
+}
+```
+
