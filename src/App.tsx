@@ -86,6 +86,13 @@ import DayRateSettings from "./pages/dashboard/admin/DayRateSettings";
 import DayRateCalendar from "./pages/dashboard/admin/DayRateCalendar";
 import DataImport from "./pages/dashboard/admin/DataImport";
 
+// Platform Admin pages
+import PlatformOverview from "./pages/dashboard/platform/Overview";
+import PlatformAccounts from "./pages/dashboard/platform/Accounts";
+import AccountDetail from "./pages/dashboard/platform/AccountDetail";
+import PlatformImport from "./pages/dashboard/platform/PlatformImport";
+import PlatformSettings from "./pages/dashboard/platform/PlatformSettings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -182,6 +189,13 @@ const App = () => (
                       <Route path="/dashboard/admin/feature-flags" element={<ProtectedRoute requiredPermission="manage_settings"><FeatureFlags /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
+
+                      {/* Platform Admin routes */}
+                      <Route path="/dashboard/platform/overview" element={<ProtectedRoute requiredPermission="view_platform_admin"><PlatformOverview /></ProtectedRoute>} />
+                      <Route path="/dashboard/platform/accounts" element={<ProtectedRoute requiredPermission="view_platform_admin"><PlatformAccounts /></ProtectedRoute>} />
+                      <Route path="/dashboard/platform/accounts/:orgId" element={<ProtectedRoute requiredPermission="view_platform_admin"><AccountDetail /></ProtectedRoute>} />
+                      <Route path="/dashboard/platform/import" element={<ProtectedRoute requiredPermission="perform_migrations"><PlatformImport /></ProtectedRoute>} />
+                      <Route path="/dashboard/platform/settings" element={<ProtectedRoute requiredPermission="manage_organizations"><PlatformSettings /></ProtectedRoute>} />
 
                       <Route path="*" element={<NotFound />} />
                     </Routes>
