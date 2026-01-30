@@ -1808,6 +1808,69 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_payroll_settings: {
+        Row: {
+          commission_enabled: boolean | null
+          created_at: string
+          direct_deposit_status: string | null
+          employee_id: string
+          external_employee_id: string | null
+          hourly_rate: number | null
+          id: string
+          is_payroll_active: boolean | null
+          metadata: Json | null
+          organization_id: string
+          pay_type: string
+          salary_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          commission_enabled?: boolean | null
+          created_at?: string
+          direct_deposit_status?: string | null
+          employee_id: string
+          external_employee_id?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_payroll_active?: boolean | null
+          metadata?: Json | null
+          organization_id: string
+          pay_type?: string
+          salary_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          commission_enabled?: boolean | null
+          created_at?: string
+          direct_deposit_status?: string | null
+          employee_id?: string
+          external_employee_id?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_payroll_active?: boolean | null
+          metadata?: Json | null
+          organization_id?: string
+          pay_type?: string
+          salary_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_payroll_settings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "employee_payroll_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_profiles: {
         Row: {
           admin_approved_at: string | null
@@ -3706,6 +3769,220 @@ export type Database = {
             columns: ["enrollment_id"]
             isOneToOne: false
             referencedRelation: "stylist_program_enrollment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_connections: {
+        Row: {
+          access_token_encrypted: string | null
+          connected_at: string | null
+          connected_by: string | null
+          connection_status: string
+          created_at: string
+          external_company_id: string | null
+          id: string
+          last_synced_at: string | null
+          metadata: Json | null
+          organization_id: string
+          provider: Database["public"]["Enums"]["payroll_provider"]
+          refresh_token_encrypted: string | null
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          connected_at?: string | null
+          connected_by?: string | null
+          connection_status?: string
+          created_at?: string
+          external_company_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          metadata?: Json | null
+          organization_id: string
+          provider: Database["public"]["Enums"]["payroll_provider"]
+          refresh_token_encrypted?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          connected_at?: string | null
+          connected_by?: string | null
+          connection_status?: string
+          created_at?: string
+          external_company_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          provider?: Database["public"]["Enums"]["payroll_provider"]
+          refresh_token_encrypted?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_line_items: {
+        Row: {
+          bonus_pay: number | null
+          commission_pay: number | null
+          created_at: string
+          employee_deductions: number | null
+          employee_id: string
+          employee_taxes: number | null
+          employer_taxes: number | null
+          external_employee_id: string | null
+          gross_pay: number
+          hourly_pay: number | null
+          id: string
+          metadata: Json | null
+          net_pay: number
+          overtime_hours: number | null
+          payroll_run_id: string
+          regular_hours: number | null
+          salary_pay: number | null
+          tips: number | null
+          updated_at: string
+        }
+        Insert: {
+          bonus_pay?: number | null
+          commission_pay?: number | null
+          created_at?: string
+          employee_deductions?: number | null
+          employee_id: string
+          employee_taxes?: number | null
+          employer_taxes?: number | null
+          external_employee_id?: string | null
+          gross_pay?: number
+          hourly_pay?: number | null
+          id?: string
+          metadata?: Json | null
+          net_pay?: number
+          overtime_hours?: number | null
+          payroll_run_id: string
+          regular_hours?: number | null
+          salary_pay?: number | null
+          tips?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bonus_pay?: number | null
+          commission_pay?: number | null
+          created_at?: string
+          employee_deductions?: number | null
+          employee_id?: string
+          employee_taxes?: number | null
+          employer_taxes?: number | null
+          external_employee_id?: string | null
+          gross_pay?: number
+          hourly_pay?: number | null
+          id?: string
+          metadata?: Json | null
+          net_pay?: number
+          overtime_hours?: number | null
+          payroll_run_id?: string
+          regular_hours?: number | null
+          salary_pay?: number | null
+          tips?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_line_items_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "payroll_line_items_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_runs: {
+        Row: {
+          check_date: string
+          created_at: string
+          employee_count: number | null
+          external_payroll_id: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          pay_period_end: string
+          pay_period_start: string
+          processed_at: string | null
+          provider: Database["public"]["Enums"]["payroll_provider"]
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          total_employee_deductions: number | null
+          total_employer_taxes: number | null
+          total_gross_pay: number | null
+          total_net_pay: number | null
+          updated_at: string
+        }
+        Insert: {
+          check_date: string
+          created_at?: string
+          employee_count?: number | null
+          external_payroll_id?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          pay_period_end: string
+          pay_period_start: string
+          processed_at?: string | null
+          provider: Database["public"]["Enums"]["payroll_provider"]
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          total_employee_deductions?: number | null
+          total_employer_taxes?: number | null
+          total_gross_pay?: number | null
+          total_net_pay?: number | null
+          updated_at?: string
+        }
+        Update: {
+          check_date?: string
+          created_at?: string
+          employee_count?: number | null
+          external_payroll_id?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          pay_period_end?: string
+          pay_period_start?: string
+          processed_at?: string | null
+          provider?: Database["public"]["Enums"]["payroll_provider"]
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          total_employee_deductions?: number | null
+          total_employer_taxes?: number | null
+          total_gross_pay?: number | null
+          total_net_pay?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -6906,6 +7183,7 @@ export type Database = {
         | "walkin"
         | "other"
         | "salon_lead"
+      payroll_provider: "gusto" | "quickbooks"
       program_status: "active" | "paused" | "completed" | "restarted"
       stylist_type: "independent" | "commission" | "salon_owner"
       ticket_priority: "low" | "medium" | "high" | "urgent"
@@ -7100,6 +7378,7 @@ export const Constants = {
         "other",
         "salon_lead",
       ],
+      payroll_provider: ["gusto", "quickbooks"],
       program_status: ["active", "paused", "completed", "restarted"],
       stylist_type: ["independent", "commission", "salon_owner"],
       ticket_priority: ["low", "medium", "high", "urgent"],
