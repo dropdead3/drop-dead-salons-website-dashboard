@@ -22,7 +22,8 @@ import {
   Search, 
   ExternalLink,
   MoreHorizontal,
-  Upload
+  Upload,
+  MapPin
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,7 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useOrganizations } from '@/hooks/useOrganizations';
+import { useOrganizationsWithStats } from '@/hooks/useOrganizations';
 import { CreateOrganizationDialog } from '@/components/platform/CreateOrganizationDialog';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -52,16 +53,26 @@ const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> 
   churned: 'default',
 };
 
-const stageLabels: Record<string, string> = {
-  new: 'New',
-  importing: 'Importing Data',
-  training: 'Training',
-  live: 'Live',
+const businessTypeLabels: Record<string, string> = {
+  salon: 'Salon',
+  spa: 'Spa',
+  esthetics: 'Esthetics',
+  barbershop: 'Barbershop',
+  med_spa: 'Med Spa',
+  wellness: 'Wellness',
+  other: 'Other',
+};
+
+const planLabels: Record<string, string> = {
+  starter: 'Starter',
+  standard: 'Standard',
+  professional: 'Professional',
+  enterprise: 'Enterprise',
 };
 
 export default function PlatformAccounts() {
   const navigate = useNavigate();
-  const { data: organizations, isLoading } = useOrganizations();
+  const { data: organizations, isLoading } = useOrganizationsWithStats();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -134,9 +145,10 @@ export default function PlatformAccounts() {
                 <TableHeader>
                   <TableRow className="border-slate-700/50 hover:bg-transparent">
                     <TableHead className="text-slate-400">Salon</TableHead>
+                    <TableHead className="text-slate-400">Type</TableHead>
                     <TableHead className="text-slate-400">Status</TableHead>
-                    <TableHead className="text-slate-400">Stage</TableHead>
-                    <TableHead className="text-slate-400">Source</TableHead>
+                    <TableHead className="text-slate-400">Plan</TableHead>
+                    <TableHead className="text-slate-400">Locations</TableHead>
                     <TableHead className="text-slate-400">Created</TableHead>
                     <TableHead className="text-right text-slate-400">Actions</TableHead>
                   </TableRow>
@@ -164,19 +176,25 @@ export default function PlatformAccounts() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <span className="text-sm text-slate-300">
+                          {businessTypeLabels[org.business_type || 'salon']}
+                        </span>
+                      </TableCell>
+                      <TableCell>
                         <PlatformBadge variant={statusColors[org.status || 'pending']}>
                           {org.status}
                         </PlatformBadge>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-slate-300">
-                          {stageLabels[org.onboarding_stage || 'new']}
+                          {planLabels[org.subscription_tier || 'standard'] || org.subscription_tier || 'Standard'}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-slate-500">
-                          {org.source_software || '—'}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-slate-500" />
+                          <span className="text-sm text-slate-300">{org.locationCount}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-slate-500">

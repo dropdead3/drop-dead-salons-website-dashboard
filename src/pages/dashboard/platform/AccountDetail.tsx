@@ -41,6 +41,16 @@ const stageConfig: Record<string, { label: string; icon: React.ReactNode; varian
   live: { label: 'Live', icon: <CheckCircle2 className="h-4 w-4" />, variant: 'success' },
 };
 
+const businessTypeLabels: Record<string, string> = {
+  salon: 'Salon',
+  spa: 'Spa',
+  esthetics: 'Esthetics',
+  barbershop: 'Barbershop',
+  med_spa: 'Med Spa',
+  wellness: 'Wellness',
+  other: 'Other',
+};
+
 export default function AccountDetail() {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
@@ -240,6 +250,10 @@ export default function AccountDetail() {
                     <span className="text-slate-300">Activated {format(new Date(organization.activated_at), 'MMM d, yyyy')}</span>
                   </div>
                 )}
+                <div className="flex items-center gap-3">
+                  <Building2 className="h-4 w-4 text-slate-500" />
+                  <span className="text-slate-300">Type: {businessTypeLabels[organization.business_type || 'salon']}</span>
+                </div>
                 <div className="flex items-center gap-3">
                   <Globe className="h-4 w-4 text-slate-500" />
                   <span className="text-slate-300">Source: {organization.source_software || 'Not specified'}</span>

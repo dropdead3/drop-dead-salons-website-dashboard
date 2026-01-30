@@ -3057,6 +3057,7 @@ export type Database = {
       organizations: {
         Row: {
           activated_at: string | null
+          business_type: string | null
           created_at: string | null
           id: string
           legal_name: string | null
@@ -3075,6 +3076,7 @@ export type Database = {
         }
         Insert: {
           activated_at?: string | null
+          business_type?: string | null
           created_at?: string | null
           id?: string
           legal_name?: string | null
@@ -3093,6 +3095,7 @@ export type Database = {
         }
         Update: {
           activated_at?: string | null
+          business_type?: string | null
           created_at?: string | null
           id?: string
           legal_name?: string | null

@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
 
+export type BusinessType = 'salon' | 'spa' | 'esthetics' | 'barbershop' | 'med_spa' | 'wellness' | 'other';
+
 export interface Organization {
   id: string;
   name: string;
@@ -20,6 +22,7 @@ export interface Organization {
   created_at: string;
   activated_at: string | null;
   updated_at: string;
+  business_type: BusinessType;
 }
 
 export interface OrganizationInsert {
@@ -33,6 +36,7 @@ export interface OrganizationInsert {
   logo_url?: string | null;
   settings?: Json;
   timezone?: string;
+  business_type?: BusinessType;
 }
 
 export function useOrganizations() {
@@ -178,6 +182,43 @@ export interface OrganizationWithStats extends Organization {
   adminCount: number;
   importCount: number;
   completedImports: number;
+}
+
+export interface OrganizationListItem extends Organization {
+  locationCount: number;
+}
+
+export function useOrganizationsWithStats() {
+  return useQuery({
+    queryKey: ['organizations-with-stats'],
+    queryFn: async () => {
+      // Fetch organizations
+      const { data: orgs, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch location counts for all orgs
+      const { data: locationCounts } = await supabase
+        .from('locations')
+        .select('organization_id')
+        .eq('is_active' as never, true);
+
+      // Aggregate counts per org
+      const countMap = new Map<string, number>();
+      (locationCounts || []).forEach((loc: { organization_id: string | null }) => {
+        const orgId = loc.organization_id;
+        if (orgId) countMap.set(orgId, (countMap.get(orgId) || 0) + 1);
+      });
+
+      return (orgs as Organization[]).map(org => ({
+        ...org,
+        locationCount: countMap.get(org.id) || 0
+      })) as OrganizationListItem[];
+    },
+  });
 }
 
 export function useOrganizationWithStats(id: string | undefined) {
