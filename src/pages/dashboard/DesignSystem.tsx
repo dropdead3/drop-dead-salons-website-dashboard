@@ -92,12 +92,12 @@ const DesignSystem = () => {
     { name: "destructive", variable: "--destructive", usage: "Errors, warnings", light: "0 62% 50%", dark: "0 62% 50%" },
   ];
 
-  // Typography scale
+  // Typography scale with design rules
   const typography = [
-    { class: "font-display", font: "Termina", weight: "Medium (500 only)", transform: "UPPERCASE, tracking-wide", usage: "Headlines, buttons, navigation" },
-    { class: "font-sans", font: "Aeonik Pro", weight: "400-500", transform: "Normal", usage: "Body text, paragraphs" },
-    { class: "font-serif", font: "Laguna", weight: "700", transform: "Normal", usage: "Editorial accents (rarely used)" },
-    { class: "font-script", font: "Sloop Script", weight: "400", transform: "Normal", usage: "Decorative elements" },
+    { class: "font-display", font: "Termina", weight: "Medium (500 only)", transform: "UPPERCASE, tracking-wide", usage: "Headlines, buttons, navigation", rule: "NEVER use font-bold or font-semibold" },
+    { class: "font-sans", font: "Aeonik Pro", weight: "400-500", transform: "Normal (never uppercase)", usage: "Body text, paragraphs, UI labels", rule: "NEVER use uppercase or all-caps" },
+    { class: "font-serif", font: "Laguna", weight: "700", transform: "Normal", usage: "Editorial accents (rarely used)", rule: null },
+    { class: "font-script", font: "Sloop Script", weight: "400", transform: "Normal", usage: "Decorative elements", rule: null },
   ];
 
   // Border radius scale
@@ -670,10 +670,10 @@ const DesignSystem = () => {
                         <span className="text-2xl">{type.font}</span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">{type.usage}</p>
-                      {type.class === 'font-display' && (
-                        <div className="mt-3 p-2 rounded bg-destructive/10 border border-destructive/20">
-                          <p className="text-xs text-destructive font-medium">
-                            ⚠️ NEVER use font-bold or font-semibold with Termina. Always use font-medium (500).
+                      {type.rule && (
+                        <div className={`mt-3 p-2 rounded ${type.class === 'font-display' ? 'bg-destructive/10 border border-destructive/20' : 'bg-amber-500/10 border border-amber-500/20'}`}>
+                          <p className={`text-xs font-medium ${type.class === 'font-display' ? 'text-destructive' : 'text-amber-600'}`}>
+                            ⚠️ {type.rule}
                           </p>
                         </div>
                       )}

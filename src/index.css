@@ -581,6 +581,32 @@
   }
 }
 
+/* ===============================================
+   TYPOGRAPHY DESIGN RULES (Enforced via CSS)
+   ===============================================
+   
+   1. TERMINA (font-display)
+      - Weight: ALWAYS Medium (500) - no synthetic bolding
+      - Transform: ALWAYS uppercase with wide tracking
+      - Usage: Headlines, buttons, navigation labels
+      
+   2. AEONIK PRO (font-sans)  
+      - Weight: Regular (400) or Medium (500)
+      - Transform: ALWAYS normal capitalization - NEVER uppercase
+      - Usage: Body text, paragraphs, descriptions, UI labels
+      
+   3. LAGUNA (font-serif)
+      - Weight: Bold (700) only
+      - Transform: Normal
+      - Usage: Editorial accents (rarely used)
+      
+   4. SLOOP SCRIPT (font-script)
+      - Weight: Regular (400)
+      - Transform: Normal
+      - Usage: Decorative elements
+   
+   =============================================== */
+
 /* Termina font rules: always uppercase, wide tracking, never italic, NEVER synthetic bold */
 @layer utilities {
   .font-display {
@@ -588,6 +614,11 @@
     letter-spacing: 0.05em;
     font-style: normal !important;
     font-weight: 500 !important; /* Termina only has Medium weight - prevent synthetic bolding */
+  }
+  
+  /* Aeonik Pro (font-sans) should NEVER be uppercase - always normal capitalization */
+  .font-sans {
+    text-transform: none !important;
   }
   
   /* Laguna (serif) should NOT be uppercase */
