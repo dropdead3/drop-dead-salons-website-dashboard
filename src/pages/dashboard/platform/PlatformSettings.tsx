@@ -1,9 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Shield, Database, Plug, BookOpen, Palette } from 'lucide-react';
+import { Settings, Shield, Database, Plug, BookOpen, Palette, User } from 'lucide-react';
 import { PlatformTeamManager } from '@/components/platform/PlatformTeamManager';
 import { PlatformAppearanceTab } from '@/components/platform/settings/PlatformAppearanceTab';
 import { PlatformIntegrationsTab } from '@/components/platform/settings/PlatformIntegrationsTab';
 import { KnowledgeBaseTab } from '@/components/platform/settings/KnowledgeBaseTab';
+import { PlatformAccountTab } from '@/components/platform/settings/PlatformAccountTab';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { cn } from '@/lib/utils';
 import {
@@ -36,13 +37,17 @@ export default function PlatformSettings() {
         backLabel="Back to Overview"
       />
 
-      <Tabs defaultValue="team" className="space-y-6">
+      <Tabs defaultValue="account" className="space-y-6">
         <TabsList className={cn(
           'border p-1',
           isDark 
             ? 'bg-slate-800/50 border-slate-700/50'
             : 'bg-white/80 border-violet-200/50 shadow-sm'
         )}>
+          <TabsTrigger value="account" className={cn(tabTriggerClass, 'flex items-center gap-1.5')}>
+            <User className="h-3.5 w-3.5" />
+            Account
+          </TabsTrigger>
           <TabsTrigger value="team" className={tabTriggerClass}>
             Team
           </TabsTrigger>
@@ -68,6 +73,10 @@ export default function PlatformSettings() {
             Integrations
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="account">
+          <PlatformAccountTab />
+        </TabsContent>
 
         <TabsContent value="team">
           <PlatformTeamManager />

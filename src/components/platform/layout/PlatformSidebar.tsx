@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { 
   Terminal, 
@@ -17,6 +17,10 @@ import { useState, useEffect } from 'react';
 import { PlatformButton } from '../ui/PlatformButton';
 import { usePlatformBranding } from '@/hooks/usePlatformBranding';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { OnlineIndicator } from '../ui/OnlineIndicator';
 
 interface NavItem {
   href: string;
@@ -38,9 +42,12 @@ const SIDEBAR_COLLAPSED_KEY = 'platform-sidebar-collapsed';
 
 export function PlatformSidebar() {
   const location = useLocation();
-  const { hasPlatformRoleOrHigher } = useAuth();
+  const navigate = useNavigate();
+  const { user, hasPlatformRoleOrHigher } = useAuth();
   const { branding } = usePlatformBranding();
   const { resolvedTheme } = usePlatformTheme();
+  const { data: profile } = useEmployeeProfile();
+  const { isConnected } = usePlatformPresenceContext();
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
     return saved ? JSON.parse(saved) : false;
@@ -49,6 +56,12 @@ export function PlatformSidebar() {
   useEffect(() => {
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, JSON.stringify(collapsed));
   }, [collapsed]);
+
+  const getInitials = () => {
+    const name = profile?.full_name || profile?.display_name || user?.email;
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   // Filter nav items based on platform role hierarchy
   const visibleItems = platformNavItems.filter(item => {
@@ -172,6 +185,60 @@ export function PlatformSidebar() {
           })}
         </ul>
       </nav>
+
+      {/* User Profile Section */}
+      <div className={cn(
+        'border-t p-3',
+        isDark ? 'border-slate-700/50' : 'border-violet-200/50'
+      )}>
+        <button
+          onClick={() => navigate('/dashboard/platform/settings')}
+          className={cn(
+            'w-full flex items-center gap-3 rounded-xl px-2 py-2 transition-all duration-200',
+            collapsed && 'justify-center',
+            isDark 
+              ? 'hover:bg-slate-800/60' 
+              : 'hover:bg-violet-50'
+          )}
+          title={collapsed ? (profile?.display_name || profile?.full_name || 'Account') : undefined}
+        >
+          <div className="relative">
+            <Avatar className={cn(
+              'h-8 w-8 border',
+              isDark ? 'border-slate-600' : 'border-violet-200'
+            )}>
+              <AvatarImage src={profile?.photo_url || undefined} alt="Profile" />
+              <AvatarFallback className={cn(
+                'text-xs font-medium',
+                isDark ? 'bg-slate-700 text-slate-300' : 'bg-violet-100 text-violet-700'
+              )}>
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
+            <OnlineIndicator 
+              isOnline={isConnected} 
+              size="sm" 
+              className="absolute -bottom-0.5 -right-0.5"
+            />
+          </div>
+          {!collapsed && (
+            <div className="flex-1 text-left min-w-0">
+              <p className={cn(
+                'text-sm font-medium truncate',
+                isDark ? 'text-white' : 'text-slate-900'
+              )}>
+                {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account'}
+              </p>
+              <p className={cn(
+                'text-xs truncate',
+                isDark ? 'text-slate-500' : 'text-slate-400'
+              )}>
+                {isConnected ? 'Online' : 'Connecting...'}
+              </p>
+            </div>
+          )}
+        </button>
+      </div>
 
       {/* Collapse Toggle */}
       <div className={cn(

@@ -3,6 +3,7 @@ import { PlatformSidebar } from './PlatformSidebar';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { PlatformThemeProvider, usePlatformTheme } from '@/contexts/PlatformThemeContext';
+import { PlatformPresenceProvider } from '@/contexts/PlatformPresenceContext';
 
 const SIDEBAR_COLLAPSED_KEY = 'platform-sidebar-collapsed';
 
@@ -55,7 +56,9 @@ function PlatformLayoutInner() {
 export function PlatformLayout() {
   return (
     <PlatformThemeProvider>
-      <PlatformLayoutInner />
+      <PlatformPresenceProvider>
+        <PlatformLayoutInner />
+      </PlatformPresenceProvider>
     </PlatformThemeProvider>
   );
 }
