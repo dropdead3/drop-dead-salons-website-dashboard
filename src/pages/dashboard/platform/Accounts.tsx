@@ -39,7 +39,7 @@ import {
 import { useOrganizationsWithStats, type OrganizationListItem } from '@/hooks/useOrganizations';
 import { CreateOrganizationDialog } from '@/components/platform/CreateOrganizationDialog';
 import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format, parseISO, isBefore, differenceInDays, startOfDay } from 'date-fns';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -291,6 +291,7 @@ export default function PlatformAccounts() {
                     <TableHead className="text-slate-400">Type</TableHead>
                     <TableHead className="text-slate-400">Location</TableHead>
                     <TableHead className="text-slate-400">Status</TableHead>
+                    <TableHead className="text-slate-400">Go-Live</TableHead>
                     <TableHead className="text-slate-400">Plan</TableHead>
                     <TableHead className="text-slate-400">Locations</TableHead>
                     <TableHead className="text-slate-400">Payments</TableHead>
@@ -338,6 +339,35 @@ export default function PlatformAccounts() {
                         <PlatformBadge variant={statusColors[org.status || 'pending']}>
                           {org.status}
                         </PlatformBadge>
+                      </TableCell>
+                      <TableCell>
+                        {org.go_live_date ? (
+                          (() => {
+                            const goLiveDate = parseISO(org.go_live_date);
+                            const today = startOfDay(new Date());
+                            const daysUntil = differenceInDays(goLiveDate, today);
+                            const isPast = isBefore(goLiveDate, today);
+                            const isLive = org.onboarding_stage === 'live';
+                            
+                            let variant: 'success' | 'warning' | 'error' | 'default' = 'default';
+                            if (isLive && isPast) {
+                              variant = 'success';
+                            } else if (isPast && !isLive) {
+                              variant = 'error';
+                            } else if (daysUntil <= 7) {
+                              variant = 'warning';
+                            }
+                            
+                            return (
+                              <PlatformBadge variant={variant} size="sm">
+                                {format(goLiveDate, 'MMM d')}
+                                {isPast && !isLive && ' 🚨'}
+                              </PlatformBadge>
+                            );
+                          })()
+                        ) : (
+                          <span className="text-slate-500">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-slate-300">
