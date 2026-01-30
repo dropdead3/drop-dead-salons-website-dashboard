@@ -115,7 +115,7 @@ export function OrganizationSwitcher({ className, compact = false }: Organizatio
                     <Building2 className="h-4 w-4 text-violet-400" />
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="truncate">{org.name}</span>
-                      <span className="text-xs text-slate-500">{org.slug}</span>
+                      <span className="text-xs text-slate-500">#{org.account_number ?? org.slug}</span>
                     </div>
                     {selectedOrganization?.id === org.id && (
                       <Check className="h-4 w-4 shrink-0 text-violet-400" />
@@ -137,7 +137,7 @@ export function OrganizationSwitcher({ className, compact = false }: Organizatio
                     <Building2 className="h-4 w-4 text-slate-500" />
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="truncate">{org.name}</span>
-                      <span className="text-xs text-slate-500">{org.slug}</span>
+                      <span className="text-xs text-slate-500">#{org.account_number ?? org.slug}</span>
                     </div>
                     <PlatformBadge variant="outline" size="sm" className="shrink-0">
                       {org.onboarding_stage}
