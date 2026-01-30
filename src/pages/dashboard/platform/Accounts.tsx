@@ -43,6 +43,7 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
+import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -74,18 +75,18 @@ export default function PlatformAccounts() {
 
   return (
     <PlatformPageContainer className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Salon Accounts</h1>
-          <p className="text-slate-400">
-            Manage all salon organizations on the platform
-          </p>
-        </div>
-        <PlatformButton onClick={() => setCreateDialogOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Account
-        </PlatformButton>
-      </div>
+      <PlatformPageHeader
+        title="Salon Accounts"
+        description="Manage all salon organizations on the platform"
+        backTo="/dashboard/platform/overview"
+        backLabel="Back to Overview"
+        actions={
+          <PlatformButton onClick={() => setCreateDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Account
+          </PlatformButton>
+        }
+      />
 
       {/* Filters */}
       <PlatformCard variant="glass">

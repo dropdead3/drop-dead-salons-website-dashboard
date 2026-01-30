@@ -3,7 +3,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Building2, 
-  ArrowLeft,
   MapPin,
   Users,
   Upload,
@@ -26,6 +25,7 @@ import {
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
+import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -66,8 +66,7 @@ export default function AccountDetail() {
             The organization you're looking for doesn't exist or you don't have access.
           </p>
           <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Accounts
+            ← Back to Accounts
           </PlatformButton>
         </div>
       </PlatformPageContainer>
@@ -79,39 +78,34 @@ export default function AccountDetail() {
   return (
     <PlatformPageContainer className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <PlatformButton variant="ghost" size="icon" onClick={() => navigate('/dashboard/platform/accounts')}>
-            <ArrowLeft className="h-4 w-4" />
-          </PlatformButton>
-          <div className="h-16 w-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-            {organization.logo_url ? (
-              <img src={organization.logo_url} alt={organization.name} className="h-14 w-14 rounded-xl object-cover" />
-            ) : (
-              <Building2 className="h-8 w-8 text-violet-400" />
-            )}
-          </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-white">{organization.name}</h1>
-              <PlatformBadge variant={statusColors[organization.status || 'pending']}>
-                {organization.status}
-              </PlatformBadge>
+      <PlatformPageHeader
+        title={organization.name}
+        description={organization.slug}
+        backTo="/dashboard/platform/accounts"
+        backLabel="Back to Accounts"
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mr-2">
+              {organization.logo_url ? (
+                <img src={organization.logo_url} alt={organization.name} className="h-10 w-10 rounded-lg object-cover" />
+              ) : (
+                <Building2 className="h-6 w-6 text-violet-400" />
+              )}
             </div>
-            <p className="text-slate-500">{organization.slug}</p>
+            <PlatformBadge variant={statusColors[organization.status || 'pending']}>
+              {organization.status}
+            </PlatformBadge>
+            <PlatformButton variant="secondary" onClick={() => navigate(`/dashboard/platform/import?org=${organization.id}`)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Import Data
+            </PlatformButton>
+            <PlatformButton>
+              <Settings className="h-4 w-4 mr-2" />
+              Configure
+            </PlatformButton>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <PlatformButton variant="secondary" onClick={() => navigate(`/dashboard/platform/import?org=${organization.id}`)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Import Data
-          </PlatformButton>
-          <PlatformButton>
-            <Settings className="h-4 w-4 mr-2" />
-            Configure
-          </PlatformButton>
-        </div>
-      </div>
+        }
+      />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
