@@ -1,127 +1,184 @@
 
-# Update "Salon" Terminology to Inclusive "Account" Language
+# Establish Typography Design Rules
 
 ## Summary
 
-Update all platform dashboard terminology to use inclusive language that applies to all beauty business types (salons, spas, esthetics, barbershops, med spas, wellness centers) instead of specifically referencing "salons".
+Formalize two critical typography design rules to ensure brand consistency:
+1. **Termina (font-display)**: Never use synthetic bolding (font-bold, font-semibold)
+2. **Aeonik Pro (font-sans)**: Never use all-caps (uppercase) - always normal capitalization
 
 ---
 
-## Changes Overview
+## Current State
 
-The following text strings will be updated across the platform admin interface:
+### Termina Rules (Existing)
+The Termina font-weight constraint is **already enforced** via CSS:
+- `src/index.css:590` forces `font-weight: 500 !important`
+- A warning is displayed in the Design System reference page
 
-| Current Text | New Text |
-|-------------|----------|
-| "Salon Accounts" | "Accounts" |
-| "Total Salons" | "Total Accounts" |
-| "Active salon accounts" | "Active accounts" |
-| "Salons being set up" | "Accounts being set up" |
-| "Across all salons" | "Across all accounts" |
-| "New Salon Account" | "New Account" |
-| "Create your first salon account" | "Create your first account" |
-| "Manage salon accounts..." | "Manage accounts..." |
-| "Create Salon Account" | "Create Account" |
-| "Set up a new salon organization" | "Set up a new organization" |
-| "New salon account created" | "New account created" |
-| "Import data...into salon accounts" | "Import data...into accounts" |
-| "Choose which salon account..." | "Choose which account..." |
-| "Select a salon organization..." | "Select an organization..." |
-
----
-
-## Files to Modify
-
-### 1. Platform Overview Page
-
-**File**: `src/pages/dashboard/platform/Overview.tsx`
-
-| Line | Current | New |
-|------|---------|-----|
-| 47 | "Manage salon accounts, migrations, and platform health" | "Manage accounts, migrations, and platform health" |
-| 52 | "New Salon Account" | "New Account" |
-| 59 | "Total Salons" | "Total Accounts" |
-| 62 | "Active salon accounts" | "Active accounts" |
-| 68 | "Salons being set up" | "Accounts being set up" |
-| 82 | "Across all salons" | "Across all accounts" |
-| 143 | "Create your first salon account to get started" | "Create your first account to get started" |
-
-### 2. Accounts Page
-
-**File**: `src/pages/dashboard/platform/Accounts.tsx`
-
-| Line | Current | New |
-|------|---------|-----|
-| 94 | "Salon Accounts" | "Accounts" |
-| 95 | "Manage all salon organizations on the platform" | "Manage all organizations on the platform" |
-| 281 | "Create your first salon account to get started" | "Create your first account to get started" |
-
-### 3. Create Organization Dialog
-
-**File**: `src/components/platform/CreateOrganizationDialog.tsx`
-
-| Line | Current | New |
-|------|---------|-----|
-| 134 | "Create Salon Account" | "Create Account" |
-| 137 | "Set up a new salon organization on the platform" | "Set up a new organization on the platform" |
-
-### 4. Platform Import Page
-
-**File**: `src/pages/dashboard/platform/PlatformImport.tsx`
-
-| Line | Current | New |
-|------|---------|-----|
-| 58 | "Import data from external software into salon accounts" | "Import data from external software into accounts" |
-| 71 | "Choose which salon account to import data into" | "Choose which account to import data into" |
-| 77 | "Select a salon organization..." | "Select an organization..." |
-
-### 5. Dashboard Layout (Navigation)
-
-**File**: `src/components/dashboard/DashboardLayout.tsx`
-
-| Line | Current | New |
-|------|---------|-----|
-| 192 | "Salon Accounts" | "Accounts" |
-
-### 6. Organization Stats Hook
-
-**File**: `src/hooks/useOrganizationStats.ts`
-
-| Line | Current | New |
-|------|---------|-----|
-| 64 | "New salon account created" | "New account created" |
-
----
-
-## Visual Changes
-
-### Before (Platform Overview)
-
-```text
-TOTAL SALONS          IN ONBOARDING         PENDING MIGRATIONS    TOTAL LOCATIONS
-1                     0                     0                     2
-Active salon accounts Salons being set up   Data imports...       Across all salons
-```
-
-### After (Platform Overview)
-
-```text
-TOTAL ACCOUNTS        IN ONBOARDING         PENDING MIGRATIONS    TOTAL LOCATIONS
-1                     0                     0                     2
-Active accounts       Accounts being set up Data imports...       Across all accounts
-```
-
----
-
-## Technical Notes
-
-- The `business_type` field in the database remains unchanged (it still stores values like 'salon', 'spa', 'esthetics', etc.) - this is correct for categorization
-- The `businessTypeLabels` mapping in `Accounts.tsx` remains unchanged since it displays the actual business type for each organization
-- Customer-facing pages that reference the specific "Drop Dead Gorgeous" salon brand are NOT being changed (e.g., "Salon Policies" in the header)
-- This change only affects internal platform administration terminology
+### Aeonik Pro Rules (Missing Enforcement)
+The Aeonik Pro capitalization rule is **documented but not enforced**:
+- The Design System page shows "Normal" transform for font-sans
+- **No CSS rule prevents uppercase usage**
+- Multiple violations exist in the codebase
 
 ---
 
 ## Implementation
 
-This is a straightforward text replacement across 6 files with no logic changes required. All updates are simple string modifications that make the platform interface more inclusive for all beauty business types.
+### 1. Update CSS Rules in `src/index.css`
+
+Add a utility rule that resets text-transform for font-sans to prevent uppercase:
+
+```css
+/* Aeonik Pro font rules: NEVER uppercase, use normal capitalization */
+@layer utilities {
+  .font-sans {
+    text-transform: none !important;
+  }
+}
+```
+
+This creates a CSS-level enforcement that will override any `uppercase` class when combined with `font-sans`.
+
+### 2. Update Design System Documentation
+
+**File**: `src/pages/dashboard/DesignSystem.tsx`
+
+Add a warning for font-sans similar to the existing font-display warning:
+
+```tsx
+{type.class === 'font-sans' && (
+  <div className="mt-3 p-2 rounded bg-amber-500/10 border border-amber-500/20">
+    <p className="text-xs text-amber-600 font-medium">
+      ⚠️ NEVER use uppercase with Aeonik Pro. Always use normal capitalization.
+    </p>
+  </div>
+)}
+```
+
+### 3. Update Typography Scale Definition
+
+Enhance the typography documentation to be more explicit:
+
+```typescript
+const typography = [
+  { 
+    class: "font-display", 
+    font: "Termina", 
+    weight: "Medium (500 only)", 
+    transform: "UPPERCASE, tracking-wide", 
+    usage: "Headlines, buttons, navigation",
+    rules: ["NEVER use font-bold or font-semibold", "Always Medium (500) weight"]
+  },
+  { 
+    class: "font-sans", 
+    font: "Aeonik Pro", 
+    weight: "400-500", 
+    transform: "Normal (never uppercase)", 
+    usage: "Body text, paragraphs, UI labels",
+    rules: ["NEVER use uppercase or all-caps", "Use normal capitalization only"]
+  },
+  // ... other fonts
+];
+```
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/index.css` | Add `.font-sans { text-transform: none !important; }` utility rule |
+| `src/pages/dashboard/DesignSystem.tsx` | Add warning box for font-sans, update typography rules display |
+
+---
+
+## Violations to Fix (Future Cleanup)
+
+The CSS rule will automatically enforce the design constraint. However, these files contain explicit `font-sans uppercase` combinations that should be reviewed:
+
+| File | Line | Current Pattern | Suggested Fix |
+|------|------|-----------------|---------------|
+| `BusinessCardRequests.tsx` | ~227 | `font-sans uppercase` | Use `font-display` or remove uppercase |
+| `HeadshotRequests.tsx` | ~216 | `font-sans uppercase` | Use `font-display` or remove uppercase |
+| `DrinkMenuSection.tsx` | ~73, ~91-94 | `uppercase font-sans` | Use `font-display` for labels |
+| `AnnouncementBarManager.tsx` | ~104 | `font-sans uppercase` | Use `font-display` for CTAs |
+| `ReportsTabContent.tsx` | ~187-188 | `font-sans uppercase` | Use `font-display` for category labels |
+
+These will be automatically fixed by the CSS rule, but for semantic correctness, components using uppercase text should switch to `font-display` (Termina).
+
+---
+
+## Visual Reference
+
+### Typography Rules Card (Design System Page)
+
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TYPOGRAPHY                                                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  font-display                                           Medium (500)    │
+│  ┌───────────────────────────────────────────────────────────────────┐ │
+│  │ TERMINA                                                           │ │
+│  └───────────────────────────────────────────────────────────────────┘ │
+│  Headlines, buttons, navigation                                        │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ ⚠️ NEVER use font-bold or font-semibold. Always use font-medium │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  font-sans                                                    400-500   │
+│  ┌───────────────────────────────────────────────────────────────────┐ │
+│  │ Aeonik Pro                                                        │ │
+│  └───────────────────────────────────────────────────────────────────┘ │
+│  Body text, paragraphs, UI labels                                      │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ ⚠️ NEVER use uppercase. Always use normal capitalization.       │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Enhanced CSS Comment Block
+
+Update the typography comment in index.css for clarity:
+
+```css
+/* ===============================================
+   TYPOGRAPHY DESIGN RULES (Enforced via CSS)
+   ===============================================
+   
+   1. TERMINA (font-display)
+      - Weight: ALWAYS Medium (500) - no synthetic bolding
+      - Transform: ALWAYS uppercase with wide tracking
+      - Usage: Headlines, buttons, navigation labels
+      
+   2. AEONIK PRO (font-sans)  
+      - Weight: Regular (400) or Medium (500)
+      - Transform: ALWAYS normal capitalization - NEVER uppercase
+      - Usage: Body text, paragraphs, descriptions, UI labels
+      
+   3. LAGUNA (font-serif)
+      - Weight: Bold (700) only
+      - Transform: Normal
+      - Usage: Editorial accents (rarely used)
+      
+   4. SLOOP SCRIPT (font-script)
+      - Weight: Regular (400)
+      - Transform: Normal
+      - Usage: Decorative elements
+   
+   =============================================== */
+```
+
+---
+
+## Implementation Order
+
+1. Add CSS utility rule for font-sans text-transform enforcement
+2. Add enhanced typography comment block in index.css
+3. Update DesignSystem.tsx with font-sans warning
+4. Update typography scale definition with explicit rules
