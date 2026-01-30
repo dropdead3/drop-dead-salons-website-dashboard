@@ -3,28 +3,19 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Building2, 
-  Users, 
   MapPin, 
   Upload, 
   Plus, 
   ArrowRight,
   Clock,
-  CheckCircle2,
-  AlertCircle,
   Sparkles,
   Settings
 } from 'lucide-react';
 import { useOrganizationStats } from '@/hooks/useOrganizationStats';
-import { formatDistanceToNow } from 'date-fns';
-import {
-  PlatformCard,
-  PlatformCardContent,
-  PlatformCardHeader,
-  PlatformCardTitle,
-} from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
+import { PlatformActivityFeed } from '@/components/platform/overview/PlatformActivityFeed';
+import { PlatformLiveAnalytics } from '@/components/platform/overview/PlatformLiveAnalytics';
 
 export default function PlatformOverview() {
   const navigate = useNavigate();
@@ -88,11 +79,16 @@ export default function PlatformOverview() {
         />
       </div>
 
-      {/* Quick Actions & Activity */}
+      {/* Analytics & Quick Actions Row */}
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Live Analytics */}
+        <div className="lg:col-span-2">
+          <PlatformLiveAnalytics />
+        </div>
+
         {/* Quick Actions */}
         <div className="lg:col-span-1">
-          <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6">
+          <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 h-full">
             <div className="flex items-center gap-2 mb-5">
               <div className="p-2 rounded-xl bg-violet-500/20">
                 <Sparkles className="h-4 w-4 text-violet-400" />
@@ -118,39 +114,10 @@ export default function PlatformOverview() {
             </div>
           </div>
         </div>
-
-        {/* Recent Activity */}
-        <div className="lg:col-span-2">
-          <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 h-full">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
-              <PlatformButton 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/dashboard/platform/accounts')}
-                className="text-slate-400 hover:text-white"
-              >
-                View all
-              </PlatformButton>
-            </div>
-            {stats?.recentActivity && stats.recentActivity.length > 0 ? (
-              <div className="space-y-3">
-                {stats.recentActivity.map((activity) => (
-                  <ActivityItem key={activity.id} activity={activity} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-700/50 mb-4">
-                  <Building2 className="h-8 w-8 text-slate-500" />
-                </div>
-                <p className="text-slate-400 font-medium">No recent activity</p>
-                <p className="text-sm text-slate-500 mt-1">Create your first account to get started</p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
+
+      {/* Activity Feed - Full Width */}
+      <PlatformActivityFeed limit={10} />
     </PlatformPageContainer>
   );
 }
@@ -228,64 +195,6 @@ function QuickActionButton({ icon: Icon, label, onClick }: QuickActionButtonProp
       <span className="flex-1 text-left text-sm font-medium">{label}</span>
       <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all" />
     </button>
-  );
-}
-
-interface ActivityItemProps {
-  activity: {
-    id: string;
-    type: string;
-    description: string;
-    organizationName?: string;
-    createdAt: string;
-  };
-}
-
-function ActivityItem({ activity }: ActivityItemProps) {
-  const iconMap: Record<string, { icon: React.ReactNode; bg: string }> = {
-    org_created: { 
-      icon: <Building2 className="h-4 w-4 text-violet-400" />,
-      bg: 'bg-violet-500/20'
-    },
-    migration_completed: { 
-      icon: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
-      bg: 'bg-emerald-500/20'
-    },
-    status_change: { 
-      icon: <AlertCircle className="h-4 w-4 text-amber-400" />,
-      bg: 'bg-amber-500/20'
-    },
-    user_added: { 
-      icon: <Users className="h-4 w-4 text-violet-400" />,
-      bg: 'bg-violet-500/20'
-    },
-  };
-
-  const { icon, bg } = iconMap[activity.type] || { 
-    icon: <Building2 className="h-4 w-4 text-slate-400" />,
-    bg: 'bg-slate-700/50'
-  };
-
-  return (
-    <Link 
-      to={`/dashboard/platform/accounts/${activity.id}`}
-      className="flex items-center gap-4 p-4 rounded-xl bg-slate-700/30 border border-slate-600/20 hover:bg-slate-700/50 hover:border-slate-600/40 transition-all duration-200 cursor-pointer group"
-    >
-      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${bg}`}>
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white truncate group-hover:text-violet-300 transition-colors">
-          {activity.organizationName}
-        </p>
-        <p className="text-xs text-slate-500 mt-0.5">
-          {activity.description}
-        </p>
-      </div>
-      <PlatformBadge variant="outline" size="sm" className="text-slate-500 border-slate-600/50">
-        {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
-      </PlatformBadge>
-    </Link>
   );
 }
 
