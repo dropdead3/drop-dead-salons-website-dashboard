@@ -38,7 +38,7 @@ export function PlatformPageHeader({
           </PlatformButton>
         )}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">{title}</h1>
+          <h1 className="text-3xl font-medium tracking-tight text-white">{title}</h1>
           {description && (
             <p className="text-slate-400">{description}</p>
           )}

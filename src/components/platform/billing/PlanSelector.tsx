@@ -41,10 +41,10 @@ export function PlanSelector({ plans, selectedPlanId, onSelect, disabled }: Plan
             )}
             
             <div className="space-y-2">
-              <h4 className="font-semibold text-white">{plan.name}</h4>
+              <h4 className="font-medium text-white">{plan.name}</h4>
               
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-white">
+                <span className="text-2xl font-medium text-white">
                   {formatCurrency(plan.price_monthly)}
                 </span>
                 <span className="text-sm text-slate-400">/mo</span>

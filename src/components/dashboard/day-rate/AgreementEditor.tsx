@@ -311,11 +311,11 @@ function formatMarkdown(content: string) {
   
   lines.forEach((line, index) => {
     if (line.startsWith('### ')) {
-      elements.push(<h3 key={index} className="text-base font-semibold mt-4 mb-2">{line.slice(4)}</h3>);
+      elements.push(<h3 key={index} className="text-base font-medium mt-4 mb-2">{line.slice(4)}</h3>);
     } else if (line.startsWith('## ')) {
-      elements.push(<h2 key={index} className="text-lg font-semibold mt-6 mb-3">{line.slice(3)}</h2>);
+      elements.push(<h2 key={index} className="text-lg font-medium mt-6 mb-3">{line.slice(3)}</h2>);
     } else if (line.startsWith('# ')) {
-      elements.push(<h1 key={index} className="text-xl font-bold mt-6 mb-4">{line.slice(2)}</h1>);
+      elements.push(<h1 key={index} className="text-xl font-medium mt-6 mb-4">{line.slice(2)}</h1>);
     } else if (line.startsWith('- ')) {
       elements.push(<li key={index} className="ml-4 mb-1">{line.slice(2)}</li>);
     } else if (line.trim()) {

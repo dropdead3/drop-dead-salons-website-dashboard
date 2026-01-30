@@ -76,7 +76,7 @@ export function PlatformSidebar() {
                 <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20">
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-display font-semibold text-white">Platform</span>
+                <span className="font-display text-white">Platform</span>
               </>
             )}
           </div>

@@ -159,7 +159,7 @@ function QRCodeCard() {
     ctx.fillRect(0, 0, width, headerHeight);
 
     ctx.fillStyle = '#f8f6f1';
-    ctx.font = 'bold 60px Termina, sans-serif';
+    ctx.font = '500 60px Termina, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('DROP DEAD®', width / 2, headerHeight * 0.5 + 10);
     ctx.font = '28px sans-serif';

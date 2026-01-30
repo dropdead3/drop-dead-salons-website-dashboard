@@ -368,7 +368,7 @@ export default function ChangelogManager() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-display font-bold tracking-wide">CHANGELOG & ROADMAP</h1>
+            <h1 className="text-2xl font-display tracking-wide">CHANGELOG & ROADMAP</h1>
             <p className="text-muted-foreground">Manage updates, features, and user feedback</p>
           </div>
           <Button onClick={() => { resetForm(); setShowEntryDialog(true); }}>

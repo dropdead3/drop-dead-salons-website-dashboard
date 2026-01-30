@@ -342,7 +342,7 @@ export default function Changelog() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-display font-bold tracking-wide">WHAT'S NEW</h1>
+            <h1 className="text-xl sm:text-2xl font-display tracking-wide">WHAT'S NEW</h1>
             <p className="text-sm text-muted-foreground">Stay updated on the latest features</p>
           </div>
           <div className="flex items-center gap-2">
