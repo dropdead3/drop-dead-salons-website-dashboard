@@ -94,7 +94,7 @@ const DesignSystem = () => {
 
   // Typography scale with design rules
   const typography = [
-    { class: "font-display", font: "Termina", weight: "Medium (500 only)", transform: "UPPERCASE, tracking-wide", usage: "Headlines, buttons, navigation", rule: "NEVER use font-bold or font-semibold" },
+    { class: "font-display", font: "Termina", weight: "Medium (500 only)", transform: "UPPERCASE, tracking-wider (0.08em)", usage: "Headlines, buttons, navigation", rule: "NEVER use font-bold or font-semibold" },
     { class: "font-sans", font: "Aeonik Pro", weight: "400-500", transform: "Normal (never uppercase)", usage: "Body text, paragraphs, UI labels", rule: "NEVER use uppercase or all-caps" },
     { class: "font-serif", font: "Laguna", weight: "700", transform: "Normal", usage: "Editorial accents (rarely used)", rule: null },
     { class: "font-script", font: "Sloop Script", weight: "400", transform: "Normal", usage: "Decorative elements", rule: null },
