@@ -1,279 +1,153 @@
 
-
-# PandaDoc Integration for Account Signup Agreements
+# PandaDoc Integration Configuration UI
 
 ## Summary
 
-Integrate PandaDoc to manage account signup agreements, automatically populate billing terms from signed documents, and provide platform admins with full control over contract adjustments including term extensions, complimentary months, and manual overrides.
+Add a new "Integrations" tab to Platform Settings containing:
+1. **PandaDoc Integration Status Card** - Shows connection health, webhook URL, and secret configuration status
+2. **Field Mapping Configuration UI** - Allows admins to customize which PandaDoc document fields map to billing columns
+
+This provides platform admins with visibility into the integration state and flexibility to adjust mappings without code changes.
 
 ---
 
-## Current State Analysis
+## Current State
 
-**Existing Infrastructure:**
-- Robust `organization_billing` table with fields for contract dates, promo periods, trial days, and notes
-- `billing_changes` table for audit trail of all billing modifications
-- `BillingConfigurationPanel` with comprehensive forms for all billing parameters
-- Edge function patterns for webhook handling (e.g., `capture-external-lead`)
-- Existing secrets management for API keys (PHOREST, RESEND, etc.)
+**What Exists:**
+- `site_settings` table stores `pandadoc_field_mapping` configuration
+- `pandadoc-webhook` edge function processes webhook events
+- Default field mapping hardcoded in webhook and hooks as fallback
+- Secrets: `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SECRET` (not yet configured)
+- PlatformSettings page has existing tab patterns (Team, Security, Templates, Defaults, Branding)
 
 **What's Needed:**
-- PandaDoc API key storage and webhook secret
-- Edge function to receive PandaDoc webhooks when documents are completed
-- Field mapping from PandaDoc document fields to billing configuration
-- UI for viewing/linking PandaDoc documents to accounts
-- Contract adjustment tools (extend terms, comp months, etc.)
+- New "Integrations" tab in Platform Settings
+- Status card showing webhook URL and configuration state
+- Editable field mapping interface
+- Hook to check secret configuration status
 
 ---
 
-## PandaDoc Integration Architecture
+## Architecture
 
 ```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                         PandaDoc Workflow                            │
-│                                                                      │
-│  ┌──────────────┐     ┌──────────────┐     ┌──────────────────────┐ │
-│  │ PandaDoc     │     │ Document     │     │ Webhook Triggered    │ │
-│  │ Template     │────▶│ Sent to      │────▶│ on Completion        │ │
-│  │ Created      │     │ Client       │     │                      │ │
-│  └──────────────┘     └──────────────┘     └──────────┬───────────┘ │
-│                                                        │             │
-│                                            ┌───────────▼───────────┐ │
-│                                            │ Edge Function         │ │
-│                                            │ pandadoc-webhook      │ │
-│                                            └───────────┬───────────┘ │
-│                                                        │             │
-│  ┌─────────────────────────────────────────────────────▼───────────┐│
-│  │                     Field Mapping                                ││
-│  │  PandaDoc Field          →        organization_billing Column    ││
-│  │  ─────────────────────────────────────────────────────────────   ││
-│  │  term_start_date         →        contract_start_date            ││
-│  │  term_end_date           →        contract_end_date              ││
-│  │  subscription_plan       →        plan_id (lookup by name)       ││
-│  │  monthly_rate            →        custom_price                   ││
-│  │  promo_months            →        promo_months                   ││
-│  │  promo_rate              →        promo_price                    ││
-│  │  setup_fee               →        setup_fee                      ││
-│  │  special_notes           →        notes                          ││
-│  └──────────────────────────────────────────────────────────────────┘│
-│                                                        │             │
-│                                            ┌───────────▼───────────┐ │
-│                                            │ organization_billing  │ │
-│                                            │ Updated + Audit Log   │ │
-│                                            └───────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────┘
+Platform Settings Page
+├── Team
+├── Security  
+├── Import Templates
+├── Defaults
+├── Integrations (NEW)
+│   ├── PandaDoc Status Card
+│   │   ├── Webhook URL (copyable)
+│   │   ├── API Key status (configured/not configured)
+│   │   ├── Webhook Secret status
+│   │   ├── Last webhook received timestamp
+│   │   └── Recent documents count
+│   │
+│   └── Field Mapping Configuration
+│       ├── PandaDoc Field → Billing Column mappings
+│       ├── Add/Remove mapping rows
+│       ├── Billing column dropdown (contract_start_date, etc.)
+│       └── Save/Reset buttons
+│
+└── Branding (Owner Only)
 ```
 
 ---
 
-## Database Schema Changes
+## UI Design
 
-### New Table: `pandadoc_documents`
-
-Track PandaDoc documents linked to organizations:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| organization_id | uuid | FK to organizations |
-| pandadoc_document_id | text | PandaDoc's document ID |
-| document_name | text | Document title |
-| status | text | draft, sent, viewed, completed, voided |
-| sent_at | timestamptz | When document was sent |
-| completed_at | timestamptz | When document was signed |
-| signed_by_name | text | Signer's name |
-| signed_by_email | text | Signer's email |
-| extracted_fields | jsonb | Raw field data from PandaDoc |
-| applied_to_billing | boolean | Whether fields were applied |
-| applied_at | timestamptz | When applied to billing |
-| document_url | text | Link to view in PandaDoc |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-### New Table: `contract_adjustments`
-
-Track all manual contract adjustments for audit purposes:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| organization_id | uuid | FK to organizations |
-| adjustment_type | text | term_extension, comp_months, date_change, custom |
-| description | text | Human-readable description |
-| previous_end_date | date | Contract end date before adjustment |
-| new_end_date | date | Contract end date after adjustment |
-| months_added | int | Number of months added (if applicable) |
-| comp_value | numeric | Dollar value of comp'd months |
-| reason | text | Why adjustment was made |
-| approved_by | uuid | Platform user who made adjustment |
-| created_at | timestamptz | |
-
-### Add to billing_changes.change_type
-
-Extend the existing enum to include:
-- `term_extension` - Months added to contract
-- `comp_applied` - Complimentary months applied
-- `pandadoc_import` - Fields imported from PandaDoc
-
----
-
-## Edge Function: `pandadoc-webhook`
-
-Receives webhooks from PandaDoc when document status changes:
-
-```text
-POST /functions/v1/pandadoc-webhook
-
-Headers:
-  X-PandaDoc-Signature: {hmac_signature}
-
-Payload:
-{
-  "event": "document_state_changed",
-  "data": {
-    "id": "document_id",
-    "name": "Signup Agreement - Drop Dead Salons",
-    "status": "document.completed",
-    "date_completed": "2026-01-30T10:00:00Z",
-    "metadata": {
-      "organization_id": "uuid"  // Set when creating document
-    },
-    "fields": {
-      "term_start_date": { "value": "2026-02-01" },
-      "term_end_date": { "value": "2027-01-31" },
-      "subscription_plan": { "value": "Professional" },
-      "monthly_rate": { "value": "299.00" },
-      "promo_months": { "value": "3" },
-      "promo_rate": { "value": "199.00" },
-      "setup_fee": { "value": "500.00" },
-      "special_notes": { "value": "Waived setup due to referral" }
-    },
-    "recipients": [{
-      "role": "Client",
-      "email": "owner@dropdead.com",
-      "first_name": "Jane",
-      "last_name": "Doe",
-      "completed": true
-    }]
-  }
-}
-```
-
-**Processing Flow:**
-1. Verify webhook signature using PANDADOC_WEBHOOK_SECRET
-2. Parse document fields
-3. Look up organization via metadata.organization_id or match by document name
-4. Insert/update `pandadoc_documents` record
-5. If status is "completed":
-   - Map fields to billing configuration
-   - Update `organization_billing` table
-   - Log change to `billing_changes` with type `pandadoc_import`
-6. Send notification to platform team (optional)
-
----
-
-## UI Components
-
-### 1. PandaDoc Documents Card (Account Detail > Billing Tab)
-
-Display linked documents with status and quick actions:
+### Integration Status Card
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
-│  PandaDoc Agreements                            [+ Link Document] │
+│  PandaDoc Integration                              [Test Webhook] │
 ├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  Status:  ● Connected                                            │
+│                                                                   │
+│  Webhook URL:                                                     │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │ 📄 Service Agreement - 2026                    ✅ Completed │  │
-│  │    Signed by: Jane Doe (owner@dropdead.com)                │  │
-│  │    Signed: Jan 30, 2026                                     │  │
-│  │    [View Document] [Re-apply Fields]                        │  │
+│  │ https://vciqmwzgfjxtzagaxgnh.supabase.co/functions/v1/...  │  │
+│  │                                                     [Copy] │  │
 │  └────────────────────────────────────────────────────────────┘  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ 📄 Amendment - Extended Terms                  📧 Sent      │  │
-│  │    Sent to: Jane Doe                                        │  │
-│  │    Sent: Jan 28, 2026                                       │  │
-│  │    [View Document] [Resend]                                 │  │
-│  └────────────────────────────────────────────────────────────┘  │
+│                                                                   │
+│  Configuration:                                                   │
+│  ┌────────────────────┐  ┌────────────────────┐                  │
+│  │ API Key            │  │ Webhook Secret     │                  │
+│  │ ○ Not Configured   │  │ ○ Not Configured   │                  │
+│  │ [Configure]        │  │ [Configure]        │                  │
+│  └────────────────────┘  └────────────────────┘                  │
+│                                                                   │
+│  Stats:                                                           │
+│  • Documents received: 12                                         │
+│  • Last webhook: 2 hours ago                                      │
+│  • Documents pending: 3                                           │
+│                                                                   │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### 2. Contract Adjustments Panel
-
-New section in Billing tab for manual adjustments:
+### Field Mapping Configuration
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
-│  Contract Adjustments                                             │
+│  Field Mapping                                            [Reset]│
+│  Map PandaDoc document fields to billing configuration           │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                   │
-│  Current Contract: Feb 1, 2026 → Jan 31, 2027 (12 months)        │
+│  PandaDoc Field Name          Billing Column                      │
+│  ─────────────────────────────────────────────────────────────   │
+│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
+│  │ term_start_date      │ →   │ contract_start_date ▼│           │
+│  └──────────────────────┘     └──────────────────────┘           │
+│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
+│  │ term_end_date        │ →   │ contract_end_date   ▼│           │
+│  └──────────────────────┘     └──────────────────────┘           │
+│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
+│  │ subscription_plan    │ →   │ plan_name_lookup    ▼│           │
+│  └──────────────────────┘     └──────────────────────┘           │
+│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
+│  │ monthly_rate         │ →   │ custom_price        ▼│           │
+│  └──────────────────────┘     └──────────────────────┘           │
+│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
+│  │ promo_months         │ →   │ promo_months        ▼│           │
+│  └──────────────────────┘     └──────────────────────┘           │
+│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
+│  │ promo_rate           │ →   │ promo_price         ▼│           │
+│  └──────────────────────┘     └──────────────────────┘           │
+│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
+│  │ setup_fee            │ →   │ setup_fee           ▼│           │
+│  └──────────────────────┘     └──────────────────────┘           │
+│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
+│  │ special_notes        │ →   │ notes               ▼│           │
+│  └──────────────────────┘     └──────────────────────┘           │
 │                                                                   │
-│  ┌─────────────────────┐  ┌─────────────────────┐                │
-│  │ 📅 Extend Term      │  │ 🎁 Comp Free Months │                │
-│  │ Add months to end   │  │ Credit at $0 rate   │                │
-│  └─────────────────────┘  └─────────────────────┘                │
+│                              [+ Add Mapping]                      │
 │                                                                   │
-│  ┌─────────────────────┐  ┌─────────────────────┐                │
-│  │ 📆 Change Dates     │  │ 📝 Custom Adjustment│                │
-│  │ Edit start/end      │  │ Freeform change     │                │
-│  └─────────────────────┘  └─────────────────────┘                │
-│                                                                   │
-├──────────────────────────────────────────────────────────────────┤
-│  Recent Adjustments                                               │
-│  • Jan 15: +3 months extended (reason: loyalty bonus)            │
-│  • Dec 1: 1 month comp'd ($299 value) for service issue          │
+│                                              [Save Mappings]      │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### 3. Extend Term Dialog
+---
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│  Extend Contract Term                              [X]  │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  Current End Date: Jan 31, 2027                         │
-│                                                         │
-│  Months to Add:    [_3_] months                         │
-│                                                         │
-│  New End Date:     Apr 30, 2027                         │
-│                                                         │
-│  Reason:                                                │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ Loyalty bonus for 3-year client                 │   │
-│  └─────────────────────────────────────────────────┘   │
-│                                                         │
-│  ⚠️ This will be logged in the billing audit trail     │
-│                                                         │
-│                           [Cancel]  [Extend Contract]   │
-└─────────────────────────────────────────────────────────┘
-```
+## Available Billing Columns for Mapping
 
-### 4. Comp Free Months Dialog
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│  Comp Free Months                                  [X]  │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  Months to Comp:   [_1_] month(s)                       │
-│                                                         │
-│  Apply To:         ( ) Next billing cycle               │
-│                    (•) Specific month: [Feb 2026 ▼]     │
-│                                                         │
-│  Credit Value:     $299.00                              │
-│  (Based on current monthly rate)                        │
-│                                                         │
-│  Reason:                                                │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ Service outage compensation - Ticket #4521      │   │
-│  └─────────────────────────────────────────────────┘   │
-│                                                         │
-│  ⚠️ This creates a $299 credit on the account          │
-│                                                         │
-│                           [Cancel]  [Apply Credit]      │
-└─────────────────────────────────────────────────────────┘
-```
+| Column | Label | Type |
+|--------|-------|------|
+| contract_start_date | Contract Start Date | Date |
+| contract_end_date | Contract End Date | Date |
+| plan_name_lookup | Subscription Plan (by name) | Special |
+| custom_price | Monthly Rate | Number |
+| promo_months | Promo Months | Integer |
+| promo_price | Promo Price | Number |
+| promo_ends_at | Promo End Date | Date |
+| setup_fee | Setup Fee | Number |
+| trial_days | Trial Days | Integer |
+| billing_cycle | Billing Cycle | Enum |
+| notes | Special Notes | Text |
+| discount_value | Discount Value | Number |
+| per_location_fee | Per Location Fee | Number |
+| per_user_fee | Per User Fee | Number |
 
 ---
 
@@ -281,15 +155,11 @@ New section in Billing tab for manual adjustments:
 
 | File | Purpose |
 |------|---------|
-| `supabase/functions/pandadoc-webhook/index.ts` | Webhook handler for PandaDoc events |
-| `src/hooks/usePandaDocDocuments.ts` | CRUD for pandadoc_documents table |
-| `src/hooks/useContractAdjustments.ts` | CRUD for contract_adjustments + helpers |
-| `src/components/platform/billing/PandaDocDocumentsCard.tsx` | Display linked documents |
-| `src/components/platform/billing/ContractAdjustmentsPanel.tsx` | Adjustment actions grid |
-| `src/components/platform/billing/ExtendTermDialog.tsx` | Extend contract dialog |
-| `src/components/platform/billing/CompMonthsDialog.tsx` | Comp free months dialog |
-| `src/components/platform/billing/ChangeDatesDialog.tsx` | Manual date adjustment dialog |
-| `src/components/platform/billing/LinkPandaDocDialog.tsx` | Manually link existing document |
+| `src/components/platform/settings/PlatformIntegrationsTab.tsx` | Main integrations tab container |
+| `src/components/platform/settings/PandaDocStatusCard.tsx` | Connection status and webhook info |
+| `src/components/platform/settings/PandaDocFieldMappingEditor.tsx` | Editable field mapping UI |
+| `src/hooks/usePandaDocFieldMapping.ts` | CRUD for field mapping in site_settings |
+| `src/hooks/usePandaDocStats.ts` | Query for document statistics |
 
 ---
 
@@ -297,106 +167,155 @@ New section in Billing tab for manual adjustments:
 
 | File | Changes |
 |------|---------|
-| `src/components/platform/billing/BillingConfigurationPanel.tsx` | Add PandaDoc card and Adjustments panel |
-| `src/hooks/useBillingHistory.ts` | Add new change types for adjustments |
-| Database migration | Create pandadoc_documents, contract_adjustments tables |
-| `supabase/config.toml` | Add pandadoc-webhook function config |
+| `src/pages/dashboard/platform/PlatformSettings.tsx` | Add "Integrations" tab |
+| `src/hooks/useSiteSettings.ts` | Add typed hook for pandadoc_field_mapping |
 
 ---
 
-## Secrets Required
+## Implementation Details
 
-| Secret | Purpose |
-|--------|---------|
-| `PANDADOC_API_KEY` | API key for PandaDoc REST API (creating documents, fetching status) |
-| `PANDADOC_WEBHOOK_SECRET` | Shared secret for verifying webhook signatures |
+### usePandaDocFieldMapping Hook
 
----
+```typescript
+interface PandaDocFieldMapping {
+  [pandaDocField: string]: string; // maps to billing column
+}
 
-## PandaDoc Field Mapping Configuration
+const DEFAULT_MAPPING: PandaDocFieldMapping = {
+  term_start_date: 'contract_start_date',
+  term_end_date: 'contract_end_date',
+  subscription_plan: 'plan_name_lookup',
+  monthly_rate: 'custom_price',
+  promo_months: 'promo_months',
+  promo_rate: 'promo_price',
+  setup_fee: 'setup_fee',
+  special_notes: 'notes',
+};
 
-Store field mappings in `site_settings` for flexibility:
-
-```json
-{
-  "id": "pandadoc_field_mapping",
-  "value": {
-    "term_start_date": "contract_start_date",
-    "term_end_date": "contract_end_date",
-    "subscription_plan": "plan_name_lookup",
-    "monthly_rate": "custom_price",
-    "promo_months": "promo_months",
-    "promo_rate": "promo_price",
-    "setup_fee": "setup_fee",
-    "special_notes": "notes"
-  }
+function usePandaDocFieldMapping() {
+  // Query site_settings for pandadoc_field_mapping
+  // Return data with fallback to DEFAULT_MAPPING
+  // Provide update mutation
 }
 ```
 
-This allows platform admins to adjust mappings without code changes.
+### usePandaDocStats Hook
+
+```typescript
+interface PandaDocStats {
+  totalDocuments: number;
+  pendingDocuments: number;
+  completedDocuments: number;
+  lastWebhookAt: string | null;
+}
+
+function usePandaDocStats() {
+  // Query pandadoc_documents table for counts
+  // Get most recent created_at for "last webhook"
+  return useQuery({
+    queryKey: ['pandadoc-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pandadoc_documents')
+        .select('id, status, created_at')
+        .order('created_at', { ascending: false });
+      // Calculate stats from results
+    }
+  });
+}
+```
+
+### PandaDocStatusCard Component
+
+Shows:
+- Webhook URL (constructed from project ID): `https://vciqmwzgfjxtzagaxgnh.supabase.co/functions/v1/pandadoc-webhook`
+- Copy button for webhook URL
+- Configuration status indicators for API Key and Webhook Secret
+- Links to configure secrets (note: secrets API shows which are configured)
+- Document statistics from pandadoc_documents table
+
+### PandaDocFieldMappingEditor Component
+
+- Displays current mappings as editable rows
+- PandaDoc field: text input (custom field names)
+- Billing column: select dropdown with predefined options
+- Add/remove mapping buttons
+- Save persists to site_settings
+- Reset restores to default mapping
+- Changes tracked with unsaved indicator
+
+---
+
+## Billing Column Options
+
+Provide a curated list with descriptions:
+
+```typescript
+const BILLING_COLUMNS = [
+  { value: 'contract_start_date', label: 'Contract Start Date', type: 'date' },
+  { value: 'contract_end_date', label: 'Contract End Date', type: 'date' },
+  { value: 'plan_name_lookup', label: 'Plan (lookup by name)', type: 'special' },
+  { value: 'custom_price', label: 'Monthly Rate', type: 'number' },
+  { value: 'base_price', label: 'Base Price', type: 'number' },
+  { value: 'promo_months', label: 'Promo Months', type: 'integer' },
+  { value: 'promo_price', label: 'Promo Price', type: 'number' },
+  { value: 'promo_ends_at', label: 'Promo End Date', type: 'date' },
+  { value: 'setup_fee', label: 'Setup Fee', type: 'number' },
+  { value: 'trial_days', label: 'Trial Days', type: 'integer' },
+  { value: 'billing_cycle', label: 'Billing Cycle', type: 'enum' },
+  { value: 'notes', label: 'Special Notes', type: 'text' },
+  { value: 'discount_value', label: 'Discount Value', type: 'number' },
+  { value: 'per_location_fee', label: 'Per Location Fee', type: 'number' },
+  { value: 'per_user_fee', label: 'Per User Fee', type: 'number' },
+  { value: 'included_locations', label: 'Included Locations', type: 'integer' },
+  { value: 'included_users', label: 'Included Users', type: 'integer' },
+];
+```
 
 ---
 
 ## Security & Permissions
 
-- **Webhook Verification**: HMAC signature validation using PANDADOC_WEBHOOK_SECRET
-- **RLS Policies**: Platform users can view/modify documents and adjustments
-- **Audit Trail**: All adjustments logged to `contract_adjustments` and `billing_changes`
-- **Role Restrictions**: Only platform_admin and platform_owner can make contract adjustments
+- **Tab Access**: Platform admins and owners can access Integrations tab
+- **RLS**: Uses existing site_settings policies (platform users can update)
+- **Secret Display**: Only shows if secret is configured, never shows actual value
+- **Audit**: Consider logging mapping changes to platform_audit_log
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Database & Secrets Setup
-1. Create `pandadoc_documents` table with RLS
-2. Create `contract_adjustments` table with RLS
-3. Add new change types to billing_changes
-4. Add secrets: PANDADOC_API_KEY, PANDADOC_WEBHOOK_SECRET
+### Phase 1: Hooks and Data Layer
+1. Create `usePandaDocFieldMapping` hook with default fallback
+2. Create `usePandaDocStats` hook for document counts
+3. Add RLS policy for pandadoc_field_mapping if needed
 
-### Phase 2: Webhook Edge Function
-1. Create `pandadoc-webhook` edge function
-2. Implement signature verification
-3. Implement field extraction and mapping
-4. Update organization_billing from document fields
-5. Log changes to billing_changes
+### Phase 2: Status Card
+1. Create `PandaDocStatusCard` component
+2. Show webhook URL with copy button
+3. Display configuration status for secrets
+4. Show document statistics
 
-### Phase 3: Document Tracking UI
-1. Create `usePandaDocDocuments` hook
-2. Build `PandaDocDocumentsCard` component
-3. Add `LinkPandaDocDialog` for manual linking
-4. Integrate into BillingConfigurationPanel
+### Phase 3: Field Mapping Editor
+1. Create `PandaDocFieldMappingEditor` component
+2. Build editable mapping rows UI
+3. Implement add/remove/save/reset functionality
+4. Add validation for duplicate fields
 
-### Phase 4: Contract Adjustments
-1. Create `useContractAdjustments` hook
-2. Build `ContractAdjustmentsPanel` with action grid
-3. Build `ExtendTermDialog` with date calculation
-4. Build `CompMonthsDialog` with credit calculation
-5. Build `ChangeDatesDialog` for manual overrides
-6. Integrate into BillingConfigurationPanel
-
-### Phase 5: Testing & Documentation
-1. Test webhook with PandaDoc sandbox
-2. Test field mapping with various document templates
-3. Document PandaDoc template requirements
-4. Document adjustment audit trail
+### Phase 4: Integration Tab
+1. Create `PlatformIntegrationsTab` container
+2. Add "Integrations" tab to PlatformSettings
+3. Wire up all components
 
 ---
 
-## PandaDoc Template Requirements
+## Webhook URL Construction
 
-For the integration to work, PandaDoc templates should include these field tokens:
+The webhook URL is deterministic based on the Supabase project ID:
 
-| Field Name | Type | Format | Example |
-|------------|------|--------|---------|
-| term_start_date | Date | YYYY-MM-DD | 2026-02-01 |
-| term_end_date | Date | YYYY-MM-DD | 2027-01-31 |
-| subscription_plan | Text | Plan name | Professional |
-| monthly_rate | Number | Decimal | 299.00 |
-| promo_months | Number | Integer | 3 |
-| promo_rate | Number | Decimal | 199.00 |
-| setup_fee | Number | Decimal | 500.00 |
-| special_notes | Text | Freeform | Waived setup fee |
+```typescript
+const SUPABASE_PROJECT_ID = 'vciqmwzgfjxtzagaxgnh';
+const webhookUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/pandadoc-webhook`;
+```
 
-Additionally, document metadata should include `organization_id` when creating documents via API to enable automatic linking.
-
+This URL should be configured in PandaDoc's webhook settings to receive document events.
