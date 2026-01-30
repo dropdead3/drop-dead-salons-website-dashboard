@@ -423,7 +423,7 @@ export default function ViewProfile() {
                     className={completionPercentage === 100 ? "text-green-500" : "text-amber-500"}
                   />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-medium">
                   {completionPercentage}%
                 </span>
               </div>

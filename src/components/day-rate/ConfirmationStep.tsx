@@ -106,7 +106,7 @@ END:VCALENDAR`;
         <div className="border-t pt-4">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Amount Due</span>
-            <span className="text-xl font-bold">${bookingData.daily_rate}</span>
+            <span className="text-xl font-medium">${bookingData.daily_rate}</span>
           </div>
         </div>
       </Card>

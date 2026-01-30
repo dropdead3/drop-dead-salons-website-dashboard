@@ -244,7 +244,7 @@ export function LeadFunnelCard({ locationId, dateRange }: LeadFunnelCardProps) {
                     >
                       <div className="flex items-center gap-3">
                         <div className={cn(
-                          "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                          "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium",
                           idx === 0 && "bg-amber-100 text-amber-700",
                           idx === 1 && "bg-gray-100 text-gray-700",
                           idx === 2 && "bg-orange-100 text-orange-700",

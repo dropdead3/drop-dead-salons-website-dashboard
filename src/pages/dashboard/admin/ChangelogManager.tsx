@@ -73,7 +73,7 @@ function ChangelogEntryCard({
               <div>
                 <div className="flex items-center gap-2">
                   {entry.is_major && <Star className="h-4 w-4 text-amber-500 fill-amber-500" />}
-                  <h4 className="font-semibold">
+                  <h4 className="font-medium">
                     {entry.version && <span className="text-muted-foreground mr-2">{entry.version}</span>}
                     {entry.title}
                   </h4>
@@ -154,13 +154,13 @@ function FeatureRequestCard({
         <div className="flex items-start gap-4">
           <div className="flex flex-col items-center gap-1 text-center min-w-[48px]">
             <ChevronUp className="h-5 w-5 text-muted-foreground" />
-            <span className="text-lg font-bold">{request.vote_count || 0}</span>
+            <span className="text-lg font-medium">{request.vote_count || 0}</span>
           </div>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h4 className="font-semibold">{request.title}</h4>
+                <h4 className="font-medium">{request.title}</h4>
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{request.description}</p>
               </div>
               <Badge className={cn('shrink-0', statusConfig.color)}>

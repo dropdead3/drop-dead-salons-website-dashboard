@@ -244,7 +244,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
         <Button variant="ghost" size="icon" className="relative h-8 w-8">
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-bold bg-destructive text-destructive-foreground px-1 rounded-full">
+            <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-medium bg-destructive text-destructive-foreground px-1 rounded-full">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -297,7 +297,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                     <div className="flex-1 min-w-0">
                       <p className={cn(
                         "text-sm",
-                        !notification.is_read && "font-semibold"
+                        !notification.is_read && "font-medium"
                       )}>
                         {notification.title}
                       </p>
@@ -343,7 +343,7 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
                       <div className="flex items-center gap-2">
                         <p className={cn(
                           "text-sm truncate",
-                          !announcement.isRead && "font-semibold"
+                          !announcement.isRead && "font-medium"
                         )}>
                           {announcement.title}
                         </p>

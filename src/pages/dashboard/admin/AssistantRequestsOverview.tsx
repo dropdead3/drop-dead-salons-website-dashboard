@@ -50,7 +50,7 @@ function StatCard({
         <Icon className={cn('h-4 w-4', iconStyles[variant])} />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-medium">{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}

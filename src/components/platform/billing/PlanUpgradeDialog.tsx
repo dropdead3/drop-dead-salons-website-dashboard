@@ -254,7 +254,7 @@ export function PlanUpgradeDialog({
                 <div className="flex justify-between pt-2 border-t border-violet-500/30">
                   <span className="font-medium text-white">Net Amount</span>
                   <span className={cn(
-                    "font-bold",
+                    "font-medium",
                     proration.net > 0 ? "text-white" : "text-emerald-400"
                   )}>
                     {proration.net > 0 ? formatCurrency(proration.net) : `Credit: ${formatCurrency(Math.abs(proration.net))}`}

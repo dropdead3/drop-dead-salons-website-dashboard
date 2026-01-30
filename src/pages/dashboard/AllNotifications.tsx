@@ -282,7 +282,7 @@ export default function AllNotifications() {
             <div>
               <p className={cn(
                 "text-sm",
-                !notification.is_read && "font-semibold"
+                !notification.is_read && "font-medium"
               )}>
                 {notification.title}
               </p>
@@ -348,7 +348,7 @@ export default function AllNotifications() {
               <div className="flex items-center gap-2">
                 <p className={cn(
                   "text-sm",
-                  !announcement.isRead && "font-semibold"
+                  !announcement.isRead && "font-medium"
                 )}>
                   {announcement.title}
                 </p>

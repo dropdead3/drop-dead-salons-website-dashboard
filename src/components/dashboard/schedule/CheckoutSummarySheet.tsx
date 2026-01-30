@@ -365,7 +365,7 @@ export function CheckoutSummarySheet({
               <Separator />
               <div className="flex justify-between">
                 <span className="font-medium">Checkout Total</span>
-                <span className="font-bold">${checkoutTotal.toFixed(2)}</span>
+                <span className="font-medium">${checkoutTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -421,7 +421,7 @@ export function CheckoutSummarySheet({
             {tipAmount > 0 && (
               <div className="flex justify-between text-sm bg-muted/50 p-3 rounded-lg">
                 <span>Tip Amount</span>
-                <span className="font-semibold">${tipAmount.toFixed(2)}</span>
+                <span className="font-medium">${tipAmount.toFixed(2)}</span>
               </div>
             )}
           </div>
@@ -431,8 +431,8 @@ export function CheckoutSummarySheet({
             <>
               <Separator />
               <div className="flex justify-between text-lg bg-primary/5 p-4 rounded-lg border border-primary/20">
-                <span className="font-semibold">Grand Total</span>
-                <span className="font-bold text-primary">${grandTotal.toFixed(2)}</span>
+                <span className="font-medium">Grand Total</span>
+                <span className="font-medium text-primary">${grandTotal.toFixed(2)}</span>
               </div>
             </>
           )}

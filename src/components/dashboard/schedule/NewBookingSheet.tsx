@@ -611,7 +611,7 @@ export function NewBookingSheet({
 
                   <div className="flex justify-between text-lg">
                     <span className="font-medium">Total</span>
-                    <span className="font-bold">${totalPrice.toFixed(2)}</span>
+                    <span className="font-medium">${totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
 
