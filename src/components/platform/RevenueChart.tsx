@@ -60,7 +60,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-xl">
         <p className="text-sm font-medium text-slate-300">{label}</p>
-        <p className="text-lg font-bold text-violet-400">
+        <p className="text-lg font-medium text-violet-400">
           {formatCurrency(payload[0].value)}
         </p>
       </div>
@@ -77,7 +77,7 @@ const PlanTooltip = ({ active, payload }: any) => {
         <p className="text-sm font-medium text-slate-300">
           {tierLabels[data.tier] || data.tier}
         </p>
-        <p className="text-lg font-bold text-violet-400">
+        <p className="text-lg font-medium text-violet-400">
           {formatCurrency(data.revenue)}
         </p>
         <p className="text-xs text-slate-400">{data.count} accounts</p>
