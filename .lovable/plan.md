@@ -1,136 +1,108 @@
 
-# Make Platform Overview Stat Cards Clickable
+# Add More Kerning to Termina Font
 
 ## Summary
 
-Convert the four stat cards on the Platform Overview page into clickable links that navigate to their respective detail pages. This improves UX by making the cards actionable entry points to related views.
+Increase the letter-spacing (kerning) for the Termina display font from `0.05em` to `0.08em` for better visual rhythm and brand consistency. This change will apply globally to all elements using the `font-display` class.
 
 ---
 
-## Card-to-Route Mapping
+## Current State
 
-| Card | Route | Notes |
-|------|-------|-------|
-| Total Accounts | `/dashboard/platform/accounts` | View all accounts |
-| In Onboarding | `/dashboard/platform/accounts?status=onboarding` | Accounts filtered by onboarding status |
-| Pending Migrations | `/dashboard/platform/import` | Migration/import tool |
-| Total Locations | `/dashboard/platform/accounts` | Locations are scoped to accounts |
+| Setting | Value | Tailwind Equivalent |
+|---------|-------|---------------------|
+| `letter-spacing` | `0.05em` | `tracking-wider` |
+
+The Termina font rules are defined in `src/index.css` (lines 610-617):
+
+```css
+.font-display {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;  /* Current value */
+  font-style: normal !important;
+  font-weight: 500 !important;
+}
+```
+
+---
+
+## Proposed Change
+
+Increase letter-spacing to `0.08em` (between `tracking-wider` and `tracking-widest`):
+
+| Setting | Old Value | New Value |
+|---------|-----------|-----------|
+| `letter-spacing` | `0.05em` | `0.08em` |
+
+This provides noticeably more breathing room between characters while staying below the more dramatic `0.1em` used in specialty components like the brands marquee.
 
 ---
 
 ## Implementation
 
-### 1. Update StatCard Interface
+### Files to Modify
 
-Add an optional `href` prop to the StatCard component:
+| File | Change |
+|------|--------|
+| `src/index.css` | Update `.font-display` letter-spacing to `0.08em` |
+| `src/index.css` | Update `--tracking-display` CSS variable to `0.08em` |
+| `src/pages/dashboard/DesignSystem.tsx` | Update documentation to reflect new tracking value |
 
-```typescript
-interface StatCardProps {
-  title: string;
-  value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  description: string;
-  variant?: 'default' | 'warning' | 'success';
-  href?: string;  // NEW: optional link destination
-}
+### Code Changes
+
+**1. Update CSS utility (src/index.css, line 614)**
+
+```css
+/* Before */
+letter-spacing: 0.05em;
+
+/* After */
+letter-spacing: 0.08em;
 ```
 
-### 2. Modify StatCard Component
+**2. Update CSS variable (src/index.css, line 170)**
 
-Wrap the card content in a `Link` component when `href` is provided. Add visual affordances (cursor pointer, subtle arrow indicator):
+```css
+/* Before */
+--tracking-display: 0.05em;
+
+/* After */
+--tracking-display: 0.08em;
+```
+
+**3. Update Design System documentation (src/pages/dashboard/DesignSystem.tsx)**
+
+Update the typography table to reflect the new tracking value:
 
 ```tsx
-import { Link } from 'react-router-dom';
+/* Before */
+{ class: "font-display", font: "Termina", weight: "Medium (500 only)", transform: "UPPERCASE, tracking-wide", ... }
 
-function StatCard({ title, value, icon: Icon, description, variant = 'default', href }: StatCardProps) {
-  // ... existing styles ...
-  
-  const content = (
-    <div className="relative">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-medium text-slate-400">{title}</span>
-        <div className={`p-2.5 rounded-xl ${iconStyles[variant]} transition-colors`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-      <div className={`text-4xl font-bold ${valueStyles[variant]} mb-1`}>{value}</div>
-      <p className="text-sm text-slate-500">{description}</p>
-    </div>
-  );
-  
-  const cardClasses = "group relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 transition-all duration-300 hover:bg-slate-800/60 hover:border-slate-600/50";
-  
-  if (href) {
-    return (
-      <Link to={href} className={cn(cardClasses, "cursor-pointer block")}>
-        {/* glow effect */}
-        {content}
-      </Link>
-    );
-  }
-  
-  return (
-    <div className={cardClasses}>
-      {/* glow effect */}
-      {content}
-    </div>
-  );
-}
-```
-
-### 3. Add href Props to StatCard Usage
-
-Update the stat card instances to include their destination routes:
-
-```tsx
-<StatCard
-  title="Total Accounts"
-  value={stats?.totalOrganizations || 0}
-  icon={Building2}
-  description="Active accounts"
-  href="/dashboard/platform/accounts"
-/>
-<StatCard
-  title="In Onboarding"
-  value={stats?.onboardingOrganizations || 0}
-  icon={Clock}
-  description="Accounts being set up"
-  variant="warning"
-  href="/dashboard/platform/accounts?status=onboarding"
-/>
-<StatCard
-  title="Pending Migrations"
-  value={stats?.pendingMigrations || 0}
-  icon={Upload}
-  description="Data imports in progress"
-  variant={stats?.pendingMigrations ? 'warning' : 'default'}
-  href="/dashboard/platform/import"
-/>
-<StatCard
-  title="Total Locations"
-  value={stats?.totalLocations || 0}
-  icon={MapPin}
-  description="Across all accounts"
-  href="/dashboard/platform/accounts"
-/>
+/* After */
+{ class: "font-display", font: "Termina", weight: "Medium (500 only)", transform: "UPPERCASE, tracking-wider (0.08em)", ... }
 ```
 
 ---
 
-## Visual Enhancements
+## Visual Impact
 
-The existing hover styles (glow effect, border brightening) already provide good feedback. Adding `cursor-pointer` ensures the cards feel clickable.
+Elements affected by this change:
+- Navigation menu links
+- Page headings using `font-display`
+- Button text with `font-display`
+- Card titles and section headers
+- Platform admin interface headers
+
+The increased kerning will give Termina a more refined, editorial appearance consistent with luxury branding.
 
 ---
 
-## Files to Modify
+## Alternative Values
 
-| File | Changes |
-|------|---------|
-| `src/pages/dashboard/platform/Overview.tsx` | Add `href` prop to StatCard interface, wrap in Link when href provided, add routes to each card instance |
+If `0.08em` feels too tight or too loose:
 
----
-
-## Import Requirements
-
-Add `Link` from react-router-dom (already imported as `useNavigate` is used) and `cn` utility for class merging.
+| Value | Effect |
+|-------|--------|
+| `0.06em` | Subtle increase |
+| `0.08em` | Recommended (balanced) |
+| `0.1em` | Maximum (matches brands marquee) |
