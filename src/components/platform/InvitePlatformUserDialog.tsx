@@ -9,9 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -20,7 +17,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
-import { Loader2, Crown, Shield, Headphones, Code } from 'lucide-react';
+import { Loader2, Shield, Headphones, Code } from 'lucide-react';
+import { PlatformButton } from './ui/PlatformButton';
+import { PlatformInput } from './ui/PlatformInput';
+import { PlatformLabel } from './ui/PlatformLabel';
 
 interface InvitePlatformUserDialogProps {
   open: boolean;
@@ -108,18 +108,18 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-slate-800 border-slate-700">
         <DialogHeader>
-          <DialogTitle>Add Platform Team Member</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Add Platform Team Member</DialogTitle>
+          <DialogDescription className="text-slate-400">
             Grant platform access to an existing user. They must already have an account.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
+            <PlatformLabel htmlFor="email">Email Address</PlatformLabel>
+            <PlatformInput
               id="email"
               type="email"
               value={email}
@@ -131,21 +131,25 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Platform Role</Label>
+            <PlatformLabel htmlFor="role">Platform Role</PlatformLabel>
             <Select value={role} onValueChange={(v) => setRole(v as PlatformRole)}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-slate-800 border-slate-700">
                 {roleOptions.map((opt) => {
                   const Icon = opt.icon;
                   return (
-                    <SelectItem key={opt.value} value={opt.value}>
+                    <SelectItem 
+                      key={opt.value} 
+                      value={opt.value}
+                      className="text-slate-300 focus:bg-slate-700 focus:text-white"
+                    >
                       <div className="flex items-center gap-2">
-                        <Icon className="w-4 h-4" />
+                        <Icon className="w-4 h-4 text-violet-400" />
                         <div>
                           <span className="font-medium">{opt.label}</span>
-                          <span className="text-muted-foreground text-xs ml-2">
+                          <span className="text-slate-500 text-xs ml-2">
                             {opt.description}
                           </span>
                         </div>
@@ -158,13 +162,13 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <PlatformButton type="button" variant="secondary" onClick={() => onOpenChange(false)}>
               Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
+            </PlatformButton>
+            <PlatformButton type="submit" disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Add Member
-            </Button>
+            </PlatformButton>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,8 +17,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -30,6 +27,9 @@ import {
 import { Building2, Loader2 } from 'lucide-react';
 import { useCreateOrganization } from '@/hooks/useOrganizations';
 import { useNavigate } from 'react-router-dom';
+import { PlatformButton } from './ui/PlatformButton';
+import { PlatformInput } from './ui/PlatformInput';
+import { PlatformLabel } from './ui/PlatformLabel';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -112,13 +112,15 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] bg-slate-800 border-slate-700">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <div className="p-2 rounded-lg bg-violet-500/20">
+              <Building2 className="h-5 w-5 text-violet-400" />
+            </div>
             Create Salon Account
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-slate-400">
             Set up a new salon organization on the platform
           </DialogDescription>
         </DialogHeader>
@@ -130,9 +132,9 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Business Name *</FormLabel>
+                  <FormLabel className="text-slate-300">Business Name *</FormLabel>
                   <FormControl>
-                    <Input 
+                    <PlatformInput 
                       placeholder="Luxe Hair Studio" 
                       {...field}
                       onChange={(e) => {
@@ -141,7 +143,7 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                       }}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -151,14 +153,14 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
               name="slug"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>URL Slug *</FormLabel>
+                  <FormLabel className="text-slate-300">URL Slug *</FormLabel>
                   <FormControl>
-                    <Input placeholder="luxe-hair-studio" {...field} autoCapitalize="none" />
+                    <PlatformInput placeholder="luxe-hair-studio" {...field} autoCapitalize="none" />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-slate-500">
                     Unique identifier used in URLs (auto-generated from name)
                   </FormDescription>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -168,11 +170,11 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
               name="legal_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Legal Name</FormLabel>
+                  <FormLabel className="text-slate-300">Legal Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Luxe Hair Studio LLC" {...field} />
+                    <PlatformInput placeholder="Luxe Hair Studio LLC" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -183,11 +185,11 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                 name="primary_contact_email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Email</FormLabel>
+                    <FormLabel className="text-slate-300">Contact Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="owner@salon.com" {...field} autoCapitalize="none" />
+                      <PlatformInput type="email" placeholder="owner@salon.com" {...field} autoCapitalize="none" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
@@ -197,11 +199,11 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                 name="primary_contact_phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Phone</FormLabel>
+                    <FormLabel className="text-slate-300">Contact Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="(555) 123-4567" {...field} />
+                      <PlatformInput placeholder="(555) 123-4567" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
@@ -212,25 +214,29 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
               name="source_software"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Previous Software</FormLabel>
+                  <FormLabel className="text-slate-300">Previous Software</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
                         <SelectValue placeholder="Select previous software" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-800 border-slate-700">
                       {sourceSoftwareOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
+                        <SelectItem 
+                          key={option.value} 
+                          value={option.value}
+                          className="text-slate-300 focus:bg-slate-700 focus:text-white"
+                        >
                           {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>
+                  <FormDescription className="text-slate-500">
                     What software is this salon migrating from?
                   </FormDescription>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -240,33 +246,33 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
               name="subscription_tier"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Subscription Tier</FormLabel>
+                  <FormLabel className="text-slate-300">Subscription Tier</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
                         <SelectValue placeholder="Select tier" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="starter">Starter</SelectItem>
-                      <SelectItem value="standard">Standard</SelectItem>
-                      <SelectItem value="professional">Professional</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
+                    <SelectContent className="bg-slate-800 border-slate-700">
+                      <SelectItem value="starter" className="text-slate-300 focus:bg-slate-700 focus:text-white">Starter</SelectItem>
+                      <SelectItem value="standard" className="text-slate-300 focus:bg-slate-700 focus:text-white">Standard</SelectItem>
+                      <SelectItem value="professional" className="text-slate-300 focus:bg-slate-700 focus:text-white">Professional</SelectItem>
+                      <SelectItem value="enterprise" className="text-slate-300 focus:bg-slate-700 focus:text-white">Enterprise</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <PlatformButton type="button" variant="secondary" onClick={() => onOpenChange(false)}>
                 Cancel
-              </Button>
-              <Button type="submit" disabled={createOrg.isPending}>
+              </PlatformButton>
+              <PlatformButton type="submit" disabled={createOrg.isPending}>
                 {createOrg.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Create Account
-              </Button>
+              </PlatformButton>
             </div>
           </form>
         </Form>

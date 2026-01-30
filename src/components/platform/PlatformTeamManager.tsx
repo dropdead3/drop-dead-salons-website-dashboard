@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import { usePlatformTeam, useRemovePlatformRole, type PlatformRole } from '@/hooks/usePlatformRoles';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Table, 
@@ -42,12 +39,21 @@ import {
   Loader2
 } from 'lucide-react';
 import { InvitePlatformUserDialog } from './InvitePlatformUserDialog';
+import {
+  PlatformCard,
+  PlatformCardContent,
+  PlatformCardHeader,
+  PlatformCardTitle,
+  PlatformCardDescription,
+} from './ui/PlatformCard';
+import { PlatformButton } from './ui/PlatformButton';
+import { PlatformBadge } from './ui/PlatformBadge';
 
-const roleConfig: Record<PlatformRole, { label: string; icon: React.ElementType; color: string }> = {
-  platform_owner: { label: 'Owner', icon: Crown, color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-  platform_admin: { label: 'Admin', icon: Shield, color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-  platform_support: { label: 'Support', icon: Headphones, color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
-  platform_developer: { label: 'Developer', icon: Code, color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
+const roleConfig: Record<PlatformRole, { label: string; icon: React.ElementType; variant: 'warning' | 'info' | 'success' | 'primary' }> = {
+  platform_owner: { label: 'Owner', icon: Crown, variant: 'warning' },
+  platform_admin: { label: 'Admin', icon: Shield, variant: 'info' },
+  platform_support: { label: 'Support', icon: Headphones, variant: 'success' },
+  platform_developer: { label: 'Developer', icon: Code, variant: 'primary' },
 };
 
 export function PlatformTeamManager() {
@@ -91,126 +97,128 @@ export function PlatformTeamManager() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <PlatformCard variant="glass">
+        <PlatformCardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
+        </PlatformCardContent>
+      </PlatformCard>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <PlatformCard variant="glass">
+        <PlatformCardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Platform Team</CardTitle>
-            <CardDescription>
+            <PlatformCardTitle>Platform Team</PlatformCardTitle>
+            <PlatformCardDescription>
               Manage access for your development and support team
-            </CardDescription>
+            </PlatformCardDescription>
           </div>
           {canManageTeam && (
-            <Button onClick={() => setInviteOpen(true)} className="gap-2">
+            <PlatformButton onClick={() => setInviteOpen(true)} className="gap-2">
               <UserPlus className="w-4 h-4" />
               Add Team Member
-            </Button>
+            </PlatformButton>
           )}
-        </CardHeader>
-        <CardContent>
+        </PlatformCardHeader>
+        <PlatformCardContent>
           {team && team.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Added</TableHead>
-                  {canManageTeam && <TableHead className="w-12"></TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {team.map((member) => {
-                  const config = roleConfig[member.role];
-                  const Icon = config.icon;
-                  const isCurrentUser = member.user_id === user?.id;
+            <div className="rounded-xl overflow-hidden border border-slate-700/50">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-slate-700/50 hover:bg-transparent">
+                    <TableHead className="text-slate-400">Member</TableHead>
+                    <TableHead className="text-slate-400">Role</TableHead>
+                    <TableHead className="text-slate-400">Added</TableHead>
+                    {canManageTeam && <TableHead className="w-12"></TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {team.map((member) => {
+                    const config = roleConfig[member.role];
+                    const Icon = config.icon;
+                    const isCurrentUser = member.user_id === user?.id;
 
-                  return (
-                    <TableRow key={member.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                              {getInitials(member.full_name, member.email)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-sm">
-                              {member.full_name || 'Unknown'}
-                              {isCurrentUser && (
-                                <span className="text-muted-foreground ml-1">(you)</span>
-                              )}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {member.email}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={`gap-1 ${config.color}`}>
-                          <Icon className="w-3 h-3" />
-                          {config.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {format(new Date(member.created_at), 'MMM d, yyyy')}
-                      </TableCell>
-                      {canManageTeam && (
+                    return (
+                      <TableRow key={member.id} className="border-slate-700/50 hover:bg-slate-800/50">
                         <TableCell>
-                          {!isCurrentUser && member.role !== 'platform_owner' && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => setDeleteConfirm({
-                                    userId: member.user_id,
-                                    role: member.role,
-                                    name: member.full_name || member.email || 'this member',
-                                  })}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Remove
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8 bg-slate-700 border border-slate-600">
+                              <AvatarFallback className="bg-slate-700 text-slate-300 text-xs">
+                                {getInitials(member.full_name, member.email)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-sm text-white">
+                                {member.full_name || 'Unknown'}
+                                {isCurrentUser && (
+                                  <span className="text-slate-500 ml-1">(you)</span>
+                                )}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {member.email}
+                              </p>
+                            </div>
+                          </div>
                         </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        <TableCell>
+                          <PlatformBadge variant={config.variant} className="gap-1">
+                            <Icon className="w-3 h-3" />
+                            {config.label}
+                          </PlatformBadge>
+                        </TableCell>
+                        <TableCell className="text-slate-500 text-sm">
+                          {format(new Date(member.created_at), 'MMM d, yyyy')}
+                        </TableCell>
+                        {canManageTeam && (
+                          <TableCell>
+                            {!isCurrentUser && member.role !== 'platform_owner' && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <PlatformButton variant="ghost" size="icon-sm">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </PlatformButton>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                                  <DropdownMenuItem
+                                    className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
+                                    onClick={() => setDeleteConfirm({
+                                      userId: member.user_id,
+                                      role: member.role,
+                                      name: member.full_name || member.email || 'this member',
+                                    })}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Remove
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-slate-500">
               <p>No platform team members yet.</p>
               {canManageTeam && (
-                <Button
+                <PlatformButton
                   variant="link"
                   onClick={() => setInviteOpen(true)}
-                  className="mt-2"
+                  className="mt-2 text-violet-400"
                 >
                   Add your first team member
-                </Button>
+                </PlatformButton>
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
 
       <InvitePlatformUserDialog 
         open={inviteOpen} 
@@ -218,18 +226,20 @@ export function PlatformTeamManager() {
       />
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-slate-800 border-slate-700">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove team member?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-white">Remove team member?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
               This will revoke platform access for {deleteConfirm?.name}. They will no longer be able to access the Platform Admin Hub.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveMember}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 text-white hover:bg-red-500"
             >
               Remove
             </AlertDialogAction>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Building2, Upload, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { DataImportWizard } from '@/components/admin/DataImportWizard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -9,11 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Building2, Upload, AlertCircle, FileSpreadsheet } from 'lucide-react';
-import { useOrganizations } from '@/hooks/useOrganizations';
-import { DataImportWizard } from '@/components/admin/DataImportWizard';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
+import {
+  PlatformCard,
+  PlatformCardContent,
+  PlatformCardHeader,
+  PlatformCardTitle,
+  PlatformCardDescription,
+} from '@/components/platform/ui/PlatformCard';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 
 const importTypes = [
   { value: 'clients', label: 'Clients', description: 'Import customer data' },
@@ -46,93 +52,101 @@ export default function PlatformImport() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Data Migration</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight text-white">Data Migration</h1>
+        <p className="text-slate-400">
           Import data from external software into salon accounts
         </p>
       </div>
 
       {/* Organization Selector */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
+      <PlatformCard variant="glass">
+        <PlatformCardHeader>
+          <PlatformCardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-violet-400" />
             Select Target Organization
-          </CardTitle>
-          <CardDescription>
+          </PlatformCardTitle>
+          <PlatformCardDescription>
             Choose which salon account to import data into
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </PlatformCardDescription>
+        </PlatformCardHeader>
+        <PlatformCardContent>
           <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-            <SelectTrigger className="w-full max-w-md">
+            <SelectTrigger className="w-full max-w-md bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
               <SelectValue placeholder="Select a salon organization..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-slate-800 border-slate-700">
               {organizations?.map((org) => (
-                <SelectItem key={org.id} value={org.id}>
+                <SelectItem 
+                  key={org.id} 
+                  value={org.id}
+                  className="text-slate-300 focus:bg-slate-700 focus:text-white"
+                >
                   <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
+                    <Building2 className="h-4 w-4 text-violet-400" />
                     <span>{org.name}</span>
-                    <span className="text-muted-foreground">({org.slug})</span>
+                    <span className="text-slate-500">({org.slug})</span>
                   </div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </CardContent>
-      </Card>
+        </PlatformCardContent>
+      </PlatformCard>
 
       {/* Import Options or Prompt */}
       {selectedOrgId && selectedOrg ? (
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
+          <PlatformCard variant="glass">
+            <PlatformCardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Upload className="h-5 w-5" />
+                  <PlatformCardTitle className="flex items-center gap-2">
+                    <Upload className="h-5 w-5 text-violet-400" />
                     Import Data for {selectedOrg.name}
-                  </CardTitle>
-                  <CardDescription>
+                  </PlatformCardTitle>
+                  <PlatformCardDescription>
                     Source software: {selectedOrg.source_software || 'Not specified'}
-                  </CardDescription>
+                  </PlatformCardDescription>
                 </div>
-                <Badge variant="outline">{selectedOrg.status}</Badge>
+                <PlatformBadge variant="outline">{selectedOrg.status}</PlatformBadge>
               </div>
-            </CardHeader>
-            <CardContent>
+            </PlatformCardHeader>
+            <PlatformCardContent>
               <div className="grid gap-4 md:grid-cols-3">
                 {importTypes.map((type) => (
-                  <Card key={type.value} className="cursor-pointer hover:border-primary transition-colors">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <FileSpreadsheet className="h-4 w-4" />
+                  <PlatformCard 
+                    key={type.value} 
+                    variant="interactive"
+                    className="cursor-pointer"
+                  >
+                    <PlatformCardHeader className="pb-2">
+                      <PlatformCardTitle className="text-base flex items-center gap-2">
+                        <FileSpreadsheet className="h-4 w-4 text-violet-400" />
                         {type.label}
-                      </CardTitle>
-                      <CardDescription className="text-xs">
+                      </PlatformCardTitle>
+                      <PlatformCardDescription className="text-xs">
                         {type.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button 
+                      </PlatformCardDescription>
+                    </PlatformCardHeader>
+                    <PlatformCardContent>
+                      <PlatformButton 
                         className="w-full" 
                         size="sm"
                         onClick={() => handleStartImport(type.value)}
                       >
                         <Upload className="h-4 w-4 mr-2" />
                         Start Import
-                      </Button>
-                    </CardContent>
-                  </Card>
+                      </PlatformButton>
+                    </PlatformCardContent>
+                  </PlatformCard>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </PlatformCardContent>
+          </PlatformCard>
         </div>
       ) : (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
+        <Alert className="bg-slate-800/50 border-slate-700/50 text-slate-300">
+          <AlertCircle className="h-4 w-4 text-violet-400" />
           <AlertDescription>
             Please select an organization above to begin the data import process.
           </AlertDescription>
