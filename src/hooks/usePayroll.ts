@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { usePayrollConnection } from './usePayrollConnection';
 import { toast } from 'sonner';
+import { EmployeeCompensation } from './usePayrollCalculations';
 
 export interface PayrollRun {
   id: string;
@@ -232,6 +233,91 @@ export function usePayroll() {
     },
   });
 
+  // Create a local payroll run (stored in database, not sent to provider)
+  const createLocalPayrollRun = useMutation({
+    mutationFn: async (data: {
+      payPeriodStart: string;
+      payPeriodEnd: string;
+      checkDate: string;
+      status: 'draft' | 'submitted';
+      lineItems: EmployeeCompensation[];
+    }) => {
+      if (!organizationId) {
+        throw new Error('No organization selected');
+      }
+
+      // Calculate totals from line items
+      const totals = data.lineItems.reduce(
+        (acc, item) => ({
+          grossPay: acc.grossPay + item.grossPay,
+          employerTaxes: acc.employerTaxes + item.employerTaxes,
+          employeeTaxes: acc.employeeTaxes + item.estimatedTaxes,
+          deductions: acc.deductions + item.deductions,
+          netPay: acc.netPay + item.netPay,
+        }),
+        { grossPay: 0, employerTaxes: 0, employeeTaxes: 0, deductions: 0, netPay: 0 }
+      );
+
+      // Insert payroll run
+      const { data: payrollRun, error: runError } = await supabase
+        .from('payroll_runs')
+        .insert({
+          organization_id: organizationId,
+          provider: provider || 'gusto',
+          pay_period_start: data.payPeriodStart,
+          pay_period_end: data.payPeriodEnd,
+          check_date: data.checkDate,
+          status: data.status,
+          total_gross_pay: totals.grossPay,
+          total_employer_taxes: totals.employerTaxes,
+          total_employee_deductions: totals.deductions,
+          total_net_pay: totals.netPay,
+          employee_count: data.lineItems.length,
+        })
+        .select()
+        .single();
+
+      if (runError) throw runError;
+
+      // Insert line items
+      const lineItemsToInsert = data.lineItems.map((item) => ({
+        payroll_run_id: payrollRun.id,
+        employee_id: item.employeeId,
+        gross_pay: item.grossPay,
+        regular_hours: item.regularHours,
+        overtime_hours: item.overtimeHours,
+        hourly_pay: item.hourlyPay,
+        salary_pay: item.salaryPay,
+        commission_pay: item.commissionPay,
+        bonus_pay: item.bonusPay,
+        tips: item.tips,
+        employee_taxes: item.estimatedTaxes,
+        employer_taxes: item.employerTaxes,
+        employee_deductions: item.deductions,
+        net_pay: item.netPay,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('payroll_line_items')
+        .insert(lineItemsToInsert);
+
+      if (itemsError) throw itemsError;
+
+      return payrollRun;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['payroll-runs'] });
+      toast.success(
+        variables.status === 'draft'
+          ? 'Payroll saved as draft'
+          : 'Payroll finalized successfully'
+      );
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to save payroll: ${error.message}`);
+    },
+  });
+
   return {
     // Data
     payrollRuns: payrollRuns || [],
@@ -249,6 +335,8 @@ export function usePayroll() {
     isCreatingRun: createPayrollRun.isPending,
     submitPayroll: submitPayroll.mutate,
     isSubmitting: submitPayroll.isPending,
+    createLocalPayrollRun: createLocalPayrollRun.mutate,
+    isCreatingLocalRun: createLocalPayrollRun.isPending,
     refetchEmployees,
   };
 }
