@@ -3,9 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
-import { usePlatformBranding } from '@/hooks/usePlatformBranding';
 import { cn } from '@/lib/utils';
-import { User, LogOut, Settings, Crown, Shield, Headphones, Code, Users, Sparkles } from 'lucide-react';
+import { User, LogOut, Settings, Crown, Shield, Headphones, Code, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -37,7 +36,6 @@ export function PlatformHeader() {
   const { data: profile } = useEmployeeProfile();
   const { resolvedTheme } = usePlatformTheme();
   const { isConnected, onlineUsers, onlineCount } = usePlatformPresenceContext();
-  const { branding } = usePlatformBranding();
   const isDark = resolvedTheme === 'dark';
 
   const primaryRole = platformRoles[0] as PlatformRole | undefined;
@@ -62,11 +60,6 @@ export function PlatformHeader() {
   const handleViewProfile = () => {
     navigate('/dashboard/platform/settings');
   };
-
-  // Choose logo/icon based on theme (same logic as sidebar)
-  const currentLogo = isDark ? branding.primary_logo_url : branding.secondary_logo_url;
-  const currentIcon = isDark ? branding.icon_dark_url : branding.icon_light_url;
-
   return (
     <header
       className={cn(
@@ -77,50 +70,8 @@ export function PlatformHeader() {
       )}
     >
       <div className="flex h-full items-center justify-between px-6">
-        {/* Left: Logo/Name + Online Users */}
+        {/* Left: Online Users */}
         <div className="flex items-center gap-4">
-          {/* Platform Logo/Name */}
-          <div className="flex items-center gap-2">
-            {currentIcon ? (
-              <img 
-                src={currentIcon} 
-                alt="Platform" 
-                className="h-7 w-7 object-contain"
-              />
-            ) : currentLogo ? (
-              <img 
-                src={currentLogo} 
-                alt="Platform" 
-                className="h-7 max-w-[120px] object-contain"
-              />
-            ) : (
-              <div className="flex items-center gap-2">
-                <div className={cn(
-                  'h-7 w-7 rounded-lg flex items-center justify-center',
-                  isDark 
-                    ? 'bg-gradient-to-br from-violet-500 to-purple-600' 
-                    : 'bg-gradient-to-br from-violet-400 to-purple-500'
-                )}>
-                  <Sparkles className="h-4 w-4 text-white" />
-                </div>
-                <span className={cn(
-                  'font-semibold text-sm',
-                  isDark ? 'text-white' : 'text-slate-900'
-                )}>
-                  Platform
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          {onlineCount > 0 && (
-            <div className={cn(
-              'h-6 w-px',
-              isDark ? 'bg-slate-700' : 'bg-violet-200'
-            )} />
-          )}
-
           {/* Online Users Section */}
           {onlineCount > 0 && (
             <div className="flex items-center gap-3">
