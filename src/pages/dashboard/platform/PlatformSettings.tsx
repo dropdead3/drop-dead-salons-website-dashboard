@@ -1,7 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Shield, Database, Crown } from 'lucide-react';
+import { Settings, Shield, Database, Crown, Plug } from 'lucide-react';
 import { PlatformTeamManager } from '@/components/platform/PlatformTeamManager';
 import { PlatformBrandingTab } from '@/components/platform/settings/PlatformBrandingTab';
+import { PlatformIntegrationsTab } from '@/components/platform/settings/PlatformIntegrationsTab';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   PlatformCard,
@@ -51,6 +52,13 @@ export default function PlatformSettings() {
             className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white"
           >
             Defaults
+          </TabsTrigger>
+          <TabsTrigger 
+            value="integrations"
+            className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white flex items-center gap-1.5"
+          >
+            <Plug className="h-3.5 w-3.5" />
+            Integrations
           </TabsTrigger>
           {isPlatformOwner && (
             <TabsTrigger 
@@ -122,6 +130,10 @@ export default function PlatformSettings() {
               </p>
             </PlatformCardContent>
           </PlatformCard>
+        </TabsContent>
+
+        <TabsContent value="integrations">
+          <PlatformIntegrationsTab />
         </TabsContent>
 
         {isPlatformOwner && (
