@@ -2,10 +2,12 @@ import { Outlet } from 'react-router-dom';
 import { PlatformSidebar } from './PlatformSidebar';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { PlatformThemeProvider, usePlatformTheme } from '@/contexts/PlatformThemeContext';
 
 const SIDEBAR_COLLAPSED_KEY = 'platform-sidebar-collapsed';
 
-export function PlatformLayout() {
+function PlatformLayoutInner() {
+  const { resolvedTheme } = usePlatformTheme();
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
     return saved ? JSON.parse(saved) : false;
@@ -26,7 +28,15 @@ export function PlatformLayout() {
   }, []);
 
   return (
-    <div className="platform-theme min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div 
+      className={cn(
+        'platform-theme min-h-screen',
+        resolvedTheme === 'dark' ? 'platform-dark' : 'platform-light',
+        resolvedTheme === 'dark' 
+          ? 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950' 
+          : 'platform-gradient-radial'
+      )}
+    >
       <PlatformSidebar />
       
       {/* Main Content Area */}
@@ -39,5 +49,13 @@ export function PlatformLayout() {
         <Outlet />
       </main>
     </div>
+  );
+}
+
+export function PlatformLayout() {
+  return (
+    <PlatformThemeProvider>
+      <PlatformLayoutInner />
+    </PlatformThemeProvider>
   );
 }

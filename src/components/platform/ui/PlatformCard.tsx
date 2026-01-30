@@ -8,11 +8,12 @@ interface PlatformCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const PlatformCard = React.forwardRef<HTMLDivElement, PlatformCardProps>(
   ({ className, variant = 'default', glow = false, children, ...props }, ref) => {
+    // Variants now use CSS variables that adapt to platform-light/platform-dark
     const variants = {
-      default: 'bg-slate-800/50 border-slate-700/50',
+      default: 'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.5)]',
       glass: 'platform-glass',
-      elevated: 'bg-slate-800/70 border-slate-600/50 shadow-xl',
-      interactive: 'bg-slate-800/50 border-slate-700/50 platform-card-hover transition-all duration-300',
+      elevated: 'bg-[hsl(var(--platform-bg-card)/0.8)] border-[hsl(var(--platform-border)/0.6)] shadow-xl',
+      interactive: 'bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border)/0.5)] platform-card-hover transition-all duration-300',
     };
 
     return (
@@ -53,7 +54,7 @@ const PlatformCardTitle = React.forwardRef<HTMLHeadingElement, PlatformCardTitle
     <h3
       ref={ref}
       className={cn(
-        'text-xl font-medium leading-none tracking-tight text-white',
+        'text-xl font-medium leading-none tracking-tight text-[hsl(var(--platform-foreground))]',
         className
       )}
       {...props}
@@ -68,7 +69,7 @@ const PlatformCardDescription = React.forwardRef<HTMLParagraphElement, PlatformC
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-sm text-slate-400', className)}
+      className={cn('text-sm text-[hsl(var(--platform-foreground-muted))]', className)}
       {...props}
     />
   )

@@ -972,15 +972,111 @@
 }
 
 /* ===== PLATFORM ADMIN THEME ===== */
-/* Fintech-inspired dark theme with purple/violet accents */
+/* Fintech-inspired theme with purple/violet accents */
 /* This theme is scoped to platform admin pages only */
 
-.platform-theme {
+/* Platform Dark Theme (Default) */
+.platform-theme.platform-dark {
+  /* Core backgrounds - Deep slate */
+  --platform-bg: 222 47% 6%;
+  --platform-bg-elevated: 222 40% 10%;
+  --platform-bg-card: 222 35% 12%;
+  --platform-bg-hover: 222 30% 16%;
+  --platform-bg-surface: 222 35% 8%;
+  
+  /* Foregrounds */
+  --platform-foreground: 210 40% 98%;
+  --platform-foreground-muted: 215 20% 65%;
+  --platform-foreground-subtle: 215 15% 45%;
+  
+  /* Primary accent - Violet */
+  --platform-primary: 270 75% 60%;
+  --platform-primary-hover: 270 80% 65%;
+  --platform-primary-glow: 270 85% 70%;
+  --platform-primary-muted: 270 50% 35%;
+  
+  /* Secondary accent - Pink-purple */
+  --platform-secondary: 280 70% 55%;
+  --platform-secondary-hover: 280 75% 60%;
+  
+  /* Status colors */
+  --platform-success: 160 84% 39%;
+  --platform-warning: 38 92% 50%;
+  --platform-error: 0 72% 51%;
+  --platform-info: 217 91% 60%;
+  
+  /* Borders */
+  --platform-border: 222 20% 20%;
+  --platform-border-subtle: 222 15% 15%;
+  --platform-border-glow: 270 60% 50%;
+  
+  /* Input fields */
+  --platform-input: 222 30% 14%;
+  --platform-input-focus: 270 50% 25%;
+  
+  /* Ring/focus */
+  --platform-ring: 270 75% 60%;
+  
+  /* Sidebar */
+  --platform-sidebar-bg: 222 40% 8%;
+  --platform-sidebar-border: 222 25% 18%;
+}
+
+/* Platform Light Theme - Soft lavender fintech aesthetic */
+.platform-theme.platform-light {
+  /* Core backgrounds - Soft lavender/violet wash */
+  --platform-bg: 260 30% 96%;
+  --platform-bg-elevated: 260 25% 98%;
+  --platform-bg-card: 0 0% 100%;
+  --platform-bg-hover: 260 20% 94%;
+  --platform-bg-surface: 260 25% 97%;
+  
+  /* Foregrounds - Dark violet-grays */
+  --platform-foreground: 260 20% 15%;
+  --platform-foreground-muted: 260 10% 45%;
+  --platform-foreground-subtle: 260 8% 60%;
+  
+  /* Primary accent - Rich violet */
+  --platform-primary: 270 70% 55%;
+  --platform-primary-hover: 270 75% 48%;
+  --platform-primary-glow: 270 80% 60%;
+  --platform-primary-muted: 270 40% 75%;
+  
+  /* Secondary accent - Soft purple-pink */
+  --platform-secondary: 280 65% 60%;
+  --platform-secondary-hover: 280 70% 52%;
+  
+  /* Status colors - Slightly muted for light mode */
+  --platform-success: 160 70% 35%;
+  --platform-warning: 38 85% 45%;
+  --platform-error: 0 65% 50%;
+  --platform-info: 217 80% 55%;
+  
+  /* Borders - Subtle violet tint */
+  --platform-border: 260 20% 88%;
+  --platform-border-subtle: 260 15% 92%;
+  --platform-border-glow: 270 50% 70%;
+  
+  /* Input fields */
+  --platform-input: 260 15% 95%;
+  --platform-input-focus: 270 40% 90%;
+  
+  /* Ring/focus */
+  --platform-ring: 270 70% 55%;
+  
+  /* Sidebar - Crisp white with subtle violet */
+  --platform-sidebar-bg: 0 0% 100%;
+  --platform-sidebar-border: 260 20% 90%;
+}
+
+/* Fallback for platform-theme without explicit light/dark */
+.platform-theme:not(.platform-light):not(.platform-dark) {
   /* Core backgrounds */
   --platform-bg: 222 47% 6%;
   --platform-bg-elevated: 222 40% 10%;
   --platform-bg-card: 222 35% 12%;
   --platform-bg-hover: 222 30% 16%;
+  --platform-bg-surface: 222 35% 8%;
   
   /* Foregrounds */
   --platform-foreground: 210 40% 98%;
@@ -1014,11 +1110,17 @@
   
   /* Ring/focus */
   --platform-ring: 270 75% 60%;
+  
+  /* Sidebar */
+  --platform-sidebar-bg: 222 40% 8%;
+  --platform-sidebar-border: 222 25% 18%;
 }
 
 /* Platform utility classes */
 @layer utilities {
-  .platform-gradient-bg {
+  /* Dark mode gradients */
+  .platform-dark .platform-gradient-bg,
+  .platform-theme:not(.platform-light) .platform-gradient-bg {
     background: linear-gradient(
       135deg,
       hsl(var(--platform-bg)) 0%,
@@ -1027,7 +1129,8 @@
     );
   }
   
-  .platform-gradient-radial {
+  .platform-dark .platform-gradient-radial,
+  .platform-theme:not(.platform-light) .platform-gradient-radial {
     background: radial-gradient(
       ellipse at top right,
       hsl(270 50% 15% / 0.4) 0%,
@@ -1041,28 +1144,83 @@
     hsl(var(--platform-bg));
   }
   
-  .platform-glass {
+  /* Light mode gradients - Soft lavender wash */
+  .platform-light .platform-gradient-bg {
+    background: linear-gradient(
+      135deg,
+      hsl(260 35% 97%) 0%,
+      hsl(270 25% 95%) 50%,
+      hsl(280 30% 96%) 100%
+    );
+  }
+  
+  .platform-light .platform-gradient-radial {
+    background: radial-gradient(
+      ellipse at top right,
+      hsl(270 40% 92% / 0.6) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at bottom left,
+      hsl(280 35% 94% / 0.5) 0%,
+      transparent 50%
+    ),
+    hsl(var(--platform-bg));
+  }
+  
+  /* Glass effects - adaptive to theme */
+  .platform-dark .platform-glass,
+  .platform-theme:not(.platform-light) .platform-glass {
     background: hsl(var(--platform-bg-card) / 0.6);
     backdrop-filter: blur(20px);
     border: 1px solid hsl(var(--platform-border) / 0.5);
   }
   
-  .platform-glass-strong {
+  .platform-light .platform-glass {
+    background: hsl(0 0% 100% / 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--platform-border));
+    box-shadow: 0 4px 24px -8px hsl(270 30% 50% / 0.08);
+  }
+  
+  .platform-dark .platform-glass-strong,
+  .platform-theme:not(.platform-light) .platform-glass-strong {
     background: hsl(var(--platform-bg-card) / 0.8);
     backdrop-filter: blur(24px);
     border: 1px solid hsl(var(--platform-border) / 0.6);
   }
   
-  .platform-glow {
+  .platform-light .platform-glass-strong {
+    background: hsl(0 0% 100% / 0.95);
+    backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--platform-border));
+    box-shadow: 0 8px 32px -12px hsl(270 30% 50% / 0.12);
+  }
+  
+  /* Glow effects - adaptive */
+  .platform-dark .platform-glow,
+  .platform-theme:not(.platform-light) .platform-glow {
     box-shadow: 
       0 0 30px -10px hsl(var(--platform-primary) / 0.3),
       0 0 60px -20px hsl(var(--platform-secondary) / 0.2);
   }
   
-  .platform-glow-sm {
+  .platform-light .platform-glow {
+    box-shadow: 
+      0 4px 20px -6px hsl(var(--platform-primary) / 0.15),
+      0 8px 40px -12px hsl(var(--platform-secondary) / 0.1);
+  }
+  
+  .platform-dark .platform-glow-sm,
+  .platform-theme:not(.platform-light) .platform-glow-sm {
     box-shadow: 0 0 20px -8px hsl(var(--platform-primary) / 0.25);
   }
   
+  .platform-light .platform-glow-sm {
+    box-shadow: 0 2px 12px -4px hsl(var(--platform-primary) / 0.12);
+  }
+  
+  /* Button gradients */
   .platform-button-gradient {
     background: linear-gradient(
       135deg,
@@ -1071,18 +1229,34 @@
     );
   }
   
-  .platform-button-glow {
+  .platform-dark .platform-button-glow,
+  .platform-theme:not(.platform-light) .platform-button-glow {
     box-shadow: 
       0 4px 14px -4px hsl(var(--platform-primary) / 0.5),
       0 0 30px -10px hsl(var(--platform-primary) / 0.3);
   }
   
-  .platform-card-hover:hover {
+  .platform-light .platform-button-glow {
+    box-shadow: 
+      0 4px 14px -4px hsl(var(--platform-primary) / 0.3),
+      0 0 20px -8px hsl(var(--platform-primary) / 0.15);
+  }
+  
+  /* Card hover effects */
+  .platform-dark .platform-card-hover:hover,
+  .platform-theme:not(.platform-light) .platform-card-hover:hover {
     background: hsl(var(--platform-bg-hover));
     border-color: hsl(var(--platform-border-glow) / 0.3);
     box-shadow: 0 0 30px -15px hsl(var(--platform-primary) / 0.2);
   }
   
+  .platform-light .platform-card-hover:hover {
+    background: hsl(var(--platform-bg-hover));
+    border-color: hsl(var(--platform-border-glow) / 0.5);
+    box-shadow: 0 8px 30px -12px hsl(var(--platform-primary) / 0.15);
+  }
+  
+  /* Text gradients */
   .platform-text-gradient {
     background: linear-gradient(
       135deg,

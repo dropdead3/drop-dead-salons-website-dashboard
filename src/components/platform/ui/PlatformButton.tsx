@@ -5,22 +5,22 @@ import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
 const platformButtonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--platform-ring)/0.5)] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--platform-bg))] disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
         default:
           'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:from-violet-500 hover:to-purple-500 hover:shadow-violet-500/40',
         secondary:
-          'bg-slate-700/60 text-slate-100 hover:bg-slate-600/60 border border-slate-600/50',
+          'bg-[hsl(var(--platform-bg-hover))] text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border))]',
         outline:
-          'border border-slate-600/50 bg-transparent text-slate-300 hover:bg-slate-800/50 hover:text-white hover:border-slate-500/50',
+          'border border-[hsl(var(--platform-border))] bg-transparent text-[hsl(var(--platform-foreground-muted))] hover:bg-[hsl(var(--platform-bg-hover))] hover:text-[hsl(var(--platform-foreground))] hover:border-[hsl(var(--platform-border-glow)/0.5)]',
         ghost:
-          'text-slate-400 hover:text-white hover:bg-slate-800/50',
+          'text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]',
         destructive:
           'bg-red-600/80 text-white hover:bg-red-500/80 shadow-lg shadow-red-500/20',
         link:
-          'text-violet-400 underline-offset-4 hover:underline hover:text-violet-300',
+          'text-[hsl(var(--platform-primary))] underline-offset-4 hover:underline hover:text-[hsl(var(--platform-primary-hover))]',
         glow:
           'bg-gradient-to-r from-violet-600 to-purple-600 text-white platform-button-glow hover:from-violet-500 hover:to-purple-500',
       },
