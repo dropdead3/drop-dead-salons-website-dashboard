@@ -68,3 +68,12 @@ verify_jwt = false
 
 [functions.send-platform-invitation]
 verify_jwt = false
+
+[functions.gusto-oauth]
+verify_jwt = false
+
+[functions.quickbooks-oauth]
+verify_jwt = false
+
+[functions.payroll-proxy]
+verify_jwt = false

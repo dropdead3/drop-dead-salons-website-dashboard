@@ -1,4 +1,4 @@
-import { FileText, CreditCard, MessageSquare, LucideIcon } from 'lucide-react';
+import { FileText, CreditCard, MessageSquare, DollarSign, Calculator, LucideIcon } from 'lucide-react';
 
 export interface PlatformIntegration {
   id: string;
@@ -6,7 +6,7 @@ export interface PlatformIntegration {
   description: string;
   icon: LucideIcon;
   status: 'connected' | 'not_configured' | 'coming_soon';
-  category: 'documents' | 'payments' | 'communication' | 'analytics';
+  category: 'documents' | 'payments' | 'communication' | 'analytics' | 'payroll';
   features: string[];
   configPath: string;
 }
@@ -21,6 +21,26 @@ export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
     category: 'documents',
     features: ['Contract Signing', 'Field Extraction', 'Billing Auto-populate'],
     configPath: '/dashboard/platform/settings/integrations/pandadoc',
+  },
+  {
+    id: 'gusto',
+    name: 'Gusto',
+    description: 'Full-service payroll with tax compliance and HR',
+    icon: DollarSign,
+    status: 'not_configured',
+    category: 'payroll',
+    features: ['Automated Taxes', 'Direct Deposit', 'W-2s', 'Benefits'],
+    configPath: '/dashboard/admin/payroll',
+  },
+  {
+    id: 'quickbooks',
+    name: 'QuickBooks Payroll',
+    description: 'Payroll integrated with QuickBooks accounting',
+    icon: Calculator,
+    status: 'not_configured',
+    category: 'payroll',
+    features: ['QuickBooks Sync', 'Direct Deposit', 'Tax Filing', 'Reports'],
+    configPath: '/dashboard/admin/payroll',
   },
   {
     id: 'stripe',
