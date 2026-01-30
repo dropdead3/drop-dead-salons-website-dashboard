@@ -21,6 +21,8 @@ import { CapacityUsageCard } from './CapacityUsageCard';
 import { AddOnsConfigForm } from './AddOnsConfigForm';
 import { BillingHistoryCard } from './BillingHistoryCard';
 import { PlanUpgradeDialog } from './PlanUpgradeDialog';
+import { PandaDocDocumentsCard } from './PandaDocDocumentsCard';
+import { ContractAdjustmentsPanel } from './ContractAdjustmentsPanel';
 import {
   useOrganizationBilling,
   useSubscriptionPlans,
@@ -463,6 +465,17 @@ export function BillingConfigurationPanel({
             )}
             Save Billing Configuration
           </PlatformButton>
+
+          {/* PandaDoc Documents */}
+          <PandaDocDocumentsCard organizationId={organizationId} />
+
+          {/* Contract Adjustments */}
+          <ContractAdjustmentsPanel
+            organizationId={organizationId}
+            contractStartDate={contractStartDate}
+            contractEndDate={getContractEndDate()}
+            monthlyRate={calculation.effectiveMonthlyAmount}
+          />
 
           {/* Billing History */}
           <BillingHistoryCard organizationId={organizationId} />
