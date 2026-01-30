@@ -267,12 +267,15 @@ function ActivityItem({ activity }: ActivityItemProps) {
   };
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-700/30 border border-slate-600/20 hover:bg-slate-700/50 hover:border-slate-600/40 transition-all duration-200">
+    <Link 
+      to={`/dashboard/platform/accounts/${activity.id}`}
+      className="flex items-center gap-4 p-4 rounded-xl bg-slate-700/30 border border-slate-600/20 hover:bg-slate-700/50 hover:border-slate-600/40 transition-all duration-200 cursor-pointer group"
+    >
       <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${bg}`}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white truncate">
+        <p className="text-sm font-medium text-white truncate group-hover:text-violet-300 transition-colors">
           {activity.organizationName}
         </p>
         <p className="text-xs text-slate-500 mt-0.5">
@@ -282,7 +285,7 @@ function ActivityItem({ activity }: ActivityItemProps) {
       <PlatformBadge variant="outline" size="sm" className="text-slate-500 border-slate-600/50">
         {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
       </PlatformBadge>
-    </div>
+    </Link>
   );
 }
 
