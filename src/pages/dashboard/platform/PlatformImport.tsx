@@ -55,7 +55,7 @@ export default function PlatformImport() {
     <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
         title="Data Migration"
-        description="Import data from external software into salon accounts"
+        description="Import data from external software into accounts"
         backTo="/dashboard/platform/overview"
         backLabel="Back to Overview"
       />
@@ -68,13 +68,13 @@ export default function PlatformImport() {
             Select Target Organization
           </PlatformCardTitle>
           <PlatformCardDescription>
-            Choose which salon account to import data into
+            Choose which account to import data into
           </PlatformCardDescription>
         </PlatformCardHeader>
         <PlatformCardContent>
           <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
             <SelectTrigger className="w-full max-w-md bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
-              <SelectValue placeholder="Select a salon organization..." />
+              <SelectValue placeholder="Select an organization..." />
             </SelectTrigger>
             <SelectContent className="bg-slate-800 border-slate-700">
               {organizations?.map((org) => (

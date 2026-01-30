@@ -44,28 +44,28 @@ export default function PlatformOverview() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">Platform Overview</h1>
           <p className="text-slate-400 mt-1">
-            Manage salon accounts, migrations, and platform health
+            Manage accounts, migrations, and platform health
           </p>
         </div>
         <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')} className="gap-2">
           <Plus className="h-4 w-4" />
-          New Salon Account
+          New Account
         </PlatformButton>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Salons"
+          title="Total Accounts"
           value={stats?.totalOrganizations || 0}
           icon={Building2}
-          description="Active salon accounts"
+          description="Active accounts"
         />
         <StatCard
           title="In Onboarding"
           value={stats?.onboardingOrganizations || 0}
           icon={Clock}
-          description="Salons being set up"
+          description="Accounts being set up"
           variant="warning"
         />
         <StatCard
@@ -79,7 +79,7 @@ export default function PlatformOverview() {
           title="Total Locations"
           value={stats?.totalLocations || 0}
           icon={MapPin}
-          description="Across all salons"
+          description="Across all accounts"
         />
       </div>
 
@@ -140,7 +140,7 @@ export default function PlatformOverview() {
                   <Building2 className="h-8 w-8 text-slate-500" />
                 </div>
                 <p className="text-slate-400 font-medium">No recent activity</p>
-                <p className="text-sm text-slate-500 mt-1">Create your first salon account to get started</p>
+                <p className="text-sm text-slate-500 mt-1">Create your first account to get started</p>
               </div>
             )}
           </div>

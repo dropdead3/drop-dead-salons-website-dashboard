@@ -91,8 +91,8 @@ export default function PlatformAccounts() {
   return (
     <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
-        title="Salon Accounts"
-        description="Manage all salon organizations on the platform"
+        title="Accounts"
+        description="Manage all organizations on the platform"
         backTo="/dashboard/platform/overview"
         backLabel="Back to Overview"
         actions={
@@ -278,7 +278,7 @@ export default function PlatformAccounts() {
               <p className="text-slate-500 mb-4">
                 {searchQuery || statusFilter !== 'all' 
                   ? 'Try adjusting your search or filters'
-                  : 'Create your first salon account to get started'}
+                  : 'Create your first account to get started'}
               </p>
               {!searchQuery && statusFilter === 'all' && (
                 <PlatformButton onClick={() => setCreateDialogOpen(true)}>
