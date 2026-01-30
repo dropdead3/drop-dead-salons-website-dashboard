@@ -8,10 +8,11 @@ import {
   PlatformCardTitle,
   PlatformCardDescription,
 } from '@/components/platform/ui/PlatformCard';
+import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 
 export default function PlatformSettings() {
   return (
-    <div className="space-y-6">
+    <PlatformPageContainer className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-white">Platform Settings</h1>
         <p className="text-slate-400">
@@ -108,6 +109,6 @@ export default function PlatformSettings() {
           </PlatformCard>
         </TabsContent>
       </Tabs>
-    </div>
+    </PlatformPageContainer>
   );
 }

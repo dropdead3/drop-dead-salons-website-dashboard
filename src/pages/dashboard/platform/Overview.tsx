@@ -23,17 +23,22 @@ import {
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 
 export default function PlatformOverview() {
   const navigate = useNavigate();
   const { data: stats, isLoading } = useOrganizationStats();
 
   if (isLoading) {
-    return <PlatformOverviewSkeleton />;
+    return (
+      <PlatformPageContainer>
+        <PlatformOverviewSkeleton />
+      </PlatformPageContainer>
+    );
   }
 
   return (
-    <div className="space-y-8">
+    <PlatformPageContainer className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -141,7 +146,7 @@ export default function PlatformOverview() {
           </div>
         </div>
       </div>
-    </div>
+    </PlatformPageContainer>
   );
 }
 
