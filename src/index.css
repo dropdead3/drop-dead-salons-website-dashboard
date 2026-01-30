@@ -167,7 +167,7 @@
     --tracking-wide: 0.025em;
     --tracking-wider: 0.05em;
     --tracking-widest: 0.1em;
-    --tracking-display: 0.05em;
+    --tracking-display: 0.08em;
 
     --leading-none: 1;
     --leading-tight: 1.25;
@@ -611,7 +611,7 @@
 @layer utilities {
   .font-display {
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     font-style: normal !important;
     font-weight: 500 !important; /* Termina only has Medium weight - prevent synthetic bolding */
   }
