@@ -1,234 +1,127 @@
 
-# Edit Organization Account Dialog
+# Update "Salon" Terminology to Inclusive "Account" Language
 
 ## Summary
 
-Create a comprehensive edit dialog that allows platform administrators to modify all aspects of an organization account. The dialog will be accessible from both the Accounts table (via the actions dropdown) and the AccountDetail page.
+Update all platform dashboard terminology to use inclusive language that applies to all beauty business types (salons, spas, esthetics, barbershops, med spas, wellness centers) instead of specifically referencing "salons".
 
 ---
 
-## Editable Fields
+## Changes Overview
 
-Based on the database schema, the following fields will be editable:
+The following text strings will be updated across the platform admin interface:
 
-| Field | Type | Section |
-|-------|------|---------|
-| `name` | Text (required) | Basic Info |
-| `slug` | Text (required) | Basic Info |
-| `legal_name` | Text | Basic Info |
-| `business_type` | Select | Basic Info |
-| `logo_url` | Text/URL | Basic Info |
-| `status` | Select | Account Status |
-| `onboarding_stage` | Select | Account Status |
-| `subscription_tier` | Select | Account Status |
-| `primary_contact_email` | Email | Contact Info |
-| `primary_contact_phone` | Phone | Contact Info |
-| `source_software` | Select | Migration Info |
-| `timezone` | Select | Settings |
-| `activated_at` | Date picker | Account Status |
-
-**Read-only fields** (displayed but not editable):
-- `id` - System generated
-- `account_number` - Auto-generated sequence
-- `created_at` - System timestamp
-- `updated_at` - System timestamp
+| Current Text | New Text |
+|-------------|----------|
+| "Salon Accounts" | "Accounts" |
+| "Total Salons" | "Total Accounts" |
+| "Active salon accounts" | "Active accounts" |
+| "Salons being set up" | "Accounts being set up" |
+| "Across all salons" | "Across all accounts" |
+| "New Salon Account" | "New Account" |
+| "Create your first salon account" | "Create your first account" |
+| "Manage salon accounts..." | "Manage accounts..." |
+| "Create Salon Account" | "Create Account" |
+| "Set up a new salon organization" | "Set up a new organization" |
+| "New salon account created" | "New account created" |
+| "Import data...into salon accounts" | "Import data...into accounts" |
+| "Choose which salon account..." | "Choose which account..." |
+| "Select a salon organization..." | "Select an organization..." |
 
 ---
 
-## Component Architecture
+## Files to Modify
 
-### New Component: EditOrganizationDialog
+### 1. Platform Overview Page
 
-**File**: `src/components/platform/EditOrganizationDialog.tsx`
+**File**: `src/pages/dashboard/platform/Overview.tsx`
 
-A dialog component that:
-- Receives an organization object as a prop
-- Pre-populates all form fields with current values
-- Groups fields into logical sections with visual separation
-- Uses the existing `useUpdateOrganization` mutation hook
-- Validates all inputs using Zod schema
+| Line | Current | New |
+|------|---------|-----|
+| 47 | "Manage salon accounts, migrations, and platform health" | "Manage accounts, migrations, and platform health" |
+| 52 | "New Salon Account" | "New Account" |
+| 59 | "Total Salons" | "Total Accounts" |
+| 62 | "Active salon accounts" | "Active accounts" |
+| 68 | "Salons being set up" | "Accounts being set up" |
+| 82 | "Across all salons" | "Across all accounts" |
+| 143 | "Create your first salon account to get started" | "Create your first account to get started" |
 
-### Props Interface
-
-```typescript
-interface EditOrganizationDialogProps {
-  organization: Organization;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-```
-
----
-
-## Dialog Layout
-
-The dialog will use a tabbed or sectioned layout to organize fields:
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  ✏️ Edit Organization                                     [X]   │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ── Basic Information ──────────────────────────────────────    │
-│                                                                 │
-│  Business Name *              URL Slug *                        │
-│  ┌─────────────────────┐     ┌─────────────────────┐           │
-│  │ Drop Dead Gorgeous  │     │ drop-dead-gorgeous  │           │
-│  └─────────────────────┘     └─────────────────────┘           │
-│                                                                 │
-│  Legal Name                   Business Type                     │
-│  ┌─────────────────────┐     ┌─────────────────────┐           │
-│  │ DDG Holdings LLC    │     │ Salon           ▾   │           │
-│  └─────────────────────┘     └─────────────────────┘           │
-│                                                                 │
-│  Logo URL                                                       │
-│  ┌─────────────────────────────────────────────────┐           │
-│  │ https://...                                     │           │
-│  └─────────────────────────────────────────────────┘           │
-│                                                                 │
-│  ── Account Status ─────────────────────────────────────────    │
-│                                                                 │
-│  Status                      Onboarding Stage                   │
-│  ┌─────────────────────┐     ┌─────────────────────┐           │
-│  │ Active          ▾   │     │ Live            ▾   │           │
-│  └─────────────────────┘     └─────────────────────┘           │
-│                                                                 │
-│  Subscription Plan            Timezone                          │
-│  ┌─────────────────────┐     ┌─────────────────────┐           │
-│  │ Standard        ▾   │     │ America/Chicago ▾   │           │
-│  └─────────────────────┘     └─────────────────────┘           │
-│                                                                 │
-│  ── Contact Information ────────────────────────────────────    │
-│                                                                 │
-│  Contact Email               Contact Phone                      │
-│  ┌─────────────────────┐     ┌─────────────────────┐           │
-│  │ owner@salon.com     │     │ (555) 123-4567      │           │
-│  └─────────────────────┘     └─────────────────────┘           │
-│                                                                 │
-│  ── Migration Info ─────────────────────────────────────────    │
-│                                                                 │
-│  Previous Software                                              │
-│  ┌─────────────────────────────────────────────────┐           │
-│  │ Phorest                                      ▾  │           │
-│  └─────────────────────────────────────────────────┘           │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  Account #1000 • Created Jan 15, 2025                           │
-│                                         [Cancel]  [Save Changes]│
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Form Schema
-
-```typescript
-const editFormSchema = z.object({
-  // Basic Info
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  slug: z.string()
-    .min(2, 'Slug must be at least 2 characters')
-    .regex(/^[a-z0-9-]+$/, 'Lowercase letters, numbers, and hyphens only'),
-  legal_name: z.string().optional().nullable(),
-  business_type: z.enum(['salon', 'spa', 'esthetics', 'barbershop', 'med_spa', 'wellness', 'other']),
-  logo_url: z.string().url().optional().nullable().or(z.literal('')),
-  
-  // Account Status
-  status: z.enum(['pending', 'active', 'suspended', 'churned']),
-  onboarding_stage: z.enum(['new', 'importing', 'training', 'live']),
-  subscription_tier: z.string(),
-  timezone: z.string(),
-  
-  // Contact Info
-  primary_contact_email: z.string().email().optional().nullable().or(z.literal('')),
-  primary_contact_phone: z.string().optional().nullable(),
-  
-  // Migration Info
-  source_software: z.string().optional().nullable(),
-});
-```
-
----
-
-## Integration Points
-
-### 1. Accounts Table (Dropdown Menu)
+### 2. Accounts Page
 
 **File**: `src/pages/dashboard/platform/Accounts.tsx`
 
-Add an "Edit" menu item to the existing dropdown:
+| Line | Current | New |
+|------|---------|-----|
+| 94 | "Salon Accounts" | "Accounts" |
+| 95 | "Manage all salon organizations on the platform" | "Manage all organizations on the platform" |
+| 281 | "Create your first salon account to get started" | "Create your first account to get started" |
 
-```tsx
-<DropdownMenuItem onClick={(e) => {
-  e.stopPropagation();
-  setEditOrg(org);
-}}>
-  <Pencil className="h-4 w-4 mr-2" />
-  Edit Account
-</DropdownMenuItem>
-```
+### 3. Create Organization Dialog
 
-### 2. AccountDetail Page (Settings Tab + Header Button)
+**File**: `src/components/platform/CreateOrganizationDialog.tsx`
 
-**File**: `src/pages/dashboard/platform/AccountDetail.tsx`
+| Line | Current | New |
+|------|---------|-----|
+| 134 | "Create Salon Account" | "Create Account" |
+| 137 | "Set up a new salon organization on the platform" | "Set up a new organization on the platform" |
 
-- Replace the placeholder "Configure" button with an "Edit" button
-- Populate the Settings tab with editable forms or link to the edit dialog
+### 4. Platform Import Page
+
+**File**: `src/pages/dashboard/platform/PlatformImport.tsx`
+
+| Line | Current | New |
+|------|---------|-----|
+| 58 | "Import data from external software into salon accounts" | "Import data from external software into accounts" |
+| 71 | "Choose which salon account to import data into" | "Choose which account to import data into" |
+| 77 | "Select a salon organization..." | "Select an organization..." |
+
+### 5. Dashboard Layout (Navigation)
+
+**File**: `src/components/dashboard/DashboardLayout.tsx`
+
+| Line | Current | New |
+|------|---------|-----|
+| 192 | "Salon Accounts" | "Accounts" |
+
+### 6. Organization Stats Hook
+
+**File**: `src/hooks/useOrganizationStats.ts`
+
+| Line | Current | New |
+|------|---------|-----|
+| 64 | "New salon account created" | "New account created" |
 
 ---
 
-## Files to Create/Modify
+## Visual Changes
 
-| File | Change |
-|------|--------|
-| `src/components/platform/EditOrganizationDialog.tsx` | **Create** - Full edit dialog with all fields |
-| `src/pages/dashboard/platform/Accounts.tsx` | Add "Edit" to dropdown menu, import dialog |
-| `src/pages/dashboard/platform/AccountDetail.tsx` | Wire up "Configure" button to open edit dialog |
+### Before (Platform Overview)
 
----
-
-## Technical Details
-
-### Timezone Options
-
-Common timezone options to include:
-
-```typescript
-const timezoneOptions = [
-  { value: 'America/New_York', label: 'Eastern Time (ET)' },
-  { value: 'America/Chicago', label: 'Central Time (CT)' },
-  { value: 'America/Denver', label: 'Mountain Time (MT)' },
-  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
-  { value: 'America/Phoenix', label: 'Arizona (AZ)' },
-  { value: 'America/Anchorage', label: 'Alaska (AK)' },
-  { value: 'Pacific/Honolulu', label: 'Hawaii (HI)' },
-  { value: 'America/Toronto', label: 'Eastern Time (Canada)' },
-  { value: 'America/Vancouver', label: 'Pacific Time (Canada)' },
-];
+```text
+TOTAL SALONS          IN ONBOARDING         PENDING MIGRATIONS    TOTAL LOCATIONS
+1                     0                     0                     2
+Active salon accounts Salons being set up   Data imports...       Across all salons
 ```
 
-### Status Change Handling
+### After (Platform Overview)
 
-When changing status from `pending` to `active`, automatically set `activated_at` to the current timestamp if it's not already set.
-
-### Slug Validation
-
-The slug field should show a warning if changed, as it may affect existing URLs and integrations:
-
-```tsx
-{slugChanged && (
-  <p className="text-amber-400 text-xs mt-1">
-    ⚠️ Changing the slug may break existing integrations
-  </p>
-)}
+```text
+TOTAL ACCOUNTS        IN ONBOARDING         PENDING MIGRATIONS    TOTAL LOCATIONS
+1                     0                     0                     2
+Active accounts       Accounts being set up Data imports...       Across all accounts
 ```
 
 ---
 
-## Styling
+## Technical Notes
 
-The dialog follows the established Platform Theme design system:
-- Dark slate background (`bg-slate-800`)
-- Violet accent colors for focus states
-- Section dividers using subtle borders
-- Consistent spacing and typography with other platform dialogs
+- The `business_type` field in the database remains unchanged (it still stores values like 'salon', 'spa', 'esthetics', etc.) - this is correct for categorization
+- The `businessTypeLabels` mapping in `Accounts.tsx` remains unchanged since it displays the actual business type for each organization
+- Customer-facing pages that reference the specific "Drop Dead Gorgeous" salon brand are NOT being changed (e.g., "Salon Policies" in the header)
+- This change only affects internal platform administration terminology
+
+---
+
+## Implementation
+
+This is a straightforward text replacement across 6 files with no logic changes required. All updates are simple string modifications that make the platform interface more inclusive for all beauty business types.
