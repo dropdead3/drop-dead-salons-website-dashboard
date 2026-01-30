@@ -1,42 +1,38 @@
 
 
-## QuickBooks Payroll Integration - Multi-Provider Support
+## Native Payroll Run Functionality for Super Admins
 
-This plan extends the payroll system to support **QuickBooks Online Payroll** as an alternative to Gusto, giving account owners flexibility to choose their preferred payroll provider.
+This plan implements a complete payroll run wizard that allows super admins to natively run payroll from their dashboards, calculate employee compensation including commissions, and track payroll history - all without requiring a connected provider (Gusto/QuickBooks).
 
 ---
 
 ### Overview
 
-Account owners will be able to:
-1. **Choose their payroll provider** - Gusto OR QuickBooks (one active at a time)
-2. **Connect via OAuth** - Secure Intuit OAuth 2.0 flow for QuickBooks
-3. **Run payroll through QuickBooks** - Same wizard flow with QuickBooks API backend
-4. **View unified reports** - Payroll history regardless of provider
-
-The system will track which provider each organization uses and route all payroll operations through the appropriate API.
+The system will enable account owners and super admins to:
+1. **Create payroll runs** with a step-by-step wizard
+2. **Auto-calculate compensation** based on employee settings (hourly, salary, commission)
+3. **Pull commission data** from existing Phorest sales data
+4. **Review and approve** payroll before finalizing
+5. **Save payroll runs** to the database for history and reporting
+6. **Export payroll reports** for external processing
 
 ---
 
 ### Architecture
 
 ```text
-+------------------+       +-------------------+       +----------------+
-|  Account Owner   | ----> |   Your Platform   | ----> |   Gusto API    |
-|   Dashboard      |       |                   |       +----------------+
-+------------------+       |   Edge Functions: |
-                           |   - gusto-oauth   |       +------------------+
-                           |   - quickbooks-*  | ----> | QuickBooks API   |
-                           +-------------------+       +------------------+
-                                    |
-                           +-------------------+
-                           |   Supabase DB     |
-                           | payroll_connections|
-                           | payroll_runs      |
-                           +-------------------+
++-------------------+       +-------------------+       +-------------------+
+|  Run Payroll      |       | Local Database    |       | Phorest Sales     |
+|  Wizard (UI)      | <---> | payroll_runs +    | <---- | Data (Commission  |
+|                   |       | payroll_line_items|       | Calculation)      |
++-------------------+       +-------------------+       +-------------------+
 ```
 
-**Key Design Decision**: Rather than separate `gusto_connections` and `quickbooks_connections` tables, we'll use a unified `payroll_connections` table with a `provider` column. This simplifies queries and ensures only one provider is active per organization.
+Since API keys are not yet configured, the system will:
+- Store payroll runs locally in the database
+- Calculate all compensation based on `employee_payroll_settings`
+- Pull commission data from `phorest_daily_sales_summary`
+- Generate exportable reports for manual processing via external systems
 
 ---
 
@@ -44,311 +40,272 @@ The system will track which provider each organization uses and route all payrol
 
 | Area | Files | Action |
 |------|-------|--------|
-| Database | Migration | **Modify** - Rename `gusto_connections` to `payroll_connections`, add `provider` enum |
-| Edge Functions | `quickbooks-oauth`, `quickbooks-payroll-proxy` | **Create** - Handle QuickBooks OAuth and API |
-| Edge Functions | `gusto-oauth`, `gusto-payroll-proxy` | **Create** - Handle Gusto OAuth and API |
-| Hooks | `usePayrollConnection.ts` | **Create** - Unified provider connection state |
-| Components | `PayrollProviderSelector.tsx` | **Create** - Choose between Gusto/QuickBooks |
-| Components | `QuickBooksConnectionCard.tsx` | **Create** - QuickBooks-specific status card |
-| Integrations | `IntegrationsTab.tsx` | **Edit** - Add Gusto and QuickBooks as options |
-| Config | Integration registry | **Edit** - Add both payroll providers |
+| Components | `RunPayrollWizard.tsx` | **Create** - Multi-step payroll wizard |
+| Components | `PayPeriodStep.tsx` | **Create** - Date selection step |
+| Components | `EmployeeHoursStep.tsx` | **Create** - Hours entry step |
+| Components | `CommissionStep.tsx` | **Create** - Commission review step |
+| Components | `ReviewStep.tsx` | **Create** - Final review before submission |
+| Components | `PayrollSummaryCard.tsx` | **Create** - Summary statistics |
+| Hooks | `usePayrollCalculations.ts` | **Create** - Compensation calculation logic |
+| Hooks | `usePayroll.ts` | **Edit** - Add local payroll creation mutation |
+| Pages | `Payroll.tsx` | **Edit** - Integrate wizard and add navigation link |
+| DashboardLayout | `DashboardLayout.tsx` | **Edit** - Add Payroll nav item |
 
 ---
 
-### Database Schema Changes
+### Component Details
 
-#### Table: `payroll_connections` (replaces `gusto_connections`)
+#### 1. `RunPayrollWizard.tsx` (New)
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `organization_id` | UUID | FK to `organizations` (UNIQUE - one provider per org) |
-| `provider` | TEXT | `gusto` or `quickbooks` |
-| `external_company_id` | TEXT | Gusto company UUID or QuickBooks realm ID |
-| `access_token_encrypted` | TEXT | AES-encrypted access token |
-| `refresh_token_encrypted` | TEXT | AES-encrypted refresh token |
-| `token_expires_at` | TIMESTAMPTZ | Token expiration |
-| `connection_status` | TEXT | `pending`, `connected`, `disconnected`, `error` |
-| `connected_by` | UUID | User who connected |
-| `connected_at` | TIMESTAMPTZ | When connection was established |
-| `last_synced_at` | TIMESTAMPTZ | Last successful API call |
-| `metadata` | JSONB | Provider-specific config (QuickBooks: sandbox mode, Gusto: company tier) |
+A multi-step wizard with the following flow:
 
-**Key Constraint**: `UNIQUE(organization_id)` ensures only one payroll provider per organization.
+**Step 1: Select Pay Period**
+- Choose pay period start/end dates with date picker
+- Select check date (when employees get paid)
+- Display current pay schedule info
 
-#### Update: `payroll_runs` table
+**Step 2: Enter Hours**
+- List all active employees with payroll settings
+- For hourly employees: Input regular hours and overtime hours
+- For salaried employees: Show calculated period salary
+- Skip option for commission-only employees
 
-Add provider column to existing schema:
+**Step 3: Review Commissions**
+- Auto-fetch sales data from `phorest_daily_sales_summary` for the pay period
+- Calculate commissions using `useCommissionTiers` hook
+- Display breakdown by employee with service and product commissions
+- Allow manual adjustments
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `provider` | TEXT | `gusto` or `quickbooks` |
-| `external_payroll_id` | TEXT | Renamed from `gusto_payroll_uuid` for generality |
+**Step 4: Add Bonuses/Adjustments**
+- Optional one-time bonuses per employee
+- Tips entry if applicable
+- Deductions or adjustments
 
-#### Update: `employee_payroll_settings` table
+**Step 5: Review and Submit**
+- Display full summary with all employees
+- Show gross pay, estimated taxes, net pay per employee
+- Total payroll cost breakdown
+- Confirm and save to database
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `external_employee_id` | TEXT | Renamed from `gusto_employee_uuid` |
+#### 2. `usePayrollCalculations.ts` (New)
 
----
-
-### Edge Functions
-
-#### 1. `quickbooks-oauth` (New)
-Handles QuickBooks/Intuit OAuth 2.0 flow.
-
-**Endpoints:**
-- `POST /start` - Returns Intuit authorization URL with scopes for payroll
-- `POST /callback` - Exchanges code for tokens, stores encrypted with `realm_id`
-- `POST /disconnect` - Revokes tokens and clears connection
-- `GET /status` - Returns connection status
-
-**QuickBooks-Specific Details:**
-- Requires scopes: `com.intuit.quickbooks.payroll`, `com.intuit.quickbooks.accounting`
-- Must store `realm_id` (company identifier) alongside tokens
-- Tokens expire after 1 hour (shorter than Gusto's 2 hours)
-- Implements refresh token rotation (required by Intuit)
-
-#### 2. `quickbooks-payroll-proxy` (New)
-Proxies requests to QuickBooks Payroll API.
-
-**Functionality:**
-- Attaches bearer token to requests
-- Auto-refreshes expired tokens (with rotation handling)
-- Routes to `https://payroll.api.intuit.com/v1/...` or sandbox
-- Maps internal employee IDs to QuickBooks employee references
-
----
-
-### QuickBooks Payroll API Integration
-
-QuickBooks Online Payroll provides these key endpoints:
-
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /payroll-runs` | List payroll history |
-| `POST /payroll-runs` | Create new payroll run |
-| `GET /payroll-runs/{id}` | Get payroll details |
-| `POST /payroll-runs/{id}/submit` | Submit for processing |
-| `GET /employees` | List employees in payroll |
-| `GET /pay-schedules` | Get pay schedule configurations |
-
-**Key Differences from Gusto:**
-- QuickBooks uses `realm_id` instead of `company_uuid`
-- Different webhook event format
-- Tax document endpoints differ
-- No embedded SDK (pure API integration)
-
----
-
-### UI Components
-
-#### 1. `PayrollProviderSelector.tsx` (New)
-
-Initial selection screen when no provider is connected:
-
-```text
-+-----------------------------------------------+
-|  Choose Your Payroll Provider                 |
-|                                               |
-|  +------------------+  +------------------+   |
-|  |   [Gusto Logo]   |  | [QuickBooks Logo]|   |
-|  |                  |  |                  |   |
-|  |  Full-service    |  | Part of your     |   |
-|  |  payroll with    |  | QuickBooks       |   |
-|  |  compliance      |  | ecosystem        |   |
-|  |                  |  |                  |   |
-|  |  [Connect Gusto] |  | [Connect QB]     |   |
-|  +------------------+  +------------------+   |
-|                                               |
-|  Note: Only one provider can be active        |
-+-----------------------------------------------+
-```
-
-#### 2. `QuickBooksConnectionCard.tsx` (New)
-
-Similar to `GustoConnectionCard` but with QuickBooks branding:
-
-```text
-+-----------------------------------------------+
-|  Payroll Provider                             |
-|                                               |
-|  [QuickBooks Logo]  Connected                 |
-|  Company: ABC Salon LLC                       |
-|  Last synced: 30 minutes ago                  |
-|                                               |
-|  [Sync Now]  [Switch Provider]  [Disconnect]  |
-+-----------------------------------------------+
-```
-
-**Switch Provider Flow**:
-1. User clicks "Switch Provider"
-2. Warning dialog: "This will disconnect QuickBooks. Existing payroll history will be preserved."
-3. On confirm, disconnect current provider
-4. Show provider selector again
-
-#### 3. Update: `RunPayrollWizard.tsx`
-
-Modify to detect active provider and route API calls accordingly:
+Centralized calculation logic:
 
 ```typescript
-const { provider, connection } = usePayrollConnection();
-
-// Route to appropriate edge function
-const submitPayroll = async (data) => {
-  const endpoint = provider === 'gusto' 
-    ? 'gusto-payroll-proxy' 
-    : 'quickbooks-payroll-proxy';
-  
-  await supabase.functions.invoke(endpoint, {
-    body: { action: 'submit', ...data }
-  });
-};
-```
-
----
-
-### Unified Hook: `usePayrollConnection.ts`
-
-Replaces separate `useGustoConnection` with provider-agnostic hook:
-
-```typescript
-interface PayrollConnection {
-  id: string;
-  provider: 'gusto' | 'quickbooks';
-  status: 'connected' | 'pending' | 'disconnected' | 'error';
-  companyName?: string;
-  lastSyncedAt?: string;
+interface EmployeeCompensation {
+  employeeId: string;
+  regularHours: number;
+  overtimeHours: number;
+  hourlyPay: number;
+  salaryPay: number;
+  commissionPay: number;
+  bonusPay: number;
+  tips: number;
+  grossPay: number;
+  estimatedTaxes: number;
+  estimatedDeductions: number;
+  netPay: number;
 }
 
-export function usePayrollConnection() {
-  // Fetches from payroll_connections table
-  // Returns null if no provider connected
-  // Provides connect/disconnect mutations
-}
+function calculateEmployeeCompensation(
+  settings: EmployeePayrollSettings,
+  hours: { regular: number; overtime: number },
+  salesData: SalesData[],
+  bonus?: number,
+  tips?: number
+): EmployeeCompensation
+```
+
+**Calculation Rules:**
+- **Hourly**: `(regularHours * hourlyRate) + (overtimeHours * hourlyRate * 1.5)`
+- **Salary**: `(annualSalary / 52) * weeksInPeriod` or `/26` for bi-weekly
+- **Commission**: Use existing `calculateCommission()` from `useCommissionTiers`
+- **Tax Estimates**: Apply standard withholding percentages (federal ~22%, state ~5%, FICA 7.65%)
+
+#### 3. Commission Integration
+
+Fetch and aggregate sales data for the pay period:
+
+```typescript
+// Query phorest_daily_sales_summary for pay period
+const { data: salesData } = useQuery({
+  queryKey: ['payroll-sales', payPeriodStart, payPeriodEnd],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from('phorest_daily_sales_summary')
+      .select('user_id, service_revenue, product_revenue, summary_date')
+      .gte('summary_date', payPeriodStart)
+      .lte('summary_date', payPeriodEnd);
+    return data;
+  }
+});
+
+// Aggregate by employee
+const employeeSales = aggregateSalesByEmployee(salesData);
+
+// Calculate commissions
+employees.forEach(emp => {
+  const sales = employeeSales[emp.employee_id];
+  const commission = calculateCommission(sales.serviceRevenue, sales.productRevenue);
+});
 ```
 
 ---
 
-### Permissions & Access Control
+### Local Payroll Run Creation
 
-**No changes needed** - existing payroll permissions apply to both providers:
-- `manage_payroll` - Run payroll, connect providers
-- `view_payroll_reports` - View history
-- `manage_employee_compensation` - Edit pay settings
-
-RLS policies will work unchanged since they're scoped to `organization_id`.
-
----
-
-### Integration Registry Updates
-
-Add to `IntegrationsTab.tsx` for account-level integrations:
+Since providers are not connected, payroll runs will be saved locally:
 
 ```typescript
-const payrollIntegrations: Integration[] = [
-  {
-    id: 'gusto',
-    name: 'Gusto',
-    description: 'Full-service payroll with tax compliance and HR.',
-    icon: DollarSign,
-    status: getPayrollStatus('gusto'),
-    configPath: '/dashboard/admin/payroll',
-    features: ['Automated Taxes', 'Direct Deposit', 'W-2s', 'Benefits'],
-    available: true,
-    category: 'payroll',
+// usePayroll.ts - new mutation
+const createLocalPayrollRun = useMutation({
+  mutationFn: async (data: {
+    payPeriodStart: string;
+    payPeriodEnd: string;
+    checkDate: string;
+    lineItems: EmployeeCompensation[];
+  }) => {
+    // Calculate totals
+    const totals = calculatePayrollTotals(data.lineItems);
+    
+    // Insert payroll run
+    const { data: payrollRun, error: runError } = await supabase
+      .from('payroll_runs')
+      .insert({
+        organization_id: organizationId,
+        provider: connection?.provider || 'gusto', // default provider
+        pay_period_start: data.payPeriodStart,
+        pay_period_end: data.payPeriodEnd,
+        check_date: data.checkDate,
+        status: 'draft', // stays draft until provider is connected
+        total_gross_pay: totals.grossPay,
+        total_employer_taxes: totals.employerTaxes,
+        total_employee_deductions: totals.deductions,
+        total_net_pay: totals.netPay,
+        employee_count: data.lineItems.length,
+      })
+      .select()
+      .single();
+    
+    // Insert line items
+    const lineItemsToInsert = data.lineItems.map(item => ({
+      payroll_run_id: payrollRun.id,
+      employee_id: item.employeeId,
+      gross_pay: item.grossPay,
+      regular_hours: item.regularHours,
+      overtime_hours: item.overtimeHours,
+      hourly_pay: item.hourlyPay,
+      salary_pay: item.salaryPay,
+      commission_pay: item.commissionPay,
+      bonus_pay: item.bonusPay,
+      tips: item.tips,
+      employee_taxes: item.estimatedTaxes,
+      net_pay: item.netPay,
+    }));
+    
+    await supabase.from('payroll_line_items').insert(lineItemsToInsert);
+    
+    return payrollRun;
   },
-  {
-    id: 'quickbooks',
-    name: 'QuickBooks Payroll',
-    description: 'Payroll integrated with QuickBooks accounting.',
-    icon: Calculator,
-    status: getPayrollStatus('quickbooks'),
-    configPath: '/dashboard/admin/payroll',
-    features: ['QuickBooks Sync', 'Direct Deposit', 'Tax Filing', 'Reports'],
-    available: true,
-    category: 'payroll',
+});
+```
+
+---
+
+### UI Flow and Wizard Steps
+
+**Step Progress Indicator:**
+```text
+[1 Pay Period] ── [2 Hours] ── [3 Commissions] ── [4 Adjustments] ── [5 Review]
+     ●              ○             ○                   ○                 ○
+```
+
+**Pay Period Step:**
+- Calendar date pickers for start/end
+- Presets: "Last 2 weeks", "Last month", "Current pay period"
+- Check date defaults to 5 business days after period end
+
+**Hours Entry Step:**
+- Table with employee avatars, names, pay types
+- Input fields for regular and overtime hours
+- Running total of wages displayed
+- Bulk actions: "Apply standard hours to all"
+
+**Commission Step:**
+- Auto-populated from Phorest sales data
+- Tier progression visualization (same as existing `CommissionCalculator`)
+- Manual override capability with change reason
+
+**Review Step:**
+- Full breakdown per employee in expandable rows
+- Company totals: Gross, Taxes, Net
+- Export button for CSV download
+- "Save as Draft" and "Finalize Payroll" buttons
+
+---
+
+### Navigation Integration
+
+Add Payroll to admin navigation in `DashboardLayout.tsx`:
+
+```typescript
+const adminOnlyNavItems: NavItem[] = [
+  // ... existing items
+  { 
+    href: '/dashboard/admin/payroll', 
+    label: 'Payroll', 
+    icon: DollarSign, 
+    permission: 'manage_payroll' 
   },
 ];
 ```
 
-Both route to `/dashboard/admin/payroll` where the appropriate UI is shown based on connection state.
-
 ---
 
-### Implementation Phases
+### Export Functionality
 
-**Phase 1: Schema Refactor**
-- Migrate `gusto_connections` to `payroll_connections` with `provider` column
-- Update RLS policies
-- Add QuickBooks-specific metadata handling
+For organizations without provider connections, provide export options:
 
-**Phase 2: QuickBooks OAuth**
-- Create `quickbooks-oauth` edge function
-- Implement token rotation for Intuit's requirements
-- Create connection status card
+**CSV Export:**
+- Employee Name, Hours, Gross Pay, Taxes, Deductions, Net Pay
+- Suitable for import into external payroll systems
 
-**Phase 3: QuickBooks Payroll API**
-- Create `quickbooks-payroll-proxy` edge function
-- Map QuickBooks employee sync
-- Implement payroll submission flow
-
-**Phase 4: Unified UI**
-- Create provider selector component
-- Update payroll wizard for multi-provider support
-- Update integrations tab
-
----
-
-### Secrets Required
-
-Add to existing secrets (Gusto secrets already planned):
-
-| Secret Name | Description |
-|-------------|-------------|
-| `QUICKBOOKS_CLIENT_ID` | Intuit OAuth client ID |
-| `QUICKBOOKS_CLIENT_SECRET` | Intuit OAuth client secret |
-| `QUICKBOOKS_ENCRYPTION_KEY` | Can share with Gusto or separate |
+**PDF Summary:**
+- Payroll run summary with company totals
+- Individual employee breakdowns
+- Signature lines for approval
 
 ---
 
 ### Files to Create/Modify
 
-| File | Action |
-|------|--------|
-| Database migration | **New** - Rename table, add provider enum |
-| `supabase/functions/quickbooks-oauth/index.ts` | **New** |
-| `supabase/functions/quickbooks-payroll-proxy/index.ts` | **New** |
-| `supabase/functions/gusto-oauth/index.ts` | **New** |
-| `supabase/functions/gusto-payroll-proxy/index.ts` | **New** |
-| `src/hooks/usePayrollConnection.ts` | **New** - Unified hook |
-| `src/hooks/usePayroll.ts` | **New** - Payroll operations |
-| `src/pages/dashboard/admin/Payroll.tsx` | **New** - Main payroll hub |
-| `src/components/dashboard/payroll/PayrollProviderSelector.tsx` | **New** |
-| `src/components/dashboard/payroll/GustoConnectionCard.tsx` | **New** |
-| `src/components/dashboard/payroll/QuickBooksConnectionCard.tsx` | **New** |
-| `src/components/dashboard/payroll/RunPayrollWizard.tsx` | **New** |
-| `src/components/dashboard/payroll/PayrollHistoryTable.tsx` | **New** |
-| `src/components/dashboard/payroll/EmployeePayrollList.tsx` | **New** |
-| `src/components/dashboard/IntegrationsTab.tsx` | **Edit** - Add payroll section |
-| `src/components/dashboard/DashboardLayout.tsx` | **Edit** - Add payroll nav |
-| `src/App.tsx` | **Edit** - Add payroll routes |
-| `supabase/config.toml` | **Edit** - Register new functions |
+| File | Action | Description |
+|------|--------|-------------|
+| `src/components/dashboard/payroll/RunPayrollWizard.tsx` | **Create** | Main wizard component |
+| `src/components/dashboard/payroll/steps/PayPeriodStep.tsx` | **Create** | Date selection step |
+| `src/components/dashboard/payroll/steps/EmployeeHoursStep.tsx` | **Create** | Hours entry table |
+| `src/components/dashboard/payroll/steps/CommissionStep.tsx` | **Create** | Commission review |
+| `src/components/dashboard/payroll/steps/AdjustmentsStep.tsx` | **Create** | Bonuses and adjustments |
+| `src/components/dashboard/payroll/steps/ReviewStep.tsx` | **Create** | Final review |
+| `src/components/dashboard/payroll/PayrollSummaryCard.tsx` | **Create** | Summary stats display |
+| `src/hooks/usePayrollCalculations.ts` | **Create** | Calculation logic |
+| `src/hooks/usePayroll.ts` | **Edit** | Add local creation mutation |
+| `src/pages/dashboard/admin/Payroll.tsx` | **Edit** | Integrate wizard |
+| `src/components/dashboard/DashboardLayout.tsx` | **Edit** | Add nav item |
 
 ---
 
 ### Technical Notes
 
-1. **Provider Lock**: Only one provider active per organization prevents sync conflicts
+1. **Offline-First**: Payroll runs are stored locally first, then can be synced to providers when connected
 
-2. **Data Portability**: When switching providers, employee pay settings are preserved locally; only external IDs are cleared
+2. **Tax Estimates**: Uses approximate withholding rates; actual taxes will be calculated by the provider when connected
 
-3. **Commission Integration**: Works identically for both providers - calculated from Phorest data before submission
+3. **Commission Data**: Relies on synced Phorest data; warns if data appears stale
 
-4. **QuickBooks Sandbox**: Use `https://sandbox-payroll.api.intuit.com` for development
+4. **Permissions**: Requires `manage_payroll` permission (granted to `super_admin` and `admin`)
 
-5. **Token Rotation**: Intuit requires rotating refresh tokens - each refresh returns a new refresh token
+5. **Draft Status**: Runs saved without a provider connection stay in "draft" status until submitted through a connected provider
 
-6. **Accounting Integration**: QuickBooks payroll can optionally sync journal entries to QuickBooks accounting (future enhancement)
+6. **Animations**: Uses `framer-motion` for step transitions (consistent with existing wizard patterns)
 
