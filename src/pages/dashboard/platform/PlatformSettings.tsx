@@ -1,11 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Shield, Database, Crown, Plug, BookOpen, Palette } from 'lucide-react';
+import { Settings, Shield, Database, Plug, BookOpen, Palette } from 'lucide-react';
 import { PlatformTeamManager } from '@/components/platform/PlatformTeamManager';
-import { PlatformBrandingTab } from '@/components/platform/settings/PlatformBrandingTab';
 import { PlatformAppearanceTab } from '@/components/platform/settings/PlatformAppearanceTab';
 import { PlatformIntegrationsTab } from '@/components/platform/settings/PlatformIntegrationsTab';
 import { KnowledgeBaseTab } from '@/components/platform/settings/KnowledgeBaseTab';
-import { useAuth } from '@/contexts/AuthContext';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { cn } from '@/lib/utils';
 import {
@@ -19,9 +17,7 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 
 export default function PlatformSettings() {
-  const { hasPlatformRoleOrHigher } = useAuth();
   const { resolvedTheme } = usePlatformTheme();
-  const isPlatformOwner = hasPlatformRoleOrHigher('platform_owner');
   const isDark = resolvedTheme === 'dark';
 
   const tabTriggerClass = cn(
@@ -71,12 +67,6 @@ export default function PlatformSettings() {
             <Plug className="h-3.5 w-3.5" />
             Integrations
           </TabsTrigger>
-          {isPlatformOwner && (
-            <TabsTrigger value="branding" className={cn(tabTriggerClass, 'flex items-center gap-1.5')}>
-              <Crown className="h-3.5 w-3.5 text-amber-400" />
-              Branding
-            </TabsTrigger>
-          )}
         </TabsList>
 
         <TabsContent value="team">
@@ -151,12 +141,6 @@ export default function PlatformSettings() {
         <TabsContent value="integrations">
           <PlatformIntegrationsTab />
         </TabsContent>
-
-        {isPlatformOwner && (
-          <TabsContent value="branding">
-            <PlatformBrandingTab />
-          </TabsContent>
-        )}
       </Tabs>
     </PlatformPageContainer>
   );
