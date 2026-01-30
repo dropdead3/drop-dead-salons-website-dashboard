@@ -1,116 +1,263 @@
 
-# Add Back Navigation to Platform Pages
+# Add Business Type, Plan & Location Count to Organization Cards
 
-## Design Rule: Platform Page Headers with Navigation
+## Summary
 
-Establish a consistent header pattern for all platform pages that includes contextual back navigation.
+Enhance the Platform Accounts table to display three key pieces of information for each organization:
+1. **Business Type** - Salon, Spa, Esthetics, etc.
+2. **Subscription Plan** - Starter, Standard, Professional, Enterprise
+3. **Active Locations** - Count of locations for multi-location businesses
 
 ---
 
-## Navigation Hierarchy
+## Current State Analysis
 
-```text
-Platform Overview (hub/home - no back button needed)
-    │
-    ├── Salon Accounts ← Back to Overview
-    │       └── Account Detail ← Back to Accounts (already implemented)
-    │
-    ├── Migrations ← Back to Overview
-    │
-    └── Platform Settings ← Back to Overview
+| Data | Status | Location |
+|------|--------|----------|
+| Business Type | Missing | Needs new `business_type` column |
+| Subscription Plan | Exists but not shown | `subscription_tier` column already in DB |
+| Location Count | Calculated only for detail page | `useOrganizationWithStats` hook |
+
+---
+
+## Implementation Plan
+
+### Phase 1: Database Migration
+
+Add a `business_type` column to the `organizations` table with predefined options:
+
+```sql
+ALTER TABLE public.organizations 
+ADD COLUMN business_type TEXT DEFAULT 'salon' 
+CHECK (business_type IN ('salon', 'spa', 'esthetics', 'barbershop', 'med_spa', 'wellness', 'other'));
 ```
 
----
+| Value | Display Label |
+|-------|---------------|
+| `salon` | Salon |
+| `spa` | Spa |
+| `esthetics` | Esthetics |
+| `barbershop` | Barbershop |
+| `med_spa` | Med Spa |
+| `wellness` | Wellness |
+| `other` | Other |
 
-## Header Component Pattern
+### Phase 2: Update Type Definitions
 
-Create a reusable `PlatformPageHeader` component that standardizes:
-- Back button placement (left-aligned, before title)
-- Page title and description
-- Optional right-side action buttons
+**File**: `src/hooks/useOrganizations.ts`
 
-### Component Structure
+Add `business_type` to the `Organization` interface:
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│ [←]  Page Title                                    [+ Action]   │
-│      Description text                                           │
-└─────────────────────────────────────────────────────────────────┘
+```typescript
+export interface Organization {
+  // ... existing fields
+  business_type: 'salon' | 'spa' | 'esthetics' | 'barbershop' | 'med_spa' | 'wellness' | 'other';
+}
 ```
 
----
+Add to `OrganizationInsert`:
 
-## Implementation
+```typescript
+business_type?: 'salon' | 'spa' | 'esthetics' | 'barbershop' | 'med_spa' | 'wellness' | 'other';
+```
 
-### 1. Create PlatformPageHeader Component
+### Phase 3: Create Organizations With Stats Hook
 
-**File**: `src/components/platform/ui/PlatformPageHeader.tsx`
+Create a new hook `useOrganizationsWithStats` that fetches all organizations with their location counts in a single efficient query:
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `title` | string | Page heading |
-| `description` | string (optional) | Subtext below title |
-| `backTo` | string (optional) | Route to navigate back to |
-| `backLabel` | string (optional) | Accessible label (default: "Go back") |
-| `actions` | ReactNode (optional) | Right-side buttons/actions |
+```typescript
+export interface OrganizationListItem extends Organization {
+  locationCount: number;
+}
 
-The back button uses the existing `PlatformButton` ghost variant with `ArrowLeft` icon.
+export function useOrganizationsWithStats() {
+  return useQuery({
+    queryKey: ['organizations-with-stats'],
+    queryFn: async () => {
+      // Fetch organizations
+      const { data: orgs, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Fetch location counts for all orgs
+      const { data: locationCounts } = await supabase
+        .from('locations')
+        .select('organization_id')
+        .eq('is_active', true);
+      
+      // Aggregate counts per org
+      const countMap = new Map<string, number>();
+      locationCounts?.forEach(loc => {
+        const orgId = loc.organization_id;
+        if (orgId) countMap.set(orgId, (countMap.get(orgId) || 0) + 1);
+      });
+      
+      return orgs.map(org => ({
+        ...org,
+        locationCount: countMap.get(org.id) || 0
+      }));
+    },
+  });
+}
+```
 
-### 2. Update Platform Pages
+### Phase 4: Update Accounts Table
 
-| Page | Back Target | Back Label |
-|------|-------------|------------|
-| **Overview** | None (hub page) | - |
-| **Accounts** | `/dashboard/platform/overview` | "Back to Overview" |
-| **AccountDetail** | `/dashboard/platform/accounts` | Already implemented |
-| **PlatformImport** | `/dashboard/platform/overview` | "Back to Overview" |
-| **PlatformSettings** | `/dashboard/platform/overview` | "Back to Overview" |
+**File**: `src/pages/dashboard/platform/Accounts.tsx`
 
-### 3. Export from UI Index
+Update the table to display the three new columns:
 
-Add `PlatformPageHeader` to the platform UI component exports.
+| Current Columns | New Columns |
+|-----------------|-------------|
+| Salon (name + slug) | (unchanged) |
+| Status | Type (business_type) |
+| Stage | Plan (subscription_tier) |
+| Source | Locations (count badge) |
+| Created | (unchanged) |
+| Actions | (unchanged) |
 
----
+**Visual Design:**
 
-## Files to Create/Modify
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│ Salon               │ Type    │ Status  │ Plan         │ Locations │ Created        │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│ [logo] Drop Dead    │ Salon   │ active  │ Professional │ 3 📍      │ 10 hours ago   │
+│        drop-dead... │         │         │              │           │                │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
 
-| File | Change |
-|------|--------|
-| `src/components/platform/ui/PlatformPageHeader.tsx` | **Create** - New reusable header component |
-| `src/components/platform/ui/index.ts` | Add export |
-| `src/pages/dashboard/platform/Accounts.tsx` | Replace header with `PlatformPageHeader` |
-| `src/pages/dashboard/platform/PlatformImport.tsx` | Replace header with `PlatformPageHeader` |
-| `src/pages/dashboard/platform/PlatformSettings.tsx` | Replace header with `PlatformPageHeader` |
-| `src/pages/dashboard/platform/AccountDetail.tsx` | Refactor to use `PlatformPageHeader` for consistency |
+**Type Display**: Show as simple text with optional icon hint
 
----
+**Plan Display**: Use a subtle badge or text with plan tier
 
-## Design Details
+**Locations Display**: Show count with `MapPin` icon, styled as pill/badge
 
-### Back Button Styling
-- Uses `PlatformButton` with `variant="ghost"` and `size="icon"`
-- `ArrowLeft` icon at 16x16 (h-4 w-4)
-- Positioned inline with title, gap of 12px (gap-3)
-- Hover state: subtle background highlight per ghost button style
+### Phase 5: Update Create Organization Dialog
 
-### Responsive Behavior
-- On mobile: back button + title remain inline
-- Action buttons stack below title on very small screens if needed
+**File**: `src/components/platform/CreateOrganizationDialog.tsx`
 
----
-
-## Component Preview
+Add a Business Type selector to the form:
 
 ```tsx
-<PlatformPageHeader
-  title="Salon Accounts"
-  description="Manage all salon organizations on the platform"
-  backTo="/dashboard/platform/overview"
-  actions={
-    <PlatformButton onClick={handleCreate}>
-      <Plus className="h-4 w-4" />
-      New Account
-    </PlatformButton>
-  }
+<FormField
+  control={form.control}
+  name="business_type"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Business Type</FormLabel>
+      <Select onValueChange={field.onChange} value={field.value}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select business type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="salon">Salon</SelectItem>
+          <SelectItem value="spa">Spa</SelectItem>
+          <SelectItem value="esthetics">Esthetics</SelectItem>
+          <SelectItem value="barbershop">Barbershop</SelectItem>
+          <SelectItem value="med_spa">Med Spa</SelectItem>
+          <SelectItem value="wellness">Wellness</SelectItem>
+          <SelectItem value="other">Other</SelectItem>
+        </SelectContent>
+      </Select>
+    </FormItem>
+  )}
 />
+```
+
+### Phase 6: Update Account Detail Page
+
+Ensure the AccountDetail page also displays business type in the organization info card.
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| **Migration** | Add `business_type` column to organizations |
+| `src/hooks/useOrganizations.ts` | Add `business_type` to types, create `useOrganizationsWithStats` hook |
+| `src/pages/dashboard/platform/Accounts.tsx` | Update table with Type, Plan, Locations columns |
+| `src/components/platform/CreateOrganizationDialog.tsx` | Add Business Type field |
+| `src/pages/dashboard/platform/AccountDetail.tsx` | Display business type |
+
+---
+
+## Technical Details
+
+### Table Column Layout Update
+
+Replace the current columns with:
+
+```tsx
+<TableHeader>
+  <TableRow>
+    <TableHead>Salon</TableHead>
+    <TableHead>Type</TableHead>
+    <TableHead>Status</TableHead>
+    <TableHead>Plan</TableHead>
+    <TableHead>Locations</TableHead>
+    <TableHead>Created</TableHead>
+    <TableHead className="text-right">Actions</TableHead>
+  </TableRow>
+</TableHeader>
+```
+
+### Business Type Labels Mapping
+
+```typescript
+const businessTypeLabels: Record<string, string> = {
+  salon: 'Salon',
+  spa: 'Spa',
+  esthetics: 'Esthetics',
+  barbershop: 'Barbershop',
+  med_spa: 'Med Spa',
+  wellness: 'Wellness',
+  other: 'Other',
+};
+```
+
+### Plan Tier Labels Mapping
+
+```typescript
+const planLabels: Record<string, string> = {
+  starter: 'Starter',
+  standard: 'Standard',
+  professional: 'Professional',
+  enterprise: 'Enterprise',
+};
+```
+
+### Location Count Cell
+
+```tsx
+<TableCell>
+  <div className="flex items-center gap-1.5">
+    <MapPin className="h-3.5 w-3.5 text-slate-500" />
+    <span className="text-sm text-slate-300">{org.locationCount}</span>
+  </div>
+</TableCell>
+```
+
+---
+
+## Filter Updates (Optional Enhancement)
+
+Consider adding a filter dropdown for business type alongside the existing status filter:
+
+```tsx
+<Select value={typeFilter} onValueChange={setTypeFilter}>
+  <SelectTrigger className="w-[150px]">
+    <SelectValue placeholder="All Types" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all">All Types</SelectItem>
+    <SelectItem value="salon">Salon</SelectItem>
+    <SelectItem value="spa">Spa</SelectItem>
+    {/* ... */}
+  </SelectContent>
+</Select>
 ```
