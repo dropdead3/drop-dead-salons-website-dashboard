@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form';
+import { formatPhoneNumber } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -243,7 +244,11 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                   <FormItem>
                     <FormLabel className="text-slate-300">Contact Phone</FormLabel>
                     <FormControl>
-                      <PlatformInput placeholder="(555) 123-4567" {...field} />
+                      <PlatformInput 
+                        placeholder="(555) 123-4567" 
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))}
+                      />
                     </FormControl>
                     <FormMessage className="text-red-400" />
                   </FormItem>
