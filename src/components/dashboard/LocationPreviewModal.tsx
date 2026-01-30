@@ -24,7 +24,7 @@ function LocationPreviewCard({ location }: { location: Location }) {
       <div className="p-6 pb-4">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="font-display text-xl font-semibold mb-1">{location.name}</h3>
+            <h3 className="font-display text-xl mb-1">{location.name}</h3>
             <p className="text-sm text-muted-foreground">{location.city}</p>
           </div>
           {location.store_number && (

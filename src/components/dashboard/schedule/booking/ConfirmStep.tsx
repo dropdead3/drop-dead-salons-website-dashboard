@@ -188,10 +188,10 @@ export function ConfirmStep({
       <div className="p-4 border-t border-border bg-card space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Estimated Total</span>
-          <span className="text-xl font-bold">${totalPrice.toFixed(2)}</span>
+          <span className="text-xl font-medium">${totalPrice.toFixed(2)}</span>
         </div>
         <Button
-          className="w-full h-12 text-base font-semibold"
+          className="w-full h-12 text-base font-medium"
           disabled={isLoading}
           onClick={onConfirm}
         >

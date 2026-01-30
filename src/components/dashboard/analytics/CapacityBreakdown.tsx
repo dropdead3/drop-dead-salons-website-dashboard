@@ -180,8 +180,8 @@ export function CapacityBreakdown({
           {/* Net hours result */}
           <div className="pt-3 border-t border-border/50">
             <div className="grid grid-cols-[1fr,auto] items-center gap-4">
-              <span className="font-semibold text-foreground">Net Available Hours</span>
-              <span className="text-primary font-bold tabular-nums text-base">
+              <span className="font-medium text-foreground">Net Available Hours</span>
+              <span className="text-primary font-medium tabular-nums text-base">
                 {netHoursPerDay.toFixed(1)}h<span className="text-xs font-normal text-muted-foreground">/day</span>
               </span>
             </div>

@@ -89,13 +89,13 @@ export function FormSigningDialog({
     const lines = content.split('\n');
     return lines.map((line, idx) => {
       if (line.startsWith('### ')) {
-        return <h3 key={idx} className="text-lg font-semibold mt-4 mb-2">{line.slice(4)}</h3>;
+        return <h3 key={idx} className="text-lg font-medium mt-4 mb-2">{line.slice(4)}</h3>;
       }
       if (line.startsWith('## ')) {
-        return <h2 key={idx} className="text-xl font-semibold mt-4 mb-2">{line.slice(3)}</h2>;
+        return <h2 key={idx} className="text-xl font-medium mt-4 mb-2">{line.slice(3)}</h2>;
       }
       if (line.startsWith('# ')) {
-        return <h1 key={idx} className="text-2xl font-bold mt-4 mb-2">{line.slice(2)}</h1>;
+        return <h1 key={idx} className="text-2xl font-medium mt-4 mb-2">{line.slice(2)}</h1>;
       }
       if (line.includes('**')) {
         const parts = line.split(/\*\*(.*?)\*\*/g);

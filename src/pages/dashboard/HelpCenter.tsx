@@ -77,7 +77,7 @@ export default function HelpCenter() {
         ) : null}
 
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-display font-bold mb-2">
+          <h1 className="text-3xl font-display mb-2">
             {currentCategory ? currentCategory.name : 'Help Center'}
           </h1>
           <p className="text-muted-foreground">

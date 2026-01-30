@@ -170,7 +170,7 @@ export function PlatformBrandingTab() {
                       >
                         <Sparkles className="h-4 w-4 text-white" />
                       </div>
-                      <span className="font-display font-semibold text-white">Platform</span>
+                      <span className="font-display text-white">Platform</span>
                     </>
                   )}
                 </div>
