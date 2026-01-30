@@ -43,7 +43,7 @@ export default function PlatformOverview() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Platform Overview</h1>
+          <h1 className="text-3xl font-display text-white">Platform Overview</h1>
           <p className="text-slate-400 mt-1">
             Manage accounts, migrations, and platform health
           </p>
