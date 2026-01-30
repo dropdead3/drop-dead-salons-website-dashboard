@@ -1,248 +1,146 @@
 
-
-# Platform Payments and Revenue Dashboard
+# Give Platform Owner Full Permissions + Revenue Link Visibility
 
 ## Summary
 
-Build a subscription billing system where organizations pay platform fees based on their plan (Starter, Standard, Professional, Enterprise), plus a Revenue Dashboard exclusively for approved platform admins to track Monthly Recurring Revenue (MRR), payment history, and subscription health.
+Update the platform role system so that `platform_owner` automatically has all permissions that `platform_admin` has (hierarchy), and restrict the Revenue nav link to only show for platform owners and admins.
 
 ---
 
-## Architecture Overview
+## Current Issue
+
+1. **Route Access**: The Revenue page is protected with `requirePlatformRole="platform_admin"`, but `hasPlatformRole()` does an exact match. A `platform_owner` cannot access Revenue because they technically don't have the `platform_admin` role - even though they should have MORE permissions.
+
+2. **Nav Visibility**: The Revenue link shows for all platform users (support, developer, etc.) even though they can't access the page.
+
+---
+
+## Solution
+
+### 1. Add Platform Role Hierarchy Function
+
+Create a helper that respects the permission hierarchy:
 
 ```text
-+------------------+       +-------------------+       +------------------+
-|   Organizations  | ----> |   Stripe Billing  | ----> |  Revenue Dashboard |
-+------------------+       +-------------------+       +------------------+
-       |                          |                          |
-  subscription_tier          Subscriptions              Platform Admins
-  stripe_customer_id         Invoices                   (platform_admin role)
-                             Webhooks
+platform_owner > platform_admin > platform_support = platform_developer
+```
+
+The `platform_owner` should inherit all permissions of lower roles.
+
+### 2. Update Route Protection
+
+Modify the `ProtectedRoute` component to use a new `hasPlatformRoleOrHigher` check that recognizes the hierarchy.
+
+### 3. Filter Revenue Nav Item
+
+Add a `platformRoles` property to the Revenue nav item so it only appears for `platform_owner` and `platform_admin`.
+
+---
+
+## Implementation Details
+
+### File 1: `src/contexts/AuthContext.tsx`
+
+Add a new helper function `hasPlatformRoleOrHigher` that implements the hierarchy:
+
+```typescript
+// Platform role hierarchy (higher includes all permissions of lower)
+const PLATFORM_ROLE_HIERARCHY: Record<PlatformRole, number> = {
+  platform_owner: 4,
+  platform_admin: 3,
+  platform_support: 2,
+  platform_developer: 2,
+};
+
+const hasPlatformRoleOrHigher = useCallback((requiredRole: PlatformRole): boolean => {
+  const requiredLevel = PLATFORM_ROLE_HIERARCHY[requiredRole];
+  return platformRoles.some(role => PLATFORM_ROLE_HIERARCHY[role] >= requiredLevel);
+}, [platformRoles]);
+```
+
+Add this to the context interface and provider exports.
+
+### File 2: `src/components/auth/ProtectedRoute.tsx`
+
+Update the platform role check to use `hasPlatformRoleOrHigher`:
+
+```typescript
+// Before:
+if (requirePlatformRole && !hasPlatformRole(requirePlatformRole)) {
+  return <Navigate to="/dashboard/platform/overview" replace />;
+}
+
+// After:
+if (requirePlatformRole && !hasPlatformRoleOrHigher(requirePlatformRole)) {
+  return <Navigate to="/dashboard/platform/overview" replace />;
+}
+```
+
+### File 3: `src/components/dashboard/DashboardLayout.tsx`
+
+Update the `platformNavItems` to include role restrictions:
+
+```typescript
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  permission?: string;
+  roles?: AppRole[];
+  platformRoles?: PlatformRole[];  // NEW: restrict to specific platform roles
+}
+
+const platformNavItems: NavItem[] = [
+  { href: '/dashboard/platform/overview', label: 'Platform Overview', icon: Terminal },
+  { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
+  { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
+  { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, 
+    platformRoles: ['platform_owner', 'platform_admin'] },
+  { href: '/dashboard/platform/settings', label: 'Platform Settings', icon: Settings,
+    platformRoles: ['platform_owner', 'platform_admin'] },
+];
+```
+
+Update `filterNavItems` to check platform role restrictions:
+
+```typescript
+const filterNavItems = (items: NavItem[]) => {
+  return items.filter(item => {
+    // Check platform role restriction first
+    if (item.platformRoles && item.platformRoles.length > 0) {
+      const hasRequiredPlatformRole = item.platformRoles.some(
+        role => hasPlatformRoleOrHigher(role)
+      );
+      if (!hasRequiredPlatformRole) return false;
+    }
+    
+    // Existing permission/role checks...
+    if (item.permission) {
+      return hasPermission(item.permission);
+    }
+    if (!item.roles) return true;
+    return item.roles.some(role => roles.includes(role));
+  });
+};
 ```
 
 ---
 
-## Database Schema
-
-### New Tables
-
-| Table | Purpose |
-|-------|---------|
-| `subscription_plans` | Define plan tiers with pricing |
-| `organization_subscriptions` | Track active subscriptions per org |
-| `subscription_invoices` | Record payment history |
-
-### Schema Details
-
-**subscription_plans**
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| tier | text | starter, standard, professional, enterprise |
-| name | text | Display name (e.g., "Professional Plan") |
-| price_monthly | numeric | Monthly price in dollars |
-| price_annually | numeric | Annual price (discounted) |
-| stripe_price_id_monthly | text | Stripe Price ID for monthly |
-| stripe_price_id_annual | text | Stripe Price ID for annual |
-| max_locations | int | Location limit per plan |
-| max_users | int | User limit per plan |
-| features | jsonb | Feature flags |
-| is_active | boolean | Available for new signups |
-
-**organization_subscriptions** (modify organizations table)
-| Column | Type | Description |
-|--------|------|-------------|
-| stripe_customer_id | text | Stripe Customer ID |
-| stripe_subscription_id | text | Active subscription ID |
-| subscription_status | text | active, past_due, cancelled, trialing |
-| current_period_start | timestamptz | Billing period start |
-| current_period_end | timestamptz | Billing period end |
-| billing_email | text | Billing contact email |
-
-**subscription_invoices**
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| organization_id | uuid | FK to organizations |
-| stripe_invoice_id | text | Stripe Invoice ID |
-| amount | numeric | Invoice amount |
-| status | text | paid, unpaid, void |
-| period_start | timestamptz | Invoice period start |
-| period_end | timestamptz | Invoice period end |
-| paid_at | timestamptz | Payment timestamp |
-| invoice_url | text | Hosted invoice URL |
-
----
-
-## Stripe Integration
-
-### Edge Function: `stripe-webhook`
-
-Handles Stripe webhook events:
-- `customer.subscription.created` - New subscription
-- `customer.subscription.updated` - Plan changes
-- `customer.subscription.deleted` - Cancellation
-- `invoice.paid` - Successful payment
-- `invoice.payment_failed` - Failed payment
-
-### Edge Function: `create-checkout-session`
-
-Creates Stripe Checkout session for:
-- New subscription signup
-- Plan upgrades/downgrades
-- Payment method updates
-
-### Edge Function: `customer-portal`
-
-Generates Stripe Customer Portal link for self-service:
-- Update payment method
-- View invoices
-- Cancel subscription
-
----
-
-## Revenue Dashboard
-
-### Access Control
-
-Protected by `requirePlatformRole="platform_admin"` - only `platform_owner` and `platform_admin` can access.
-
-### Route
-
-`/dashboard/platform/revenue`
-
-### Key Metrics
-
-| Metric | Description |
-|--------|-------------|
-| MRR | Monthly Recurring Revenue |
-| ARR | Annual Recurring Revenue |
-| Active Subscriptions | Count by plan |
-| Churn Rate | Cancellations this month |
-| Revenue by Plan | Breakdown by tier |
-| Payment Success Rate | Successful vs failed |
-
-### Dashboard Sections
-
-1. **KPI Cards**
-   - Total MRR with trend
-   - Active subscriptions
-   - Average revenue per account
-   - Churn this month
-
-2. **Revenue Chart**
-   - Monthly revenue over time
-   - Stacked by plan tier
-
-3. **Subscription Breakdown**
-   - Table of accounts by plan
-   - Status indicators (active, past_due, trialing)
-
-4. **Recent Invoices**
-   - Latest 10 invoices
-   - Status, amount, organization
-
-5. **At-Risk Accounts**
-   - Past due subscriptions
-   - Failed payments
-   - Action buttons
-
----
-
-## Implementation Files
-
-### New Files
-
-| File | Purpose |
-|------|---------|
-| `supabase/functions/stripe-webhook/index.ts` | Webhook handler |
-| `supabase/functions/create-checkout-session/index.ts` | Checkout creation |
-| `supabase/functions/customer-portal/index.ts` | Portal link generation |
-| `src/pages/dashboard/platform/Revenue.tsx` | Revenue dashboard page |
-| `src/hooks/usePlatformRevenue.ts` | Revenue metrics hook |
-| `src/hooks/useSubscriptionManagement.ts` | Subscription actions hook |
-| `src/components/platform/RevenueChart.tsx` | Revenue visualization |
-| `src/components/platform/SubscriptionTable.tsx` | Subscription list |
-
-### Modified Files
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/App.tsx` | Add Revenue route with platform_admin protection |
-| `src/components/dashboard/DashboardLayout.tsx` | Add Revenue nav item |
-| Database migration | Add new tables and columns |
+| `src/contexts/AuthContext.tsx` | Add `hasPlatformRoleOrHigher` function with hierarchy logic |
+| `src/components/auth/ProtectedRoute.tsx` | Use `hasPlatformRoleOrHigher` instead of exact match |
+| `src/components/dashboard/DashboardLayout.tsx` | Add `platformRoles` to NavItem interface, add restrictions to Revenue/Settings items, update filter logic |
+| `src/components/dashboard/SidebarNavContent.tsx` | Update NavItem interface to include `platformRoles` |
 
 ---
 
-## Plan Pricing (Configurable)
+## Result
 
-| Tier | Monthly | Annual (Save 20%) |
-|------|---------|-------------------|
-| Starter | $99 | $948 |
-| Standard | $199 | $1,908 |
-| Professional | $349 | $3,348 |
-| Enterprise | Custom | Custom |
-
----
-
-## Security
-
-### RLS Policies
-
-- `subscription_plans`: Anyone can read (public pricing)
-- `organization_subscriptions`: Platform users can view all, org admins view own
-- `subscription_invoices`: Platform users can view all, org admins view own
-
-### Webhook Security
-
-- Verify Stripe signature using `STRIPE_WEBHOOK_SECRET`
-- Log all webhook events to `platform_audit_log`
-
-### Dashboard Access
-
-- Protected by `ProtectedRoute` with `requirePlatformRole="platform_admin"`
-- Only `platform_owner` and `platform_admin` roles can access
-
----
-
-## Required Secrets
-
-| Secret | Purpose |
-|--------|---------|
-| `STRIPE_SECRET_KEY` | Server-side Stripe API |
-| `STRIPE_WEBHOOK_SECRET` | Webhook signature verification |
-
----
-
-## Implementation Phases
-
-### Phase 1: Database + Stripe Setup
-1. Create database tables and RLS policies
-2. Set up Stripe products and prices
-3. Add Stripe secrets
-
-### Phase 2: Edge Functions
-1. Build `stripe-webhook` handler
-2. Build `create-checkout-session`
-3. Build `customer-portal`
-
-### Phase 3: Revenue Dashboard
-1. Create revenue data hooks
-2. Build dashboard page with charts
-3. Add navigation and route protection
-
-### Phase 4: Account Integration
-1. Add billing tab to Account Detail page
-2. Show subscription status
-3. Enable plan management actions
-
----
-
-## Technical Notes
-
-- Uses Stripe Checkout for secure, hosted payment pages
-- Stripe Customer Portal for self-service management
-- Webhook-driven updates for real-time sync
-- Recharts for revenue visualization (already installed)
-- Platform theme styling consistent with existing pages
-
+After these changes:
+- **Platform Owner** can access Revenue and Settings pages (inherits admin permissions)
+- **Platform Admin** can access Revenue and Settings pages
+- **Platform Support/Developer** cannot see or access Revenue/Settings
+- The nav sidebar correctly shows/hides links based on effective platform permissions
