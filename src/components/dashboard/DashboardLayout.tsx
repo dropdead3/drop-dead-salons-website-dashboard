@@ -136,6 +136,7 @@ const housekeepingNavItems: NavItem[] = [
   { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users, permission: 'view_onboarding' },
   { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText, permission: 'view_handbooks' },
   { href: '/dashboard/changelog', label: "What's New", icon: Sparkles },
+  { href: '/dashboard/help', label: 'Help Center', icon: HelpCircle },
 ];
 
 const growthNavItems: NavItem[] = [

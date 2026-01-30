@@ -2740,6 +2740,140 @@ export type Database = {
         }
         Relationships: []
       }
+      kb_article_reads: {
+        Row: {
+          article_id: string
+          id: string
+          organization_id: string | null
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          id?: string
+          organization_id?: string | null
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          id?: string
+          organization_id?: string | null
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_article_reads_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "kb_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_article_reads_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_articles: {
+        Row: {
+          author_id: string
+          category_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_featured: boolean | null
+          is_pinned: boolean | null
+          published_at: string | null
+          slug: string
+          status: string
+          summary: string | null
+          title: string
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          author_id: string
+          category_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean | null
+          is_pinned?: boolean | null
+          published_at?: string | null
+          slug: string
+          status?: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string
+          category_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean | null
+          is_pinned?: boolean | null
+          published_at?: string | null
+          slug?: string
+          status?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "kb_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leaderboard_achievements: {
         Row: {
           badge_color: string
@@ -6515,6 +6649,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_kb_article_views: {
+        Args: { article_id: string }
+        Returns: undefined
       }
       is_coach_or_admin: { Args: { _user_id: string }; Returns: boolean }
       is_org_admin: {

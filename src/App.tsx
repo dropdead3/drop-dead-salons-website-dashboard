@@ -87,6 +87,7 @@ import DayRateBooking from "./pages/DayRateBooking";
 import DayRateSettings from "./pages/dashboard/admin/DayRateSettings";
 import DayRateCalendar from "./pages/dashboard/admin/DayRateCalendar";
 import DataImport from "./pages/dashboard/admin/DataImport";
+import HelpCenter from "./pages/dashboard/HelpCenter";
 
 // Platform Admin pages
 import PlatformOverview from "./pages/dashboard/platform/Overview";
@@ -155,6 +156,9 @@ const App = () => (
                       <Route path="/dashboard/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
                       <Route path="/dashboard/metrics-glossary" element={<ProtectedRoute><MetricsGlossary /></ProtectedRoute>} />
                       <Route path="/dashboard/design-system" element={<ProtectedRoute requiredPermission="manage_settings"><DesignSystem /></ProtectedRoute>} />
+                      <Route path="/dashboard/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+                      <Route path="/dashboard/help/:categorySlug" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+                      <Route path="/dashboard/help/:categorySlug/:articleSlug" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
                       
                       {/* Admin routes */}
                       <Route path="/dashboard/admin/team" element={<ProtectedRoute requiredPermission="view_team_overview"><TeamOverview /></ProtectedRoute>} />

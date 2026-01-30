@@ -3,12 +3,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings2, Cake, Calendar, Award, Sparkles, Armchair } from 'lucide-react';
+import { Settings2, Cake, Calendar, Award, Sparkles, Armchair, HelpCircle } from 'lucide-react';
 import { BirthdayWidget } from './BirthdayWidget';
 import { WorkScheduleWidgetCompact } from './WorkScheduleWidgetCompact';
 import { AnniversaryWidget } from './AnniversaryWidget';
 import { ChangelogWidget } from './ChangelogWidget';
 import { DayRateWidget } from './DayRateWidget';
+import { HelpCenterWidget } from './HelpCenterWidget';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useDashboardLayout, useSaveDashboardLayout } from '@/hooks/useDashboardLayout';
 
@@ -19,6 +20,7 @@ const AVAILABLE_WIDGETS = [
   { id: 'anniversaries', label: 'Work Anniversaries', icon: Award },
   { id: 'schedule', label: 'My Schedule', icon: Calendar },
   { id: 'dayrate', label: 'Day Rate Bookings', icon: Armchair },
+  { id: 'help', label: 'Help Center', icon: HelpCircle },
 ] as const;
 
 type WidgetId = typeof AVAILABLE_WIDGETS[number]['id'];
@@ -140,6 +142,9 @@ export function WidgetsSection({ defaultEnabledWidgets = ['changelog', 'birthday
         </VisibilityGate>
         <VisibilityGate elementKey="widget_dayrate" elementName="Day Rate Bookings Widget" elementCategory="Dashboard Widgets">
           {isWidgetEnabled('dayrate') && <DayRateWidget />}
+        </VisibilityGate>
+        <VisibilityGate elementKey="widget_help" elementName="Help Center Widget" elementCategory="Dashboard Widgets">
+          {isWidgetEnabled('help') && <HelpCenterWidget />}
         </VisibilityGate>
       </div>
     </div>
