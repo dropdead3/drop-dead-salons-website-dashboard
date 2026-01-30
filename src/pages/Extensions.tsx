@@ -500,7 +500,7 @@ export default function Extensions() {
         <div className="container mx-auto px-6 lg:px-12">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
             <p className="text-foreground font-medium text-center">
-              New clients can save 15% off their first extension install service! Present code <span className="font-bold">NEWCLIENT15</span> at checkout.
+              New clients can save 15% off their first extension install service! Present code <span className="font-medium">NEWCLIENT15</span> at checkout.
             </p>
             <button
               onClick={() => {

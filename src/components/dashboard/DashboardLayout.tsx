@@ -914,18 +914,18 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
                   <>
                     <Avatar className="h-6 w-6 border-2 border-amber-950/30 shadow-sm">
                       <AvatarImage src={viewAsUser.photo_url || undefined} />
-                      <AvatarFallback className="text-[10px] bg-amber-950/20 text-amber-950 font-bold">
+                      <AvatarFallback className="text-[10px] bg-amber-950/20 text-amber-950 font-medium">
                         {viewAsUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-start leading-tight">
-                      <span className="font-semibold">{viewAsUser.full_name}</span>
+                      <span className="font-medium">{viewAsUser.full_name}</span>
                       <span className="text-[10px] text-amber-950/70">Impersonating User</span>
                     </div>
                   </>
                 ) : (
                   <div className="flex flex-col items-start leading-tight">
-                    <span className="font-semibold">{viewAsRole ? ROLE_LABELS[viewAsRole] : 'Unknown'}</span>
+                    <span className="font-medium">{viewAsRole ? ROLE_LABELS[viewAsRole] : 'Unknown'}</span>
                     <span className="text-[10px] text-amber-950/70">Viewing as Role</span>
                   </div>
                 )}

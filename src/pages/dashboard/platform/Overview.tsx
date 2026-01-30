@@ -191,7 +191,7 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
             <Icon className="h-5 w-5" />
           </div>
         </div>
-        <div className={`text-4xl font-bold ${valueStyles[variant]} mb-1`}>{value}</div>
+        <div className={`text-4xl font-medium ${valueStyles[variant]} mb-1`}>{value}</div>
         <p className="text-sm text-slate-500">{description}</p>
       </div>
     </>

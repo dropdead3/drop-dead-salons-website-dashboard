@@ -84,19 +84,19 @@ export function AssistantRequestHistoryCard({ userId }: AssistantRequestHistoryC
         {/* Quick Stats */}
         <div className="grid grid-cols-4 gap-4 mb-4">
           <div className="text-center p-2 bg-muted/50 rounded-lg">
-            <div className="text-lg font-bold">{stats.total}</div>
+            <div className="text-lg font-medium">{stats.total}</div>
             <div className="text-xs text-muted-foreground">Assigned</div>
           </div>
           <div className="text-center p-2 bg-green-50 dark:bg-green-950/30 rounded-lg">
-            <div className="text-lg font-bold text-green-600">{stats.accepted}</div>
+            <div className="text-lg font-medium text-green-600">{stats.accepted}</div>
             <div className="text-xs text-muted-foreground">Accepted</div>
           </div>
           <div className="text-center p-2 bg-red-50 dark:bg-red-950/30 rounded-lg">
-            <div className="text-lg font-bold text-red-600">{stats.declined}</div>
+            <div className="text-lg font-medium text-red-600">{stats.declined}</div>
             <div className="text-xs text-muted-foreground">Declined</div>
           </div>
           <div className="text-center p-2 bg-muted/50 rounded-lg">
-            <div className="text-lg font-bold">{formatDuration(stats.avgResponseSeconds)}</div>
+            <div className="text-lg font-medium">{formatDuration(stats.avgResponseSeconds)}</div>
             <div className="text-xs text-muted-foreground">Avg Response</div>
           </div>
         </div>

@@ -191,7 +191,7 @@ export default function StaffStrikes() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Active Strikes</p>
-                  <p className="text-2xl font-bold">{activeStrikes}</p>
+                  <p className="text-2xl font-medium">{activeStrikes}</p>
                 </div>
                 <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
                   <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
@@ -204,7 +204,7 @@ export default function StaffStrikes() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Critical Issues</p>
-                  <p className="text-2xl font-bold text-destructive">{criticalStrikes}</p>
+                  <p className="text-2xl font-medium text-destructive">{criticalStrikes}</p>
                 </div>
                 <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
                   <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -217,7 +217,7 @@ export default function StaffStrikes() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Resolved</p>
-                  <p className="text-2xl font-bold text-green-600">{resolvedStrikes}</p>
+                  <p className="text-2xl font-medium text-green-600">{resolvedStrikes}</p>
                 </div>
                 <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
                   <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />

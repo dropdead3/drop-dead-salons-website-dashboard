@@ -299,7 +299,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       className="w-8 h-8 object-contain"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded bg-foreground text-background flex items-center justify-center font-display text-sm font-bold">
+                    <div className="w-8 h-8 rounded bg-foreground text-background flex items-center justify-center font-display text-sm">
                       {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
                     </div>
                   )}

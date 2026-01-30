@@ -52,7 +52,7 @@ export function AssistantWorkloadChart({ requests }: AssistantWorkloadChartProps
             <CardDescription>Assignment distribution across assistants</CardDescription>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{totalAssignments}</div>
+            <div className="text-2xl font-medium">{totalAssignments}</div>
             <div className="text-xs text-muted-foreground">total • avg {avgPerAssistant}/person</div>
           </div>
         </div>

@@ -83,7 +83,7 @@ export function HelpArticleView({ article }: HelpArticleViewProps) {
             )}
           </div>
 
-          <h1 className="text-2xl font-bold">{article.title}</h1>
+          <h1 className="text-2xl font-medium">{article.title}</h1>
 
           {article.summary && (
             <p className="text-muted-foreground text-lg">{article.summary}</p>

@@ -60,7 +60,7 @@ function AppointmentCard({
         <div className="flex items-start gap-4">
           {/* Time Column */}
           <div className="text-center shrink-0 w-16">
-            <div className="text-lg font-semibold">
+            <div className="text-lg font-medium">
               {formatTime12h(appointment.start_time).replace(' ', '')}
             </div>
             <div className="text-xs text-muted-foreground">
