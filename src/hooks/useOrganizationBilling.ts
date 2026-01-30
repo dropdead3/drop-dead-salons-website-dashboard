@@ -34,6 +34,8 @@ export interface OrganizationBilling {
   included_locations: number | null;
   included_users: number | null;
   auto_renewal: boolean;
+  non_renewal_requested_at: string | null;
+  non_renewal_reason: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

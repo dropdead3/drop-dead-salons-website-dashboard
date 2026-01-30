@@ -178,6 +178,8 @@ export function BillingConfigurationPanel({
     included_locations: includedLocations,
     included_users: includedUsers,
     auto_renewal: autoRenewal,
+    non_renewal_requested_at: billing?.non_renewal_requested_at || null,
+    non_renewal_reason: billing?.non_renewal_reason || null,
     notes: notes || null,
     created_at: billing?.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
