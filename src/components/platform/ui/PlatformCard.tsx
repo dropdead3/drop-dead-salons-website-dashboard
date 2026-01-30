@@ -53,7 +53,7 @@ const PlatformCardTitle = React.forwardRef<HTMLHeadingElement, PlatformCardTitle
     <h3
       ref={ref}
       className={cn(
-        'text-xl font-semibold leading-none tracking-tight text-white',
+        'text-xl font-medium leading-none tracking-tight text-white',
         className
       )}
       {...props}
