@@ -1,18 +1,36 @@
 
 
-## Onboarding Dashboard for Organization Go-Live Tracking
+## Add Contract Term Information to Account Details
 
-This plan creates a dedicated Onboarding Dashboard where platform admins can track organizations through their onboarding journey, view upcoming go-live dates, and manage next steps for each account.
+This plan will enhance the Account Details card on the AccountDetail page to display contract term dates (start/end), renewal status, and handle the scenario where a customer has decided not to renew.
 
 ---
 
-### Overview
+### Current State
 
-The Onboarding Dashboard will provide:
-- **Timeline View**: Visual representation of organizations progressing through onboarding stages
-- **Go-Live Calendar**: Upcoming and overdue go-live dates with clear visual indicators
-- **Stage Tracking**: Kanban-style or list view showing organizations grouped by stage
-- **Action Items**: Per-organization checklist of next steps with quick action buttons
+The Account Details card currently shows:
+- Account Number
+- Created Date
+- Go-Live Date
+- Activated Date
+- Business Type
+- Source Software
+- Plan
+
+**Missing**: Contract term dates and renewal status
+
+---
+
+### Data Available
+
+The `organization_billing` table already has these fields:
+- `contract_start_date` (DATE)
+- `contract_end_date` (DATE)  
+- `auto_renewal` (BOOLEAN, defaults to true)
+
+**New Field Needed**: Track when an account is scheduled for non-renewal (closing at term end)
+- `non_renewal_requested_at` (TIMESTAMPTZ) - When the non-renewal decision was made
+- `non_renewal_reason` (TEXT) - Why they're not renewing
 
 ---
 
@@ -20,190 +38,93 @@ The Onboarding Dashboard will provide:
 
 | Area | File | Action |
 |------|------|--------|
-| New Page | `src/pages/dashboard/platform/Onboarding.tsx` | **Create** - Main onboarding dashboard |
-| New Hook | `src/hooks/useOnboardingOrganizations.ts` | **Create** - Data fetching for onboarding orgs |
-| Sidebar | `src/components/platform/layout/PlatformSidebar.tsx` | **Edit** - Add nav link |
-| Routing | `src/App.tsx` | **Edit** - Add route for new page |
-
----
-
-### Dashboard Layout Design
-
-The dashboard will be organized into three main sections:
-
-```text
-+------------------------------------------------------------------+
-|  Onboarding Dashboard                              [+ New Account]|
-|  Track accounts through their go-live journey                     |
-+------------------------------------------------------------------+
-|                                                                   |
-|  SUMMARY CARDS (4 columns)                                        |
-| +-------------+ +-------------+ +-------------+ +-------------+   |
-| | Total       | | Approaching | | Overdue     | | Avg Days    |   |
-| | Onboarding  | | (7 days)    | | Go-Lives    | | to Go-Live  |   |
-| | 12          | | 3           | | 2           | | 28 days     |   |
-| +-------------+ +-------------+ +-------------+ +-------------+   |
-|                                                                   |
-+------------------------------------------------------------------+
-|                                                                   |
-|  GO-LIVE TIMELINE (2/3 width)  |  STAGE BREAKDOWN (1/3 width)    |
-| +---------------------------+  | +---------------------------+    |
-| | Upcoming Go-Lives         |  | | By Stage                  |    |
-| | [Feb 5] Acme Salon  #1002 |  | | New (3)          ●●●      |    |
-| | [Feb 12] Beauty Co #1005  |  | | Importing (4)    ●●●●     |    |
-| | [Feb 15] Style Hub #1008  |  | | Training (5)     ●●●●●    |    |
-| | ...                       |  | | Live (23)                 |    |
-| +---------------------------+  | +---------------------------+    |
-|                                                                   |
-+------------------------------------------------------------------+
-|                                                                   |
-|  ORGANIZATION CARDS (full width, grouped by stage)                |
-| +------------------------------------------------------------------+
-| | NEW (3 accounts)                                     [Expand All]|
-| +------------------------------------------------------------------+
-| | +------------------------------------------------------------+  |
-| | | Acme Salon #1002                        Go-Live: Feb 5     |  |
-| | | Contact: john@acme.com   Source: Phorest                   |  |
-| | | Next Steps:                                                |  |
-| | | [ ] Schedule kickoff call                                  |  |
-| | | [ ] Request data export                                    |  |
-| | | [Import Data] [Edit] [View Dashboard]                      |  |
-| | +------------------------------------------------------------+  |
-| +------------------------------------------------------------------+
-|                                                                   |
-| | IMPORTING (4 accounts)                                          |
-| | ...                                                             |
-+------------------------------------------------------------------+
-```
+| Database | Migration | Add `non_renewal_requested_at` and `non_renewal_reason` columns |
+| TypeScript | `useOrganizationBilling.ts` | Update interface to include new fields |
+| Account Detail | `AccountDetail.tsx` | Fetch billing data, display term info in Account Details card |
 
 ---
 
 ### Implementation Details
 
-#### 1. Create Data Hook (`useOnboardingOrganizations.ts`)
+#### 1. Database Migration
 
-A specialized hook that fetches organizations not yet "live" with enriched data:
+Add new columns to track non-renewal requests:
 
-```typescript
-interface OnboardingOrganization extends Organization {
-  locationCount: number;
-  daysUntilGoLive: number | null;
-  isOverdue: boolean;
-  isApproaching: boolean; // within 7 days
-}
+```sql
+ALTER TABLE public.organization_billing 
+ADD COLUMN non_renewal_requested_at TIMESTAMPTZ,
+ADD COLUMN non_renewal_reason TEXT;
 
-interface OnboardingStats {
-  totalOnboarding: number;
-  approaching: number;     // go-live within 7 days
-  overdue: number;         // past go-live but not live
-  byStage: Record<string, number>;
-  avgDaysToGoLive: number | null;
-}
+-- Add a comment for clarity
+COMMENT ON COLUMN public.organization_billing.non_renewal_requested_at 
+IS 'Timestamp when the customer requested to not renew at term end';
 ```
 
-The hook will:
-- Filter for `onboarding_stage != 'live'` (or status = 'pending')
-- Calculate days until go-live for each organization
-- Aggregate stats for the summary cards
-- Support sorting by go-live date, stage, or created date
+#### 2. Update TypeScript Interface
 
-#### 2. Create Onboarding Dashboard Page (`Onboarding.tsx`)
-
-Components within the page:
-
-**Summary Stats Cards**
-- Total Onboarding (count of non-live orgs)
-- Approaching Go-Live (within 7 days - amber)
-- Overdue Go-Lives (past date, not live - red alert)
-- Average Days to Go-Live
-
-**Go-Live Timeline**
-- Chronological list of upcoming go-live dates
-- Click to navigate to account detail
-- Visual indicators:
-  - **Green**: Today (go-live day!)
-  - **Amber**: Within 7 days
-  - **Red**: Overdue
-
-**Stage Breakdown**
-- Horizontal progress bars showing count per stage
-- Click to filter the organization list below
-
-**Organization Cards** (grouped by stage)
-- Collapsible sections for each stage (New, Importing, Training)
-- Each card shows:
-  - Organization name with account number
-  - Go-live date with status badge
-  - Primary contact info
-  - Source software (what they're migrating from)
-  - Quick action buttons: Import Data, Edit, View Dashboard
-
-#### 3. Update Sidebar Navigation
-
-Add "Onboarding" link in `PlatformSidebar.tsx`:
+In `useOrganizationBilling.ts`, add to `OrganizationBilling` interface:
 
 ```typescript
-{ 
-  href: '/dashboard/platform/onboarding', 
-  label: 'Onboarding', 
-  icon: Rocket, // or ClipboardList
-  platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] 
-}
+non_renewal_requested_at: string | null;
+non_renewal_reason: string | null;
 ```
 
-Position: Between "Accounts" and "Migrations" for logical flow.
+#### 3. Update Account Detail Page
 
-#### 4. Add Route in App.tsx
+Fetch billing data using `useOrganizationBilling` hook and add new rows to the Account Details card:
 
-```typescript
-<Route path="onboarding" element={<PlatformOnboarding />} />
-```
+**New display items:**
 
----
+| Icon | Label | Value | Condition |
+|------|-------|-------|-----------|
+| `CalendarRange` | Term Start | `Jan 1, 2026` | When `contract_start_date` exists |
+| `CalendarCheck` | Term End | `Dec 31, 2026` | When `contract_end_date` exists |
+| `RefreshCw` | Renewal | `Auto-Renews` (emerald) | When `auto_renewal = true` |
+| `XCircle` | Renewal | `Closing at Term End` (red) | When `auto_renewal = false` |
 
-### Visual Design Details
-
-**Color Coding for Go-Live Status:**
-- **Emerald**: Already live (completed)
-- **Violet**: No go-live date set
-- **Slate**: More than 7 days away
-- **Amber**: Within 7 days (approaching)
-- **Red**: Past go-live date but not yet live (overdue)
-
-**Stage Progress Visualization:**
-Each stage card will show a visual progress indicator:
+**Visual Design:**
 
 ```text
-New → Importing → Training → Live
- ●        ●          ○         ○   (current: Importing)
+Account Details
+────────────────
+🏢 Account #1234
+📅 Created Jan 15, 2026
+🎯 Go-Live Feb 28, 2026
+✓  Activated Feb 28, 2026
+📆 Term Start Feb 1, 2026
+📆 Term End Jan 31, 2027
+🔄 Auto-Renews  (emerald badge)
+   — OR —
+❌ Closing at Term End  (red text with badge)
+   Reason: Customer relocating
+
+🏢 Type: Salon
+🌐 Source: phorest
+📦 Plan: professional
 ```
 
-**Overdue Alert Banner:**
-When any organization is overdue, show a prominent alert:
+**Logic for renewal status display:**
 
-```text
-+------------------------------------------------------------------+
-| ⚠️  2 accounts are past their scheduled go-live date             |
-|     [View Overdue Accounts]                                       |
-+------------------------------------------------------------------+
+```typescript
+// If auto_renewal is true
+<div className="flex items-center gap-3">
+  <RefreshCw className="h-4 w-4 text-emerald-400" />
+  <span className="text-emerald-400">Auto-Renews</span>
+</div>
+
+// If auto_renewal is false
+<div className="flex items-center gap-3">
+  <XCircle className="h-4 w-4 text-red-400" />
+  <div>
+    <span className="text-red-400">Closing at Term End</span>
+    {billing.non_renewal_reason && (
+      <p className="text-xs text-slate-500 mt-0.5">
+        Reason: {billing.non_renewal_reason}
+      </p>
+    )}
+  </div>
+</div>
 ```
-
----
-
-### Technical Notes
-
-1. **Performance**: The hook will use `useQuery` with appropriate caching (30s refetch interval to match Overview page)
-
-2. **Filtering**: Support URL query params for pre-filtering (e.g., `?stage=importing` or `?status=overdue`)
-
-3. **Reuse**: Leverages existing platform UI components:
-   - `PlatformPageContainer`, `PlatformPageHeader`
-   - `PlatformCard`, `PlatformBadge`, `PlatformButton`
-   - `StatCard` pattern from Overview page
-
-4. **Data Consistency**: Uses the same `Organization` type and queries from `useOrganizations.ts`
-
-5. **Real-time Updates**: Hook uses 30-second refetch interval to show near-real-time status
 
 ---
 
@@ -211,8 +132,20 @@ When any organization is overdue, show a prominent alert:
 
 | File | Change |
 |------|--------|
-| `src/hooks/useOnboardingOrganizations.ts` | **New** - Data hook for onboarding orgs |
-| `src/pages/dashboard/platform/Onboarding.tsx` | **New** - Main dashboard page |
-| `src/components/platform/layout/PlatformSidebar.tsx` | **Edit** - Add nav link |
-| `src/App.tsx` | **Edit** - Add route and import |
+| Database Migration | **New** - Add `non_renewal_requested_at` and `non_renewal_reason` columns |
+| `src/hooks/useOrganizationBilling.ts` | **Edit** - Add new fields to interfaces |
+| `src/pages/dashboard/platform/AccountDetail.tsx` | **Edit** - Fetch billing, display term info |
+
+---
+
+### Technical Notes
+
+1. **Conditional Display**: Term dates only show if billing record exists and has dates set
+2. **Loading State**: Handle loading state while billing data is being fetched
+3. **No Billing Record**: If no billing configuration exists yet, show "No contract terms configured"
+4. **Semantic Icons**: Using `CalendarRange` for term start, `CalendarCheck` for term end
+5. **Color Coding**: 
+   - Emerald for active/renewing accounts
+   - Red for accounts scheduled to close
+   - Slate for neutral information
 
