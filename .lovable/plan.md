@@ -1,239 +1,248 @@
 
-# Add Multi-Level Filters to Platform Accounts
+
+# Platform Payments and Revenue Dashboard
 
 ## Summary
 
-Add cascading filters to the Accounts page allowing filtering by Country, State/Province, Account Type (subscription tier), and Business Type. The filters will be dynamic - the State/Province dropdown will only show options relevant to the selected Country.
+Build a subscription billing system where organizations pay platform fees based on their plan (Starter, Standard, Professional, Enterprise), plus a Revenue Dashboard exclusively for approved platform admins to track Monthly Recurring Revenue (MRR), payment history, and subscription health.
 
 ---
 
-## Current State
-
-The Accounts page currently has:
-- Search input (name/slug)
-- Status filter dropdown (all/pending/active/suspended/churned)
-
-The data is already available:
-- `primaryLocation.country` and `primaryLocation.state_province` from aggregated location data
-- `subscription_tier` on organization
-- `business_type` on organization
-
----
-
-## Filter Design
-
-### Filter Hierarchy
+## Architecture Overview
 
 ```text
-+-------------+  +-----------------+  +--------------+  +---------------+
-|   Country   |  | State/Province  |  | Account Type |  | Business Type |
-|   (US, CA)  |  | (AZ, CA, TX...) |  | (Starter...) |  | (Salon, Spa)  |
-+-------------+  +-----------------+  +--------------+  +---------------+
-       |                 |
-       +-----------------+
-       Cascading: State options
-       filtered by Country
-```
-
-### Filter Options
-
-| Filter | Options | Source |
-|--------|---------|--------|
-| Country | Dynamic from data + "All Countries" | `primaryLocation.country` |
-| State/Province | Dynamic, filtered by country + "All States" | `primaryLocation.state_province` |
-| Account Type | Starter, Standard, Professional, Enterprise | `subscription_tier` |
-| Business Type | Salon, Spa, Esthetics, Barbershop, Med Spa, Wellness, Other | `business_type` |
-
----
-
-## Implementation
-
-### 1. Add Filter State Variables
-
-```typescript
-const [countryFilter, setCountryFilter] = useState<string>('all');
-const [stateFilter, setStateFilter] = useState<string>('all');
-const [planFilter, setPlanFilter] = useState<string>('all');
-const [businessTypeFilter, setBusinessTypeFilter] = useState<string>('all');
-```
-
-### 2. Extract Unique Values from Data
-
-```typescript
-// Get unique countries and states from the data
-const { countries, statesByCountry } = useMemo(() => {
-  const countrySet = new Set<string>();
-  const stateMap = new Map<string, Set<string>>();
-  
-  organizations?.forEach(org => {
-    const country = org.primaryLocation?.country || 'US';
-    const state = org.primaryLocation?.state_province;
-    
-    countrySet.add(country);
-    if (state) {
-      if (!stateMap.has(country)) stateMap.set(country, new Set());
-      stateMap.get(country)!.add(state);
-    }
-  });
-  
-  return {
-    countries: Array.from(countrySet).sort(),
-    statesByCountry: stateMap,
-  };
-}, [organizations]);
-
-// Get states for selected country
-const availableStates = useMemo(() => {
-  if (countryFilter === 'all') {
-    // Show all states across all countries
-    const allStates = new Set<string>();
-    statesByCountry.forEach(states => states.forEach(s => allStates.add(s)));
-    return Array.from(allStates).sort();
-  }
-  return Array.from(statesByCountry.get(countryFilter) || []).sort();
-}, [countryFilter, statesByCountry]);
-```
-
-### 3. Update Filter Logic
-
-```typescript
-const filteredOrganizations = organizations?.filter(org => {
-  const matchesSearch = org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    org.slug.toLowerCase().includes(searchQuery.toLowerCase());
-  const matchesStatus = statusFilter === 'all' || org.status === statusFilter;
-  const matchesCountry = countryFilter === 'all' || 
-    (org.primaryLocation?.country || 'US') === countryFilter;
-  const matchesState = stateFilter === 'all' || 
-    org.primaryLocation?.state_province === stateFilter;
-  const matchesPlan = planFilter === 'all' || org.subscription_tier === planFilter;
-  const matchesBusinessType = businessTypeFilter === 'all' || 
-    org.business_type === businessTypeFilter;
-  
-  return matchesSearch && matchesStatus && matchesCountry && 
-         matchesState && matchesPlan && matchesBusinessType;
-});
-```
-
-### 4. Reset State When Country Changes
-
-```typescript
-// Reset state filter when country changes
-useEffect(() => {
-  setStateFilter('all');
-}, [countryFilter]);
-```
-
-### 5. Add Filter UI Components
-
-Add four new Select dropdowns in the filter section, arranged in a responsive grid:
-
-```tsx
-<div className="flex flex-col gap-4">
-  {/* Row 1: Search + Status */}
-  <div className="flex flex-col sm:flex-row gap-4">
-    <div className="relative flex-1">
-      <PlatformInput ... />
-    </div>
-    <Select value={statusFilter} ...>
-      {/* Status options */}
-    </Select>
-  </div>
-  
-  {/* Row 2: Geography + Type filters */}
-  <div className="flex flex-wrap gap-4">
-    {/* Country Filter */}
-    <Select value={countryFilter} onValueChange={setCountryFilter}>
-      <SelectTrigger className="w-[160px] ...">
-        <SelectValue placeholder="Country" />
-      </SelectTrigger>
-      <SelectContent ...>
-        <SelectItem value="all">All Countries</SelectItem>
-        {countries.map(country => (
-          <SelectItem key={country} value={country}>{country}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-    
-    {/* State/Province Filter */}
-    <Select value={stateFilter} onValueChange={setStateFilter}>
-      <SelectTrigger className="w-[160px] ...">
-        <SelectValue placeholder="State" />
-      </SelectTrigger>
-      <SelectContent ...>
-        <SelectItem value="all">All States</SelectItem>
-        {availableStates.map(state => (
-          <SelectItem key={state} value={state}>{state}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-    
-    {/* Account Type (Plan) Filter */}
-    <Select value={planFilter} onValueChange={setPlanFilter}>
-      <SelectTrigger className="w-[160px] ...">
-        <SelectValue placeholder="Plan" />
-      </SelectTrigger>
-      <SelectContent ...>
-        <SelectItem value="all">All Plans</SelectItem>
-        <SelectItem value="starter">Starter</SelectItem>
-        <SelectItem value="standard">Standard</SelectItem>
-        <SelectItem value="professional">Professional</SelectItem>
-        <SelectItem value="enterprise">Enterprise</SelectItem>
-      </SelectContent>
-    </Select>
-    
-    {/* Business Type Filter */}
-    <Select value={businessTypeFilter} onValueChange={setBusinessTypeFilter}>
-      <SelectTrigger className="w-[160px] ...">
-        <SelectValue placeholder="Business Type" />
-      </SelectTrigger>
-      <SelectContent ...>
-        <SelectItem value="all">All Types</SelectItem>
-        <SelectItem value="salon">Salon</SelectItem>
-        <SelectItem value="spa">Spa</SelectItem>
-        <SelectItem value="esthetics">Esthetics</SelectItem>
-        <SelectItem value="barbershop">Barbershop</SelectItem>
-        <SelectItem value="med_spa">Med Spa</SelectItem>
-        <SelectItem value="wellness">Wellness</SelectItem>
-        <SelectItem value="other">Other</SelectItem>
-      </SelectContent>
-    </Select>
-  </div>
-</div>
++------------------+       +-------------------+       +------------------+
+|   Organizations  | ----> |   Stripe Billing  | ----> |  Revenue Dashboard |
++------------------+       +-------------------+       +------------------+
+       |                          |                          |
+  subscription_tier          Subscriptions              Platform Admins
+  stripe_customer_id         Invoices                   (platform_admin role)
+                             Webhooks
 ```
 
 ---
 
-## Visual Layout
+## Database Schema
 
-```text
-+--------------------------------------------------+
-| [Search by name or slug...        ] [Status  v]  |
-+--------------------------------------------------+
-| [Country v] [State v] [Plan v] [Business Type v] |
-+--------------------------------------------------+
-```
+### New Tables
 
-The filters use the same dark styling as the existing Status filter for consistency.
+| Table | Purpose |
+|-------|---------|
+| `subscription_plans` | Define plan tiers with pricing |
+| `organization_subscriptions` | Track active subscriptions per org |
+| `subscription_invoices` | Record payment history |
+
+### Schema Details
+
+**subscription_plans**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| tier | text | starter, standard, professional, enterprise |
+| name | text | Display name (e.g., "Professional Plan") |
+| price_monthly | numeric | Monthly price in dollars |
+| price_annually | numeric | Annual price (discounted) |
+| stripe_price_id_monthly | text | Stripe Price ID for monthly |
+| stripe_price_id_annual | text | Stripe Price ID for annual |
+| max_locations | int | Location limit per plan |
+| max_users | int | User limit per plan |
+| features | jsonb | Feature flags |
+| is_active | boolean | Available for new signups |
+
+**organization_subscriptions** (modify organizations table)
+| Column | Type | Description |
+|--------|------|-------------|
+| stripe_customer_id | text | Stripe Customer ID |
+| stripe_subscription_id | text | Active subscription ID |
+| subscription_status | text | active, past_due, cancelled, trialing |
+| current_period_start | timestamptz | Billing period start |
+| current_period_end | timestamptz | Billing period end |
+| billing_email | text | Billing contact email |
+
+**subscription_invoices**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| organization_id | uuid | FK to organizations |
+| stripe_invoice_id | text | Stripe Invoice ID |
+| amount | numeric | Invoice amount |
+| status | text | paid, unpaid, void |
+| period_start | timestamptz | Invoice period start |
+| period_end | timestamptz | Invoice period end |
+| paid_at | timestamptz | Payment timestamp |
+| invoice_url | text | Hosted invoice URL |
 
 ---
 
-## Files to Modify
+## Stripe Integration
+
+### Edge Function: `stripe-webhook`
+
+Handles Stripe webhook events:
+- `customer.subscription.created` - New subscription
+- `customer.subscription.updated` - Plan changes
+- `customer.subscription.deleted` - Cancellation
+- `invoice.paid` - Successful payment
+- `invoice.payment_failed` - Failed payment
+
+### Edge Function: `create-checkout-session`
+
+Creates Stripe Checkout session for:
+- New subscription signup
+- Plan upgrades/downgrades
+- Payment method updates
+
+### Edge Function: `customer-portal`
+
+Generates Stripe Customer Portal link for self-service:
+- Update payment method
+- View invoices
+- Cancel subscription
+
+---
+
+## Revenue Dashboard
+
+### Access Control
+
+Protected by `requirePlatformRole="platform_admin"` - only `platform_owner` and `platform_admin` can access.
+
+### Route
+
+`/dashboard/platform/revenue`
+
+### Key Metrics
+
+| Metric | Description |
+|--------|-------------|
+| MRR | Monthly Recurring Revenue |
+| ARR | Annual Recurring Revenue |
+| Active Subscriptions | Count by plan |
+| Churn Rate | Cancellations this month |
+| Revenue by Plan | Breakdown by tier |
+| Payment Success Rate | Successful vs failed |
+
+### Dashboard Sections
+
+1. **KPI Cards**
+   - Total MRR with trend
+   - Active subscriptions
+   - Average revenue per account
+   - Churn this month
+
+2. **Revenue Chart**
+   - Monthly revenue over time
+   - Stacked by plan tier
+
+3. **Subscription Breakdown**
+   - Table of accounts by plan
+   - Status indicators (active, past_due, trialing)
+
+4. **Recent Invoices**
+   - Latest 10 invoices
+   - Status, amount, organization
+
+5. **At-Risk Accounts**
+   - Past due subscriptions
+   - Failed payments
+   - Action buttons
+
+---
+
+## Implementation Files
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `supabase/functions/stripe-webhook/index.ts` | Webhook handler |
+| `supabase/functions/create-checkout-session/index.ts` | Checkout creation |
+| `supabase/functions/customer-portal/index.ts` | Portal link generation |
+| `src/pages/dashboard/platform/Revenue.tsx` | Revenue dashboard page |
+| `src/hooks/usePlatformRevenue.ts` | Revenue metrics hook |
+| `src/hooks/useSubscriptionManagement.ts` | Subscription actions hook |
+| `src/components/platform/RevenueChart.tsx` | Revenue visualization |
+| `src/components/platform/SubscriptionTable.tsx` | Subscription list |
+
+### Modified Files
 
 | File | Changes |
 |------|---------|
-| `src/pages/dashboard/platform/Accounts.tsx` | Add filter state, dynamic option extraction, filter logic, and UI dropdowns |
+| `src/App.tsx` | Add Revenue route with platform_admin protection |
+| `src/components/dashboard/DashboardLayout.tsx` | Add Revenue nav item |
+| Database migration | Add new tables and columns |
 
 ---
 
-## Edge Cases
+## Plan Pricing (Configurable)
 
-- **No locations**: Organizations without location data default to country `'US'` in the filter
-- **Country change**: Resets state filter to 'all' to prevent invalid selections
-- **Empty states**: If a country has no state data, the state dropdown shows only "All States"
-- **URL query params**: The `?status=onboarding` from the Overview cards will continue to work
+| Tier | Monthly | Annual (Save 20%) |
+|------|---------|-------------------|
+| Starter | $99 | $948 |
+| Standard | $199 | $1,908 |
+| Professional | $349 | $3,348 |
+| Enterprise | Custom | Custom |
 
 ---
 
-## Future Enhancement
+## Security
 
-Consider adding URL query param support for all filters so links can be shared with pre-applied filters (e.g., `/accounts?country=US&state=AZ&type=salon`).
+### RLS Policies
+
+- `subscription_plans`: Anyone can read (public pricing)
+- `organization_subscriptions`: Platform users can view all, org admins view own
+- `subscription_invoices`: Platform users can view all, org admins view own
+
+### Webhook Security
+
+- Verify Stripe signature using `STRIPE_WEBHOOK_SECRET`
+- Log all webhook events to `platform_audit_log`
+
+### Dashboard Access
+
+- Protected by `ProtectedRoute` with `requirePlatformRole="platform_admin"`
+- Only `platform_owner` and `platform_admin` roles can access
+
+---
+
+## Required Secrets
+
+| Secret | Purpose |
+|--------|---------|
+| `STRIPE_SECRET_KEY` | Server-side Stripe API |
+| `STRIPE_WEBHOOK_SECRET` | Webhook signature verification |
+
+---
+
+## Implementation Phases
+
+### Phase 1: Database + Stripe Setup
+1. Create database tables and RLS policies
+2. Set up Stripe products and prices
+3. Add Stripe secrets
+
+### Phase 2: Edge Functions
+1. Build `stripe-webhook` handler
+2. Build `create-checkout-session`
+3. Build `customer-portal`
+
+### Phase 3: Revenue Dashboard
+1. Create revenue data hooks
+2. Build dashboard page with charts
+3. Add navigation and route protection
+
+### Phase 4: Account Integration
+1. Add billing tab to Account Detail page
+2. Show subscription status
+3. Enable plan management actions
+
+---
+
+## Technical Notes
+
+- Uses Stripe Checkout for secure, hosted payment pages
+- Stripe Customer Portal for self-service management
+- Webhook-driven updates for real-time sync
+- Recharts for revenue visualization (already installed)
+- Platform theme styling consistent with existing pages
+
