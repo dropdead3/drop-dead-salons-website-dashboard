@@ -12,12 +12,16 @@ import {
   Phone,
   Globe,
   Calendar,
+  CalendarRange,
+  CalendarCheck,
   CheckCircle2,
   Clock,
   CreditCard,
   MessageSquare,
   Target,
-  LayoutDashboard
+  LayoutDashboard,
+  RefreshCw,
+  XCircle
 } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { logPlatformAction } from '@/hooks/useOrganizations';
@@ -36,7 +40,7 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
-import type { BillingStatus } from '@/hooks/useOrganizationBilling';
+import { useOrganizationBilling, type BillingStatus } from '@/hooks/useOrganizationBilling';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -69,6 +73,7 @@ export default function AccountDetail() {
   const defaultTab = searchParams.get('tab') || 'overview';
   const { setSelectedOrganization } = useOrganizationContext();
   const { data: organization, isLoading } = useOrganizationWithStats(orgId);
+  const { data: billing } = useOrganizationBilling(orgId);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   if (isLoading) {
@@ -332,6 +337,40 @@ export default function AccountDetail() {
                   <Building2 className="h-4 w-4 text-slate-500" />
                   <span className="text-slate-300">Plan: {organization.subscription_tier || 'Standard'}</span>
                 </div>
+                
+                {/* Contract Term Information */}
+                {billing?.contract_start_date && (
+                  <div className="flex items-center gap-3">
+                    <CalendarRange className="h-4 w-4 text-violet-400" />
+                    <span className="text-slate-300">Term Start: {format(parseISO(billing.contract_start_date), 'MMM d, yyyy')}</span>
+                  </div>
+                )}
+                {billing?.contract_end_date && (
+                  <div className="flex items-center gap-3">
+                    <CalendarCheck className="h-4 w-4 text-violet-400" />
+                    <span className="text-slate-300">Term End: {format(parseISO(billing.contract_end_date), 'MMM d, yyyy')}</span>
+                  </div>
+                )}
+                {billing && (
+                  billing.auto_renewal ? (
+                    <div className="flex items-center gap-3">
+                      <RefreshCw className="h-4 w-4 text-emerald-400" />
+                      <span className="text-emerald-400">Auto-Renews</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <XCircle className="h-4 w-4 text-red-400" />
+                      <div>
+                        <span className="text-red-400">Closing at Term End</span>
+                        {billing.non_renewal_reason && (
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Reason: {billing.non_renewal_reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                )}
               </PlatformCardContent>
             </PlatformCard>
           </div>

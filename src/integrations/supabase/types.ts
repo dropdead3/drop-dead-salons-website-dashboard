@@ -3401,6 +3401,8 @@ export type Database = {
           id: string
           included_locations: number | null
           included_users: number | null
+          non_renewal_reason: string | null
+          non_renewal_requested_at: string | null
           notes: string | null
           organization_id: string
           per_location_fee: number | null
@@ -3433,6 +3435,8 @@ export type Database = {
           id?: string
           included_locations?: number | null
           included_users?: number | null
+          non_renewal_reason?: string | null
+          non_renewal_requested_at?: string | null
           notes?: string | null
           organization_id: string
           per_location_fee?: number | null
@@ -3465,6 +3469,8 @@ export type Database = {
           id?: string
           included_locations?: number | null
           included_users?: number | null
+          non_renewal_reason?: string | null
+          non_renewal_requested_at?: string | null
           notes?: string | null
           organization_id?: string
           per_location_fee?: number | null
