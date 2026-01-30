@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,7 +7,7 @@ import {
   MapPin,
   Users,
   Upload,
-  Settings,
+  Pencil,
   Mail,
   Phone,
   Globe,
@@ -14,7 +15,8 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react';
-import { useOrganizationWithStats } from '@/hooks/useOrganizations';
+import { useOrganizationWithStats, type OrganizationWithStats } from '@/hooks/useOrganizations';
+import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
 import { format } from 'date-fns';
 import {
   PlatformCard,
@@ -55,6 +57,7 @@ export default function AccountDetail() {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
   const { data: organization, isLoading } = useOrganizationWithStats(orgId);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -109,9 +112,9 @@ export default function AccountDetail() {
               <Upload className="h-4 w-4 mr-2" />
               Import Data
             </PlatformButton>
-            <PlatformButton>
-              <Settings className="h-4 w-4 mr-2" />
-              Configure
+            <PlatformButton onClick={() => setEditDialogOpen(true)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit Account
             </PlatformButton>
           </div>
         }
@@ -337,6 +340,12 @@ export default function AccountDetail() {
           </PlatformCard>
         </TabsContent>
       </Tabs>
+
+      <EditOrganizationDialog
+        organization={organization}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
     </PlatformPageContainer>
   );
 }

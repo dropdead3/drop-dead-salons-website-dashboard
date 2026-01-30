@@ -23,7 +23,8 @@ import {
   ExternalLink,
   MoreHorizontal,
   Upload,
-  MapPin
+  MapPin,
+  Pencil
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,8 +32,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useOrganizationsWithStats } from '@/hooks/useOrganizations';
+import { useOrganizationsWithStats, type OrganizationListItem } from '@/hooks/useOrganizations';
 import { CreateOrganizationDialog } from '@/components/platform/CreateOrganizationDialog';
+import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
 import { formatDistanceToNow } from 'date-fns';
 import {
   PlatformCard,
@@ -77,6 +79,7 @@ export default function PlatformAccounts() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editOrg, setEditOrg] = useState<OrganizationListItem | null>(null);
 
   const filteredOrganizations = organizations?.filter(org => {
     const matchesSearch = org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -242,6 +245,16 @@ export default function PlatformAccounts() {
                               className="text-slate-300 focus:bg-slate-700 focus:text-white"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setEditOrg(org);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit Account
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-slate-300 focus:bg-slate-700 focus:text-white"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 navigate(`/dashboard/platform/import?org=${org.id}`);
                               }}
                             >
@@ -282,6 +295,14 @@ export default function PlatformAccounts() {
         open={createDialogOpen} 
         onOpenChange={setCreateDialogOpen} 
       />
+
+      {editOrg && (
+        <EditOrganizationDialog
+          organization={editOrg}
+          open={!!editOrg}
+          onOpenChange={(open) => !open && setEditOrg(null)}
+        />
+      )}
     </PlatformPageContainer>
   );
 }
