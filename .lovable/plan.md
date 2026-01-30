@@ -1,19 +1,20 @@
 
 
-## Native Payroll System with Gusto Integration
+## QuickBooks Payroll Integration - Multi-Provider Support
 
-This plan implements a complete payroll solution for account owners using **Gusto Embedded Payroll**, enabling secure bank connections, automated payroll runs, tax compliance, and comprehensive reporting.
+This plan extends the payroll system to support **QuickBooks Online Payroll** as an alternative to Gusto, giving account owners flexibility to choose their preferred payroll provider.
 
 ---
 
 ### Overview
 
-Gusto handles the complex regulatory requirements (taxes, W-2s, compliance) while your platform provides the user interface and organization-specific context. Account owners will:
+Account owners will be able to:
+1. **Choose their payroll provider** - Gusto OR QuickBooks (one active at a time)
+2. **Connect via OAuth** - Secure Intuit OAuth 2.0 flow for QuickBooks
+3. **Run payroll through QuickBooks** - Same wizard flow with QuickBooks API backend
+4. **View unified reports** - Payroll history regardless of provider
 
-1. **Connect their business** to Gusto via OAuth
-2. **Onboard employees** through embedded Gusto components
-3. **Run payroll** with commission calculations from existing sales data
-4. **Access reports** for payroll history, tax documents, and analytics
+The system will track which provider each organization uses and route all payroll operations through the appropriate API.
 
 ---
 
@@ -22,23 +23,20 @@ Gusto handles the complex regulatory requirements (taxes, W-2s, compliance) whil
 ```text
 +------------------+       +-------------------+       +----------------+
 |  Account Owner   | ----> |   Your Platform   | ----> |   Gusto API    |
-|   Dashboard      |       |   (Edge Function  |       | (OAuth + REST) |
-+------------------+       |    Proxy Layer)   |       +----------------+
-                           +-------------------+
+|   Dashboard      |       |                   |       +----------------+
++------------------+       |   Edge Functions: |
+                           |   - gusto-oauth   |       +------------------+
+                           |   - quickbooks-*  | ----> | QuickBooks API   |
+                           +-------------------+       +------------------+
                                     |
                            +-------------------+
                            |   Supabase DB     |
-                           | gusto_connections |
+                           | payroll_connections|
                            | payroll_runs      |
-                           | employee_payroll  |
                            +-------------------+
 ```
 
-**Key Components:**
-- **OAuth Proxy Edge Function**: Handles Gusto OAuth flow securely
-- **Payroll Proxy Edge Function**: Routes Embedded SDK requests with proper tokens
-- **Token Storage**: Encrypted company tokens in `gusto_connections` table
-- **Embedded React SDK**: Gusto's UI components for payroll operations
+**Key Design Decision**: Rather than separate `gusto_connections` and `quickbooks_connections` tables, we'll use a unified `payroll_connections` table with a `provider` column. This simplifies queries and ensures only one provider is active per organization.
 
 ---
 
@@ -46,246 +44,272 @@ Gusto handles the complex regulatory requirements (taxes, W-2s, compliance) whil
 
 | Area | Files | Action |
 |------|-------|--------|
-| Database | Migration | **Create** - `gusto_connections`, `payroll_runs`, `employee_payroll_settings` tables |
-| Edge Functions | `gusto-oauth`, `gusto-payroll-proxy` | **Create** - Handle OAuth and API proxy |
-| Hooks | `useGustoConnection.ts`, `usePayroll.ts` | **Create** - Manage Gusto connection state |
-| Pages | `Payroll.tsx`, `PayrollSettings.tsx`, `PayrollReports.tsx` | **Create** - Owner dashboard pages |
-| Components | `src/components/dashboard/payroll/` | **Create** - Connection status, run payroll, reports |
-| Settings | Admin Settings | **Edit** - Add payroll configuration section |
-| Config | Platform Integrations | **Edit** - Add Gusto as available integration |
+| Database | Migration | **Modify** - Rename `gusto_connections` to `payroll_connections`, add `provider` enum |
+| Edge Functions | `quickbooks-oauth`, `quickbooks-payroll-proxy` | **Create** - Handle QuickBooks OAuth and API |
+| Edge Functions | `gusto-oauth`, `gusto-payroll-proxy` | **Create** - Handle Gusto OAuth and API |
+| Hooks | `usePayrollConnection.ts` | **Create** - Unified provider connection state |
+| Components | `PayrollProviderSelector.tsx` | **Create** - Choose between Gusto/QuickBooks |
+| Components | `QuickBooksConnectionCard.tsx` | **Create** - QuickBooks-specific status card |
+| Integrations | `IntegrationsTab.tsx` | **Edit** - Add Gusto and QuickBooks as options |
+| Config | Integration registry | **Edit** - Add both payroll providers |
 
 ---
 
-### Database Schema
+### Database Schema Changes
 
-#### Table: `gusto_connections`
-Stores the OAuth tokens per organization (one Gusto company per organization).
+#### Table: `payroll_connections` (replaces `gusto_connections`)
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | UUID | Primary key |
-| `organization_id` | UUID | FK to `organizations` |
-| `gusto_company_uuid` | TEXT | Gusto's company identifier |
+| `organization_id` | UUID | FK to `organizations` (UNIQUE - one provider per org) |
+| `provider` | TEXT | `gusto` or `quickbooks` |
+| `external_company_id` | TEXT | Gusto company UUID or QuickBooks realm ID |
 | `access_token_encrypted` | TEXT | AES-encrypted access token |
 | `refresh_token_encrypted` | TEXT | AES-encrypted refresh token |
-| `token_expires_at` | TIMESTAMPTZ | Token expiration (2 hours from issue) |
+| `token_expires_at` | TIMESTAMPTZ | Token expiration |
 | `connection_status` | TEXT | `pending`, `connected`, `disconnected`, `error` |
 | `connected_by` | UUID | User who connected |
 | `connected_at` | TIMESTAMPTZ | When connection was established |
 | `last_synced_at` | TIMESTAMPTZ | Last successful API call |
+| `metadata` | JSONB | Provider-specific config (QuickBooks: sandbox mode, Gusto: company tier) |
 
-#### Table: `payroll_runs`
-Local record of payroll runs for reporting and audit.
+**Key Constraint**: `UNIQUE(organization_id)` ensures only one payroll provider per organization.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `organization_id` | UUID | FK to `organizations` |
-| `gusto_payroll_uuid` | TEXT | Gusto's payroll identifier |
-| `pay_period_start` | DATE | Start of pay period |
-| `pay_period_end` | DATE | End of pay period |
-| `check_date` | DATE | When employees are paid |
-| `status` | TEXT | `draft`, `submitted`, `processed`, `cancelled` |
-| `total_gross_pay` | NUMERIC | Sum of all gross pay |
-| `total_employer_taxes` | NUMERIC | Employer tax obligations |
-| `total_employee_deductions` | NUMERIC | Employee deductions |
-| `total_net_pay` | NUMERIC | Sum of all net pay |
-| `employee_count` | INTEGER | Employees in this run |
-| `submitted_by` | UUID | Who submitted the payroll |
-| `submitted_at` | TIMESTAMPTZ | When payroll was submitted |
+#### Update: `payroll_runs` table
 
-#### Table: `employee_payroll_settings`
-Per-employee payroll configuration (extends `employee_profiles`).
+Add provider column to existing schema:
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `id` | UUID | Primary key |
-| `employee_id` | UUID | FK to `employee_profiles.user_id` |
-| `organization_id` | UUID | FK to `organizations` |
-| `gusto_employee_uuid` | TEXT | Gusto's employee identifier |
-| `pay_type` | TEXT | `hourly`, `salary`, `commission` |
-| `hourly_rate` | NUMERIC | If hourly |
-| `salary_amount` | NUMERIC | If salaried (annual) |
-| `commission_enabled` | BOOLEAN | Use commission tiers |
-| `direct_deposit_status` | TEXT | `not_started`, `pending`, `verified` |
-| `is_payroll_active` | BOOLEAN | Include in payroll runs |
+| `provider` | TEXT | `gusto` or `quickbooks` |
+| `external_payroll_id` | TEXT | Renamed from `gusto_payroll_uuid` for generality |
+
+#### Update: `employee_payroll_settings` table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `external_employee_id` | TEXT | Renamed from `gusto_employee_uuid` |
 
 ---
 
 ### Edge Functions
 
-#### 1. `gusto-oauth` (New)
-Handles the complete OAuth flow with Gusto.
+#### 1. `quickbooks-oauth` (New)
+Handles QuickBooks/Intuit OAuth 2.0 flow.
 
 **Endpoints:**
-- `POST /start` - Initiates OAuth, returns authorization URL
-- `POST /callback` - Exchanges code for tokens, stores encrypted
-- `POST /disconnect` - Revokes access and clears tokens
-- `GET /status` - Returns connection status for an organization
+- `POST /start` - Returns Intuit authorization URL with scopes for payroll
+- `POST /callback` - Exchanges code for tokens, stores encrypted with `realm_id`
+- `POST /disconnect` - Revokes tokens and clears connection
+- `GET /status` - Returns connection status
 
-**Security:**
-- Tokens encrypted at rest using Supabase Vault
-- CSRF protection via `state` parameter
-- Only `super_admin` or org `owner` can initiate
+**QuickBooks-Specific Details:**
+- Requires scopes: `com.intuit.quickbooks.payroll`, `com.intuit.quickbooks.accounting`
+- Must store `realm_id` (company identifier) alongside tokens
+- Tokens expire after 1 hour (shorter than Gusto's 2 hours)
+- Implements refresh token rotation (required by Intuit)
 
-#### 2. `gusto-payroll-proxy` (New)
-Proxies requests from the Gusto Embedded SDK.
+#### 2. `quickbooks-payroll-proxy` (New)
+Proxies requests to QuickBooks Payroll API.
 
 **Functionality:**
-- Attaches bearer token to outgoing requests
-- Auto-refreshes expired tokens
-- Logs API calls for audit
-- Sanitizes responses for security
+- Attaches bearer token to requests
+- Auto-refreshes expired tokens (with rotation handling)
+- Routes to `https://payroll.api.intuit.com/v1/...` or sandbox
+- Maps internal employee IDs to QuickBooks employee references
+
+---
+
+### QuickBooks Payroll API Integration
+
+QuickBooks Online Payroll provides these key endpoints:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /payroll-runs` | List payroll history |
+| `POST /payroll-runs` | Create new payroll run |
+| `GET /payroll-runs/{id}` | Get payroll details |
+| `POST /payroll-runs/{id}/submit` | Submit for processing |
+| `GET /employees` | List employees in payroll |
+| `GET /pay-schedules` | Get pay schedule configurations |
+
+**Key Differences from Gusto:**
+- QuickBooks uses `realm_id` instead of `company_uuid`
+- Different webhook event format
+- Tax document endpoints differ
+- No embedded SDK (pure API integration)
 
 ---
 
 ### UI Components
 
-#### Payroll Dashboard Tab
-New admin section accessible to `super_admin` and organization `owner` roles.
+#### 1. `PayrollProviderSelector.tsx` (New)
 
-**Location:** `/dashboard/admin/payroll`
-
-**Sub-sections:**
-
-| Tab | Description |
-|-----|-------------|
-| **Run Payroll** | Start a new payroll, review hours/commissions, submit |
-| **History** | List of past payroll runs with status and totals |
-| **Employees** | Employee payroll settings, direct deposit status |
-| **Reports** | Tax documents, YTD summaries, export to CSV |
-| **Settings** | Gusto connection, pay schedules, defaults |
-
-#### Component: `GustoConnectionCard`
-Shows connection status with actions to connect/disconnect.
+Initial selection screen when no provider is connected:
 
 ```text
 +-----------------------------------------------+
-|  🏦 Payroll Connection                        |
+|  Choose Your Payroll Provider                 |
 |                                               |
-|  [Gusto Logo]  Connected ✓                    |
-|  Last synced: 2 hours ago                     |
+|  +------------------+  +------------------+   |
+|  |   [Gusto Logo]   |  | [QuickBooks Logo]|   |
+|  |                  |  |                  |   |
+|  |  Full-service    |  | Part of your     |   |
+|  |  payroll with    |  | QuickBooks       |   |
+|  |  compliance      |  | ecosystem        |   |
+|  |                  |  |                  |   |
+|  |  [Connect Gusto] |  | [Connect QB]     |   |
+|  +------------------+  +------------------+   |
 |                                               |
-|  [Sync Now]  [Disconnect]                     |
+|  Note: Only one provider can be active        |
 +-----------------------------------------------+
 ```
 
-#### Component: `RunPayrollWizard`
-Step-by-step payroll submission flow.
+#### 2. `QuickBooksConnectionCard.tsx` (New)
 
-**Steps:**
-1. **Select Pay Period** - Choose period and check date
-2. **Review Hours** - Import/confirm hours worked per employee
-3. **Add Commissions** - Auto-calculate from `phorest_performance_metrics`
-4. **Review Totals** - Show gross, taxes, net per employee
-5. **Submit** - Confirm and submit to Gusto
+Similar to `GustoConnectionCard` but with QuickBooks branding:
 
-#### Component: `PayrollHistoryTable`
-Sortable/filterable table of past payrolls.
+```text
++-----------------------------------------------+
+|  Payroll Provider                             |
+|                                               |
+|  [QuickBooks Logo]  Connected                 |
+|  Company: ABC Salon LLC                       |
+|  Last synced: 30 minutes ago                  |
+|                                               |
+|  [Sync Now]  [Switch Provider]  [Disconnect]  |
++-----------------------------------------------+
+```
 
-| Column | Description |
-|--------|-------------|
-| Pay Period | Date range |
-| Check Date | Payment date |
-| Employees | Count |
-| Gross Pay | Total gross |
-| Net Pay | Total net |
-| Status | Badge |
-| Actions | View details, download summary |
+**Switch Provider Flow**:
+1. User clicks "Switch Provider"
+2. Warning dialog: "This will disconnect QuickBooks. Existing payroll history will be preserved."
+3. On confirm, disconnect current provider
+4. Show provider selector again
 
-#### Component: `EmployeePayrollList`
-Shows each employee's payroll setup status.
+#### 3. Update: `RunPayrollWizard.tsx`
 
-- Direct deposit status indicator
-- Pay type badge
-- Last paid amount
-- Link to Gusto's embedded onboarding for missing info
+Modify to detect active provider and route API calls accordingly:
+
+```typescript
+const { provider, connection } = usePayrollConnection();
+
+// Route to appropriate edge function
+const submitPayroll = async (data) => {
+  const endpoint = provider === 'gusto' 
+    ? 'gusto-payroll-proxy' 
+    : 'quickbooks-payroll-proxy';
+  
+  await supabase.functions.invoke(endpoint, {
+    body: { action: 'submit', ...data }
+  });
+};
+```
+
+---
+
+### Unified Hook: `usePayrollConnection.ts`
+
+Replaces separate `useGustoConnection` with provider-agnostic hook:
+
+```typescript
+interface PayrollConnection {
+  id: string;
+  provider: 'gusto' | 'quickbooks';
+  status: 'connected' | 'pending' | 'disconnected' | 'error';
+  companyName?: string;
+  lastSyncedAt?: string;
+}
+
+export function usePayrollConnection() {
+  // Fetches from payroll_connections table
+  // Returns null if no provider connected
+  // Provides connect/disconnect mutations
+}
+```
 
 ---
 
 ### Permissions & Access Control
 
-**Who can access payroll:**
-- `super_admin` - Full access to all payroll features
-- Organization `owner` (from `organization_admins` table) - Full access
-- `admin` role - View-only access to reports (configurable)
+**No changes needed** - existing payroll permissions apply to both providers:
+- `manage_payroll` - Run payroll, connect providers
+- `view_payroll_reports` - View history
+- `manage_employee_compensation` - Edit pay settings
 
-**RLS Policies:**
-- All payroll tables scoped to `organization_id`
-- Only org admins/owners can read/write their org's data
-- Platform users (`platform_owner`, `platform_admin`) can view for support
-
-**New Permissions:**
-- `manage_payroll` - Run payroll, manage settings
-- `view_payroll_reports` - View historical data (no submission rights)
-- `manage_employee_compensation` - Edit pay rates and settings
+RLS policies will work unchanged since they're scoped to `organization_id`.
 
 ---
 
-### Commission Integration
+### Integration Registry Updates
 
-Leverage existing `phorest_performance_metrics` and `phorest_daily_sales_summary` data:
+Add to `IntegrationsTab.tsx` for account-level integrations:
 
-1. When running payroll, fetch sales data for the pay period
-2. Apply `commission_tiers` to calculate commission amounts per employee
-3. Pre-populate the payroll run with calculated commissions
-4. Allow manual adjustments before submission
-
-**Commission Calculation Logic:**
 ```typescript
-// Fetch employee sales for pay period
-const sales = await fetchEmployeeSales(employeeId, periodStart, periodEnd);
-
-// Get applicable commission tiers
-const serviceSales = sales.filter(s => s.type === 'service');
-const productSales = sales.filter(s => s.type === 'product');
-
-// Calculate based on existing commission_tiers table
-const serviceCommission = calculateTieredCommission(serviceSales.total, serviceTiers);
-const productCommission = calculateTieredCommission(productSales.total, productTiers);
-
-return serviceCommission + productCommission;
+const payrollIntegrations: Integration[] = [
+  {
+    id: 'gusto',
+    name: 'Gusto',
+    description: 'Full-service payroll with tax compliance and HR.',
+    icon: DollarSign,
+    status: getPayrollStatus('gusto'),
+    configPath: '/dashboard/admin/payroll',
+    features: ['Automated Taxes', 'Direct Deposit', 'W-2s', 'Benefits'],
+    available: true,
+    category: 'payroll',
+  },
+  {
+    id: 'quickbooks',
+    name: 'QuickBooks Payroll',
+    description: 'Payroll integrated with QuickBooks accounting.',
+    icon: Calculator,
+    status: getPayrollStatus('quickbooks'),
+    configPath: '/dashboard/admin/payroll',
+    features: ['QuickBooks Sync', 'Direct Deposit', 'Tax Filing', 'Reports'],
+    available: true,
+    category: 'payroll',
+  },
+];
 ```
+
+Both route to `/dashboard/admin/payroll` where the appropriate UI is shown based on connection state.
 
 ---
 
 ### Implementation Phases
 
-**Phase 1: Foundation**
-- Database tables and RLS policies
-- Gusto OAuth edge function
-- Connection status UI
-- Add payroll nav items
+**Phase 1: Schema Refactor**
+- Migrate `gusto_connections` to `payroll_connections` with `provider` column
+- Update RLS policies
+- Add QuickBooks-specific metadata handling
 
-**Phase 2: Employee Sync**
-- Employee payroll settings table
-- Sync employees with Gusto
-- Direct deposit status tracking
-- Employee payroll list component
+**Phase 2: QuickBooks OAuth**
+- Create `quickbooks-oauth` edge function
+- Implement token rotation for Intuit's requirements
+- Create connection status card
 
-**Phase 3: Run Payroll**
-- Payroll proxy edge function
-- Run payroll wizard
-- Commission calculation integration
-- Submit to Gusto
+**Phase 3: QuickBooks Payroll API**
+- Create `quickbooks-payroll-proxy` edge function
+- Map QuickBooks employee sync
+- Implement payroll submission flow
 
-**Phase 4: Reporting**
-- Payroll history table
-- YTD summaries
-- Tax document links (W-2s)
-- Export functionality
+**Phase 4: Unified UI**
+- Create provider selector component
+- Update payroll wizard for multi-provider support
+- Update integrations tab
 
 ---
 
 ### Secrets Required
 
-The following API credentials will need to be configured:
+Add to existing secrets (Gusto secrets already planned):
 
 | Secret Name | Description |
 |-------------|-------------|
-| `GUSTO_CLIENT_ID` | OAuth client ID from Gusto Partner Portal |
-| `GUSTO_CLIENT_SECRET` | OAuth client secret |
-| `GUSTO_ENCRYPTION_KEY` | AES key for encrypting tokens at rest |
+| `QUICKBOOKS_CLIENT_ID` | Intuit OAuth client ID |
+| `QUICKBOOKS_CLIENT_SECRET` | Intuit OAuth client secret |
+| `QUICKBOOKS_ENCRYPTION_KEY` | Can share with Gusto or separate |
 
 ---
 
@@ -293,36 +317,38 @@ The following API credentials will need to be configured:
 
 | File | Action |
 |------|--------|
-| Database migration | **New** - Create payroll tables |
-| `supabase/functions/gusto-oauth/index.ts` | **New** - OAuth handler |
-| `supabase/functions/gusto-payroll-proxy/index.ts` | **New** - API proxy |
-| `src/hooks/useGustoConnection.ts` | **New** - Connection state |
+| Database migration | **New** - Rename table, add provider enum |
+| `supabase/functions/quickbooks-oauth/index.ts` | **New** |
+| `supabase/functions/quickbooks-payroll-proxy/index.ts` | **New** |
+| `supabase/functions/gusto-oauth/index.ts` | **New** |
+| `supabase/functions/gusto-payroll-proxy/index.ts` | **New** |
+| `src/hooks/usePayrollConnection.ts` | **New** - Unified hook |
 | `src/hooks/usePayroll.ts` | **New** - Payroll operations |
-| `src/hooks/useEmployeePayroll.ts` | **New** - Employee settings |
-| `src/pages/dashboard/admin/Payroll.tsx` | **New** - Main payroll page |
+| `src/pages/dashboard/admin/Payroll.tsx` | **New** - Main payroll hub |
+| `src/components/dashboard/payroll/PayrollProviderSelector.tsx` | **New** |
 | `src/components/dashboard/payroll/GustoConnectionCard.tsx` | **New** |
+| `src/components/dashboard/payroll/QuickBooksConnectionCard.tsx` | **New** |
 | `src/components/dashboard/payroll/RunPayrollWizard.tsx` | **New** |
 | `src/components/dashboard/payroll/PayrollHistoryTable.tsx` | **New** |
 | `src/components/dashboard/payroll/EmployeePayrollList.tsx` | **New** |
-| `src/components/dashboard/payroll/PayrollReportsTab.tsx` | **New** |
-| `src/components/dashboard/payroll/CommissionPreview.tsx` | **New** |
+| `src/components/dashboard/IntegrationsTab.tsx` | **Edit** - Add payroll section |
 | `src/components/dashboard/DashboardLayout.tsx` | **Edit** - Add payroll nav |
-| `src/App.tsx` | **Edit** - Add routes |
-| `src/config/platformIntegrations.ts` | **Edit** - Add Gusto |
+| `src/App.tsx` | **Edit** - Add payroll routes |
+| `supabase/config.toml` | **Edit** - Register new functions |
 
 ---
 
 ### Technical Notes
 
-1. **Token Security**: All Gusto tokens stored encrypted; decryption happens only in edge functions
+1. **Provider Lock**: Only one provider active per organization prevents sync conflicts
 
-2. **Multi-Tenant Isolation**: Each organization has its own Gusto company connection; tokens are never shared
+2. **Data Portability**: When switching providers, employee pay settings are preserved locally; only external IDs are cleared
 
-3. **Gusto Sandbox**: Development will use Gusto's sandbox environment for testing
+3. **Commission Integration**: Works identically for both providers - calculated from Phorest data before submission
 
-4. **Webhook Support** (Future): Gusto can send webhooks for payroll events; infrastructure prepared for this
+4. **QuickBooks Sandbox**: Use `https://sandbox-payroll.api.intuit.com` for development
 
-5. **Embedded SDK**: The `@gusto/embedded-react-sdk` provides pre-built UI components that we'll wrap with your platform's styling
+5. **Token Rotation**: Intuit requires rotating refresh tokens - each refresh returns a new refresh token
 
-6. **Commission Sync**: Payroll calculations will pull from existing sales/performance data, ensuring consistency with displayed stats
+6. **Accounting Integration**: QuickBooks payroll can optionally sync journal entries to QuickBooks accounting (future enhancement)
 
