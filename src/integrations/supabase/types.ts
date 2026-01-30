@@ -3069,11 +3069,111 @@ export type Database = {
           },
         ]
       }
+      organization_billing: {
+        Row: {
+          auto_renewal: boolean | null
+          base_price: number | null
+          billing_cycle: Database["public"]["Enums"]["billing_cycle"]
+          billing_starts_at: string | null
+          contract_end_date: string | null
+          contract_length_months: number
+          contract_start_date: string | null
+          created_at: string
+          custom_price: number | null
+          discount_reason: string | null
+          discount_type: Database["public"]["Enums"]["discount_type"] | null
+          discount_value: number | null
+          id: string
+          notes: string | null
+          organization_id: string
+          per_location_fee: number | null
+          plan_id: string | null
+          promo_ends_at: string | null
+          promo_months: number | null
+          promo_price: number | null
+          setup_fee: number | null
+          setup_fee_paid: boolean | null
+          trial_days: number | null
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_renewal?: boolean | null
+          base_price?: number | null
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
+          billing_starts_at?: string | null
+          contract_end_date?: string | null
+          contract_length_months?: number
+          contract_start_date?: string | null
+          created_at?: string
+          custom_price?: number | null
+          discount_reason?: string | null
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value?: number | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          per_location_fee?: number | null
+          plan_id?: string | null
+          promo_ends_at?: string | null
+          promo_months?: number | null
+          promo_price?: number | null
+          setup_fee?: number | null
+          setup_fee_paid?: boolean | null
+          trial_days?: number | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_renewal?: boolean | null
+          base_price?: number | null
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
+          billing_starts_at?: string | null
+          contract_end_date?: string | null
+          contract_length_months?: number
+          contract_start_date?: string | null
+          created_at?: string
+          custom_price?: number | null
+          discount_reason?: string | null
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value?: number | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          per_location_fee?: number | null
+          plan_id?: string | null
+          promo_ends_at?: string | null
+          promo_months?: number | null
+          promo_price?: number | null
+          setup_fee?: number | null
+          setup_fee_paid?: boolean | null
+          trial_days?: number | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_billing_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_billing_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           account_number: number | null
           activated_at: string | null
           billing_email: string | null
+          billing_status: Database["public"]["Enums"]["billing_status"] | null
           business_type: string | null
           created_at: string | null
           current_period_end: string | null
@@ -3082,7 +3182,10 @@ export type Database = {
           legal_name: string | null
           logo_url: string | null
           name: string
+          next_invoice_date: string | null
           onboarding_stage: string | null
+          pause_ends_at: string | null
+          paused_at: string | null
           primary_contact_email: string | null
           primary_contact_phone: string | null
           settings: Json | null
@@ -3101,6 +3204,7 @@ export type Database = {
           account_number?: number | null
           activated_at?: string | null
           billing_email?: string | null
+          billing_status?: Database["public"]["Enums"]["billing_status"] | null
           business_type?: string | null
           created_at?: string | null
           current_period_end?: string | null
@@ -3109,7 +3213,10 @@ export type Database = {
           legal_name?: string | null
           logo_url?: string | null
           name: string
+          next_invoice_date?: string | null
           onboarding_stage?: string | null
+          pause_ends_at?: string | null
+          paused_at?: string | null
           primary_contact_email?: string | null
           primary_contact_phone?: string | null
           settings?: Json | null
@@ -3128,6 +3235,7 @@ export type Database = {
           account_number?: number | null
           activated_at?: string | null
           billing_email?: string | null
+          billing_status?: Database["public"]["Enums"]["billing_status"] | null
           business_type?: string | null
           created_at?: string | null
           current_period_end?: string | null
@@ -3136,7 +3244,10 @@ export type Database = {
           legal_name?: string | null
           logo_url?: string | null
           name?: string
+          next_invoice_date?: string | null
           onboarding_stage?: string | null
+          pause_ends_at?: string | null
+          paused_at?: string | null
           primary_contact_email?: string | null
           primary_contact_phone?: string | null
           settings?: Json | null
@@ -6207,6 +6318,14 @@ export type Database = {
         | "admin_assistant"
         | "operations_assistant"
         | "super_admin"
+      billing_cycle: "monthly" | "quarterly" | "semi_annual" | "annual"
+      billing_status:
+        | "draft"
+        | "trialing"
+        | "active"
+        | "past_due"
+        | "paused"
+        | "cancelled"
       day_rate_booking_status:
         | "pending"
         | "confirmed"
@@ -6214,6 +6333,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_show"
+      discount_type: "percentage" | "fixed_amount" | "promotional"
       inquiry_source:
         | "website_form"
         | "google_business"
@@ -6379,6 +6499,15 @@ export const Constants = {
         "operations_assistant",
         "super_admin",
       ],
+      billing_cycle: ["monthly", "quarterly", "semi_annual", "annual"],
+      billing_status: [
+        "draft",
+        "trialing",
+        "active",
+        "past_due",
+        "paused",
+        "cancelled",
+      ],
       day_rate_booking_status: [
         "pending",
         "confirmed",
@@ -6387,6 +6516,7 @@ export const Constants = {
         "cancelled",
         "no_show",
       ],
+      discount_type: ["percentage", "fixed_amount", "promotional"],
       inquiry_source: [
         "website_form",
         "google_business",

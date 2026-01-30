@@ -13,10 +13,12 @@ import {
   Globe,
   Calendar,
   CheckCircle2,
-  Clock
+  Clock,
+  CreditCard
 } from 'lucide-react';
 import { useOrganizationWithStats, type OrganizationWithStats } from '@/hooks/useOrganizations';
 import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
+import { BillingConfigurationPanel } from '@/components/platform/billing/BillingConfigurationPanel';
 import { format } from 'date-fns';
 import {
   PlatformCard,
@@ -28,6 +30,7 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
+import type { BillingStatus } from '@/hooks/useOrganizationBilling';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -204,6 +207,13 @@ export default function AccountDetail() {
             Imports
           </TabsTrigger>
           <TabsTrigger 
+            value="billing"
+            className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white"
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            Billing
+          </TabsTrigger>
+          <TabsTrigger 
             value="settings"
             className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white"
           >
@@ -325,6 +335,14 @@ export default function AccountDetail() {
               </p>
             </PlatformCardContent>
           </PlatformCard>
+        </TabsContent>
+
+        <TabsContent value="billing">
+          <BillingConfigurationPanel
+            organizationId={organization.id}
+            billingStatus={(organization as any).billing_status as BillingStatus || 'draft'}
+            locationCount={organization.locationCount}
+          />
         </TabsContent>
 
         <TabsContent value="settings">
