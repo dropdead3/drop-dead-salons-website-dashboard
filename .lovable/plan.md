@@ -1,153 +1,141 @@
 
-# PandaDoc Integration Configuration UI
+# Multi-Integration Hub for Platform Settings
 
 ## Summary
 
-Add a new "Integrations" tab to Platform Settings containing:
-1. **PandaDoc Integration Status Card** - Shows connection health, webhook URL, and secret configuration status
-2. **Field Mapping Configuration UI** - Allows admins to customize which PandaDoc document fields map to billing columns
-
-This provides platform admins with visibility into the integration state and flexibility to adjust mappings without code changes.
+Redesign the Platform Integrations tab to display multiple integrations as clickable cards in a grid layout. Each card shows the integration status, key stats, and navigates to a dedicated integration overview page when clicked. This follows the existing pattern from the salon-level IntegrationsTab while adapting it for the platform admin dark theme.
 
 ---
 
 ## Current State
 
 **What Exists:**
-- `site_settings` table stores `pandadoc_field_mapping` configuration
-- `pandadoc-webhook` edge function processes webhook events
-- Default field mapping hardcoded in webhook and hooks as fallback
-- Secrets: `PANDADOC_API_KEY` and `PANDADOC_WEBHOOK_SECRET` (not yet configured)
-- PlatformSettings page has existing tab patterns (Team, Security, Templates, Defaults, Branding)
+- `PlatformIntegrationsTab` directly renders PandaDoc components inline
+- `PandaDocStatusCard` and `PandaDocFieldMappingEditor` are embedded in the tab
+- No routing structure for individual integration detail pages
+- The salon-level `IntegrationsTab` has a good pattern with `Integration` interface and grid layout
 
 **What's Needed:**
-- New "Integrations" tab in Platform Settings
-- Status card showing webhook URL and configuration state
-- Editable field mapping interface
-- Hook to check secret configuration status
+- Grid of integration cards (connected, available, coming soon)
+- Clickable cards that navigate to `/dashboard/platform/settings/integrations/:id`
+- New route for integration detail pages
+- PandaDoc detail page that contains the current status card and field mapping editor
+- Extensible structure for future integrations (Stripe, Twilio, etc.)
 
 ---
 
 ## Architecture
 
 ```text
-Platform Settings Page
-├── Team
-├── Security  
-├── Import Templates
-├── Defaults
-├── Integrations (NEW)
-│   ├── PandaDoc Status Card
-│   │   ├── Webhook URL (copyable)
-│   │   ├── API Key status (configured/not configured)
-│   │   ├── Webhook Secret status
-│   │   ├── Last webhook received timestamp
-│   │   └── Recent documents count
-│   │
-│   └── Field Mapping Configuration
-│       ├── PandaDoc Field → Billing Column mappings
-│       ├── Add/Remove mapping rows
-│       ├── Billing column dropdown (contract_start_date, etc.)
-│       └── Save/Reset buttons
+Platform Settings → Integrations Tab
 │
-└── Branding (Owner Only)
+├── Integration Cards Grid
+│   ├── PandaDoc Card (connected) → Click → /dashboard/platform/settings/integrations/pandadoc
+│   ├── Stripe Card (coming soon)
+│   ├── Twilio Card (coming soon)
+│   └── + Request Integration
+│
+└── Integration Detail Pages
+    └── /dashboard/platform/settings/integrations/:integrationId
+        ├── PandaDoc Overview
+        │   ├── PandaDocStatusCard
+        │   └── PandaDocFieldMappingEditor
+        ├── Stripe Overview (future)
+        └── Twilio Overview (future)
 ```
 
 ---
 
 ## UI Design
 
-### Integration Status Card
+### Integrations Tab - Card Grid View
 
 ```text
-┌──────────────────────────────────────────────────────────────────┐
-│  PandaDoc Integration                              [Test Webhook] │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  Status:  ● Connected                                            │
-│                                                                   │
-│  Webhook URL:                                                     │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │ https://vciqmwzgfjxtzagaxgnh.supabase.co/functions/v1/...  │  │
-│  │                                                     [Copy] │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                                                                   │
-│  Configuration:                                                   │
-│  ┌────────────────────┐  ┌────────────────────┐                  │
-│  │ API Key            │  │ Webhook Secret     │                  │
-│  │ ○ Not Configured   │  │ ○ Not Configured   │                  │
-│  │ [Configure]        │  │ [Configure]        │                  │
-│  └────────────────────┘  └────────────────────┘                  │
-│                                                                   │
-│  Stats:                                                           │
-│  • Documents received: 12                                         │
-│  • Last webhook: 2 hours ago                                      │
-│  • Documents pending: 3                                           │
-│                                                                   │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  Integrations                                                             │
+│  Connect and manage third-party services for platform operations          │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Active Integrations                                                      │
+│  ─────────────────────────────────────────────────────────────────────   │
+│  ┌─────────────────────────────────┐                                     │
+│  │ 📄 PandaDoc              ●Ready │  ← Clickable card                   │
+│  │                                  │                                     │
+│  │ Contract signing and billing     │                                     │
+│  │ automation                       │                                     │
+│  │                                  │                                     │
+│  │ 12 documents  │  3 pending       │  ← Quick stats                     │
+│  │                                  │                                     │
+│  │ [Configure →]                    │  ← Subtle action indicator         │
+│  └─────────────────────────────────┘                                     │
+│                                                                           │
+│  Coming Soon                                                              │
+│  ─────────────────────────────────────────────────────────────────────   │
+│  ┌─────────────────────────────────┐  ┌─────────────────────────────────┐│
+│  │ 💳 Stripe            Coming Soon│  │ 📱 Twilio           Coming Soon ││
+│  │                                  │  │                                  ││
+│  │ Payment processing and           │  │ SMS notifications and            ││
+│  │ subscription billing             │  │ communication                    ││
+│  └─────────────────────────────────┘  └─────────────────────────────────┘│
+│                                                                           │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Field Mapping Configuration
+### Integration Detail Page (PandaDoc)
 
 ```text
-┌──────────────────────────────────────────────────────────────────┐
-│  Field Mapping                                            [Reset]│
-│  Map PandaDoc document fields to billing configuration           │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  PandaDoc Field Name          Billing Column                      │
-│  ─────────────────────────────────────────────────────────────   │
-│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
-│  │ term_start_date      │ →   │ contract_start_date ▼│           │
-│  └──────────────────────┘     └──────────────────────┘           │
-│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
-│  │ term_end_date        │ →   │ contract_end_date   ▼│           │
-│  └──────────────────────┘     └──────────────────────┘           │
-│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
-│  │ subscription_plan    │ →   │ plan_name_lookup    ▼│           │
-│  └──────────────────────┘     └──────────────────────┘           │
-│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
-│  │ monthly_rate         │ →   │ custom_price        ▼│           │
-│  └──────────────────────┘     └──────────────────────┘           │
-│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
-│  │ promo_months         │ →   │ promo_months        ▼│           │
-│  └──────────────────────┘     └──────────────────────┘           │
-│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
-│  │ promo_rate           │ →   │ promo_price         ▼│           │
-│  └──────────────────────┘     └──────────────────────┘           │
-│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
-│  │ setup_fee            │ →   │ setup_fee           ▼│           │
-│  └──────────────────────┘     └──────────────────────┘           │
-│  ┌──────────────────────┐     ┌──────────────────────┐  [×]      │
-│  │ special_notes        │ →   │ notes               ▼│           │
-│  └──────────────────────┘     └──────────────────────┘           │
-│                                                                   │
-│                              [+ Add Mapping]                      │
-│                                                                   │
-│                                              [Save Mappings]      │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│  ← Back to Integrations                                                   │
+│                                                                           │
+│  📄 PandaDoc Integration                                                 │
+│  Automate contract signing and billing configuration                     │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  [PandaDocStatusCard - webhook URL, config, stats]                       │
+│                                                                           │
+│  [PandaDocFieldMappingEditor - mapping configuration]                    │
+│                                                                           │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Available Billing Columns for Mapping
+## Platform Integration Interface
 
-| Column | Label | Type |
-|--------|-------|------|
-| contract_start_date | Contract Start Date | Date |
-| contract_end_date | Contract End Date | Date |
-| plan_name_lookup | Subscription Plan (by name) | Special |
-| custom_price | Monthly Rate | Number |
-| promo_months | Promo Months | Integer |
-| promo_price | Promo Price | Number |
-| promo_ends_at | Promo End Date | Date |
-| setup_fee | Setup Fee | Number |
-| trial_days | Trial Days | Integer |
-| billing_cycle | Billing Cycle | Enum |
-| notes | Special Notes | Text |
-| discount_value | Discount Value | Number |
-| per_location_fee | Per Location Fee | Number |
-| per_user_fee | Per User Fee | Number |
+Define a consistent structure for all platform integrations:
+
+```typescript
+interface PlatformIntegration {
+  id: string;                    // 'pandadoc', 'stripe', 'twilio'
+  name: string;                  // 'PandaDoc'
+  description: string;           // Short description
+  icon: React.ComponentType;     // Lucide icon
+  status: 'connected' | 'not_configured' | 'coming_soon';
+  category: 'documents' | 'payments' | 'communication' | 'analytics';
+  features: string[];            // Key features list
+  configPath: string;            // '/dashboard/platform/settings/integrations/pandadoc'
+  statsComponent?: React.ComponentType; // Optional inline stats
+}
+```
+
+---
+
+## Integration Cards Design
+
+Each card follows the platform dark theme with interactive hover states:
+
+**Connected Integration Card:**
+- Glass variant with violet accent border when connected
+- Status badge (top-right): "Ready" (emerald), "Issues" (amber), "Not Configured" (slate)
+- Quick stats row at bottom (documents count, pending, etc.)
+- Entire card is clickable, navigates to detail page
+- Subtle "Configure →" text as affordance
+
+**Coming Soon Card:**
+- Reduced opacity (60%)
+- "Coming Soon" badge
+- Not clickable
+- Brief description only
 
 ---
 
@@ -155,11 +143,9 @@ Platform Settings Page
 
 | File | Purpose |
 |------|---------|
-| `src/components/platform/settings/PlatformIntegrationsTab.tsx` | Main integrations tab container |
-| `src/components/platform/settings/PandaDocStatusCard.tsx` | Connection status and webhook info |
-| `src/components/platform/settings/PandaDocFieldMappingEditor.tsx` | Editable field mapping UI |
-| `src/hooks/usePandaDocFieldMapping.ts` | CRUD for field mapping in site_settings |
-| `src/hooks/usePandaDocStats.ts` | Query for document statistics |
+| `src/components/platform/settings/PlatformIntegrationCard.tsx` | Reusable clickable card component |
+| `src/components/platform/settings/integrations/PandaDocIntegrationPage.tsx` | PandaDoc detail page |
+| `src/pages/dashboard/platform/PlatformIntegrationDetail.tsx` | Router wrapper for integration detail pages |
 
 ---
 
@@ -167,155 +153,178 @@ Platform Settings Page
 
 | File | Changes |
 |------|---------|
-| `src/pages/dashboard/platform/PlatformSettings.tsx` | Add "Integrations" tab |
-| `src/hooks/useSiteSettings.ts` | Add typed hook for pandadoc_field_mapping |
+| `src/components/platform/settings/PlatformIntegrationsTab.tsx` | Replace inline components with card grid |
+| `src/App.tsx` | Add route for `/dashboard/platform/settings/integrations/:integrationId` |
+| `src/hooks/usePandaDocStats.ts` | Ensure it's usable in card preview |
 
 ---
 
-## Implementation Details
+## Routing Structure
 
-### usePandaDocFieldMapping Hook
-
-```typescript
-interface PandaDocFieldMapping {
-  [pandaDocField: string]: string; // maps to billing column
-}
-
-const DEFAULT_MAPPING: PandaDocFieldMapping = {
-  term_start_date: 'contract_start_date',
-  term_end_date: 'contract_end_date',
-  subscription_plan: 'plan_name_lookup',
-  monthly_rate: 'custom_price',
-  promo_months: 'promo_months',
-  promo_rate: 'promo_price',
-  setup_fee: 'setup_fee',
-  special_notes: 'notes',
-};
-
-function usePandaDocFieldMapping() {
-  // Query site_settings for pandadoc_field_mapping
-  // Return data with fallback to DEFAULT_MAPPING
-  // Provide update mutation
-}
-```
-
-### usePandaDocStats Hook
+Add nested route under platform settings:
 
 ```typescript
-interface PandaDocStats {
-  totalDocuments: number;
-  pendingDocuments: number;
-  completedDocuments: number;
-  lastWebhookAt: string | null;
-}
-
-function usePandaDocStats() {
-  // Query pandadoc_documents table for counts
-  // Get most recent created_at for "last webhook"
-  return useQuery({
-    queryKey: ['pandadoc-stats'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('pandadoc_documents')
-        .select('id, status, created_at')
-        .order('created_at', { ascending: false });
-      // Calculate stats from results
-    }
-  });
-}
+// In App.tsx, add inside the platform routes:
+<Route path="settings/integrations/:integrationId" element={
+  <ProtectedRoute requirePlatformRole="platform_admin">
+    <PlatformIntegrationDetail />
+  </ProtectedRoute>
+} />
 ```
 
-### PandaDocStatusCard Component
-
-Shows:
-- Webhook URL (constructed from project ID): `https://vciqmwzgfjxtzagaxgnh.supabase.co/functions/v1/pandadoc-webhook`
-- Copy button for webhook URL
-- Configuration status indicators for API Key and Webhook Secret
-- Links to configure secrets (note: secrets API shows which are configured)
-- Document statistics from pandadoc_documents table
-
-### PandaDocFieldMappingEditor Component
-
-- Displays current mappings as editable rows
-- PandaDoc field: text input (custom field names)
-- Billing column: select dropdown with predefined options
-- Add/remove mapping buttons
-- Save persists to site_settings
-- Reset restores to default mapping
-- Changes tracked with unsaved indicator
+The `PlatformIntegrationDetail` component will:
+1. Read `integrationId` from URL params
+2. Render the appropriate integration page component
+3. Handle "not found" for unknown integrations
 
 ---
 
-## Billing Column Options
+## Integration Registry
 
-Provide a curated list with descriptions:
+Create a central registry for all platform integrations:
 
 ```typescript
-const BILLING_COLUMNS = [
-  { value: 'contract_start_date', label: 'Contract Start Date', type: 'date' },
-  { value: 'contract_end_date', label: 'Contract End Date', type: 'date' },
-  { value: 'plan_name_lookup', label: 'Plan (lookup by name)', type: 'special' },
-  { value: 'custom_price', label: 'Monthly Rate', type: 'number' },
-  { value: 'base_price', label: 'Base Price', type: 'number' },
-  { value: 'promo_months', label: 'Promo Months', type: 'integer' },
-  { value: 'promo_price', label: 'Promo Price', type: 'number' },
-  { value: 'promo_ends_at', label: 'Promo End Date', type: 'date' },
-  { value: 'setup_fee', label: 'Setup Fee', type: 'number' },
-  { value: 'trial_days', label: 'Trial Days', type: 'integer' },
-  { value: 'billing_cycle', label: 'Billing Cycle', type: 'enum' },
-  { value: 'notes', label: 'Special Notes', type: 'text' },
-  { value: 'discount_value', label: 'Discount Value', type: 'number' },
-  { value: 'per_location_fee', label: 'Per Location Fee', type: 'number' },
-  { value: 'per_user_fee', label: 'Per User Fee', type: 'number' },
-  { value: 'included_locations', label: 'Included Locations', type: 'integer' },
-  { value: 'included_users', label: 'Included Users', type: 'integer' },
+// src/config/platformIntegrations.ts
+
+import { FileText, CreditCard, MessageSquare, BarChart3 } from 'lucide-react';
+
+export const PLATFORM_INTEGRATIONS: PlatformIntegration[] = [
+  {
+    id: 'pandadoc',
+    name: 'PandaDoc',
+    description: 'Contract signing and billing automation',
+    icon: FileText,
+    status: 'connected', // Will be dynamic based on stats
+    category: 'documents',
+    features: ['Contract Signing', 'Field Extraction', 'Billing Auto-populate'],
+    configPath: '/dashboard/platform/settings/integrations/pandadoc',
+  },
+  {
+    id: 'stripe',
+    name: 'Stripe',
+    description: 'Payment processing and subscription billing',
+    icon: CreditCard,
+    status: 'coming_soon',
+    category: 'payments',
+    features: ['Payment Processing', 'Subscriptions', 'Invoicing'],
+    configPath: '/dashboard/platform/settings/integrations/stripe',
+  },
+  {
+    id: 'twilio',
+    name: 'Twilio',
+    description: 'SMS notifications and communication',
+    icon: MessageSquare,
+    status: 'coming_soon',
+    category: 'communication',
+    features: ['SMS Alerts', 'Two-Factor Auth', 'Appointment Reminders'],
+    configPath: '/dashboard/platform/settings/integrations/twilio',
+  },
 ];
 ```
 
 ---
 
-## Security & Permissions
+## PandaDoc Status Detection
 
-- **Tab Access**: Platform admins and owners can access Integrations tab
-- **RLS**: Uses existing site_settings policies (platform users can update)
-- **Secret Display**: Only shows if secret is configured, never shows actual value
-- **Audit**: Consider logging mapping changes to platform_audit_log
+Determine PandaDoc connection status dynamically:
+
+```typescript
+function usePandaDocStatus(): 'connected' | 'not_configured' | 'error' {
+  const { data: stats } = usePandaDocStats();
+  const { data: mapping } = usePandaDocFieldMapping();
+  
+  // Has received documents = connected and working
+  if (stats && stats.totalDocuments > 0) return 'connected';
+  
+  // Has mapping configured but no documents yet
+  if (mapping && Object.keys(mapping).length > 0) return 'not_configured';
+  
+  return 'not_configured';
+}
+```
+
+---
+
+## Component Details
+
+### PlatformIntegrationCard
+
+```typescript
+interface PlatformIntegrationCardProps {
+  integration: PlatformIntegration;
+  stats?: {
+    primary: { label: string; value: number };
+    secondary?: { label: string; value: number };
+  };
+  onClick?: () => void;
+}
+```
+
+Features:
+- Uses `PlatformCard` with `variant="interactive"` for hover effects
+- Displays icon, name, description, status badge
+- Shows quick stats for connected integrations
+- Full card is clickable (uses `useNavigate`)
+- "Coming Soon" cards are not clickable and have reduced opacity
+
+### PandaDocIntegrationPage
+
+Wraps the existing components:
+- `PlatformPageHeader` with back navigation to integrations tab
+- `PandaDocStatusCard`
+- `PandaDocFieldMappingEditor`
+
+### PlatformIntegrationDetail
+
+Router component that:
+- Reads `integrationId` from params
+- Switches to render correct integration page
+- Shows 404 for unknown integrations
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Hooks and Data Layer
-1. Create `usePandaDocFieldMapping` hook with default fallback
-2. Create `usePandaDocStats` hook for document counts
-3. Add RLS policy for pandadoc_field_mapping if needed
+### Phase 1: Infrastructure
+1. Create `platformIntegrations.ts` config registry
+2. Create `PlatformIntegrationCard` component
+3. Add route for integration detail pages
 
-### Phase 2: Status Card
-1. Create `PandaDocStatusCard` component
-2. Show webhook URL with copy button
-3. Display configuration status for secrets
-4. Show document statistics
+### Phase 2: Integrations Tab Redesign
+1. Refactor `PlatformIntegrationsTab` to use card grid
+2. Group cards by status (Active, Coming Soon)
+3. Wire up navigation on card click
 
-### Phase 3: Field Mapping Editor
-1. Create `PandaDocFieldMappingEditor` component
-2. Build editable mapping rows UI
-3. Implement add/remove/save/reset functionality
-4. Add validation for duplicate fields
+### Phase 3: PandaDoc Detail Page
+1. Create `PandaDocIntegrationPage` component
+2. Create `PlatformIntegrationDetail` router wrapper
+3. Move existing components into detail page
 
-### Phase 4: Integration Tab
-1. Create `PlatformIntegrationsTab` container
-2. Add "Integrations" tab to PlatformSettings
-3. Wire up all components
+### Phase 4: Polish
+1. Add quick stats preview on PandaDoc card
+2. Add status detection hook
+3. Test navigation flow
 
 ---
 
-## Webhook URL Construction
+## Navigation Flow
 
-The webhook URL is deterministic based on the Supabase project ID:
+1. User lands on Platform Settings
+2. Clicks "Integrations" tab
+3. Sees grid of integration cards
+4. Clicks PandaDoc card
+5. Navigates to `/dashboard/platform/settings/integrations/pandadoc`
+6. Sees full PandaDoc configuration (status card + field mapping)
+7. "Back to Integrations" returns to the tab view
 
-```typescript
-const SUPABASE_PROJECT_ID = 'vciqmwzgfjxtzagaxgnh';
-const webhookUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/pandadoc-webhook`;
-```
+---
 
-This URL should be configured in PandaDoc's webhook settings to receive document events.
+## Future Extensibility
+
+When adding a new integration (e.g., Stripe):
+1. Add entry to `PLATFORM_INTEGRATIONS` registry
+2. Create `StripeIntegrationPage` component
+3. Add case in `PlatformIntegrationDetail` switch
+4. Update status from 'coming_soon' to 'connected'
+
+No changes needed to the integrations tab itself - it automatically renders from the registry.
