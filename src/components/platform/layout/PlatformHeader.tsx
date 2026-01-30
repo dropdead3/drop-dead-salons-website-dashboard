@@ -4,7 +4,7 @@ import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
 import { cn } from '@/lib/utils';
-import { User, LogOut, Settings, Crown, Shield, Headphones, Code } from 'lucide-react';
+import { User, LogOut, Settings, Crown, Shield, Headphones, Code, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -13,7 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PlatformButton } from '../ui/PlatformButton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PlatformBadge } from '../ui/PlatformBadge';
 import { OnlineIndicator } from '../ui/OnlineIndicator';
 import type { PlatformRole } from '@/hooks/usePlatformRoles';
@@ -30,16 +35,21 @@ export function PlatformHeader() {
   const { user, signOut, platformRoles } = useAuth();
   const { data: profile } = useEmployeeProfile();
   const { resolvedTheme } = usePlatformTheme();
-  const { isConnected } = usePlatformPresenceContext();
+  const { isConnected, onlineUsers, onlineCount } = usePlatformPresenceContext();
   const isDark = resolvedTheme === 'dark';
 
   const primaryRole = platformRoles[0] as PlatformRole | undefined;
   const roleInfo = primaryRole ? roleConfig[primaryRole] : null;
 
-  const getInitials = () => {
-    const name = profile?.full_name || profile?.display_name || user?.email;
-    if (!name) return '?';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  // Get other online users (exclude current user)
+  const otherOnlineUsers = Array.from(onlineUsers.entries())
+    .filter(([id]) => id !== user?.id)
+    .map(([id, data]) => ({ id, ...data }));
+
+  const getInitials = (name?: string, email?: string) => {
+    const source = name || email;
+    if (!source) return '?';
+    return source.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const handleSignOut = async () => {
@@ -60,7 +70,82 @@ export function PlatformHeader() {
           : 'border-violet-200/50 bg-white/80'
       )}
     >
-      <div className="flex h-full items-center justify-end px-6 gap-4">
+      <div className="flex h-full items-center justify-between px-6">
+        {/* Online Users Section */}
+        <div className="flex items-center gap-3">
+          {onlineCount > 0 && (
+            <>
+              <div className="flex items-center gap-2">
+                <Users className={cn('h-4 w-4', isDark ? 'text-slate-400' : 'text-slate-500')} />
+                <span className={cn(
+                  'text-sm font-medium',
+                  isDark ? 'text-slate-300' : 'text-slate-600'
+                )}>
+                  {onlineCount} online
+                </span>
+              </div>
+              
+              {otherOnlineUsers.length > 0 && (
+                <div className={cn(
+                  'h-6 w-px mx-1',
+                  isDark ? 'bg-slate-700' : 'bg-violet-200'
+                )} />
+              )}
+              
+              {/* Other Online Users Avatars */}
+              <TooltipProvider delayDuration={200}>
+                <div className="flex -space-x-2">
+                  {otherOnlineUsers.slice(0, 5).map((onlineUser) => (
+                    <Tooltip key={onlineUser.id}>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          <Avatar className={cn(
+                            'h-8 w-8 border-2 ring-2',
+                            isDark 
+                              ? 'border-slate-900 ring-emerald-500/30' 
+                              : 'border-white ring-emerald-500/30'
+                          )}>
+                            <AvatarImage src={onlineUser.photo_url || undefined} alt={onlineUser.full_name} />
+                            <AvatarFallback className={cn(
+                              'text-xs font-medium',
+                              isDark ? 'bg-slate-700 text-slate-300' : 'bg-violet-100 text-violet-700'
+                            )}>
+                              {getInitials(onlineUser.full_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <OnlineIndicator 
+                            isOnline={true} 
+                            size="sm" 
+                            className="absolute -bottom-0.5 -right-0.5 ring-2 ring-slate-900"
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent 
+                        side="bottom"
+                        className={isDark ? 'bg-slate-800 border-slate-700 text-white' : ''}
+                      >
+                        <p className="font-medium">{onlineUser.full_name || 'Team Member'}</p>
+                        <p className="text-xs text-emerald-400">Online</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                  
+                  {otherOnlineUsers.length > 5 && (
+                    <div className={cn(
+                      'h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-medium',
+                      isDark 
+                        ? 'border-slate-900 bg-slate-700 text-slate-300' 
+                        : 'border-white bg-violet-100 text-violet-700'
+                    )}>
+                      +{otherOnlineUsers.length - 5}
+                    </div>
+                  )}
+                </div>
+              </TooltipProvider>
+            </>
+          )}
+        </div>
+
         {/* User Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -73,29 +158,35 @@ export function PlatformHeader() {
               )}
             >
               <div className="flex items-center gap-2">
-                <Avatar className={cn(
-                  'h-8 w-8 border',
-                  isDark ? 'border-slate-600' : 'border-violet-200'
-                )}>
-                  <AvatarImage src={profile?.photo_url || undefined} alt="Profile" />
-                  <AvatarFallback className={cn(
-                    'text-xs font-medium',
-                    isDark ? 'bg-slate-700 text-slate-300' : 'bg-violet-100 text-violet-700'
+                <div className="relative">
+                  <Avatar className={cn(
+                    'h-8 w-8 border',
+                    isDark ? 'border-slate-600' : 'border-violet-200'
                   )}>
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
+                    <AvatarImage src={profile?.photo_url || undefined} alt="Profile" />
+                    <AvatarFallback className={cn(
+                      'text-xs font-medium',
+                      isDark ? 'bg-slate-700 text-slate-300' : 'bg-violet-100 text-violet-700'
+                    )}>
+                      {getInitials(profile?.full_name || profile?.display_name, user?.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {isConnected && (
+                    <OnlineIndicator 
+                      isOnline={true} 
+                      size="sm" 
+                      className="absolute -bottom-0.5 -right-0.5"
+                    />
+                  )}
+                </div>
                 
                 <div className="hidden sm:block text-left">
-                  <div className="flex items-center gap-1.5">
-                    <span className={cn(
-                      'text-sm font-medium',
-                      isDark ? 'text-white' : 'text-slate-900'
-                    )}>
-                      {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account'}
-                    </span>
-                    {isConnected && <OnlineIndicator isOnline={true} size="sm" />}
-                  </div>
+                  <span className={cn(
+                    'text-sm font-medium block',
+                    isDark ? 'text-white' : 'text-slate-900'
+                  )}>
+                    {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account'}
+                  </span>
                   {roleInfo && (
                     <PlatformBadge variant={roleInfo.variant} size="sm" className="gap-1">
                       <roleInfo.icon className="w-2.5 h-2.5" />
