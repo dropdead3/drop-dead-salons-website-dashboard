@@ -96,6 +96,7 @@ import PlatformImport from "./pages/dashboard/platform/PlatformImport";
 import PlatformSettings from "./pages/dashboard/platform/PlatformSettings";
 import PlatformRevenue from "./pages/dashboard/platform/Revenue";
 import PlatformPermissions from "./pages/dashboard/platform/Permissions";
+import PlatformIntegrationDetail from "./pages/dashboard/platform/PlatformIntegrationDetail";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
 
 const queryClient = new QueryClient();
@@ -205,6 +206,7 @@ const App = () => (
                         <Route path="import" element={<PlatformImport />} />
                         <Route path="revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />
                         <Route path="settings" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSettings /></ProtectedRoute>} />
+                        <Route path="settings/integrations/:integrationId" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformIntegrationDetail /></ProtectedRoute>} />
                         <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
                       </Route>
 
