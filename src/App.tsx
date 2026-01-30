@@ -94,6 +94,7 @@ import PlatformAccounts from "./pages/dashboard/platform/Accounts";
 import AccountDetail from "./pages/dashboard/platform/AccountDetail";
 import PlatformImport from "./pages/dashboard/platform/PlatformImport";
 import PlatformSettings from "./pages/dashboard/platform/PlatformSettings";
+import PlatformRevenue from "./pages/dashboard/platform/Revenue";
 
 const queryClient = new QueryClient();
 
@@ -199,6 +200,7 @@ const App = () => (
                       <Route path="/dashboard/platform/accounts" element={<ProtectedRoute requireAnyPlatformRole><PlatformAccounts /></ProtectedRoute>} />
                       <Route path="/dashboard/platform/accounts/:orgId" element={<ProtectedRoute requireAnyPlatformRole><AccountDetail /></ProtectedRoute>} />
                       <Route path="/dashboard/platform/import" element={<ProtectedRoute requireAnyPlatformRole><PlatformImport /></ProtectedRoute>} />
+                      <Route path="/dashboard/platform/revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />
                       <Route path="/dashboard/platform/settings" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSettings /></ProtectedRoute>} />
 
                         <Route path="*" element={<NotFound />} />

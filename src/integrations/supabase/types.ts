@@ -3073,8 +3073,11 @@ export type Database = {
         Row: {
           account_number: number | null
           activated_at: string | null
+          billing_email: string | null
           business_type: string | null
           created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
           id: string
           legal_name: string | null
           logo_url: string | null
@@ -3086,15 +3089,22 @@ export type Database = {
           slug: string
           source_software: string | null
           status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
           subscription_tier: string | null
           timezone: string | null
+          trial_ends_at: string | null
           updated_at: string | null
         }
         Insert: {
           account_number?: number | null
           activated_at?: string | null
+          billing_email?: string | null
           business_type?: string | null
           created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
           id?: string
           legal_name?: string | null
           logo_url?: string | null
@@ -3106,15 +3116,22 @@ export type Database = {
           slug: string
           source_software?: string | null
           status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           subscription_tier?: string | null
           timezone?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
         }
         Update: {
           account_number?: number | null
           activated_at?: string | null
+          billing_email?: string | null
           business_type?: string | null
           created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
           id?: string
           legal_name?: string | null
           logo_url?: string | null
@@ -3126,8 +3143,12 @@ export type Database = {
           slug?: string
           source_software?: string | null
           status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           subscription_tier?: string | null
           timezone?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -5423,6 +5444,119 @@ export type Database = {
           updated_at?: string
           user_id?: string
           weekly_wins_due_day?: number | null
+        }
+        Relationships: []
+      }
+      subscription_invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          invoice_pdf: string | null
+          invoice_url: string | null
+          organization_id: string
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          invoice_pdf?: string | null
+          invoice_url?: string | null
+          organization_id: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          invoice_pdf?: string | null
+          invoice_url?: string | null
+          organization_id?: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_locations: number | null
+          max_users: number | null
+          name: string
+          price_annually: number
+          price_monthly: number
+          stripe_price_id_annual: string | null
+          stripe_price_id_monthly: string | null
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_locations?: number | null
+          max_users?: number | null
+          name: string
+          price_annually?: number
+          price_monthly?: number
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_locations?: number | null
+          max_users?: number | null
+          name?: string
+          price_annually?: number
+          price_monthly?: number
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
+          tier?: string
+          updated_at?: string
         }
         Relationships: []
       }
