@@ -219,8 +219,7 @@ export function PlatformSidebar() {
           )}
           title={collapsed ? (profile?.display_name || profile?.full_name || 'Account') : undefined}
         >
-          <div className="relative">
-            <Avatar className={cn(
+          <Avatar className={cn(
               'h-8 w-8 border',
               isDark ? 'border-slate-600' : 'border-violet-200'
             )}>
@@ -232,12 +231,6 @@ export function PlatformSidebar() {
                 {getInitials()}
               </AvatarFallback>
             </Avatar>
-            <OnlineIndicator 
-              isOnline={isConnected} 
-              size="sm" 
-              className="absolute -bottom-0.5 -right-0.5"
-            />
-          </div>
           {!collapsed && (
             <div className="flex-1 text-left min-w-0">
               <div className="flex items-center gap-1.5">
