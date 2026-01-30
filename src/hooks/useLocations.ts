@@ -24,6 +24,8 @@ export interface HolidayClosure {
   name: string;
 }
 
+export type StripeStatus = 'not_connected' | 'pending' | 'active' | 'issues' | 'suspended';
+
 export interface Location {
   id: string;
   name: string;
@@ -50,6 +52,11 @@ export interface Location {
   break_minutes_per_day: number | null;
   lunch_minutes: number | null;
   appointment_padding_minutes: number | null;
+  state_province: string | null;
+  country: string | null;
+  stripe_account_id: string | null;
+  stripe_payments_enabled: boolean;
+  stripe_status: StripeStatus;
   created_at: string;
   updated_at: string;
 }

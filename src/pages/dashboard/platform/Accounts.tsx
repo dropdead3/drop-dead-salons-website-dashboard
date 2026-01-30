@@ -45,6 +45,7 @@ import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
+import { StripeStatusIndicator } from '@/components/platform/ui/StripeStatusIndicator';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -144,12 +145,13 @@ export default function PlatformAccounts() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-slate-700/50 hover:bg-transparent">
-                    <TableHead className="text-slate-400">Salon</TableHead>
+                    <TableHead className="text-slate-400">Account</TableHead>
                     <TableHead className="text-slate-400">Type</TableHead>
+                    <TableHead className="text-slate-400">Location</TableHead>
                     <TableHead className="text-slate-400">Status</TableHead>
                     <TableHead className="text-slate-400">Plan</TableHead>
                     <TableHead className="text-slate-400">Locations</TableHead>
-                    <TableHead className="text-slate-400">Created</TableHead>
+                    <TableHead className="text-slate-400">Payments</TableHead>
                     <TableHead className="text-right text-slate-400">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -171,7 +173,7 @@ export default function PlatformAccounts() {
                           </div>
                           <div>
                             <p className="font-medium text-white">{org.name}</p>
-                            <p className="text-xs text-slate-500">{org.slug}</p>
+                            <p className="text-xs text-slate-500">#{org.account_number}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -179,6 +181,16 @@ export default function PlatformAccounts() {
                         <span className="text-sm text-slate-300">
                           {businessTypeLabels[org.business_type || 'salon']}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {org.primaryLocation ? (
+                          <span className="text-sm text-slate-300">
+                            {org.primaryLocation.state_province && `${org.primaryLocation.state_province}, `}
+                            {org.primaryLocation.country || 'US'}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-slate-500">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <PlatformBadge variant={statusColors[org.status || 'pending']}>
@@ -195,6 +207,13 @@ export default function PlatformAccounts() {
                           <MapPin className="h-3.5 w-3.5 text-slate-500" />
                           <span className="text-sm text-slate-300">{org.locationCount}</span>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <StripeStatusIndicator
+                          activeCount={org.stripeLocationsActive}
+                          totalCount={org.locationCount}
+                          hasIssues={org.hasStripeIssues}
+                        />
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-slate-500">

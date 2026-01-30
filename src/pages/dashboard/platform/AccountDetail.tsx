@@ -240,6 +240,12 @@ export default function AccountDetail() {
                 <PlatformCardTitle className="text-lg">Account Details</PlatformCardTitle>
               </PlatformCardHeader>
               <PlatformCardContent className="space-y-4">
+                {organization.account_number && (
+                  <div className="flex items-center gap-3">
+                    <Building2 className="h-4 w-4 text-violet-400" />
+                    <span className="text-slate-300">Account #{organization.account_number}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-3">
                   <Calendar className="h-4 w-4 text-slate-500" />
                   <span className="text-slate-300">Created {format(new Date(organization.created_at), 'MMM d, yyyy')}</span>

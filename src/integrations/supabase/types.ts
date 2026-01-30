@@ -2692,6 +2692,7 @@ export type Database = {
           booking_url: string | null
           break_minutes_per_day: number | null
           city: string
+          country: string | null
           created_at: string | null
           day_rate_blackout_dates: string[] | null
           day_rate_default_price: number | null
@@ -2710,7 +2711,11 @@ export type Database = {
           phone: string
           phorest_branch_id: string | null
           show_on_website: boolean
+          state_province: string | null
           store_number: string | null
+          stripe_account_id: string | null
+          stripe_payments_enabled: boolean | null
+          stripe_status: string | null
           stylist_capacity: number | null
           tax_rate: number | null
           updated_at: string | null
@@ -2722,6 +2727,7 @@ export type Database = {
           booking_url?: string | null
           break_minutes_per_day?: number | null
           city: string
+          country?: string | null
           created_at?: string | null
           day_rate_blackout_dates?: string[] | null
           day_rate_default_price?: number | null
@@ -2740,7 +2746,11 @@ export type Database = {
           phone: string
           phorest_branch_id?: string | null
           show_on_website?: boolean
+          state_province?: string | null
           store_number?: string | null
+          stripe_account_id?: string | null
+          stripe_payments_enabled?: boolean | null
+          stripe_status?: string | null
           stylist_capacity?: number | null
           tax_rate?: number | null
           updated_at?: string | null
@@ -2752,6 +2762,7 @@ export type Database = {
           booking_url?: string | null
           break_minutes_per_day?: number | null
           city?: string
+          country?: string | null
           created_at?: string | null
           day_rate_blackout_dates?: string[] | null
           day_rate_default_price?: number | null
@@ -2770,7 +2781,11 @@ export type Database = {
           phone?: string
           phorest_branch_id?: string | null
           show_on_website?: boolean
+          state_province?: string | null
           store_number?: string | null
+          stripe_account_id?: string | null
+          stripe_payments_enabled?: boolean | null
+          stripe_status?: string | null
           stylist_capacity?: number | null
           tax_rate?: number | null
           updated_at?: string | null
@@ -3056,6 +3071,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          account_number: number | null
           activated_at: string | null
           business_type: string | null
           created_at: string | null
@@ -3075,6 +3091,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          account_number?: number | null
           activated_at?: string | null
           business_type?: string | null
           created_at?: string | null
@@ -3094,6 +3111,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          account_number?: number | null
           activated_at?: string | null
           business_type?: string | null
           created_at?: string | null

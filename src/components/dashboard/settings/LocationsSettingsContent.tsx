@@ -192,6 +192,11 @@ export function LocationsSettingsContent() {
       break_minutes_per_day: formData.break_minutes_per_day,
       lunch_minutes: formData.lunch_minutes,
       appointment_padding_minutes: formData.appointment_padding_minutes,
+      state_province: null,
+      country: 'US',
+      stripe_account_id: null,
+      stripe_payments_enabled: false,
+      stripe_status: 'not_connected' as const,
     };
 
     if (editingLocation) {
