@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Building2, 
@@ -60,6 +61,7 @@ export default function PlatformOverview() {
           value={stats?.totalOrganizations || 0}
           icon={Building2}
           description="Active accounts"
+          href="/dashboard/platform/accounts"
         />
         <StatCard
           title="In Onboarding"
@@ -67,6 +69,7 @@ export default function PlatformOverview() {
           icon={Clock}
           description="Accounts being set up"
           variant="warning"
+          href="/dashboard/platform/accounts?status=onboarding"
         />
         <StatCard
           title="Pending Migrations"
@@ -74,12 +77,14 @@ export default function PlatformOverview() {
           icon={Upload}
           description="Data imports in progress"
           variant={stats?.pendingMigrations ? 'warning' : 'default'}
+          href="/dashboard/platform/import"
         />
         <StatCard
           title="Total Locations"
           value={stats?.totalLocations || 0}
           icon={MapPin}
           description="Across all accounts"
+          href="/dashboard/platform/accounts"
         />
       </div>
 
@@ -156,9 +161,10 @@ interface StatCardProps {
   icon: React.ComponentType<{ className?: string }>;
   description: string;
   variant?: 'default' | 'warning' | 'success';
+  href?: string;
 }
 
-function StatCard({ title, value, icon: Icon, description, variant = 'default' }: StatCardProps) {
+function StatCard({ title, value, icon: Icon, description, variant = 'default', href }: StatCardProps) {
   const iconStyles = {
     default: 'bg-violet-500/20 text-violet-400',
     warning: 'bg-amber-500/20 text-amber-400',
@@ -171,8 +177,10 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default' }
     success: 'text-emerald-300',
   };
 
-  return (
-    <div className="group relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 transition-all duration-300 hover:bg-slate-800/60 hover:border-slate-600/50">
+  const cardClasses = "group relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 transition-all duration-300 hover:bg-slate-800/60 hover:border-slate-600/50";
+
+  const content = (
+    <>
       {/* Subtle glow on hover */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
       
@@ -186,6 +194,20 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default' }
         <div className={`text-4xl font-bold ${valueStyles[variant]} mb-1`}>{value}</div>
         <p className="text-sm text-slate-500">{description}</p>
       </div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link to={href} className={cn(cardClasses, "cursor-pointer block")}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={cardClasses}>
+      {content}
     </div>
   );
 }
