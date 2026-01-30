@@ -451,6 +451,53 @@ export type Database = {
           },
         ]
       }
+      billing_changes: {
+        Row: {
+          change_type: string
+          created_at: string
+          created_by: string | null
+          effective_date: string
+          id: string
+          new_value: Json | null
+          notes: string | null
+          organization_id: string
+          previous_value: Json | null
+          proration_amount: number | null
+        }
+        Insert: {
+          change_type: string
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          id?: string
+          new_value?: Json | null
+          notes?: string | null
+          organization_id: string
+          previous_value?: Json | null
+          proration_amount?: number | null
+        }
+        Update: {
+          change_type?: string
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          id?: string
+          new_value?: Json | null
+          notes?: string | null
+          organization_id?: string
+          previous_value?: Json | null
+          proration_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_changes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       build_tasks: {
         Row: {
           blocked_by: string | null
@@ -3071,6 +3118,8 @@ export type Database = {
       }
       organization_billing: {
         Row: {
+          additional_locations_purchased: number | null
+          additional_users_purchased: number | null
           auto_renewal: boolean | null
           base_price: number | null
           billing_cycle: Database["public"]["Enums"]["billing_cycle"]
@@ -3084,9 +3133,12 @@ export type Database = {
           discount_type: Database["public"]["Enums"]["discount_type"] | null
           discount_value: number | null
           id: string
+          included_locations: number | null
+          included_users: number | null
           notes: string | null
           organization_id: string
           per_location_fee: number | null
+          per_user_fee: number | null
           plan_id: string | null
           promo_ends_at: string | null
           promo_months: number | null
@@ -3098,6 +3150,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          additional_locations_purchased?: number | null
+          additional_users_purchased?: number | null
           auto_renewal?: boolean | null
           base_price?: number | null
           billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
@@ -3111,9 +3165,12 @@ export type Database = {
           discount_type?: Database["public"]["Enums"]["discount_type"] | null
           discount_value?: number | null
           id?: string
+          included_locations?: number | null
+          included_users?: number | null
           notes?: string | null
           organization_id: string
           per_location_fee?: number | null
+          per_user_fee?: number | null
           plan_id?: string | null
           promo_ends_at?: string | null
           promo_months?: number | null
@@ -3125,6 +3182,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          additional_locations_purchased?: number | null
+          additional_users_purchased?: number | null
           auto_renewal?: boolean | null
           base_price?: number | null
           billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
@@ -3138,9 +3197,12 @@ export type Database = {
           discount_type?: Database["public"]["Enums"]["discount_type"] | null
           discount_value?: number | null
           id?: string
+          included_locations?: number | null
+          included_users?: number | null
           notes?: string | null
           organization_id?: string
           per_location_fee?: number | null
+          per_user_fee?: number | null
           plan_id?: string | null
           promo_ends_at?: string | null
           promo_months?: number | null
