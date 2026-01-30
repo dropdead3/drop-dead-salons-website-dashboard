@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { usePlatformTeam, useRemovePlatformRole, type PlatformRole } from '@/hooks/usePlatformRoles';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Table, 
   TableBody, 
@@ -44,7 +44,8 @@ import {
   Trash2,
   UserPlus,
   Loader2,
-  Filter
+  Filter,
+  Circle
 } from 'lucide-react';
 import { InvitePlatformUserDialog } from './InvitePlatformUserDialog';
 import { PendingInvitationsSection } from './PendingInvitationsSection';
@@ -57,6 +58,8 @@ import {
 } from './ui/PlatformCard';
 import { PlatformButton } from './ui/PlatformButton';
 import { PlatformBadge } from './ui/PlatformBadge';
+import { OnlineIndicator } from './ui/OnlineIndicator';
+import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
 
 // Role hierarchy order (higher = more senior)
 const ROLE_HIERARCHY: PlatformRole[] = [
@@ -77,6 +80,7 @@ export function PlatformTeamManager() {
   const { user, hasPlatformRole } = useAuth();
   const { data: team, isLoading } = usePlatformTeam();
   const removeMutation = useRemovePlatformRole();
+  const { isOnline, onlineCount } = usePlatformPresenceContext();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; role: PlatformRole; name: string } | null>(null);
   const [roleFilter, setRoleFilter] = useState<PlatformRole | 'all'>('all');
@@ -148,7 +152,15 @@ export function PlatformTeamManager() {
       <PlatformCard variant="glass">
         <PlatformCardHeader className="flex flex-row items-center justify-between">
           <div>
-            <PlatformCardTitle>Platform Team</PlatformCardTitle>
+            <div className="flex items-center gap-3">
+              <PlatformCardTitle>Platform Team</PlatformCardTitle>
+              {onlineCount > 0 && (
+                <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
+                  <Circle className="h-2 w-2 fill-emerald-400" />
+                  {onlineCount} online
+                </span>
+              )}
+            </div>
             <PlatformCardDescription>
               Manage access for your development and support team
             </PlatformCardDescription>
@@ -207,18 +219,31 @@ export function PlatformTeamManager() {
                       <TableRow key={member.id} className="border-slate-700/50 hover:bg-slate-800/50">
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8 bg-slate-700 border border-slate-600">
-                              <AvatarFallback className="bg-slate-700 text-slate-300 text-xs">
-                                {getInitials(member.full_name, member.email)}
-                              </AvatarFallback>
-                            </Avatar>
+                            <div className="relative">
+                              <Avatar className="h-8 w-8 bg-slate-700 border border-slate-600">
+                                <AvatarImage src={member.photo_url || undefined} alt={member.full_name || 'Team member'} />
+                                <AvatarFallback className="bg-slate-700 text-slate-300 text-xs">
+                                  {getInitials(member.full_name, member.email)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <OnlineIndicator 
+                                isOnline={isOnline(member.user_id)} 
+                                size="sm" 
+                                className="absolute -bottom-0.5 -right-0.5"
+                              />
+                            </div>
                             <div>
-                              <p className="font-medium text-sm text-white">
-                                {member.full_name || 'Unknown'}
-                                {isCurrentUser && (
-                                  <span className="text-slate-500 ml-1">(you)</span>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-sm text-white">
+                                  {member.full_name || 'Unknown'}
+                                  {isCurrentUser && (
+                                    <span className="text-slate-500 ml-1">(you)</span>
+                                  )}
+                                </p>
+                                {isOnline(member.user_id) && (
+                                  <span className="text-xs text-emerald-400">Online</span>
                                 )}
-                              </p>
+                              </div>
                               <p className="text-xs text-slate-500">
                                 {member.email}
                               </p>

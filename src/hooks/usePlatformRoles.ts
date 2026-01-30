@@ -20,6 +20,7 @@ interface PlatformTeamMember {
   granted_by: string | null;
   email?: string;
   full_name?: string;
+  photo_url?: string | null;
 }
 
 export function usePlatformRoles() {
@@ -70,7 +71,7 @@ export function usePlatformTeam() {
       const userIds = data?.map(r => r.user_id) || [];
       const { data: profiles } = await supabase
         .from('employee_profiles')
-        .select('user_id, email, full_name')
+        .select('user_id, email, full_name, photo_url')
         .in('user_id', userIds);
 
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
@@ -80,6 +81,7 @@ export function usePlatformTeam() {
         role: record.role as PlatformRole,
         email: profileMap.get(record.user_id)?.email,
         full_name: profileMap.get(record.user_id)?.full_name,
+        photo_url: profileMap.get(record.user_id)?.photo_url,
       }));
     },
   });
