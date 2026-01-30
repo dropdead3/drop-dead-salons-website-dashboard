@@ -1,121 +1,91 @@
 
-# Invite Platform Team Member by Email
+# Platform Account Profile Editor with Online Presence
 
 ## Summary
 
-Implement a complete email invitation system for the Platform Team, allowing admins to invite new users who don't yet have accounts. This mirrors the existing staff invitation system but is tailored for platform-level roles.
+Create a profile editing system for platform team members with a dedicated "My Account" page in the platform settings, featuring profile photo upload and real-time online presence tracking that shows which team members are currently active.
 
 ---
 
-## Current State
+## Current State Analysis
 
-The platform currently has two separate flows:
-
-| Flow | Use Case | Limitation |
-|------|----------|------------|
-| Staff Invitations | Invite salon team members | Org-level only, not for platform roles |
-| Platform Role Assignment | Add platform roles | Requires existing account |
-
-The screenshot shows the Platform Settings > Team tab with "Add Team Member" button. Currently, this only works if the user already has an account. The request is to enable inviting users by email who may not have an account yet.
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Platform Team List | Exists | Shows initials only, no photos, no online status |
+| Profile Data | Exists | Uses `employee_profiles` table with `photo_url` column |
+| Photo Upload Hook | Exists | `useUploadProfilePhoto` uploads to `employee-photos` bucket |
+| Online Presence | Missing | No real-time tracking infrastructure |
 
 ---
 
 ## Solution Architecture
 
 ```text
-+------------------+    +---------------------+    +------------------+
-|  Invite Dialog   | -> | platform_invitations| -> | Edge Function    |
-|  (enter email)   |    | (database table)    |    | (send email)     |
-+------------------+    +---------------------+    +------------------+
-                                                           |
-                                                           v
-                                                   +------------------+
-                                                   |  Email w/ Link   |
-                                                   |  (signup token)  |
-                                                   +------------------+
-                                                           |
-                                                           v
-                                                   +------------------+
-                                                   |  Platform Login  |
-                                                   |  (signup flow)   |
-                                                   +------------------+
-                                                           |
-                                                           v
-                                                   +------------------+
-                                                   |  Auto-assign     |
-                                                   |  platform_role   |
-                                                   +------------------+
++---------------------------+       +------------------------+
+|  Platform Settings        |       |  PlatformSidebar       |
+|  > Account Tab (NEW)      |       |  Current User Avatar   |
++---------------------------+       |  + Online Indicator    |
+            |                       +------------------------+
+            v
++---------------------------+       +------------------------+
+|  PlatformAccountEditor    | <---> |  employee_profiles     |
+|  - Photo upload           |       |  (existing table)      |
+|  - Name, email, phone     |       +------------------------+
+|  - Display preferences    |
++---------------------------+
+            |
+            v
++---------------------------+       +------------------------+
+|  usePlatformPresence      | <---> |  Supabase Realtime     |
+|  (Presence channel)       |       |  Presence Channel      |
++---------------------------+       +------------------------+
+            |
+            v
++---------------------------+
+|  PlatformTeamManager      |
+|  - Photo avatars          |
+|  - Online status dots     |
+|  - "X online" counter     |
++---------------------------+
 ```
+
+---
+
+## Features
+
+### 1. Platform Account Profile Editor
+
+A new "Account" tab in Platform Settings allowing team members to edit:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Profile Photo | Image Upload | Uses existing `employee-photos` bucket |
+| Display Name | Text | Preferred name shown in platform |
+| Full Name | Text | Legal name for records |
+| Email | Text | Contact email (read-only from auth) |
+| Phone | Text | Optional contact phone |
+
+### 2. Online Presence Tracking
+
+Real-time visibility of who is currently logged in to the platform:
+
+| Feature | Implementation |
+|---------|---------------|
+| Online indicator | Green dot on avatar when active |
+| Team list status | Shows "Online" badge next to active users |
+| Presence count | "3 online" counter in team header |
+| Auto-disconnect | Clears presence on logout/tab close |
 
 ---
 
 ## Database Changes
 
-### New Table: `platform_invitations`
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| email | TEXT | Invitee email |
-| role | platform_role | Admin/Support/Developer |
-| invited_by | UUID | User who sent invite |
-| token | UUID | Unique signup token |
-| status | TEXT | pending/accepted/expired/cancelled |
-| expires_at | TIMESTAMPTZ | 7-day expiration |
-| accepted_at | TIMESTAMPTZ | When accepted |
-| accepted_by | UUID | User who accepted |
-| created_at | TIMESTAMPTZ | Created timestamp |
-
-### RLS Policies
-
-- Platform admins/owners can view all invitations
-- Platform admins/owners can insert invitations
-- Platform admins/owners can update invitation status
-
----
-
-## Edge Function: `send-platform-invitation`
-
-Creates and sends the invitation email using Resend:
-
-1. Receives: `{ email, role, token, inviter_name }`
-2. Constructs personalized HTML email with:
-   - Platform branding
-   - Role description
-   - Signup link with token
-   - Expiration notice (7 days)
-3. Sends via Resend API
-
----
-
-## Frontend Components
-
-### Updated: `InvitePlatformUserDialog.tsx`
-
-Add two modes:
-
-1. **Existing User**: Search by email, assign role (current behavior)
-2. **New User**: Send email invitation (new behavior)
-
-Flow logic:
-- User enters email
-- Check if account exists in `employee_profiles`
-- If exists: offer to assign role immediately
-- If not exists: create invitation and send email
-
-### New Hook: `usePlatformInvitations.ts`
-
-- `usePlatformInvitations()` - List all invitations
-- `useCreatePlatformInvitation()` - Create and send invite
-- `useCancelPlatformInvitation()` - Cancel pending invite
-- `useResendPlatformInvitation()` - Resend expired invite
-
-### Updated: `PlatformLogin.tsx`
-
-Add invitation token handling:
-- Check URL for `?invitation=<token>`
-- Pre-fill email from invitation
-- On signup success: mark invitation accepted, assign platform role
+No new tables required. The existing `employee_profiles` table already has all necessary columns:
+- `photo_url` - Profile photo URL
+- `full_name` - Full name
+- `display_name` - Preferred display name
+- `email` - Email address
+- `phone` - Phone number
 
 ---
 
@@ -123,132 +93,160 @@ Add invitation token handling:
 
 | File | Purpose |
 |------|---------|
-| `supabase/functions/send-platform-invitation/index.ts` | Email sending edge function |
-| `src/hooks/usePlatformInvitations.ts` | React Query hooks for invitations |
+| `src/components/platform/settings/PlatformAccountTab.tsx` | Profile editing form with photo upload |
+| `src/hooks/usePlatformPresence.ts` | Supabase Realtime Presence hook |
+| `src/components/platform/ui/OnlineIndicator.tsx` | Reusable online status dot component |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/platform/InvitePlatformUserDialog.tsx` | Add new user invitation flow |
-| `src/components/platform/PlatformTeamManager.tsx` | Show pending invitations section |
-| `src/pages/PlatformLogin.tsx` | Handle invitation token on signup |
+| `src/pages/dashboard/platform/PlatformSettings.tsx` | Add "Account" tab |
+| `src/components/platform/PlatformTeamManager.tsx` | Add photos and online indicators |
+| `src/components/platform/layout/PlatformSidebar.tsx` | Add current user avatar with online status |
+| `src/components/platform/layout/PlatformLayout.tsx` | Initialize presence tracking |
 
 ---
 
 ## Technical Details
 
-### Database Migration SQL
+### Presence Hook Pattern
 
-```sql
--- Create platform_role type if not exists
-DO $$ BEGIN
-  CREATE TYPE platform_role AS ENUM ('platform_owner', 'platform_admin', 'platform_support', 'platform_developer');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
-
--- Create platform invitations table
-CREATE TABLE IF NOT EXISTS public.platform_invitations (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  email TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('platform_admin', 'platform_support', 'platform_developer')),
-  invited_by UUID NOT NULL,
-  token UUID NOT NULL DEFAULT gen_random_uuid(),
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'expired', 'cancelled')),
-  expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '7 days'),
-  accepted_at TIMESTAMPTZ,
-  accepted_by UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- Enable RLS
-ALTER TABLE public.platform_invitations ENABLE ROW LEVEL SECURITY;
-
--- RLS policies for platform team members
-CREATE POLICY "Platform team can view invitations"
-  ON public.platform_invitations FOR SELECT
-  USING (public.is_platform_user(auth.uid()));
-
-CREATE POLICY "Platform admins can create invitations"
-  ON public.platform_invitations FOR INSERT
-  WITH CHECK (
-    public.has_platform_role(auth.uid(), 'platform_owner') OR
-    public.has_platform_role(auth.uid(), 'platform_admin')
-  );
-
-CREATE POLICY "Platform admins can update invitations"
-  ON public.platform_invitations FOR UPDATE
-  USING (
-    public.has_platform_role(auth.uid(), 'platform_owner') OR
-    public.has_platform_role(auth.uid(), 'platform_admin')
-  );
-```
-
-### Edge Function Pattern
-
-Following existing patterns (e.g., `notify-assignment-response`):
+The `usePlatformPresence` hook will use Supabase Realtime Presence:
 
 ```typescript
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+// Subscribes to 'platform_presence' channel
+// Tracks: { user_id, full_name, photo_url, online_at }
+// Returns: { onlineUsers: Map, isOnline: (userId) => boolean }
 
-// Sends invitation email with signup link
-// Uses RESEND_API_KEY secret
-// Returns { success: true, email_id: ... }
+const channel = supabase.channel('platform_presence', {
+  config: { presence: { key: user.id } }
+});
+
+channel
+  .on('presence', { event: 'sync' }, () => {
+    const state = channel.presenceState();
+    setOnlineUsers(state);
+  })
+  .subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await channel.track({
+        user_id: user.id,
+        full_name: profile.full_name,
+        photo_url: profile.photo_url,
+        online_at: new Date().toISOString()
+      });
+    }
+  });
 ```
 
-### Invitation Email Template
+### Profile Editor Component
 
-- Professional platform branding
-- Clear role explanation (Admin/Support/Developer)
-- Direct signup link: `{base_url}/platform-login?invitation={token}`
-- 7-day expiration warning
-- Mobile-responsive HTML
+```typescript
+// Uses existing hooks:
+// - useEmployeeProfile() for fetching
+// - useUpdateEmployeeProfile() for saving
+// - useUploadProfilePhoto() for image upload
 
----
+// Form fields:
+// - Avatar with camera overlay for upload
+// - Display name input
+// - Full name input  
+// - Email (read-only, from auth)
+// - Phone input (optional)
+```
 
-## User Flow
+### Online Indicator Component
 
-### Inviting a New Team Member
-
-1. Admin opens "Add Team Member" dialog
-2. Enters email address
-3. Selects role (Admin, Support, or Developer)
-4. Clicks "Send Invitation"
-5. System checks if email exists:
-   - **If exists**: Shows option to assign role immediately
-   - **If not exists**: Creates invitation, sends email
-6. Success toast: "Invitation sent to email@example.com"
-
-### Receiving an Invitation
-
-1. New user receives email with signup link
-2. Clicks link → Opens platform login page with pre-filled email
-3. Creates account (password + details)
-4. System automatically:
-   - Marks invitation as accepted
-   - Assigns the platform role
-5. User is logged in with platform access
+```typescript
+// Small component for consistent online status display
+<OnlineIndicator 
+  isOnline={true} 
+  size="sm" // sm | md | lg
+  className="..." 
+/>
+// Renders: green pulsing dot (online) or gray dot (offline)
+```
 
 ---
 
-## Pending Invitations UI
+## UI Design
 
-Add a section below the team table showing pending invitations:
+### Account Tab Layout
 
-| Email | Role | Invited | Expires | Actions |
-|-------|------|---------|---------|---------|
-| new@example.com | Support | Jan 30 | Feb 6 | Resend · Cancel |
+```
++------------------------------------------+
+|  Account Settings                        |
+|  Manage your platform profile            |
++------------------------------------------+
+|                                          |
+|   +--------+   Full Name                 |
+|   |        |   [Alex Maxwell Day    ]    |
+|   | PHOTO  |                             |
+|   |        |   Display Name              |
+|   | [cam]  |   [Alex              ]      |
+|   +--------+                             |
+|                                          |
+|   Email (from your account)              |
+|   alexmaxday@gmail.com                   |
+|                                          |
+|   Phone                                  |
+|   [555-123-4567           ]              |
+|                                          |
+|   [     Save Changes     ]               |
+|                                          |
++------------------------------------------+
+```
+
+### Team List with Online Status
+
+```
++------------------------------------------+
+|  Platform Team           [3 online]      |
++------------------------------------------+
+|  +----+  Alex Maxwell Day    Owner       |
+|  |PHOTO| alexmaxday@gmail.com   [ONLINE] |
+|  | ●  |  Added: Jan 30, 2026             |
+|  +----+                                  |
++------------------------------------------+
+|  +----+  Jane Developer      Developer   |
+|  |JD  | jane@example.com                 |
+|  | ○  |  Added: Jan 25, 2026             |
+|  +----+                                  |
++------------------------------------------+
+
+● = Green online indicator
+○ = Gray offline indicator
+```
+
+### Sidebar User Section
+
+```
++------------------+
+|  +----+          |
+|  |PHOTO|  Alex   |
+|  | ●  |  Owner   |
+|  +----+          |
++------------------+
+```
 
 ---
 
 ## Implementation Order
 
-1. Create database migration for `platform_invitations` table
-2. Create `send-platform-invitation` edge function
-3. Create `usePlatformInvitations` hook
-4. Update `InvitePlatformUserDialog` with new user flow
-5. Update `PlatformTeamManager` to show pending invitations
-6. Update `PlatformLogin` to handle invitation tokens
+1. **Create OnlineIndicator component** - Reusable status dot
+2. **Create usePlatformPresence hook** - Realtime presence tracking
+3. **Create PlatformAccountTab** - Profile editor form
+4. **Update PlatformSettings** - Add Account tab
+5. **Update PlatformLayout** - Initialize presence on mount
+6. **Update PlatformTeamManager** - Add photos and online indicators
+7. **Update PlatformSidebar** - Add current user avatar with status
+
+---
+
+## Theme Compatibility
+
+All new components will use the existing platform theme system:
+- CSS variables: `--platform-bg-card`, `--platform-text-primary`, etc.
+- Light/dark mode support via `usePlatformTheme`
+- Consistent styling with existing platform components
