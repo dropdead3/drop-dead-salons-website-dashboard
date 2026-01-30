@@ -12,7 +12,8 @@ import {
   Sparkles,
   Crown,
   Headphones,
-  Code
+  Code,
+  BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,6 +46,7 @@ const platformNavItems: NavItem[] = [
   { href: '/dashboard/platform/overview', label: 'Overview', icon: Terminal },
   { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
   { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
+  { href: '/dashboard/platform/knowledge-base', label: 'Knowledge Base', icon: BookOpen, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/permissions', label: 'Permissions', icon: Shield, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/settings', label: 'Settings', icon: Settings, platformRoles: ['platform_owner', 'platform_admin'] },

@@ -6162,6 +6162,71 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          first_response_at: string | null
+          id: string
+          organization_id: string | null
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at: string | null
+          sla_deadline_at: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          tags: string[] | null
+          ticket_number: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          first_response_at?: string | null
+          id?: string
+          organization_id?: string | null
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          sla_deadline_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tags?: string[] | null
+          ticket_number?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          first_response_at?: string | null
+          id?: string
+          organization_id?: string | null
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          sla_deadline_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tags?: string[] | null
+          ticket_number?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           completed_at: string | null
@@ -6200,6 +6265,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ticket_comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_progress: {
         Row: {
@@ -6796,6 +6899,14 @@ export type Database = {
         | "salon_lead"
       program_status: "active" | "paused" | "completed" | "restarted"
       stylist_type: "independent" | "commission" | "salon_owner"
+      ticket_priority: "low" | "medium" | "high" | "urgent"
+      ticket_status:
+        | "open"
+        | "in_progress"
+        | "waiting_on_customer"
+        | "waiting_on_internal"
+        | "resolved"
+        | "closed"
       touchpoint_type: "call" | "text" | "email" | "social" | "in_person"
     }
     CompositeTypes: {
@@ -6982,6 +7093,15 @@ export const Constants = {
       ],
       program_status: ["active", "paused", "completed", "restarted"],
       stylist_type: ["independent", "commission", "salon_owner"],
+      ticket_priority: ["low", "medium", "high", "urgent"],
+      ticket_status: [
+        "open",
+        "in_progress",
+        "waiting_on_customer",
+        "waiting_on_internal",
+        "resolved",
+        "closed",
+      ],
       touchpoint_type: ["call", "text", "email", "social", "in_person"],
     },
   },
