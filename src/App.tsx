@@ -96,6 +96,7 @@ import PlatformImport from "./pages/dashboard/platform/PlatformImport";
 import PlatformSettings from "./pages/dashboard/platform/PlatformSettings";
 import PlatformRevenue from "./pages/dashboard/platform/Revenue";
 import PlatformPermissions from "./pages/dashboard/platform/Permissions";
+import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
 
 const queryClient = new QueryClient();
 
@@ -196,14 +197,16 @@ const App = () => (
                       <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
 
-                      {/* Platform Admin routes - require platform roles */}
-                      <Route path="/dashboard/platform/overview" element={<ProtectedRoute requireAnyPlatformRole><PlatformOverview /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/accounts" element={<ProtectedRoute requireAnyPlatformRole><PlatformAccounts /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/accounts/:orgId" element={<ProtectedRoute requireAnyPlatformRole><AccountDetail /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/import" element={<ProtectedRoute requireAnyPlatformRole><PlatformImport /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/settings" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSettings /></ProtectedRoute>} />
-                      <Route path="/dashboard/platform/permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
+                      {/* Platform Admin routes - nested under PlatformLayout with sidebar */}
+                      <Route path="/dashboard/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
+                        <Route path="overview" element={<PlatformOverview />} />
+                        <Route path="accounts" element={<PlatformAccounts />} />
+                        <Route path="accounts/:orgId" element={<AccountDetail />} />
+                        <Route path="import" element={<PlatformImport />} />
+                        <Route path="revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />
+                        <Route path="settings" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSettings /></ProtectedRoute>} />
+                        <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
+                      </Route>
 
                         <Route path="*" element={<NotFound />} />
                       </Routes>
