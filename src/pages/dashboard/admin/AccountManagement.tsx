@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { GenerateTestAccountsButton } from '@/components/dashboard/GenerateTestAccountsButton';
+import { CreateAdminAccountDialog } from '@/components/dashboard/CreateAdminAccountDialog';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -309,7 +310,7 @@ export default function AccountManagement() {
   const [activeTab, setActiveTab] = useState<'invitations' | 'approvals'>('invitations');
 
   // Approvals data
-  const { data: allAccounts, isLoading: loadingAccounts } = useAccountApprovals();
+  const { data: allAccounts, isLoading: loadingAccounts, refetch: refetchApprovals } = useAccountApprovals();
   const { data: pendingAccounts, isLoading: loadingPendingAccounts } = usePendingApprovals();
   const { data: usersWithRoles } = useAllUsersWithRoles();
   const { data: canApproveAdmin } = useCanApproveAdmin();
@@ -624,7 +625,8 @@ export default function AccountManagement() {
             <h1 className="text-2xl font-display">Account Invitations & Approvals</h1>
             <p className="text-muted-foreground">Invite new team members and manage account access</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <CreateAdminAccountDialog onSuccess={() => refetchApprovals()} />
             <GenerateTestAccountsButton />
             <InviteStaffDialog />
           </div>
