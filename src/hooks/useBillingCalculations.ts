@@ -46,7 +46,8 @@ export function isDateInFuture(dateStr: string | null): boolean {
 export function useBillingCalculations(
   billing: OrganizationBilling | null,
   plan: SubscriptionPlan | null,
-  locationCount: number = 1
+  locationCount: number = 1,
+  userCount: number = 0
 ): BillingCalculation {
   return useMemo(() => {
     // Default values when no billing config
@@ -99,11 +100,26 @@ export function useBillingCalculations(
       }
     }
 
-    // Add per-location fees (first location included in base)
-    const additionalLocations = Math.max(0, locationCount - 1);
-    const locationFees = additionalLocations * (billing.per_location_fee || 0);
+    // Add per-location fees (based on plan limits and purchased add-ons)
+    const baseLocations = billing.included_locations ?? plan.max_locations ?? 1;
+    const purchasedLocations = billing.additional_locations_purchased ?? 0;
+    const includedLocations = baseLocations === -1 ? Infinity : baseLocations + purchasedLocations;
+    const billableLocations = Math.max(0, locationCount - includedLocations);
+    const locationFees = billableLocations * (billing.per_location_fee || 0);
     effectiveMonthly += locationFees;
 
+    // Add per-user fees (based on plan limits and purchased add-ons)
+    const baseUsers = billing.included_users ?? plan.max_users ?? 5;
+    const purchasedUsers = billing.additional_users_purchased ?? 0;
+    const includedUsers = baseUsers === -1 ? Infinity : baseUsers + purchasedUsers;
+    const billableUsers = Math.max(0, userCount - includedUsers);
+    const userFees = billableUsers * (billing.per_user_fee || 0);
+    effectiveMonthly += userFees;
+
+    // Add fees for purchased add-ons (separate from overage fees)
+    const addOnLocationFees = purchasedLocations * (billing.per_location_fee || 0);
+    const addOnUserFees = purchasedUsers * (billing.per_user_fee || 0);
+    effectiveMonthly += addOnLocationFees + addOnUserFees;
     // Calculate cycle amount with discount
     const cycleAmountBeforeDiscount = effectiveMonthly * cycleMultiplier;
     const cycleAmount = cycleAmountBeforeDiscount * (1 - cycleDiscount);
@@ -141,7 +157,7 @@ export function useBillingCalculations(
       daysUntilTrialEnds,
       isInTrial,
     };
-  }, [billing, plan, locationCount]);
+  }, [billing, plan, locationCount, userCount]);
 }
 
 export function formatCurrency(amount: number): string {

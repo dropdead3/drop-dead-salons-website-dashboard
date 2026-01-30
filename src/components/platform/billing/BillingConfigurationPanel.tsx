@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save } from 'lucide-react';
-import { addMonths, format } from 'date-fns';
+import { Loader2, Save, ArrowUpRight } from 'lucide-react';
+import { addMonths, format, differenceInDays } from 'date-fns';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -17,6 +17,10 @@ import { PromoConfigForm } from './PromoConfigForm';
 import { ContractTermsForm } from './ContractTermsForm';
 import { SetupFeesForm } from './SetupFeesForm';
 import { InvoicePreview } from './InvoicePreview';
+import { CapacityUsageCard } from './CapacityUsageCard';
+import { AddOnsConfigForm } from './AddOnsConfigForm';
+import { BillingHistoryCard } from './BillingHistoryCard';
+import { PlanUpgradeDialog } from './PlanUpgradeDialog';
 import {
   useOrganizationBilling,
   useSubscriptionPlans,
@@ -26,21 +30,30 @@ import {
   type BillingStatus,
 } from '@/hooks/useOrganizationBilling';
 import { useBillingCalculations } from '@/hooks/useBillingCalculations';
+import { useOrganizationUsage, calculateCapacity } from '@/hooks/useOrganizationCapacity';
+import { useCreateBillingChange } from '@/hooks/useBillingHistory';
 
 interface BillingConfigurationPanelProps {
   organizationId: string;
   billingStatus: BillingStatus;
   locationCount: number;
+  userCount?: number;
 }
 
 export function BillingConfigurationPanel({
   organizationId,
   billingStatus,
   locationCount,
+  userCount: propUserCount,
 }: BillingConfigurationPanelProps) {
   const { data: billing, isLoading: billingLoading } = useOrganizationBilling(organizationId);
   const { data: plans, isLoading: plansLoading } = useSubscriptionPlans();
+  const { data: usage } = useOrganizationUsage(organizationId);
   const upsertBilling = useUpsertOrganizationBilling();
+  const createBillingChange = useCreateBillingChange();
+
+  // Dialogs
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
   // Form state
   const [planId, setPlanId] = useState<string | null>(null);
@@ -66,9 +79,20 @@ export function BillingConfigurationPanel({
   const [setupFee, setSetupFee] = useState(0);
   const [setupFeePaid, setSetupFeePaid] = useState(false);
   const [perLocationFee, setPerLocationFee] = useState(0);
+  const [perUserFee, setPerUserFee] = useState(0);
+  
+  // Add-ons
+  const [additionalLocationsPurchased, setAdditionalLocationsPurchased] = useState(0);
+  const [additionalUsersPurchased, setAdditionalUsersPurchased] = useState(0);
+  const [includedLocations, setIncludedLocations] = useState<number | null>(null);
+  const [includedUsers, setIncludedUsers] = useState<number | null>(null);
   
   // Notes
   const [notes, setNotes] = useState('');
+
+  // Use actual usage or props
+  const actualLocationCount = usage?.locationCount ?? locationCount;
+  const actualUserCount = usage?.userCount ?? propUserCount ?? 0;
 
   // Initialize from existing billing
   useEffect(() => {
@@ -90,6 +114,11 @@ export function BillingConfigurationPanel({
       setSetupFee(billing.setup_fee);
       setSetupFeePaid(billing.setup_fee_paid);
       setPerLocationFee(billing.per_location_fee);
+      setPerUserFee(billing.per_user_fee);
+      setAdditionalLocationsPurchased(billing.additional_locations_purchased);
+      setAdditionalUsersPurchased(billing.additional_users_purchased);
+      setIncludedLocations(billing.included_locations);
+      setIncludedUsers(billing.included_users);
       setNotes(billing.notes || '');
     }
   }, [billing]);
@@ -141,13 +170,35 @@ export function BillingConfigurationPanel({
     setup_fee: setupFee,
     setup_fee_paid: setupFeePaid,
     per_location_fee: perLocationFee,
+    per_user_fee: perUserFee,
+    additional_locations_purchased: additionalLocationsPurchased,
+    additional_users_purchased: additionalUsersPurchased,
+    included_locations: includedLocations,
+    included_users: includedUsers,
     auto_renewal: autoRenewal,
     notes: notes || null,
     created_at: billing?.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
 
-  const calculation = useBillingCalculations(billingForCalc, selectedPlan, locationCount);
+  const calculation = useBillingCalculations(
+    billingForCalc, 
+    selectedPlan, 
+    actualLocationCount,
+    actualUserCount
+  );
+
+  // Calculate capacity
+  const capacity = calculateCapacity(
+    billingForCalc,
+    selectedPlan,
+    { locationCount: actualLocationCount, userCount: actualUserCount }
+  );
+
+  // Calculate days remaining for proration
+  const daysRemainingInCycle = contractStartDate 
+    ? Math.max(0, differenceInDays(new Date(getContractEndDate() || new Date()), new Date()))
+    : 30;
 
   const handleSave = () => {
     upsertBilling.mutate({
@@ -171,15 +222,40 @@ export function BillingConfigurationPanel({
       setup_fee: setupFee,
       setup_fee_paid: setupFeePaid,
       per_location_fee: perLocationFee,
+      per_user_fee: perUserFee,
+      additional_locations_purchased: additionalLocationsPurchased,
+      additional_users_purchased: additionalUsersPurchased,
+      included_locations: includedLocations,
+      included_users: includedUsers,
       auto_renewal: autoRenewal,
       notes: notes || null,
     });
   };
 
+  const handlePlanUpgrade = (newPlanId: string, effectiveDate: 'immediately' | 'next_cycle') => {
+    const newPlan = plans?.find(p => p.id === newPlanId);
+    const oldPlan = selectedPlan;
+    
+    // Log the billing change
+    createBillingChange.mutate({
+      organization_id: organizationId,
+      change_type: newPlan && oldPlan && newPlan.price_monthly > oldPlan.price_monthly 
+        ? 'plan_upgrade' 
+        : 'plan_downgrade',
+      previous_value: { plan_id: planId, plan_name: oldPlan?.name },
+      new_value: { plan_id: newPlanId, plan_name: newPlan?.name },
+      effective_date: effectiveDate === 'immediately' ? new Date().toISOString().split('T')[0] : getContractEndDate() || undefined,
+      notes: `Plan changed from ${oldPlan?.name} to ${newPlan?.name}`,
+    });
+
+    setPlanId(newPlanId);
+    setUpgradeDialogOpen(false);
+  };
+
   if (billingLoading || plansLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -195,12 +271,32 @@ export function BillingConfigurationPanel({
         planName={selectedPlan?.name}
       />
 
+      {/* Capacity Usage */}
+      <CapacityUsageCard
+        capacity={capacity}
+        onAddCapacity={() => {
+          // Scroll to add-ons section
+          document.getElementById('add-ons-section')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onUpgradePlan={() => setUpgradeDialogOpen(true)}
+      />
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           {/* Plan Selection */}
           <PlatformCard variant="glass">
-            <PlatformCardHeader>
+            <PlatformCardHeader className="flex flex-row items-center justify-between">
               <PlatformCardTitle>Subscription Plan</PlatformCardTitle>
+              {selectedPlan && plans && plans.length > 1 && (
+                <PlatformButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setUpgradeDialogOpen(true)}
+                >
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                  Change Plan
+                </PlatformButton>
+              )}
             </PlatformCardHeader>
             <PlatformCardContent>
               {plans && (
@@ -210,6 +306,33 @@ export function BillingConfigurationPanel({
                   onSelect={setPlanId}
                 />
               )}
+            </PlatformCardContent>
+          </PlatformCard>
+
+          {/* Add-Ons Configuration */}
+          <PlatformCard variant="glass" id="add-ons-section">
+            <PlatformCardHeader>
+              <PlatformCardTitle>Capacity Add-Ons</PlatformCardTitle>
+            </PlatformCardHeader>
+            <PlatformCardContent>
+              <AddOnsConfigForm
+                perLocationFee={perLocationFee}
+                onPerLocationFeeChange={setPerLocationFee}
+                additionalLocationsPurchased={additionalLocationsPurchased}
+                onAdditionalLocationsPurchasedChange={setAdditionalLocationsPurchased}
+                includedLocations={includedLocations}
+                onIncludedLocationsChange={setIncludedLocations}
+                planMaxLocations={selectedPlan?.max_locations ?? 1}
+                locationMetrics={capacity.locations}
+                perUserFee={perUserFee}
+                onPerUserFeeChange={setPerUserFee}
+                additionalUsersPurchased={additionalUsersPurchased}
+                onAdditionalUsersPurchasedChange={setAdditionalUsersPurchased}
+                includedUsers={includedUsers}
+                onIncludedUsersChange={setIncludedUsers}
+                planMaxUsers={selectedPlan?.max_users ?? 5}
+                userMetrics={capacity.users}
+              />
             </PlatformCardContent>
           </PlatformCard>
 
@@ -277,7 +400,7 @@ export function BillingConfigurationPanel({
           {/* Setup Fees */}
           <PlatformCard variant="glass">
             <PlatformCardHeader>
-              <PlatformCardTitle>Fees & Add-ons</PlatformCardTitle>
+              <PlatformCardTitle>Setup & One-Time Fees</PlatformCardTitle>
             </PlatformCardHeader>
             <PlatformCardContent>
               <SetupFeesForm
@@ -287,7 +410,7 @@ export function BillingConfigurationPanel({
                 onSetupFeePaidChange={setSetupFeePaid}
                 perLocationFee={perLocationFee}
                 onPerLocationFeeChange={setPerLocationFee}
-                locationCount={locationCount}
+                locationCount={actualLocationCount}
               />
             </PlatformCardContent>
           </PlatformCard>
@@ -305,14 +428,14 @@ export function BillingConfigurationPanel({
                   placeholder="Internal notes about billing arrangements, negotiations, etc."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700/50 text-slate-300 min-h-[100px]"
+                  className="bg-card/50 border-border/50 text-foreground min-h-[100px]"
                 />
               </div>
             </PlatformCardContent>
           </PlatformCard>
         </div>
 
-        {/* Sidebar - Invoice Preview */}
+        {/* Sidebar */}
         <div className="space-y-6">
           <InvoicePreview
             calculation={calculation}
@@ -320,8 +443,12 @@ export function BillingConfigurationPanel({
             planName={selectedPlan?.name || 'No Plan Selected'}
             setupFee={setupFee}
             setupFeePaid={setupFeePaid}
-            locationCount={locationCount}
+            locationCount={actualLocationCount}
             perLocationFee={perLocationFee}
+            userCount={actualUserCount}
+            perUserFee={perUserFee}
+            additionalLocationsPurchased={additionalLocationsPurchased}
+            additionalUsersPurchased={additionalUsersPurchased}
           />
 
           <PlatformButton
@@ -336,8 +463,25 @@ export function BillingConfigurationPanel({
             )}
             Save Billing Configuration
           </PlatformButton>
+
+          {/* Billing History */}
+          <BillingHistoryCard organizationId={organizationId} />
         </div>
       </div>
+
+      {/* Plan Upgrade Dialog */}
+      {plans && (
+        <PlanUpgradeDialog
+          open={upgradeDialogOpen}
+          onOpenChange={setUpgradeDialogOpen}
+          currentPlan={selectedPlan}
+          plans={plans}
+          onConfirm={handlePlanUpgrade}
+          isLoading={upsertBilling.isPending}
+          daysRemainingInCycle={daysRemainingInCycle}
+          currentMonthlyAmount={calculation.effectiveMonthlyAmount}
+        />
+      )}
     </div>
   );
 }

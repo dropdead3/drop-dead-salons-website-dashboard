@@ -28,6 +28,11 @@ export interface OrganizationBilling {
   setup_fee: number;
   setup_fee_paid: boolean;
   per_location_fee: number;
+  per_user_fee: number;
+  additional_locations_purchased: number;
+  additional_users_purchased: number;
+  included_locations: number | null;
+  included_users: number | null;
   auto_renewal: boolean;
   notes: string | null;
   created_at: string;
@@ -55,6 +60,11 @@ export interface OrganizationBillingInsert {
   setup_fee?: number;
   setup_fee_paid?: boolean;
   per_location_fee?: number;
+  per_user_fee?: number;
+  additional_locations_purchased?: number;
+  additional_users_purchased?: number;
+  included_locations?: number | null;
+  included_users?: number | null;
   auto_renewal?: boolean;
   notes?: string | null;
 }
