@@ -22,7 +22,7 @@ export function ProtectedRoute({
   requirePlatformRole,
   requireAnyPlatformRole = false,
 }: ProtectedRouteProps) {
-  const { user, loading, isCoach, hasPermission, permissions, roles, platformRoles, hasPlatformRole, isPlatformUser } = useAuth();
+  const { user, loading, isCoach, hasPermission, permissions, roles, platformRoles, hasPlatformRoleOrHigher, isPlatformUser } = useAuth();
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   const location = useLocation();
 
@@ -58,7 +58,7 @@ export function ProtectedRoute({
     return <Navigate to="/platform-login" replace />;
   }
 
-  if (requirePlatformRole && !hasPlatformRole(requirePlatformRole)) {
+  if (requirePlatformRole && !hasPlatformRoleOrHigher(requirePlatformRole)) {
     return <Navigate to="/dashboard/platform/overview" replace />;
   }
 

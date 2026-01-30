@@ -13,12 +13,15 @@ import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 
+type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
+
 interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   permission?: string;
   roles?: string[];
+  platformRoles?: PlatformRole[];
 }
 
 interface OnboardingProgress {
