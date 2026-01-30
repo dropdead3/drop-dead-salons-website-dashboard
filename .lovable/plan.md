@@ -1,183 +1,163 @@
 
-# Flexible Subscription Billing System
+# Account Upgrade & Add-On Management System
 
 ## Summary
 
-Build a comprehensive subscription management system that allows platform admins to configure custom billing terms for each organization, including promotional discounts, negotiated rates, trial periods, and flexible billing cycles. Billing only begins when an account is activated.
+Build a system that allows organizations to upgrade their subscription plans and purchase additional capacity (locations, user seats) beyond what their base plan includes. This creates a flexible "add-on" model where accounts can stay on their current plan while paying for extra resources.
 
 ---
 
 ## Current State Analysis
 
-The system currently has:
-- **subscription_plans** table with base pricing (Starter $99, Standard $199, Professional $349, Enterprise custom)
-- **organizations** table with basic billing fields (stripe_customer_id, subscription_status, trial_ends_at, etc.)
-- Plan selection in Create/Edit Organization dialogs (static dropdown, no pricing customization)
+**What We Have:**
+- **subscription_plans** table with base limits: `max_locations` (1-5 or unlimited) and `max_users` (5-30 or unlimited)
+- **organization_billing** table with `per_location_fee` for charging extra per additional location
+- Dynamic user counts from `employee_profiles` table
+- Dynamic location counts from `locations` table
+- Billing tab in Account Detail page with plan selection and pricing
 
-What's missing:
-- Custom pricing overrides per organization
-- Promotional/discount configuration
-- Billing term flexibility (monthly vs annual, 6-month vs 12-month)
-- Trial period management
-- Billing start date tied to activation
-
----
-
-## Key SaaS Billing Features to Implement
-
-### 1. Custom Pricing Overrides
-- Override base plan price for specific accounts
-- Track reason for discount (negotiation, promotion, partner, etc.)
-- Store discount percentage or fixed amount
-
-### 2. Promotional Periods
-- First X months at discounted rate
-- Introductory pricing that reverts to full rate
-- Time-limited promotional codes
-
-### 3. Billing Term Flexibility
-- Monthly, Quarterly, Semi-Annual, Annual billing cycles
-- Different pricing per billing frequency
-- Custom contract lengths (6mo, 12mo, 24mo, etc.)
-
-### 4. Trial & Grace Periods
-- Free trial (14, 30, 60 days configurable)
-- Billing starts on activation, not signup
-- Grace period before suspension for failed payments
-
-### 5. Additional SaaS Model Suggestions
-- **Setup Fees**: One-time onboarding/migration fees
-- **Per-Location Pricing**: Base + $X per additional location
-- **Overage Charges**: Extra fees when exceeding plan limits (users, locations)
-- **Annual Prepay Discounts**: Save 20% when paying annually
-- **Pause Subscriptions**: Seasonal businesses can pause billing
-- **Credits/Refunds**: Issue account credits for issues or referrals
-- **Upgrade/Downgrade Proration**: Calculate mid-cycle plan changes
+**What's Missing:**
+- No per-user-seat fee tracking (only per-location exists)
+- No tracking of "purchased" add-on seats vs "used" seats
+- No upgrade history or change log
+- No proration calculations for mid-cycle changes
+- No UI to configure and visualize capacity usage vs limits
 
 ---
 
-## Database Schema
+## Key Features to Implement
 
-### New Table: `organization_billing`
+### 1. Add-On Capacity Tracking
+Track purchased capacity separately from base plan limits:
+- **Additional Locations**: Already have `per_location_fee` - extend to track included vs purchased
+- **Additional User Seats**: New fee type for extra users beyond plan limit
 
-Stores custom billing configuration per organization:
+### 2. Capacity Usage Visualization
+Show organizations their current usage against their total capacity:
+- Base plan limits + purchased add-ons = total allowed
+- Current usage (locations, users) vs total allowed
+- Visual progress bars with warning thresholds
+
+### 3. Plan Upgrade Path
+Enable seamless plan changes:
+- Compare current plan vs target plan
+- Calculate proration for mid-cycle upgrades
+- Handle downgrades with capacity checks
+
+### 4. Change History
+Track all billing changes for audit:
+- Plan upgrades/downgrades
+- Add-on purchases
+- Pricing changes
+
+---
+
+## Database Schema Changes
+
+### Update `organization_billing` Table
+
+Add new columns:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| per_user_fee | numeric | Monthly fee per additional user seat |
+| additional_locations_purchased | int | Extra locations beyond plan limit |
+| additional_users_purchased | int | Extra user seats beyond plan limit |
+| included_locations | int | Override plan's included locations (null = use plan default) |
+| included_users | int | Override plan's included users (null = use plan default) |
+
+### New Table: `billing_changes`
+
+Track all billing modifications for audit:
 
 | Column | Type | Description |
 |--------|------|-------------|
 | id | uuid | Primary key |
-| organization_id | uuid | FK to organizations (unique) |
-| plan_id | uuid | FK to subscription_plans |
-| billing_cycle | text | monthly, quarterly, semi_annual, annual |
-| contract_length_months | int | 1, 6, 12, 24, etc. |
-| contract_start_date | date | When contract begins |
-| contract_end_date | date | Calculated from start + length |
-| base_price | numeric | Standard plan price |
-| custom_price | numeric | Override price (null = use base) |
-| discount_type | text | percentage, fixed_amount, promotional |
-| discount_value | numeric | Discount % or $ amount |
-| discount_reason | text | Reason for discount |
-| promo_months | int | First X months at promo rate |
-| promo_price | numeric | Price during promo period |
-| promo_ends_at | timestamptz | When promo pricing ends |
-| trial_days | int | Free trial duration |
-| trial_ends_at | timestamptz | Trial end date |
-| billing_starts_at | timestamptz | When billing begins (activation) |
-| setup_fee | numeric | One-time setup/migration fee |
-| setup_fee_paid | boolean | Whether setup fee was paid |
-| per_location_fee | numeric | Additional per-location charge |
-| notes | text | Internal billing notes |
+| organization_id | uuid | FK to organizations |
+| change_type | text | plan_upgrade, plan_downgrade, add_locations, add_users, pricing_change |
+| previous_value | jsonb | Snapshot of old billing config |
+| new_value | jsonb | Snapshot of new billing config |
+| effective_date | date | When change takes effect |
+| proration_amount | numeric | Credit/charge for mid-cycle change |
+| notes | text | Admin notes about the change |
+| created_by | uuid | Platform user who made change |
 | created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-### Update `organizations` Table
-
-Add columns to track billing state:
-- `billing_status`: draft, trialing, active, past_due, paused, cancelled
-- `next_invoice_date`: When next charge will occur
-- `paused_at`: If subscription is paused
-- `pause_ends_at`: When pause period ends
 
 ---
 
 ## Architecture
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│                   Account Detail Page                        │
-│                                                              │
-│  ┌─────────────┐  ┌─────────────┐  ┌──────────────────────┐ │
-│  │  Overview   │  │  Locations  │  │      BILLING         │ │
-│  │    Tab      │  │    Tab      │  │       Tab            │ │
-│  └─────────────┘  └─────────────┘  └──────────────────────┘ │
-│                                              │               │
-│                                              ▼               │
-│                          ┌──────────────────────────────┐   │
-│                          │  BillingConfigurationPanel   │   │
-│                          │                              │   │
-│                          │  • Plan Selection            │   │
-│                          │  • Custom Pricing            │   │
-│                          │  • Promotional Rates         │   │
-│                          │  • Billing Cycle             │   │
-│                          │  • Contract Terms            │   │
-│                          │  • Trial Period              │   │
-│                          │  • Setup Fees                │   │
-│                          │  • Invoice Preview           │   │
-│                          └──────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    Billing Tab (Enhanced)                        │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │              Capacity Usage Card (NEW)                      │ │
+│  │  ┌──────────────────┐  ┌──────────────────┐                │ │
+│  │  │   Locations      │  │   User Seats     │                │ │
+│  │  │   ████████░░ 8/10│  │   ██████░░░ 12/20│                │ │
+│  │  │   Base: 5        │  │   Base: 15       │                │ │
+│  │  │   Add-on: +5     │  │   Add-on: +5     │                │ │
+│  │  └──────────────────┘  └──────────────────┘                │ │
+│  │                   [+ Add More Capacity]                     │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │              Current Plan Card (Existing)                   │ │
+│  │  Standard Plan - $199/mo                                    │ │
+│  │  [Upgrade Plan]  [Change Billing Cycle]                     │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │              Add-Ons Card (NEW)                             │ │
+│  │  Per-Location Fee: $25/mo × 3 additional = $75/mo          │ │
+│  │  Per-User Fee: $10/mo × 5 additional = $50/mo              │ │
+│  │  [Configure Add-Ons]                                        │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │              Upgrade Dialog (NEW)                           │ │
+│  │  Current: Standard ($199/mo, 2 locations, 15 users)        │ │
+│  │  ↓                                                          │ │
+│  │  Target: Professional ($349/mo, 5 locations, 30 users)     │ │
+│  │  ────────────────────────────────────────                   │ │
+│  │  Proration: $75 credit for remaining cycle                 │ │
+│  │  Effective: Immediately / Next billing cycle               │ │
+│  │                               [Cancel] [Confirm Upgrade]    │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## UI Components
+## UI Components to Create
 
-### 1. Billing Tab in Account Detail Page
+### 1. CapacityUsageCard
+Visual display of current capacity usage:
+- Progress bars for locations and users
+- Breakdown of base + add-on capacity
+- Warning states when approaching limits
+- Quick action to add more capacity
 
-A new tab showing the complete billing configuration with sections:
+### 2. AddOnsConfigForm
+Configure per-unit pricing and purchased quantities:
+- Per-location fee and count
+- Per-user fee and count
+- Real-time cost preview
+- Included capacity overrides
 
-**Current Status Card**
-- Billing status badge (trialing/active/past_due)
-- Current monthly cost
-- Next invoice date and amount
-- Days remaining in trial/promo
+### 3. PlanUpgradeDialog
+Modal for upgrading/downgrading plans:
+- Side-by-side plan comparison
+- Feature differences highlighted
+- Proration calculator
+- Effective date selection
 
-**Plan & Pricing Section**
-- Plan selector with base prices
-- Custom price override toggle
-- Discount configuration (type, value, reason)
-
-**Contract Terms Section**
-- Billing cycle (monthly/quarterly/annual)
-- Contract length
-- Contract start/end dates
-- Auto-renewal toggle
-
-**Promotional Pricing Section**
-- Promo duration (first X months)
-- Promo price
-- Visual timeline showing promo → regular rate
-
-**Trial & Onboarding Section**
-- Trial days configuration
-- Billing start date (tied to activation)
-- Setup fee with paid status
-
-**Invoice Preview**
-- Show calculated amounts based on configuration
-- First invoice breakdown
-- Ongoing invoice preview
-
-### 2. Quick Billing Setup in Create Account Dialog
-
-Add expandable "Billing Configuration" section:
-- Plan selection with prices shown
-- Quick promo options (First month free, 3 months 50% off)
-- Standard contract length selector
-
-### 3. Billing History Section
-
-- List of invoices with status
-- Payment method on file
-- Credits/adjustments
+### 4. BillingHistoryCard
+Timeline of billing changes:
+- Plan changes
+- Add-on modifications
+- Payment history (future)
 
 ---
 
@@ -185,15 +165,12 @@ Add expandable "Billing Configuration" section:
 
 | File | Purpose |
 |------|---------|
-| `src/components/platform/billing/BillingConfigurationPanel.tsx` | Main billing config UI |
-| `src/components/platform/billing/PlanSelector.tsx` | Plan selection with pricing |
-| `src/components/platform/billing/CustomPricingForm.tsx` | Override pricing form |
-| `src/components/platform/billing/PromoConfigForm.tsx` | Promotional period setup |
-| `src/components/platform/billing/ContractTermsForm.tsx` | Contract/term settings |
-| `src/components/platform/billing/InvoicePreview.tsx` | Real-time invoice calculation |
-| `src/components/platform/billing/BillingStatusCard.tsx` | Current billing status |
-| `src/hooks/useOrganizationBilling.ts` | CRUD for billing config |
-| `src/hooks/useBillingCalculations.ts` | Invoice calculation logic |
+| `src/components/platform/billing/CapacityUsageCard.tsx` | Visual capacity usage display |
+| `src/components/platform/billing/AddOnsConfigForm.tsx` | Add-on configuration form |
+| `src/components/platform/billing/PlanUpgradeDialog.tsx` | Plan upgrade modal with proration |
+| `src/components/platform/billing/BillingHistoryCard.tsx` | Change history timeline |
+| `src/hooks/useOrganizationCapacity.ts` | Calculate capacity limits and usage |
+| `src/hooks/useBillingHistory.ts` | CRUD for billing changes |
 
 ---
 
@@ -201,79 +178,119 @@ Add expandable "Billing Configuration" section:
 
 | File | Changes |
 |------|---------|
-| `src/pages/dashboard/platform/AccountDetail.tsx` | Add Billing tab |
-| `src/components/platform/CreateOrganizationDialog.tsx` | Add billing quick setup |
-| `src/components/platform/EditOrganizationDialog.tsx` | Link to billing config |
-| Database migration | Add organization_billing table, update organizations |
+| `src/hooks/useOrganizationBilling.ts` | Add new fields for user fees and purchased add-ons |
+| `src/hooks/useBillingCalculations.ts` | Include user seat fees in calculations |
+| `src/components/platform/billing/BillingConfigurationPanel.tsx` | Add CapacityUsageCard, AddOnsConfigForm |
+| `src/components/platform/billing/SetupFeesForm.tsx` | Rename/refactor to include user seat fees |
+| `src/components/platform/billing/InvoicePreview.tsx` | Add user seat fee line items |
+| Database migration | Add new columns and billing_changes table |
 
 ---
 
-## Implementation Phases
-
-### Phase 1: Database & Core Logic
-1. Create `organization_billing` table with all fields
-2. Add billing status columns to `organizations`
-3. Create `useOrganizationBilling` hook for CRUD
-4. Create `useBillingCalculations` hook for invoice math
-
-### Phase 2: Billing Tab UI
-1. Add Billing tab to Account Detail page
-2. Build BillingStatusCard component
-3. Build PlanSelector with base prices
-4. Build CustomPricingForm
-
-### Phase 3: Advanced Configuration
-1. Build PromoConfigForm
-2. Build ContractTermsForm
-3. Build InvoicePreview with calculations
-4. Integrate all into BillingConfigurationPanel
-
-### Phase 4: Quick Setup Integration
-1. Add billing section to CreateOrganizationDialog
-2. Add "Configure Billing" button to EditOrganizationDialog
-3. Add billing status to Accounts list view
-
----
-
-## Invoice Calculation Logic
+## Capacity Calculation Logic
 
 ```text
-calculateMonthlyAmount(billing):
-  1. Start with base_price from plan
-  2. If custom_price set, use that instead
-  3. If in promo period (now < promo_ends_at):
-     - Use promo_price
-  4. Apply discount if set:
-     - percentage: price * (1 - discount_value/100)
-     - fixed_amount: price - discount_value
-  5. Add per_location_fee * (location_count - included_locations)
-  6. Return final amount
+calculateCapacity(billing, plan, currentUsage):
+  // Locations
+  baseLocations = billing.included_locations ?? plan.max_locations
+  purchasedLocations = billing.additional_locations_purchased ?? 0
+  totalLocationCapacity = baseLocations + purchasedLocations
+  usedLocations = currentUsage.locationCount
+  locationUtilization = usedLocations / totalLocationCapacity
 
-calculateFirstInvoice(billing):
-  1. Get monthly amount
-  2. If billing_cycle = annual: amount * 12 * 0.8 (20% discount)
-  3. If billing_cycle = semi_annual: amount * 6 * 0.9 (10% discount)
-  4. Add setup_fee if not paid
-  5. Return total
+  // Users
+  baseUsers = billing.included_users ?? plan.max_users
+  purchasedUsers = billing.additional_users_purchased ?? 0
+  totalUserCapacity = baseUsers + purchasedUsers
+  usedUsers = currentUsage.userCount
+  userUtilization = usedUsers / totalUserCapacity
+
+  return {
+    locations: { base, purchased, total, used, utilization },
+    users: { base, purchased, total, used, utilization },
+    isOverLimit: usedLocations > totalLocationCapacity || usedUsers > totalUserCapacity,
+    nearLimit: locationUtilization > 0.8 || userUtilization > 0.8
+  }
+```
+
+---
+
+## Proration Logic
+
+For mid-cycle plan changes:
+
+```text
+calculateProration(currentPlan, newPlan, daysRemaining, cycleLength):
+  // Calculate daily rate for current plan
+  currentDailyRate = currentPlan.monthlyAmount / 30
+  
+  // Credit for unused days on current plan
+  unusedCredit = currentDailyRate * daysRemaining
+  
+  // Charge for new plan's remaining days
+  newDailyRate = newPlan.monthlyAmount / 30
+  newCharge = newDailyRate * daysRemaining
+  
+  // Net proration
+  netAmount = newCharge - unusedCredit
+  
+  return {
+    creditAmount: unusedCredit,
+    newChargeAmount: newCharge,
+    netProration: netAmount,
+    daysRemaining,
+    effectiveDate: now()
+  }
 ```
 
 ---
 
 ## Security & RLS
 
-- `organization_billing`: Platform users can view/edit all, org admins can view own
-- Billing modifications logged to `platform_audit_log`
+- `billing_changes`: Platform users can view/insert all, org admins can view own
+- All billing modifications logged with `created_by` user ID
+- Capacity changes trigger audit log entries
 - Only platform_owner and platform_admin can modify billing terms
 
 ---
 
-## Stripe Integration Notes (Future)
+## Implementation Phases
 
-When Stripe is enabled, the billing configuration will:
-1. Create Stripe Customer for organization
-2. Create Subscription with custom pricing via Price overrides
-3. Handle trial periods via Stripe's trial_end parameter
-4. Use Stripe Coupons for promotional discounts
-5. Webhook updates billing status in real-time
+### Phase 1: Database & Core Logic
+1. Add new columns to `organization_billing`
+2. Create `billing_changes` table
+3. Update `useOrganizationBilling` hook with new fields
+4. Create `useOrganizationCapacity` hook
+5. Create `useBillingHistory` hook
 
-For now, the system tracks billing intent and configuration. Stripe integration adds payment processing.
+### Phase 2: Capacity Visualization
+1. Build CapacityUsageCard component
+2. Integrate into BillingConfigurationPanel
+3. Add capacity data to Account Detail stats
+
+### Phase 3: Add-On Management
+1. Refactor SetupFeesForm into AddOnsConfigForm
+2. Add per-user fee configuration
+3. Update billing calculations for user fees
+4. Update InvoicePreview with user fees
+
+### Phase 4: Plan Upgrades
+1. Build PlanUpgradeDialog with comparison view
+2. Implement proration calculator
+3. Add change history logging
+4. Build BillingHistoryCard
+
+---
+
+## Visual States
+
+### Capacity Bar Colors
+- **Green** (0-60%): Healthy usage
+- **Yellow** (60-80%): Approaching limit
+- **Orange** (80-95%): Near capacity
+- **Red** (95%+): At or over limit
+
+### Upgrade Indicators
+- Show "Upgrade Available" when usage exceeds 80% of base plan
+- Highlight cost savings when add-ons exceed upgrade price
+- "Recommended" badge on optimal plan based on usage
