@@ -86,7 +86,9 @@ export default function PlatformImport() {
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-violet-400" />
                     <span>{org.name}</span>
-                    <span className="text-slate-500">({org.slug})</span>
+                    <span className="text-slate-500">
+                      #{org.account_number ?? org.slug}
+                    </span>
                   </div>
                 </SelectItem>
               ))}
