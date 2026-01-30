@@ -1,108 +1,239 @@
 
-# Add More Kerning to Termina Font
+# Add Multi-Level Filters to Platform Accounts
 
 ## Summary
 
-Increase the letter-spacing (kerning) for the Termina display font from `0.05em` to `0.08em` for better visual rhythm and brand consistency. This change will apply globally to all elements using the `font-display` class.
+Add cascading filters to the Accounts page allowing filtering by Country, State/Province, Account Type (subscription tier), and Business Type. The filters will be dynamic - the State/Province dropdown will only show options relevant to the selected Country.
 
 ---
 
 ## Current State
 
-| Setting | Value | Tailwind Equivalent |
-|---------|-------|---------------------|
-| `letter-spacing` | `0.05em` | `tracking-wider` |
+The Accounts page currently has:
+- Search input (name/slug)
+- Status filter dropdown (all/pending/active/suspended/churned)
 
-The Termina font rules are defined in `src/index.css` (lines 610-617):
-
-```css
-.font-display {
-  text-transform: uppercase;
-  letter-spacing: 0.05em;  /* Current value */
-  font-style: normal !important;
-  font-weight: 500 !important;
-}
-```
+The data is already available:
+- `primaryLocation.country` and `primaryLocation.state_province` from aggregated location data
+- `subscription_tier` on organization
+- `business_type` on organization
 
 ---
 
-## Proposed Change
+## Filter Design
 
-Increase letter-spacing to `0.08em` (between `tracking-wider` and `tracking-widest`):
+### Filter Hierarchy
 
-| Setting | Old Value | New Value |
-|---------|-----------|-----------|
-| `letter-spacing` | `0.05em` | `0.08em` |
+```text
++-------------+  +-----------------+  +--------------+  +---------------+
+|   Country   |  | State/Province  |  | Account Type |  | Business Type |
+|   (US, CA)  |  | (AZ, CA, TX...) |  | (Starter...) |  | (Salon, Spa)  |
++-------------+  +-----------------+  +--------------+  +---------------+
+       |                 |
+       +-----------------+
+       Cascading: State options
+       filtered by Country
+```
 
-This provides noticeably more breathing room between characters while staying below the more dramatic `0.1em` used in specialty components like the brands marquee.
+### Filter Options
+
+| Filter | Options | Source |
+|--------|---------|--------|
+| Country | Dynamic from data + "All Countries" | `primaryLocation.country` |
+| State/Province | Dynamic, filtered by country + "All States" | `primaryLocation.state_province` |
+| Account Type | Starter, Standard, Professional, Enterprise | `subscription_tier` |
+| Business Type | Salon, Spa, Esthetics, Barbershop, Med Spa, Wellness, Other | `business_type` |
 
 ---
 
 ## Implementation
 
-### Files to Modify
+### 1. Add Filter State Variables
 
-| File | Change |
-|------|--------|
-| `src/index.css` | Update `.font-display` letter-spacing to `0.08em` |
-| `src/index.css` | Update `--tracking-display` CSS variable to `0.08em` |
-| `src/pages/dashboard/DesignSystem.tsx` | Update documentation to reflect new tracking value |
-
-### Code Changes
-
-**1. Update CSS utility (src/index.css, line 614)**
-
-```css
-/* Before */
-letter-spacing: 0.05em;
-
-/* After */
-letter-spacing: 0.08em;
+```typescript
+const [countryFilter, setCountryFilter] = useState<string>('all');
+const [stateFilter, setStateFilter] = useState<string>('all');
+const [planFilter, setPlanFilter] = useState<string>('all');
+const [businessTypeFilter, setBusinessTypeFilter] = useState<string>('all');
 ```
 
-**2. Update CSS variable (src/index.css, line 170)**
+### 2. Extract Unique Values from Data
 
-```css
-/* Before */
---tracking-display: 0.05em;
+```typescript
+// Get unique countries and states from the data
+const { countries, statesByCountry } = useMemo(() => {
+  const countrySet = new Set<string>();
+  const stateMap = new Map<string, Set<string>>();
+  
+  organizations?.forEach(org => {
+    const country = org.primaryLocation?.country || 'US';
+    const state = org.primaryLocation?.state_province;
+    
+    countrySet.add(country);
+    if (state) {
+      if (!stateMap.has(country)) stateMap.set(country, new Set());
+      stateMap.get(country)!.add(state);
+    }
+  });
+  
+  return {
+    countries: Array.from(countrySet).sort(),
+    statesByCountry: stateMap,
+  };
+}, [organizations]);
 
-/* After */
---tracking-display: 0.08em;
+// Get states for selected country
+const availableStates = useMemo(() => {
+  if (countryFilter === 'all') {
+    // Show all states across all countries
+    const allStates = new Set<string>();
+    statesByCountry.forEach(states => states.forEach(s => allStates.add(s)));
+    return Array.from(allStates).sort();
+  }
+  return Array.from(statesByCountry.get(countryFilter) || []).sort();
+}, [countryFilter, statesByCountry]);
 ```
 
-**3. Update Design System documentation (src/pages/dashboard/DesignSystem.tsx)**
+### 3. Update Filter Logic
 
-Update the typography table to reflect the new tracking value:
+```typescript
+const filteredOrganizations = organizations?.filter(org => {
+  const matchesSearch = org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    org.slug.toLowerCase().includes(searchQuery.toLowerCase());
+  const matchesStatus = statusFilter === 'all' || org.status === statusFilter;
+  const matchesCountry = countryFilter === 'all' || 
+    (org.primaryLocation?.country || 'US') === countryFilter;
+  const matchesState = stateFilter === 'all' || 
+    org.primaryLocation?.state_province === stateFilter;
+  const matchesPlan = planFilter === 'all' || org.subscription_tier === planFilter;
+  const matchesBusinessType = businessTypeFilter === 'all' || 
+    org.business_type === businessTypeFilter;
+  
+  return matchesSearch && matchesStatus && matchesCountry && 
+         matchesState && matchesPlan && matchesBusinessType;
+});
+```
+
+### 4. Reset State When Country Changes
+
+```typescript
+// Reset state filter when country changes
+useEffect(() => {
+  setStateFilter('all');
+}, [countryFilter]);
+```
+
+### 5. Add Filter UI Components
+
+Add four new Select dropdowns in the filter section, arranged in a responsive grid:
 
 ```tsx
-/* Before */
-{ class: "font-display", font: "Termina", weight: "Medium (500 only)", transform: "UPPERCASE, tracking-wide", ... }
-
-/* After */
-{ class: "font-display", font: "Termina", weight: "Medium (500 only)", transform: "UPPERCASE, tracking-wider (0.08em)", ... }
+<div className="flex flex-col gap-4">
+  {/* Row 1: Search + Status */}
+  <div className="flex flex-col sm:flex-row gap-4">
+    <div className="relative flex-1">
+      <PlatformInput ... />
+    </div>
+    <Select value={statusFilter} ...>
+      {/* Status options */}
+    </Select>
+  </div>
+  
+  {/* Row 2: Geography + Type filters */}
+  <div className="flex flex-wrap gap-4">
+    {/* Country Filter */}
+    <Select value={countryFilter} onValueChange={setCountryFilter}>
+      <SelectTrigger className="w-[160px] ...">
+        <SelectValue placeholder="Country" />
+      </SelectTrigger>
+      <SelectContent ...>
+        <SelectItem value="all">All Countries</SelectItem>
+        {countries.map(country => (
+          <SelectItem key={country} value={country}>{country}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+    
+    {/* State/Province Filter */}
+    <Select value={stateFilter} onValueChange={setStateFilter}>
+      <SelectTrigger className="w-[160px] ...">
+        <SelectValue placeholder="State" />
+      </SelectTrigger>
+      <SelectContent ...>
+        <SelectItem value="all">All States</SelectItem>
+        {availableStates.map(state => (
+          <SelectItem key={state} value={state}>{state}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+    
+    {/* Account Type (Plan) Filter */}
+    <Select value={planFilter} onValueChange={setPlanFilter}>
+      <SelectTrigger className="w-[160px] ...">
+        <SelectValue placeholder="Plan" />
+      </SelectTrigger>
+      <SelectContent ...>
+        <SelectItem value="all">All Plans</SelectItem>
+        <SelectItem value="starter">Starter</SelectItem>
+        <SelectItem value="standard">Standard</SelectItem>
+        <SelectItem value="professional">Professional</SelectItem>
+        <SelectItem value="enterprise">Enterprise</SelectItem>
+      </SelectContent>
+    </Select>
+    
+    {/* Business Type Filter */}
+    <Select value={businessTypeFilter} onValueChange={setBusinessTypeFilter}>
+      <SelectTrigger className="w-[160px] ...">
+        <SelectValue placeholder="Business Type" />
+      </SelectTrigger>
+      <SelectContent ...>
+        <SelectItem value="all">All Types</SelectItem>
+        <SelectItem value="salon">Salon</SelectItem>
+        <SelectItem value="spa">Spa</SelectItem>
+        <SelectItem value="esthetics">Esthetics</SelectItem>
+        <SelectItem value="barbershop">Barbershop</SelectItem>
+        <SelectItem value="med_spa">Med Spa</SelectItem>
+        <SelectItem value="wellness">Wellness</SelectItem>
+        <SelectItem value="other">Other</SelectItem>
+      </SelectContent>
+    </Select>
+  </div>
+</div>
 ```
 
 ---
 
-## Visual Impact
+## Visual Layout
 
-Elements affected by this change:
-- Navigation menu links
-- Page headings using `font-display`
-- Button text with `font-display`
-- Card titles and section headers
-- Platform admin interface headers
+```text
++--------------------------------------------------+
+| [Search by name or slug...        ] [Status  v]  |
++--------------------------------------------------+
+| [Country v] [State v] [Plan v] [Business Type v] |
++--------------------------------------------------+
+```
 
-The increased kerning will give Termina a more refined, editorial appearance consistent with luxury branding.
+The filters use the same dark styling as the existing Status filter for consistency.
 
 ---
 
-## Alternative Values
+## Files to Modify
 
-If `0.08em` feels too tight or too loose:
+| File | Changes |
+|------|---------|
+| `src/pages/dashboard/platform/Accounts.tsx` | Add filter state, dynamic option extraction, filter logic, and UI dropdowns |
 
-| Value | Effect |
-|-------|--------|
-| `0.06em` | Subtle increase |
-| `0.08em` | Recommended (balanced) |
-| `0.1em` | Maximum (matches brands marquee) |
+---
+
+## Edge Cases
+
+- **No locations**: Organizations without location data default to country `'US'` in the filter
+- **Country change**: Resets state filter to 'all' to prevent invalid selections
+- **Empty states**: If a country has no state data, the state dropdown shows only "All States"
+- **URL query params**: The `?status=onboarding` from the Overview cards will continue to work
+
+---
+
+## Future Enhancement
+
+Consider adding URL query param support for all filters so links can be shared with pre-applied filters (e.g., `/accounts?country=US&state=AZ&type=salon`).
