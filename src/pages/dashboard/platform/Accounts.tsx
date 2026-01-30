@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -78,14 +78,64 @@ export default function PlatformAccounts() {
   const { data: organizations, isLoading } = useOrganizationsWithStats();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [countryFilter, setCountryFilter] = useState<string>('all');
+  const [stateFilter, setStateFilter] = useState<string>('all');
+  const [planFilter, setPlanFilter] = useState<string>('all');
+  const [businessTypeFilter, setBusinessTypeFilter] = useState<string>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editOrg, setEditOrg] = useState<OrganizationListItem | null>(null);
+
+  // Extract unique countries and states from the data
+  const { countries, statesByCountry } = useMemo(() => {
+    const countrySet = new Set<string>();
+    const stateMap = new Map<string, Set<string>>();
+    
+    organizations?.forEach(org => {
+      const country = org.primaryLocation?.country || 'US';
+      const state = org.primaryLocation?.state_province;
+      
+      countrySet.add(country);
+      if (state) {
+        if (!stateMap.has(country)) stateMap.set(country, new Set());
+        stateMap.get(country)!.add(state);
+      }
+    });
+    
+    return {
+      countries: Array.from(countrySet).sort(),
+      statesByCountry: stateMap,
+    };
+  }, [organizations]);
+
+  // Get states for selected country
+  const availableStates = useMemo(() => {
+    if (countryFilter === 'all') {
+      const allStates = new Set<string>();
+      statesByCountry.forEach(states => states.forEach(s => allStates.add(s)));
+      return Array.from(allStates).sort();
+    }
+    return Array.from(statesByCountry.get(countryFilter) || []).sort();
+  }, [countryFilter, statesByCountry]);
+
+  // Reset state filter when country changes
+  useEffect(() => {
+    setStateFilter('all');
+  }, [countryFilter]);
 
   const filteredOrganizations = organizations?.filter(org => {
     const matchesSearch = org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       org.slug.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || org.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesCountry = countryFilter === 'all' || 
+      (org.primaryLocation?.country || 'US') === countryFilter;
+    const matchesState = stateFilter === 'all' || 
+      org.primaryLocation?.state_province === stateFilter;
+    const matchesPlan = planFilter === 'all' || org.subscription_tier === planFilter;
+    const matchesBusinessType = businessTypeFilter === 'all' || 
+      org.business_type === businessTypeFilter;
+    
+    return matchesSearch && matchesStatus && matchesCountry && 
+           matchesState && matchesPlan && matchesBusinessType;
   });
 
   return (
@@ -106,28 +156,91 @@ export default function PlatformAccounts() {
       {/* Filters */}
       <PlatformCard variant="glass">
         <PlatformCardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <PlatformInput
-                placeholder="Search by name or slug..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                icon={<Search className="h-4 w-4" />}
-                autoCapitalize="none"
-              />
+          <div className="flex flex-col gap-4">
+            {/* Row 1: Search + Status */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <PlatformInput
+                  placeholder="Search by name or slug..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  icon={<Search className="h-4 w-4" />}
+                  autoCapitalize="none"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px] bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-slate-300 focus:bg-slate-700 focus:text-white">All Statuses</SelectItem>
+                  <SelectItem value="pending" className="text-slate-300 focus:bg-slate-700 focus:text-white">Pending</SelectItem>
+                  <SelectItem value="active" className="text-slate-300 focus:bg-slate-700 focus:text-white">Active</SelectItem>
+                  <SelectItem value="suspended" className="text-slate-300 focus:bg-slate-700 focus:text-white">Suspended</SelectItem>
+                  <SelectItem value="churned" className="text-slate-300 focus:bg-slate-700 focus:text-white">Churned</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="all" className="text-slate-300 focus:bg-slate-700 focus:text-white">All Statuses</SelectItem>
-                <SelectItem value="pending" className="text-slate-300 focus:bg-slate-700 focus:text-white">Pending</SelectItem>
-                <SelectItem value="active" className="text-slate-300 focus:bg-slate-700 focus:text-white">Active</SelectItem>
-                <SelectItem value="suspended" className="text-slate-300 focus:bg-slate-700 focus:text-white">Suspended</SelectItem>
-                <SelectItem value="churned" className="text-slate-300 focus:bg-slate-700 focus:text-white">Churned</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            {/* Row 2: Geography + Type filters */}
+            <div className="flex flex-wrap gap-4">
+              {/* Country Filter */}
+              <Select value={countryFilter} onValueChange={setCountryFilter}>
+                <SelectTrigger className="w-[160px] bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                  <SelectValue placeholder="Country" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-slate-300 focus:bg-slate-700 focus:text-white">All Countries</SelectItem>
+                  {countries.map(country => (
+                    <SelectItem key={country} value={country} className="text-slate-300 focus:bg-slate-700 focus:text-white">{country}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* State/Province Filter */}
+              <Select value={stateFilter} onValueChange={setStateFilter}>
+                <SelectTrigger className="w-[160px] bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                  <SelectValue placeholder="State" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-slate-300 focus:bg-slate-700 focus:text-white">All States</SelectItem>
+                  {availableStates.map(state => (
+                    <SelectItem key={state} value={state} className="text-slate-300 focus:bg-slate-700 focus:text-white">{state}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Account Type (Plan) Filter */}
+              <Select value={planFilter} onValueChange={setPlanFilter}>
+                <SelectTrigger className="w-[160px] bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                  <SelectValue placeholder="Plan" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-slate-300 focus:bg-slate-700 focus:text-white">All Plans</SelectItem>
+                  <SelectItem value="starter" className="text-slate-300 focus:bg-slate-700 focus:text-white">Starter</SelectItem>
+                  <SelectItem value="standard" className="text-slate-300 focus:bg-slate-700 focus:text-white">Standard</SelectItem>
+                  <SelectItem value="professional" className="text-slate-300 focus:bg-slate-700 focus:text-white">Professional</SelectItem>
+                  <SelectItem value="enterprise" className="text-slate-300 focus:bg-slate-700 focus:text-white">Enterprise</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Business Type Filter */}
+              <Select value={businessTypeFilter} onValueChange={setBusinessTypeFilter}>
+                <SelectTrigger className="w-[160px] bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                  <SelectValue placeholder="Business Type" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-slate-300 focus:bg-slate-700 focus:text-white">All Types</SelectItem>
+                  <SelectItem value="salon" className="text-slate-300 focus:bg-slate-700 focus:text-white">Salon</SelectItem>
+                  <SelectItem value="spa" className="text-slate-300 focus:bg-slate-700 focus:text-white">Spa</SelectItem>
+                  <SelectItem value="esthetics" className="text-slate-300 focus:bg-slate-700 focus:text-white">Esthetics</SelectItem>
+                  <SelectItem value="barbershop" className="text-slate-300 focus:bg-slate-700 focus:text-white">Barbershop</SelectItem>
+                  <SelectItem value="med_spa" className="text-slate-300 focus:bg-slate-700 focus:text-white">Med Spa</SelectItem>
+                  <SelectItem value="wellness" className="text-slate-300 focus:bg-slate-700 focus:text-white">Wellness</SelectItem>
+                  <SelectItem value="other" className="text-slate-300 focus:bg-slate-700 focus:text-white">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </PlatformCardContent>
       </PlatformCard>
