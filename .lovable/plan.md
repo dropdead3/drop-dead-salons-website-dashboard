@@ -1,184 +1,136 @@
 
-# Establish Typography Design Rules
+# Update Organization Slug to "drop-dead-salons"
 
 ## Summary
 
-Formalize two critical typography design rules to ensure brand consistency:
-1. **Termina (font-display)**: Never use synthetic bolding (font-bold, font-semibold)
-2. **Aeonik Pro (font-sans)**: Never use all-caps (uppercase) - always normal capitalization
+Change the default organization's URL slug from `drop-dead-gorgeous` to `drop-dead-salons` via a database update. The current architecture ensures this change is safe for existing integrations since all data relationships use UUID-based `organization_id` references.
 
 ---
 
-## Current State
+## Architecture Analysis
 
-### Termina Rules (Existing)
-The Termina font-weight constraint is **already enforced** via CSS:
-- `src/index.css:590` forces `font-weight: 500 !important`
-- A warning is displayed in the Design System reference page
+The multi-tenant architecture uses **UUIDs for all data relationships**, not slugs:
 
-### Aeonik Pro Rules (Missing Enforcement)
-The Aeonik Pro capitalization rule is **documented but not enforced**:
-- The Design System page shows "Normal" transform for font-sans
-- **No CSS rule prevents uppercase usage**
-- Multiple violations exist in the codebase
+| Table | Uses organization_id (UUID) | Uses slug |
+|-------|----------------------------|-----------|
+| locations | Yes | No |
+| employee_profiles | Yes | No |
+| clients | Yes | No |
+| appointments | Yes | No |
+| services | Yes | No |
+| Routing (App.tsx) | Yes (`/accounts/:orgId`) | No |
 
----
-
-## Implementation
-
-### 1. Update CSS Rules in `src/index.css`
-
-Add a utility rule that resets text-transform for font-sans to prevent uppercase:
-
-```css
-/* Aeonik Pro font rules: NEVER uppercase, use normal capitalization */
-@layer utilities {
-  .font-sans {
-    text-transform: none !important;
-  }
-}
-```
-
-This creates a CSS-level enforcement that will override any `uppercase` class when combined with `font-sans`.
-
-### 2. Update Design System Documentation
-
-**File**: `src/pages/dashboard/DesignSystem.tsx`
-
-Add a warning for font-sans similar to the existing font-display warning:
-
-```tsx
-{type.class === 'font-sans' && (
-  <div className="mt-3 p-2 rounded bg-amber-500/10 border border-amber-500/20">
-    <p className="text-xs text-amber-600 font-medium">
-      ⚠️ NEVER use uppercase with Aeonik Pro. Always use normal capitalization.
-    </p>
-  </div>
-)}
-```
-
-### 3. Update Typography Scale Definition
-
-Enhance the typography documentation to be more explicit:
-
-```typescript
-const typography = [
-  { 
-    class: "font-display", 
-    font: "Termina", 
-    weight: "Medium (500 only)", 
-    transform: "UPPERCASE, tracking-wide", 
-    usage: "Headlines, buttons, navigation",
-    rules: ["NEVER use font-bold or font-semibold", "Always Medium (500) weight"]
-  },
-  { 
-    class: "font-sans", 
-    font: "Aeonik Pro", 
-    weight: "400-500", 
-    transform: "Normal (never uppercase)", 
-    usage: "Body text, paragraphs, UI labels",
-    rules: ["NEVER use uppercase or all-caps", "Use normal capitalization only"]
-  },
-  // ... other fonts
-];
-```
+**The slug is only used for:**
+1. Display purposes (UI labels, context banner)
+2. Audit logging (logged alongside actions)
+3. Database lookups via `useOrganizationBySlug` hook (not actively used in routing)
 
 ---
 
-## Files to Modify
+## Required Changes
 
-| File | Changes |
+### 1. Database Update (Primary Change)
+
+Update the organization record in the `organizations` table:
+
+```sql
+UPDATE organizations 
+SET slug = 'drop-dead-salons', 
+    name = 'Drop Dead Salons',
+    updated_at = now()
+WHERE slug = 'drop-dead-gorgeous';
+```
+
+This is the **only required change** to update the slug. All other references dynamically pull from this record.
+
+---
+
+## What Automatically Updates (No Code Changes Needed)
+
+These locations display the slug dynamically from the database and will automatically reflect the new value:
+
+| Location | How It Gets Slug | Auto-Updates? |
+|----------|------------------|---------------|
+| AccountDetail page header | `organization.slug` | Yes |
+| PlatformContextBanner | `selectedOrganization.slug` | Yes |
+| Edit Organization Dialog | Pre-populated from org record | Yes |
+| Audit logs | Logged at action time | Yes (new logs) |
+| Organization Switcher | Dynamic from query | Yes |
+
+---
+
+## External References to Verify
+
+The following hardcoded external URLs exist in the codebase but are **independent Square integrations**, not related to the organization slug:
+
+| File | URL | Action |
+|------|-----|--------|
+| `src/pages/Services.tsx:205` | `https://drop-dead-gorgeous-az.square.site` | External booking link (Square) - separate system |
+| `src/pages/Services.tsx:423` | `https://drop-dead-gorgeous-az.square.site` | Same external booking link |
+
+These Square site URLs are **external third-party integrations** and not part of the slug system. They would need to be updated separately if the Square site name changes.
+
+---
+
+## Migration Seed Files (Historical Reference Only)
+
+The migration files contain the old slug for initial seeding:
+
+| File | Line | Content |
+|------|------|---------|
+| `20260129202631_*.sql` | 3 | `'drop-dead-gorgeous'` in INSERT |
+| `20260129202631_*.sql` | 11 | `WHERE slug = 'drop-dead-gorgeous'` |
+
+**These do NOT need to be modified** because:
+- Migration files are historical records that have already run
+- They use `ON CONFLICT (slug) DO NOTHING` - safe for re-runs
+- The database update changes the live record directly
+
+---
+
+## Implementation Steps
+
+### Step 1: Database Migration
+
+Create a new migration to update the organization record:
+
+```sql
+-- Update default organization slug and name
+UPDATE organizations 
+SET 
+  slug = 'drop-dead-salons',
+  name = 'Drop Dead Salons',
+  updated_at = now()
+WHERE slug = 'drop-dead-gorgeous';
+```
+
+### Step 2: Verify Update
+
+After migration, confirm the change:
+
+```sql
+SELECT id, name, slug FROM organizations WHERE slug = 'drop-dead-salons';
+```
+
+---
+
+## Impact Assessment
+
+| Area | Impact | Risk Level |
+|------|--------|------------|
+| Data relationships | None (uses UUIDs) | None |
+| API endpoints | None (routes use orgId) | None |
+| User sessions | None (org fetched by id) | None |
+| Audit logs | Old logs show old slug | Low (historical) |
+| External Square links | Separate system | None |
+| UI displays | Automatically updated | None |
+
+---
+
+## Files to Create
+
+| File | Purpose |
 |------|---------|
-| `src/index.css` | Add `.font-sans { text-transform: none !important; }` utility rule |
-| `src/pages/dashboard/DesignSystem.tsx` | Add warning box for font-sans, update typography rules display |
+| Database migration | Update organization slug and name |
 
----
-
-## Violations to Fix (Future Cleanup)
-
-The CSS rule will automatically enforce the design constraint. However, these files contain explicit `font-sans uppercase` combinations that should be reviewed:
-
-| File | Line | Current Pattern | Suggested Fix |
-|------|------|-----------------|---------------|
-| `BusinessCardRequests.tsx` | ~227 | `font-sans uppercase` | Use `font-display` or remove uppercase |
-| `HeadshotRequests.tsx` | ~216 | `font-sans uppercase` | Use `font-display` or remove uppercase |
-| `DrinkMenuSection.tsx` | ~73, ~91-94 | `uppercase font-sans` | Use `font-display` for labels |
-| `AnnouncementBarManager.tsx` | ~104 | `font-sans uppercase` | Use `font-display` for CTAs |
-| `ReportsTabContent.tsx` | ~187-188 | `font-sans uppercase` | Use `font-display` for category labels |
-
-These will be automatically fixed by the CSS rule, but for semantic correctness, components using uppercase text should switch to `font-display` (Termina).
-
----
-
-## Visual Reference
-
-### Typography Rules Card (Design System Page)
-
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│ TYPOGRAPHY                                                              │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  font-display                                           Medium (500)    │
-│  ┌───────────────────────────────────────────────────────────────────┐ │
-│  │ TERMINA                                                           │ │
-│  └───────────────────────────────────────────────────────────────────┘ │
-│  Headlines, buttons, navigation                                        │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │ ⚠️ NEVER use font-bold or font-semibold. Always use font-medium │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-│  font-sans                                                    400-500   │
-│  ┌───────────────────────────────────────────────────────────────────┐ │
-│  │ Aeonik Pro                                                        │ │
-│  └───────────────────────────────────────────────────────────────────┘ │
-│  Body text, paragraphs, UI labels                                      │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │ ⚠️ NEVER use uppercase. Always use normal capitalization.       │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Enhanced CSS Comment Block
-
-Update the typography comment in index.css for clarity:
-
-```css
-/* ===============================================
-   TYPOGRAPHY DESIGN RULES (Enforced via CSS)
-   ===============================================
-   
-   1. TERMINA (font-display)
-      - Weight: ALWAYS Medium (500) - no synthetic bolding
-      - Transform: ALWAYS uppercase with wide tracking
-      - Usage: Headlines, buttons, navigation labels
-      
-   2. AEONIK PRO (font-sans)  
-      - Weight: Regular (400) or Medium (500)
-      - Transform: ALWAYS normal capitalization - NEVER uppercase
-      - Usage: Body text, paragraphs, descriptions, UI labels
-      
-   3. LAGUNA (font-serif)
-      - Weight: Bold (700) only
-      - Transform: Normal
-      - Usage: Editorial accents (rarely used)
-      
-   4. SLOOP SCRIPT (font-script)
-      - Weight: Regular (400)
-      - Transform: Normal
-      - Usage: Decorative elements
-   
-   =============================================== */
-```
-
----
-
-## Implementation Order
-
-1. Add CSS utility rule for font-sans text-transform enforcement
-2. Add enhanced typography comment block in index.css
-3. Update DesignSystem.tsx with font-sans warning
-4. Update typography scale definition with explicit rules
+No frontend code changes are required - the slug is already fetched dynamically from the database throughout the application.
