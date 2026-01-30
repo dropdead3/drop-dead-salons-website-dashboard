@@ -78,6 +78,7 @@ export default function PlatformAccounts() {
   const { data: organizations, isLoading } = useOrganizationsWithStats();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
   const [countryFilter, setCountryFilter] = useState<string>('all');
   const [stateFilter, setStateFilter] = useState<string>('all');
   const [planFilter, setPlanFilter] = useState<string>('all');
@@ -126,6 +127,13 @@ export default function PlatformAccounts() {
     const matchesSearch = org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       org.slug.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || org.status === statusFilter;
+    
+    // Active filter: active = status is active, inactive = pending/suspended, archived = churned
+    const matchesActive = activeFilter === 'all' || 
+      (activeFilter === 'active' && org.status === 'active') ||
+      (activeFilter === 'inactive' && (org.status === 'pending' || org.status === 'suspended')) ||
+      (activeFilter === 'archived' && org.status === 'churned');
+    
     const matchesCountry = countryFilter === 'all' || 
       (org.primaryLocation?.country || 'US') === countryFilter;
     const matchesState = stateFilter === 'all' || 
@@ -134,7 +142,7 @@ export default function PlatformAccounts() {
     const matchesBusinessType = businessTypeFilter === 'all' || 
       org.business_type === businessTypeFilter;
     
-    return matchesSearch && matchesStatus && matchesCountry && 
+    return matchesSearch && matchesStatus && matchesActive && matchesCountry && 
            matchesState && matchesPlan && matchesBusinessType;
   });
 
@@ -178,6 +186,19 @@ export default function PlatformAccounts() {
                   <SelectItem value="active" className="text-slate-300 focus:bg-slate-700 focus:text-white">Active</SelectItem>
                   <SelectItem value="suspended" className="text-slate-300 focus:bg-slate-700 focus:text-white">Suspended</SelectItem>
                   <SelectItem value="churned" className="text-slate-300 focus:bg-slate-700 focus:text-white">Churned</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Active/Inactive/Archived Filter */}
+              <Select value={activeFilter} onValueChange={setActiveFilter}>
+                <SelectTrigger className="w-[160px] bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                  <SelectValue placeholder="Account State" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="all" className="text-slate-300 focus:bg-slate-700 focus:text-white">All Accounts</SelectItem>
+                  <SelectItem value="active" className="text-slate-300 focus:bg-slate-700 focus:text-white">Active</SelectItem>
+                  <SelectItem value="inactive" className="text-slate-300 focus:bg-slate-700 focus:text-white">Inactive</SelectItem>
+                  <SelectItem value="archived" className="text-slate-300 focus:bg-slate-700 focus:text-white">Archived</SelectItem>
                 </SelectContent>
               </Select>
             </div>
