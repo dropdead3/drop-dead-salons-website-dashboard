@@ -1218,6 +1218,62 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_adjustments: {
+        Row: {
+          adjustment_type: string
+          approved_by: string
+          comp_value: number | null
+          created_at: string
+          description: string
+          id: string
+          months_added: number | null
+          new_end_date: string | null
+          new_start_date: string | null
+          organization_id: string
+          previous_end_date: string | null
+          previous_start_date: string | null
+          reason: string
+        }
+        Insert: {
+          adjustment_type: string
+          approved_by: string
+          comp_value?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          months_added?: number | null
+          new_end_date?: string | null
+          new_start_date?: string | null
+          organization_id: string
+          previous_end_date?: string | null
+          previous_start_date?: string | null
+          reason: string
+        }
+        Update: {
+          adjustment_type?: string
+          approved_by?: string
+          comp_value?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          months_added?: number | null
+          new_end_date?: string | null
+          new_start_date?: string | null
+          organization_id?: string
+          previous_end_date?: string | null
+          previous_start_date?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_adjustments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_completions: {
         Row: {
           all_tasks_done: boolean
@@ -3401,6 +3457,68 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      pandadoc_documents: {
+        Row: {
+          applied_at: string | null
+          applied_to_billing: boolean | null
+          completed_at: string | null
+          created_at: string
+          document_name: string
+          document_url: string | null
+          extracted_fields: Json | null
+          id: string
+          organization_id: string
+          pandadoc_document_id: string
+          sent_at: string | null
+          signed_by_email: string | null
+          signed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_to_billing?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          document_name: string
+          document_url?: string | null
+          extracted_fields?: Json | null
+          id?: string
+          organization_id: string
+          pandadoc_document_id: string
+          sent_at?: string | null
+          signed_by_email?: string | null
+          signed_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string | null
+          applied_to_billing?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          document_name?: string
+          document_url?: string | null
+          extracted_fields?: Json | null
+          id?: string
+          organization_id?: string
+          pandadoc_document_id?: string
+          sent_at?: string | null
+          signed_by_email?: string | null
+          signed_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pandadoc_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pass_usage_history: {
         Row: {
