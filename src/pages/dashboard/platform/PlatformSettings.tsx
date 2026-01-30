@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Shield, Database, Crown, Plug } from 'lucide-react';
+import { Settings, Shield, Database, Crown, Plug, BookOpen } from 'lucide-react';
 import { PlatformTeamManager } from '@/components/platform/PlatformTeamManager';
 import { PlatformBrandingTab } from '@/components/platform/settings/PlatformBrandingTab';
 import { PlatformIntegrationsTab } from '@/components/platform/settings/PlatformIntegrationsTab';
+import { KnowledgeBaseTab } from '@/components/platform/settings/KnowledgeBaseTab';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   PlatformCard,
@@ -52,6 +53,13 @@ export default function PlatformSettings() {
             className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white"
           >
             Defaults
+          </TabsTrigger>
+          <TabsTrigger 
+            value="knowledge-base"
+            className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white flex items-center gap-1.5"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            Knowledge Base
           </TabsTrigger>
           <TabsTrigger 
             value="integrations"
@@ -130,6 +138,10 @@ export default function PlatformSettings() {
               </p>
             </PlatformCardContent>
           </PlatformCard>
+        </TabsContent>
+
+        <TabsContent value="knowledge-base">
+          <KnowledgeBaseTab />
         </TabsContent>
 
         <TabsContent value="integrations">
