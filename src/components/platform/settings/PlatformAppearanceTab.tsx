@@ -326,15 +326,15 @@ export function PlatformAppearanceTab() {
         </PlatformCardContent>
       </PlatformCard>
 
-      {/* Logo Configuration Card */}
+      {/* Full Logo Configuration Card */}
       <PlatformCard variant="glass">
         <PlatformCardHeader>
           <PlatformCardTitle className="flex items-center gap-2">
             <ImageIcon className={cn('h-5 w-5', isDark ? 'text-violet-400' : 'text-violet-600')} />
-            Platform Logos
+            Full Logos
           </PlatformCardTitle>
           <PlatformCardDescription>
-            Upload different logos for light and dark themes
+            Primary logos shown in the expanded sidebar
           </PlatformCardDescription>
         </PlatformCardHeader>
         <PlatformCardContent>
@@ -342,7 +342,7 @@ export function PlatformAppearanceTab() {
             {/* Dark Mode Logo (Light/White logo for dark backgrounds) */}
             <LogoUpload
               label="Dark Mode Logo"
-              description="Light/white logo for dark backgrounds"
+              description="Light/white logo for dark backgrounds (recommended: 180x48px)"
               currentUrl={localBranding.primary_logo_url}
               onUpload={(url) => handleLogoUpdate('primary_logo_url', url)}
               onRemove={() => handleLogoUpdate('primary_logo_url', null)}
@@ -352,10 +352,46 @@ export function PlatformAppearanceTab() {
             {/* Light Mode Logo (Dark logo for light backgrounds) */}
             <LogoUpload
               label="Light Mode Logo"
-              description="Dark/colored logo for light backgrounds"
+              description="Dark/colored logo for light backgrounds (recommended: 180x48px)"
               currentUrl={localBranding.secondary_logo_url}
               onUpload={(url) => handleLogoUpdate('secondary_logo_url', url)}
               onRemove={() => handleLogoUpdate('secondary_logo_url', null)}
+              variant="light"
+            />
+          </div>
+        </PlatformCardContent>
+      </PlatformCard>
+
+      {/* Icon Logo Configuration Card */}
+      <PlatformCard variant="glass">
+        <PlatformCardHeader>
+          <PlatformCardTitle className="flex items-center gap-2">
+            <Sparkles className={cn('h-5 w-5', isDark ? 'text-violet-400' : 'text-violet-600')} />
+            Sidebar Icons
+          </PlatformCardTitle>
+          <PlatformCardDescription>
+            Square icons shown when the sidebar is collapsed
+          </PlatformCardDescription>
+        </PlatformCardHeader>
+        <PlatformCardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Dark Mode Icon */}
+            <LogoUpload
+              label="Dark Mode Icon"
+              description="Light/white icon for dark backgrounds (recommended: 32x32px)"
+              currentUrl={localBranding.icon_dark_url}
+              onUpload={(url) => handleLogoUpdate('icon_dark_url', url)}
+              onRemove={() => handleLogoUpdate('icon_dark_url', null)}
+              variant="dark"
+            />
+
+            {/* Light Mode Icon */}
+            <LogoUpload
+              label="Light Mode Icon"
+              description="Dark/colored icon for light backgrounds (recommended: 32x32px)"
+              currentUrl={localBranding.icon_light_url}
+              onUpload={(url) => handleLogoUpdate('icon_light_url', url)}
+              onRemove={() => handleLogoUpdate('icon_light_url', null)}
               variant="light"
             />
           </div>
@@ -364,12 +400,13 @@ export function PlatformAppearanceTab() {
             'mt-6 p-4 rounded-lg border',
             isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-200'
           )}>
-            <h4 className={cn('text-sm font-medium mb-2', isDark ? 'text-slate-200' : 'text-slate-700')}>Logo Guidelines</h4>
+            <h4 className={cn('text-sm font-medium mb-2', isDark ? 'text-slate-200' : 'text-slate-700')}>Logo & Icon Guidelines</h4>
             <ul className={cn('text-xs space-y-1', isDark ? 'text-slate-400' : 'text-slate-500')}>
-              <li>• <strong>Dark Mode:</strong> Use white or light-colored logos that contrast well against dark backgrounds</li>
-              <li>• <strong>Light Mode:</strong> Use dark or colored logos that contrast well against light backgrounds</li>
+              <li>• <strong>Dark Mode:</strong> Use white or light-colored assets that contrast well against dark backgrounds</li>
+              <li>• <strong>Light Mode:</strong> Use dark or colored assets that contrast well against light backgrounds</li>
+              <li>• <strong>Full Logos:</strong> Horizontal format, recommended 180x48px</li>
+              <li>• <strong>Icons:</strong> Square format, recommended 32x32px</li>
               <li>• Recommended formats: SVG (best), PNG with transparency, or WebP</li>
-              <li>• Maximum recommended height: 48px for optimal display</li>
             </ul>
           </div>
         </PlatformCardContent>

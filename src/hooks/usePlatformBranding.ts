@@ -4,8 +4,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 
 export interface PlatformBranding {
-  primary_logo_url: string | null;
-  secondary_logo_url: string | null;
+  primary_logo_url: string | null;      // Dark mode full logo (light/white)
+  secondary_logo_url: string | null;    // Light mode full logo (dark/colored)
+  icon_dark_url: string | null;         // Dark mode collapsed icon (light/white)
+  icon_light_url: string | null;        // Light mode collapsed icon (dark/colored)
   theme_colors: Record<string, string>;
   typography: Record<string, string>;
 }
@@ -13,6 +15,8 @@ export interface PlatformBranding {
 const DEFAULT_BRANDING: PlatformBranding = {
   primary_logo_url: null,
   secondary_logo_url: null,
+  icon_dark_url: null,
+  icon_light_url: null,
   theme_colors: {},
   typography: {},
 };
@@ -57,6 +61,8 @@ export function usePlatformBranding() {
       return {
         primary_logo_url: (value.primary_logo_url as string | null) ?? null,
         secondary_logo_url: (value.secondary_logo_url as string | null) ?? null,
+        icon_dark_url: (value.icon_dark_url as string | null) ?? null,
+        icon_light_url: (value.icon_light_url as string | null) ?? null,
         theme_colors: (value.theme_colors as Record<string, string>) ?? {},
         typography: (value.typography as Record<string, string>) ?? {},
       };
@@ -70,6 +76,8 @@ export function usePlatformBranding() {
       const brandingValue = {
         primary_logo_url: branding.primary_logo_url,
         secondary_logo_url: branding.secondary_logo_url,
+        icon_dark_url: branding.icon_dark_url,
+        icon_light_url: branding.icon_light_url,
         theme_colors: branding.theme_colors,
         typography: branding.typography,
       };

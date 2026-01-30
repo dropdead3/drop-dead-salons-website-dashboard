@@ -63,9 +63,12 @@ export function PlatformSidebar() {
     ? branding.primary_logo_url 
     : branding.secondary_logo_url;
   
+  // Choose icon based on theme (for collapsed sidebar)
+  // Dark mode: use icon_dark_url (light/white icon)
+  // Light mode: use icon_light_url (dark icon)
   const currentIcon = resolvedTheme === 'dark'
-    ? branding.primary_logo_url // Using same for now, could add icon variants
-    : branding.secondary_logo_url;
+    ? branding.icon_dark_url
+    : branding.icon_light_url;
 
   const isDark = resolvedTheme === 'dark';
 
