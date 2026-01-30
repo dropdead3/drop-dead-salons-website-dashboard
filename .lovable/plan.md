@@ -1,151 +1,278 @@
 
-# Platform Branding & Customization Settings
+
+# PandaDoc Integration for Account Signup Agreements
 
 ## Summary
 
-Add a new "Branding" tab to Platform Settings exclusively for platform owners. This will allow customization of the platform's visual identity including:
-- Primary and secondary logos for the platform navigation bar
-- Theme color customization for the platform UI
-- Typography/font settings for the platform interface
-
-This is platform-level branding (for the admin interface), separate from organization-level branding managed via BusinessSettingsDialog.
+Integrate PandaDoc to manage account signup agreements, automatically populate billing terms from signed documents, and provide platform admins with full control over contract adjustments including term extensions, complimentary months, and manual overrides.
 
 ---
 
 ## Current State Analysis
 
-**What We Have:**
-- Platform Settings page with tabs: Team, Security, Import Templates, Defaults
-- `platform_owner` role check via `hasPlatformRoleOrHigher('platform_owner')`
-- Existing Theme Editor and Typography Editor components (for organization dashboards)
-- `business-logos` storage bucket for file uploads
-- `site_settings` table as a key-value store for platform-wide configs
-- `useCustomTheme` and `useTypographyTheme` hooks for CSS variable management
-- Platform-specific CSS variables defined under `.platform-theme` class
+**Existing Infrastructure:**
+- Robust `organization_billing` table with fields for contract dates, promo periods, trial days, and notes
+- `billing_changes` table for audit trail of all billing modifications
+- `BillingConfigurationPanel` with comprehensive forms for all billing parameters
+- Edge function patterns for webhook handling (e.g., `capture-external-lead`)
+- Existing secrets management for API keys (PHOREST, RESEND, etc.)
 
-**What's Missing:**
-- No platform-level branding storage (separate from organization branding)
-- No logo display in Platform Sidebar
-- No owner-restricted branding tab in Platform Settings
+**What's Needed:**
+- PandaDoc API key storage and webhook secret
+- Edge function to receive PandaDoc webhooks when documents are completed
+- Field mapping from PandaDoc document fields to billing configuration
+- UI for viewing/linking PandaDoc documents to accounts
+- Contract adjustment tools (extend terms, comp months, etc.)
 
 ---
 
-## Key Features to Implement
+## PandaDoc Integration Architecture
 
-### 1. Platform Branding Database Storage
-Store platform-level branding in `site_settings` table with key `platform_branding`:
-```json
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│                         PandaDoc Workflow                            │
+│                                                                      │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────────────┐ │
+│  │ PandaDoc     │     │ Document     │     │ Webhook Triggered    │ │
+│  │ Template     │────▶│ Sent to      │────▶│ on Completion        │ │
+│  │ Created      │     │ Client       │     │                      │ │
+│  └──────────────┘     └──────────────┘     └──────────┬───────────┘ │
+│                                                        │             │
+│                                            ┌───────────▼───────────┐ │
+│                                            │ Edge Function         │ │
+│                                            │ pandadoc-webhook      │ │
+│                                            └───────────┬───────────┘ │
+│                                                        │             │
+│  ┌─────────────────────────────────────────────────────▼───────────┐│
+│  │                     Field Mapping                                ││
+│  │  PandaDoc Field          →        organization_billing Column    ││
+│  │  ─────────────────────────────────────────────────────────────   ││
+│  │  term_start_date         →        contract_start_date            ││
+│  │  term_end_date           →        contract_end_date              ││
+│  │  subscription_plan       →        plan_id (lookup by name)       ││
+│  │  monthly_rate            →        custom_price                   ││
+│  │  promo_months            →        promo_months                   ││
+│  │  promo_rate              →        promo_price                    ││
+│  │  setup_fee               →        setup_fee                      ││
+│  │  special_notes           →        notes                          ││
+│  └──────────────────────────────────────────────────────────────────┘│
+│                                                        │             │
+│                                            ┌───────────▼───────────┐ │
+│                                            │ organization_billing  │ │
+│                                            │ Updated + Audit Log   │ │
+│                                            └───────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Database Schema Changes
+
+### New Table: `pandadoc_documents`
+
+Track PandaDoc documents linked to organizations:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| organization_id | uuid | FK to organizations |
+| pandadoc_document_id | text | PandaDoc's document ID |
+| document_name | text | Document title |
+| status | text | draft, sent, viewed, completed, voided |
+| sent_at | timestamptz | When document was sent |
+| completed_at | timestamptz | When document was signed |
+| signed_by_name | text | Signer's name |
+| signed_by_email | text | Signer's email |
+| extracted_fields | jsonb | Raw field data from PandaDoc |
+| applied_to_billing | boolean | Whether fields were applied |
+| applied_at | timestamptz | When applied to billing |
+| document_url | text | Link to view in PandaDoc |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
+
+### New Table: `contract_adjustments`
+
+Track all manual contract adjustments for audit purposes:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| organization_id | uuid | FK to organizations |
+| adjustment_type | text | term_extension, comp_months, date_change, custom |
+| description | text | Human-readable description |
+| previous_end_date | date | Contract end date before adjustment |
+| new_end_date | date | Contract end date after adjustment |
+| months_added | int | Number of months added (if applicable) |
+| comp_value | numeric | Dollar value of comp'd months |
+| reason | text | Why adjustment was made |
+| approved_by | uuid | Platform user who made adjustment |
+| created_at | timestamptz | |
+
+### Add to billing_changes.change_type
+
+Extend the existing enum to include:
+- `term_extension` - Months added to contract
+- `comp_applied` - Complimentary months applied
+- `pandadoc_import` - Fields imported from PandaDoc
+
+---
+
+## Edge Function: `pandadoc-webhook`
+
+Receives webhooks from PandaDoc when document status changes:
+
+```text
+POST /functions/v1/pandadoc-webhook
+
+Headers:
+  X-PandaDoc-Signature: {hmac_signature}
+
+Payload:
 {
-  "primary_logo_url": "https://...",
-  "secondary_logo_url": "https://...",
-  "theme_colors": { "platform-accent": "...", ... },
-  "typography": { "font-size-base": "16px", ... },
-  "updated_at": "timestamp"
+  "event": "document_state_changed",
+  "data": {
+    "id": "document_id",
+    "name": "Signup Agreement - Drop Dead Salons",
+    "status": "document.completed",
+    "date_completed": "2026-01-30T10:00:00Z",
+    "metadata": {
+      "organization_id": "uuid"  // Set when creating document
+    },
+    "fields": {
+      "term_start_date": { "value": "2026-02-01" },
+      "term_end_date": { "value": "2027-01-31" },
+      "subscription_plan": { "value": "Professional" },
+      "monthly_rate": { "value": "299.00" },
+      "promo_months": { "value": "3" },
+      "promo_rate": { "value": "199.00" },
+      "setup_fee": { "value": "500.00" },
+      "special_notes": { "value": "Waived setup due to referral" }
+    },
+    "recipients": [{
+      "role": "Client",
+      "email": "owner@dropdead.com",
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "completed": true
+    }]
+  }
 }
 ```
 
-### 2. Logo Management
-- Primary logo: Main logo displayed in platform sidebar header (expanded state)
-- Secondary logo: Icon/mark displayed in collapsed sidebar state
-- File upload to `business-logos` bucket with platform prefix
-
-### 3. Platform Theme Colors
-Subset of platform-specific CSS variables:
-- `--platform-accent` (violet by default)
-- `--platform-bg` variants
-- `--platform-foreground`
-- etc.
-
-### 4. Typography Settings
-- Font size adjustments for platform UI
-- Reuse existing typography token structure
-
-### 5. Owner-Only Access
-- New tab only visible to `platform_owner` role
-- RLS policy on site_settings for platform_branding key
+**Processing Flow:**
+1. Verify webhook signature using PANDADOC_WEBHOOK_SECRET
+2. Parse document fields
+3. Look up organization via metadata.organization_id or match by document name
+4. Insert/update `pandadoc_documents` record
+5. If status is "completed":
+   - Map fields to billing configuration
+   - Update `organization_billing` table
+   - Log change to `billing_changes` with type `pandadoc_import`
+6. Send notification to platform team (optional)
 
 ---
 
-## Architecture
+## UI Components
+
+### 1. PandaDoc Documents Card (Account Detail > Billing Tab)
+
+Display linked documents with status and quick actions:
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    Platform Settings Page                        │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  Tabs: Team | Security | Templates | Defaults | Branding   │ │
-│  │                                           ↑ OWNER ONLY      │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │                    Branding Tab Content                     │ │
-│  │                                                             │ │
-│  │  ┌──────────────────────────────────────────────────────┐  │ │
-│  │  │  Logo Management                                      │  │ │
-│  │  │  ┌─────────────────────┐ ┌─────────────────────┐     │  │ │
-│  │  │  │ Primary Logo        │ │ Secondary Logo      │     │  │ │
-│  │  │  │ (Expanded Sidebar)  │ │ (Collapsed Icon)    │     │  │ │
-│  │  │  │ [Upload Area]       │ │ [Upload Area]       │     │  │ │
-│  │  │  └─────────────────────┘ └─────────────────────┘     │  │ │
-│  │  └──────────────────────────────────────────────────────┘  │ │
-│  │                                                             │ │
-│  │  ┌──────────────────────────────────────────────────────┐  │ │
-│  │  │  Platform Theme Colors                                │  │ │
-│  │  │  • Accent Color (Violet)                              │  │ │
-│  │  │  • Background variants                                │  │ │
-│  │  │  • Text colors                                        │  │ │
-│  │  │  [Color Pickers Grid]                                 │  │ │
-│  │  └──────────────────────────────────────────────────────┘  │ │
-│  │                                                             │ │
-│  │  ┌──────────────────────────────────────────────────────┐  │ │
-│  │  │  Typography                                           │  │ │
-│  │  │  • Base font sizes                                    │  │ │
-│  │  │  • Header sizes                                       │  │ │
-│  │  └──────────────────────────────────────────────────────┘  │ │
-│  │                                                             │ │
-│  │  ┌──────────────────────────────────────────────────────┐  │ │
-│  │  │  Preview Sidebar                                      │  │ │
-│  │  │  [Live preview of changes]                            │  │ │
-│  │  └──────────────────────────────────────────────────────┘  │ │
-│  │                                                             │ │
-│  │                        [Save Changes]                       │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  PandaDoc Agreements                            [+ Link Document] │
+├──────────────────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ 📄 Service Agreement - 2026                    ✅ Completed │  │
+│  │    Signed by: Jane Doe (owner@dropdead.com)                │  │
+│  │    Signed: Jan 30, 2026                                     │  │
+│  │    [View Document] [Re-apply Fields]                        │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │ 📄 Amendment - Extended Terms                  📧 Sent      │  │
+│  │    Sent to: Jane Doe                                        │  │
+│  │    Sent: Jan 28, 2026                                       │  │
+│  │    [View Document] [Resend]                                 │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
----
+### 2. Contract Adjustments Panel
 
-## Database Schema
+New section in Billing tab for manual adjustments:
 
-### site_settings Entry
-Add/update `platform_branding` key in site_settings:
-
-```sql
-INSERT INTO site_settings (id, value)
-VALUES ('platform_branding', '{
-  "primary_logo_url": null,
-  "secondary_logo_url": null,
-  "theme_colors": {},
-  "typography": {}
-}')
-ON CONFLICT (id) DO NOTHING;
+```text
+┌──────────────────────────────────────────────────────────────────┐
+│  Contract Adjustments                                             │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  Current Contract: Feb 1, 2026 → Jan 31, 2027 (12 months)        │
+│                                                                   │
+│  ┌─────────────────────┐  ┌─────────────────────┐                │
+│  │ 📅 Extend Term      │  │ 🎁 Comp Free Months │                │
+│  │ Add months to end   │  │ Credit at $0 rate   │                │
+│  └─────────────────────┘  └─────────────────────┘                │
+│                                                                   │
+│  ┌─────────────────────┐  ┌─────────────────────┐                │
+│  │ 📆 Change Dates     │  │ 📝 Custom Adjustment│                │
+│  │ Edit start/end      │  │ Freeform change     │                │
+│  └─────────────────────┘  └─────────────────────┘                │
+│                                                                   │
+├──────────────────────────────────────────────────────────────────┤
+│  Recent Adjustments                                               │
+│  • Jan 15: +3 months extended (reason: loyalty bonus)            │
+│  • Dec 1: 1 month comp'd ($299 value) for service issue          │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### RLS Policy for Platform Branding
-Only platform owners can update this specific setting:
+### 3. Extend Term Dialog
 
-```sql
-CREATE POLICY "Platform owners can update platform branding"
-ON site_settings
-FOR UPDATE
-USING (
-  id = 'platform_branding' AND
-  public.has_platform_role(auth.uid(), 'platform_owner')
-)
-WITH CHECK (
-  id = 'platform_branding' AND
-  public.has_platform_role(auth.uid(), 'platform_owner')
-);
+```text
+┌─────────────────────────────────────────────────────────┐
+│  Extend Contract Term                              [X]  │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  Current End Date: Jan 31, 2027                         │
+│                                                         │
+│  Months to Add:    [_3_] months                         │
+│                                                         │
+│  New End Date:     Apr 30, 2027                         │
+│                                                         │
+│  Reason:                                                │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ Loyalty bonus for 3-year client                 │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  ⚠️ This will be logged in the billing audit trail     │
+│                                                         │
+│                           [Cancel]  [Extend Contract]   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 4. Comp Free Months Dialog
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│  Comp Free Months                                  [X]  │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  Months to Comp:   [_1_] month(s)                       │
+│                                                         │
+│  Apply To:         ( ) Next billing cycle               │
+│                    (•) Specific month: [Feb 2026 ▼]     │
+│                                                         │
+│  Credit Value:     $299.00                              │
+│  (Based on current monthly rate)                        │
+│                                                         │
+│  Reason:                                                │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ Service outage compensation - Ticket #4521      │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  ⚠️ This creates a $299 credit on the account          │
+│                                                         │
+│                           [Cancel]  [Apply Credit]      │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -154,10 +281,15 @@ WITH CHECK (
 
 | File | Purpose |
 |------|---------|
-| `src/components/platform/settings/PlatformBrandingTab.tsx` | Main branding configuration UI |
-| `src/components/platform/settings/PlatformLogoUploader.tsx` | Logo upload cards for primary/secondary |
-| `src/components/platform/settings/PlatformThemeEditor.tsx` | Platform-specific color editor |
-| `src/hooks/usePlatformBranding.ts` | CRUD hook for platform branding settings |
+| `supabase/functions/pandadoc-webhook/index.ts` | Webhook handler for PandaDoc events |
+| `src/hooks/usePandaDocDocuments.ts` | CRUD for pandadoc_documents table |
+| `src/hooks/useContractAdjustments.ts` | CRUD for contract_adjustments + helpers |
+| `src/components/platform/billing/PandaDocDocumentsCard.tsx` | Display linked documents |
+| `src/components/platform/billing/ContractAdjustmentsPanel.tsx` | Adjustment actions grid |
+| `src/components/platform/billing/ExtendTermDialog.tsx` | Extend contract dialog |
+| `src/components/platform/billing/CompMonthsDialog.tsx` | Comp free months dialog |
+| `src/components/platform/billing/ChangeDatesDialog.tsx` | Manual date adjustment dialog |
+| `src/components/platform/billing/LinkPandaDocDialog.tsx` | Manually link existing document |
 
 ---
 
@@ -165,156 +297,106 @@ WITH CHECK (
 
 | File | Changes |
 |------|---------|
-| `src/pages/dashboard/platform/PlatformSettings.tsx` | Add "Branding" tab with owner-only visibility |
-| `src/components/platform/layout/PlatformSidebar.tsx` | Display custom logos from platform branding |
-| Database migration | Add platform_branding to site_settings, update RLS |
+| `src/components/platform/billing/BillingConfigurationPanel.tsx` | Add PandaDoc card and Adjustments panel |
+| `src/hooks/useBillingHistory.ts` | Add new change types for adjustments |
+| Database migration | Create pandadoc_documents, contract_adjustments tables |
+| `supabase/config.toml` | Add pandadoc-webhook function config |
 
 ---
 
-## Implementation Details
+## Secrets Required
 
-### usePlatformBranding Hook
-```typescript
-interface PlatformBranding {
-  primary_logo_url: string | null;
-  secondary_logo_url: string | null;
-  theme_colors: Record<string, string>;
-  typography: Record<string, string>;
-}
+| Secret | Purpose |
+|--------|---------|
+| `PANDADOC_API_KEY` | API key for PandaDoc REST API (creating documents, fetching status) |
+| `PANDADOC_WEBHOOK_SECRET` | Shared secret for verifying webhook signatures |
 
-function usePlatformBranding() {
-  // Fetch from site_settings where id = 'platform_branding'
-  // Return query + mutation for updating
-}
-```
+---
 
-### PlatformBrandingTab Component
-- Uses PlatformCard components for consistent styling
-- Logo upload section with drag-and-drop
-- Color picker grid for theme colors
-- Typography sliders (similar to existing TypographyEditor)
-- Live preview mini-sidebar
-- Save/Cancel/Reset buttons
+## PandaDoc Field Mapping Configuration
 
-### PlatformSidebar Logo Integration
-Modify header section:
-```tsx
-// Current: Static Sparkles icon + "Platform" text
-// New: Check for custom logos from usePlatformBranding
+Store field mappings in `site_settings` for flexibility:
 
-const { data: branding } = usePlatformBranding();
-
-// Expanded state: Show primary logo or fallback to Sparkles + "Platform"
-// Collapsed state: Show secondary logo or fallback to Sparkles icon
-```
-
-### Platform Theme Application
-On load, apply saved platform theme colors:
-```typescript
-// In PlatformLayout or a PlatformThemeInitializer
-useEffect(() => {
-  if (branding?.theme_colors) {
-    Object.entries(branding.theme_colors).forEach(([key, value]) => {
-      document.documentElement.style.setProperty(`--${key}`, value);
-    });
+```json
+{
+  "id": "pandadoc_field_mapping",
+  "value": {
+    "term_start_date": "contract_start_date",
+    "term_end_date": "contract_end_date",
+    "subscription_plan": "plan_name_lookup",
+    "monthly_rate": "custom_price",
+    "promo_months": "promo_months",
+    "promo_rate": "promo_price",
+    "setup_fee": "setup_fee",
+    "special_notes": "notes"
   }
-}, [branding]);
+}
 ```
 
----
-
-## Logo Upload Flow
-
-1. User clicks upload area or drops file
-2. Validate file (SVG/PNG preferred, max 2MB)
-3. Upload to `business-logos` bucket with prefix `platform-`
-4. Get public URL
-5. Update local state for preview
-6. On save, persist to site_settings
-
----
-
-## Platform Theme Color Tokens
-
-Editable platform-specific tokens:
-
-| Token | Label | Default |
-|-------|-------|---------|
-| platform-accent | Accent Color | violet-500 |
-| platform-accent-hover | Accent Hover | violet-600 |
-| platform-bg | Background | slate-950 |
-| platform-bg-elevated | Elevated BG | slate-900 |
-| platform-bg-card | Card BG | slate-800 |
-| platform-foreground | Text | white |
-| platform-muted | Muted Text | slate-400 |
-| platform-border | Border | slate-700 |
+This allows platform admins to adjust mappings without code changes.
 
 ---
 
 ## Security & Permissions
 
-- **Tab Visibility**: Only shown when `hasPlatformRoleOrHigher('platform_owner')` returns true
-- **API Protection**: RLS policy restricts updates to platform_owner role
-- **Storage**: Reuses existing public `business-logos` bucket
-- **Audit**: Consider logging branding changes to `platform_audit_log`
+- **Webhook Verification**: HMAC signature validation using PANDADOC_WEBHOOK_SECRET
+- **RLS Policies**: Platform users can view/modify documents and adjustments
+- **Audit Trail**: All adjustments logged to `contract_adjustments` and `billing_changes`
+- **Role Restrictions**: Only platform_admin and platform_owner can make contract adjustments
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Database & Hook
-1. Create migration to add `platform_branding` to site_settings
-2. Add RLS policy for platform_owner-only updates
-3. Build `usePlatformBranding` hook
+### Phase 1: Database & Secrets Setup
+1. Create `pandadoc_documents` table with RLS
+2. Create `contract_adjustments` table with RLS
+3. Add new change types to billing_changes
+4. Add secrets: PANDADOC_API_KEY, PANDADOC_WEBHOOK_SECRET
 
-### Phase 2: Logo Management
-1. Create `PlatformLogoUploader` component
-2. Implement upload logic to storage bucket
-3. Add logo preview functionality
+### Phase 2: Webhook Edge Function
+1. Create `pandadoc-webhook` edge function
+2. Implement signature verification
+3. Implement field extraction and mapping
+4. Update organization_billing from document fields
+5. Log changes to billing_changes
 
-### Phase 3: Branding Tab UI
-1. Create `PlatformBrandingTab` component
-2. Add Branding tab to PlatformSettings (owner-restricted)
-3. Integrate logo uploader
+### Phase 3: Document Tracking UI
+1. Create `usePandaDocDocuments` hook
+2. Build `PandaDocDocumentsCard` component
+3. Add `LinkPandaDocDialog` for manual linking
+4. Integrate into BillingConfigurationPanel
 
-### Phase 4: Theme & Typography
-1. Create `PlatformThemeEditor` component with color pickers
-2. Add typography section
-3. Implement live preview mini-sidebar
+### Phase 4: Contract Adjustments
+1. Create `useContractAdjustments` hook
+2. Build `ContractAdjustmentsPanel` with action grid
+3. Build `ExtendTermDialog` with date calculation
+4. Build `CompMonthsDialog` with credit calculation
+5. Build `ChangeDatesDialog` for manual overrides
+6. Integrate into BillingConfigurationPanel
 
-### Phase 5: Apply Branding
-1. Modify PlatformSidebar to use custom logos
-2. Create PlatformBrandingInitializer for theme colors
-3. Integrate into PlatformLayout
-
----
-
-## Visual Design
-
-**Tab Badge**: Crown icon to indicate owner-only access
-
-**Logo Upload Cards**:
-- Dark slate background (`slate-800/50`)
-- Dashed border for empty state
-- Image preview with remove button when uploaded
-- Upload progress indicator
-
-**Color Editor**:
-- Grid of color swatches
-- ColorWheelPicker component (already exists)
-- "Modified" dot indicator for changed values
-
-**Live Preview**:
-- Mini version of PlatformSidebar (scaled down)
-- Shows logo and accent color changes in real-time
-- Collapsed/expanded toggle for preview
+### Phase 5: Testing & Documentation
+1. Test webhook with PandaDoc sandbox
+2. Test field mapping with various document templates
+3. Document PandaDoc template requirements
+4. Document adjustment audit trail
 
 ---
 
-## Fallback Behavior
+## PandaDoc Template Requirements
 
-When no custom branding is set:
-- **Primary Logo**: Shows Sparkles icon + "Platform" text
-- **Secondary Logo**: Shows Sparkles icon only
-- **Theme Colors**: Uses default violet/slate theme from CSS
-- **Typography**: Uses default platform font sizes
+For the integration to work, PandaDoc templates should include these field tokens:
+
+| Field Name | Type | Format | Example |
+|------------|------|--------|---------|
+| term_start_date | Date | YYYY-MM-DD | 2026-02-01 |
+| term_end_date | Date | YYYY-MM-DD | 2027-01-31 |
+| subscription_plan | Text | Plan name | Professional |
+| monthly_rate | Number | Decimal | 299.00 |
+| promo_months | Number | Integer | 3 |
+| promo_rate | Number | Decimal | 199.00 |
+| setup_fee | Number | Decimal | 500.00 |
+| special_notes | Text | Freeform | Waived setup fee |
+
+Additionally, document metadata should include `organization_id` when creating documents via API to enable automatic linking.
+
