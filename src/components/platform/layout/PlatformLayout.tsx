@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { PlatformSidebar } from './PlatformSidebar';
+import { PlatformHeader } from './PlatformHeader';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { PlatformThemeProvider, usePlatformTheme } from '@/contexts/PlatformThemeContext';
@@ -41,14 +42,17 @@ function PlatformLayoutInner() {
       <PlatformSidebar />
       
       {/* Main Content Area */}
-      <main
+      <div
         className={cn(
-          'min-h-screen transition-all duration-300',
+          'min-h-screen transition-all duration-300 flex flex-col',
           collapsed ? 'ml-16' : 'ml-56'
         )}
       >
-        <Outlet />
-      </main>
+        <PlatformHeader />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
