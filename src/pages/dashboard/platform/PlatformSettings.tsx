@@ -1,6 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Shield, Database } from 'lucide-react';
+import { Settings, Shield, Database, Crown } from 'lucide-react';
 import { PlatformTeamManager } from '@/components/platform/PlatformTeamManager';
+import { PlatformBrandingTab } from '@/components/platform/settings/PlatformBrandingTab';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -12,6 +14,9 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 
 export default function PlatformSettings() {
+  const { hasPlatformRoleOrHigher } = useAuth();
+  const isPlatformOwner = hasPlatformRoleOrHigher('platform_owner');
+
   return (
     <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
@@ -47,6 +52,15 @@ export default function PlatformSettings() {
           >
             Defaults
           </TabsTrigger>
+          {isPlatformOwner && (
+            <TabsTrigger 
+              value="branding"
+              className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white flex items-center gap-1.5"
+            >
+              <Crown className="h-3.5 w-3.5 text-amber-400" />
+              Branding
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="team">
@@ -109,6 +123,12 @@ export default function PlatformSettings() {
             </PlatformCardContent>
           </PlatformCard>
         </TabsContent>
+
+        {isPlatformOwner && (
+          <TabsContent value="branding">
+            <PlatformBrandingTab />
+          </TabsContent>
+        )}
       </Tabs>
     </PlatformPageContainer>
   );

@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { PlatformButton } from '../ui/PlatformButton';
+import { usePlatformBranding } from '@/hooks/usePlatformBranding';
 
 interface NavItem {
   href: string;
@@ -37,6 +38,7 @@ const SIDEBAR_COLLAPSED_KEY = 'platform-sidebar-collapsed';
 export function PlatformSidebar() {
   const location = useLocation();
   const { hasPlatformRoleOrHigher } = useAuth();
+  const { branding } = usePlatformBranding();
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
     return saved ? JSON.parse(saved) : false;
@@ -63,15 +65,35 @@ export function PlatformSidebar() {
       <div className="flex h-16 items-center justify-between border-b border-slate-700/50 px-4">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20">
-              <Sparkles className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-display font-semibold text-white">Platform</span>
+            {branding.primary_logo_url ? (
+              <img
+                src={branding.primary_logo_url}
+                alt="Platform logo"
+                className="h-8 object-contain"
+              />
+            ) : (
+              <>
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                <span className="font-display font-semibold text-white">Platform</span>
+              </>
+            )}
           </div>
         )}
         {collapsed && (
-          <div className="mx-auto p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20">
-            <Sparkles className="h-4 w-4 text-white" />
+          <div className="mx-auto">
+            {branding.secondary_logo_url ? (
+              <img
+                src={branding.secondary_logo_url}
+                alt="Platform icon"
+                className="h-8 w-8 object-contain"
+              />
+            ) : (
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+            )}
           </div>
         )}
       </div>
