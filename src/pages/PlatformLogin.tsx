@@ -1,27 +1,64 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useInvitationByToken, useAcceptPlatformInvitation } from '@/hooks/usePlatformInvitations';
 import { toast } from '@/components/ui/use-toast';
-import { Loader2, Terminal, ArrowRight, Sparkles } from 'lucide-react';
+import { Loader2, Terminal, ArrowRight, Sparkles, Mail, UserPlus } from 'lucide-react';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import { PlatformCard } from '@/components/platform/ui/PlatformCard';
 
 export default function PlatformLogin() {
+  const [searchParams] = useSearchParams();
+  const invitationToken = searchParams.get('invitation');
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(false);
-  const { user, signIn } = useAuth();
+  const [isSignupMode, setIsSignupMode] = useState(false);
+  
+  const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  
+  const { data: invitation, isLoading: loadingInvitation } = useInvitationByToken(invitationToken);
+  const acceptInvitationMutation = useAcceptPlatformInvitation();
+
+  // Set signup mode and pre-fill email when invitation is loaded
+  useEffect(() => {
+    if (invitation && invitation.status === 'pending') {
+      setEmail(invitation.email);
+      setIsSignupMode(true);
+    }
+  }, [invitation]);
 
   // Check if already logged in as platform user
   useEffect(() => {
     const checkPlatformAccess = async () => {
       if (user) {
         setCheckingAccess(true);
+        
+        // If we have an invitation token, accept it
+        if (invitationToken && invitation?.status === 'pending') {
+          try {
+            await acceptInvitationMutation.mutateAsync({
+              token: invitationToken,
+              userId: user.id,
+            });
+            toast({
+              title: 'Welcome to the Platform Team!',
+              description: `You've been granted ${invitation.role.replace('platform_', '')} access.`,
+            });
+            navigate('/dashboard/platform/overview', { replace: true });
+            return;
+          } catch (error) {
+            console.error('Failed to accept invitation:', error);
+          }
+        }
+        
         const { data } = await supabase
           .from('platform_roles')
           .select('role')
@@ -36,9 +73,9 @@ export default function PlatformLogin() {
     };
 
     checkPlatformAccess();
-  }, [user, navigate]);
+  }, [user, navigate, invitationToken, invitation, acceptInvitationMutation]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -58,6 +95,24 @@ export default function PlatformLogin() {
       // Check if user has platform role
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
+        // If there's an invitation, accept it
+        if (invitationToken && invitation?.status === 'pending') {
+          try {
+            await acceptInvitationMutation.mutateAsync({
+              token: invitationToken,
+              userId: session.session.user.id,
+            });
+            toast({
+              title: 'Welcome to the Platform Team!',
+              description: `You've been granted ${invitation.role.replace('platform_', '')} access.`,
+            });
+            navigate('/dashboard/platform/overview', { replace: true });
+            return;
+          } catch (error) {
+            console.error('Failed to accept invitation:', error);
+          }
+        }
+
         const { data: roles } = await supabase
           .from('platform_roles')
           .select('role')
@@ -94,13 +149,97 @@ export default function PlatformLogin() {
     }
   };
 
-  if (checkingAccess) {
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!invitationToken || !invitation) {
+      toast({
+        title: 'Invalid invitation',
+        description: 'A valid invitation is required to create an account.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (invitation.status !== 'pending') {
+      toast({
+        title: 'Invitation expired',
+        description: 'This invitation has already been used or has expired.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // For platform invitations, we use 'admin' as the base role since
+      // the platform role is assigned separately after account creation
+      const { error } = await signUp(email, password, fullName, 'admin');
+
+      if (error) {
+        toast({
+          title: 'Signup failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
+
+      toast({
+        title: 'Account created!',
+        description: 'Please check your email to verify your account, then sign in.',
+      });
+
+      setIsSignupMode(false);
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (checkingAccess || loadingInvitation) {
     return (
       <div className="min-h-screen platform-gradient-radial platform-theme flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
-          <p className="text-slate-400 text-sm">Checking access...</p>
+          <p className="text-slate-400 text-sm">
+            {loadingInvitation ? 'Loading invitation...' : 'Checking access...'}
+          </p>
         </div>
+      </div>
+    );
+  }
+
+  // Show expired/invalid invitation message
+  if (invitationToken && invitation && invitation.status !== 'pending') {
+    return (
+      <div className="min-h-screen platform-gradient-radial platform-theme flex flex-col items-center justify-center px-4">
+        <PlatformCard variant="glass" className="max-w-md w-full p-8 text-center">
+          <div className="p-4 bg-red-500/10 rounded-full w-fit mx-auto mb-4">
+            <Mail className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-xl font-medium text-white mb-2">
+            {invitation.status === 'accepted' ? 'Invitation Already Used' : 'Invitation Expired'}
+          </h2>
+          <p className="text-slate-400 mb-6">
+            {invitation.status === 'accepted' 
+              ? 'This invitation has already been accepted.'
+              : 'This invitation has expired or been cancelled.'}
+          </p>
+          <PlatformButton 
+            onClick={() => navigate('/platform-login', { replace: true })}
+            variant="glow"
+          >
+            Go to Login
+          </PlatformButton>
+        </PlatformCard>
       </div>
     );
   }
@@ -109,13 +248,9 @@ export default function PlatformLogin() {
     <div className="min-h-screen platform-gradient-radial platform-theme flex flex-col relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Top-right glow */}
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl platform-animate-float" />
-        {/* Bottom-left glow */}
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" style={{ animationDelay: '3s' }} />
-        {/* Center accent */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-violet-500/5 via-transparent to-purple-500/5 rounded-full blur-3xl" />
-        {/* Grid pattern overlay */}
         <div 
           className="absolute inset-0 opacity-[0.015]"
           style={{
@@ -136,25 +271,45 @@ export default function PlatformLogin() {
             <div className="flex items-center justify-center gap-3 mb-6">
               <div className="relative">
                 <div className="p-4 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl shadow-lg platform-button-glow">
-                  <Terminal className="w-8 h-8 text-white" />
+                  {isSignupMode ? (
+                    <UserPlus className="w-8 h-8 text-white" />
+                  ) : (
+                    <Terminal className="w-8 h-8 text-white" />
+                  )}
                 </div>
-                {/* Decorative sparkle */}
                 <div className="absolute -top-1 -right-1">
                   <Sparkles className="w-4 h-4 text-violet-400" />
                 </div>
               </div>
             </div>
             <h1 className="text-3xl font-medium text-white tracking-tight">
-              Platform Administration
+              {isSignupMode ? 'Create Your Account' : 'Platform Administration'}
             </h1>
             <p className="text-slate-400">
-              Internal access for development and support teams
+              {isSignupMode 
+                ? `You've been invited as ${invitation?.role.replace('platform_', '').replace('_', ' ')}`
+                : 'Internal access for development and support teams'}
             </p>
           </div>
 
-          {/* Login Form Card */}
+          {/* Form Card */}
           <PlatformCard variant="glass" glow className="p-8 shadow-2xl">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={isSignupMode ? handleSignUp : handleSignIn} className="space-y-6">
+              {isSignupMode && (
+                <div className="space-y-2">
+                  <PlatformLabel htmlFor="fullName">Full Name</PlatformLabel>
+                  <PlatformInput
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your full name"
+                    required
+                    autoComplete="name"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <PlatformLabel htmlFor="email">Email</PlatformLabel>
                 <PlatformInput
@@ -166,6 +321,7 @@ export default function PlatformLogin() {
                   required
                   autoComplete="email"
                   autoCapitalize="none"
+                  disabled={isSignupMode && !!invitation}
                 />
               </div>
 
@@ -178,8 +334,12 @@ export default function PlatformLogin() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  autoComplete="current-password"
+                  autoComplete={isSignupMode ? 'new-password' : 'current-password'}
+                  minLength={isSignupMode ? 8 : undefined}
                 />
+                {isSignupMode && (
+                  <p className="text-xs text-slate-500">Must be at least 8 characters</p>
+                )}
               </div>
 
               <PlatformButton
@@ -188,8 +348,23 @@ export default function PlatformLogin() {
                 variant="glow"
                 className="w-full h-12 text-base"
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading 
+                  ? (isSignupMode ? 'Creating account...' : 'Signing in...')
+                  : (isSignupMode ? 'Create Account' : 'Sign In')}
               </PlatformButton>
+
+              {isSignupMode && (
+                <p className="text-center text-sm text-slate-400">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setIsSignupMode(false)}
+                    className="text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    Sign in instead
+                  </button>
+                </p>
+              )}
             </form>
           </PlatformCard>
 
