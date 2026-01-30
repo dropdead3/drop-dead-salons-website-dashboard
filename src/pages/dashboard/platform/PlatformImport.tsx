@@ -20,6 +20,7 @@ import {
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 
 const importTypes = [
   { value: 'clients', label: 'Clients', description: 'Import customer data' },
@@ -50,7 +51,7 @@ export default function PlatformImport() {
   };
 
   return (
-    <div className="space-y-6">
+    <PlatformPageContainer className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-white">Data Migration</h1>
         <p className="text-slate-400">
@@ -162,6 +163,6 @@ export default function PlatformImport() {
           dataType={selectedDataType}
         />
       )}
-    </div>
+    </PlatformPageContainer>
   );
 }

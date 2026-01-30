@@ -42,6 +42,7 @@ import {
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -72,7 +73,7 @@ export default function PlatformAccounts() {
   });
 
   return (
-    <div className="space-y-6">
+    <PlatformPageContainer className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">Salon Accounts</h1>
@@ -243,7 +244,7 @@ export default function PlatformAccounts() {
         open={createDialogOpen} 
         onOpenChange={setCreateDialogOpen} 
       />
-    </div>
+    </PlatformPageContainer>
   );
 }
 

@@ -25,6 +25,7 @@ import {
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -46,31 +47,37 @@ export default function AccountDetail() {
   const { data: organization, isLoading } = useOrganizationWithStats(orgId);
 
   if (isLoading) {
-    return <AccountDetailSkeleton />;
+    return (
+      <PlatformPageContainer>
+        <AccountDetailSkeleton />
+      </PlatformPageContainer>
+    );
   }
 
   if (!organization) {
     return (
-      <div className="text-center py-12">
-        <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
-          <Building2 className="h-8 w-8 text-slate-600" />
+      <PlatformPageContainer>
+        <div className="text-center py-12">
+          <div className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
+            <Building2 className="h-8 w-8 text-slate-600" />
+          </div>
+          <h3 className="text-lg font-medium text-white mb-1">Organization not found</h3>
+          <p className="text-slate-500 mb-4">
+            The organization you're looking for doesn't exist or you don't have access.
+          </p>
+          <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Accounts
+          </PlatformButton>
         </div>
-        <h3 className="text-lg font-medium text-white mb-1">Organization not found</h3>
-        <p className="text-slate-500 mb-4">
-          The organization you're looking for doesn't exist or you don't have access.
-        </p>
-        <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Accounts
-        </PlatformButton>
-      </div>
+      </PlatformPageContainer>
     );
   }
 
   const stage = stageConfig[organization.onboarding_stage || 'new'];
 
   return (
-    <div className="space-y-6">
+    <PlatformPageContainer className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
@@ -316,7 +323,7 @@ export default function AccountDetail() {
           </PlatformCard>
         </TabsContent>
       </Tabs>
-    </div>
+    </PlatformPageContainer>
   );
 }
 
