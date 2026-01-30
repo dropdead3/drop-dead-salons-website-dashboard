@@ -43,7 +43,10 @@ export function PlatformContextBanner() {
           <PlatformButton
             variant="ghost"
             size="sm"
-            onClick={clearSelection}
+            onClick={() => {
+              clearSelection();
+              navigate('/dashboard/platform/overview');
+            }}
             className="h-7 text-xs gap-1 hover:bg-red-500/20 hover:text-red-400"
           >
             <X className="h-3 w-3" />

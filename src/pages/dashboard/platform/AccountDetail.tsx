@@ -15,8 +15,11 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
-  MessageSquare
+  MessageSquare,
+  LayoutDashboard
 } from 'lucide-react';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { logPlatformAction } from '@/hooks/useOrganizations';
 import { useOrganizationWithStats, type OrganizationWithStats } from '@/hooks/useOrganizations';
 import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
 import { BillingConfigurationPanel } from '@/components/platform/billing/BillingConfigurationPanel';
@@ -63,6 +66,7 @@ export default function AccountDetail() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'overview';
+  const { setSelectedOrganization } = useOrganizationContext();
   const { data: organization, isLoading } = useOrganizationWithStats(orgId);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
@@ -118,6 +122,20 @@ export default function AccountDetail() {
             <PlatformButton variant="secondary" onClick={() => navigate(`/dashboard/platform/import?org=${organization.id}`)}>
               <Upload className="h-4 w-4 mr-2" />
               Import Data
+            </PlatformButton>
+            <PlatformButton 
+              variant="secondary" 
+              onClick={() => {
+                setSelectedOrganization(organization);
+                logPlatformAction(organization.id, 'dashboard_accessed', 'organization', organization.id, {
+                  organization_name: organization.name,
+                  action: 'view_dashboard',
+                });
+                navigate('/dashboard');
+              }}
+            >
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              View Dashboard
             </PlatformButton>
             <PlatformButton onClick={() => setEditDialogOpen(true)}>
               <Pencil className="h-4 w-4 mr-2" />
