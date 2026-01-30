@@ -131,10 +131,10 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
             <div className="p-2 rounded-lg bg-violet-500/20">
               <Building2 className="h-5 w-5 text-violet-400" />
             </div>
-            Create Salon Account
+            Create Account
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Set up a new salon organization on the platform
+            Set up a new organization on the platform
           </DialogDescription>
         </DialogHeader>
 

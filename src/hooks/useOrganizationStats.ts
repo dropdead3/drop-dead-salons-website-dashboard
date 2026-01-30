@@ -61,7 +61,7 @@ export function useOrganizationStats() {
         .map(org => ({
           id: org.id,
           type: 'org_created' as const,
-          description: `New salon account created`,
+          description: `New account created`,
           organizationName: org.name,
           createdAt: org.created_at,
         }));
