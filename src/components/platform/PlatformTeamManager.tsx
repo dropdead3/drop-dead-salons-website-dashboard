@@ -47,6 +47,7 @@ import {
   Filter
 } from 'lucide-react';
 import { InvitePlatformUserDialog } from './InvitePlatformUserDialog';
+import { PendingInvitationsSection } from './PendingInvitationsSection';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -141,7 +142,9 @@ export function PlatformTeamManager() {
   }
 
   return (
-    <>
+    <div className="space-y-6">
+      <PendingInvitationsSection />
+      
       <PlatformCard variant="glass">
         <PlatformCardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -306,6 +309,6 @@ export function PlatformTeamManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

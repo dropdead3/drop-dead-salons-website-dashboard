@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.create-admin-account]
 verify_jwt = false
+
+[functions.send-platform-invitation]
+verify_jwt = false

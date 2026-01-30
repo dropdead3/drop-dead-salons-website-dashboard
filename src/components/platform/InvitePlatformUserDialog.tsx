@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAddPlatformRole, type PlatformRole } from '@/hooks/usePlatformRoles';
+import { useCreatePlatformInvitation } from '@/hooks/usePlatformInvitations';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
@@ -17,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
-import { Loader2, Shield, Headphones, Code } from 'lucide-react';
+import { Loader2, Shield, Headphones, Code, Mail, UserCheck } from 'lucide-react';
 import { PlatformButton } from './ui/PlatformButton';
 import { PlatformInput } from './ui/PlatformInput';
 import { PlatformLabel } from './ui/PlatformLabel';
@@ -33,18 +34,44 @@ const roleOptions: { value: PlatformRole; label: string; description: string; ic
   { value: 'platform_developer', label: 'Platform Developer', description: 'View access, testing, debugging', icon: Code },
 ];
 
+type FlowState = 'input' | 'existing_user' | 'new_user';
+
+interface UserCheck {
+  userId: string;
+  fullName: string | null;
+  email: string;
+}
+
 export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformUserDialogProps) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<PlatformRole>('platform_support');
   const [loading, setLoading] = useState(false);
+  const [flowState, setFlowState] = useState<FlowState>('input');
+  const [existingUser, setExistingUser] = useState<UserCheck | null>(null);
+  
   const addRoleMutation = useAddPlatformRole();
+  const createInvitationMutation = useCreatePlatformInvitation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetDialog = () => {
+    setEmail('');
+    setRole('platform_support');
+    setFlowState('input');
+    setExistingUser(null);
+    setLoading(false);
+  };
+
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      resetDialog();
+    }
+    onOpenChange(isOpen);
+  };
+
+  const checkUserExists = async () => {
     setLoading(true);
 
     try {
-      // Find user by email in employee_profiles
+      // Check for existing user
       const { data: profiles, error: profileError } = await supabase
         .from('employee_profiles')
         .select('user_id, email, full_name')
@@ -55,46 +82,74 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
         throw new Error('Failed to search for user');
       }
 
-      if (!profiles || profiles.length === 0) {
-        toast({
-          title: 'User not found',
-          description: 'No user found with that email. They must have an account first.',
-          variant: 'destructive',
+      if (profiles && profiles.length > 0) {
+        // User exists - check if they already have this role
+        const { data: existingRoles } = await supabase
+          .from('platform_roles')
+          .select('role')
+          .eq('user_id', profiles[0].user_id)
+          .eq('role', role);
+
+        if (existingRoles && existingRoles.length > 0) {
+          toast({
+            title: 'Already assigned',
+            description: 'This user already has the selected platform role.',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
+        setExistingUser({
+          userId: profiles[0].user_id,
+          fullName: profiles[0].full_name,
+          email: profiles[0].email || email,
         });
-        setLoading(false);
-        return;
+        setFlowState('existing_user');
+      } else {
+        // Check for pending invitation
+        const { data: pendingInvites } = await supabase
+          .from('platform_invitations')
+          .select('id')
+          .eq('email', email.toLowerCase())
+          .eq('status', 'pending');
+
+        if (pendingInvites && pendingInvites.length > 0) {
+          toast({
+            title: 'Invitation pending',
+            description: 'An invitation has already been sent to this email address.',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
+        setFlowState('new_user');
       }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to check user',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const userId = profiles[0].user_id;
+  const handleAssignRole = async () => {
+    if (!existingUser) return;
+    setLoading(true);
 
-      // Check if user already has this role
-      const { data: existingRoles } = await supabase
-        .from('platform_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', role);
-
-      if (existingRoles && existingRoles.length > 0) {
-        toast({
-          title: 'Already assigned',
-          description: 'This user already has the selected platform role.',
-          variant: 'destructive',
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Add the platform role
-      await addRoleMutation.mutateAsync({ userId, role });
+    try {
+      await addRoleMutation.mutateAsync({ userId: existingUser.userId, role });
 
       toast({
         title: 'Team member added',
-        description: `${profiles[0].full_name || email} has been granted ${role.replace('platform_', '')} access.`,
+        description: `${existingUser.fullName || email} has been granted ${role.replace('platform_', '')} access.`,
       });
 
-      setEmail('');
-      setRole('platform_support');
-      onOpenChange(false);
+      handleClose(false);
     } catch (error) {
       toast({
         title: 'Error',
@@ -106,68 +161,156 @@ export function InvitePlatformUserDialog({ open, onOpenChange }: InvitePlatformU
     }
   };
 
+  const handleSendInvitation = async () => {
+    setLoading(true);
+
+    try {
+      await createInvitationMutation.mutateAsync({ email, role });
+
+      toast({
+        title: 'Invitation sent',
+        description: `An invitation email has been sent to ${email}.`,
+      });
+
+      handleClose(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to send invitation',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (flowState === 'input') {
+      await checkUserExists();
+    } else if (flowState === 'existing_user') {
+      await handleAssignRole();
+    } else if (flowState === 'new_user') {
+      await handleSendInvitation();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md bg-slate-800 border-slate-700">
         <DialogHeader>
-          <DialogTitle className="text-white">Add Platform Team Member</DialogTitle>
+          <DialogTitle className="text-white">
+            {flowState === 'input' && 'Add Platform Team Member'}
+            {flowState === 'existing_user' && 'Assign Platform Role'}
+            {flowState === 'new_user' && 'Send Invitation'}
+          </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Grant platform access to an existing user. They must already have an account.
+            {flowState === 'input' && 'Enter an email address to add a new team member or invite someone new.'}
+            {flowState === 'existing_user' && `${existingUser?.fullName || existingUser?.email} already has an account.`}
+            {flowState === 'new_user' && `No account found for ${email}. Send an invitation to create one.`}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <PlatformLabel htmlFor="email">Email Address</PlatformLabel>
-            <PlatformInput
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="team@company.com"
-              required
-              autoCapitalize="none"
-            />
-          </div>
+          {flowState === 'input' && (
+            <>
+              <div className="space-y-2">
+                <PlatformLabel htmlFor="email">Email Address</PlatformLabel>
+                <PlatformInput
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="team@company.com"
+                  required
+                  autoCapitalize="none"
+                />
+              </div>
 
-          <div className="space-y-2">
-            <PlatformLabel htmlFor="role">Platform Role</PlatformLabel>
-            <Select value={role} onValueChange={(v) => setRole(v as PlatformRole)}>
-              <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                {roleOptions.map((opt) => {
-                  const Icon = opt.icon;
-                  return (
-                    <SelectItem 
-                      key={opt.value} 
-                      value={opt.value}
-                      className="text-slate-300 focus:bg-slate-700 focus:text-white"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon className="w-4 h-4 text-violet-400" />
-                        <div>
-                          <span className="font-medium">{opt.label}</span>
-                          <span className="text-slate-500 text-xs ml-2">
-                            {opt.description}
-                          </span>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-2">
+                <PlatformLabel htmlFor="role">Platform Role</PlatformLabel>
+                <Select value={role} onValueChange={(v) => setRole(v as PlatformRole)}>
+                  <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    {roleOptions.map((opt) => {
+                      const Icon = opt.icon;
+                      return (
+                        <SelectItem 
+                          key={opt.value} 
+                          value={opt.value}
+                          className="text-slate-300 focus:bg-slate-700 focus:text-white"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4 text-violet-400" />
+                            <div>
+                              <span className="font-medium">{opt.label}</span>
+                              <span className="text-slate-500 text-xs ml-2">
+                                {opt.description}
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
 
-          <DialogFooter>
-            <PlatformButton type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+          {flowState === 'existing_user' && (
+            <div className="flex items-center gap-3 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <UserCheck className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">
+                  {existingUser?.fullName || 'Unknown'}
+                </p>
+                <p className="text-xs text-slate-400">{existingUser?.email}</p>
+              </div>
+            </div>
+          )}
+
+          {flowState === 'new_user' && (
+            <div className="flex items-center gap-3 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <div className="p-2 bg-violet-500/10 rounded-lg">
+                <Mail className="w-5 h-5 text-violet-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">Invitation Email</p>
+                <p className="text-xs text-slate-400">
+                  They'll receive a link to create an account with {role.replace('platform_', '')} access.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            {flowState !== 'input' && (
+              <PlatformButton 
+                type="button" 
+                variant="secondary" 
+                onClick={() => setFlowState('input')}
+              >
+                Back
+              </PlatformButton>
+            )}
+            <PlatformButton 
+              type="button" 
+              variant="secondary" 
+              onClick={() => handleClose(false)}
+            >
               Cancel
             </PlatformButton>
             <PlatformButton type="submit" disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Add Member
+              {flowState === 'input' && 'Continue'}
+              {flowState === 'existing_user' && 'Assign Role'}
+              {flowState === 'new_user' && 'Send Invitation'}
             </PlatformButton>
           </DialogFooter>
         </form>
