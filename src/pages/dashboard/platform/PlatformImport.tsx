@@ -21,6 +21,7 @@ import {
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
+import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 
 const importTypes = [
   { value: 'clients', label: 'Clients', description: 'Import customer data' },
@@ -52,12 +53,12 @@ export default function PlatformImport() {
 
   return (
     <PlatformPageContainer className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Data Migration</h1>
-        <p className="text-slate-400">
-          Import data from external software into salon accounts
-        </p>
-      </div>
+      <PlatformPageHeader
+        title="Data Migration"
+        description="Import data from external software into salon accounts"
+        backTo="/dashboard/platform/overview"
+        backLabel="Back to Overview"
+      />
 
       {/* Organization Selector */}
       <PlatformCard variant="glass">

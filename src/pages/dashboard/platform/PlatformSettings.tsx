@@ -9,16 +9,17 @@ import {
   PlatformCardDescription,
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
+import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 
 export default function PlatformSettings() {
   return (
     <PlatformPageContainer className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Platform Settings</h1>
-        <p className="text-slate-400">
-          Configure platform-wide settings and defaults
-        </p>
-      </div>
+      <PlatformPageHeader
+        title="Platform Settings"
+        description="Configure platform-wide settings and defaults"
+        backTo="/dashboard/platform/overview"
+        backLabel="Back to Overview"
+      />
 
       <Tabs defaultValue="team" className="space-y-6">
         <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
