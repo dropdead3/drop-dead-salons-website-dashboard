@@ -61,6 +61,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    
+    const callerId = caller.id;
 
     // Parse request body
     const { email, fullName, password, grantSuperAdmin = false } = await req.json();
@@ -123,7 +125,7 @@ Deno.serve(async (req) => {
         is_approved: true,
         is_active: true,
         is_super_admin: grantSuperAdmin,
-        approved_by: caller.id,
+        approved_by: callerId,
         approved_at: new Date().toISOString()
       })
       .eq('user_id', userId);
@@ -150,7 +152,7 @@ Deno.serve(async (req) => {
       .insert({
         user_id: userId,
         action: 'admin_account_created',
-        performed_by: caller.id
+        performed_by: callerId
       });
 
     if (logError) {
