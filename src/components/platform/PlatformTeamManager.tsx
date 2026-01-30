@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { usePlatformTeam, useRemovePlatformRole, type PlatformRole } from '@/hooks/usePlatformRoles';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
@@ -25,6 +25,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
@@ -36,7 +43,8 @@ import {
   MoreHorizontal, 
   Trash2,
   UserPlus,
-  Loader2
+  Loader2,
+  Filter
 } from 'lucide-react';
 import { InvitePlatformUserDialog } from './InvitePlatformUserDialog';
 import {
@@ -48,6 +56,14 @@ import {
 } from './ui/PlatformCard';
 import { PlatformButton } from './ui/PlatformButton';
 import { PlatformBadge } from './ui/PlatformBadge';
+
+// Role hierarchy order (higher = more senior)
+const ROLE_HIERARCHY: PlatformRole[] = [
+  'platform_owner',
+  'platform_admin',
+  'platform_support',
+  'platform_developer',
+];
 
 const roleConfig: Record<PlatformRole, { label: string; icon: React.ElementType; variant: 'warning' | 'info' | 'success' | 'primary' }> = {
   platform_owner: { label: 'Owner', icon: Crown, variant: 'warning' },
@@ -62,8 +78,27 @@ export function PlatformTeamManager() {
   const removeMutation = useRemovePlatformRole();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; role: PlatformRole; name: string } | null>(null);
+  const [roleFilter, setRoleFilter] = useState<PlatformRole | 'all'>('all');
 
   const canManageTeam = hasPlatformRole('platform_owner') || hasPlatformRole('platform_admin');
+
+  // Sort by role hierarchy, then filter
+  const filteredAndSortedTeam = useMemo(() => {
+    if (!team) return [];
+    
+    // First sort by role hierarchy
+    const sorted = [...team].sort((a, b) => {
+      const aIndex = ROLE_HIERARCHY.indexOf(a.role);
+      const bIndex = ROLE_HIERARCHY.indexOf(b.role);
+      if (aIndex !== bIndex) return aIndex - bIndex;
+      // Secondary sort by name
+      return (a.full_name || '').localeCompare(b.full_name || '');
+    });
+    
+    // Then filter if a specific role is selected
+    if (roleFilter === 'all') return sorted;
+    return sorted.filter(member => member.role === roleFilter);
+  }, [team, roleFilter]);
 
   const handleRemoveMember = async () => {
     if (!deleteConfirm) return;
@@ -115,15 +150,40 @@ export function PlatformTeamManager() {
               Manage access for your development and support team
             </PlatformCardDescription>
           </div>
-          {canManageTeam && (
-            <PlatformButton onClick={() => setInviteOpen(true)} className="gap-2">
-              <UserPlus className="w-4 h-4" />
-              Add Team Member
-            </PlatformButton>
-          )}
+          <div className="flex items-center gap-3">
+            {/* Role Filter */}
+            <Select value={roleFilter} onValueChange={(val) => setRoleFilter(val as PlatformRole | 'all')}>
+              <SelectTrigger className="w-[160px] bg-slate-800/50 border-slate-700 text-slate-300">
+                <Filter className="w-4 h-4 mr-2 text-slate-500" />
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="all" className="text-slate-300">All Roles</SelectItem>
+                {ROLE_HIERARCHY.map(role => {
+                  const config = roleConfig[role];
+                  const Icon = config.icon;
+                  return (
+                    <SelectItem key={role} value={role} className="text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-3 h-3" />
+                        {config.label}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            
+            {canManageTeam && (
+              <PlatformButton onClick={() => setInviteOpen(true)} className="gap-2">
+                <UserPlus className="w-4 h-4" />
+                Add Team Member
+              </PlatformButton>
+            )}
+          </div>
         </PlatformCardHeader>
         <PlatformCardContent>
-          {team && team.length > 0 ? (
+          {filteredAndSortedTeam.length > 0 ? (
             <div className="rounded-xl overflow-hidden border border-slate-700/50">
               <Table>
                 <TableHeader>
@@ -135,7 +195,7 @@ export function PlatformTeamManager() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {team.map((member) => {
+                  {filteredAndSortedTeam.map((member) => {
                     const config = roleConfig[member.role];
                     const Icon = config.icon;
                     const isCurrentUser = member.user_id === user?.id;
