@@ -1051,9 +1051,16 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
 // Export wrapper component that applies scoped dark mode
 export function DashboardLayout(props: DashboardLayoutProps) {
   const { resolvedTheme } = useDashboardTheme();
+  const location = useLocation();
+  
+  // Check if we're on a platform route
+  const isPlatformRoute = location.pathname.startsWith('/dashboard/platform');
   
   return (
-    <div className={cn(resolvedTheme === 'dark' && 'dark')}>
+    <div className={cn(
+      resolvedTheme === 'dark' && 'dark',
+      isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
+    )}>
       <DashboardLayoutInner {...props} />
     </div>
   );

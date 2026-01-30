@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
-import { Loader2, Terminal, ArrowRight } from 'lucide-react';
+import { Loader2, Terminal, ArrowRight, Sparkles } from 'lucide-react';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput } from '@/components/platform/ui/PlatformInput';
+import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
+import { PlatformCard } from '@/components/platform/ui/PlatformCard';
 
 export default function PlatformLogin() {
   const [email, setEmail] = useState('');
@@ -95,22 +96,52 @@ export default function PlatformLogin() {
 
   if (checkingAccess) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      <div className="min-h-screen platform-gradient-radial platform-theme flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
+          <p className="text-slate-400 text-sm">Checking access...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen platform-gradient-radial platform-theme flex flex-col relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Top-right glow */}
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl platform-animate-float" />
+        {/* Bottom-left glow */}
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" style={{ animationDelay: '3s' }} />
+        {/* Center accent */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-violet-500/5 via-transparent to-purple-500/5 rounded-full blur-3xl" />
+        {/* Grid pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}
+        />
+      </div>
+
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-center px-4">
+      <div className="flex-1 flex items-center justify-center px-4 relative z-10">
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="p-3 bg-slate-800 rounded-xl border border-slate-700">
-                <Terminal className="w-8 h-8 text-emerald-400" />
+              <div className="relative">
+                <div className="p-4 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl shadow-lg platform-button-glow">
+                  <Terminal className="w-8 h-8 text-white" />
+                </div>
+                {/* Decorative sparkle */}
+                <div className="absolute -top-1 -right-1">
+                  <Sparkles className="w-4 h-4 text-violet-400" />
+                </div>
               </div>
             </div>
             <h1 className="text-3xl font-bold text-white tracking-tight">
@@ -121,14 +152,12 @@ export default function PlatformLogin() {
             </p>
           </div>
 
-          {/* Login Form */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-xl">
+          {/* Login Form Card */}
+          <PlatformCard variant="glass" glow className="p-8 shadow-2xl">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-300">
-                  Email
-                </Label>
-                <Input
+                <PlatformLabel htmlFor="email">Email</PlatformLabel>
+                <PlatformInput
                   id="email"
                   type="email"
                   value={email}
@@ -136,15 +165,13 @@ export default function PlatformLogin() {
                   placeholder="you@company.com"
                   required
                   autoComplete="email"
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-lg"
+                  autoCapitalize="none"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-300">
-                  Password
-                </Label>
-                <Input
+                <PlatformLabel htmlFor="password">Password</PlatformLabel>
+                <PlatformInput
                   id="password"
                   type="password"
                   value={password}
@@ -152,42 +179,35 @@ export default function PlatformLogin() {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20 rounded-lg"
                 />
               </div>
 
-              <Button
+              <PlatformButton
                 type="submit"
-                disabled={loading}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-lg transition-colors"
+                loading={loading}
+                variant="glow"
+                className="w-full h-12 text-base"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </Button>
+                {loading ? 'Signing in...' : 'Sign In'}
+              </PlatformButton>
             </form>
-          </div>
+          </PlatformCard>
 
           {/* Footer link */}
           <div className="text-center">
             <Link
               to="/staff-login"
-              className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-300 text-sm transition-colors"
+              className="inline-flex items-center gap-2 text-slate-500 hover:text-violet-400 text-sm transition-colors group"
             >
               Salon staff? Login here
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>
       </div>
 
       {/* Bottom branding */}
-      <div className="py-6 text-center">
+      <div className="py-6 text-center relative z-10">
         <p className="text-slate-600 text-sm">
           © {new Date().getFullYear()} Platform Admin • Internal Use Only
         </p>

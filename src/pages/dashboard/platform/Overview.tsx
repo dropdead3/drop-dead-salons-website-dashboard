@@ -1,7 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Building2, 
@@ -12,10 +9,19 @@ import {
   ArrowRight,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import { useOrganizationStats } from '@/hooks/useOrganizationStats';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  PlatformCard,
+  PlatformCardContent,
+  PlatformCardHeader,
+  PlatformCardTitle,
+} from '@/components/platform/ui/PlatformCard';
+import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 
 export default function PlatformOverview() {
   const navigate = useNavigate();
@@ -29,15 +35,15 @@ export default function PlatformOverview() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Platform Overview</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight text-white">Platform Overview</h1>
+          <p className="text-slate-400">
             Manage salon accounts, migrations, and platform health
           </p>
         </div>
-        <Button onClick={() => navigate('/dashboard/platform/accounts')} className="gap-2">
+        <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')} className="gap-2">
           <Plus className="h-4 w-4" />
           New Salon Account
-        </Button>
+        </PlatformButton>
       </div>
 
       {/* Stats Grid */}
@@ -73,50 +79,53 @@ export default function PlatformOverview() {
       {/* Quick Actions & Activity */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Quick Actions */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button 
-              variant="outline" 
+        <PlatformCard variant="glass" className="lg:col-span-1">
+          <PlatformCardHeader>
+            <PlatformCardTitle className="text-lg flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-violet-400" />
+              Quick Actions
+            </PlatformCardTitle>
+          </PlatformCardHeader>
+          <PlatformCardContent className="space-y-2">
+            <PlatformButton 
+              variant="secondary" 
               className="w-full justify-start gap-2"
               onClick={() => navigate('/dashboard/platform/accounts')}
             >
               <Building2 className="h-4 w-4" />
               View All Accounts
               <ArrowRight className="h-4 w-4 ml-auto" />
-            </Button>
-            <Button 
-              variant="outline" 
+            </PlatformButton>
+            <PlatformButton 
+              variant="secondary" 
               className="w-full justify-start gap-2"
               onClick={() => navigate('/dashboard/platform/import')}
             >
               <Upload className="h-4 w-4" />
               Start Migration
               <ArrowRight className="h-4 w-4 ml-auto" />
-            </Button>
-            <Button 
-              variant="outline" 
+            </PlatformButton>
+            <PlatformButton 
+              variant="secondary" 
               className="w-full justify-start gap-2"
               onClick={() => navigate('/dashboard/platform/settings')}
             >
               <Users className="h-4 w-4" />
               Platform Settings
               <ArrowRight className="h-4 w-4 ml-auto" />
-            </Button>
-          </CardContent>
-        </Card>
+            </PlatformButton>
+          </PlatformCardContent>
+        </PlatformCard>
 
         {/* Recent Activity */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Recent Activity</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/platform/accounts')}>
+        <PlatformCard variant="glass" className="lg:col-span-2">
+          <PlatformCardHeader className="flex flex-row items-center justify-between">
+            <PlatformCardTitle className="text-lg">Recent Activity</PlatformCardTitle>
+            <PlatformButton variant="ghost" size="sm" onClick={() => navigate('/dashboard/platform/accounts')}>
               View all
-            </Button>
-          </CardHeader>
-          <CardContent>
+            </PlatformButton>
+          </PlatformCardHeader>
+          <PlatformCardContent>
             {stats?.recentActivity && stats.recentActivity.length > 0 ? (
               <div className="space-y-4">
                 {stats.recentActivity.map((activity) => (
@@ -124,14 +133,14 @@ export default function PlatformOverview() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-slate-500">
                 <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>No recent activity</p>
                 <p className="text-sm">Create your first salon account to get started</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </PlatformCardContent>
+        </PlatformCard>
       </div>
     </div>
   );
@@ -146,23 +155,31 @@ interface StatCardProps {
 }
 
 function StatCard({ title, value, icon: Icon, description, variant = 'default' }: StatCardProps) {
-  const variantStyles = {
-    default: 'bg-card',
-    warning: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800',
-    success: 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800',
+  const iconVariants = {
+    default: 'text-violet-400',
+    warning: 'text-amber-400',
+    success: 'text-emerald-400',
+  };
+
+  const valueVariants = {
+    default: 'text-white',
+    warning: 'text-amber-300',
+    success: 'text-emerald-300',
   };
 
   return (
-    <Card className={variantStyles[variant]}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
-      </CardContent>
-    </Card>
+    <PlatformCard variant="interactive" className="group">
+      <PlatformCardHeader className="flex flex-row items-center justify-between pb-2">
+        <PlatformCardTitle className="text-sm font-medium text-slate-400">{title}</PlatformCardTitle>
+        <div className="p-2 rounded-lg bg-slate-700/50 group-hover:bg-violet-500/20 transition-colors">
+          <Icon className={`h-4 w-4 ${iconVariants[variant]} transition-colors`} />
+        </div>
+      </PlatformCardHeader>
+      <PlatformCardContent>
+        <div className={`text-3xl font-bold ${valueVariants[variant]}`}>{value}</div>
+        <p className="text-xs text-slate-500 mt-1">{description}</p>
+      </PlatformCardContent>
+    </PlatformCard>
   );
 }
 
@@ -178,28 +195,28 @@ interface ActivityItemProps {
 
 function ActivityItem({ activity }: ActivityItemProps) {
   const iconMap: Record<string, React.ReactNode> = {
-    org_created: <Building2 className="h-4 w-4 text-primary" />,
-    migration_completed: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
-    status_change: <AlertCircle className="h-4 w-4 text-amber-500" />,
-    user_added: <Users className="h-4 w-4 text-primary" />,
+    org_created: <Building2 className="h-4 w-4 text-violet-400" />,
+    migration_completed: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
+    status_change: <AlertCircle className="h-4 w-4 text-amber-400" />,
+    user_added: <Users className="h-4 w-4 text-violet-400" />,
   };
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-        {iconMap[activity.type] || <Building2 className="h-4 w-4" />}
+    <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-800/30 hover:bg-slate-800/50 transition-colors">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-700/50">
+        {iconMap[activity.type] || <Building2 className="h-4 w-4 text-slate-400" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">
+        <p className="text-sm font-medium text-white truncate">
           {activity.organizationName}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-slate-500">
           {activity.description}
         </p>
       </div>
-      <Badge variant="outline" className="text-xs shrink-0">
+      <PlatformBadge variant="outline" size="sm">
         {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
-      </Badge>
+      </PlatformBadge>
     </div>
   );
 }
@@ -209,22 +226,22 @@ function PlatformOverviewSkeleton() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Skeleton className="h-9 w-48 mb-2" />
-          <Skeleton className="h-5 w-72" />
+          <Skeleton className="h-9 w-48 mb-2 bg-slate-800" />
+          <Skeleton className="h-5 w-72 bg-slate-800" />
         </div>
-        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-10 w-40 bg-slate-800" />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-1" />
-              <Skeleton className="h-3 w-32" />
-            </CardContent>
-          </Card>
+          <PlatformCard key={i}>
+            <PlatformCardHeader className="pb-2">
+              <Skeleton className="h-4 w-24 bg-slate-700" />
+            </PlatformCardHeader>
+            <PlatformCardContent>
+              <Skeleton className="h-8 w-16 mb-1 bg-slate-700" />
+              <Skeleton className="h-3 w-32 bg-slate-700" />
+            </PlatformCardContent>
+          </PlatformCard>
         ))}
       </div>
     </div>

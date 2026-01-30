@@ -939,3 +939,174 @@
     transform: rotateY(180deg);
   }
 }
+
+/* ===== PLATFORM ADMIN THEME ===== */
+/* Fintech-inspired dark theme with purple/violet accents */
+/* This theme is scoped to platform admin pages only */
+
+.platform-theme {
+  /* Core backgrounds */
+  --platform-bg: 222 47% 6%;
+  --platform-bg-elevated: 222 40% 10%;
+  --platform-bg-card: 222 35% 12%;
+  --platform-bg-hover: 222 30% 16%;
+  
+  /* Foregrounds */
+  --platform-foreground: 210 40% 98%;
+  --platform-foreground-muted: 215 20% 65%;
+  --platform-foreground-subtle: 215 15% 45%;
+  
+  /* Primary accent - Violet */
+  --platform-primary: 270 75% 60%;
+  --platform-primary-hover: 270 80% 65%;
+  --platform-primary-glow: 270 85% 70%;
+  --platform-primary-muted: 270 50% 35%;
+  
+  /* Secondary accent - Pink-purple gradient */
+  --platform-secondary: 280 70% 55%;
+  --platform-secondary-hover: 280 75% 60%;
+  
+  /* Status colors */
+  --platform-success: 160 84% 39%;
+  --platform-warning: 38 92% 50%;
+  --platform-error: 0 72% 51%;
+  --platform-info: 217 91% 60%;
+  
+  /* Borders */
+  --platform-border: 222 20% 20%;
+  --platform-border-subtle: 222 15% 15%;
+  --platform-border-glow: 270 60% 50%;
+  
+  /* Input fields */
+  --platform-input: 222 30% 14%;
+  --platform-input-focus: 270 50% 25%;
+  
+  /* Ring/focus */
+  --platform-ring: 270 75% 60%;
+}
+
+/* Platform utility classes */
+@layer utilities {
+  .platform-gradient-bg {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--platform-bg)) 0%,
+      hsl(222 45% 8%) 50%,
+      hsl(270 30% 10%) 100%
+    );
+  }
+  
+  .platform-gradient-radial {
+    background: radial-gradient(
+      ellipse at top right,
+      hsl(270 50% 15% / 0.4) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at bottom left,
+      hsl(280 40% 12% / 0.3) 0%,
+      transparent 50%
+    ),
+    hsl(var(--platform-bg));
+  }
+  
+  .platform-glass {
+    background: hsl(var(--platform-bg-card) / 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--platform-border) / 0.5);
+  }
+  
+  .platform-glass-strong {
+    background: hsl(var(--platform-bg-card) / 0.8);
+    backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--platform-border) / 0.6);
+  }
+  
+  .platform-glow {
+    box-shadow: 
+      0 0 30px -10px hsl(var(--platform-primary) / 0.3),
+      0 0 60px -20px hsl(var(--platform-secondary) / 0.2);
+  }
+  
+  .platform-glow-sm {
+    box-shadow: 0 0 20px -8px hsl(var(--platform-primary) / 0.25);
+  }
+  
+  .platform-button-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--platform-primary)) 0%,
+      hsl(var(--platform-secondary)) 100%
+    );
+  }
+  
+  .platform-button-glow {
+    box-shadow: 
+      0 4px 14px -4px hsl(var(--platform-primary) / 0.5),
+      0 0 30px -10px hsl(var(--platform-primary) / 0.3);
+  }
+  
+  .platform-card-hover:hover {
+    background: hsl(var(--platform-bg-hover));
+    border-color: hsl(var(--platform-border-glow) / 0.3);
+    box-shadow: 0 0 30px -15px hsl(var(--platform-primary) / 0.2);
+  }
+  
+  .platform-text-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--platform-foreground)) 0%,
+      hsl(var(--platform-primary-glow)) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .platform-border-gradient {
+    border-image: linear-gradient(
+      135deg,
+      hsl(var(--platform-border)) 0%,
+      hsl(var(--platform-primary-muted)) 100%
+    ) 1;
+  }
+}
+
+/* Platform animations */
+@keyframes platform-pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 20px -8px hsl(var(--platform-primary) / 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 40px -8px hsl(var(--platform-primary) / 0.5);
+  }
+}
+
+@keyframes platform-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes platform-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.platform-animate-pulse-glow {
+  animation: platform-pulse-glow 3s ease-in-out infinite;
+}
+
+.platform-animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--platform-primary) / 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: platform-shimmer 2s ease-in-out infinite;
+}
+
+.platform-animate-float {
+  animation: platform-float 6s ease-in-out infinite;
+}
