@@ -9,7 +9,10 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Crown,
+  Headphones,
+  Code
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +24,15 @@ import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { OnlineIndicator } from '../ui/OnlineIndicator';
+import { PlatformBadge } from '../ui/PlatformBadge';
+import type { PlatformRole } from '@/hooks/usePlatformRoles';
+
+const roleConfig: Record<PlatformRole, { label: string; icon: React.ComponentType<{ className?: string }>; variant: 'warning' | 'info' | 'success' | 'primary' }> = {
+  platform_owner: { label: 'Owner', icon: Crown, variant: 'warning' },
+  platform_admin: { label: 'Admin', icon: Shield, variant: 'info' },
+  platform_support: { label: 'Support', icon: Headphones, variant: 'success' },
+  platform_developer: { label: 'Developer', icon: Code, variant: 'primary' },
+};
 
 interface NavItem {
   href: string;
@@ -43,11 +55,16 @@ const SIDEBAR_COLLAPSED_KEY = 'platform-sidebar-collapsed';
 export function PlatformSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, hasPlatformRoleOrHigher } = useAuth();
+  const { user, hasPlatformRoleOrHigher, platformRoles } = useAuth();
   const { branding } = usePlatformBranding();
   const { resolvedTheme } = usePlatformTheme();
   const { data: profile } = useEmployeeProfile();
   const { isConnected } = usePlatformPresenceContext();
+  
+  // Get the highest priority role for display
+  const primaryRole = platformRoles[0] as PlatformRole | undefined;
+  const roleInfo = primaryRole ? roleConfig[primaryRole] : null;
+  
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
     return saved ? JSON.parse(saved) : false;
@@ -223,18 +240,23 @@ export function PlatformSidebar() {
           </div>
           {!collapsed && (
             <div className="flex-1 text-left min-w-0">
-              <p className={cn(
-                'text-sm font-medium truncate',
-                isDark ? 'text-white' : 'text-slate-900'
-              )}>
-                {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account'}
-              </p>
-              <p className={cn(
-                'text-xs truncate',
-                isDark ? 'text-slate-500' : 'text-slate-400'
-              )}>
-                {isConnected ? 'Online' : 'Connecting...'}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className={cn(
+                  'text-sm font-medium truncate',
+                  isDark ? 'text-white' : 'text-slate-900'
+                )}>
+                  {profile?.display_name || profile?.full_name?.split(' ')[0] || 'Account'}
+                </p>
+                {isConnected && (
+                  <OnlineIndicator isOnline={true} size="sm" />
+                )}
+              </div>
+              {roleInfo && (
+                <PlatformBadge variant={roleInfo.variant} size="sm" className="gap-1 mt-0.5">
+                  <roleInfo.icon className="w-2.5 h-2.5" />
+                  {roleInfo.label}
+                </PlatformBadge>
+              )}
             </div>
           )}
         </button>

@@ -3,7 +3,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile, useUpdateEmployeeProfile, useUploadProfilePhoto } from '@/hooks/useEmployeeProfile';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { cn } from '@/lib/utils';
-import { Camera, Loader2, Save, User } from 'lucide-react';
+import { Camera, Loader2, Save, User, Crown, Shield, Headphones, Code } from 'lucide-react';
+import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import type { PlatformRole } from '@/hooks/usePlatformRoles';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   PlatformCard,
@@ -17,14 +19,25 @@ import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
 import { OnlineIndicator } from '@/components/platform/ui/OnlineIndicator';
 
+const roleConfig: Record<PlatformRole, { label: string; icon: React.ElementType; variant: 'warning' | 'info' | 'success' | 'primary' }> = {
+  platform_owner: { label: 'Owner', icon: Crown, variant: 'warning' },
+  platform_admin: { label: 'Admin', icon: Shield, variant: 'info' },
+  platform_support: { label: 'Support', icon: Headphones, variant: 'success' },
+  platform_developer: { label: 'Developer', icon: Code, variant: 'primary' },
+};
+
 export function PlatformAccountTab() {
-  const { user } = useAuth();
+  const { user, platformRoles } = useAuth();
   const { data: profile, isLoading } = useEmployeeProfile();
   const updateProfile = useUpdateEmployeeProfile();
   const uploadPhoto = useUploadProfilePhoto();
   const { resolvedTheme } = usePlatformTheme();
   const isDark = resolvedTheme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Get the highest priority role for display
+  const primaryRole = platformRoles[0] as PlatformRole | undefined;
+  const roleInfo = primaryRole ? roleConfig[primaryRole] : null;
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -148,6 +161,14 @@ export function PlatformAccountTab() {
             )}>
               Click to upload photo
             </p>
+            
+            {/* Role Badge */}
+            {roleInfo && (
+              <PlatformBadge variant={roleInfo.variant} size="lg" className="gap-1.5 mt-2">
+                <roleInfo.icon className="w-3.5 h-3.5" />
+                {roleInfo.label}
+              </PlatformBadge>
+            )}
           </div>
 
           {/* Form Fields */}
