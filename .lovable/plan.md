@@ -1,331 +1,328 @@
 
 
-## Platform Owner Analytics Hub - Deep Organization Intelligence
+## Native Payroll System with Gusto Integration
 
-This plan creates a comprehensive, owner-only analytics dashboard that provides unprecedented visibility into all organizations using your platform, featuring multi-dimensional leaderboards, deep operational metrics, and cross-organization comparisons.
+This plan implements a complete payroll solution for account owners using **Gusto Embedded Payroll**, enabling secure bank connections, automated payroll runs, tax compliance, and comprehensive reporting.
 
 ---
 
 ### Overview
 
-The Analytics Hub will be a **platform_owner exclusive** section that aggregates and analyzes data from every organization, providing:
+Gusto handles the complex regulatory requirements (taxes, W-2s, compliance) while your platform provides the user interface and organization-specific context. Account owners will:
 
-- **Organization Leaderboards**: Rank organizations by revenue, user counts, engagement, and operational metrics
-- **Size & Growth Analytics**: Track organization growth trajectories (locations, users, revenue)
-- **Operational Deep-Dive**: Aggregate Phorest performance metrics across all organizations
-- **Revenue Intelligence**: Per-organization revenue tracking beyond subscription fees (actual salon revenue)
-- **Engagement Metrics**: How actively each organization uses the platform
-- **Comparative Analysis**: Benchmark organizations against each other and platform averages
+1. **Connect their business** to Gusto via OAuth
+2. **Onboard employees** through embedded Gusto components
+3. **Run payroll** with commission calculations from existing sales data
+4. **Access reports** for payroll history, tax documents, and analytics
+
+---
+
+### Architecture
+
+```text
++------------------+       +-------------------+       +----------------+
+|  Account Owner   | ----> |   Your Platform   | ----> |   Gusto API    |
+|   Dashboard      |       |   (Edge Function  |       | (OAuth + REST) |
++------------------+       |    Proxy Layer)   |       +----------------+
+                           +-------------------+
+                                    |
+                           +-------------------+
+                           |   Supabase DB     |
+                           | gusto_connections |
+                           | payroll_runs      |
+                           | employee_payroll  |
+                           +-------------------+
+```
+
+**Key Components:**
+- **OAuth Proxy Edge Function**: Handles Gusto OAuth flow securely
+- **Payroll Proxy Edge Function**: Routes Embedded SDK requests with proper tokens
+- **Token Storage**: Encrypted company tokens in `gusto_connections` table
+- **Embedded React SDK**: Gusto's UI components for payroll operations
 
 ---
 
 ### Changes Summary
 
-| Area | File | Action |
-|------|------|--------|
-| New Page | `src/pages/dashboard/platform/Analytics.tsx` | **Create** - Main analytics hub with tabs |
-| New Hooks | `src/hooks/useOrganizationAnalytics.ts` | **Create** - Comprehensive data aggregation |
-| New Components | `src/components/platform/analytics/` | **Create** - Charts, leaderboards, tables |
-| Sidebar | `PlatformSidebar.tsx` | **Edit** - Add owner-only nav link |
-| Routing | `App.tsx` | **Edit** - Add protected route |
+| Area | Files | Action |
+|------|-------|--------|
+| Database | Migration | **Create** - `gusto_connections`, `payroll_runs`, `employee_payroll_settings` tables |
+| Edge Functions | `gusto-oauth`, `gusto-payroll-proxy` | **Create** - Handle OAuth and API proxy |
+| Hooks | `useGustoConnection.ts`, `usePayroll.ts` | **Create** - Manage Gusto connection state |
+| Pages | `Payroll.tsx`, `PayrollSettings.tsx`, `PayrollReports.tsx` | **Create** - Owner dashboard pages |
+| Components | `src/components/dashboard/payroll/` | **Create** - Connection status, run payroll, reports |
+| Settings | Admin Settings | **Edit** - Add payroll configuration section |
+| Config | Platform Integrations | **Edit** - Add Gusto as available integration |
 
 ---
 
-### Data Sources for Analytics
+### Database Schema
 
-Based on your existing database schema, we can aggregate:
+#### Table: `gusto_connections`
+Stores the OAuth tokens per organization (one Gusto company per organization).
 
-**Size Metrics (per organization):**
-- Location count (from `locations` table)
-- Active user count (from `employee_profiles`)
-- Client count (from `phorest_clients` via location mapping)
-- Total appointments (from `phorest_appointments`)
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `organization_id` | UUID | FK to `organizations` |
+| `gusto_company_uuid` | TEXT | Gusto's company identifier |
+| `access_token_encrypted` | TEXT | AES-encrypted access token |
+| `refresh_token_encrypted` | TEXT | AES-encrypted refresh token |
+| `token_expires_at` | TIMESTAMPTZ | Token expiration (2 hours from issue) |
+| `connection_status` | TEXT | `pending`, `connected`, `disconnected`, `error` |
+| `connected_by` | UUID | User who connected |
+| `connected_at` | TIMESTAMPTZ | When connection was established |
+| `last_synced_at` | TIMESTAMPTZ | Last successful API call |
 
-**Revenue Metrics:**
-- Subscription revenue (from `organization_billing` + `subscription_plans`)
-- Actual salon revenue (from `phorest_daily_sales_summary` aggregated by location → org)
-- Average ticket size
-- Product vs service revenue split
+#### Table: `payroll_runs`
+Local record of payroll runs for reporting and audit.
 
-**Performance Metrics:**
-- Rebooking rate (from `phorest_performance_metrics`)
-- Retention rate
-- New clients acquired
-- Retail attachment rate
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `organization_id` | UUID | FK to `organizations` |
+| `gusto_payroll_uuid` | TEXT | Gusto's payroll identifier |
+| `pay_period_start` | DATE | Start of pay period |
+| `pay_period_end` | DATE | End of pay period |
+| `check_date` | DATE | When employees are paid |
+| `status` | TEXT | `draft`, `submitted`, `processed`, `cancelled` |
+| `total_gross_pay` | NUMERIC | Sum of all gross pay |
+| `total_employer_taxes` | NUMERIC | Employer tax obligations |
+| `total_employee_deductions` | NUMERIC | Employee deductions |
+| `total_net_pay` | NUMERIC | Sum of all net pay |
+| `employee_count` | INTEGER | Employees in this run |
+| `submitted_by` | UUID | Who submitted the payroll |
+| `submitted_at` | TIMESTAMPTZ | When payroll was submitted |
 
-**Engagement Metrics (NEW - would need tracking):**
-- Dashboard logins per organization
-- Feature usage patterns
-- Active users vs total users ratio
+#### Table: `employee_payroll_settings`
+Per-employee payroll configuration (extends `employee_profiles`).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `employee_id` | UUID | FK to `employee_profiles.user_id` |
+| `organization_id` | UUID | FK to `organizations` |
+| `gusto_employee_uuid` | TEXT | Gusto's employee identifier |
+| `pay_type` | TEXT | `hourly`, `salary`, `commission` |
+| `hourly_rate` | NUMERIC | If hourly |
+| `salary_amount` | NUMERIC | If salaried (annual) |
+| `commission_enabled` | BOOLEAN | Use commission tiers |
+| `direct_deposit_status` | TEXT | `not_started`, `pending`, `verified` |
+| `is_payroll_active` | BOOLEAN | Include in payroll runs |
 
 ---
 
-### Page Structure & Tabs
+### Edge Functions
 
-The Analytics Hub will use a tabbed interface:
+#### 1. `gusto-oauth` (New)
+Handles the complete OAuth flow with Gusto.
+
+**Endpoints:**
+- `POST /start` - Initiates OAuth, returns authorization URL
+- `POST /callback` - Exchanges code for tokens, stores encrypted
+- `POST /disconnect` - Revokes access and clears tokens
+- `GET /status` - Returns connection status for an organization
+
+**Security:**
+- Tokens encrypted at rest using Supabase Vault
+- CSRF protection via `state` parameter
+- Only `super_admin` or org `owner` can initiate
+
+#### 2. `gusto-payroll-proxy` (New)
+Proxies requests from the Gusto Embedded SDK.
+
+**Functionality:**
+- Attaches bearer token to outgoing requests
+- Auto-refreshes expired tokens
+- Logs API calls for audit
+- Sanitizes responses for security
+
+---
+
+### UI Components
+
+#### Payroll Dashboard Tab
+New admin section accessible to `super_admin` and organization `owner` roles.
+
+**Location:** `/dashboard/admin/payroll`
+
+**Sub-sections:**
+
+| Tab | Description |
+|-----|-------------|
+| **Run Payroll** | Start a new payroll, review hours/commissions, submit |
+| **History** | List of past payroll runs with status and totals |
+| **Employees** | Employee payroll settings, direct deposit status |
+| **Reports** | Tax documents, YTD summaries, export to CSV |
+| **Settings** | Gusto connection, pay schedules, defaults |
+
+#### Component: `GustoConnectionCard`
+Shows connection status with actions to connect/disconnect.
 
 ```text
-+------------------------------------------------------------------+
-|  Organization Analytics                    [Owner Only Badge]     |
-|  Deep intelligence across all accounts                            |
-+------------------------------------------------------------------+
-|                                                                   |
-|  [Overview] [Leaderboards] [Revenue Intel] [Operational] [Growth] |
-|                                                                   |
-+------------------------------------------------------------------+
++-----------------------------------------------+
+|  🏦 Payroll Connection                        |
+|                                               |
+|  [Gusto Logo]  Connected ✓                    |
+|  Last synced: 2 hours ago                     |
+|                                               |
+|  [Sync Now]  [Disconnect]                     |
++-----------------------------------------------+
 ```
 
-#### Tab 1: Overview
-- **Key Stats Grid**: Total organizations, combined revenue, total users, total locations
-- **Top 5 Quick Glance**: Largest orgs by revenue, most users, fastest growing
-- **Health Distribution**: Pie chart of subscription statuses
-- **Geographic Distribution**: Organizations by country/region
+#### Component: `RunPayrollWizard`
+Step-by-step payroll submission flow.
 
-#### Tab 2: Leaderboards (THE CORE FEATURE)
-Interactive leaderboards with trophy/medal styling:
+**Steps:**
+1. **Select Pay Period** - Choose period and check date
+2. **Review Hours** - Import/confirm hours worked per employee
+3. **Add Commissions** - Auto-calculate from `phorest_performance_metrics`
+4. **Review Totals** - Show gross, taxes, net per employee
+5. **Submit** - Confirm and submit to Gusto
 
-| Leaderboard | Metric | Data Source |
-|-------------|--------|-------------|
-| Revenue Champions | Monthly salon revenue | `phorest_daily_sales_summary` |
-| Size Leaders | Total locations + users | `locations` + `employee_profiles` |
-| Growth Stars | MoM location/user growth | Historical comparison |
-| Engagement Leaders | Active users ratio | Login tracking (future) |
-| Performance Elite | Avg rebooking + retention | `phorest_performance_metrics` |
-| Client Magnets | New clients acquired | `phorest_performance_metrics` |
-| Retail Warriors | Retail attachment % | `phorest_performance_metrics` |
+#### Component: `PayrollHistoryTable`
+Sortable/filterable table of past payrolls.
 
-Each leaderboard shows:
-- Rank position with trophy/medal icons
-- Organization name + account number
-- Primary metric value
-- Trend indicator (up/down from last period)
-- Click to drill into organization detail
+| Column | Description |
+|--------|-------------|
+| Pay Period | Date range |
+| Check Date | Payment date |
+| Employees | Count |
+| Gross Pay | Total gross |
+| Net Pay | Total net |
+| Status | Badge |
+| Actions | View details, download summary |
 
-#### Tab 3: Revenue Intelligence
-- **Platform Revenue**: MRR/ARR from subscriptions (existing)
-- **Salon Revenue Aggregation**: Total revenue flowing through customer salons
-- **Revenue per Location**: Average across all orgs
-- **Revenue Distribution**: Histogram showing revenue bands
-- **Top Revenue by Tier**: See which plan tier generates most salon revenue
-- **Month-over-Month Trend**: Combined revenue growth chart
+#### Component: `EmployeePayrollList`
+Shows each employee's payroll setup status.
 
-#### Tab 4: Operational Metrics
-Aggregated performance data across all organizations:
-
-- **Platform-Wide Averages**:
-  - Average rebooking rate
-  - Average retention rate
-  - Average ticket size
-  - Retail attachment rate
-
-- **Organization Comparison Matrix**:
-  Table showing all organizations with columns for each KPI, sortable and filterable
-
-- **Outlier Detection**:
-  Highlight organizations significantly above/below platform averages
-
-#### Tab 5: Growth Analytics
-- **Account Growth Timeline**: New accounts per month (area chart)
-- **Location Expansion**: Total locations over time
-- **User Growth**: Platform-wide user count trend
-- **Churn Analysis**: Accounts lost per period
-- **Cohort Analysis**: Retention by signup month
+- Direct deposit status indicator
+- Pay type badge
+- Last paid amount
+- Link to Gusto's embedded onboarding for missing info
 
 ---
 
-### Implementation Details
+### Permissions & Access Control
 
-#### 1. New Hook: `useOrganizationAnalytics.ts`
+**Who can access payroll:**
+- `super_admin` - Full access to all payroll features
+- Organization `owner` (from `organization_admins` table) - Full access
+- `admin` role - View-only access to reports (configurable)
 
+**RLS Policies:**
+- All payroll tables scoped to `organization_id`
+- Only org admins/owners can read/write their org's data
+- Platform users (`platform_owner`, `platform_admin`) can view for support
+
+**New Permissions:**
+- `manage_payroll` - Run payroll, manage settings
+- `view_payroll_reports` - View historical data (no submission rights)
+- `manage_employee_compensation` - Edit pay rates and settings
+
+---
+
+### Commission Integration
+
+Leverage existing `phorest_performance_metrics` and `phorest_daily_sales_summary` data:
+
+1. When running payroll, fetch sales data for the pay period
+2. Apply `commission_tiers` to calculate commission amounts per employee
+3. Pre-populate the payroll run with calculated commissions
+4. Allow manual adjustments before submission
+
+**Commission Calculation Logic:**
 ```typescript
-interface OrganizationMetrics {
-  id: string;
-  name: string;
-  accountNumber: number;
-  subscriptionTier: string;
-  
-  // Size
-  locationCount: number;
-  userCount: number;
-  activeUserCount: number;
-  clientCount: number;
-  
-  // Revenue (salon, not subscription)
-  totalRevenue: number;
-  revenueThisMonth: number;
-  revenueLastMonth: number;
-  revenueGrowth: number;
-  averageTicket: number;
-  
-  // Performance
-  avgRebookingRate: number;
-  avgRetentionRate: number;
-  avgRetailAttachment: number;
-  newClientsThisMonth: number;
-  
-  // Engagement
-  activeUsersRatio: number;
-  lastActivityAt: string | null;
-}
+// Fetch employee sales for pay period
+const sales = await fetchEmployeeSales(employeeId, periodStart, periodEnd);
 
-interface PlatformAnalyticsSummary {
-  totalOrganizations: number;
-  totalLocations: number;
-  totalUsers: number;
-  totalClients: number;
-  
-  combinedMonthlyRevenue: number;
-  avgRevenuePerOrg: number;
-  avgRevenuePerLocation: number;
-  
-  platformAvgRebooking: number;
-  platformAvgRetention: number;
-  platformAvgTicket: number;
-  
-  organizationMetrics: OrganizationMetrics[];
-  
-  // Leaderboard data
-  topByRevenue: OrganizationMetrics[];
-  topBySize: OrganizationMetrics[];
-  topByGrowth: OrganizationMetrics[];
-  topByPerformance: OrganizationMetrics[];
-}
-```
+// Get applicable commission tiers
+const serviceSales = sales.filter(s => s.type === 'service');
+const productSales = sales.filter(s => s.type === 'product');
 
-The hook will:
-1. Fetch all organizations
-2. Aggregate location counts per org
-3. Aggregate employee counts per org (via location → org mapping)
-4. Aggregate revenue from `phorest_daily_sales_summary` per location → org
-5. Aggregate performance metrics from `phorest_performance_metrics`
-6. Calculate platform-wide averages
-7. Generate sorted leaderboards
+// Calculate based on existing commission_tiers table
+const serviceCommission = calculateTieredCommission(serviceSales.total, serviceTiers);
+const productCommission = calculateTieredCommission(productSales.total, productTiers);
 
-#### 2. Leaderboard Component Pattern
-
-```typescript
-interface LeaderboardEntry {
-  rank: number;
-  organizationId: string;
-  organizationName: string;
-  accountNumber: number;
-  value: number;
-  previousValue?: number;
-  change?: number;
-  tier?: string;
-}
-
-interface OrganizationLeaderboardProps {
-  title: string;
-  data: LeaderboardEntry[];
-  valueFormatter: (value: number) => string;
-  valueLabel: string;
-  icon: React.ComponentType;
-}
-```
-
-Visual style:
-- Rank 1: Gold trophy + gold gradient background
-- Rank 2: Silver medal + silver gradient
-- Rank 3: Bronze medal + bronze gradient
-- Ranks 4-10: Numbered with subtle styling
-- Trend arrows (green up, red down)
-
-#### 3. Access Control
-
-Route protection in `App.tsx`:
-
-```typescript
-<Route 
-  path="analytics" 
-  element={
-    <ProtectedRoute requirePlatformRole="platform_owner">
-      <PlatformAnalytics />
-    </ProtectedRoute>
-  } 
-/>
-```
-
-Sidebar visibility in `PlatformSidebar.tsx`:
-
-```typescript
-{
-  href: '/dashboard/platform/analytics',
-  label: 'Analytics',
-  icon: BarChart3,
-  platformRoles: ['platform_owner'], // Owner only!
-}
+return serviceCommission + productCommission;
 ```
 
 ---
 
-### Database Considerations
+### Implementation Phases
 
-**No new tables required** - all data exists:
-- Organizations: `organizations` table
-- Locations: `locations` table (has `organization_id`)
-- Users: `employee_profiles` table (has `organization_id`)
-- Revenue: `phorest_daily_sales_summary` → join via `location_id` → `locations.organization_id`
-- Performance: `phorest_performance_metrics` → same join path
+**Phase 1: Foundation**
+- Database tables and RLS policies
+- Gusto OAuth edge function
+- Connection status UI
+- Add payroll nav items
 
-**Query Strategy**:
-For performance, we'll aggregate server-side where possible:
+**Phase 2: Employee Sync**
+- Employee payroll settings table
+- Sync employees with Gusto
+- Direct deposit status tracking
+- Employee payroll list component
 
-```sql
--- Example: Revenue per organization
-SELECT 
-  l.organization_id,
-  SUM(pds.total_revenue) as total_revenue,
-  AVG(pds.average_ticket) as avg_ticket
-FROM phorest_daily_sales_summary pds
-JOIN locations l ON pds.location_id = l.id
-WHERE pds.summary_date >= NOW() - INTERVAL '30 days'
-GROUP BY l.organization_id
-```
+**Phase 3: Run Payroll**
+- Payroll proxy edge function
+- Run payroll wizard
+- Commission calculation integration
+- Submit to Gusto
 
-**Future Enhancement**: Consider a materialized view or cron-updated summary table for large-scale analytics.
+**Phase 4: Reporting**
+- Payroll history table
+- YTD summaries
+- Tax document links (W-2s)
+- Export functionality
 
 ---
 
-### Visual Design
+### Secrets Required
 
-Following the platform theme (fintech dark with violet accents):
+The following API credentials will need to be configured:
 
-**Stat Cards**: Large numbers with icons, trend indicators
-**Charts**: Recharts with `#8b5cf6` (violet) primary, gradient fills
-**Leaderboards**: Trophy/medal iconography, rank numbers with colored backgrounds
-**Tables**: Sortable columns with hover states
-**Organization Links**: Click any org name to navigate to its detail page
+| Secret Name | Description |
+|-------------|-------------|
+| `GUSTO_CLIENT_ID` | OAuth client ID from Gusto Partner Portal |
+| `GUSTO_CLIENT_SECRET` | OAuth client secret |
+| `GUSTO_ENCRYPTION_KEY` | AES key for encrypting tokens at rest |
 
 ---
 
 ### Files to Create/Modify
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `src/pages/dashboard/platform/Analytics.tsx` | **New** - Main analytics page with tabs |
-| `src/hooks/useOrganizationAnalytics.ts` | **New** - Data aggregation hook |
-| `src/components/platform/analytics/AnalyticsOverview.tsx` | **New** - Overview tab |
-| `src/components/platform/analytics/OrganizationLeaderboards.tsx` | **New** - Leaderboard tab |
-| `src/components/platform/analytics/RevenueIntelligence.tsx` | **New** - Revenue tab |
-| `src/components/platform/analytics/OperationalMetrics.tsx` | **New** - Operations tab |
-| `src/components/platform/analytics/GrowthAnalytics.tsx` | **New** - Growth tab |
-| `src/components/platform/analytics/LeaderboardCard.tsx` | **New** - Reusable leaderboard |
-| `src/components/platform/analytics/MetricComparisonTable.tsx` | **New** - Sortable org table |
-| `src/components/platform/layout/PlatformSidebar.tsx` | **Edit** - Add nav link |
-| `src/App.tsx` | **Edit** - Add protected route |
+| Database migration | **New** - Create payroll tables |
+| `supabase/functions/gusto-oauth/index.ts` | **New** - OAuth handler |
+| `supabase/functions/gusto-payroll-proxy/index.ts` | **New** - API proxy |
+| `src/hooks/useGustoConnection.ts` | **New** - Connection state |
+| `src/hooks/usePayroll.ts` | **New** - Payroll operations |
+| `src/hooks/useEmployeePayroll.ts` | **New** - Employee settings |
+| `src/pages/dashboard/admin/Payroll.tsx` | **New** - Main payroll page |
+| `src/components/dashboard/payroll/GustoConnectionCard.tsx` | **New** |
+| `src/components/dashboard/payroll/RunPayrollWizard.tsx` | **New** |
+| `src/components/dashboard/payroll/PayrollHistoryTable.tsx` | **New** |
+| `src/components/dashboard/payroll/EmployeePayrollList.tsx` | **New** |
+| `src/components/dashboard/payroll/PayrollReportsTab.tsx` | **New** |
+| `src/components/dashboard/payroll/CommissionPreview.tsx` | **New** |
+| `src/components/dashboard/DashboardLayout.tsx` | **Edit** - Add payroll nav |
+| `src/App.tsx` | **Edit** - Add routes |
+| `src/config/platformIntegrations.ts` | **Edit** - Add Gusto |
 
 ---
 
 ### Technical Notes
 
-1. **Performance**: Cache queries with 5-minute stale time; consider pagination for org lists > 100
+1. **Token Security**: All Gusto tokens stored encrypted; decryption happens only in edge functions
 
-2. **Data Completeness**: Handle orgs without Phorest data gracefully (N/A display)
+2. **Multi-Tenant Isolation**: Each organization has its own Gusto company connection; tokens are never shared
 
-3. **Security**: `platform_owner` only - no other platform roles can access
+3. **Gusto Sandbox**: Development will use Gusto's sandbox environment for testing
 
-4. **Drill-down**: All organization names link to `/dashboard/platform/accounts/{slug}` for deeper investigation
+4. **Webhook Support** (Future): Gusto can send webhooks for payroll events; infrastructure prepared for this
 
-5. **Export Ready**: Design tables to support CSV export in future iteration
+5. **Embedded SDK**: The `@gusto/embedded-react-sdk` provides pre-built UI components that we'll wrap with your platform's styling
+
+6. **Commission Sync**: Payroll calculations will pull from existing sales/performance data, ensuring consistency with displayed stats
 
