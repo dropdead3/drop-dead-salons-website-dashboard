@@ -99,6 +99,7 @@ import PlatformRevenue from "./pages/dashboard/platform/Revenue";
 import PlatformPermissions from "./pages/dashboard/platform/Permissions";
 import PlatformIntegrationDetail from "./pages/dashboard/platform/PlatformIntegrationDetail";
 import PlatformKnowledgeBase from "./pages/dashboard/platform/KnowledgeBase";
+import PlatformOnboarding from "./pages/dashboard/platform/Onboarding";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
 
 const queryClient = new QueryClient();
@@ -208,6 +209,7 @@ const App = () => (
                         <Route path="overview" element={<PlatformOverview />} />
                         <Route path="accounts" element={<PlatformAccounts />} />
                         <Route path="accounts/:orgId" element={<AccountDetail />} />
+                        <Route path="onboarding" element={<PlatformOnboarding />} />
                         <Route path="import" element={<PlatformImport />} />
                         <Route path="knowledge-base" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformKnowledgeBase /></ProtectedRoute>} />
                         <Route path="revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />
