@@ -1,4 +1,6 @@
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { 
   Rocket, 
@@ -9,7 +11,6 @@ import {
   ChevronRight,
   Mail,
   Upload,
-  Settings,
   Target,
   Users,
   Loader2
@@ -19,7 +20,10 @@ import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader'
 import { PlatformCard, PlatformCardHeader, PlatformCardTitle, PlatformCardContent } from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOnboardingOrganizations, type OnboardingOrganization } from '@/hooks/useOnboardingOrganizations';
+import { OnboardingCalendar } from '@/components/platform/onboarding/OnboardingCalendar';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
 const stageConfig: Record<string, { label: string; order: number }> = {
@@ -218,6 +222,35 @@ function TimelineItem({ org }: { org: OnboardingOrganization }) {
 export default function PlatformOnboarding() {
   const { data, isLoading, error } = useOnboardingOrganizations();
   const navigate = useNavigate();
+  const [activeView, setActiveView] = useState<'list' | 'calendar'>('list');
+
+  // Fetch billing data for calendar
+  const { data: billingData } = useQuery({
+    queryKey: ['onboarding-billing'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('organization_billing')
+        .select('organization_id, contract_start_date, contract_end_date, trial_ends_at');
+      
+      if (error) throw error;
+      
+      const map = new Map<string, { 
+        contract_start_date?: string | null;
+        contract_end_date?: string | null;
+        trial_ends_at?: string | null;
+      }>();
+      
+      data?.forEach(item => {
+        map.set(item.organization_id, {
+          contract_start_date: item.contract_start_date,
+          contract_end_date: item.contract_end_date,
+          trial_ends_at: item.trial_ends_at,
+        });
+      });
+      
+      return map;
+    },
+  });
 
   if (isLoading) {
     return (
@@ -322,84 +355,115 @@ export default function PlatformOnboarding() {
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-        {/* Go-Live Timeline (2/3 width) */}
-        <PlatformCard className="lg:col-span-2">
-          <PlatformCardHeader>
-            <PlatformCardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-violet-400" />
-              Upcoming Go-Lives
-            </PlatformCardTitle>
-          </PlatformCardHeader>
-          <PlatformCardContent>
-            {upcomingGoLives.length > 0 ? (
-              <div className="space-y-1">
-                {upcomingGoLives.map(org => (
-                  <TimelineItem key={org.id} org={org} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500 text-center py-8">
-                No scheduled go-live dates
-              </p>
-            )}
-          </PlatformCardContent>
-        </PlatformCard>
+      {/* View Tabs */}
+      <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'list' | 'calendar')} className="mt-8">
+        <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
+          <TabsTrigger 
+            value="list"
+            className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            List View
+          </TabsTrigger>
+          <TabsTrigger 
+            value="calendar"
+            className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Calendar
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Stage Breakdown (1/3 width) */}
-        <PlatformCard>
-          <PlatformCardHeader>
-            <PlatformCardTitle className="flex items-center gap-2">
-              <Rocket className="h-5 w-5 text-violet-400" />
-              By Stage
-            </PlatformCardTitle>
-          </PlatformCardHeader>
-          <PlatformCardContent>
-            <div className="space-y-4">
-              {Object.entries(stageConfig).map(([stage, config]) => {
-                const count = stats.byStage[stage] || 0;
-                const percentage = stats.totalOnboarding > 0 
-                  ? (count / stats.totalOnboarding) * 100 
-                  : 0;
-                
-                return (
-                  <div key={stage}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-medium text-slate-300">{config.label}</span>
-                      <span className="text-sm text-slate-500">{count}</span>
-                    </div>
-                    <div className="h-2 bg-slate-700/50 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all duration-500"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
+        <TabsContent value="list" className="mt-6 space-y-6">
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Go-Live Timeline (2/3 width) */}
+            <PlatformCard className="lg:col-span-2">
+              <PlatformCardHeader>
+                <PlatformCardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-violet-400" />
+                  Upcoming Go-Lives
+                </PlatformCardTitle>
+              </PlatformCardHeader>
+              <PlatformCardContent>
+                {upcomingGoLives.length > 0 ? (
+                  <div className="space-y-1">
+                    {upcomingGoLives.map(org => (
+                      <TimelineItem key={org.id} org={org} />
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          </PlatformCardContent>
-        </PlatformCard>
-      </div>
+                ) : (
+                  <p className="text-sm text-slate-500 text-center py-8">
+                    No scheduled go-live dates
+                  </p>
+                )}
+              </PlatformCardContent>
+            </PlatformCard>
 
-      {/* Organization Cards by Stage */}
-      <div className="space-y-8 mt-8">
-        {groupedByStage.map(({ stage, orgs }) => (
-          <StageSection key={stage} stage={stage} orgs={orgs} />
-        ))}
-
-        {organizations.length === 0 && (
-          <div className="text-center py-12">
-            <Rocket className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-300 mb-2">No accounts onboarding</h3>
-            <p className="text-sm text-slate-500 mb-6">All accounts have completed their go-live journey</p>
-            <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')}>
-              View All Accounts
-            </PlatformButton>
+            {/* Stage Breakdown (1/3 width) */}
+            <PlatformCard>
+              <PlatformCardHeader>
+                <PlatformCardTitle className="flex items-center gap-2">
+                  <Rocket className="h-5 w-5 text-violet-400" />
+                  By Stage
+                </PlatformCardTitle>
+              </PlatformCardHeader>
+              <PlatformCardContent>
+                <div className="space-y-4">
+                  {Object.entries(stageConfig).map(([stage, config]) => {
+                    const count = stats.byStage[stage] || 0;
+                    const percentage = stats.totalOnboarding > 0 
+                      ? (count / stats.totalOnboarding) * 100 
+                      : 0;
+                    
+                    return (
+                      <div key={stage}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm font-medium text-slate-300">{config.label}</span>
+                          <span className="text-sm text-slate-500">{count}</span>
+                        </div>
+                        <div className="h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all duration-500"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </PlatformCardContent>
+            </PlatformCard>
           </div>
-        )}
-      </div>
+
+          {/* Organization Cards by Stage */}
+          <div className="space-y-8">
+            {groupedByStage.map(({ stage, orgs }) => (
+              <StageSection key={stage} stage={stage} orgs={orgs} />
+            ))}
+
+            {organizations.length === 0 && (
+              <div className="text-center py-12">
+                <Rocket className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-slate-300 mb-2">No accounts onboarding</h3>
+                <p className="text-sm text-slate-500 mb-6">All accounts have completed their go-live journey</p>
+                <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')}>
+                  View All Accounts
+                </PlatformButton>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="calendar" className="mt-6">
+          <div className="grid grid-cols-1 gap-6">
+            <OnboardingCalendar 
+              organizations={organizations}
+              billingData={billingData}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </PlatformPageContainer>
   );
 }
