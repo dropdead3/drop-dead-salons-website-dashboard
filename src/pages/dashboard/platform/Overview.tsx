@@ -178,7 +178,7 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default' }
       
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-slate-400 uppercase tracking-wide">{title}</span>
+          <span className="text-sm font-medium text-slate-400">{title}</span>
           <div className={`p-2.5 rounded-xl ${iconStyles[variant]} transition-colors`}>
             <Icon className="h-5 w-5" />
           </div>
