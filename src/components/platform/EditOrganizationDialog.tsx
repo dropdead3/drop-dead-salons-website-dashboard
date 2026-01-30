@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { formatPhoneNumber } from '@/lib/utils';
+import { formatPhoneNumber, cn } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,11 +26,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Building2, Loader2, AlertTriangle } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Building2, Loader2, AlertTriangle, CalendarIcon } from 'lucide-react';
 import { useUpdateOrganization, type Organization, type BusinessType } from '@/hooks/useOrganizations';
 import { PlatformButton } from './ui/PlatformButton';
 import { PlatformInput } from './ui/PlatformInput';
-import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const editFormSchema = z.object({
@@ -48,6 +55,7 @@ const editFormSchema = z.object({
   onboarding_stage: z.enum(['new', 'importing', 'training', 'live']),
   subscription_tier: z.string(),
   timezone: z.string(),
+  go_live_date: z.string().optional().nullable(),
   
   // Contact Info
   primary_contact_email: z.string().email('Invalid email').optional().nullable().or(z.literal('')),
@@ -137,6 +145,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
       primary_contact_email: organization.primary_contact_email || '',
       primary_contact_phone: organization.primary_contact_phone || '',
       source_software: organization.source_software || '',
+      go_live_date: organization.go_live_date || null,
     },
   });
 
@@ -156,6 +165,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
         primary_contact_email: organization.primary_contact_email || '',
         primary_contact_phone: organization.primary_contact_phone || '',
         source_software: organization.source_software || '',
+        go_live_date: organization.go_live_date || null,
       });
       setOriginalSlug(organization.slug);
     }
@@ -164,6 +174,8 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
   const currentSlug = form.watch('slug');
   const slugChanged = currentSlug !== originalSlug;
   const currentStatus = form.watch('status');
+  const currentGoLiveDate = form.watch('go_live_date');
+  const isGoLiveDatePast = currentGoLiveDate ? isBefore(parseISO(currentGoLiveDate), startOfDay(new Date())) : false;
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -182,6 +194,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
         primary_contact_email: values.primary_contact_email || null,
         primary_contact_phone: values.primary_contact_phone || null,
         source_software: values.source_software || null,
+        go_live_date: values.go_live_date || null,
       };
 
       // Auto-set activated_at when status changes to active
@@ -445,6 +458,68 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                     )}
                   />
                 </div>
+
+                {/* Go-Live Date Picker */}
+                <FormField
+                  control={form.control}
+                  name="go_live_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-slate-300">Scheduled Go-Live Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 hover:text-slate-200",
+                                !field.value && "text-slate-500"
+                              )}
+                            >
+                              {field.value ? (
+                                format(parseISO(field.value), "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-700" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value ? parseISO(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : null)}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                          {field.value && (
+                            <div className="border-t border-slate-700 p-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full text-slate-400 hover:text-white hover:bg-slate-700"
+                                onClick={() => field.onChange(null)}
+                              >
+                                Clear date
+                              </Button>
+                            </div>
+                          )}
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription className="text-slate-500">
+                        The date when final import completes and the account begins live operations.
+                      </FormDescription>
+                      {isGoLiveDatePast && (
+                        <p className="text-amber-400 text-xs flex items-center gap-1 mt-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          This date is in the past
+                        </p>
+                      )}
+                      <FormMessage className="text-red-400" />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* Contact Information Section */}

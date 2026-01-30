@@ -24,6 +24,7 @@ export interface Organization {
   updated_at: string;
   business_type: BusinessType;
   account_number: number | null;
+  go_live_date: string | null;
 }
 
 export interface OrganizationInsert {

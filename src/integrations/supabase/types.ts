@@ -3506,6 +3506,7 @@ export type Database = {
           created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
+          go_live_date: string | null
           id: string
           legal_name: string | null
           logo_url: string | null
@@ -3537,6 +3538,7 @@ export type Database = {
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
+          go_live_date?: string | null
           id?: string
           legal_name?: string | null
           logo_url?: string | null
@@ -3568,6 +3570,7 @@ export type Database = {
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
+          go_live_date?: string | null
           id?: string
           legal_name?: string | null
           logo_url?: string | null

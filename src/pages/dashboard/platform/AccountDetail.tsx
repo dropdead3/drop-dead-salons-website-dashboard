@@ -16,6 +16,7 @@ import {
   Clock,
   CreditCard,
   MessageSquare,
+  Target,
   LayoutDashboard
 } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -24,7 +25,7 @@ import { useOrganizationWithStats, type OrganizationWithStats } from '@/hooks/us
 import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
 import { BillingConfigurationPanel } from '@/components/platform/billing/BillingConfigurationPanel';
 import { AccountNotesSection } from '@/components/platform/notes/AccountNotesSection';
-import { format } from 'date-fns';
+import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -292,6 +293,27 @@ export default function AccountDetail() {
                   <Calendar className="h-4 w-4 text-slate-500" />
                   <span className="text-slate-300">Created {format(new Date(organization.created_at), 'MMM d, yyyy')}</span>
                 </div>
+                {organization.go_live_date && (
+                  <div className="flex items-center gap-3">
+                    <Target className={`h-4 w-4 ${
+                      organization.onboarding_stage === 'live' 
+                        ? 'text-emerald-400' 
+                        : isBefore(parseISO(organization.go_live_date), startOfDay(new Date()))
+                          ? 'text-red-400'
+                          : 'text-amber-400'
+                    }`} />
+                    <span className={`${
+                      organization.onboarding_stage === 'live' 
+                        ? 'text-emerald-400' 
+                        : isBefore(parseISO(organization.go_live_date), startOfDay(new Date()))
+                          ? 'text-red-400'
+                          : 'text-slate-300'
+                    }`}>
+                      Go-Live {format(parseISO(organization.go_live_date), 'MMM d, yyyy')}
+                      {organization.onboarding_stage !== 'live' && isBefore(parseISO(organization.go_live_date), startOfDay(new Date())) && ' (overdue)'}
+                    </span>
+                  </div>
+                )}
                 {organization.activated_at && (
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
