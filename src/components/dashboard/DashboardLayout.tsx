@@ -195,6 +195,7 @@ const platformNavItems: NavItem[] = [
   { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
   { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
   { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
+  { href: '/dashboard/platform/permissions', label: 'Permissions', icon: Shield, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/settings', label: 'Platform Settings', icon: Settings, platformRoles: ['platform_owner', 'platform_admin'] },
 ];
 
