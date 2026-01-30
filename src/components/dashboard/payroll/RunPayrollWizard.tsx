@@ -170,11 +170,11 @@ export function RunPayrollWizard({ onComplete, onCancel }: RunPayrollWizardProps
               <div className="flex flex-col items-center">
                 <div
                   className={`
-                    w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium
+                    w-10 h-10 rounded-full flex items-center justify-center text-sm
                     ${index < currentStep 
                       ? 'bg-primary text-primary-foreground' 
                       : index === currentStep 
-                        ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2' 
+                        ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
                         : 'bg-muted text-muted-foreground'
                     }
                   `}
