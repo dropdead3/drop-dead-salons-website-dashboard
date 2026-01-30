@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Building2, Loader2 } from 'lucide-react';
-import { useCreateOrganization } from '@/hooks/useOrganizations';
+import { useCreateOrganization, type BusinessType } from '@/hooks/useOrganizations';
 import { useNavigate } from 'react-router-dom';
 import { PlatformButton } from './ui/PlatformButton';
 import { PlatformInput } from './ui/PlatformInput';
@@ -41,7 +41,18 @@ const formSchema = z.object({
   primary_contact_phone: z.string().optional(),
   source_software: z.string().optional(),
   subscription_tier: z.string().default('standard'),
+  business_type: z.enum(['salon', 'spa', 'esthetics', 'barbershop', 'med_spa', 'wellness', 'other']).default('salon'),
 });
+
+const businessTypeOptions = [
+  { value: 'salon', label: 'Salon' },
+  { value: 'spa', label: 'Spa' },
+  { value: 'esthetics', label: 'Esthetics' },
+  { value: 'barbershop', label: 'Barbershop' },
+  { value: 'med_spa', label: 'Med Spa' },
+  { value: 'wellness', label: 'Wellness' },
+  { value: 'other', label: 'Other' },
+];
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -74,6 +85,7 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
       primary_contact_phone: '',
       source_software: '',
       subscription_tier: 'standard',
+      business_type: 'salon',
     },
   });
 
@@ -98,6 +110,7 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
         primary_contact_phone: values.primary_contact_phone || null,
         source_software: values.source_software || null,
         subscription_tier: values.subscription_tier,
+        business_type: values.business_type as BusinessType,
       });
       
       onOpenChange(false);
@@ -160,6 +173,35 @@ export function CreateOrganizationDialog({ open, onOpenChange }: CreateOrganizat
                   <FormDescription className="text-slate-500">
                     Unique identifier used in URLs (auto-generated from name)
                   </FormDescription>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="business_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-300">Business Type *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-800/70 focus:ring-violet-500/30">
+                        <SelectValue placeholder="Select business type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-slate-800 border-slate-700">
+                      {businessTypeOptions.map((option) => (
+                        <SelectItem 
+                          key={option.value} 
+                          value={option.value}
+                          className="text-slate-300 focus:bg-slate-700 focus:text-white"
+                        >
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage className="text-red-400" />
                 </FormItem>
               )}
