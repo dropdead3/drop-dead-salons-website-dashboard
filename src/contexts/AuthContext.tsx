@@ -6,6 +6,14 @@ import type { Database } from '@/integrations/supabase/types';
 type AppRole = Database['public']['Enums']['app_role'];
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
+// Platform role hierarchy (higher includes all permissions of lower)
+const PLATFORM_ROLE_HIERARCHY: Record<PlatformRole, number> = {
+  platform_owner: 4,
+  platform_admin: 3,
+  platform_support: 2,
+  platform_developer: 2,
+};
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -19,6 +27,7 @@ interface AuthContextType {
   hasAnyPermission: (permissionNames: string[]) => boolean;
   hasAllPermissions: (permissionNames: string[]) => boolean;
   hasPlatformRole: (role: PlatformRole) => boolean;
+  hasPlatformRoleOrHigher: (role: PlatformRole) => boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<{ error: Error | null; data?: { user: User | null } }>;
   signOut: () => Promise<void>;
@@ -145,6 +154,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasPlatformRole = useCallback((role: PlatformRole): boolean => {
     return platformRoles.includes(role);
+  }, [platformRoles]);
+
+  const hasPlatformRoleOrHigher = useCallback((requiredRole: PlatformRole): boolean => {
+    const requiredLevel = PLATFORM_ROLE_HIERARCHY[requiredRole];
+    return platformRoles.some(role => PLATFORM_ROLE_HIERARCHY[role] >= requiredLevel);
   }, [platformRoles]);
 
   useEffect(() => {
@@ -276,6 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hasAnyPermission,
           hasAllPermissions,
           hasPlatformRole,
+          hasPlatformRoleOrHigher,
           signIn,
           signUp,
           signOut,

@@ -115,12 +115,15 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
+
 interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   permission?: string; // Permission required to view this item
   roles?: AppRole[]; // Fallback: If undefined, visible to all authenticated users
+  platformRoles?: PlatformRole[]; // Restrict to specific platform roles (uses hierarchy)
 }
 
 const mainNavItems: NavItem[] = [
@@ -191,8 +194,8 @@ const platformNavItems: NavItem[] = [
   { href: '/dashboard/platform/overview', label: 'Platform Overview', icon: Terminal },
   { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
   { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
-  { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign },
-  { href: '/dashboard/platform/settings', label: 'Platform Settings', icon: Settings },
+  { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
+  { href: '/dashboard/platform/settings', label: 'Platform Settings', icon: Settings, platformRoles: ['platform_owner', 'platform_admin'] },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
@@ -213,7 +216,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   }, [sidebarCollapsed]);
   
   const toggleSidebarCollapsed = () => setSidebarCollapsed(prev => !prev);
-  const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut, isPlatformUser } = useAuth();
+  const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut, isPlatformUser, hasPlatformRoleOrHigher } = useAuth();
   const { isImpersonating } = useOrganizationContext();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
@@ -408,7 +411,15 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   // Filter nav items based on permissions (primary) or roles (fallback)
   const filterNavItems = (items: NavItem[]) => {
     return items.filter(item => {
-      // Check permission first
+      // Check platform role restriction first (uses hierarchy)
+      if (item.platformRoles && item.platformRoles.length > 0) {
+        const hasRequiredPlatformRole = item.platformRoles.some(
+          role => hasPlatformRoleOrHigher(role)
+        );
+        if (!hasRequiredPlatformRole) return false;
+      }
+      
+      // Check permission
       if (item.permission) {
         return hasPermission(item.permission);
       }
