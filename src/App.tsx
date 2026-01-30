@@ -87,6 +87,8 @@ import DayRateBooking from "./pages/DayRateBooking";
 import DayRateSettings from "./pages/dashboard/admin/DayRateSettings";
 import DayRateCalendar from "./pages/dashboard/admin/DayRateCalendar";
 import DataImport from "./pages/dashboard/admin/DataImport";
+import Payroll from "./pages/dashboard/admin/Payroll";
+import PayrollCallback from "./pages/dashboard/admin/PayrollCallback";
 import HelpCenter from "./pages/dashboard/HelpCenter";
 
 // Platform Admin pages
@@ -204,6 +206,8 @@ const App = () => (
                       <Route path="/dashboard/admin/feature-flags" element={<ProtectedRoute requiredPermission="manage_settings"><FeatureFlags /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/payroll" element={<ProtectedRoute requiredPermission="manage_payroll"><Payroll /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/payroll/callback" element={<ProtectedRoute requiredPermission="manage_payroll"><PayrollCallback /></ProtectedRoute>} />
 
                       {/* Platform Admin routes - nested under PlatformLayout with sidebar */}
                       <Route path="/dashboard/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
