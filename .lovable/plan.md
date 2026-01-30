@@ -1,176 +1,176 @@
 
-# Add Business Type, Plan & Location Count to Organization Cards
+# Add Organization & Payment Indicators to Platform Accounts
 
 ## Summary
 
-Enhance the Platform Accounts table to display three key pieces of information for each organization:
-1. **Business Type** - Salon, Spa, Esthetics, etc.
-2. **Subscription Plan** - Starter, Standard, Professional, Enterprise
-3. **Active Locations** - Count of locations for multi-location businesses
+Enhance the Platform Accounts view with additional business intelligence:
+1. **Account Number** - Auto-generated unique identifier starting at 1000
+2. **Business Location** - State/Province and Country for each location
+3. **Stripe Payment Status** - Track which locations are connected to Stripe and their processing status
 
 ---
 
-## Current State Analysis
+## Database Changes
 
-| Data | Status | Location |
-|------|--------|----------|
-| Business Type | Missing | Needs new `business_type` column |
-| Subscription Plan | Exists but not shown | `subscription_tier` column already in DB |
-| Location Count | Calculated only for detail page | `useOrganizationWithStats` hook |
+### 1. Organizations Table - Add Account Number
 
----
-
-## Implementation Plan
-
-### Phase 1: Database Migration
-
-Add a `business_type` column to the `organizations` table with predefined options:
+Add an auto-incrementing `account_number` column that starts at 1000:
 
 ```sql
+-- Create a sequence starting at 1000
+CREATE SEQUENCE IF NOT EXISTS organization_account_number_seq START WITH 1000;
+
+-- Add account_number column with auto-generated default
 ALTER TABLE public.organizations 
-ADD COLUMN business_type TEXT DEFAULT 'salon' 
-CHECK (business_type IN ('salon', 'spa', 'esthetics', 'barbershop', 'med_spa', 'wellness', 'other'));
+ADD COLUMN account_number INTEGER UNIQUE DEFAULT nextval('organization_account_number_seq');
+
+-- Backfill existing organizations
+UPDATE public.organizations 
+SET account_number = nextval('organization_account_number_seq')
+WHERE account_number IS NULL;
 ```
 
-| Value | Display Label |
-|-------|---------------|
-| `salon` | Salon |
-| `spa` | Spa |
-| `esthetics` | Esthetics |
-| `barbershop` | Barbershop |
-| `med_spa` | Med Spa |
-| `wellness` | Wellness |
-| `other` | Other |
+| Column | Type | Default | Description |
+|--------|------|---------|-------------|
+| `account_number` | INTEGER | nextval sequence | Unique ID starting at 1000 |
 
-### Phase 2: Update Type Definitions
+### 2. Locations Table - Add Geography Fields
 
-**File**: `src/hooks/useOrganizations.ts`
+Add state/province and country for each location:
 
-Add `business_type` to the `Organization` interface:
+```sql
+ALTER TABLE public.locations
+ADD COLUMN state_province TEXT,
+ADD COLUMN country TEXT DEFAULT 'US';
+```
+
+| Column | Type | Default | Description |
+|--------|------|---------|-------------|
+| `state_province` | TEXT | null | State or province code (e.g., "TX", "ON") |
+| `country` | TEXT | 'US' | Country code (e.g., "US", "CA") |
+
+### 3. Locations Table - Add Stripe Payment Fields
+
+Track Stripe integration status per location:
+
+```sql
+ALTER TABLE public.locations
+ADD COLUMN stripe_account_id TEXT,
+ADD COLUMN stripe_payments_enabled BOOLEAN DEFAULT false,
+ADD COLUMN stripe_status TEXT DEFAULT 'not_connected' 
+  CHECK (stripe_status IN ('not_connected', 'pending', 'active', 'issues', 'suspended'));
+```
+
+| Column | Type | Default | Description |
+|--------|------|---------|-------------|
+| `stripe_account_id` | TEXT | null | Stripe Connect account ID |
+| `stripe_payments_enabled` | BOOLEAN | false | Whether payments are actively processing |
+| `stripe_status` | TEXT | 'not_connected' | Current status of Stripe integration |
+
+### Stripe Status Values
+
+| Status | Icon | Color | Description |
+|--------|------|-------|-------------|
+| `not_connected` | Circle | Gray | No Stripe account linked |
+| `pending` | Clock | Yellow | Account created, awaiting verification |
+| `active` | Check | Green | Payments processing normally |
+| `issues` | Alert | Orange | Requires attention (failed payouts, etc.) |
+| `suspended` | X | Red | Account suspended |
+
+---
+
+## Type Updates
+
+### Update Organization Interface
+
+File: `src/hooks/useOrganizations.ts`
 
 ```typescript
 export interface Organization {
   // ... existing fields
-  business_type: 'salon' | 'spa' | 'esthetics' | 'barbershop' | 'med_spa' | 'wellness' | 'other';
+  account_number: number | null;
 }
 ```
 
-Add to `OrganizationInsert`:
+### Update Location Types
+
+File: `src/hooks/useLocations.ts` (or create if needed)
 
 ```typescript
-business_type?: 'salon' | 'spa' | 'esthetics' | 'barbershop' | 'med_spa' | 'wellness' | 'other';
+export interface Location {
+  // ... existing fields
+  state_province: string | null;
+  country: string | null;
+  stripe_account_id: string | null;
+  stripe_payments_enabled: boolean;
+  stripe_status: 'not_connected' | 'pending' | 'active' | 'issues' | 'suspended';
+}
 ```
 
-### Phase 3: Create Organizations With Stats Hook
+---
 
-Create a new hook `useOrganizationsWithStats` that fetches all organizations with their location counts in a single efficient query:
+## Hook Enhancements
+
+### Update useOrganizationsWithStats
+
+Enhance the hook to fetch aggregated Stripe status per organization:
 
 ```typescript
 export interface OrganizationListItem extends Organization {
   locationCount: number;
-}
-
-export function useOrganizationsWithStats() {
-  return useQuery({
-    queryKey: ['organizations-with-stats'],
-    queryFn: async () => {
-      // Fetch organizations
-      const { data: orgs, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      // Fetch location counts for all orgs
-      const { data: locationCounts } = await supabase
-        .from('locations')
-        .select('organization_id')
-        .eq('is_active', true);
-      
-      // Aggregate counts per org
-      const countMap = new Map<string, number>();
-      locationCounts?.forEach(loc => {
-        const orgId = loc.organization_id;
-        if (orgId) countMap.set(orgId, (countMap.get(orgId) || 0) + 1);
-      });
-      
-      return orgs.map(org => ({
-        ...org,
-        locationCount: countMap.get(org.id) || 0
-      }));
-    },
-  });
+  // New fields
+  stripeLocationsActive: number;    // Locations with active Stripe
+  stripeLocationsTotal: number;     // Total locations with Stripe enabled
+  hasStripeIssues: boolean;         // Any location with issues
+  primaryLocation: {                // First active location's geography
+    state_province: string | null;
+    country: string | null;
+  } | null;
 }
 ```
 
-### Phase 4: Update Accounts Table
+The hook will aggregate:
+- Count of locations with `stripe_status = 'active'`
+- Count of locations with `stripe_payments_enabled = true`
+- Boolean flag if any location has `stripe_status = 'issues'`
+- Primary location's state/country for display
 
-**File**: `src/pages/dashboard/platform/Accounts.tsx`
+---
 
-Update the table to display the three new columns:
+## UI Updates
 
-| Current Columns | New Columns |
-|-----------------|-------------|
-| Salon (name + slug) | (unchanged) |
-| Status | Type (business_type) |
-| Stage | Plan (subscription_tier) |
-| Source | Locations (count badge) |
-| Created | (unchanged) |
-| Actions | (unchanged) |
+### Accounts Table - New Columns
 
-**Visual Design:**
+Replace current table layout with:
+
+| Column | Data | Display |
+|--------|------|---------|
+| **Account** | `account_number` | `#1000` format with org name/logo |
+| **Type** | `business_type` | Label text |
+| **Location** | Primary location | State/Country (e.g., "TX, US") |
+| **Status** | `status` | Badge |
+| **Plan** | `subscription_tier` | Label text |
+| **Locations** | Count | Number with MapPin icon |
+| **Payments** | Stripe status | Status indicator |
+| **Actions** | Menu | Dropdown |
+
+### Stripe Payment Status Indicator
+
+Visual indicator showing aggregated payment status:
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│ Salon               │ Type    │ Status  │ Plan         │ Locations │ Created        │
-├─────────────────────────────────────────────────────────────────────────────────────┤
-│ [logo] Drop Dead    │ Salon   │ active  │ Professional │ 3 📍      │ 10 hours ago   │
-│        drop-dead... │         │         │              │           │                │
-└─────────────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────┐
+│  ● Active (2/3)                 │  All locations active
+│  ◐ Partial (1/3)                │  Some locations active
+│  ⚠ Issues                       │  One or more has issues
+│  ○ Not Connected                │  No Stripe setup
+└─────────────────────────────────┘
 ```
 
-**Type Display**: Show as simple text with optional icon hint
-
-**Plan Display**: Use a subtle badge or text with plan tier
-
-**Locations Display**: Show count with `MapPin` icon, styled as pill/badge
-
-### Phase 5: Update Create Organization Dialog
-
-**File**: `src/components/platform/CreateOrganizationDialog.tsx`
-
-Add a Business Type selector to the form:
-
-```tsx
-<FormField
-  control={form.control}
-  name="business_type"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Business Type</FormLabel>
-      <Select onValueChange={field.onChange} value={field.value}>
-        <SelectTrigger>
-          <SelectValue placeholder="Select business type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="salon">Salon</SelectItem>
-          <SelectItem value="spa">Spa</SelectItem>
-          <SelectItem value="esthetics">Esthetics</SelectItem>
-          <SelectItem value="barbershop">Barbershop</SelectItem>
-          <SelectItem value="med_spa">Med Spa</SelectItem>
-          <SelectItem value="wellness">Wellness</SelectItem>
-          <SelectItem value="other">Other</SelectItem>
-        </SelectContent>
-      </Select>
-    </FormItem>
-  )}
-/>
-```
-
-### Phase 6: Update Account Detail Page
-
-Ensure the AccountDetail page also displays business type in the organization info card.
+Component design:
+- Green dot + "2/3" = 2 of 3 locations have active Stripe
+- Orange warning icon if any location has issues
+- Gray if no Stripe connected
 
 ---
 
@@ -178,86 +178,106 @@ Ensure the AccountDetail page also displays business type in the organization in
 
 | File | Changes |
 |------|---------|
-| **Migration** | Add `business_type` column to organizations |
-| `src/hooks/useOrganizations.ts` | Add `business_type` to types, create `useOrganizationsWithStats` hook |
-| `src/pages/dashboard/platform/Accounts.tsx` | Update table with Type, Plan, Locations columns |
-| `src/components/platform/CreateOrganizationDialog.tsx` | Add Business Type field |
-| `src/pages/dashboard/platform/AccountDetail.tsx` | Display business type |
+| **Migration** | Add `account_number` to organizations, add `state_province`, `country`, `stripe_account_id`, `stripe_payments_enabled`, `stripe_status` to locations |
+| `src/hooks/useOrganizations.ts` | Update types, enhance `useOrganizationsWithStats` to include Stripe aggregates and primary location |
+| `src/pages/dashboard/platform/Accounts.tsx` | Update table columns: Account #, Location, Payments indicator |
+| `src/components/platform/CreateOrganizationDialog.tsx` | Optionally add primary state/country fields |
+| `src/pages/dashboard/platform/AccountDetail.tsx` | Display account number, Stripe status per location |
 
 ---
 
-## Technical Details
+## Table Column Layout
 
-### Table Column Layout Update
-
-Replace the current columns with:
+### Updated Table Headers
 
 ```tsx
 <TableHeader>
   <TableRow>
-    <TableHead>Salon</TableHead>
+    <TableHead>Account</TableHead>        {/* Account # + Name */}
     <TableHead>Type</TableHead>
+    <TableHead>Location</TableHead>       {/* NEW: State, Country */}
     <TableHead>Status</TableHead>
     <TableHead>Plan</TableHead>
     <TableHead>Locations</TableHead>
-    <TableHead>Created</TableHead>
+    <TableHead>Payments</TableHead>       {/* NEW: Stripe status */}
     <TableHead className="text-right">Actions</TableHead>
   </TableRow>
 </TableHeader>
 ```
 
-### Business Type Labels Mapping
-
-```typescript
-const businessTypeLabels: Record<string, string> = {
-  salon: 'Salon',
-  spa: 'Spa',
-  esthetics: 'Esthetics',
-  barbershop: 'Barbershop',
-  med_spa: 'Med Spa',
-  wellness: 'Wellness',
-  other: 'Other',
-};
-```
-
-### Plan Tier Labels Mapping
-
-```typescript
-const planLabels: Record<string, string> = {
-  starter: 'Starter',
-  standard: 'Standard',
-  professional: 'Professional',
-  enterprise: 'Enterprise',
-};
-```
-
-### Location Count Cell
+### Account Cell Display
 
 ```tsx
 <TableCell>
-  <div className="flex items-center gap-1.5">
-    <MapPin className="h-3.5 w-3.5 text-slate-500" />
-    <span className="text-sm text-slate-300">{org.locationCount}</span>
+  <div className="flex items-center gap-3">
+    <div className="h-10 w-10 rounded-xl bg-violet-500/10 ...">
+      {/* Logo or Building2 icon */}
+    </div>
+    <div>
+      <p className="font-medium text-white">{org.name}</p>
+      <p className="text-xs text-slate-500">#{org.account_number}</p>
+    </div>
   </div>
 </TableCell>
 ```
 
----
-
-## Filter Updates (Optional Enhancement)
-
-Consider adding a filter dropdown for business type alongside the existing status filter:
+### Location Cell Display
 
 ```tsx
-<Select value={typeFilter} onValueChange={setTypeFilter}>
-  <SelectTrigger className="w-[150px]">
-    <SelectValue placeholder="All Types" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="all">All Types</SelectItem>
-    <SelectItem value="salon">Salon</SelectItem>
-    <SelectItem value="spa">Spa</SelectItem>
-    {/* ... */}
-  </SelectContent>
-</Select>
+<TableCell>
+  {org.primaryLocation ? (
+    <span className="text-sm text-slate-300">
+      {org.primaryLocation.state_province}, {org.primaryLocation.country}
+    </span>
+  ) : (
+    <span className="text-sm text-slate-500">—</span>
+  )}
+</TableCell>
 ```
+
+### Payments Status Cell
+
+```tsx
+<TableCell>
+  <StripeStatusIndicator 
+    activeCount={org.stripeLocationsActive}
+    totalCount={org.locationCount}
+    hasIssues={org.hasStripeIssues}
+  />
+</TableCell>
+```
+
+The indicator component will show:
+- Green dot with "X/Y" if any active
+- Orange warning icon if issues
+- Gray "Not Connected" if none
+
+---
+
+## Visual Design Reference
+
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Account             │ Type   │ Location │ Status │ Plan    │ Locations │ Payments  │ Actions  │
+├────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ [logo] Drop Dead    │ Salon  │ TX, US   │ active │ Standard│ 📍 2      │ ● 2/2     │ ⋯        │
+│        #1000        │        │          │        │         │           │           │          │
+├────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ [logo] Luxe Spa     │ Spa    │ CA, US   │ pending│ Starter │ 📍 1      │ ⚠ Issues  │ ⋯        │
+│        #1001        │        │          │        │         │           │           │          │
+├────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ [logo] New Salon    │ Salon  │ ON, CA   │ pending│ Standard│ 📍 3      │ ○ Not Set │ ⋯        │
+│        #1002        │        │          │        │         │           │           │          │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Implementation Order
+
+1. Run database migration (add all new columns)
+2. Update TypeScript types in hooks
+3. Enhance `useOrganizationsWithStats` hook with new aggregations
+4. Create `StripeStatusIndicator` component
+5. Update Accounts table with new columns
+6. Update AccountDetail page to show per-location Stripe status
