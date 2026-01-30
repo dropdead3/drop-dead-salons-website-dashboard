@@ -23,6 +23,7 @@ export interface Organization {
   activated_at: string | null;
   updated_at: string;
   business_type: BusinessType;
+  account_number: number | null;
 }
 
 export interface OrganizationInsert {
@@ -186,6 +187,21 @@ export interface OrganizationWithStats extends Organization {
 
 export interface OrganizationListItem extends Organization {
   locationCount: number;
+  stripeLocationsActive: number;
+  hasStripeIssues: boolean;
+  primaryLocation: {
+    state_province: string | null;
+    country: string | null;
+  } | null;
+}
+
+interface LocationWithStripe {
+  organization_id: string | null;
+  is_active: boolean;
+  state_province: string | null;
+  country: string | null;
+  stripe_status: string | null;
+  display_order: number;
 }
 
 export function useOrganizationsWithStats() {
@@ -200,23 +216,57 @@ export function useOrganizationsWithStats() {
 
       if (error) throw error;
 
-      // Fetch location counts for all orgs
-      const { data: locationCounts } = await supabase
+      // Fetch locations with Stripe and geography data
+      const { data: locationsData } = await supabase
         .from('locations')
-        .select('organization_id')
-        .eq('is_active' as never, true);
+        .select('organization_id, is_active, state_province, country, stripe_status, display_order')
+        .eq('is_active' as never, true)
+        .order('display_order', { ascending: true });
 
-      // Aggregate counts per org
-      const countMap = new Map<string, number>();
-      (locationCounts || []).forEach((loc: { organization_id: string | null }) => {
+      const locations = (locationsData || []) as unknown as LocationWithStripe[];
+
+      // Aggregate data per org
+      const orgDataMap = new Map<string, {
+        count: number;
+        stripeActive: number;
+        hasIssues: boolean;
+        primaryLocation: { state_province: string | null; country: string | null } | null;
+      }>();
+
+      locations.forEach((loc) => {
         const orgId = loc.organization_id;
-        if (orgId) countMap.set(orgId, (countMap.get(orgId) || 0) + 1);
+        if (!orgId) return;
+
+        const existing = orgDataMap.get(orgId) || {
+          count: 0,
+          stripeActive: 0,
+          hasIssues: false,
+          primaryLocation: null,
+        };
+
+        existing.count += 1;
+        if (loc.stripe_status === 'active') existing.stripeActive += 1;
+        if (loc.stripe_status === 'issues') existing.hasIssues = true;
+        if (!existing.primaryLocation && (loc.state_province || loc.country)) {
+          existing.primaryLocation = {
+            state_province: loc.state_province,
+            country: loc.country,
+          };
+        }
+
+        orgDataMap.set(orgId, existing);
       });
 
-      return (orgs as Organization[]).map(org => ({
-        ...org,
-        locationCount: countMap.get(org.id) || 0
-      })) as OrganizationListItem[];
+      return (orgs as Organization[]).map(org => {
+        const data = orgDataMap.get(org.id);
+        return {
+          ...org,
+          locationCount: data?.count || 0,
+          stripeLocationsActive: data?.stripeActive || 0,
+          hasStripeIssues: data?.hasIssues || false,
+          primaryLocation: data?.primaryLocation || null,
+        };
+      }) as OrganizationListItem[];
     },
   });
 }
