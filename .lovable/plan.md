@@ -1,88 +1,71 @@
 
+## Add Account Number Identification to Organization Selectors
 
-## Move Knowledge Base to Standalone Platform Page
-
-This plan will extract the Knowledge Base management from the Settings tabs and make it a first-class page in the Platform navigation.
+This plan will update organization selectors across the platform to display the unique account number alongside the organization name, making it easier to distinguish between accounts with similar or identical names.
 
 ---
 
-### Overview
+### Problem
 
-The Knowledge Base content management will become its own dedicated page accessible directly from the sidebar, rather than being nested inside Platform Settings. This makes it easier to access and visually elevates its importance as a core platform feature.
+Organizations may have similar or identical names across different states/regions. Currently, the organization selectors show the slug as the differentiator, but the unique `account_number` (starting at 1000) provides a clearer, more consistent identifier.
 
 ---
 
 ### Changes Summary
 
-| File | Action |
-|------|--------|
-| `src/pages/dashboard/platform/KnowledgeBase.tsx` | **Create** - New standalone page |
-| `src/components/platform/layout/PlatformSidebar.tsx` | **Edit** - Add nav link with BookOpen icon |
-| `src/pages/dashboard/platform/PlatformSettings.tsx` | **Edit** - Remove Knowledge Base tab |
-| `src/App.tsx` | **Edit** - Add route for new page |
+| File | Action | Description |
+|------|--------|-------------|
+| `src/pages/dashboard/platform/PlatformImport.tsx` | **Edit** | Update Select dropdown to show `#account_number` instead of `(slug)` |
+| `src/components/platform/OrganizationSwitcher.tsx` | **Edit** | Update CommandItem display to show `#account_number` as secondary identifier |
 
 ---
 
 ### Implementation Details
 
-#### 1. Create New Knowledge Base Page
+#### 1. Update Data Migration Selector (`PlatformImport.tsx`)
 
-Create `src/pages/dashboard/platform/KnowledgeBase.tsx` that wraps the existing Knowledge Base content with proper platform page layout components:
-
-- Uses `PlatformPageContainer` for consistent padding and max-width
-- Uses `PlatformPageHeader` with "Back to Overview" navigation
-- Imports and renders the existing article/category management components
-- Includes the "New Article" button in the header
-
-#### 2. Add Sidebar Navigation Link
-
-Add a new nav item in `PlatformSidebar.tsx`:
-
-```text
-Current nav order:
-├── Overview
-├── Accounts
-├── Migrations
-├── Revenue (admin+)
-├── Permissions (admin+)
-└── Settings (admin+)
-
-New nav order:
-├── Overview
-├── Accounts
-├── Migrations
-├── Knowledge Base (admin+)  ← NEW
-├── Revenue (admin+)
-├── Permissions (admin+)
-└── Settings (admin+)
+Change the organization display from:
+```
+[Icon] Organization Name (slug)
 ```
 
-- Icon: `BookOpen` (already in use in the tab)
-- Route: `/dashboard/platform/knowledge-base`
-- Role restriction: Same as Settings (`platform_owner`, `platform_admin`)
-
-#### 3. Remove Tab from Settings
-
-Edit `PlatformSettings.tsx` to:
-- Remove the "Knowledge Base" TabsTrigger
-- Remove the "Knowledge Base" TabsContent
-- Remove the `KnowledgeBaseTab` import
-
-#### 4. Add Route
-
-In `App.tsx`, add the new route under the platform layout:
-
+To:
 ```
-/dashboard/platform/knowledge-base → PlatformKnowledgeBase
+[Icon] Organization Name  #1234
 ```
 
-With the same protection as Settings (`requirePlatformRole="platform_admin"`).
+The account number will be displayed as a styled badge/tag to the right, providing clear visual differentiation.
+
+#### 2. Update Organization Switcher (`OrganizationSwitcher.tsx`)
+
+For both Active and Onboarding account groups, change from:
+```
+[Icon] Organization Name
+       slug
+```
+
+To:
+```
+[Icon] Organization Name
+       #1234
+```
+
+The account number replaces the slug as the secondary identifier since it's more unique and meaningful for differentiating similar accounts.
+
+---
+
+### Visual Design
+
+The account number will be formatted consistently as `#XXXX` (e.g., `#1001`, `#1234`) matching the existing pattern used in:
+- Accounts table: `#1234` in slate-500 text
+- Account detail: `Account #1234`
+- Edit dialog footer: `Account #1234`
 
 ---
 
 ### Technical Notes
 
-- The existing `KBCategoryManager`, `KBArticlesList`, and `KBArticleEditor` components will be reused directly in the new page
-- No database or hook changes required - all existing functionality remains intact
-- The change is purely structural (routing and navigation)
-
+- The `account_number` field is already available in the `Organization` type from `useOrganizations` hook
+- No database or hook changes required
+- Null safety: If `account_number` is null, fall back to displaying the slug
+- The CommandInput search in OrganizationSwitcher will continue to work as it searches the entire item content
