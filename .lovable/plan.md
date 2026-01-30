@@ -1,252 +1,88 @@
 
-# Platform Account Profile Editor with Online Presence
 
-## Summary
+## Move Knowledge Base to Standalone Platform Page
 
-Create a profile editing system for platform team members with a dedicated "My Account" page in the platform settings, featuring profile photo upload and real-time online presence tracking that shows which team members are currently active.
-
----
-
-## Current State Analysis
-
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Platform Team List | Exists | Shows initials only, no photos, no online status |
-| Profile Data | Exists | Uses `employee_profiles` table with `photo_url` column |
-| Photo Upload Hook | Exists | `useUploadProfilePhoto` uploads to `employee-photos` bucket |
-| Online Presence | Missing | No real-time tracking infrastructure |
+This plan will extract the Knowledge Base management from the Settings tabs and make it a first-class page in the Platform navigation.
 
 ---
 
-## Solution Architecture
+### Overview
+
+The Knowledge Base content management will become its own dedicated page accessible directly from the sidebar, rather than being nested inside Platform Settings. This makes it easier to access and visually elevates its importance as a core platform feature.
+
+---
+
+### Changes Summary
+
+| File | Action |
+|------|--------|
+| `src/pages/dashboard/platform/KnowledgeBase.tsx` | **Create** - New standalone page |
+| `src/components/platform/layout/PlatformSidebar.tsx` | **Edit** - Add nav link with BookOpen icon |
+| `src/pages/dashboard/platform/PlatformSettings.tsx` | **Edit** - Remove Knowledge Base tab |
+| `src/App.tsx` | **Edit** - Add route for new page |
+
+---
+
+### Implementation Details
+
+#### 1. Create New Knowledge Base Page
+
+Create `src/pages/dashboard/platform/KnowledgeBase.tsx` that wraps the existing Knowledge Base content with proper platform page layout components:
+
+- Uses `PlatformPageContainer` for consistent padding and max-width
+- Uses `PlatformPageHeader` with "Back to Overview" navigation
+- Imports and renders the existing article/category management components
+- Includes the "New Article" button in the header
+
+#### 2. Add Sidebar Navigation Link
+
+Add a new nav item in `PlatformSidebar.tsx`:
 
 ```text
-+---------------------------+       +------------------------+
-|  Platform Settings        |       |  PlatformSidebar       |
-|  > Account Tab (NEW)      |       |  Current User Avatar   |
-+---------------------------+       |  + Online Indicator    |
-            |                       +------------------------+
-            v
-+---------------------------+       +------------------------+
-|  PlatformAccountEditor    | <---> |  employee_profiles     |
-|  - Photo upload           |       |  (existing table)      |
-|  - Name, email, phone     |       +------------------------+
-|  - Display preferences    |
-+---------------------------+
-            |
-            v
-+---------------------------+       +------------------------+
-|  usePlatformPresence      | <---> |  Supabase Realtime     |
-|  (Presence channel)       |       |  Presence Channel      |
-+---------------------------+       +------------------------+
-            |
-            v
-+---------------------------+
-|  PlatformTeamManager      |
-|  - Photo avatars          |
-|  - Online status dots     |
-|  - "X online" counter     |
-+---------------------------+
+Current nav order:
+├── Overview
+├── Accounts
+├── Migrations
+├── Revenue (admin+)
+├── Permissions (admin+)
+└── Settings (admin+)
+
+New nav order:
+├── Overview
+├── Accounts
+├── Migrations
+├── Knowledge Base (admin+)  ← NEW
+├── Revenue (admin+)
+├── Permissions (admin+)
+└── Settings (admin+)
 ```
+
+- Icon: `BookOpen` (already in use in the tab)
+- Route: `/dashboard/platform/knowledge-base`
+- Role restriction: Same as Settings (`platform_owner`, `platform_admin`)
+
+#### 3. Remove Tab from Settings
+
+Edit `PlatformSettings.tsx` to:
+- Remove the "Knowledge Base" TabsTrigger
+- Remove the "Knowledge Base" TabsContent
+- Remove the `KnowledgeBaseTab` import
+
+#### 4. Add Route
+
+In `App.tsx`, add the new route under the platform layout:
+
+```
+/dashboard/platform/knowledge-base → PlatformKnowledgeBase
+```
+
+With the same protection as Settings (`requirePlatformRole="platform_admin"`).
 
 ---
 
-## Features
+### Technical Notes
 
-### 1. Platform Account Profile Editor
+- The existing `KBCategoryManager`, `KBArticlesList`, and `KBArticleEditor` components will be reused directly in the new page
+- No database or hook changes required - all existing functionality remains intact
+- The change is purely structural (routing and navigation)
 
-A new "Account" tab in Platform Settings allowing team members to edit:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| Profile Photo | Image Upload | Uses existing `employee-photos` bucket |
-| Display Name | Text | Preferred name shown in platform |
-| Full Name | Text | Legal name for records |
-| Email | Text | Contact email (read-only from auth) |
-| Phone | Text | Optional contact phone |
-
-### 2. Online Presence Tracking
-
-Real-time visibility of who is currently logged in to the platform:
-
-| Feature | Implementation |
-|---------|---------------|
-| Online indicator | Green dot on avatar when active |
-| Team list status | Shows "Online" badge next to active users |
-| Presence count | "3 online" counter in team header |
-| Auto-disconnect | Clears presence on logout/tab close |
-
----
-
-## Database Changes
-
-No new tables required. The existing `employee_profiles` table already has all necessary columns:
-- `photo_url` - Profile photo URL
-- `full_name` - Full name
-- `display_name` - Preferred display name
-- `email` - Email address
-- `phone` - Phone number
-
----
-
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/components/platform/settings/PlatformAccountTab.tsx` | Profile editing form with photo upload |
-| `src/hooks/usePlatformPresence.ts` | Supabase Realtime Presence hook |
-| `src/components/platform/ui/OnlineIndicator.tsx` | Reusable online status dot component |
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/pages/dashboard/platform/PlatformSettings.tsx` | Add "Account" tab |
-| `src/components/platform/PlatformTeamManager.tsx` | Add photos and online indicators |
-| `src/components/platform/layout/PlatformSidebar.tsx` | Add current user avatar with online status |
-| `src/components/platform/layout/PlatformLayout.tsx` | Initialize presence tracking |
-
----
-
-## Technical Details
-
-### Presence Hook Pattern
-
-The `usePlatformPresence` hook will use Supabase Realtime Presence:
-
-```typescript
-// Subscribes to 'platform_presence' channel
-// Tracks: { user_id, full_name, photo_url, online_at }
-// Returns: { onlineUsers: Map, isOnline: (userId) => boolean }
-
-const channel = supabase.channel('platform_presence', {
-  config: { presence: { key: user.id } }
-});
-
-channel
-  .on('presence', { event: 'sync' }, () => {
-    const state = channel.presenceState();
-    setOnlineUsers(state);
-  })
-  .subscribe(async (status) => {
-    if (status === 'SUBSCRIBED') {
-      await channel.track({
-        user_id: user.id,
-        full_name: profile.full_name,
-        photo_url: profile.photo_url,
-        online_at: new Date().toISOString()
-      });
-    }
-  });
-```
-
-### Profile Editor Component
-
-```typescript
-// Uses existing hooks:
-// - useEmployeeProfile() for fetching
-// - useUpdateEmployeeProfile() for saving
-// - useUploadProfilePhoto() for image upload
-
-// Form fields:
-// - Avatar with camera overlay for upload
-// - Display name input
-// - Full name input  
-// - Email (read-only, from auth)
-// - Phone input (optional)
-```
-
-### Online Indicator Component
-
-```typescript
-// Small component for consistent online status display
-<OnlineIndicator 
-  isOnline={true} 
-  size="sm" // sm | md | lg
-  className="..." 
-/>
-// Renders: green pulsing dot (online) or gray dot (offline)
-```
-
----
-
-## UI Design
-
-### Account Tab Layout
-
-```
-+------------------------------------------+
-|  Account Settings                        |
-|  Manage your platform profile            |
-+------------------------------------------+
-|                                          |
-|   +--------+   Full Name                 |
-|   |        |   [Alex Maxwell Day    ]    |
-|   | PHOTO  |                             |
-|   |        |   Display Name              |
-|   | [cam]  |   [Alex              ]      |
-|   +--------+                             |
-|                                          |
-|   Email (from your account)              |
-|   alexmaxday@gmail.com                   |
-|                                          |
-|   Phone                                  |
-|   [555-123-4567           ]              |
-|                                          |
-|   [     Save Changes     ]               |
-|                                          |
-+------------------------------------------+
-```
-
-### Team List with Online Status
-
-```
-+------------------------------------------+
-|  Platform Team           [3 online]      |
-+------------------------------------------+
-|  +----+  Alex Maxwell Day    Owner       |
-|  |PHOTO| alexmaxday@gmail.com   [ONLINE] |
-|  | ●  |  Added: Jan 30, 2026             |
-|  +----+                                  |
-+------------------------------------------+
-|  +----+  Jane Developer      Developer   |
-|  |JD  | jane@example.com                 |
-|  | ○  |  Added: Jan 25, 2026             |
-|  +----+                                  |
-+------------------------------------------+
-
-● = Green online indicator
-○ = Gray offline indicator
-```
-
-### Sidebar User Section
-
-```
-+------------------+
-|  +----+          |
-|  |PHOTO|  Alex   |
-|  | ●  |  Owner   |
-|  +----+          |
-+------------------+
-```
-
----
-
-## Implementation Order
-
-1. **Create OnlineIndicator component** - Reusable status dot
-2. **Create usePlatformPresence hook** - Realtime presence tracking
-3. **Create PlatformAccountTab** - Profile editor form
-4. **Update PlatformSettings** - Add Account tab
-5. **Update PlatformLayout** - Initialize presence on mount
-6. **Update PlatformTeamManager** - Add photos and online indicators
-7. **Update PlatformSidebar** - Add current user avatar with status
-
----
-
-## Theme Compatibility
-
-All new components will use the existing platform theme system:
-- CSS variables: `--platform-bg-card`, `--platform-text-primary`, etc.
-- Light/dark mode support via `usePlatformTheme`
-- Consistent styling with existing platform components
