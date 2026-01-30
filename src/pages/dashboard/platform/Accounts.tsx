@@ -24,8 +24,12 @@ import {
   MoreHorizontal,
   Upload,
   MapPin,
-  Pencil
+  Pencil,
+  LayoutDashboard
 } from 'lucide-react';
+import { DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { logPlatformAction } from '@/hooks/useOrganizations';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,6 +79,7 @@ const planLabels: Record<string, string> = {
 
 export default function PlatformAccounts() {
   const navigate = useNavigate();
+  const { setSelectedOrganization } = useOrganizationContext();
   const { data: organizations, isLoading } = useOrganizationsWithStats();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -394,6 +399,22 @@ export default function PlatformAccounts() {
                             >
                               <Upload className="h-4 w-4 mr-2" />
                               Start Import
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-slate-700" />
+                            <DropdownMenuItem 
+                              className="text-slate-300 focus:bg-slate-700 focus:text-white"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrganization(org);
+                                logPlatformAction(org.id, 'dashboard_accessed', 'organization', org.id, {
+                                  organization_name: org.name,
+                                  action: 'view_dashboard',
+                                });
+                                navigate('/dashboard');
+                              }}
+                            >
+                              <LayoutDashboard className="h-4 w-4 mr-2" />
+                              View Dashboard
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
