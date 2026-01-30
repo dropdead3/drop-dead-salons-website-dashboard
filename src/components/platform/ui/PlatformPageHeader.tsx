@@ -38,9 +38,9 @@ export function PlatformPageHeader({
           </PlatformButton>
         )}
         <div>
-          <h1 className="text-3xl font-medium tracking-tight text-white">{title}</h1>
+          <h1 className="text-3xl font-medium tracking-tight text-[hsl(var(--platform-foreground))]">{title}</h1>
           {description && (
-            <p className="text-slate-400">{description}</p>
+            <p className="text-[hsl(var(--platform-foreground-muted))]">{description}</p>
           )}
         </div>
       </div>

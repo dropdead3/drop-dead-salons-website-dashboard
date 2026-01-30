@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { PlatformButton } from '../ui/PlatformButton';
 import { usePlatformBranding } from '@/hooks/usePlatformBranding';
+import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 
 interface NavItem {
   href: string;
@@ -39,6 +40,7 @@ export function PlatformSidebar() {
   const location = useLocation();
   const { hasPlatformRoleOrHigher } = useAuth();
   const { branding } = usePlatformBranding();
+  const { resolvedTheme } = usePlatformTheme();
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
     return saved ? JSON.parse(saved) : false;
@@ -54,43 +56,75 @@ export function PlatformSidebar() {
     return item.platformRoles.some(role => hasPlatformRoleOrHigher(role));
   });
 
+  // Choose logo based on theme
+  // Dark mode: use primary_logo_url (light/white logo)
+  // Light mode: use secondary_logo_url (dark logo)
+  const currentLogo = resolvedTheme === 'dark' 
+    ? branding.primary_logo_url 
+    : branding.secondary_logo_url;
+  
+  const currentIcon = resolvedTheme === 'dark'
+    ? branding.primary_logo_url // Using same for now, could add icon variants
+    : branding.secondary_logo_url;
+
+  const isDark = resolvedTheme === 'dark';
+
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen border-r border-slate-700/50 bg-slate-900/95 backdrop-blur-xl transition-all duration-300',
-        collapsed ? 'w-16' : 'w-56'
+        'fixed left-0 top-0 z-40 h-screen border-r transition-all duration-300',
+        collapsed ? 'w-16' : 'w-56',
+        isDark 
+          ? 'border-slate-700/50 bg-slate-900/95 backdrop-blur-xl'
+          : 'border-violet-200/50 bg-white/95 backdrop-blur-xl shadow-lg shadow-violet-500/5'
       )}
     >
       {/* Logo / Header */}
-      <div className="flex h-16 items-center justify-between border-b border-slate-700/50 px-4">
+      <div className={cn(
+        'flex h-16 items-center justify-between border-b px-4',
+        isDark ? 'border-slate-700/50' : 'border-violet-200/50'
+      )}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            {branding.primary_logo_url ? (
+            {currentLogo ? (
               <img
-                src={branding.primary_logo_url}
+                src={currentLogo}
                 alt="Platform logo"
                 className="h-8 object-contain"
               />
             ) : (
               <>
-                <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20">
+                <div className={cn(
+                  'p-1.5 rounded-lg shadow-lg',
+                  isDark 
+                    ? 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'
+                    : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/30'
+                )}>
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-display text-white">Platform</span>
+                <span className={cn(
+                  'font-display',
+                  isDark ? 'text-white' : 'text-slate-900'
+                )}>Platform</span>
               </>
             )}
           </div>
         )}
         {collapsed && (
           <div className="mx-auto">
-            {branding.secondary_logo_url ? (
+            {currentIcon ? (
               <img
-                src={branding.secondary_logo_url}
+                src={currentIcon}
                 alt="Platform icon"
                 className="h-8 w-8 object-contain"
               />
             ) : (
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20">
+              <div className={cn(
+                'p-1.5 rounded-lg shadow-lg',
+                isDark 
+                  ? 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'
+                  : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/30'
+              )}>
                 <Sparkles className="h-4 w-4 text-white" />
               </div>
             )}
@@ -113,12 +147,21 @@ export function PlatformSidebar() {
                     'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     collapsed && 'justify-center px-2',
                     isActive
-                      ? 'bg-violet-500/20 text-violet-300 shadow-sm shadow-violet-500/10'
-                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
+                      ? isDark
+                        ? 'bg-violet-500/20 text-violet-300 shadow-sm shadow-violet-500/10'
+                        : 'bg-violet-100 text-violet-700 shadow-sm shadow-violet-500/10'
+                      : isDark
+                        ? 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
+                        : 'text-slate-500 hover:bg-violet-50 hover:text-violet-700'
                   )}
                   title={collapsed ? item.label : undefined}
                 >
-                  <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-violet-400')} />
+                  <Icon className={cn(
+                    'h-5 w-5 shrink-0',
+                    isActive 
+                      ? isDark ? 'text-violet-400' : 'text-violet-600'
+                      : ''
+                  )} />
                   {!collapsed && <span>{item.label}</span>}
                 </NavLink>
               </li>
@@ -128,12 +171,21 @@ export function PlatformSidebar() {
       </nav>
 
       {/* Collapse Toggle */}
-      <div className="border-t border-slate-700/50 p-3">
+      <div className={cn(
+        'border-t p-3',
+        isDark ? 'border-slate-700/50' : 'border-violet-200/50'
+      )}>
         <PlatformButton
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className={cn('w-full justify-center text-slate-400 hover:text-white', !collapsed && 'justify-start gap-2')}
+          className={cn(
+            'w-full justify-center',
+            !collapsed && 'justify-start gap-2',
+            isDark 
+              ? 'text-slate-400 hover:text-white' 
+              : 'text-slate-500 hover:text-violet-700 hover:bg-violet-50'
+          )}
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />
