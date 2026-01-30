@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { formatPhoneNumber } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -479,8 +480,8 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                         <FormControl>
                           <PlatformInput 
                             placeholder="(555) 123-4567" 
-                            {...field} 
                             value={field.value || ''} 
+                            onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))}
                           />
                         </FormControl>
                         <FormMessage className="text-red-400" />
