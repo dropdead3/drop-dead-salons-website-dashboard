@@ -38,6 +38,82 @@ export type Database = {
         }
         Relationships: []
       }
+      account_note_mentions: {
+        Row: {
+          created_at: string
+          id: string
+          mentioned_role: string | null
+          mentioned_user_id: string | null
+          note_id: string
+          notified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentioned_role?: string | null
+          mentioned_user_id?: string | null
+          note_id: string
+          notified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentioned_role?: string | null
+          mentioned_user_id?: string | null
+          note_id?: string
+          notified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_note_mentions_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "account_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      account_notes: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          mentions: Json | null
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          mentions?: Json | null
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          mentions?: Json | null
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcement_reads: {
         Row: {
           announcement_id: string

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -14,11 +14,13 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  CreditCard
+  CreditCard,
+  MessageSquare
 } from 'lucide-react';
 import { useOrganizationWithStats, type OrganizationWithStats } from '@/hooks/useOrganizations';
 import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
 import { BillingConfigurationPanel } from '@/components/platform/billing/BillingConfigurationPanel';
+import { AccountNotesSection } from '@/components/platform/notes/AccountNotesSection';
 import { format } from 'date-fns';
 import {
   PlatformCard,
@@ -59,6 +61,8 @@ const businessTypeLabels: Record<string, string> = {
 export default function AccountDetail() {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'overview';
   const { data: organization, isLoading } = useOrganizationWithStats(orgId);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
@@ -180,7 +184,7 @@ export default function AccountDetail() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue={defaultTab} className="space-y-4">
         <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
           <TabsTrigger 
             value="overview"
@@ -212,6 +216,13 @@ export default function AccountDetail() {
           >
             <CreditCard className="h-4 w-4 mr-2" />
             Billing
+          </TabsTrigger>
+          <TabsTrigger 
+            value="notes"
+            className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white"
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Notes
           </TabsTrigger>
           <TabsTrigger 
             value="settings"
@@ -342,6 +353,13 @@ export default function AccountDetail() {
             organizationId={organization.id}
             billingStatus={(organization as any).billing_status as BillingStatus || 'draft'}
             locationCount={organization.locationCount}
+          />
+        </TabsContent>
+
+        <TabsContent value="notes">
+          <AccountNotesSection
+            organizationId={organization.id}
+            organizationName={organization.name}
           />
         </TabsContent>
 
