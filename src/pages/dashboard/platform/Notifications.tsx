@@ -10,7 +10,8 @@ import {
   Check,
   Building2,
   Clock,
-  Zap
+  Zap,
+  CreditCard
 } from 'lucide-react';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
@@ -45,6 +46,8 @@ const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   sla_breach: Clock,
   migration_complete: CheckCircle,
   job_failure: AlertCircle,
+  payment_failed: CreditCard,
+  payment_recovered: CheckCircle,
 };
 
 export default function NotificationsPage() {

@@ -56,6 +56,16 @@ export const NOTIFICATION_TYPES = {
     description: 'When scheduled jobs fail',
     defaultChannels: ['in_app', 'email'],
   },
+  payment_failed: {
+    label: 'Payment Failures',
+    description: 'When subscription payments fail',
+    defaultChannels: ['in_app', 'email'],
+  },
+  payment_recovered: {
+    label: 'Payment Recovery',
+    description: 'When failed payments are recovered',
+    defaultChannels: ['in_app'],
+  },
 };
 
 export function usePlatformNotifications(limit = 50) {
