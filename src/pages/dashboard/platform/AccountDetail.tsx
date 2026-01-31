@@ -30,6 +30,7 @@ import { logPlatformAction } from '@/hooks/useOrganizations';
 import { useOrganizationWithStats, type OrganizationWithStats } from '@/hooks/useOrganizations';
 import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
 import { AccountIntegrationsCard } from '@/components/platform/account/AccountIntegrationsCard';
+import { MigrationCredentialsCard } from '@/components/platform/account/MigrationCredentialsCard';
 import { BillingConfigurationPanel } from '@/components/platform/billing/BillingConfigurationPanel';
 import { AccountNotesSection } from '@/components/platform/notes/AccountNotesSection';
 import { format, parseISO, isBefore, startOfDay } from 'date-fns';
@@ -402,6 +403,9 @@ export default function AccountDetail() {
               </PlatformCardContent>
             </PlatformCard>
           </div>
+
+          {/* Migration Credentials Card */}
+          <MigrationCredentialsCard organizationId={organization.id} organization={organization} />
 
           {/* Business Integrations Card */}
           <AccountIntegrationsCard organizationId={organization.id} />
