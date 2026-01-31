@@ -800,6 +800,185 @@ export type Database = {
           },
         ]
       }
+      booth_rental_contracts: {
+        Row: {
+          additional_terms: Json | null
+          auto_renew: boolean | null
+          booth_renter_id: string
+          contract_name: string
+          contract_type: string | null
+          created_at: string | null
+          document_url: string | null
+          due_day_of_month: number | null
+          due_day_of_week: number | null
+          end_date: string | null
+          id: string
+          includes_products: boolean | null
+          includes_utilities: boolean | null
+          includes_wifi: boolean | null
+          notice_period_days: number | null
+          organization_id: string
+          pandadoc_document_id: string | null
+          pandadoc_status: string | null
+          rent_amount: number
+          rent_frequency: string
+          retail_commission_enabled: boolean | null
+          retail_commission_rate: number | null
+          security_deposit: number | null
+          security_deposit_paid: boolean | null
+          signed_at: string | null
+          start_date: string
+          status: string | null
+          terminated_at: string | null
+          termination_reason: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          additional_terms?: Json | null
+          auto_renew?: boolean | null
+          booth_renter_id: string
+          contract_name: string
+          contract_type?: string | null
+          created_at?: string | null
+          document_url?: string | null
+          due_day_of_month?: number | null
+          due_day_of_week?: number | null
+          end_date?: string | null
+          id?: string
+          includes_products?: boolean | null
+          includes_utilities?: boolean | null
+          includes_wifi?: boolean | null
+          notice_period_days?: number | null
+          organization_id: string
+          pandadoc_document_id?: string | null
+          pandadoc_status?: string | null
+          rent_amount: number
+          rent_frequency: string
+          retail_commission_enabled?: boolean | null
+          retail_commission_rate?: number | null
+          security_deposit?: number | null
+          security_deposit_paid?: boolean | null
+          signed_at?: string | null
+          start_date: string
+          status?: string | null
+          terminated_at?: string | null
+          termination_reason?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          additional_terms?: Json | null
+          auto_renew?: boolean | null
+          booth_renter_id?: string
+          contract_name?: string
+          contract_type?: string | null
+          created_at?: string | null
+          document_url?: string | null
+          due_day_of_month?: number | null
+          due_day_of_week?: number | null
+          end_date?: string | null
+          id?: string
+          includes_products?: boolean | null
+          includes_utilities?: boolean | null
+          includes_wifi?: boolean | null
+          notice_period_days?: number | null
+          organization_id?: string
+          pandadoc_document_id?: string | null
+          pandadoc_status?: string | null
+          rent_amount?: number
+          rent_frequency?: string
+          retail_commission_enabled?: boolean | null
+          retail_commission_rate?: number | null
+          security_deposit?: number | null
+          security_deposit_paid?: boolean | null
+          signed_at?: string | null
+          start_date?: string
+          status?: string | null
+          terminated_at?: string | null
+          termination_reason?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booth_rental_contracts_booth_renter_id_fkey"
+            columns: ["booth_renter_id"]
+            isOneToOne: false
+            referencedRelation: "booth_renter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booth_rental_contracts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booth_renter_profiles: {
+        Row: {
+          billing_address: Json | null
+          billing_email: string | null
+          billing_phone: string | null
+          business_license_number: string | null
+          business_name: string | null
+          created_at: string | null
+          ein_number: string | null
+          end_date: string | null
+          id: string
+          license_state: string | null
+          onboarding_complete: boolean | null
+          organization_id: string
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          billing_address?: Json | null
+          billing_email?: string | null
+          billing_phone?: string | null
+          business_license_number?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          ein_number?: string | null
+          end_date?: string | null
+          id?: string
+          license_state?: string | null
+          onboarding_complete?: boolean | null
+          organization_id: string
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          billing_address?: Json | null
+          billing_email?: string | null
+          billing_phone?: string | null
+          business_license_number?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          ein_number?: string | null
+          end_date?: string | null
+          id?: string
+          license_state?: string | null
+          onboarding_complete?: boolean | null
+          organization_id?: string
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booth_renter_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       build_tasks: {
         Row: {
           blocked_by: string | null
@@ -6880,6 +7059,327 @@ export type Database = {
           },
         ]
       }
+      rent_payments: {
+        Row: {
+          adjustment_notes: string | null
+          adjustments: number | null
+          amount_paid: number | null
+          autopay_attempted_at: string | null
+          autopay_failed_reason: string | null
+          autopay_scheduled: boolean | null
+          base_rent: number
+          booth_renter_id: string
+          contract_id: string
+          created_at: string | null
+          credits_applied: number | null
+          due_date: string
+          id: string
+          late_fee: number | null
+          notes: string | null
+          organization_id: string
+          paid_at: string | null
+          payment_method: string | null
+          period_end: string
+          period_start: string
+          status: string | null
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          adjustment_notes?: string | null
+          adjustments?: number | null
+          amount_paid?: number | null
+          autopay_attempted_at?: string | null
+          autopay_failed_reason?: string | null
+          autopay_scheduled?: boolean | null
+          base_rent: number
+          booth_renter_id: string
+          contract_id: string
+          created_at?: string | null
+          credits_applied?: number | null
+          due_date: string
+          id?: string
+          late_fee?: number | null
+          notes?: string | null
+          organization_id: string
+          paid_at?: string | null
+          payment_method?: string | null
+          period_end: string
+          period_start: string
+          status?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          adjustment_notes?: string | null
+          adjustments?: number | null
+          amount_paid?: number | null
+          autopay_attempted_at?: string | null
+          autopay_failed_reason?: string | null
+          autopay_scheduled?: boolean | null
+          base_rent?: number
+          booth_renter_id?: string
+          contract_id?: string
+          created_at?: string | null
+          credits_applied?: number | null
+          due_date?: string
+          id?: string
+          late_fee?: number | null
+          notes?: string | null
+          organization_id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payments_booth_renter_id_fkey"
+            columns: ["booth_renter_id"]
+            isOneToOne: false
+            referencedRelation: "booth_renter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_payments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "booth_rental_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renter_onboarding_completions: {
+        Row: {
+          booth_renter_id: string
+          completed_at: string | null
+          completed_data: Json | null
+          id: string
+          task_id: string
+        }
+        Insert: {
+          booth_renter_id: string
+          completed_at?: string | null
+          completed_data?: Json | null
+          id?: string
+          task_id: string
+        }
+        Update: {
+          booth_renter_id?: string
+          completed_at?: string | null
+          completed_data?: Json | null
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renter_onboarding_completions_booth_renter_id_fkey"
+            columns: ["booth_renter_id"]
+            isOneToOne: false
+            referencedRelation: "booth_renter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renter_onboarding_completions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "renter_onboarding_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renter_onboarding_tasks: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          document_template_id: string | null
+          form_template_id: string | null
+          id: string
+          is_active: boolean | null
+          link_url: string | null
+          organization_id: string
+          required: boolean | null
+          task_type: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          document_template_id?: string | null
+          form_template_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_url?: string | null
+          organization_id: string
+          required?: boolean | null
+          task_type?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          document_template_id?: string | null
+          form_template_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_url?: string | null
+          organization_id?: string
+          required?: boolean | null
+          task_type?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renter_onboarding_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renter_payment_settings: {
+        Row: {
+          autopay_days_before_due: number | null
+          autopay_enabled: boolean | null
+          booth_renter_id: string
+          created_at: string | null
+          id: string
+          organization_id: string
+          payment_method_brand: string | null
+          payment_method_last_four: string | null
+          payment_method_type: string | null
+          stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          autopay_days_before_due?: number | null
+          autopay_enabled?: boolean | null
+          booth_renter_id: string
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          payment_method_brand?: string | null
+          payment_method_last_four?: string | null
+          payment_method_type?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          autopay_days_before_due?: number | null
+          autopay_enabled?: boolean | null
+          booth_renter_id?: string
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          payment_method_brand?: string | null
+          payment_method_last_four?: string | null
+          payment_method_type?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renter_payment_settings_booth_renter_id_fkey"
+            columns: ["booth_renter_id"]
+            isOneToOne: true
+            referencedRelation: "booth_renter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renter_payment_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renter_retail_commissions: {
+        Row: {
+          booth_renter_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          payout_date: string | null
+          payout_reference: string | null
+          payout_status: string | null
+          retail_sale_id: string | null
+          sale_amount: number
+          sale_date: string
+        }
+        Insert: {
+          booth_renter_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          payout_date?: string | null
+          payout_reference?: string | null
+          payout_status?: string | null
+          retail_sale_id?: string | null
+          sale_amount: number
+          sale_date: string
+        }
+        Update: {
+          booth_renter_id?: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          payout_date?: string | null
+          payout_reference?: string | null
+          payout_status?: string | null
+          retail_sale_id?: string | null
+          sale_amount?: number
+          sale_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renter_retail_commissions_booth_renter_id_fkey"
+            columns: ["booth_renter_id"]
+            isOneToOne: false
+            referencedRelation: "booth_renter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renter_retail_commissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_history: {
         Row: {
           created_at: string | null
@@ -8990,6 +9490,10 @@ export type Database = {
         }[]
       }
       current_user_is_coach: { Args: never; Returns: boolean }
+      get_booth_renter_profile_id: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       get_or_create_client_balance: {
         Args: { p_client_id: string; p_organization_id: string }
         Returns: string
@@ -9023,6 +9527,7 @@ export type Database = {
         Args: { article_id: string }
         Returns: undefined
       }
+      is_booth_renter: { Args: { _user_id: string }; Returns: boolean }
       is_coach_or_admin: { Args: { _user_id: string }; Returns: boolean }
       is_org_admin: {
         Args: { _org_id: string; _user_id: string }
@@ -9081,6 +9586,7 @@ export type Database = {
         | "admin_assistant"
         | "operations_assistant"
         | "super_admin"
+        | "booth_renter"
       billing_cycle: "monthly" | "quarterly" | "semi_annual" | "annual"
       billing_status:
         | "draft"
@@ -9270,6 +9776,7 @@ export const Constants = {
         "admin_assistant",
         "operations_assistant",
         "super_admin",
+        "booth_renter",
       ],
       billing_cycle: ["monthly", "quarterly", "semi_annual", "annual"],
       billing_status: [
