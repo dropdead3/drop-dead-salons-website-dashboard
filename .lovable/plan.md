@@ -1,185 +1,176 @@
 
-# Product SKU Management & Register Scanning System
+
+# Rewards, Gift Cards & Loyalty Program Configurator
 
 ## Overview
-Build a complete system for organizations to manage retail product SKUs/barcodes and scan products at a Point of Sale (POS) register. This includes a product inventory management page for assigning SKUs, a barcode scanning interface integrated into the checkout flow, and local retail sale recording.
-
-## Current State
-- **Database Ready**: The `products` table already has `sku` and `barcode` fields (currently populated via CSV import only)
-- **No Product Management UI**: There's no dedicated page for viewing/editing products or assigning SKUs
-- **Checkout is Service-Only**: `CheckoutSummarySheet` handles appointment finalization but doesn't support adding retail products
-- **Transaction Recording**: Retail sales are synced from Phorest; no local retail sale recording exists
-
-## System Architecture
-
-### Database Changes
-
-#### 1. Retail Sales Table (Local Sales Recording)
-```sql
-CREATE TABLE retail_sales (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id),
-  location_id TEXT REFERENCES locations(id),
-  client_id UUID REFERENCES phorest_clients(id),
-  staff_id UUID REFERENCES auth.users(id),
-  
-  -- Totals
-  subtotal DECIMAL(10,2) NOT NULL,
-  tax_amount DECIMAL(10,2) DEFAULT 0,
-  discount_amount DECIMAL(10,2) DEFAULT 0,
-  total_amount DECIMAL(10,2) NOT NULL,
-  
-  -- Payment
-  payment_method TEXT, -- 'card', 'cash', 'credit', 'giftcard'
-  payment_status TEXT DEFAULT 'completed',
-  
-  -- Metadata
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-#### 2. Retail Sale Items Table
-```sql
-CREATE TABLE retail_sale_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  sale_id UUID NOT NULL REFERENCES retail_sales(id) ON DELETE CASCADE,
-  product_id UUID NOT NULL REFERENCES products(id),
-  product_name TEXT NOT NULL,
-  sku TEXT,
-  quantity INTEGER NOT NULL DEFAULT 1,
-  unit_price DECIMAL(10,2) NOT NULL,
-  discount DECIMAL(10,2) DEFAULT 0,
-  total_amount DECIMAL(10,2) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-#### 3. Add Index for SKU/Barcode Lookup
-```sql
-CREATE INDEX idx_products_sku ON products(organization_id, sku) WHERE sku IS NOT NULL;
-CREATE INDEX idx_products_barcode ON products(organization_id, barcode) WHERE barcode IS NOT NULL;
-```
-
-### New Permissions
-- `manage_inventory` - View and edit products, assign SKUs
-- `process_retail_sales` - Use the register/POS to ring up products
+Build a comprehensive configuration system for organizations to manage client loyalty programs, gift card design customization, physical card ordering, and printable gift card certificates. This system will integrate with the existing gift card infrastructure and follow established configurator patterns.
 
 ---
 
-## Implementation Phases
+## System Architecture
 
-### Phase 1: Product Inventory Management Page
+### Database Schema
 
-**New Route**: `/dashboard/inventory`
-
-**Features**:
-- Sortable/filterable product table with columns: Name, SKU, Barcode, Category, Brand, Price, Stock, Actions
-- Inline editing of SKU and Barcode fields (quick-edit mode)
-- Full product edit dialog for all fields
-- Low stock warnings (highlight products below reorder level)
-- Search by name, SKU, or barcode
-- Filter by category, brand, location
-- Bulk SKU assignment tool
-
-**UI Mockup**:
-```
-+------------------------------------------------------------------+
-| INVENTORY                                    [+ Add Product]      |
-| Manage retail products and stock levels                           |
-+------------------------------------------------------------------+
-| [🔍 Search by name/SKU/barcode...]  [Category ▼] [Location ▼]    |
-+------------------------------------------------------------------+
-| NAME            SKU           BARCODE        PRICE    STOCK  ACT  |
-|----------------------------------------------------------------------
-| Olaplex No.3   OLAP-003     [Edit]          $28.00   12     [···] |
-| K18 Mask       K18-MASK     8901234567890   $75.00   3 ⚠️   [···] |
-| Purple Shampoo [+ Add SKU]  [+ Add Barcode] $24.00   8      [···] |
-+------------------------------------------------------------------+
-```
-
-### Phase 2: Point of Sale / Register Page
-
-**New Route**: `/dashboard/register`
-
-**Features**:
-- Barcode scanner input (auto-focus, listens for rapid keyboard input from USB scanner)
-- Manual SKU/barcode search field
-- Shopping cart with quantity adjustments
-- Client selection (optional - for walk-ins)
-- Staff attribution for commission tracking
-- Tax calculation (uses location's tax rate)
-- Payment method selection (Card, Cash, Salon Credit, Gift Card)
-- Apply client credit/gift card balances
-- Receipt generation (PDF)
-
-**Barcode Scanner Logic**:
-```typescript
-// Detect barcode scanner input (rapid sequential keystrokes)
-// USB scanners type very fast - detect 6+ chars within 50ms
-const [scanBuffer, setScanBuffer] = useState('');
-const [lastKeyTime, setLastKeyTime] = useState(0);
-
-useEffect(() => {
-  const handleKeyPress = (e: KeyboardEvent) => {
-    const now = Date.now();
-    if (now - lastKeyTime < 50) {
-      setScanBuffer(prev => prev + e.key);
-    } else {
-      setScanBuffer(e.key);
-    }
-    setLastKeyTime(now);
-    
-    // On Enter, trigger lookup
-    if (e.key === 'Enter' && scanBuffer.length > 5) {
-      lookupProduct(scanBuffer);
-      setScanBuffer('');
-    }
-  };
-  window.addEventListener('keypress', handleKeyPress);
-  return () => window.removeEventListener('keypress', handleKeyPress);
-}, [scanBuffer, lastKeyTime]);
+#### 1. Loyalty Program Settings Table
+Stores organization-level loyalty program configuration.
+```sql
+CREATE TABLE public.loyalty_program_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL UNIQUE REFERENCES organizations(id),
+  
+  -- Program Status
+  is_enabled BOOLEAN DEFAULT false,
+  program_name TEXT DEFAULT 'Rewards Program',
+  
+  -- Points Earning Rules
+  points_per_dollar DECIMAL(10,2) DEFAULT 1.0,
+  service_multiplier DECIMAL(10,2) DEFAULT 1.0,
+  product_multiplier DECIMAL(10,2) DEFAULT 1.0,
+  
+  -- Redemption Rules  
+  points_to_dollar_ratio DECIMAL(10,4) DEFAULT 0.01, -- 100 pts = $1
+  minimum_redemption_points INTEGER DEFAULT 100,
+  
+  -- Expiration
+  points_expire BOOLEAN DEFAULT false,
+  points_expiration_days INTEGER DEFAULT 365,
+  
+  -- Bonus Rules (JSONB for flexibility)
+  bonus_rules JSONB DEFAULT '[]',
+  -- e.g., [{"type": "birthday", "bonus_points": 100}, {"type": "first_visit", "multiplier": 2}]
+  
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-**UI Mockup**:
-```
-+------------------------------------------------------------------+
-| REGISTER                                     Val Vista Location   |
-+------------------------------------------------------------------+
-| [🔍 Scan barcode or enter SKU...]              Staff: Jane Smith  |
-+------------------------------------------------------------------+
-|                                    |                              |
-| CART (3 items)                     |  Client: Sarah Johnson       |
-| ─────────────────────────────────  |  Credit Balance: $25.00      |
-| Olaplex No.3        x2    $56.00   |                              |
-|   [-] [2] [+]              [🗑️]    |  ─────────────────────────── |
-|                                    |  Subtotal:        $131.00    |
-| K18 Mask            x1    $75.00   |  Tax (8.5%):       $11.14    |
-|   [-] [1] [+]              [🗑️]    |  Discount:          -$0.00   |
-|                                    |  ─────────────────────────── |
-|                                    |  TOTAL:           $142.14    |
-|                                    |                              |
-|                                    |  [Apply $25 Credit]          |
-|                                    |                              |
-|                                    |  Payment: [Card ▼]           |
-|                                    |                              |
-+------------------------------------------------------------------+
-|              [Clear Cart]           [Complete Sale →]             |
-+------------------------------------------------------------------+
+#### 2. Client Loyalty Points Table
+Tracks individual client point balances.
+```sql
+CREATE TABLE public.client_loyalty_points (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  client_id UUID NOT NULL REFERENCES phorest_clients(id),
+  current_points INTEGER NOT NULL DEFAULT 0,
+  lifetime_points INTEGER NOT NULL DEFAULT 0,
+  tier TEXT DEFAULT 'bronze', -- bronze, silver, gold, platinum
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(organization_id, client_id)
+);
 ```
 
-### Phase 3: Checkout Integration
+#### 3. Points Transaction Ledger
+Audit trail for all points activity.
+```sql
+CREATE TABLE public.points_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  client_id UUID NOT NULL REFERENCES phorest_clients(id),
+  transaction_type TEXT NOT NULL, 
+  -- 'earned', 'redeemed', 'bonus', 'expired', 'adjustment'
+  points INTEGER NOT NULL,
+  reference_type TEXT, -- 'appointment', 'retail_sale', 'manual', 'birthday'
+  reference_id TEXT,
+  description TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
 
-**Enhance `CheckoutSummarySheet`** to include retail add-ons:
-- Add "Add Retail Products" section with scanner/search
-- Show combined total (service + products + tax + tip)
-- Record both appointment completion AND retail sale in single transaction
+#### 4. Loyalty Tiers Configuration
+```sql
+CREATE TABLE public.loyalty_tiers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  tier_name TEXT NOT NULL,
+  tier_key TEXT NOT NULL, -- 'bronze', 'silver', 'gold', 'platinum'
+  minimum_lifetime_points INTEGER NOT NULL DEFAULT 0,
+  points_multiplier DECIMAL(10,2) DEFAULT 1.0,
+  perks TEXT[], -- Array of perk descriptions
+  sort_order INTEGER DEFAULT 0,
+  color TEXT DEFAULT '#cd7f32',
+  icon TEXT DEFAULT 'star',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
 
-### Phase 4: Analytics Integration
+#### 5. Gift Card Design Settings
+Organization branding for gift cards.
+```sql
+CREATE TABLE public.gift_card_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL UNIQUE REFERENCES organizations(id),
+  
+  -- Digital Card Design
+  card_background_color TEXT DEFAULT '#1a1a1a',
+  card_text_color TEXT DEFAULT '#ffffff',
+  card_accent_color TEXT DEFAULT '#d4af37',
+  card_logo_url TEXT,
+  
+  -- Print Settings
+  print_template TEXT DEFAULT 'elegant', -- elegant, modern, minimal
+  include_qr_code BOOLEAN DEFAULT true,
+  include_terms BOOLEAN DEFAULT true,
+  terms_text TEXT,
+  
+  -- Default Values
+  default_expiration_months INTEGER DEFAULT 12,
+  suggested_amounts INTEGER[] DEFAULT ARRAY[25, 50, 100, 150, 200],
+  
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
 
-- Update `ProductLeaderboard` to include local retail sales (not just Phorest sync)
-- Add retail sales to Transactions page
-- Show daily register sales in Command Center
+#### 6. Physical Card Orders
+Track orders for custom printed gift cards.
+```sql
+CREATE TABLE public.gift_card_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  
+  -- Order Details
+  quantity INTEGER NOT NULL,
+  card_design TEXT NOT NULL, -- design template name
+  card_stock TEXT DEFAULT 'standard', -- standard, premium, plastic
+  
+  -- Customization
+  custom_logo_url TEXT,
+  custom_message TEXT,
+  card_number_prefix TEXT, -- e.g., "DD-" for Drop Dead
+  
+  -- Shipping
+  shipping_address JSONB NOT NULL,
+  shipping_method TEXT DEFAULT 'standard', -- standard, express, overnight
+  
+  -- Status & Pricing
+  status TEXT DEFAULT 'pending', 
+  -- pending, confirmed, printing, shipped, delivered, cancelled
+  unit_price DECIMAL(10,2),
+  total_price DECIMAL(10,2),
+  tracking_number TEXT,
+  estimated_delivery DATE,
+  
+  -- Timestamps
+  ordered_by UUID NOT NULL REFERENCES auth.users(id),
+  ordered_at TIMESTAMPTZ DEFAULT now(),
+  shipped_at TIMESTAMPTZ,
+  delivered_at TIMESTAMPTZ,
+  notes TEXT
+);
+```
+
+### Add New Fields to Gift Cards Table
+```sql
+ALTER TABLE public.gift_cards ADD COLUMN IF NOT EXISTS 
+  card_type TEXT DEFAULT 'digital', -- 'digital', 'physical'
+  design_template TEXT,
+  custom_message TEXT,
+  qr_code_url TEXT,
+  printed_at TIMESTAMPTZ,
+  physical_card_id TEXT; -- For tracking physical card stock
+```
 
 ---
 
@@ -187,115 +178,317 @@ useEffect(() => {
 
 ```
 src/
-├── pages/dashboard/
-│   ├── Inventory.tsx                      # Product management page
-│   └── Register.tsx                       # POS/register page
-├── components/dashboard/inventory/
-│   ├── ProductTable.tsx                   # Sortable product table
-│   ├── ProductEditDialog.tsx              # Full product editor
-│   ├── SKUEditor.tsx                      # Inline SKU/barcode editor
-│   ├── BulkSKUAssigner.tsx                # Bulk SKU assignment tool
-│   └── LowStockAlert.tsx                  # Stock level warnings
-├── components/dashboard/register/
-│   ├── BarcodeScannerInput.tsx            # Scanner detection component
-│   ├── ProductSearch.tsx                  # Manual product lookup
-│   ├── RegisterCart.tsx                   # Shopping cart display
-│   ├── CartItem.tsx                       # Individual cart item
-│   ├── RegisterClientSelect.tsx           # Client picker
-│   ├── PaymentMethodSelect.tsx            # Payment options
-│   ├── RegisterTotals.tsx                 # Price summary
-│   └── RegisterReceipt.tsx                # Receipt generation
+├── pages/dashboard/settings/
+│   └── LoyaltyProgram.tsx                    # Main configurator page
+├── components/dashboard/loyalty/
+│   ├── LoyaltyProgramConfigurator.tsx        # Program settings tab
+│   ├── LoyaltyTiersEditor.tsx                # Tier configuration
+│   ├── PointsRulesEditor.tsx                 # Earning/redemption rules
+│   ├── BonusRulesEditor.tsx                  # Birthday/referral bonuses
+│   ├── GiftCardDesignEditor.tsx              # Visual design customization
+│   ├── GiftCardPreview.tsx                   # Live card preview
+│   ├── PhysicalCardOrderForm.tsx             # Order custom printed cards
+│   ├── PhysicalCardOrderHistory.tsx          # Past orders list
+│   ├── PrintableGiftCard.tsx                 # Printable paper certificate
+│   └── ClientLoyaltyCard.tsx                 # Client profile loyalty display
 ├── hooks/
-│   ├── useProducts.ts                     # Product CRUD operations
-│   ├── useProductLookup.ts                # SKU/barcode search
-│   ├── useRegisterCart.ts                 # Cart state management
-│   └── useRetailSales.ts                  # Sale recording
+│   ├── useLoyaltySettings.ts                 # Loyalty program CRUD
+│   ├── useLoyaltyTiers.ts                    # Tier configuration
+│   ├── useClientLoyaltyPoints.ts             # Client points management
+│   ├── useGiftCardSettings.ts                # Gift card branding
+│   └── useGiftCardOrders.ts                  # Physical card orders
 ```
+
+---
+
+## Implementation Phases
+
+### Phase 1: Database & Core Hooks
+
+1. Create migration with all new tables and RLS policies
+2. Add permissions: `manage_loyalty_program`, `manage_gift_card_design`, `order_physical_cards`
+3. Create hooks:
+   - `useLoyaltySettings` - Fetch/update program configuration
+   - `useLoyaltyTiers` - CRUD for reward tiers
+   - `useClientLoyaltyPoints` - Client points queries
+   - `useGiftCardSettings` - Organization card branding
+   - `useGiftCardOrders` - Physical card order management
+
+### Phase 2: Loyalty Program Configurator
+
+**Route**: `/dashboard/settings/loyalty` (or integrated into Admin Settings)
+
+**Tabs Structure**:
+1. **Program Settings** - Enable/disable, naming, basic rules
+2. **Points Rules** - Earning rates, multipliers, redemption ratios
+3. **Reward Tiers** - Bronze/Silver/Gold/Platinum configuration
+4. **Bonus Rules** - Birthday rewards, first-visit bonuses, referral points
+
+**UI Mockup - Program Settings**:
+```
++------------------------------------------------------------------+
+| LOYALTY & REWARDS                                                 |
+| Configure your client loyalty program                             |
++------------------------------------------------------------------+
+| [Program] [Points Rules] [Tiers] [Bonuses] [Gift Cards]          |
++------------------------------------------------------------------+
+|                                                                   |
+| Enable Loyalty Program                              [Toggle ON]   |
+|                                                                   |
+| Program Name                                                      |
+| [Drop Dead Rewards                                           ]    |
+|                                                                   |
+| ─────────────────────────────────────────────────────────────    |
+|                                                                   |
+| POINTS EARNING                                                    |
+|                                                                   |
+| Base Rate: [$1.00] spent = [1] point                             |
+|                                                                   |
+| Category Multipliers:                                             |
+| • Services          [1.5x ▼]                                     |
+| • Retail Products   [1.0x ▼]                                     |
+| • Extensions        [2.0x ▼]                                     |
+|                                                                   |
+| ─────────────────────────────────────────────────────────────    |
+|                                                                   |
+| REDEMPTION                                                        |
+|                                                                   |
+| [100] points = $[1.00] off                                       |
+| Minimum redemption: [500] points                                  |
+|                                                                   |
++------------------------------------------------------------------+
+```
+
+**UI Mockup - Tiers Editor**:
+```
++------------------------------------------------------------------+
+| REWARD TIERS                           [+ Add Tier] [Reset]       |
++------------------------------------------------------------------+
+|                                                                   |
+| ┌─ Bronze ─────────────────────────────────────────────────────┐ |
+| │ [🥉] Lifetime Points Required: [0]                           │ |
+| │ Points Multiplier: [1.0x]                                     │ |
+| │ Perks:                                                        │ |
+| │ • [Birthday discount: 10%                              ] [×]  │ |
+| │ • [+ Add perk]                                                │ |
+| │ Color: [#CD7F32 ■]                                           │ |
+| └───────────────────────────────────────────────────────────────┘ |
+|                                                                   |
+| ┌─ Silver ─────────────────────────────────────────────────────┐ |
+| │ [🥈] Lifetime Points Required: [500]                         │ |
+| │ Points Multiplier: [1.25x]                                    │ |
+| │ Perks:                                                        │ |
+| │ • [Birthday discount: 15%                              ] [×]  │ |
+| │ • [Free product sample with visit                      ] [×]  │ |
+| │ • [+ Add perk]                                                │ |
+| └───────────────────────────────────────────────────────────────┘ |
+|                                                                   |
++------------------------------------------------------------------+
+```
+
+### Phase 3: Gift Card Design Configurator
+
+**Features**:
+- Live preview of digital gift card appearance
+- Color picker for background/text/accent
+- Logo upload integration (uses existing storage bucket)
+- Template selection (Elegant, Modern, Minimal)
+- QR code toggle
+- Terms & conditions editor
+- Suggested denomination amounts
+
+**UI Mockup - Design Editor**:
+```
++------------------------------------------------------------------+
+| GIFT CARD DESIGN                                                  |
++------------------------------------------------------------------+
+|                                                                   |
+| PREVIEW                          | SETTINGS                       |
+| ┌─────────────────────────────┐  |                                |
+| │  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  │  | Template: [Elegant ▼]          |
+| │  █                        █  │  |                                |
+| │  █   DROP DEAD®           █  │  | Background: [#1A1A1A ■]        |
+| │  █                        █  │  | Text Color: [#FFFFFF ■]        |
+| │  █   GIFT CARD            █  │  | Accent:     [#D4AF37 ■]        |
+| │  █                        █  │  |                                |
+| │  █   $100                 █  │  | [☑] Include QR Code            |
+| │  █                        █  │  | [☑] Include Terms              |
+| │  █  CODE: XXXX-XXXX-XXXX  █  │  |                                |
+| │  █     [QR CODE]          █  │  | ─────────────────────────────  |
+| │  █████████████████████████  │  |                                |
+| └─────────────────────────────┘  | Suggested Amounts:              |
+|                                  | [$25] [$50] [$100] [$150] [$200]|
+| [Print Preview] [Download PDF]   | [+ Add Amount]                  |
+|                                  |                                 |
++------------------------------------------------------------------+
+```
+
+### Phase 4: Printable Gift Card (Paper)
+
+**Component**: `PrintableGiftCard.tsx`
+
+Uses existing patterns from `Extensions.tsx` coupon printing and `jsPDF` for PDF generation:
+- Generates a printable certificate-style gift card
+- Includes QR code (using `qrcode.react`) for balance lookup
+- Organization branding from `gift_card_settings`
+- Unique gift card code prominently displayed
+- Optional custom message from purchaser
+
+**Print Layout (8.5" x 4" or standard gift card certificate)**:
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                                                                     │
+│                    [ORGANIZATION LOGO]                              │
+│                                                                     │
+│                        GIFT CARD                                    │
+│                                                                     │
+│                         $100                                        │
+│                                                                     │
+│    ┌──────────┐                                                     │
+│    │ [QR CODE]│     Code: ABCD-1234-EFGH-5678                      │
+│    └──────────┘                                                     │
+│                                                                     │
+│    To: Jane Doe                                                     │
+│    From: John Smith                                                 │
+│    Message: "Happy Birthday! Treat yourself!"                       │
+│                                                                     │
+│    ─────────────────────────────────────────────────────────────   │
+│    Valid at all Drop Dead locations. No cash value.                 │
+│    Expires: January 31, 2027                                        │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Phase 5: Physical Card Ordering System
+
+**Route**: `/dashboard/settings/loyalty?tab=physical-cards`
+
+**Features**:
+- Order form for custom printed plastic/cardstock gift cards
+- Quantity selection with tiered pricing display
+- Design template preview
+- Custom logo upload
+- Shipping address form (pulls from organization defaults)
+- Order history with status tracking
+- Platform admin fulfillment dashboard (separate from org view)
+
+**UI Mockup - Order Form**:
+```
++------------------------------------------------------------------+
+| ORDER PHYSICAL GIFT CARDS                                         |
++------------------------------------------------------------------+
+|                                                                   |
+| CARD DESIGN                                                       |
+| ┌─────────┐ ┌─────────┐ ┌─────────┐                              |
+| │ Elegant │ │ Modern  │ │ Minimal │                              |
+| │  (•)    │ │  ( )    │ │  ( )    │                              |
+| └─────────┘ └─────────┘ └─────────┘                              |
+|                                                                   |
+| CARD STOCK                                                        |
+| ( ) Standard Cardstock    - $0.50/card                           |
+| (•) Premium Matte         - $0.85/card                           |
+| ( ) Plastic PVC           - $1.50/card                           |
+|                                                                   |
+| QUANTITY                                                          |
+| [100 ▼] cards            Subtotal: $85.00                        |
+|                                                                   |
+| ─────────────────────────────────────────────────────────────    |
+|                                                                   |
+| CUSTOMIZATION                                                     |
+| Upload Logo: [Choose File] business-logo.png                      |
+| Card Prefix: [DD-     ] (e.g., DD-0001)                          |
+|                                                                   |
+| ─────────────────────────────────────────────────────────────    |
+|                                                                   |
+| SHIPPING ADDRESS                                                  |
+| [Use default business address ▼]                                  |
+|                                                                   |
+| Shipping: ( ) Standard (5-7 days) FREE                           |
+|           (•) Express (2-3 days) $15.00                          |
+|                                                                   |
+| ─────────────────────────────────────────────────────────────    |
+|                                                                   |
+|                     TOTAL: $100.00                                |
+|                                                                   |
+| [Cancel]                              [Submit Order →]            |
+|                                                                   |
++------------------------------------------------------------------+
+```
+
+**Order History Table**:
+```
+| Order #    | Date       | Qty  | Design  | Status    | Tracking        |
+|------------|------------|------|---------|-----------|-----------------|
+| ORD-001234 | Jan 15, 26 | 500  | Elegant | Shipped   | 1Z999AA10123... |
+| ORD-001198 | Dec 20, 25 | 250  | Modern  | Delivered | —               |
+```
+
+### Phase 6: Integration with Existing Systems
+
+1. **Client Profiles**: Add loyalty points display to `ClientDetailSheet` and `ClientBalanceCard`
+2. **Checkout Flow**: Points earning calculation during `CheckoutSummarySheet`
+3. **Register POS**: Points redemption option in payment methods
+4. **Gift Card Manager**: Add "Print" and "Order Physical" actions to existing table
+5. **Transactions Page**: Show loyalty points activity in client transaction history
 
 ---
 
 ## Technical Details
 
-### Product Lookup Hook
-```typescript
-export function useProductLookup(organizationId: string) {
-  return useMutation({
-    mutationFn: async (query: string) => {
-      // Try exact barcode match first
-      let { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .eq('barcode', query)
-        .eq('is_active', true)
-        .maybeSingle();
-      
-      if (data) return data;
-      
-      // Try exact SKU match
-      ({ data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .eq('sku', query.toUpperCase())
-        .eq('is_active', true)
-        .maybeSingle());
-      
-      if (data) return data;
-      
-      // Fuzzy name search
-      ({ data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .ilike('name', `%${query}%`)
-        .eq('is_active', true)
-        .limit(10));
-      
-      return data;
-    }
-  });
-}
-```
-
-### Register Cart State
-```typescript
-interface CartItem {
-  productId: string;
-  name: string;
-  sku: string | null;
-  quantity: number;
-  unitPrice: number;
-  discount: number;
-}
-
-interface RegisterState {
-  items: CartItem[];
-  clientId: string | null;
-  staffId: string;
-  paymentMethod: 'card' | 'cash' | 'credit' | 'giftcard';
-  discountAmount: number;
-  appliedCredit: number;
-}
-```
-
 ### RLS Policies
 ```sql
--- Products: Staff can view, admin/manager can edit
-CREATE POLICY "Staff can view products" ON products
+-- All loyalty tables: Org admins/managers can manage
+CREATE POLICY "Org staff can manage loyalty settings" ON loyalty_program_settings
+  FOR ALL TO authenticated
+  USING (
+    public.user_belongs_to_org(auth.uid(), organization_id) AND
+    (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'manager'))
+  );
+
+-- Points viewing: Any staff can view client points
+CREATE POLICY "Staff can view client points" ON client_loyalty_points
   FOR SELECT TO authenticated
-  USING (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'manager') OR 
-         has_role(auth.uid(), 'receptionist') OR has_role(auth.uid(), 'stylist'));
+  USING (public.user_belongs_to_org(auth.uid(), organization_id));
+```
 
-CREATE POLICY "Admin/Manager can update products" ON products
-  FOR UPDATE TO authenticated
-  USING (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'manager'));
+### Gift Card PDF Generation
+```typescript
+// Uses existing jsPDF pattern
+const generatePrintableGiftCard = (giftCard: GiftCard, settings: GiftCardSettings) => {
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'in',
+    format: [4, 8.5], // Certificate size
+  });
+  
+  // Background color
+  doc.setFillColor(settings.card_background_color);
+  doc.rect(0, 0, 8.5, 4, 'F');
+  
+  // Add logo, text, QR code...
+  // Use QRCodeCanvas.toDataURL() for embedding QR in PDF
+  
+  doc.save(`gift-card-${giftCard.code}.pdf`);
+};
+```
 
--- Retail sales: Staff can insert, admin can view all
-CREATE POLICY "Staff can record sales" ON retail_sales
-  FOR INSERT TO authenticated
-  WITH CHECK (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'manager') OR 
-              has_role(auth.uid(), 'receptionist'));
+### Points Calculation Hook
+```typescript
+export function useCalculatePoints(transaction: { 
+  type: 'service' | 'product'; 
+  amount: number 
+}) {
+  const { data: settings } = useLoyaltySettings();
+  
+  const multiplier = transaction.type === 'service' 
+    ? settings?.service_multiplier || 1 
+    : settings?.product_multiplier || 1;
+    
+  const basePoints = Math.floor(transaction.amount * (settings?.points_per_dollar || 1));
+  const earnedPoints = Math.floor(basePoints * multiplier);
+  
+  return { basePoints, earnedPoints, multiplier };
+}
 ```
 
 ---
@@ -304,27 +497,38 @@ CREATE POLICY "Staff can record sales" ON retail_sales
 
 | Action | File | Description |
 |--------|------|-------------|
-| Create | Migration | New tables, indexes, permissions |
-| Create | `src/pages/dashboard/Inventory.tsx` | Product management page |
-| Create | `src/pages/dashboard/Register.tsx` | POS/register page |
-| Create | `src/components/dashboard/inventory/*` | Inventory components |
-| Create | `src/components/dashboard/register/*` | Register components |
-| Create | `src/hooks/useProducts.ts` | Product CRUD hook |
-| Create | `src/hooks/useProductLookup.ts` | SKU/barcode lookup hook |
-| Create | `src/hooks/useRegisterCart.ts` | Cart state hook |
-| Create | `src/hooks/useRetailSales.ts` | Sale recording hook |
-| Modify | `src/App.tsx` | Add routes |
-| Modify | `src/components/dashboard/DashboardLayout.tsx` | Add nav items |
-| Modify | `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Add retail products section |
+| Create | Migration | All new tables, RLS, permissions |
+| Create | `src/pages/dashboard/settings/LoyaltyProgram.tsx` | Main configurator page |
+| Create | `src/components/dashboard/loyalty/LoyaltyProgramConfigurator.tsx` | Program settings panel |
+| Create | `src/components/dashboard/loyalty/LoyaltyTiersEditor.tsx` | Tier management UI |
+| Create | `src/components/dashboard/loyalty/PointsRulesEditor.tsx` | Earning/redemption rules |
+| Create | `src/components/dashboard/loyalty/BonusRulesEditor.tsx` | Special bonus configuration |
+| Create | `src/components/dashboard/loyalty/GiftCardDesignEditor.tsx` | Visual design customizer |
+| Create | `src/components/dashboard/loyalty/GiftCardPreview.tsx` | Live preview component |
+| Create | `src/components/dashboard/loyalty/PhysicalCardOrderForm.tsx` | Order placement form |
+| Create | `src/components/dashboard/loyalty/PhysicalCardOrderHistory.tsx` | Order tracking table |
+| Create | `src/components/dashboard/loyalty/PrintableGiftCard.tsx` | PDF/print certificate |
+| Create | `src/components/dashboard/loyalty/ClientLoyaltyCard.tsx` | Points display for profiles |
+| Create | `src/hooks/useLoyaltySettings.ts` | Program config CRUD |
+| Create | `src/hooks/useLoyaltyTiers.ts` | Tier management |
+| Create | `src/hooks/useClientLoyaltyPoints.ts` | Client points operations |
+| Create | `src/hooks/useGiftCardSettings.ts` | Design settings |
+| Create | `src/hooks/useGiftCardOrders.ts` | Physical order management |
+| Modify | `src/App.tsx` | Add route for loyalty settings |
+| Modify | `src/pages/dashboard/admin/Settings.tsx` | Add Loyalty category card |
+| Modify | `src/components/dashboard/transactions/GiftCardManager.tsx` | Add Print/Order actions |
+| Modify | `src/components/dashboard/transactions/ClientBalanceCard.tsx` | Show loyalty points |
+| Modify | `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Points earning display |
 
 ---
 
 ## Edge Cases & Considerations
 
-- **Duplicate SKUs**: Enforce unique SKU per organization with DB constraint
-- **Barcode formats**: Support UPC-A, EAN-13, and custom codes
-- **Inventory sync**: Flag locally-managed vs Phorest-synced products
-- **Offline mode**: Consider localStorage cart persistence
-- **Stock validation**: Warn if selling below available stock
-- **Multi-location**: Products can be location-specific or organization-wide
-- **Commission tracking**: Link sales to staff member for retail commission
+- **Multi-location**: Loyalty points are organization-wide, not location-specific
+- **Point expiration**: Batch job or trigger needed for expiring old points
+- **Physical card activation**: Cards ordered may need manual code assignment flow
+- **Tier downgrades**: Decide if clients can drop tiers (typically no)
+- **Migration**: Existing gift cards remain functional with default design
+- **Printing costs**: Platform takes margin on physical card orders (revenue stream)
+- **International**: Consider multi-currency for organizations outside US
+
