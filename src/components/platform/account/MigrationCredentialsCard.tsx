@@ -135,7 +135,7 @@ export function MigrationCredentialsCard({ organizationId, organization }: Migra
               autoComplete="off"
               className="pr-20"
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-3">
               {password && (
                 <button
                   type="button"
