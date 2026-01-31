@@ -3597,6 +3597,7 @@ export type Database = {
           timezone: string | null
           trial_ends_at: string | null
           updated_at: string | null
+          website_url: string | null
         }
         Insert: {
           account_number?: number | null
@@ -3629,6 +3630,7 @@ export type Database = {
           timezone?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Update: {
           account_number?: number | null
@@ -3661,6 +3663,7 @@ export type Database = {
           timezone?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }

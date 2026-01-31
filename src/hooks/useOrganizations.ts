@@ -17,6 +17,7 @@ export interface Organization {
   primary_contact_phone: string | null;
   source_software: string | null;
   logo_url: string | null;
+  website_url: string | null;
   settings: Json;
   timezone: string;
   created_at: string;
@@ -36,6 +37,7 @@ export interface OrganizationInsert {
   source_software?: string | null;
   subscription_tier?: string;
   logo_url?: string | null;
+  website_url?: string | null;
   settings?: Json;
   timezone?: string;
   business_type?: BusinessType;
