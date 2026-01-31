@@ -1,0 +1,497 @@
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+
+// Use 'any' for Supabase client since we don't have generated types in edge functions
+type SupabaseClientAny = SupabaseClient<any, any, any>;
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+// Stripe signature verification using Web Crypto API
+async function verifyStripeSignature(
+  payload: string,
+  signature: string | null,
+  secret: string
+): Promise<boolean> {
+  if (!secret) {
+    console.warn("STRIPE_WEBHOOK_SECRET not configured - skipping verification");
+    return true; // Allow in dev mode without secret
+  }
+
+  if (!signature) {
+    console.error("No stripe-signature header present");
+    return false;
+  }
+
+  const elements = signature.split(',');
+  const timestamp = elements.find(e => e.startsWith('t='))?.slice(2);
+  const sig = elements.find(e => e.startsWith('v1='))?.slice(3);
+
+  if (!timestamp || !sig) {
+    console.error("Invalid signature format");
+    return false;
+  }
+
+  // Check timestamp freshness (within 5 minutes)
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp)) > 300) {
+    console.error("Webhook timestamp too old");
+    return false;
+  }
+
+  const signedPayload = `${timestamp}.${payload}`;
+  const encoder = new TextEncoder();
+  
+  try {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const expected = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      encoder.encode(signedPayload)
+    );
+
+    const expectedHex = Array.from(new Uint8Array(expected))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    return expectedHex === sig;
+  } catch (error) {
+    console.error("Signature verification error:", error);
+    return false;
+  }
+}
+
+// Send payment failure email to platform admins
+async function sendPaymentFailedEmail(
+  resend: Resend | null,
+  org: { id: string; name: string; slug: string; billing_email?: string },
+  invoice: Record<string, unknown>
+) {
+  if (!resend) {
+    console.log("Resend not configured - skipping email");
+    return;
+  }
+
+  const amount = ((invoice.amount_due as number) || 0) / 100;
+  const failedAt = new Date().toLocaleString('en-US', { 
+    timeZone: 'America/Denver',
+    dateStyle: 'full',
+    timeStyle: 'short'
+  });
+  const reason = (invoice.last_payment_error as Record<string, unknown>)?.message || 'Unknown';
+  const attemptCount = (invoice.attempt_count as number) || 1;
+  const nextAttempt = invoice.next_payment_attempt 
+    ? new Date((invoice.next_payment_attempt as number) * 1000).toLocaleDateString()
+    : 'No retry scheduled';
+
+  try {
+    await resend.emails.send({
+      from: "Platform Alerts <alerts@mail.yourdomain.com>",
+      to: ["platform-admins@yourdomain.com"], // Configure your admin emails
+      subject: `🚨 Payment Failed: ${org.name}`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #dc2626; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 20px;">🚨 URGENT: Payment Failed</h1>
+          </div>
+          <div style="background: #f8fafc; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
+            <p style="margin-top: 0;">A subscription payment has failed and requires attention:</p>
+            
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Organization:</td>
+                  <td style="padding: 8px 0; font-weight: 600;">${org.name}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Amount:</td>
+                  <td style="padding: 8px 0; font-weight: 600;">$${amount.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Failed At:</td>
+                  <td style="padding: 8px 0;">${failedAt}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Reason:</td>
+                  <td style="padding: 8px 0; color: #dc2626;">${reason}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Attempt:</td>
+                  <td style="padding: 8px 0;">${attemptCount} of 4</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Next Retry:</td>
+                  <td style="padding: 8px 0;">${nextAttempt}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="margin-top: 24px;">
+              <a href="https://yourdomain.com/dashboard/platform/accounts/${org.slug}" 
+                 style="background: #7c3aed; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; margin-right: 8px;">
+                View Account
+              </a>
+            </div>
+          </div>
+        </div>
+      `,
+    });
+    console.log("Payment failed email sent successfully");
+  } catch (error) {
+    console.error("Failed to send payment failed email:", error);
+  }
+}
+
+// Handler for invoice.payment_failed
+async function handlePaymentFailed(
+  supabase: SupabaseClientAny,
+  resend: Resend | null,
+  invoice: Record<string, unknown>
+) {
+  const customerId = invoice.customer as string;
+  console.log(`Handling payment failure for customer: ${customerId}`);
+
+  // Find organization by stripe_customer_id
+  const { data: org, error: orgError } = await supabase
+    .from('organizations')
+    .select('id, name, slug, billing_email')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (orgError || !org) {
+    console.warn(`Organization not found for Stripe customer: ${customerId}`);
+    return;
+  }
+
+  console.log(`Found organization: ${org.name} (${org.id})`);
+
+  // Update organization subscription status
+  const { error: updateError } = await supabase
+    .from('organizations')
+    .update({ subscription_status: 'past_due' })
+    .eq('id', org.id);
+
+  if (updateError) {
+    console.error("Failed to update org status:", updateError);
+  }
+
+  // Create platform notification
+  const amount = ((invoice.amount_due as number) || 0) / 100;
+  const reason = (invoice.last_payment_error as Record<string, unknown>)?.message || 'Unknown';
+  
+  const { error: notifError } = await supabase
+    .from('platform_notifications')
+    .insert({
+      type: 'payment_failed',
+      severity: 'critical',
+      title: `Payment Failed: ${org.name}`,
+      message: `Invoice for $${amount.toFixed(2)} failed. Reason: ${reason}`,
+      link: `/dashboard/platform/accounts/${org.slug}`,
+      metadata: {
+        organization_id: org.id,
+        stripe_invoice_id: invoice.id,
+        amount: invoice.amount_due,
+        attempt_count: invoice.attempt_count,
+        next_attempt: invoice.next_payment_attempt,
+        failure_reason: reason,
+      }
+    });
+
+  if (notifError) {
+    console.error("Failed to create notification:", notifError);
+  }
+
+  // Log to subscription_invoices
+  await supabase.from('subscription_invoices').upsert({
+    organization_id: org.id,
+    stripe_invoice_id: invoice.id as string,
+    amount: amount,
+    status: 'unpaid',
+    description: `Payment failed: ${reason}`,
+  }, {
+    onConflict: 'stripe_invoice_id'
+  });
+
+  // Send email alert
+  await sendPaymentFailedEmail(resend, org, invoice);
+
+  console.log(`Payment failure processed for ${org.name}`);
+}
+
+// Handler for invoice.payment_succeeded
+async function handlePaymentSucceeded(
+  supabase: SupabaseClientAny,
+  invoice: Record<string, unknown>
+) {
+  const customerId = invoice.customer as string;
+  console.log(`Handling payment success for customer: ${customerId}`);
+
+  const { data: org, error: orgError } = await supabase
+    .from('organizations')
+    .select('id, name, slug')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (orgError || !org) {
+    console.warn(`Organization not found for Stripe customer: ${customerId}`);
+    return;
+  }
+
+  // Update organization subscription status to active
+  await supabase
+    .from('organizations')
+    .update({ subscription_status: 'active' })
+    .eq('id', org.id);
+
+  // Check if this was a recovery from past_due
+  const { data: prevNotifs } = await supabase
+    .from('platform_notifications')
+    .select('id')
+    .eq('type', 'payment_failed')
+    .eq('metadata->>organization_id', org.id)
+    .eq('is_read', false)
+    .limit(1);
+
+  if (prevNotifs && prevNotifs.length > 0) {
+    // Create recovery notification
+    const amount = ((invoice.amount_due as number) || 0) / 100;
+    await supabase.from('platform_notifications').insert({
+      type: 'payment_recovered',
+      severity: 'info',
+      title: `Payment Recovered: ${org.name}`,
+      message: `Invoice for $${amount.toFixed(2)} was successfully paid.`,
+      link: `/dashboard/platform/accounts/${org.slug}`,
+      metadata: {
+        organization_id: org.id,
+        stripe_invoice_id: invoice.id,
+        amount: invoice.amount_due,
+      }
+    });
+
+    // Mark old failure notifications as read
+    await supabase
+      .from('platform_notifications')
+      .update({ is_read: true, read_at: new Date().toISOString() })
+      .eq('type', 'payment_failed')
+      .eq('metadata->>organization_id', org.id);
+  }
+
+  // Update invoice record
+  await supabase.from('subscription_invoices').upsert({
+    organization_id: org.id,
+    stripe_invoice_id: invoice.id as string,
+    amount: ((invoice.amount_due as number) || 0) / 100,
+    status: 'paid',
+    paid_at: new Date().toISOString(),
+  }, {
+    onConflict: 'stripe_invoice_id'
+  });
+
+  console.log(`Payment success processed for ${org.name}`);
+}
+
+// Handler for charge.failed (standalone charges, not invoice-related)
+async function handleChargeFailed(
+  supabase: SupabaseClientAny,
+  charge: Record<string, unknown>
+) {
+  const customerId = charge.customer as string;
+  if (!customerId) {
+    console.log("Charge failed with no customer - skipping");
+    return;
+  }
+
+  console.log(`Handling charge failure for customer: ${customerId}`);
+
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('id, name, slug')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (!org) {
+    console.warn(`Organization not found for Stripe customer: ${customerId}`);
+    return;
+  }
+
+  const amount = ((charge.amount as number) || 0) / 100;
+  const reason = (charge.failure_message as string) || 'Unknown';
+
+  await supabase.from('platform_notifications').insert({
+    type: 'payment_failed',
+    severity: 'error',
+    title: `Charge Failed: ${org.name}`,
+    message: `Charge for $${amount.toFixed(2)} failed. Reason: ${reason}`,
+    link: `/dashboard/platform/accounts/${org.slug}`,
+    metadata: {
+      organization_id: org.id,
+      stripe_charge_id: charge.id,
+      amount: charge.amount,
+      failure_reason: reason,
+    }
+  });
+
+  console.log(`Charge failure notification created for ${org.name}`);
+}
+
+// Handler for customer.subscription.deleted
+async function handleSubscriptionDeleted(
+  supabase: SupabaseClientAny,
+  resend: Resend | null,
+  subscription: Record<string, unknown>
+) {
+  const customerId = subscription.customer as string;
+  console.log(`Handling subscription deletion for customer: ${customerId}`);
+
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('id, name, slug')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (!org) {
+    console.warn(`Organization not found for Stripe customer: ${customerId}`);
+    return;
+  }
+
+  await supabase
+    .from('organizations')
+    .update({ subscription_status: 'cancelled' })
+    .eq('id', org.id);
+
+  await supabase.from('platform_notifications').insert({
+    type: 'payment_failed',
+    severity: 'critical',
+    title: `Subscription Cancelled: ${org.name}`,
+    message: `The subscription has been cancelled. Immediate attention required.`,
+    link: `/dashboard/platform/accounts/${org.slug}`,
+    metadata: {
+      organization_id: org.id,
+      stripe_subscription_id: subscription.id,
+      cancelled_at: new Date().toISOString(),
+    }
+  });
+
+  console.log(`Subscription deletion processed for ${org.name}`);
+}
+
+// Handler for customer.subscription.updated
+async function handleSubscriptionUpdated(
+  supabase: SupabaseClientAny,
+  subscription: Record<string, unknown>
+) {
+  const customerId = subscription.customer as string;
+  const status = subscription.status as string;
+  
+  console.log(`Handling subscription update for customer: ${customerId}, status: ${status}`);
+
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('id, name')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (!org) {
+    console.warn(`Organization not found for Stripe customer: ${customerId}`);
+    return;
+  }
+
+  // Map Stripe subscription status to our status
+  const statusMap: Record<string, string> = {
+    'active': 'active',
+    'past_due': 'past_due',
+    'canceled': 'cancelled',
+    'unpaid': 'past_due',
+    'trialing': 'active',
+  };
+
+  const mappedStatus = statusMap[status] || 'active';
+
+  await supabase
+    .from('organizations')
+    .update({ subscription_status: mappedStatus })
+    .eq('id', org.id);
+
+  console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
+}
+
+// Main handler
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const resend = resendApiKey ? new Resend(resendApiKey) : null;
+
+    // Get raw body and signature
+    const payload = await req.text();
+    const signature = req.headers.get("stripe-signature");
+
+    // Verify signature (will pass if no secret configured - for dev)
+    if (webhookSecret && !await verifyStripeSignature(payload, signature, webhookSecret)) {
+      console.error("Invalid Stripe webhook signature");
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const event = JSON.parse(payload);
+    console.log(`Stripe webhook received: ${event.type}`, event.id);
+
+    // Route to appropriate handler
+    switch (event.type) {
+      case "invoice.payment_failed":
+        await handlePaymentFailed(supabase, resend, event.data.object);
+        break;
+        
+      case "invoice.payment_succeeded":
+        await handlePaymentSucceeded(supabase, event.data.object);
+        break;
+        
+      case "charge.failed":
+        await handleChargeFailed(supabase, event.data.object);
+        break;
+        
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(supabase, resend, event.data.object);
+        break;
+        
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(supabase, event.data.object);
+        break;
+        
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (error: unknown) {
+    console.error("Webhook error:", error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
