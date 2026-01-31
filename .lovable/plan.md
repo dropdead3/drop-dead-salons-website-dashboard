@@ -1,7 +1,8 @@
 
-# Comprehensive Platform & Dashboard Feature Build
 
-This plan implements **5 major features** across Platform Admin and Business Dashboard, tackling all "coming soon" placeholders identified in the codebase.
+# Next Feature Build: Platform Settings, Website Tools & Data Infrastructure
+
+This plan tackles the remaining **"coming soon"** placeholders across the Platform Admin and Business Dashboard areas.
 
 ---
 
@@ -9,368 +10,347 @@ This plan implements **5 major features** across Platform Admin and Business Das
 
 | # | Feature | Location | Priority |
 |---|---------|----------|----------|
-| 1 | Account User Management | AccountDetail.tsx - Users Tab | High |
-| 2 | Import History with Rollback | AccountDetail.tsx - Migration Tab | High |
-| 3 | Organization Settings | AccountDetail.tsx - Settings Tab | Medium |
-| 4 | Appointment Edit Dialog | Today's Queue | High |
-| 5 | Platform Security Settings | PlatformSettings.tsx - Security Tab | Medium |
+| 1 | Import Templates Manager | PlatformSettings - Templates Tab | High |
+| 2 | Default Organization Settings | PlatformSettings - Defaults Tab | High |
+| 3 | Force Logout Implementation | PlatformSecurityTab | Medium |
+| 4 | Services Manager DB Integration | ServicesManager.tsx | High |
+| 5 | Testimonials Drag-and-Drop | TestimonialsManager.tsx | Medium |
+| 6 | Webhook Security (Edge Function) | capture-external-lead | High |
 
 ---
 
-## Feature 1: Account User Management
+## Feature 1: Import Templates Manager
 
 ### What Gets Built
-A complete user management interface for platform admins to view and manage organization employees.
+A configuration panel to manage default field mappings for data imports from different CRM systems (Phorest, Vagaro, Salon Iris, CSV).
 
 ### Current State
 ```
-Users Tab → "User management coming soon"
+Import Templates tab → "Import templates coming soon..."
 ```
 
 ### New Implementation
 
 **Components to Create:**
-- `AccountUsersTab.tsx` - Main tab component
-- `AccountUserCard.tsx` - Individual user row with role badges
-- `InviteOrgUserDialog.tsx` - Invite new user on behalf of org
-
-**Hook to Create:**
-- `useOrganizationUsers.ts` - Fetch users + roles for an organization
+- `PlatformImportTemplatesTab.tsx` - Main templates manager
 
 **Functionality:**
-- List all employees for the organization
-- Show user roles with colored badges
-- Show active/inactive status
-- Display last login timestamp
-- Role assignment capabilities
-- Invite new team members
-- Remove users from organization
+- View existing import templates per source system
+- Create/edit field mappings (source field → target column)
+- Set default transformations (date formats, phone normalization)
+- Clone templates for new organizations
+- Preview sample mappings
 
 ### Visual Design
 ```text
 +------------------------------------------------------------+
-| Users (12)                              [+ Invite User]     |
+| Import Templates                                            |
 +------------------------------------------------------------+
-| [Avatar] John Smith                                         |
-|   john@salon.com                    [Super Admin] [Active]  |
-|   Last active: 2 hours ago              [Edit] [Remove]     |
+| Select Source: [Phorest ▼]                                  |
 +------------------------------------------------------------+
-| [Avatar] Jane Doe                                           |
-|   jane@salon.com                    [Manager] [Active]      |
-|   Last active: Yesterday                [Edit] [Remove]     |
+| FIELD MAPPINGS                                              |
+| Source Field          →         Target Column               |
+| ──────────────────────────────────────────────────         |
+| client_name           →         [full_name ▼]               |
+| email_address         →         [email ▼]                   |
+| mobile                →         [phone ▼]                   |
+| created_date          →         [created_at ▼]              |
+|                                                [+ Add Row]  |
 +------------------------------------------------------------+
-```
-
-### Database Query Pattern
-```typescript
-// Hook: useOrganizationUsers
-const { data: profiles } = await supabase
-  .from('employee_profiles')
-  .select('user_id, full_name, display_name, email, photo_url, is_active, last_sign_in_at')
-  .eq('organization_id', organizationId)
-  .order('full_name');
-
-// Get roles for these users
-const { data: roles } = await supabase
-  .from('user_roles')
-  .select('user_id, role')
-  .in('user_id', userIds);
-```
-
----
-
-## Feature 2: Import History with Rollback
-
-### What Gets Built
-Connect the Migration tab to real `import_jobs` data with rollback functionality.
-
-### Current State
-```
-Import History Card → "No imports yet for this organization"
-```
-
-### New Implementation
-
-**Changes Required:**
-- Update `useImportJobs` hook to properly filter by organization
-- Add database migration to add `organization_id` to `import_jobs`
-- Reuse existing `ImportHistoryCard` component
-- Add entity type breakdown stats
-
-**Functionality:**
-- Show all imports for this organization
-- Display import status (completed, failed, dry_run, rolled_back)
-- Show success/error counts
-- Rollback button for eligible imports
-- Filter by entity type
-- Link to start new import
-
-### Visual Design
-```text
+| TRANSFORMATIONS                                             |
+| Date Format: [YYYY-MM-DD ▼]                                 |
+| Phone Format: [E.164 ▼]                                     |
+| [x] Normalize names to Title Case                           |
 +------------------------------------------------------------+
-| Import History                              [New Import]    |
-+------------------------------------------------------------+
-| Filter: [All Types ▼]                                       |
-+------------------------------------------------------------+
-| ● Clients from phorest         Jan 30, 2026 2:15 PM        |
-|   ✓ 156 imported, 3 failed         [View Details] [Rollback]|
-+------------------------------------------------------------+
-| ● Services from csv            Jan 30, 2026 1:45 PM        |
-|   ✓ 45 imported                    [View Details]          |
-+------------------------------------------------------------+
-| ○ Staff from phorest           Jan 29, 2026 10:00 AM       |
-|   ↩ Rolled back                    [View Details]          |
+|                    [Save Template] [Clone for New Org]      |
 +------------------------------------------------------------+
 ```
 
-### Database Changes
+### Storage Approach
+Store in `platform_import_templates` table:
 ```sql
--- Add organization_id to import_jobs for direct filtering
-ALTER TABLE public.import_jobs 
-ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES public.organizations(id);
-
--- Create index for efficient querying
-CREATE INDEX IF NOT EXISTS idx_import_jobs_organization 
-ON public.import_jobs(organization_id);
+CREATE TABLE IF NOT EXISTS public.platform_import_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_system TEXT NOT NULL, -- 'phorest', 'vagaro', 'salon_iris', 'csv'
+  entity_type TEXT NOT NULL, -- 'clients', 'services', 'appointments', 'staff'
+  field_mappings JSONB NOT NULL DEFAULT '[]',
+  transformations JSONB NOT NULL DEFAULT '{}',
+  is_default BOOLEAN DEFAULT false,
+  organization_id UUID REFERENCES organizations(id), -- null = platform default
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id)
+);
 ```
 
 ---
 
-## Feature 3: Organization Settings
+## Feature 2: Default Organization Settings
 
 ### What Gets Built
-Per-organization configuration panel for feature flags, notifications, and defaults.
+Configure default values that are applied when creating new organizations.
 
 ### Current State
 ```
-Settings Tab → "Settings configuration coming soon"
+Defaults tab → "Default settings coming soon..."
 ```
 
 ### New Implementation
 
 **Components to Create:**
-- `AccountSettingsTab.tsx` - Main settings component
-- Uses existing settings patterns from business dashboard
+- `PlatformDefaultsTab.tsx` - Default settings configuration
 
-**Settings Categories:**
-1. **Feature Flags** - Enable/disable features per org
-2. **Notifications** - Email and SMS preferences
-3. **Defaults** - Default location, timezone, currency
-4. **Branding** - Logo, colors (links to their dashboard)
+**Settings to Configure:**
+1. **Plan & Billing Defaults**
+   - Default subscription plan
+   - Default billing cycle
+   - Trial period length
+
+2. **Feature Defaults**
+   - Which features are enabled by default
+   - Default role permissions
+
+3. **Operational Defaults**
+   - Default timezone
+   - Default currency
+   - Default appointment duration
 
 ### Visual Design
 ```text
 +------------------------------------------------------------+
-| Organization Settings                                       |
+| Default Organization Settings                               |
 +------------------------------------------------------------+
-| FEATURE FLAGS                                               |
+| PLAN DEFAULTS                                               |
+| Default Plan: [Professional ▼]                              |
+| Billing Cycle: [Monthly ▼]                                  |
+| Trial Period: [14] days                                     |
++------------------------------------------------------------+
+| FEATURE DEFAULTS                                            |
 | [x] Enable 75 Hard program                                  |
 | [x] Enable client portal                                    |
 | [ ] Enable online booking                                   |
 | [ ] Enable inventory management                             |
 +------------------------------------------------------------+
-| NOTIFICATIONS                                               |
-| Email Digest: [Weekly ▼]                                    |
-| SMS Reminders: [Enabled ▼]                                  |
-+------------------------------------------------------------+
-| DEFAULTS                                                    |
-| Default Location: [Main Salon ▼]                            |
+| OPERATIONAL DEFAULTS                                        |
 | Timezone: [America/New_York ▼]                              |
 | Currency: [USD ▼]                                           |
+| Default Appointment: [60] minutes                           |
++------------------------------------------------------------+
+|                              [Save Defaults]                |
 +------------------------------------------------------------+
 ```
 
-### Storage Approach
-Store in `organizations.settings` JSONB column (already exists):
+### Storage
+Use `site_settings` table with `scope = 'platform'`:
 ```typescript
-interface OrgSettings {
-  feature_flags: {
-    enable_75_hard: boolean;
-    enable_client_portal: boolean;
-    enable_online_booking: boolean;
-  };
-  notifications: {
-    email_digest: 'daily' | 'weekly' | 'monthly' | 'never';
-    sms_reminders: boolean;
-  };
-  defaults: {
-    default_location_id: string | null;
-    timezone: string;
-    currency: string;
-  };
+{
+  key: 'new_org_defaults',
+  value: {
+    plan: 'professional',
+    billing_cycle: 'monthly',
+    trial_days: 14,
+    features: { enable_75_hard: true, ... },
+    timezone: 'America/New_York',
+    currency: 'USD',
+  }
 }
 ```
 
 ---
 
-## Feature 4: Appointment Edit Dialog
+## Feature 3: Force Logout Implementation
 
 ### What Gets Built
-A full-featured edit dialog for appointments from Today's Queue.
+A working "Force Logout All Platform Users" function that terminates all active sessions.
 
 ### Current State
-```
-Edit button → toast("Edit functionality coming soon")
+```typescript
+// TODO: Implement force logout
+alert('Force logout functionality would be implemented here');
 ```
 
 ### New Implementation
 
-**Components to Create:**
-- `EditAppointmentDialog.tsx` - Main dialog component
-- Reuses patterns from `QuickBookingPopover` and `AppointmentDetailSheet`
+**Edge Function to Create:**
+- `force-logout-platform-users` - Revokes all platform user sessions
 
-**Editable Fields:**
-- Date and time
-- Assigned staff member
-- Service (if allowed)
-- Notes
-- Status
+**Backend Logic:**
+1. Query all users with platform roles
+2. Call Supabase Admin API to revoke refresh tokens
+3. Log the action to `platform_audit_log`
+4. Return count of affected users
 
-**Hook Updates:**
-- Extend `useRescheduleAppointment` or create `useUpdateAppointment`
+**UI Updates:**
+- Replace `alert()` with actual API call
+- Show loading state during operation
+- Display success message with count
 
-### Visual Design
-```text
-+--------------------------------------------+
-| Edit Appointment                     [X]   |
-+--------------------------------------------+
-| CLIENT                                     |
-| Jane Smith                                 |
-| jane@email.com • (555) 123-4567            |
-+--------------------------------------------+
-| DATE & TIME                                |
-| [Jan 31, 2026]  [2:00 PM] - [3:30 PM]      |
-+--------------------------------------------+
-| STAFF                                      |
-| [Sarah Johnson ▼]                          |
-+--------------------------------------------+
-| SERVICE                                    |
-| Balayage Highlights         $185           |
-| 90 min                                     |
-+--------------------------------------------+
-| NOTES                                      |
-| [Additional notes here...]                 |
-+--------------------------------------------+
-|           [Cancel]    [Save Changes]       |
-+--------------------------------------------+
-```
-
-### Backend Integration
-Uses existing `update-phorest-appointment-time` edge function:
+### Code Pattern
 ```typescript
-const { data, error } = await supabase.functions.invoke('update-phorest-appointment-time', {
-  body: {
-    appointment_id: appointmentId,
-    new_date: selectedDate,
-    new_time: selectedTime,
-    new_staff_id: selectedStaffId,
-  },
+// Edge Function: force-logout-platform-users
+const { data: platformUsers } = await supabaseAdmin
+  .from('user_roles')
+  .select('user_id')
+  .in('role', ['platform_owner', 'platform_admin', 'platform_support', 'platform_developer']);
+
+for (const user of platformUsers) {
+  await supabaseAdmin.auth.admin.signOut(user.user_id, 'global');
+}
+
+// Log to audit
+await supabaseAdmin.from('platform_audit_log').insert({
+  action: 'force_logout_all',
+  performed_by: userId,
+  details: { affected_users: platformUsers.length },
 });
 ```
 
 ---
 
-## Feature 5: Platform Security Settings
+## Feature 4: Services Manager DB Integration
 
 ### What Gets Built
-Security configuration panel for platform-wide authentication and access controls.
+Connect the ServicesManager to the database using existing hooks.
 
 ### Current State
 ```
-Security Tab → "Security settings coming soon..."
+"Note: Changes made here are currently local only. Database integration coming soon."
 ```
 
-### New Implementation
+### Changes Required
 
-**Components to Create:**
-- `PlatformSecurityTab.tsx` - Main security settings
+**Hook Integration:**
+- Replace local `useState` with `useServicesData()` hook
+- Wire up `useUpdateService()` for edits
+- Wire up `useDeleteService()` for removal
+- Wire up `useCreateService()` for new services
 
-**Security Settings:**
-1. **Password Policies**
-   - Minimum length
-   - Require special characters
-   - Password expiration days
+**Key Changes:**
+1. Fetch real services grouped by category
+2. Update mutations to call database
+3. Remove mock `initialServices` data
+4. Add organization context for multi-tenant
 
-2. **Session Management**
-   - Session timeout duration
-   - Max concurrent sessions
-   - Force logout all users
+### Before/After Pattern
+```typescript
+// BEFORE (local state)
+const [serviceCategories, setServiceCategories] = useState(initialServices);
+const handleSave = () => setServiceCategories([...updated]);
 
-3. **Two-Factor Authentication**
-   - Require 2FA for platform admins
-   - Require 2FA for org admins
-
-4. **Audit Logging**
-   - View recent security events
-   - Export audit logs
-
-### Visual Design
-```text
-+------------------------------------------------------------+
-| Security Settings                                           |
-+------------------------------------------------------------+
-| PASSWORD POLICIES                                           |
-| Minimum password length: [12]                               |
-| [x] Require special characters                              |
-| [x] Require uppercase and lowercase                         |
-| Password expires after: [90] days                           |
-+------------------------------------------------------------+
-| SESSION MANAGEMENT                                          |
-| Session timeout: [30 minutes ▼]                             |
-| Max concurrent sessions: [3]                                |
-| [Force Logout All Platform Users]                           |
-+------------------------------------------------------------+
-| TWO-FACTOR AUTHENTICATION                                   |
-| [x] Require 2FA for platform admins                         |
-| [ ] Require 2FA for organization admins                     |
-+------------------------------------------------------------+
-| SECURITY AUDIT                                              |
-| Recent events: [View Log]                                   |
-| [Export Last 30 Days]                                       |
-+------------------------------------------------------------+
+// AFTER (database connected)
+const { data: services } = useServicesData();
+const updateService = useUpdateService();
+const handleSave = () => updateService.mutate({ id, ...changes });
 ```
 
-### Storage
-Create new table or use `site_settings` with platform scope:
+---
+
+## Feature 5: Testimonials Drag-and-Drop
+
+### What Gets Built
+Add drag-and-drop reordering capability to TestimonialsManager.
+
+### Current State
+```
+"Order: Drag and drop to reorder testimonials (coming soon)."
+```
+
+### Implementation
+
+**Using @dnd-kit** (already installed):
+- Wrap testimonials list in `DndContext`
+- Make each testimonial a `SortableItem`
+- Save new order to database via `display_order` column
+
+**Components to Update:**
+- `TestimonialsManager.tsx` - Add sortable container
+- `TestimonialsContent.tsx` - Mirror changes
+
+**Database Change:**
 ```sql
--- Platform security settings table
-CREATE TABLE IF NOT EXISTS public.platform_security_settings (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  min_password_length INTEGER DEFAULT 12,
-  require_special_chars BOOLEAN DEFAULT true,
-  require_mixed_case BOOLEAN DEFAULT true,
-  password_expiry_days INTEGER DEFAULT 90,
-  session_timeout_minutes INTEGER DEFAULT 30,
-  max_concurrent_sessions INTEGER DEFAULT 3,
-  require_2fa_platform_admins BOOLEAN DEFAULT true,
-  require_2fa_org_admins BOOLEAN DEFAULT false,
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  updated_by UUID REFERENCES auth.users(id)
-);
+ALTER TABLE public.testimonials
+ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;
+```
+
+### Visual Enhancement
+```text
++------------------------------------------+
+| [≡] "Love this place!" - Lexi V.    ★★★★★|  ← Drag handle
+|     "I love Drop Dead! The owner..."     |
+|     [Edit] [Toggle] [Delete]             |
++------------------------------------------+
+| [≡] "Amazing experience" - Jane D. ★★★★★|
+|     "Best salon I've ever been to..."    |
+|     [Edit] [Toggle] [Delete]             |
++------------------------------------------+
+```
+
+---
+
+## Feature 6: Webhook Security
+
+### What Gets Built
+Add signature verification for external lead webhooks.
+
+### Current State
+```typescript
+// TODO: Add webhook secret verification per source
+// - CallRail: Signature verification
+// - Meta: App secret verification
+// - Google: OAuth token verification
+```
+
+### Implementation
+
+**Verification Functions:**
+1. **CallRail**: Verify HMAC-SHA256 signature header
+2. **Meta (Facebook/Instagram)**: Verify X-Hub-Signature-256
+3. **Google Business**: Verify JWT token
+
+**Environment Secrets Required:**
+- `CALLRAIL_WEBHOOK_SECRET`
+- `META_APP_SECRET`
+- `GOOGLE_WEBHOOK_SECRET`
+
+### Code Pattern
+```typescript
+// Verify CallRail signature
+function verifyCallRailSignature(body: string, signature: string): boolean {
+  const secret = Deno.env.get('CALLRAIL_WEBHOOK_SECRET');
+  const expected = crypto.createHmac('sha256', secret).update(body).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+}
+
+// Verify Meta signature
+function verifyMetaSignature(body: string, signature: string): boolean {
+  const secret = Deno.env.get('META_APP_SECRET');
+  const expected = `sha256=${crypto.createHmac('sha256', secret).update(body).digest('hex')}`;
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+}
 ```
 
 ---
 
 ## Implementation Order
 
-### Phase 1: Platform Admin Core (Features 1, 2)
-1. Add `organization_id` to `import_jobs` table
-2. Create `useOrganizationUsers` hook
-3. Build `AccountUsersTab` component
-4. Update Migration tab with real import history
-5. Connect rollback functionality
+### Phase 1: Platform Settings (Features 1, 2, 3)
+1. Create `platform_import_templates` table
+2. Build `PlatformImportTemplatesTab` component
+3. Build `PlatformDefaultsTab` component
+4. Create `force-logout-platform-users` edge function
+5. Wire up Force Logout button
 
-### Phase 2: Appointment Edit (Feature 4)
-1. Create `EditAppointmentDialog` component
-2. Integrate with `useRescheduleAppointment`
-3. Update `TodaysQueueSection` to open dialog
-4. Add staff reassignment capability
+### Phase 2: Data Management (Features 4, 5)
+1. Refactor `ServicesManager.tsx` to use hooks
+2. Add `display_order` to testimonials table
+3. Implement drag-and-drop with @dnd-kit
+4. Update both TestimonialsManager and TestimonialsContent
 
-### Phase 3: Settings & Security (Features 3, 5)
-1. Create `AccountSettingsTab` component
-2. Create `PlatformSecurityTab` component
-3. Add database table for security settings
-4. Implement audit log viewer
+### Phase 3: Security (Feature 6)
+1. Add webhook secret environment variables
+2. Implement signature verification functions
+3. Update `capture-external-lead` edge function
+4. Add audit logging for rejected webhooks
 
 ---
 
@@ -378,50 +358,76 @@ CREATE TABLE IF NOT EXISTS public.platform_security_settings (
 
 | File | Action | Feature |
 |------|--------|---------|
-| `src/hooks/useOrganizationUsers.ts` | **Create** | 1 |
-| `src/components/platform/account/AccountUsersTab.tsx` | **Create** | 1 |
-| `src/components/platform/account/AccountUserCard.tsx` | **Create** | 1 |
-| `src/components/platform/account/InviteOrgUserDialog.tsx` | **Create** | 1 |
-| `src/hooks/useImportJobs.ts` | **Edit** | 2 |
-| `src/pages/dashboard/platform/AccountDetail.tsx` | **Edit** | 1, 2, 3 |
-| `src/components/platform/account/AccountSettingsTab.tsx` | **Create** | 3 |
-| `src/components/dashboard/schedule/EditAppointmentDialog.tsx` | **Create** | 4 |
-| `src/components/dashboard/TodaysQueueSection.tsx` | **Edit** | 4 |
-| `src/components/platform/settings/PlatformSecurityTab.tsx` | **Create** | 5 |
-| `src/pages/dashboard/platform/PlatformSettings.tsx` | **Edit** | 5 |
-| Database Migration | **Create** | 2, 5 |
+| `src/components/platform/settings/PlatformImportTemplatesTab.tsx` | **Create** | 1 |
+| `src/components/platform/settings/PlatformDefaultsTab.tsx` | **Create** | 2 |
+| `supabase/functions/force-logout-platform-users/index.ts` | **Create** | 3 |
+| `src/components/platform/settings/PlatformSecurityTab.tsx` | **Edit** | 3 |
+| `src/pages/dashboard/admin/ServicesManager.tsx` | **Edit** | 4 |
+| `src/pages/dashboard/admin/TestimonialsManager.tsx` | **Edit** | 5 |
+| `src/components/dashboard/website-editor/TestimonialsContent.tsx` | **Edit** | 5 |
+| `supabase/functions/capture-external-lead/index.ts` | **Edit** | 6 |
+| `src/pages/dashboard/platform/PlatformSettings.tsx` | **Edit** | 1, 2 |
+| Database Migration | **Create** | 1, 5 |
+
+---
+
+## Database Changes
+
+```sql
+-- Feature 1: Import Templates
+CREATE TABLE IF NOT EXISTS public.platform_import_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_system TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  field_mappings JSONB NOT NULL DEFAULT '[]',
+  transformations JSONB NOT NULL DEFAULT '{}',
+  is_default BOOLEAN DEFAULT false,
+  organization_id UUID REFERENCES organizations(id),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id)
+);
+
+ALTER TABLE public.platform_import_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Platform admins can manage templates"
+ON public.platform_import_templates
+FOR ALL TO authenticated
+USING (public.has_platform_role_or_higher(auth.uid(), 'platform_support'))
+WITH CHECK (public.has_platform_role_or_higher(auth.uid(), 'platform_support'));
+
+-- Feature 5: Testimonials ordering
+ALTER TABLE public.testimonials
+ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;
+
+CREATE INDEX IF NOT EXISTS idx_testimonials_display_order 
+ON public.testimonials(display_order);
+```
 
 ---
 
 ## Technical Considerations
 
-### RLS Policies
-- `employee_profiles` already has org-level RLS
-- New security settings table needs platform-admin-only access
-- Import jobs update needs RLS for organization_id filtering
-
 ### Existing Patterns Used
-- `ImportHistoryCard` - Reused for migration tab
-- `useAllUsersWithRoles` - Pattern for user + role fetching
-- `useRescheduleAppointment` - Backend for appointment updates
-- Platform UI components (PlatformCard, PlatformButton, etc.)
+- `useServicesData` hooks for database operations
+- `@dnd-kit` for drag-and-drop (already installed)
+- Platform UI components for settings tabs
+- Edge function patterns for security
 
-### Edge Function Updates
-- No new edge functions required
-- Uses existing `update-phorest-appointment-time`
-- Uses existing `rollback-import`
+### Security Notes
+- Webhook secrets stored in Supabase Edge Function secrets
+- Force logout requires platform_admin or higher
+- Import templates RLS restricts to platform team
 
----
-
-## Estimated Scope
+### Estimated Scope
 
 | Feature | Complexity | Estimated Changes |
 |---------|------------|-------------------|
-| Account User Management | Medium | ~400 lines |
-| Import History + Rollback | Low | ~150 lines |
-| Organization Settings | Medium | ~300 lines |
-| Appointment Edit Dialog | Medium-High | ~450 lines |
-| Platform Security Settings | Medium | ~350 lines |
-| **Total** | | **~1,650 lines** |
+| Import Templates Manager | Medium | ~350 lines |
+| Default Org Settings | Medium | ~250 lines |
+| Force Logout | Low | ~100 lines |
+| Services DB Integration | Medium | ~200 lines |
+| Testimonials Drag-Drop | Medium | ~250 lines |
+| Webhook Security | Low | ~150 lines |
+| **Total** | | **~1,300 lines** |
 
-This comprehensive build addresses all identified gaps and creates a fully-featured platform administration experience with operational improvements for the business dashboard.
