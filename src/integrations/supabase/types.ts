@@ -2654,6 +2654,84 @@ export type Database = {
         }
         Relationships: []
       }
+      imported_staff: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          email: string | null
+          external_id: string | null
+          full_name: string
+          hire_date: string | null
+          id: string
+          import_source: string | null
+          imported_at: string | null
+          linked_at: string | null
+          linked_user_id: string | null
+          location_id: string | null
+          organization_id: string | null
+          phone: string | null
+          specialties: string[] | null
+          status: string | null
+          stylist_level: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          email?: string | null
+          external_id?: string | null
+          full_name: string
+          hire_date?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          linked_at?: string | null
+          linked_user_id?: string | null
+          location_id?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          specialties?: string[] | null
+          status?: string | null
+          stylist_level?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          email?: string | null
+          external_id?: string | null
+          full_name?: string
+          hire_date?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          linked_at?: string | null
+          linked_user_id?: string | null
+          location_id?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          specialties?: string[] | null
+          status?: string | null
+          stylist_level?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imported_staff_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imported_staff_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiry_activity_log: {
         Row: {
           action: string
@@ -4814,6 +4892,87 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      products: {
+        Row: {
+          barcode: string | null
+          brand: string | null
+          category: string | null
+          cost_price: number | null
+          created_at: string | null
+          description: string | null
+          external_id: string | null
+          id: string
+          import_source: string | null
+          imported_at: string | null
+          is_active: boolean | null
+          location_id: string | null
+          name: string
+          organization_id: string | null
+          quantity_on_hand: number | null
+          reorder_level: number | null
+          retail_price: number | null
+          sku: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          barcode?: string | null
+          brand?: string | null
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          is_active?: boolean | null
+          location_id?: string | null
+          name: string
+          organization_id?: string | null
+          quantity_on_hand?: number | null
+          reorder_level?: number | null
+          retail_price?: number | null
+          sku?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          barcode?: string | null
+          brand?: string | null
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          external_id?: string | null
+          id?: string
+          import_source?: string | null
+          imported_at?: string | null
+          is_active?: boolean | null
+          location_id?: string | null
+          name?: string
+          organization_id?: string | null
+          quantity_on_hand?: number | null
+          reorder_level?: number | null
+          retail_price?: number | null
+          sku?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       program_achievements: {
         Row: {

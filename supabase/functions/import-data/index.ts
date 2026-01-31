@@ -9,8 +9,9 @@ const corsHeaders = {
 interface ImportRequest {
   template_id?: string;
   source_type: string;
-  entity_type: 'clients' | 'appointments' | 'services';
+  entity_type: 'clients' | 'appointments' | 'services' | 'staff' | 'locations' | 'products';
   location_id?: string;
+  organization_id?: string;
   data: Record<string, any>[];
   column_mappings?: Record<string, string>;
 }
@@ -78,7 +79,10 @@ serve(async (req) => {
     }
 
     const importData: ImportRequest = await req.json();
-    const { template_id, source_type, entity_type, location_id, data, column_mappings } = importData;
+    const { template_id, source_type, entity_type, location_id, organization_id, data, column_mappings } = importData;
+    
+    // Determine target table for entity type (staff goes to imported_staff staging table)
+    const targetTable = entity_type === 'staff' ? 'imported_staff' : entity_type;
 
     if (!entity_type || !data || !Array.isArray(data) || data.length === 0) {
       throw new Error("Missing required fields: entity_type, data (non-empty array)");
@@ -149,6 +153,11 @@ serve(async (req) => {
         mapped.import_source = source_type || 'csv';
         mapped.imported_at = new Date().toISOString();
 
+        // Add organization if provided
+        if (organization_id) {
+          mapped.organization_id = organization_id;
+        }
+
         // Add location if provided
         if (location_id && entity_type !== 'services') {
           mapped.location_id = location_id;
@@ -181,6 +190,29 @@ serve(async (req) => {
               validationError = 'Missing date or time fields';
             }
             break;
+          case 'staff':
+            if (!mapped.full_name) {
+              isValid = false;
+              validationError = 'Missing staff full_name';
+            }
+            // Staff imports go to imported_staff staging table
+            break;
+          case 'locations':
+            if (!mapped.name || !mapped.address || !mapped.city || !mapped.phone) {
+              isValid = false;
+              validationError = 'Missing required location fields (name, address, city, phone)';
+            }
+            // Generate ID if not provided
+            if (!mapped.id) {
+              mapped.id = crypto.randomUUID();
+            }
+            break;
+          case 'products':
+            if (!mapped.name) {
+              isValid = false;
+              validationError = 'Missing product name';
+            }
+            break;
         }
 
         if (!isValid) {
@@ -191,7 +223,7 @@ serve(async (req) => {
 
         // Insert into appropriate table
         const { error: insertError } = await supabase
-          .from(entity_type)
+          .from(targetTable)
           .insert(mapped);
 
         if (insertError) {
