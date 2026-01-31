@@ -29,10 +29,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
 
 const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   today: 'Today',
+  yesterday: 'Yesterday',
   '7d': 'Last 7 days',
   '30d': 'Last 30 days',
   thisWeek: 'This Week',
@@ -46,6 +47,10 @@ function getDateRange(dateRange: DateRangeType): { dateFrom: string; dateTo: str
   switch (dateRange) {
     case 'today':
       return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+    case 'yesterday': {
+      const yesterday = subDays(now, 1);
+      return { dateFrom: format(yesterday, 'yyyy-MM-dd'), dateTo: format(yesterday, 'yyyy-MM-dd') };
+    }
     case '7d':
       return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
     case '30d':
