@@ -90,6 +90,7 @@ import DataImport from "./pages/dashboard/admin/DataImport";
 import Payroll from "./pages/dashboard/admin/Payroll";
 import PayrollCallback from "./pages/dashboard/admin/PayrollCallback";
 import HelpCenter from "./pages/dashboard/HelpCenter";
+import MyPay from "./pages/dashboard/MyPay";
 
 // Platform Admin pages
 import PlatformOverview from "./pages/dashboard/platform/Overview";
@@ -157,6 +158,7 @@ const App = () => (
                       <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
                       <Route path="/dashboard/my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
                       <Route path="/dashboard/my-clients" element={<ProtectedRoute requiredPermission="view_own_stats"><MyClients /></ProtectedRoute>} />
+                      <Route path="/dashboard/my-pay" element={<ProtectedRoute requiredPermission="view_my_pay"><MyPay /></ProtectedRoute>} />
                       <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
                       <Route path="/dashboard/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
                       <Route path="/dashboard/metrics-glossary" element={<ProtectedRoute><MetricsGlossary /></ProtectedRoute>} />
