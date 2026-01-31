@@ -338,38 +338,47 @@ export default function AccountDetail() {
                   <span className="text-slate-300">Plan: {organization.subscription_tier || 'Standard'}</span>
                 </div>
                 
-                {/* Contract Term Information */}
-                {billing?.contract_start_date && (
+                {/* Contract Term Information - Always visible for quick view */}
+                <div className="flex items-center gap-3">
+                  <CalendarRange className="h-4 w-4 text-violet-400" />
+                  <span className="text-slate-300">
+                    Term Start: {billing?.contract_start_date 
+                      ? format(parseISO(billing.contract_start_date), 'MMM d, yyyy') 
+                      : <span className="text-slate-500 italic">Not set</span>}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CalendarCheck className="h-4 w-4 text-violet-400" />
+                  <span className="text-slate-300">
+                    Term End: {billing?.contract_end_date 
+                      ? format(parseISO(billing.contract_end_date), 'MMM d, yyyy') 
+                      : <span className="text-slate-500 italic">Not set</span>}
+                  </span>
+                </div>
+                {billing?.auto_renewal === true ? (
                   <div className="flex items-center gap-3">
-                    <CalendarRange className="h-4 w-4 text-violet-400" />
-                    <span className="text-slate-300">Term Start: {format(parseISO(billing.contract_start_date), 'MMM d, yyyy')}</span>
+                    <RefreshCw className="h-4 w-4 text-emerald-400" />
+                    <span className="text-emerald-400">Auto-Renews</span>
                   </div>
-                )}
-                {billing?.contract_end_date && (
+                ) : billing?.auto_renewal === false ? (
                   <div className="flex items-center gap-3">
-                    <CalendarCheck className="h-4 w-4 text-violet-400" />
-                    <span className="text-slate-300">Term End: {format(parseISO(billing.contract_end_date), 'MMM d, yyyy')}</span>
+                    <XCircle className="h-4 w-4 text-red-400" />
+                    <div>
+                      <span className="text-red-400">Closing at Term End</span>
+                      {billing.non_renewal_reason && (
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Reason: {billing.non_renewal_reason}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                )}
-                {billing && (
-                  billing.auto_renewal ? (
-                    <div className="flex items-center gap-3">
-                      <RefreshCw className="h-4 w-4 text-emerald-400" />
-                      <span className="text-emerald-400">Auto-Renews</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <XCircle className="h-4 w-4 text-red-400" />
-                      <div>
-                        <span className="text-red-400">Closing at Term End</span>
-                        {billing.non_renewal_reason && (
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            Reason: {billing.non_renewal_reason}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <RefreshCw className="h-4 w-4 text-slate-500" />
+                    <span className="text-slate-300">
+                      Renewal: <span className="text-slate-500 italic">Not set</span>
+                    </span>
+                  </div>
                 )}
               </PlatformCardContent>
             </PlatformCard>
