@@ -357,9 +357,11 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
     queryKey: ['sales-by-location-from-appointments', dateFrom, dateTo],
     queryFn: async () => {
       // First fetch locations to map IDs to names
+      // Fetch only active locations
       const { data: locations } = await supabase
         .from('locations')
-        .select('id, name');
+        .select('id, name, is_active')
+        .eq('is_active', true);
 
       let query = supabase
         .from('phorest_appointments')
@@ -376,27 +378,30 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Aggregate by location
+      // Pre-populate ALL active locations with zero values
       const byLocation: Record<string, any> = {};
+      locations?.forEach(loc => {
+        byLocation[loc.id] = {
+          location_id: loc.id,
+          name: loc.name || 'Unknown Location',
+          totalRevenue: 0,
+          serviceRevenue: 0,
+          productRevenue: 0,
+          totalServices: 0,
+          totalProducts: 0,
+          totalTransactions: 0,
+        };
+      });
+
+      // Add revenue data from appointments to existing location entries
       data?.forEach(apt => {
-        const key = apt.location_id || 'Unknown';
-        if (!byLocation[key]) {
-          const loc = locations?.find(l => l.id === apt.location_id);
-          byLocation[key] = {
-            location_id: apt.location_id,
-            name: loc?.name || 'Unknown Location',
-            totalRevenue: 0,
-            serviceRevenue: 0,
-            productRevenue: 0,
-            totalServices: 0,
-            totalProducts: 0,
-            totalTransactions: 0,
-          };
+        const key = apt.location_id;
+        if (key && byLocation[key]) {
+          byLocation[key].totalRevenue += Number(apt.total_price) || 0;
+          byLocation[key].serviceRevenue += Number(apt.total_price) || 0;
+          byLocation[key].totalServices += 1;
+          byLocation[key].totalTransactions += 1;
         }
-        byLocation[key].totalRevenue += Number(apt.total_price) || 0;
-        byLocation[key].serviceRevenue += Number(apt.total_price) || 0;
-        byLocation[key].totalServices += 1;
-        byLocation[key].totalTransactions += 1;
       });
 
       return Object.values(byLocation).sort((a, b) => b.totalRevenue - a.totalRevenue);
