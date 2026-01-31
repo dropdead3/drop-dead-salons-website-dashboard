@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { CreditCard, Plus, Trash2, Star, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useBoothRenter } from '@/hooks/useBoothRenters';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 export default function RenterPaymentMethods() {
