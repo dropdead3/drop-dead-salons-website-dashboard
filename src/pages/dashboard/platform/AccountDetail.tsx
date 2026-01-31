@@ -331,11 +331,11 @@ export default function AccountDetail() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Globe className="h-4 w-4 text-slate-500" />
-                  <span className="text-slate-300">Source: {organization.source_software || 'Not specified'}</span>
+                  <span className="text-slate-300">Source: <span className="capitalize">{organization.source_software || 'Not specified'}</span></span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Building2 className="h-4 w-4 text-slate-500" />
-                  <span className="text-slate-300">Plan: {organization.subscription_tier || 'Standard'}</span>
+                  <span className="text-slate-300">Plan: <span className="capitalize">{organization.subscription_tier || 'Standard'}</span></span>
                 </div>
                 
                 {/* Contract Term Information - Always visible for quick view */}
