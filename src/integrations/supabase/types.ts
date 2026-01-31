@@ -670,6 +670,60 @@ export type Database = {
           },
         ]
       }
+      balance_transactions: {
+        Row: {
+          amount: number
+          balance_type: string
+          client_id: string
+          created_at: string | null
+          id: string
+          issued_by: string | null
+          notes: string | null
+          organization_id: string
+          reference_transaction_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          balance_type: string
+          client_id: string
+          created_at?: string | null
+          id?: string
+          issued_by?: string | null
+          notes?: string | null
+          organization_id: string
+          reference_transaction_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          balance_type?: string
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          issued_by?: string | null
+          notes?: string | null
+          organization_id?: string
+          reference_transaction_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balance_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "balance_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bell_entry_high_fives: {
         Row: {
           created_at: string
@@ -1170,6 +1224,51 @@ export type Database = {
             foreignKeyName: "churn_risk_scores_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_balances: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          gift_card_balance: number
+          id: string
+          organization_id: string
+          salon_credit_balance: number
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          gift_card_balance?: number
+          id?: string
+          organization_id: string
+          salon_credit_balance?: number
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          gift_card_balance?: number
+          id?: string
+          organization_id?: string
+          salon_credit_balance?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_balances_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_balances_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -2568,6 +2667,72 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      gift_cards: {
+        Row: {
+          assigned_client_id: string | null
+          code: string
+          created_at: string | null
+          created_by: string | null
+          current_balance: number
+          expires_at: string | null
+          id: string
+          initial_amount: number
+          is_active: boolean | null
+          organization_id: string
+          purchaser_email: string | null
+          purchaser_name: string | null
+          recipient_email: string | null
+          recipient_name: string | null
+        }
+        Insert: {
+          assigned_client_id?: string | null
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          current_balance: number
+          expires_at?: string | null
+          id?: string
+          initial_amount: number
+          is_active?: boolean | null
+          organization_id: string
+          purchaser_email?: string | null
+          purchaser_name?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+        }
+        Update: {
+          assigned_client_id?: string | null
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_balance?: number
+          expires_at?: string | null
+          id?: string
+          initial_amount?: number
+          is_active?: boolean | null
+          organization_id?: string
+          purchaser_email?: string | null
+          purchaser_name?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_cards_assigned_client_id_fkey"
+            columns: ["assigned_client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_cards_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       graduation_feedback: {
         Row: {
@@ -5985,6 +6150,75 @@ export type Database = {
         }
         Relationships: []
       }
+      refund_records: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          created_by: string
+          id: string
+          notes: string | null
+          organization_id: string
+          original_item_name: string | null
+          original_transaction_date: string
+          original_transaction_id: string
+          processed_at: string | null
+          processed_by: string | null
+          reason: string | null
+          refund_amount: number
+          refund_type: string
+          status: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          original_item_name?: string | null
+          original_transaction_date: string
+          original_transaction_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          refund_amount: number
+          refund_type: string
+          status?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          original_item_name?: string | null
+          original_transaction_date?: string
+          original_transaction_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          refund_amount?: number
+          refund_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_records_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_history: {
         Row: {
           created_at: string | null
@@ -7919,6 +8153,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_to_client_balance: {
+        Args: {
+          p_amount: number
+          p_balance_type: string
+          p_client_id: string
+          p_issued_by?: string
+          p_notes?: string
+          p_organization_id: string
+          p_reference_transaction_id?: string
+          p_transaction_type: string
+        }
+        Returns: string
+      }
       calculate_preferred_stylists: {
         Args: never
         Returns: {
@@ -7971,6 +8218,10 @@ export type Database = {
         }[]
       }
       current_user_is_coach: { Args: never; Returns: boolean }
+      get_or_create_client_balance: {
+        Args: { p_client_id: string; p_organization_id: string }
+        Returns: string
+      }
       get_staff_availability: {
         Args: {
           p_date: string
