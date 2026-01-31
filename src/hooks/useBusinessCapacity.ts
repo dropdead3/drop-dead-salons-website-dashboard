@@ -118,3 +118,49 @@ export function useAddLocationSeats() {
 
   return { addSeats, organizationId };
 }
+
+export function useAddUserSeats() {
+  const { data: profile } = useEmployeeProfile();
+  const organizationId = profile?.organization_id;
+
+  const addSeats = async (seatsToAdd: number) => {
+    if (!organizationId) throw new Error('No organization found');
+
+    // Get current billing record
+    const { data: billing, error: fetchError } = await supabase
+      .from('organization_billing')
+      .select('id, additional_users_purchased')
+      .eq('organization_id', organizationId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const currentSeats = billing.additional_users_purchased ?? 0;
+    const newSeats = currentSeats + seatsToAdd;
+
+    // Update the billing record
+    const { error: updateError } = await supabase
+      .from('organization_billing')
+      .update({ additional_users_purchased: newSeats })
+      .eq('id', billing.id);
+
+    if (updateError) throw updateError;
+
+    // Log the change
+    const { error: logError } = await supabase
+      .from('billing_changes')
+      .insert({
+        organization_id: organizationId,
+        change_type: 'add_users',
+        previous_value: { additional_users_purchased: currentSeats },
+        new_value: { additional_users_purchased: newSeats },
+        notes: `Added ${seatsToAdd} user seat(s)`,
+      });
+
+    if (logError) console.error('Failed to log billing change:', logError);
+
+    return { previousSeats: currentSeats, newSeats };
+  };
+
+  return { addSeats, organizationId };
+}
