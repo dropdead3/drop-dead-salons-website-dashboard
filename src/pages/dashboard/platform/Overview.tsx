@@ -16,6 +16,7 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformActivityFeed } from '@/components/platform/overview/PlatformActivityFeed';
 import { PlatformLiveAnalytics } from '@/components/platform/overview/PlatformLiveAnalytics';
+import { PlatformIntegrationsCard } from '@/components/platform/overview/PlatformIntegrationsCard';
 
 export default function PlatformOverview() {
   const navigate = useNavigate();
@@ -86,9 +87,9 @@ export default function PlatformOverview() {
           <PlatformLiveAnalytics />
         </div>
 
-        {/* Quick Actions */}
-        <div className="lg:col-span-1">
-          <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 h-full">
+        {/* Quick Actions & Integrations Stacked */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6">
             <div className="flex items-center gap-2 mb-5">
               <div className="p-2 rounded-xl bg-violet-500/20">
                 <Sparkles className="h-4 w-4 text-violet-400" />
@@ -113,6 +114,9 @@ export default function PlatformOverview() {
               />
             </div>
           </div>
+
+          {/* Integrations Health Card */}
+          <PlatformIntegrationsCard />
         </div>
       </div>
 
