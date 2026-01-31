@@ -55,7 +55,11 @@ import {
   Sparkles,
   Settings2,
   FileCheck,
+  Plus,
 } from 'lucide-react';
+import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
+import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
+import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesManager';
 import { EmailVariablesManager } from '@/components/dashboard/EmailVariablesManager';
@@ -517,6 +521,10 @@ export default function Settings() {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>(null);
   const [mounted, setMounted] = useState(false);
+  const [isAddUserSeatsOpen, setIsAddUserSeatsOpen] = useState(false);
+  
+  const capacity = useBusinessCapacity();
+  const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
 
   // Reset to main view when nav link is clicked (same route navigation)
   useEffect(() => {
@@ -900,6 +908,16 @@ export default function Settings() {
                 <CardDescription>Manage team members and their access levels.</CardDescription>
               </CardHeader>
               <CardContent>
+                {/* User capacity bar for super admins */}
+                {isSuperAdmin && !capacity.isLoading && !capacity.users.isUnlimited && (
+                  <div className="mb-6">
+                    <UserCapacityBar 
+                      capacity={capacity} 
+                      onAddSeats={() => setIsAddUserSeatsOpen(true)} 
+                    />
+                  </div>
+                )}
+                
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -1386,6 +1404,13 @@ export default function Settings() {
         <BusinessSettingsDialog 
           open={businessDialogOpen} 
           onOpenChange={setBusinessDialogOpen} 
+        />
+        
+        {/* Add User Seats Dialog */}
+        <AddUserSeatsDialog
+          open={isAddUserSeatsOpen}
+          onOpenChange={setIsAddUserSeatsOpen}
+          capacity={capacity}
         />
       </div>
     </DashboardLayout>

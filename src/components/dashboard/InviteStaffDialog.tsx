@@ -18,9 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCreateInvitation } from '@/hooks/useStaffInvitations';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
-import { UserPlus, Loader2, Mail } from 'lucide-react';
+import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
+import { UserPlus, Loader2, Mail, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -36,6 +38,9 @@ export function InviteStaffDialog() {
   
   const createInvitation = useCreateInvitation();
   const { roleOptions } = useRoleUtils();
+  const capacity = useBusinessCapacity();
+  
+  const canInvite = capacity.canAddUser || capacity.isLoading || capacity.users.isUnlimited;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +67,11 @@ export function InviteStaffDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button 
+          className="gap-2" 
+          disabled={!canInvite}
+          title={!canInvite ? 'User seats at capacity - add more seats to invite staff' : undefined}
+        >
           <UserPlus className="h-4 w-4" />
           Invite Staff
         </Button>
@@ -77,6 +86,18 @@ export function InviteStaffDialog() {
             Send an invitation email to a new team member. They'll be able to create their account using this invitation.
           </DialogDescription>
         </DialogHeader>
+        
+        {/* Capacity warning */}
+        {!capacity.canAddUser && !capacity.users.isUnlimited && !capacity.isLoading && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              You've reached your user seat limit ({capacity.users.used}/{capacity.users.total}). 
+              Contact your organization admin to add more seats before inviting new staff.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email Address</Label>
