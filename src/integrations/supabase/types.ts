@@ -1651,6 +1651,53 @@ export type Database = {
           },
         ]
       }
+      edge_function_logs: {
+        Row: {
+          completed_at: string | null
+          duration_ms: number | null
+          error_message: string | null
+          function_name: string
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          started_at: string
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          function_name: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          started_at?: string
+          status: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          function_name?: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edge_function_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_digest_log: {
         Row: {
           digest_type: string
@@ -3702,6 +3749,47 @@ export type Database = {
           },
         ]
       }
+      organization_feature_flags: {
+        Row: {
+          created_at: string | null
+          flag_key: string
+          id: string
+          is_enabled: boolean
+          organization_id: string
+          override_reason: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          flag_key: string
+          id?: string
+          is_enabled: boolean
+          organization_id: string
+          override_reason?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          flag_key?: string
+          id?: string
+          is_enabled?: boolean
+          organization_id?: string
+          override_reason?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_feature_flags_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           account_number: number | null
@@ -4913,6 +5001,75 @@ export type Database = {
           status?: string
           token?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_notification_preferences: {
+        Row: {
+          email_enabled: boolean | null
+          id: string
+          in_app_enabled: boolean | null
+          notification_type: string
+          slack_enabled: boolean | null
+          user_id: string
+        }
+        Insert: {
+          email_enabled?: boolean | null
+          id?: string
+          in_app_enabled?: boolean | null
+          notification_type: string
+          slack_enabled?: boolean | null
+          user_id: string
+        }
+        Update: {
+          email_enabled?: boolean | null
+          id?: string
+          in_app_enabled?: boolean | null
+          notification_type?: string
+          slack_enabled?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          link: string | null
+          message: string
+          metadata: Json | null
+          read_at: string | null
+          recipient_id: string | null
+          severity: string
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message: string
+          metadata?: Json | null
+          read_at?: string | null
+          recipient_id?: string | null
+          severity?: string
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          message?: string
+          metadata?: Json | null
+          read_at?: string | null
+          recipient_id?: string | null
+          severity?: string
+          title?: string
+          type?: string
         }
         Relationships: []
       }
@@ -6842,6 +6999,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_health_status: {
+        Row: {
+          error_message: string | null
+          id: string
+          last_checked_at: string | null
+          metadata: Json | null
+          response_time_ms: number | null
+          service_name: string
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          last_checked_at?: string | null
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name: string
+          status: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          last_checked_at?: string | null
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name?: string
+          status?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {

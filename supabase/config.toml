@@ -80,3 +80,9 @@ verify_jwt = false
 
 [functions.force-logout-platform-users]
 verify_jwt = false
+
+[functions.trigger-scheduled-job]
+verify_jwt = false
+
+[functions.check-system-health]
+verify_jwt = false
