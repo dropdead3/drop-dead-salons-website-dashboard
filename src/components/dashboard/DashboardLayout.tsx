@@ -336,6 +336,10 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         'view_assistant_schedule', 'manage_assistant_schedule', 'schedule_meetings',
         'view_onboarding', 'view_handbooks', 'view_booking_calendar', 'view_own_appointments'
       ],
+      booth_renter: [
+        'view_command_center', 'view_team_directory', 'view_handbooks', 'view_onboarding',
+        'view_own_stats', 'view_booking_calendar', 'view_own_appointments'
+      ],
     };
     return rolePermissionMap[role] || [];
   };
