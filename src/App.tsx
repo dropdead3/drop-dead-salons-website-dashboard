@@ -94,6 +94,7 @@ import MyPay from "./pages/dashboard/MyPay";
 import Transactions from "./pages/dashboard/Transactions";
 import Inventory from "./pages/dashboard/Inventory";
 import Register from "./pages/dashboard/Register";
+import LoyaltyProgram from "./pages/dashboard/settings/LoyaltyProgram";
 
 // Platform Admin pages
 import PlatformOverview from "./pages/dashboard/platform/Overview";
@@ -221,6 +222,7 @@ const App = () => (
                       <Route path="/dashboard/transactions" element={<ProtectedRoute requiredPermission="view_transactions"><Transactions /></ProtectedRoute>} />
                       <Route path="/dashboard/inventory" element={<ProtectedRoute requiredPermission="manage_inventory"><Inventory /></ProtectedRoute>} />
                       <Route path="/dashboard/register" element={<ProtectedRoute requiredPermission="process_retail_sales"><Register /></ProtectedRoute>} />
+                      <Route path="/dashboard/settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
 
                       {/* Platform Admin routes - nested under PlatformLayout with sidebar */}
                       <Route path="/dashboard/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
