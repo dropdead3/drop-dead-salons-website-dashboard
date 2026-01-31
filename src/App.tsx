@@ -104,6 +104,10 @@ import PlatformIntegrationDetail from "./pages/dashboard/platform/PlatformIntegr
 import PlatformKnowledgeBase from "./pages/dashboard/platform/KnowledgeBase";
 import PlatformOnboarding from "./pages/dashboard/platform/Onboarding";
 import PlatformAnalytics from "./pages/dashboard/platform/Analytics";
+import AuditLogPage from "./pages/dashboard/platform/AuditLog";
+import JobsPage from "./pages/dashboard/platform/Jobs";
+import SystemHealthPage from "./pages/dashboard/platform/SystemHealth";
+import NotificationsPage from "./pages/dashboard/platform/Notifications";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
 
 const queryClient = new QueryClient();
@@ -218,6 +222,10 @@ const App = () => (
                         <Route path="accounts/:orgId" element={<AccountDetail />} />
                         <Route path="onboarding" element={<PlatformOnboarding />} />
                         <Route path="import" element={<PlatformImport />} />
+                        <Route path="audit-log" element={<AuditLogPage />} />
+                        <Route path="jobs" element={<JobsPage />} />
+                        <Route path="health" element={<SystemHealthPage />} />
+                        <Route path="notifications" element={<ProtectedRoute requirePlatformRole="platform_admin"><NotificationsPage /></ProtectedRoute>} />
                         <Route path="analytics" element={<ProtectedRoute requirePlatformRole="platform_owner"><PlatformAnalytics /></ProtectedRoute>} />
                         <Route path="knowledge-base" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformKnowledgeBase /></ProtectedRoute>} />
                         <Route path="revenue" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformRevenue /></ProtectedRoute>} />

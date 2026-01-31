@@ -15,7 +15,11 @@ import {
   Code,
   BookOpen,
   Rocket,
-  BarChart3
+  BarChart3,
+  FileText,
+  Clock,
+  Activity,
+  Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,6 +53,10 @@ const platformNavItems: NavItem[] = [
   { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
   { href: '/dashboard/platform/onboarding', label: 'Onboarding', icon: Rocket, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
   { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
+  { href: '/dashboard/platform/audit-log', label: 'Audit Log', icon: FileText, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+  { href: '/dashboard/platform/jobs', label: 'Scheduled Jobs', icon: Clock, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+  { href: '/dashboard/platform/health', label: 'System Health', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+  { href: '/dashboard/platform/notifications', label: 'Notifications', icon: Bell, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/analytics', label: 'Analytics', icon: BarChart3, platformRoles: ['platform_owner'] },
   { href: '/dashboard/platform/knowledge-base', label: 'Knowledge Base', icon: BookOpen, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
