@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StylistCardPreview } from '@/components/dashboard/StylistCardPreview';
+import { LandingPageSettings } from '@/components/dashboard/settings/LandingPageSettings';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const DAYS_OF_WEEK = [
@@ -1278,6 +1279,11 @@ export default function MyProfile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Landing Page Settings - only show if not impersonating */}
+          {!isReadOnly && (
+            <LandingPageSettings />
+          )}
 
         </fieldset>
 

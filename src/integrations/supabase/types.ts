@@ -8491,6 +8491,7 @@ export type Database = {
       user_preferences: {
         Row: {
           created_at: string
+          custom_landing_page: string | null
           custom_theme: Json | null
           custom_typography: Json | null
           dashboard_layout: Json | null
@@ -8501,6 +8502,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_landing_page?: string | null
           custom_theme?: Json | null
           custom_typography?: Json | null
           dashboard_layout?: Json | null
@@ -8511,6 +8513,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_landing_page?: string | null
           custom_theme?: Json | null
           custom_typography?: Json | null
           dashboard_layout?: Json | null
