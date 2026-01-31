@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { 
   Building2, 
   MapPin,
@@ -21,7 +22,8 @@ import {
   Target,
   LayoutDashboard,
   RefreshCw,
-  XCircle
+  XCircle,
+  ExternalLink
 } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { logPlatformAction } from '@/hooks/useOrganizations';
@@ -40,7 +42,10 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
-import { useOrganizationBilling, type BillingStatus } from '@/hooks/useOrganizationBilling';
+import { useOrganizationBilling, useSubscriptionPlans, type BillingStatus } from '@/hooks/useOrganizationBilling';
+import { useLocations } from '@/hooks/useLocations';
+import { useOrganizationUsage, calculateCapacity, getUtilizationColor, getUtilizationBgColor } from '@/hooks/useOrganizationCapacity';
+import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   pending: 'warning',
@@ -386,20 +391,7 @@ export default function AccountDetail() {
         </TabsContent>
 
         <TabsContent value="locations">
-          <PlatformCard variant="glass">
-            <PlatformCardHeader className="flex flex-row items-center justify-between">
-              <PlatformCardTitle>Locations</PlatformCardTitle>
-              <PlatformButton size="sm">
-                <MapPin className="h-4 w-4 mr-2" />
-                Add Location
-              </PlatformButton>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <p className="text-slate-500 text-center py-8">
-                Location management coming soon
-              </p>
-            </PlatformCardContent>
-          </PlatformCard>
+          <LocationSeatsTab organizationId={organization.id} />
         </TabsContent>
 
         <TabsContent value="users">
@@ -471,6 +463,134 @@ export default function AccountDetail() {
         onOpenChange={setEditDialogOpen}
       />
     </PlatformPageContainer>
+  );
+}
+
+// Location Seats Tab Component
+function LocationSeatsTab({ organizationId }: { organizationId: string }) {
+  const navigate = useNavigate();
+  const { data: billing } = useOrganizationBilling(organizationId);
+  const { data: usage } = useOrganizationUsage(organizationId);
+  const { data: plans } = useSubscriptionPlans();
+  const { data: locations = [], isLoading: locationsLoading } = useLocations(organizationId);
+
+  const plan = plans?.find(p => p.id === billing?.plan_id) ?? null;
+  const capacity = calculateCapacity(
+    billing ?? null,
+    plan,
+    usage ?? { locationCount: 0, userCount: 0 }
+  );
+
+  const baseSeats = capacity.locations.isUnlimited ? -1 : (capacity.locations.base);
+  const purchasedSeats = capacity.locations.purchased;
+  const totalSeats = capacity.locations.isUnlimited ? -1 : capacity.locations.total;
+  const usedSeats = capacity.locations.used;
+  const utilization = capacity.locations.utilization;
+
+  return (
+    <PlatformCard variant="glass">
+      <PlatformCardHeader className="flex flex-row items-center justify-between">
+        <PlatformCardTitle>Location Seats</PlatformCardTitle>
+        <PlatformButton 
+          variant="secondary" 
+          size="sm"
+          onClick={() => navigate(`/dashboard/platform/accounts/${organizationId}?tab=billing`)}
+        >
+          <CreditCard className="h-4 w-4 mr-2" />
+          Adjust Seats in Billing
+        </PlatformButton>
+      </PlatformCardHeader>
+      <PlatformCardContent className="space-y-6">
+        {/* Seat Allocation Summary */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+            <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Allocated Seats</p>
+            <p className="text-2xl font-bold text-white">
+              {capacity.locations.isUnlimited ? '∞' : totalSeats}
+            </p>
+            {!capacity.locations.isUnlimited && (
+              <p className="text-xs text-slate-400 mt-1">
+                {baseSeats} base + {purchasedSeats} purchased
+              </p>
+            )}
+          </div>
+          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+            <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Filled Seats</p>
+            <p className="text-2xl font-bold text-white">
+              {usedSeats} {!capacity.locations.isUnlimited && <span className="text-lg text-slate-400">of {totalSeats}</span>}
+            </p>
+          </div>
+          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+            <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Available</p>
+            <p className={cn("text-2xl font-bold", capacity.locations.isUnlimited ? 'text-emerald-400' : getUtilizationColor(utilization))}>
+              {capacity.locations.isUnlimited ? '∞' : capacity.locations.remaining}
+            </p>
+          </div>
+        </div>
+
+        {/* Utilization Bar */}
+        {!capacity.locations.isUnlimited && (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">Seat Utilization</span>
+              <span className={getUtilizationColor(utilization)}>
+                {Math.round(utilization * 100)}%
+              </span>
+            </div>
+            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className={cn("h-full transition-all rounded-full", getUtilizationBgColor(utilization))}
+                style={{ width: `${Math.min(utilization * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Locations List */}
+        <div>
+          <h4 className="text-sm font-medium text-slate-300 mb-3">Filled Locations</h4>
+          {locationsLoading ? (
+            <div className="space-y-2">
+              {[1, 2].map(i => (
+                <Skeleton key={i} className="h-12 w-full bg-slate-800" />
+              ))}
+            </div>
+          ) : locations.length === 0 ? (
+            <div className="text-center py-8 border border-dashed border-slate-700 rounded-lg">
+              <MapPin className="h-8 w-8 mx-auto text-slate-600 mb-2" />
+              <p className="text-slate-500">No locations created yet</p>
+              <p className="text-xs text-slate-600 mt-1">
+                Business admins can add locations in their Settings
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {locations.map(location => (
+                <div 
+                  key={location.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                      <MapPin className="h-4 w-4 text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">{location.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {location.address}, {location.city}
+                      </p>
+                    </div>
+                  </div>
+                  <PlatformBadge variant={location.is_active ? 'success' : 'default'}>
+                    {location.is_active ? 'Active' : 'Inactive'}
+                  </PlatformBadge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </PlatformCardContent>
+    </PlatformCard>
   );
 }
 

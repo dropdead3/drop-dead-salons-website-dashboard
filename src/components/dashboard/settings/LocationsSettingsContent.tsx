@@ -24,6 +24,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   Plus, 
   Pencil, 
@@ -49,6 +55,10 @@ import {
   type HolidayClosure,
 } from '@/hooks/useLocations';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
+import { LocationCapacityBar } from './LocationCapacityBar';
+import { AddLocationSeatsDialog } from './AddLocationSeatsDialog';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 const DAY_LABELS: Record<string, string> = {
@@ -122,14 +132,28 @@ export function LocationsSettingsContent() {
   const createLocation = useCreateLocation();
   const updateLocation = useUpdateLocation();
   const deleteLocation = useDeleteLocation();
+  const capacity = useBusinessCapacity();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddSeatsDialogOpen, setIsAddSeatsDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [formData, setFormData] = useState<LocationFormData>(emptyForm);
   const [newHolidayDate, setNewHolidayDate] = useState('');
   const [newHolidayName, setNewHolidayName] = useState('');
 
+  const canAddLocation = capacity.canAddLocation;
+
   const handleOpenCreate = () => {
+    if (!canAddLocation) {
+      toast.error("You've used all your location seats", {
+        description: 'Add more seats to continue adding locations.',
+        action: {
+          label: 'Add Seats',
+          onClick: () => setIsAddSeatsDialogOpen(true),
+        },
+      });
+      return;
+    }
     setEditingLocation(null);
     setFormData({
       ...emptyForm,
@@ -272,13 +296,39 @@ export function LocationsSettingsContent() {
               <CardTitle className="font-display text-lg">ALL LOCATIONS</CardTitle>
               <CardDescription>Add, edit, and manage salon locations</CardDescription>
             </div>
-            <Button onClick={handleOpenCreate} size="sm" className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Location
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button 
+                      onClick={handleOpenCreate} 
+                      size="sm" 
+                      className="gap-2"
+                      disabled={!canAddLocation && !capacity.locations.isUnlimited}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Location
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {!canAddLocation && !capacity.locations.isUnlimited && (
+                  <TooltipContent>
+                    <p>All location seats are in use</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Capacity Bar */}
+          {!capacity.isLoading && (
+            <LocationCapacityBar 
+              capacity={capacity} 
+              onAddSeats={() => setIsAddSeatsDialogOpen(true)} 
+            />
+          )}
+          
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               Loading locations...
@@ -871,6 +921,13 @@ export function LocationsSettingsContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Location Seats Dialog */}
+      <AddLocationSeatsDialog
+        open={isAddSeatsDialogOpen}
+        onOpenChange={setIsAddSeatsDialogOpen}
+        capacity={capacity}
+      />
     </div>
   );
 }
