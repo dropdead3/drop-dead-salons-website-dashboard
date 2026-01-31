@@ -1,8 +1,8 @@
 
-# Promotions, Vouchers & Enhanced Rewards Analytics System
+# Independent Stylist / Booth Renter Management System
 
 ## Overview
-Build a comprehensive promotions and voucher management system that allows organizations to create time-limited promotional offers, discount vouchers, and temporary promotional services. The system will integrate with existing analytics to provide clear separation between promotional and standard sales, plus dedicated loyalty/rewards analytics.
+Build a comprehensive booth rental management system that allows salons to manage independent stylists who rent chairs/spaces in their business. This includes contract management via PandaDoc, rent payment tracking, onboarding workflows, retail commission structures, and dedicated revenue analytics.
 
 ---
 
@@ -10,205 +10,238 @@ Build a comprehensive promotions and voucher management system that allows organ
 
 ### Database Schema
 
-#### 1. Promotions Table
-Core table for managing promotional campaigns.
+#### 1. Add New Role: `booth_renter`
+Extend the existing `app_role` enum to include the independent stylist role.
 
 ```sql
-CREATE TABLE public.promotions (
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'booth_renter';
+```
+
+Update `public.roles` table with display metadata:
+```sql
+INSERT INTO public.roles (name, display_name, description, color, icon, sort_order, is_system)
+VALUES ('booth_renter', 'Booth Renter', 'Independent stylist renting space', 'orange', 'Store', 7, true);
+```
+
+#### 2. Booth Renter Profiles Table
+Extends employee_profiles with renter-specific details.
+
+```sql
+CREATE TABLE public.booth_renter_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  
+  -- Business Info
+  business_name TEXT,
+  business_license_number TEXT,
+  license_state TEXT,
+  ein_number TEXT, -- For 1099 purposes
+  
+  -- Contact
+  billing_email TEXT,
+  billing_phone TEXT,
+  billing_address JSONB, -- {street, city, state, zip}
+  
+  -- Status
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'inactive', 'terminated')),
+  onboarding_complete BOOLEAN DEFAULT false,
+  
+  -- Dates
+  start_date DATE,
+  end_date DATE,
+  
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  
+  UNIQUE(user_id, organization_id)
+);
+```
+
+#### 3. Booth Rental Contracts Table
+Track rental agreements linked to PandaDoc.
+
+```sql
+CREATE TABLE public.booth_rental_contracts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id),
+  booth_renter_id UUID NOT NULL REFERENCES booth_renter_profiles(id) ON DELETE CASCADE,
   
-  -- Promotion Details
-  name TEXT NOT NULL,
-  description TEXT,
-  promo_code TEXT, -- Optional redemption code
-  promotion_type TEXT NOT NULL CHECK (promotion_type IN (
-    'percentage_discount',    -- e.g., 20% off
-    'fixed_discount',         -- e.g., $25 off
-    'bogo',                   -- Buy one get one
-    'bundle',                 -- Package deal
-    'new_client',             -- First-time visitor special
-    'loyalty_bonus',          -- Extra points/rewards
-    'referral'                -- Referral rewards
-  )),
+  -- Contract Details
+  contract_name TEXT NOT NULL,
+  contract_type TEXT DEFAULT 'standard' CHECK (contract_type IN ('standard', 'month_to_month', 'annual')),
   
-  -- Discount Configuration
-  discount_value DECIMAL(10,2), -- Amount or percentage
-  discount_max_amount DECIMAL(10,2), -- Cap for percentage discounts
-  minimum_purchase DECIMAL(10,2) DEFAULT 0,
+  -- PandaDoc Integration
+  pandadoc_document_id TEXT,
+  pandadoc_status TEXT DEFAULT 'draft' CHECK (pandadoc_status IN ('draft', 'sent', 'viewed', 'completed', 'voided', 'declined')),
+  document_url TEXT,
+  signed_at TIMESTAMPTZ,
   
-  -- Applicability
-  applies_to TEXT DEFAULT 'all' CHECK (applies_to IN ('all', 'services', 'products', 'specific')),
-  applicable_service_ids UUID[], -- Specific services if applies_to = 'specific'
-  applicable_category TEXT[], -- Service categories
-  excluded_service_ids UUID[], -- Exclusions
+  -- Terms
+  start_date DATE NOT NULL,
+  end_date DATE,
+  auto_renew BOOLEAN DEFAULT true,
+  notice_period_days INTEGER DEFAULT 30,
   
-  -- Limits
-  usage_limit INTEGER, -- Total redemptions allowed (null = unlimited)
-  usage_per_client INTEGER DEFAULT 1, -- Per-client limit
-  current_usage_count INTEGER DEFAULT 0,
+  -- Rent Configuration
+  rent_amount DECIMAL(10,2) NOT NULL,
+  rent_frequency TEXT NOT NULL CHECK (rent_frequency IN ('weekly', 'monthly')),
+  due_day_of_week INTEGER, -- 0=Sunday, for weekly
+  due_day_of_month INTEGER, -- 1-28, for monthly
   
-  -- Validity
-  starts_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  expires_at TIMESTAMPTZ,
-  is_active BOOLEAN DEFAULT true,
+  -- Additional Terms
+  security_deposit DECIMAL(10,2) DEFAULT 0,
+  security_deposit_paid BOOLEAN DEFAULT false,
+  includes_utilities BOOLEAN DEFAULT true,
+  includes_wifi BOOLEAN DEFAULT true,
+  includes_products BOOLEAN DEFAULT false,
+  additional_terms JSONB, -- Flexible storage for custom terms
   
-  -- Targeting
-  target_audience TEXT DEFAULT 'all' CHECK (target_audience IN (
-    'all', 'new_clients', 'existing_clients', 'loyalty_tier', 'specific_clients'
-  )),
-  target_loyalty_tiers TEXT[], -- For tier-specific promos
-  target_client_ids UUID[], -- For specific client promos
+  -- Retail Commission
+  retail_commission_enabled BOOLEAN DEFAULT true,
+  retail_commission_rate DECIMAL(5,4) DEFAULT 0.10, -- 10% default
   
-  -- Tracking
-  created_by UUID REFERENCES auth.users(id),
+  -- Status
+  status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'pending_signature', 'active', 'expired', 'terminated')),
+  terminated_at TIMESTAMPTZ,
+  termination_reason TEXT,
+  
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-#### 2. Vouchers Table
-Individual voucher codes that can be gifted or distributed.
+#### 4. Rent Payments Table
+Track individual rent payments.
 
 ```sql
-CREATE TABLE public.vouchers (
+CREATE TABLE public.rent_payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id),
-  promotion_id UUID REFERENCES promotions(id), -- Can link to parent promotion
+  booth_renter_id UUID NOT NULL REFERENCES booth_renter_profiles(id),
+  contract_id UUID NOT NULL REFERENCES booth_rental_contracts(id),
   
-  -- Voucher Details
-  code TEXT NOT NULL UNIQUE,
-  voucher_type TEXT NOT NULL CHECK (voucher_type IN (
-    'discount',        -- Service/product discount
-    'free_service',    -- Complimentary service
-    'credit',          -- Salon credit
-    'upgrade'          -- Service upgrade
-  )),
+  -- Payment Period
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  due_date DATE NOT NULL,
   
-  -- Value
-  value DECIMAL(10,2), -- Discount amount or credit value
-  value_type TEXT DEFAULT 'fixed' CHECK (value_type IN ('fixed', 'percentage')),
-  free_service_id UUID REFERENCES services(id), -- For free service vouchers
+  -- Amounts
+  base_rent DECIMAL(10,2) NOT NULL,
+  late_fee DECIMAL(10,2) DEFAULT 0,
+  credits_applied DECIMAL(10,2) DEFAULT 0,
+  adjustments DECIMAL(10,2) DEFAULT 0,
+  adjustment_notes TEXT,
+  total_due DECIMAL(10,2) GENERATED ALWAYS AS (base_rent + late_fee - credits_applied + adjustments) STORED,
+  amount_paid DECIMAL(10,2) DEFAULT 0,
+  balance DECIMAL(10,2) GENERATED ALWAYS AS (base_rent + late_fee - credits_applied + adjustments - amount_paid) STORED,
   
-  -- Assignment
-  issued_to_client_id UUID REFERENCES phorest_clients(id),
-  issued_to_email TEXT,
-  issued_to_name TEXT,
+  -- Payment Details
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'partial', 'paid', 'overdue', 'waived')),
+  paid_at TIMESTAMPTZ,
+  payment_method TEXT,
+  stripe_payment_intent_id TEXT,
+  stripe_invoice_id TEXT,
   
-  -- Usage
-  is_redeemed BOOLEAN DEFAULT false,
-  redeemed_at TIMESTAMPTZ,
-  redeemed_by_client_id UUID REFERENCES phorest_clients(id),
-  redeemed_transaction_id TEXT, -- Link to sales transaction
+  -- Auto-pay
+  autopay_scheduled BOOLEAN DEFAULT false,
+  autopay_attempted_at TIMESTAMPTZ,
+  autopay_failed_reason TEXT,
   
-  -- Validity
-  valid_from TIMESTAMPTZ DEFAULT now(),
-  expires_at TIMESTAMPTZ,
-  is_active BOOLEAN DEFAULT true,
-  
-  -- Meta
   notes TEXT,
-  issued_by UUID REFERENCES auth.users(id),
-  issued_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-#### 3. Promotional Services Table
-Temporary services created specifically for promotions.
-
-```sql
-CREATE TABLE public.promotional_services (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id),
-  service_id UUID NOT NULL REFERENCES services(id), -- Link to created service
-  promotion_id UUID REFERENCES promotions(id),
-  
-  -- Original Service Reference (if this is a discounted version)
-  original_service_id UUID REFERENCES services(id),
-  original_price DECIMAL(10,2),
-  promotional_price DECIMAL(10,2),
-  
-  -- Expiration
-  expires_at TIMESTAMPTZ NOT NULL,
-  auto_deactivate BOOLEAN DEFAULT true, -- Auto-disable when expired
-  
-  -- Tracking
   created_at TIMESTAMPTZ DEFAULT now(),
-  deactivated_at TIMESTAMPTZ
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-#### 4. Promotion Redemptions Table
-Tracks each use of a promotion or voucher.
+#### 5. Renter Auto-Pay Settings Table
+Store payment method and autopay preferences.
 
 ```sql
-CREATE TABLE public.promotion_redemptions (
+CREATE TABLE public.renter_payment_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  booth_renter_id UUID NOT NULL REFERENCES booth_renter_profiles(id) ON DELETE CASCADE,
   organization_id UUID NOT NULL REFERENCES organizations(id),
   
-  -- Source
-  promotion_id UUID REFERENCES promotions(id),
-  voucher_id UUID REFERENCES vouchers(id),
-  promo_code_used TEXT,
+  -- Stripe Connect
+  stripe_customer_id TEXT,
+  stripe_payment_method_id TEXT,
+  payment_method_last_four TEXT,
+  payment_method_brand TEXT, -- visa, mastercard, etc.
+  payment_method_type TEXT, -- card, bank_account
   
-  -- Transaction Details
-  client_id UUID REFERENCES phorest_clients(id),
-  transaction_id TEXT, -- phorest_transaction_id or internal
-  transaction_date TIMESTAMPTZ DEFAULT now(),
+  -- Auto-pay settings
+  autopay_enabled BOOLEAN DEFAULT false,
+  autopay_days_before_due INTEGER DEFAULT 0, -- 0 = on due date
   
-  -- Value
-  original_amount DECIMAL(10,2),
-  discount_applied DECIMAL(10,2),
-  final_amount DECIMAL(10,2),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
   
-  -- Items Discounted
-  items_discounted JSONB, -- [{item_name, original_price, discount}]
+  UNIQUE(booth_renter_id)
+);
+```
+
+#### 6. Retail Commission Tracking Table
+Track retail sales commissions for booth renters.
+
+```sql
+CREATE TABLE public.renter_retail_commissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  booth_renter_id UUID NOT NULL REFERENCES booth_renter_profiles(id),
   
-  -- Meta
-  location_id TEXT,
-  staff_user_id UUID REFERENCES auth.users(id),
+  -- Sale Reference
+  retail_sale_id UUID, -- Link to retail_sales if applicable
+  sale_date DATE NOT NULL,
+  
+  -- Commission Details
+  sale_amount DECIMAL(10,2) NOT NULL,
+  commission_rate DECIMAL(5,4) NOT NULL,
+  commission_amount DECIMAL(10,2) NOT NULL,
+  
+  -- Payout
+  payout_status TEXT DEFAULT 'pending' CHECK (payout_status IN ('pending', 'included_in_statement', 'paid')),
+  payout_date DATE,
+  payout_reference TEXT,
+  
+  notes TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-#### 5. Add Sale Type Classification Column
-Extend transaction tracking to classify sale types.
+#### 7. Renter Onboarding Tasks Table
+Track renter-specific onboarding checklist.
 
 ```sql
--- Add to phorest_transaction_items (or create view)
-ALTER TABLE phorest_transaction_items 
-ADD COLUMN IF NOT EXISTS sale_classification TEXT DEFAULT 'standard' 
-  CHECK (sale_classification IN ('standard', 'promotional', 'voucher', 'loyalty_redemption', 'gift_card'));
-
--- Also update retail_sale_items
-ALTER TABLE retail_sale_items
-ADD COLUMN IF NOT EXISTS sale_classification TEXT DEFAULT 'standard';
-```
-
-#### 6. Loyalty Analytics Aggregation Table
-Pre-aggregated loyalty metrics for performance.
-
-```sql
-CREATE TABLE public.loyalty_analytics_daily (
+CREATE TABLE public.renter_onboarding_tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES organizations(id),
-  analytics_date DATE NOT NULL,
   
-  -- Points Activity
-  points_earned INTEGER DEFAULT 0,
-  points_redeemed INTEGER DEFAULT 0,
-  points_expired INTEGER DEFAULT 0,
+  title TEXT NOT NULL,
+  description TEXT,
+  task_type TEXT DEFAULT 'action' CHECK (task_type IN ('action', 'document', 'form', 'acknowledgment')),
+  required BOOLEAN DEFAULT true,
+  display_order INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
   
-  -- Member Activity
-  active_members INTEGER DEFAULT 0, -- Members with activity
-  new_enrollments INTEGER DEFAULT 0,
-  tier_upgrades INTEGER DEFAULT 0,
+  -- Optional link/action
+  link_url TEXT,
+  form_template_id UUID,
+  document_template_id TEXT, -- PandaDoc template ID
   
-  -- Revenue Attribution
-  loyalty_attributed_revenue DECIMAL(10,2) DEFAULT 0,
-  redemption_value DECIMAL(10,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE public.renter_onboarding_completions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  booth_renter_id UUID NOT NULL REFERENCES booth_renter_profiles(id) ON DELETE CASCADE,
+  task_id UUID NOT NULL REFERENCES renter_onboarding_tasks(id) ON DELETE CASCADE,
   
-  UNIQUE(organization_id, analytics_date)
+  completed_at TIMESTAMPTZ DEFAULT now(),
+  completed_data JSONB, -- Any data collected
+  
+  UNIQUE(booth_renter_id, task_id)
 );
 ```
 
@@ -218,267 +251,341 @@ CREATE TABLE public.loyalty_analytics_daily (
 
 ```
 src/
-├── components/dashboard/promotions/
-│   ├── PromotionsConfigurator.tsx        # Main configurator (tabbed)
-│   ├── PromotionsList.tsx                # All promotions table
-│   ├── PromotionForm.tsx                 # Create/edit promotion dialog
-│   ├── PromotionCard.tsx                 # Summary card with actions
-│   ├── VoucherGenerator.tsx              # Bulk voucher creation
-│   ├── VouchersList.tsx                  # Voucher management table
-│   ├── VoucherRedemption.tsx             # Redemption interface
-│   ├── PromotionalServiceForm.tsx        # Create promotional service
-│   ├── PromotionalServicesManager.tsx    # List with expiration status
-│   ├── PromoAnalyticsSummary.tsx         # Promo performance overview
-│   └── LoyaltyAnalyticsPanel.tsx         # Loyalty program analytics
+├── components/dashboard/booth-renters/
+│   ├── BoothRentersList.tsx               # Main list view
+│   ├── BoothRenterCard.tsx                # Summary card
+│   ├── BoothRenterDetailSheet.tsx         # Full profile slide-out
+│   ├── BoothRenterForm.tsx                # Add/edit form
+│   ├── RentalContractForm.tsx             # Contract creation
+│   ├── RentalContractCard.tsx             # Contract display
+│   ├── RentPaymentTracker.tsx             # Payment status grid
+│   ├── RentPaymentDialog.tsx              # Record payment
+│   ├── AutoPaySetupDialog.tsx             # Configure autopay
+│   ├── RenterOnboardingChecklist.tsx      # Onboarding progress
+│   ├── RenterRetailCommissions.tsx        # Commission tracking
+│   └── IssueContractDialog.tsx            # PandaDoc contract issuance
 ├── components/dashboard/analytics/
-│   ├── SalesTypeFilter.tsx               # Filter toggle (all/standard/promo)
-│   ├── PromoSalesBreakdown.tsx           # Promo vs standard pie chart
-│   └── LoyaltyMetricsCard.tsx            # Points/tier summary
+│   └── RentRevenueAnalytics.tsx           # Rent revenue dashboard
 ├── hooks/
-│   ├── usePromotions.ts                  # Promotion CRUD
-│   ├── useVouchers.ts                    # Voucher management
-│   ├── usePromotionalServices.ts         # Auto-expiring services
-│   ├── usePromotionRedemptions.ts        # Redemption tracking
-│   └── useLoyaltyAnalytics.ts            # Loyalty program metrics
-├── pages/dashboard/settings/
-│   └── (integrate via LoyaltySettingsContent)
+│   ├── useBoothRenters.ts                 # Renter CRUD
+│   ├── useRentalContracts.ts              # Contract management
+│   ├── useRentPayments.ts                 # Payment tracking
+│   ├── useRenterPaymentSettings.ts        # Auto-pay configuration
+│   ├── useRenterOnboarding.ts             # Onboarding tasks
+│   ├── useRenterRetailCommissions.ts      # Commission tracking
+│   └── useRentRevenueAnalytics.ts         # Analytics aggregation
+├── pages/dashboard/admin/
+│   ├── BoothRenters.tsx                   # Main management page
+│   └── RentPayments.tsx                   # Payment tracker page
+└── supabase/functions/
+    ├── process-rent-payments/index.ts     # Auto-pay processing cron
+    └── generate-rent-invoices/index.ts    # Invoice generation cron
 ```
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Database & Core Infrastructure
+### Phase 1: Database & Role Setup
+1. **Migration**: Add `booth_renter` role to enum
+2. **Tables**: Create all renter-related tables with RLS
+3. **Permissions**: Add granular permissions
+   - `manage_booth_renters` - Full CRUD access
+   - `view_booth_renters` - Read-only access
+   - `view_rent_payments` - See payment history
+   - `manage_rent_payments` - Record payments
+   - `view_rent_analytics` - See rent revenue analytics
 
-1. **Migration**: Create all new tables with RLS policies
-2. **Permissions**: Add `manage_promotions`, `view_promotion_analytics`
-3. **Edge Function**: `expire-promotional-services` - Daily cron to auto-deactivate expired promo services
-4. **Core Hooks**:
-   - `usePromotions` - CRUD for promotions
-   - `useVouchers` - Voucher generation/redemption
-   - `usePromotionalServices` - Service lifecycle management
+### Phase 2: Booth Renter Management UI
+**Location**: `/dashboard/admin/booth-renters`
 
-### Phase 2: Promotions Configurator UI
+**Features**:
+- List all booth renters with status filters
+- Add new renter (creates user account with booth_renter role)
+- View/edit renter profile and business info
+- Track active contracts and payment status
 
-**Location**: New tab in Loyalty Settings or dedicated Settings category
-
-**Tabs**:
-1. **Active Promotions** - Current promos with quick actions
-2. **Create Promotion** - Full form with targeting options
-3. **Vouchers** - Generate/manage individual codes
-4. **Promo Services** - Temporary service management
-5. **Analytics** - Performance dashboard
-
-**UI Mockup - Create Promotion**:
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ CREATE NEW PROMOTION                                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│ Promotion Name *                                                │
-│ [Spring Refresh Special                                    ]    │
-│                                                                 │
-│ Description                                                     │
-│ [20% off all color services for the month of April       ]     │
-│                                                                 │
-│ ───────────────────────────────────────────────────────────    │
-│                                                                 │
-│ DISCOUNT TYPE                                                   │
-│ (•) Percentage    [$20 ] %                                     │
-│ ( ) Fixed Amount  [$   ]                                       │
-│ ( ) Free Service  [Select service ▼]                           │
-│                                                                 │
-│ APPLIES TO                                                      │
-│ ( ) All Services & Products                                    │
-│ (•) Service Categories  [☑ Color] [☑ Blonding] [☐ Haircut]    │
-│ ( ) Specific Services   [Select... ▼]                          │
-│                                                                 │
-│ ───────────────────────────────────────────────────────────    │
-│                                                                 │
-│ VALIDITY                                                        │
-│ Start Date: [Apr 1, 2026 ▼]    End Date: [Apr 30, 2026 ▼]     │
-│                                                                 │
-│ PROMO CODE (Optional)                                           │
-│ [SPRING20     ]  [Generate Random]                              │
-│                                                                 │
-│ ───────────────────────────────────────────────────────────    │
-│                                                                 │
-│ LIMITS                                                          │
-│ Total Uses: [100  ] (leave blank for unlimited)                │
-│ Per Client: [1    ]                                             │
-│ Min Purchase: [$0  ]                                            │
-│                                                                 │
-│ TARGET AUDIENCE                                                 │
-│ ( ) All Clients                                                │
-│ ( ) New Clients Only                                           │
-│ (•) Loyalty Members  [☑ Gold] [☑ Platinum]                    │
-│                                                                 │
-│                               [Cancel]   [Create Promotion →]   │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│ BOOTH RENTERS                                                            │
+│ Manage independent stylists renting space                                │
+├──────────────────────────────────────────────────────────────────────────┤
+│ [+ Add Renter]  [Filter: All ▼]  [Search...]                            │
+│                                                                          │
+│ ┌─────────────────────────────────────────────────────────────────────┐ │
+│ │ 🟢 Sarah Martinez                                                   │ │
+│ │ Martinez Style Co.                                                  │ │
+│ │ Rent: $800/mo • Due: 1st • Status: Current                         │ │
+│ │ Contract: Active until Dec 31, 2026                                 │ │
+│ │ [View] [Contract] [Payments]                                        │ │
+│ └─────────────────────────────────────────────────────────────────────┘ │
+│                                                                          │
+│ ┌─────────────────────────────────────────────────────────────────────┐ │
+│ │ 🟡 James Chen                                                       │ │
+│ │ JC Hair Studio                                                      │ │
+│ │ Rent: $200/wk • Due: Monday • Status: Payment Due                  │ │
+│ │ Contract: Month-to-month                                            │ │
+│ │ [View] [Contract] [Payments]                                        │ │
+│ └─────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Phase 3: Promotional Services Feature
+### Phase 3: Contract Management with PandaDoc
+**Features**:
+- Create contracts from templates
+- Issue via PandaDoc integration
+- Track signature status
+- Auto-apply terms to billing on completion
 
-**Concept**: Create a temporary service (e.g., "Spring Balayage Special - $199") that:
-- Appears in booking/POS systems
-- Has an automatic expiration date
-- Gets soft-deleted/hidden when expired
-- Is tagged for analytics exclusion if desired
+**Contract Issuance Flow**:
+1. Admin selects renter and chooses "Issue Contract"
+2. Select PandaDoc template or create custom
+3. Pre-fill fields from renter profile
+4. Send for signature via PandaDoc API
+5. Webhook updates status and extracts terms
+6. Contract becomes active on completion
 
-**UI Mockup - Create Promotional Service**:
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ CREATE PROMOTIONAL SERVICE                                      │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│ ☑ Base on Existing Service                                     │
-│ [Signature Balayage ▼]                                         │
-│                                                                 │
-│ Original Price: $350                                            │
-│ Promotional Price: [$199      ]                                │
-│                                                                 │
-│ Promotional Service Name                                        │
-│ [Spring Balayage Special                                   ]    │
-│                                                                 │
-│ ───────────────────────────────────────────────────────────    │
-│                                                                 │
-│ EXPIRATION                                                      │
-│ End Date: [Apr 30, 2026 ▼]                                     │
-│                                                                 │
-│ ☑ Automatically hide service after expiration                  │
-│ ☐ Send notification 3 days before expiration                   │
-│                                                                 │
-│ Link to Promotion: [Spring Refresh Special ▼] (optional)       │
-│                                                                 │
-│                          [Cancel]   [Create Service →]          │
-└─────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│ ISSUE RENTAL CONTRACT                                          │
+├────────────────────────────────────────────────────────────────┤
+│                                                                │
+│ Renter: Sarah Martinez                                         │
+│                                                                │
+│ CONTRACT TEMPLATE                                              │
+│ [Standard Booth Rental Agreement ▼]                           │
+│                                                                │
+│ ─────────────────────────────────────────────────────────     │
+│                                                                │
+│ RENT CONFIGURATION                                             │
+│ Frequency: (•) Monthly  ( ) Weekly                            │
+│ Amount: [$800.00    ]                                         │
+│ Due Day: [1st of month ▼]                                     │
+│                                                                │
+│ ─────────────────────────────────────────────────────────     │
+│                                                                │
+│ CONTRACT TERM                                                  │
+│ Start Date: [Feb 1, 2026 ▼]                                   │
+│ End Date:   [Jan 31, 2027 ▼]  ☑ Auto-renew                   │
+│                                                                │
+│ ─────────────────────────────────────────────────────────     │
+│                                                                │
+│ RETAIL COMMISSION                                              │
+│ ☑ Enable retail product sales commission                      │
+│ Rate: [10] %                                                  │
+│                                                                │
+│ ADDITIONAL INCLUSIONS                                          │
+│ ☑ Utilities  ☑ WiFi  ☐ Products                              │
+│                                                                │
+│ Security Deposit: [$800.00    ]                               │
+│                                                                │
+│                      [Cancel]  [Issue via PandaDoc →]         │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-### Phase 4: Analytics Integration
+### Phase 4: Rent Payment Tracking
+**Location**: `/dashboard/admin/rent-payments`
 
-**Sales Dashboard Enhancements**:
+**Features**:
+- Calendar/grid view of upcoming payments
+- Filter by status (pending, overdue, paid)
+- Record manual payments
+- View payment history per renter
+- Late fee management
 
-1. **Sale Type Filter** - Toggle between:
-   - All Sales
-   - Standard Sales Only (exclude promos)
-   - Promotional Sales Only
-   - Loyalty Redemptions
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ RENT PAYMENT TRACKER                       [February 2026 ◀ ▶]          │
+│ [Weekly ▼] [All Locations ▼]                                            │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Renter              │ Due Date  │ Amount   │ Status    │ Actions       │
+│ ─────────────────────┼───────────┼──────────┼───────────┼─────────────  │
+│  Sarah Martinez      │ Feb 1     │ $800.00  │ 🟢 Paid   │ [Receipt]     │
+│  James Chen          │ Feb 3     │ $200.00  │ 🔴 Overdue│ [Record Pay]  │
+│  Alex Rivera         │ Feb 5     │ $150.00  │ 🟡 Pending│ [Record Pay]  │
+│  Maria Thompson      │ Feb 10    │ $200.00  │ ⏰ Autopay│ [Details]     │
+│                                                                          │
+│ ─────────────────────────────────────────────────────────────────────── │
+│ SUMMARY                                                                  │
+│ Total Due: $1,350.00  │  Collected: $800.00  │  Outstanding: $550.00    │
+└──────────────────────────────────────────────────────────────────────────┘
+```
 
-2. **Revenue Breakdown Card** - Shows:
-   ```
-   ┌─────────────────────────────────┐
-   │ REVENUE BREAKDOWN               │
-   │                                 │
-   │ ● Standard Revenue    $45,230  │
-   │ ● Promotional Sales   $8,450   │
-   │ ● Voucher Redemptions $2,100   │
-   │ ● Loyalty Rewards     $1,890   │
-   │ ─────────────────────────────  │
-   │   Gross Revenue      $57,670   │
-   │                                 │
-   │ [View Details]                  │
-   └─────────────────────────────────┘
-   ```
+### Phase 5: Auto-Pay System
+**Features**:
+- Renters can set up payment methods (Stripe Connect)
+- Configure autopay on/before due date
+- Automatic processing via edge function cron
+- Failed payment notifications
 
-3. **Promotion Performance Table**:
-   ```
-   | Promotion          | Uses | Revenue | Discount Given | Net Revenue |
-   |--------------------|------|---------|----------------|-------------|
-   | Spring Refresh 20% | 45   | $12,500 | -$2,500        | $10,000     |
-   | New Client $25 Off | 12   | $1,800  | -$300          | $1,500      |
-   ```
+**Edge Function**: `process-rent-payments`
+- Runs daily at 00:05 UTC
+- Queries payments with `autopay_scheduled = true` and `due_date <= today`
+- Charges via Stripe
+- Updates payment status
+- Sends confirmation/failure notifications
 
-4. **Loyalty Analytics Tab**:
-   - Points Earned vs Redeemed (trend line)
-   - Active Members by Tier (pie chart)
-   - Redemption Rate (points used / points available)
-   - Top Loyalty Spenders
-   - Points Liability (outstanding unredeemed points value)
+### Phase 6: Onboarding for Booth Renters
+**Features**:
+- Configurable onboarding task list for renters
+- Different from employee onboarding (no training modules)
+- Focus on: contracts, tax forms, policies, keys/access
 
-**UI Mockup - Loyalty Analytics**:
+**Default Renter Onboarding Tasks**:
+1. ☐ Sign Booth Rental Agreement (PandaDoc)
+2. ☐ Submit W-9 Form
+3. ☐ Provide Proof of Liability Insurance
+4. ☐ Read & Acknowledge Salon Policies
+5. ☐ Complete Payment Setup
+6. ☐ Key/Access Card Assignment
+
+### Phase 7: Retail Commission Tracking
+**Features**:
+- Booth renters can sell salon retail products
+- Configurable commission rate per contract
+- Track sales attributed to renter
+- Generate commission statements
+
+**Integration Points**:
+- Extend `RetailSales` to capture `sold_by_booth_renter_id`
+- Calculate commission on product sales only (not services)
+- Exclude from standard commission tier calculations
+
+### Phase 8: Rent Revenue Analytics
+**Location**: Analytics Hub > New "Rent" tab (Super Admin only)
+
+**Metrics**:
+- Total Rent Revenue (MTD/YTD)
+- Collection Rate (% of due amount collected)
+- Overdue Amounts
+- Occupancy Rate (if tracking stations)
+- Revenue by Renter
+- Payment Trend (12-month chart)
+
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│ LOYALTY PROGRAM ANALYTICS                           [Last 30 Days ▼]  │
+│ RENT REVENUE ANALYTICS                          [Last 12 Months ▼]    │
 ├────────────────────────────────────────────────────────────────────────┤
 │                                                                        │
 │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌──────────────────┐ │
-│ │ 12,450      │ │ 3,200       │ │ 78%         │ │ $324             │ │
-│ │ Points      │ │ Points      │ │ Active      │ │ Points           │ │
-│ │ Earned      │ │ Redeemed    │ │ Members     │ │ Liability        │ │
-│ │ ↑ 15%       │ │ ↑ 8%        │ │ 156 of 200  │ │ (9,250 pts)      │ │
+│ │ $9,600      │ │ $115,200    │ │ 96%         │ │ $350             │ │
+│ │ Monthly     │ │ Annual      │ │ Collection  │ │ Overdue          │ │
+│ │ Rent Rev    │ │ Rent Rev    │ │ Rate        │ │ Balance          │ │
+│ │ ↑ 5%        │ │ ↑ 12%       │ │ ↓ 2%        │ │ 2 renters        │ │
 │ └─────────────┘ └─────────────┘ └─────────────┘ └──────────────────┘ │
 │                                                                        │
-│ TIER DISTRIBUTION              │ POINTS ACTIVITY (30 Days)            │
-│ ┌─────────────────────────┐   │ ┌───────────────────────────────────┐│
-│ │      Platinum 12%       │   │ │     ▲                             ││
-│ │    ●━━━━●               │   │ │   ╱ ╲    ╱╲                      ││
-│ │       Gold 28%          │   │ │  ╱   ╲  ╱  ╲  ━ Earned          ││
-│ │   ●━━━━━━━●             │   │ │ ╱     ╲╱    ╲ ━ Redeemed        ││
-│ │     Silver 35%          │   │ │╱             ╲                   ││
-│ │   ●━━━━━━━━━●           │   │ └───────────────────────────────────┘│
-│ │     Bronze 25%          │   │                                      │
-│ │   ●━━━━━━━●             │   │                                      │
-│ └─────────────────────────┘   │                                      │
+│ RENT COLLECTION TREND                                                  │
+│ ┌───────────────────────────────────────────────────────────────────┐│
+│ │     ▲                                                             ││
+│ │    ╱╲    ╱╲       ╱╲                                             ││
+│ │   ╱  ╲  ╱  ╲  ━━╱  ╲━━━━━━━━━━━━━━━                             ││
+│ │  ╱    ╲╱    ╲╱      ╲                                            ││
+│ │ ╱                    ╲                                           ││
+│ │Mar Apr May Jun Jul Aug Sep Oct Nov Dec Jan Feb                   ││
+│ └───────────────────────────────────────────────────────────────────┘│
 │                                                                        │
+│ BY RENTER                                                              │
+│ ┌────────────────────────────────────────────────────────────────────┐│
+│ │ Renter          │ Monthly Rate │ Collected │ Outstanding │ Status ││
+│ │ Sarah Martinez  │ $800         │ $9,600    │ $0          │ 🟢     ││
+│ │ James Chen      │ $800 (wk)    │ $3,400    │ $200        │ 🔴     ││
+│ │ Alex Rivera     │ $600 (wk)    │ $2,550    │ $150        │ 🟡     ││
+│ └────────────────────────────────────────────────────────────────────┘│
 └────────────────────────────────────────────────────────────────────────┘
-```
-
-### Phase 5: Edge Functions
-
-#### 1. `expire-promotional-services`
-Scheduled daily to auto-deactivate expired promotional services.
-
-```typescript
-// supabase/functions/expire-promotional-services/index.ts
-// - Query promotional_services where expires_at < now() AND auto_deactivate = true
-// - Set linked services.is_active = false
-// - Update promotional_services.deactivated_at
-// - Log to edge_function_logs
-```
-
-#### 2. `aggregate-loyalty-analytics`
-Scheduled daily to pre-compute loyalty metrics.
-
-```typescript
-// supabase/functions/aggregate-loyalty-analytics/index.ts
-// - Count points earned/redeemed from points_transactions
-// - Count active members, tier changes
-// - Insert into loyalty_analytics_daily
 ```
 
 ---
 
 ## Key Enhancements & Suggestions
 
-### 1. Smart Voucher Generation
-- Bulk generation with CSV export for email campaigns
-- Unique codes with prefix support (e.g., "SPRING-XXXXX")
-- QR codes for easy scanning at checkout
+### 1. Station/Chair Assignment
+- Track which physical station each renter occupies
+- Support multiple stations per renter
+- Station availability calendar view
 
-### 2. Promo Code Validation in Checkout
-- Integrate with `CheckoutSummarySheet` to accept promo codes
-- Real-time discount calculation
-- Client eligibility checking (new/existing, tier)
+### 2. Renter Portal (Self-Service)
+- Dedicated dashboard for booth renters
+- View/pay rent invoices
+- Update payment methods
+- View commission statements
+- Download tax documents (1099)
 
-### 3. Referral Program Integration
-- Auto-generate referral vouchers for loyal clients
-- Track referral chains (who referred whom)
-- Commission both referrer and new client
+### 3. Prorated Rent Calculations
+- Auto-calculate prorated amounts for mid-month starts
+- Handle rent increases with proper proration
 
-### 4. Flash Sale Notifications
-- Time-limited promos with countdown
-- Push notification integration for mobile
-- Homepage banner integration
+### 4. Late Fee Automation
+- Configurable grace period (e.g., 5 days)
+- Auto-apply late fees after grace period
+- Flat fee or percentage options
 
-### 5. Analytics Exclusions
-- Toggle to exclude promo sales from KPIs
-- "True revenue" vs "gross revenue" views
-- Staff commission calculations with promo adjustments
+### 5. Rent Increase Management
+- Schedule future rent increases
+- Notification system for upcoming changes
+- Audit trail of rate changes
 
-### 6. A/B Testing Promos
-- Create variants of same promotion
-- Track performance by variant
-- Statistical significance indicators
+### 6. Amenity Billing Add-ons
+- Track additional charges (extra products, supplies)
+- Add to monthly statement
+
+### 7. Commission Statements
+- Generate monthly/quarterly commission statements
+- PDF export for renter records
+- Track commission payouts
+
+### 8. 1099 Preparation
+- Aggregate annual payments for 1099-MISC
+- Export data for tax filing
+- Renter W-9 collection and storage
+
+### 9. Insurance Expiration Tracking
+- Store liability insurance details
+- Alert before expiration
+- Require updated proof of insurance
+
+### 10. Multi-Location Rent Management
+- Renters can rent at multiple locations
+- Separate contracts per location
+- Consolidated statements optional
+
+---
+
+## Permissions & Role Integration
+
+| Permission | Super Admin | Admin | Manager | Booth Renter |
+|------------|-------------|-------|---------|--------------|
+| `manage_booth_renters` | ✅ | ✅ | ✅ | ❌ |
+| `view_booth_renters` | ✅ | ✅ | ✅ | Self only |
+| `manage_rent_payments` | ✅ | ✅ | ✅ | ❌ |
+| `view_rent_payments` | ✅ | ✅ | ✅ | Self only |
+| `view_rent_analytics` | ✅ | ❌ | ❌ | ❌ |
+| `issue_renter_contracts` | ✅ | ✅ | ❌ | ❌ |
+| `configure_renter_autopay` | ✅ | ✅ | ❌ | Self only |
+
+---
+
+## Edge Functions
+
+### 1. `generate-rent-invoices`
+Scheduled: 1st of each month at 00:00 UTC
+- Creates rent_payments records for the upcoming period
+- Calculates due dates based on contract terms
+- Handles weekly vs monthly frequencies
+
+### 2. `process-rent-payments`
+Scheduled: Daily at 06:00 UTC
+- Processes autopay for due/overdue payments
+- Charges Stripe payment methods
+- Updates payment status
+- Sends confirmation emails
+- Logs failures for admin review
+
+### 3. `check-late-payments`
+Scheduled: Daily at 00:05 UTC
+- Marks overdue payments
+- Applies late fees after grace period
+- Sends reminder notifications
 
 ---
 
@@ -486,48 +593,46 @@ Scheduled daily to pre-compute loyalty metrics.
 
 | Action | File | Description |
 |--------|------|-------------|
-| Create | Migration | All new tables, RLS, permissions, cron job |
-| Create | `src/hooks/usePromotions.ts` | Promotion CRUD operations |
-| Create | `src/hooks/useVouchers.ts` | Voucher management |
-| Create | `src/hooks/usePromotionalServices.ts` | Auto-expiring services |
-| Create | `src/hooks/usePromotionRedemptions.ts` | Redemption tracking |
-| Create | `src/hooks/useLoyaltyAnalytics.ts` | Loyalty metrics aggregation |
-| Create | `src/components/dashboard/promotions/PromotionsConfigurator.tsx` | Main tabbed configurator |
-| Create | `src/components/dashboard/promotions/PromotionForm.tsx` | Create/edit dialog |
-| Create | `src/components/dashboard/promotions/PromotionsList.tsx` | Promotions table |
-| Create | `src/components/dashboard/promotions/VoucherGenerator.tsx` | Bulk voucher creation |
-| Create | `src/components/dashboard/promotions/VouchersList.tsx` | Voucher management |
-| Create | `src/components/dashboard/promotions/PromotionalServiceForm.tsx` | Create promo service |
-| Create | `src/components/dashboard/promotions/PromotionalServicesManager.tsx` | List with expiration |
-| Create | `src/components/dashboard/promotions/PromoAnalyticsSummary.tsx` | Performance dashboard |
-| Create | `src/components/dashboard/analytics/SalesTypeFilter.tsx` | Sale type toggle filter |
-| Create | `src/components/dashboard/analytics/PromoSalesBreakdown.tsx` | Revenue breakdown chart |
-| Create | `src/components/dashboard/analytics/LoyaltyMetricsCard.tsx` | Points summary card |
-| Create | `src/components/dashboard/loyalty/LoyaltyAnalyticsPanel.tsx` | Full loyalty analytics |
-| Create | `supabase/functions/expire-promotional-services/index.ts` | Auto-expire edge function |
-| Create | `supabase/functions/aggregate-loyalty-analytics/index.ts` | Daily aggregation |
-| Modify | `src/components/dashboard/settings/LoyaltySettingsContent.tsx` | Add Promotions & Analytics tabs |
-| Modify | `src/hooks/useSalesData.ts` | Add sale_classification filter support |
-| Modify | `src/pages/dashboard/admin/SalesDashboard.tsx` | Add sale type filter UI |
-| Modify | `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` | Promo code input |
+| **Create** | Migration | Add booth_renter role, all new tables, RLS, permissions |
+| **Create** | `src/hooks/useBoothRenters.ts` | Renter profile CRUD |
+| **Create** | `src/hooks/useRentalContracts.ts` | Contract management |
+| **Create** | `src/hooks/useRentPayments.ts` | Payment tracking |
+| **Create** | `src/hooks/useRenterPaymentSettings.ts` | Autopay configuration |
+| **Create** | `src/hooks/useRenterOnboarding.ts` | Onboarding tasks |
+| **Create** | `src/hooks/useRenterRetailCommissions.ts` | Commission tracking |
+| **Create** | `src/hooks/useRentRevenueAnalytics.ts` | Analytics queries |
+| **Create** | `src/pages/dashboard/admin/BoothRenters.tsx` | Main management page |
+| **Create** | `src/pages/dashboard/admin/RentPayments.tsx` | Payment tracker page |
+| **Create** | `src/components/dashboard/booth-renters/*.tsx` | All UI components |
+| **Create** | `src/components/dashboard/analytics/RentRevenueAnalytics.tsx` | Analytics panel |
+| **Create** | `supabase/functions/generate-rent-invoices/index.ts` | Invoice generation |
+| **Create** | `supabase/functions/process-rent-payments/index.ts` | Autopay processing |
+| **Create** | `supabase/functions/check-late-payments/index.ts` | Late fee automation |
+| **Modify** | `src/hooks/useUserRoles.ts` | Add booth_renter to ALL_ROLES |
+| **Modify** | `src/hooks/useRoleUtils.ts` | Add booth_renter color/icon |
+| **Modify** | `src/hooks/useRetailSales.ts` | Add booth renter commission tracking |
+| **Modify** | `src/pages/dashboard/admin/AnalyticsHub.tsx` | Add Rent tab |
+| **Modify** | Sidebar configuration | Add booth renter navigation |
 
 ---
 
 ## Technical Considerations
 
-- **RLS Policies**: Organization-scoped access for all promo tables
-- **Index Strategy**: Index on `expires_at`, `promo_code`, `organization_id`
-- **Cron Scheduling**: Daily at 00:05 UTC for expiration checks
-- **Voucher Codes**: 8-character alphanumeric, collision-resistant generation
-- **Analytics Caching**: Pre-aggregate daily to avoid expensive queries
-- **Points Liability**: Calculate unredeemed points × redemption value for financial reporting
+- **RLS Policies**: Organization-scoped access for all tables, self-access for booth renters
+- **Stripe Connect**: Use platform's Stripe account for collecting rent (no separate accounts needed)
+- **PandaDoc Templates**: Create reusable templates for standard rental agreements
+- **Audit Trail**: Log all contract changes and payment adjustments
+- **Timezone Handling**: Use organization timezone for due date calculations
+- **Generated Columns**: Use Postgres computed columns for balance calculations
 
 ---
 
 ## Edge Cases
 
-- **Stackable Promos**: Define rules for combining multiple discounts
-- **Partial Refunds**: How promo discounts apply to refunded items
-- **Service Deletion**: Soft-delete only; preserve for historical analytics
-- **Expired Vouchers**: Keep records, mark as expired, prevent redemption
-- **Tier Changes**: Recalculate applicable promos when client tier changes
+- **Mid-period Contract Start**: Prorate first payment
+- **Early Termination**: Calculate final settlement, return deposits
+- **Rent Increases**: Schedule in advance, notify renter
+- **Disputed Payments**: Track dispute status, exclude from collection metrics
+- **Multiple Contracts**: Handle transition between contract terms
+- **Partial Payments**: Allow installment tracking
+- **Commission on Returns**: Deduct from future commissions
