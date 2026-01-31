@@ -2552,6 +2552,7 @@ export type Database = {
           id: string
           is_dry_run: boolean | null
           location_id: string | null
+          organization_id: string | null
           processed_rows: number | null
           rolled_back_at: string | null
           rolled_back_by: string | null
@@ -2578,6 +2579,7 @@ export type Database = {
           id?: string
           is_dry_run?: boolean | null
           location_id?: string | null
+          organization_id?: string | null
           processed_rows?: number | null
           rolled_back_at?: string | null
           rolled_back_by?: string | null
@@ -2604,6 +2606,7 @@ export type Database = {
           id?: string
           is_dry_run?: boolean | null
           location_id?: string | null
+          organization_id?: string | null
           processed_rows?: number | null
           rolled_back_at?: string | null
           rolled_back_by?: string | null
@@ -2624,6 +2627,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -4939,6 +4949,48 @@ export type Database = {
           id?: string
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_security_settings: {
+        Row: {
+          id: string
+          max_concurrent_sessions: number
+          min_password_length: number
+          password_expiry_days: number
+          require_2fa_org_admins: boolean
+          require_2fa_platform_admins: boolean
+          require_mixed_case: boolean
+          require_special_chars: boolean
+          session_timeout_minutes: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          max_concurrent_sessions?: number
+          min_password_length?: number
+          password_expiry_days?: number
+          require_2fa_org_admins?: boolean
+          require_2fa_platform_admins?: boolean
+          require_mixed_case?: boolean
+          require_special_chars?: boolean
+          session_timeout_minutes?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          max_concurrent_sessions?: number
+          min_password_length?: number
+          password_expiry_days?: number
+          require_2fa_org_admins?: boolean
+          require_2fa_platform_admins?: boolean
+          require_mixed_case?: boolean
+          require_special_chars?: boolean
+          session_timeout_minutes?: number
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }

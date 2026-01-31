@@ -45,9 +45,10 @@ export function useImportJobs(options: UseImportJobsOptions = {}) {
         .order('created_at', { ascending: false })
         .limit(limit);
 
-      // Note: import_jobs doesn't have organization_id column directly
-      // Filtering would need to be done via location_id -> locations -> organization_id
-      // For now, return all jobs visible to the user
+      // Filter by organization_id if provided
+      if (organizationId) {
+        query = query.eq('organization_id', organizationId);
+      }
 
       const { data, error } = await query;
 
