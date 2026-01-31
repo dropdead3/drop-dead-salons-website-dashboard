@@ -11,6 +11,7 @@ import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 
 const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   today: 'Today',
+  yesterday: 'Yesterday',
   '7d': 'Last 7 days',
   '30d': 'Last 30 days',
   thisWeek: 'This Week',

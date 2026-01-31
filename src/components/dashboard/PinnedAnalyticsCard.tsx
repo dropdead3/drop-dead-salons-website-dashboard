@@ -17,12 +17,13 @@ import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
-export type DateRangeType = 'today' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth';
+export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth';
 
 // Map dashboard date range to Sales Overview date range
 function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
   const mapping: Record<DateRangeType, SalesDateRange> = {
     'today': 'today',
+    'yesterday': 'yesterday',
     '7d': '7d',
     '30d': '30d',
     'thisWeek': 'thisWeek',
@@ -41,6 +42,10 @@ export function getDateRange(dateRange: DateRangeType): { dateFrom: string; date
   switch (dateRange) {
     case 'today':
       return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
+    case 'yesterday': {
+      const yesterday = subDays(now, 1);
+      return { dateFrom: format(yesterday, 'yyyy-MM-dd'), dateTo: format(yesterday, 'yyyy-MM-dd') };
+    }
     case '7d':
       return { dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
     case '30d':
