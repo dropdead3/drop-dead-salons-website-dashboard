@@ -1,10 +1,12 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Shield, Database, Plug, Palette, User } from 'lucide-react';
+import { Settings, Database, Plug, Palette, User, Shield } from 'lucide-react';
 import { PlatformTeamManager } from '@/components/platform/PlatformTeamManager';
 import { PlatformAppearanceTab } from '@/components/platform/settings/PlatformAppearanceTab';
 import { PlatformIntegrationsTab } from '@/components/platform/settings/PlatformIntegrationsTab';
 import { PlatformAccountTab } from '@/components/platform/settings/PlatformAccountTab';
 import { PlatformSecurityTab } from '@/components/platform/settings/PlatformSecurityTab';
+import { PlatformImportTemplatesTab } from '@/components/platform/settings/PlatformImportTemplatesTab';
+import { PlatformDefaultsTab } from '@/components/platform/settings/PlatformDefaultsTab';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { cn } from '@/lib/utils';
 import {
@@ -87,42 +89,13 @@ export default function PlatformSettings() {
         </TabsContent>
 
         <TabsContent value="templates">
-          <PlatformCard variant="glass">
-            <PlatformCardHeader>
-              <PlatformCardTitle className="flex items-center gap-2">
-                <Database className={cn('h-5 w-5', isDark ? 'text-violet-400' : 'text-violet-600')} />
-                Import Templates
-              </PlatformCardTitle>
-              <PlatformCardDescription>
-                Manage default import mappings for different software
-              </PlatformCardDescription>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <p className={cn('text-sm', isDark ? 'text-slate-500' : 'text-slate-400')}>
-                Import templates coming soon...
-              </p>
-            </PlatformCardContent>
-          </PlatformCard>
+          <PlatformImportTemplatesTab />
         </TabsContent>
 
         <TabsContent value="defaults">
-          <PlatformCard variant="glass">
-            <PlatformCardHeader>
-              <PlatformCardTitle className="flex items-center gap-2">
-                <Settings className={cn('h-5 w-5', isDark ? 'text-violet-400' : 'text-violet-600')} />
-                Default Settings
-              </PlatformCardTitle>
-              <PlatformCardDescription>
-                Configure defaults for new organizations
-              </PlatformCardDescription>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <p className={cn('text-sm', isDark ? 'text-slate-500' : 'text-slate-400')}>
-                Default settings coming soon...
-              </p>
-            </PlatformCardContent>
-          </PlatformCard>
+          <PlatformDefaultsTab />
         </TabsContent>
+
 
         <TabsContent value="integrations">
           <PlatformIntegrationsTab />

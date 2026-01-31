@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { 
-  Shield, 
   Lock, 
   Clock, 
   Key, 
@@ -34,13 +33,15 @@ import {
   useUpdatePlatformSecuritySettings,
   type PlatformSecuritySettings as SecuritySettings,
 } from '@/hooks/usePlatformSecuritySettings';
-import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function PlatformSecurityTab() {
   const { data: settings, isLoading } = usePlatformSecuritySettings();
   const updateSettings = useUpdatePlatformSecuritySettings();
   const [localSettings, setLocalSettings] = useState<Partial<SecuritySettings>>({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [isForceLoggingOut, setIsForceLoggingOut] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -57,6 +58,32 @@ export function PlatformSecurityTab() {
     updateSettings.mutate(localSettings, {
       onSuccess: () => setHasChanges(false),
     });
+  };
+
+  const handleForceLogout = async () => {
+    if (!confirm('Are you sure you want to log out all platform users? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsForceLoggingOut(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('force-logout-platform-users');
+      
+      if (error) {
+        throw error;
+      }
+
+      if (data?.success) {
+        toast.success(`Successfully logged out ${data.affected_users} platform users`);
+      } else {
+        throw new Error(data?.error || 'Failed to force logout users');
+      }
+    } catch (err) {
+      console.error('Force logout error:', err);
+      toast.error('Failed to force logout users');
+    } finally {
+      setIsForceLoggingOut(false);
+    }
   };
 
   if (isLoading) {
@@ -192,14 +219,17 @@ export function PlatformSecurityTab() {
             <PlatformButton 
               variant="destructive" 
               size="sm"
-              onClick={() => {
-                if (confirm('Are you sure you want to log out all platform users? This action cannot be undone.')) {
-                  // TODO: Implement force logout
-                  alert('Force logout functionality would be implemented here');
-                }
-              }}
+              onClick={handleForceLogout}
+              disabled={isForceLoggingOut}
             >
-              Force Logout All
+              {isForceLoggingOut ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Logging out...
+                </>
+              ) : (
+                'Force Logout All'
+              )}
             </PlatformButton>
           </div>
         </PlatformCardContent>
