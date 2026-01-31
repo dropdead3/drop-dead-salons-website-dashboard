@@ -89,3 +89,36 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.dunning-automation]
+verify_jwt = false
+
+[functions.trial-expiration]
+verify_jwt = false
+
+[functions.usage-metering]
+verify_jwt = false
+
+[functions.invoice-generator]
+verify_jwt = false
+
+[functions.account-provisioner]
+verify_jwt = false
+
+[functions.onboarding-drip]
+verify_jwt = false
+
+[functions.churn-detection]
+verify_jwt = false
+
+[functions.account-offboarding]
+verify_jwt = false
+
+[functions.weekly-digest]
+verify_jwt = false
+
+[functions.data-export]
+verify_jwt = false
+
+[functions.backup-archival]
+verify_jwt = false

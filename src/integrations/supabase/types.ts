@@ -379,6 +379,168 @@ export type Database = {
           },
         ]
       }
+      archived_appointments: {
+        Row: {
+          appointment_date: string | null
+          archived_at: string | null
+          client_email: string | null
+          client_id: string | null
+          client_name: string | null
+          client_notes: string | null
+          client_phone: string | null
+          created_at: string | null
+          duration_minutes: number | null
+          end_time: string | null
+          external_id: string | null
+          id: string
+          import_job_id: string | null
+          import_source: string | null
+          imported_at: string | null
+          location_id: string | null
+          notes: string | null
+          organization_id: string | null
+          original_price: number | null
+          payment_method: string | null
+          rebooked_at_checkout: boolean | null
+          service_category: string | null
+          service_id: string | null
+          service_name: string | null
+          staff_name: string | null
+          staff_user_id: string | null
+          start_time: string | null
+          status: string | null
+          tip_amount: number | null
+          total_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_date?: string | null
+          archived_at?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          client_notes?: string | null
+          client_phone?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          external_id?: string | null
+          id: string
+          import_job_id?: string | null
+          import_source?: string | null
+          imported_at?: string | null
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          original_price?: number | null
+          payment_method?: string | null
+          rebooked_at_checkout?: boolean | null
+          service_category?: string | null
+          service_id?: string | null
+          service_name?: string | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          tip_amount?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_date?: string | null
+          archived_at?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          client_notes?: string | null
+          client_phone?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          external_id?: string | null
+          id?: string
+          import_job_id?: string | null
+          import_source?: string | null
+          imported_at?: string | null
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          original_price?: number | null
+          payment_method?: string | null
+          rebooked_at_checkout?: boolean | null
+          service_category?: string | null
+          service_id?: string | null
+          service_name?: string | null
+          staff_name?: string | null
+          staff_user_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          tip_amount?: number | null
+          total_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      archived_log_summaries: {
+        Row: {
+          archived_at: string | null
+          id: string
+          period_end: string
+          period_start: string
+          summary: Json
+        }
+        Insert: {
+          archived_at?: string | null
+          id?: string
+          period_end: string
+          period_start: string
+          summary: Json
+        }
+        Update: {
+          archived_at?: string | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          summary?: Json
+        }
+        Relationships: []
+      }
+      archived_notifications: {
+        Row: {
+          archived_at: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          metadata: Json | null
+          resolved_at: string | null
+          severity: string | null
+          title: string | null
+          type: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string | null
+          id: string
+          message?: string | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
       assistant_assignments: {
         Row: {
           assistant_id: string
@@ -972,6 +1134,47 @@ export type Database = {
           },
         ]
       }
+      churn_risk_scores: {
+        Row: {
+          analyzed_at: string | null
+          created_at: string | null
+          factors: Json | null
+          id: string
+          organization_id: string
+          recommendations: string[] | null
+          risk_level: string
+          risk_score: number
+        }
+        Insert: {
+          analyzed_at?: string | null
+          created_at?: string | null
+          factors?: Json | null
+          id?: string
+          organization_id: string
+          recommendations?: string[] | null
+          risk_level: string
+          risk_score: number
+        }
+        Update: {
+          analyzed_at?: string | null
+          created_at?: string | null
+          factors?: Json | null
+          id?: string
+          organization_id?: string
+          recommendations?: string[] | null
+          risk_level?: string
+          risk_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "churn_risk_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_form_signatures: {
         Row: {
           appointment_id: string | null
@@ -1498,6 +1701,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      data_exports: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          export_type: string
+          format: string | null
+          id: string
+          organization_id: string
+          record_count: number | null
+          requested_by: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          export_type: string
+          format?: string | null
+          id?: string
+          organization_id: string
+          record_count?: number | null
+          requested_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          export_type?: string
+          format?: string | null
+          id?: string
+          organization_id?: string
+          record_count?: number | null
+          requested_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_exports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       day_rate_agreements: {
         Row: {
@@ -3792,11 +4039,14 @@ export type Database = {
       }
       organizations: {
         Row: {
+          access_ends_at: string | null
           account_number: number | null
           activated_at: string | null
           billing_email: string | null
           billing_status: Database["public"]["Enums"]["billing_status"] | null
           business_type: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
@@ -3809,6 +4059,7 @@ export type Database = {
           onboarding_stage: string | null
           pause_ends_at: string | null
           paused_at: string | null
+          plan_type: string | null
           primary_contact_email: string | null
           primary_contact_phone: string | null
           settings: Json | null
@@ -3825,11 +4076,14 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          access_ends_at?: string | null
           account_number?: number | null
           activated_at?: string | null
           billing_email?: string | null
           billing_status?: Database["public"]["Enums"]["billing_status"] | null
           business_type?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
@@ -3842,6 +4096,7 @@ export type Database = {
           onboarding_stage?: string | null
           pause_ends_at?: string | null
           paused_at?: string | null
+          plan_type?: string | null
           primary_contact_email?: string | null
           primary_contact_phone?: string | null
           settings?: Json | null
@@ -3858,11 +4113,14 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          access_ends_at?: string | null
           account_number?: number | null
           activated_at?: string | null
           billing_email?: string | null
           billing_status?: Database["public"]["Enums"]["billing_status"] | null
           business_type?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
@@ -3875,6 +4133,7 @@ export type Database = {
           onboarding_stage?: string | null
           pause_ends_at?: string | null
           paused_at?: string | null
+          plan_type?: string | null
           primary_contact_email?: string | null
           primary_contact_phone?: string | null
           settings?: Json | null
@@ -6831,10 +7090,13 @@ export type Database = {
           id: string
           invoice_pdf: string | null
           invoice_url: string | null
+          line_items: Json | null
+          metadata: Json | null
           organization_id: string
           paid_at: string | null
           period_end: string | null
           period_start: string | null
+          retry_count: number | null
           status: string
           stripe_invoice_id: string | null
           stripe_payment_intent_id: string | null
@@ -6848,10 +7110,13 @@ export type Database = {
           id?: string
           invoice_pdf?: string | null
           invoice_url?: string | null
+          line_items?: Json | null
+          metadata?: Json | null
           organization_id: string
           paid_at?: string | null
           period_end?: string | null
           period_start?: string | null
+          retry_count?: number | null
           status?: string
           stripe_invoice_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -6865,10 +7130,13 @@ export type Database = {
           id?: string
           invoice_pdf?: string | null
           invoice_url?: string | null
+          line_items?: Json | null
+          metadata?: Json | null
           organization_id?: string
           paid_at?: string | null
           period_end?: string | null
           period_start?: string | null
+          retry_count?: number | null
           status?: string
           stripe_invoice_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -7240,6 +7508,59 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_metrics: {
+        Row: {
+          active_users: number | null
+          api_calls: number | null
+          created_at: string | null
+          id: string
+          organization_id: string
+          period_end: string
+          period_start: string
+          storage_used_mb: number | null
+          total_appointments: number | null
+          total_clients: number | null
+          total_locations: number | null
+          total_users: number | null
+        }
+        Insert: {
+          active_users?: number | null
+          api_calls?: number | null
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          period_end: string
+          period_start: string
+          storage_used_mb?: number | null
+          total_appointments?: number | null
+          total_clients?: number | null
+          total_locations?: number | null
+          total_users?: number | null
+        }
+        Update: {
+          active_users?: number | null
+          api_calls?: number | null
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          storage_used_mb?: number | null
+          total_appointments?: number | null
+          total_clients?: number | null
+          total_locations?: number | null
+          total_users?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_metrics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -7509,6 +7830,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      weekly_digests: {
+        Row: {
+          created_at: string | null
+          id: string
+          kpis: Json
+          recipients: string[] | null
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          kpis: Json
+          recipients?: string[] | null
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          kpis?: Json
+          recipients?: string[] | null
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: []
       }
       weekly_wins_reports: {
         Row: {
