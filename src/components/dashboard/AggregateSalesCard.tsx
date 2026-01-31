@@ -271,7 +271,7 @@ export function AggregateSalesCard({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary/10 flex items-center justify-center rounded-lg">
+          <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
             <DollarSign className="w-5 h-5 text-primary" />
           </div>
           <div className="flex items-center gap-2">

@@ -67,7 +67,7 @@ export function AnalyticsFilterBar({
       {/* Location Select - conditionally rendered based on access */}
       {showLocationSelector && (
         <Select value={locationId} onValueChange={onLocationChange}>
-          <SelectTrigger className="h-9 w-auto min-w-[180px] text-sm">
+          <SelectTrigger className="h-9 w-auto min-w-[180px] text-sm border-border">
             <MapPin className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
             <SelectValue placeholder="Select Location" />
           </SelectTrigger>
@@ -92,7 +92,7 @@ export function AnalyticsFilterBar({
       
       {/* Date Range Select */}
       <Select value={dateRange} onValueChange={(v) => onDateRangeChange(v as DateRangeType)}>
-        <SelectTrigger className="h-9 w-auto min-w-[160px] text-sm">
+        <SelectTrigger className="h-9 w-auto min-w-[160px] text-sm border-border">
           <Calendar className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
           <SelectValue />
         </SelectTrigger>
