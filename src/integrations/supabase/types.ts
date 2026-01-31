@@ -925,6 +925,13 @@ export type Database = {
           ein_number: string | null
           end_date: string | null
           id: string
+          insurance_document_url: string | null
+          insurance_expiry_date: string | null
+          insurance_policy_number: string | null
+          insurance_provider: string | null
+          insurance_verified: boolean | null
+          insurance_verified_at: string | null
+          insurance_verified_by: string | null
           license_state: string | null
           onboarding_complete: boolean | null
           organization_id: string
@@ -943,6 +950,13 @@ export type Database = {
           ein_number?: string | null
           end_date?: string | null
           id?: string
+          insurance_document_url?: string | null
+          insurance_expiry_date?: string | null
+          insurance_policy_number?: string | null
+          insurance_provider?: string | null
+          insurance_verified?: boolean | null
+          insurance_verified_at?: string | null
+          insurance_verified_by?: string | null
           license_state?: string | null
           onboarding_complete?: boolean | null
           organization_id: string
@@ -961,6 +975,13 @@ export type Database = {
           ein_number?: string | null
           end_date?: string | null
           id?: string
+          insurance_document_url?: string | null
+          insurance_expiry_date?: string | null
+          insurance_policy_number?: string | null
+          insurance_provider?: string | null
+          insurance_verified?: boolean | null
+          insurance_verified_at?: string | null
+          insurance_verified_by?: string | null
           license_state?: string | null
           onboarding_complete?: boolean | null
           organization_id?: string
@@ -6694,9 +6715,11 @@ export type Database = {
           original_amount: number | null
           promo_code_used: string | null
           promotion_id: string | null
+          revenue_attributed: number | null
           staff_user_id: string | null
           transaction_date: string | null
           transaction_id: string | null
+          variant_id: string | null
           voucher_id: string | null
         }
         Insert: {
@@ -6711,9 +6734,11 @@ export type Database = {
           original_amount?: number | null
           promo_code_used?: string | null
           promotion_id?: string | null
+          revenue_attributed?: number | null
           staff_user_id?: string | null
           transaction_date?: string | null
           transaction_id?: string | null
+          variant_id?: string | null
           voucher_id?: string | null
         }
         Update: {
@@ -6728,9 +6753,11 @@ export type Database = {
           original_amount?: number | null
           promo_code_used?: string | null
           promotion_id?: string | null
+          revenue_attributed?: number | null
           staff_user_id?: string | null
           transaction_date?: string | null
           transaction_id?: string | null
+          variant_id?: string | null
           voucher_id?: string | null
         }
         Relationships: [
@@ -6760,6 +6787,62 @@ export type Database = {
             columns: ["voucher_id"]
             isOneToOne: false
             referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_variants: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          discount_type: string | null
+          discount_value: number | null
+          id: string
+          is_active: boolean | null
+          is_control: boolean | null
+          promotion_id: string
+          redemptions: number | null
+          revenue_generated: number | null
+          variant_code: string | null
+          variant_name: string
+          views: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_control?: boolean | null
+          promotion_id: string
+          redemptions?: number | null
+          revenue_generated?: number | null
+          variant_code?: string | null
+          variant_name: string
+          views?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_control?: boolean | null
+          promotion_id?: string
+          redemptions?: number | null
+          revenue_generated?: number | null
+          variant_code?: string | null
+          variant_name?: string
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_variants_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
             referencedColumns: ["id"]
           },
         ]
@@ -6840,6 +6923,8 @@ export type Database = {
           applicable_category: string[] | null
           applicable_service_ids: string[] | null
           applies_to: string | null
+          banner_color: string | null
+          banner_text: string | null
           created_at: string | null
           created_by: string | null
           current_usage_count: number | null
@@ -6848,13 +6933,16 @@ export type Database = {
           discount_value: number | null
           excluded_service_ids: string[] | null
           expires_at: string | null
+          flash_sale_countdown_start: string | null
           id: string
           is_active: boolean | null
+          is_flash_sale: boolean | null
           minimum_purchase: number | null
           name: string
           organization_id: string
           promo_code: string | null
           promotion_type: string
+          show_homepage_banner: boolean | null
           starts_at: string
           target_audience: string | null
           target_client_ids: string[] | null
@@ -6867,6 +6955,8 @@ export type Database = {
           applicable_category?: string[] | null
           applicable_service_ids?: string[] | null
           applies_to?: string | null
+          banner_color?: string | null
+          banner_text?: string | null
           created_at?: string | null
           created_by?: string | null
           current_usage_count?: number | null
@@ -6875,13 +6965,16 @@ export type Database = {
           discount_value?: number | null
           excluded_service_ids?: string[] | null
           expires_at?: string | null
+          flash_sale_countdown_start?: string | null
           id?: string
           is_active?: boolean | null
+          is_flash_sale?: boolean | null
           minimum_purchase?: number | null
           name: string
           organization_id: string
           promo_code?: string | null
           promotion_type: string
+          show_homepage_banner?: boolean | null
           starts_at?: string
           target_audience?: string | null
           target_client_ids?: string[] | null
@@ -6894,6 +6987,8 @@ export type Database = {
           applicable_category?: string[] | null
           applicable_service_ids?: string[] | null
           applies_to?: string | null
+          banner_color?: string | null
+          banner_text?: string | null
           created_at?: string | null
           created_by?: string | null
           current_usage_count?: number | null
@@ -6902,13 +6997,16 @@ export type Database = {
           discount_value?: number | null
           excluded_service_ids?: string[] | null
           expires_at?: string | null
+          flash_sale_countdown_start?: string | null
           id?: string
           is_active?: boolean | null
+          is_flash_sale?: boolean | null
           minimum_purchase?: number | null
           name?: string
           organization_id?: string
           promo_code?: string | null
           promotion_type?: string
+          show_homepage_banner?: boolean | null
           starts_at?: string
           target_audience?: string | null
           target_client_ids?: string[] | null
@@ -6990,6 +7088,133 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_conversions: {
+        Row: {
+          converted_at: string | null
+          first_appointment_date: string | null
+          first_appointment_id: string | null
+          first_appointment_value: number | null
+          id: string
+          referee_reward_id: string | null
+          referee_reward_issued_at: string | null
+          referee_rewarded: boolean | null
+          referral_link_id: string
+          referred_client_id: string
+          referrer_reward_id: string | null
+          referrer_reward_issued_at: string | null
+          referrer_rewarded: boolean | null
+        }
+        Insert: {
+          converted_at?: string | null
+          first_appointment_date?: string | null
+          first_appointment_id?: string | null
+          first_appointment_value?: number | null
+          id?: string
+          referee_reward_id?: string | null
+          referee_reward_issued_at?: string | null
+          referee_rewarded?: boolean | null
+          referral_link_id: string
+          referred_client_id: string
+          referrer_reward_id?: string | null
+          referrer_reward_issued_at?: string | null
+          referrer_rewarded?: boolean | null
+        }
+        Update: {
+          converted_at?: string | null
+          first_appointment_date?: string | null
+          first_appointment_id?: string | null
+          first_appointment_value?: number | null
+          id?: string
+          referee_reward_id?: string | null
+          referee_reward_issued_at?: string | null
+          referee_rewarded?: boolean | null
+          referral_link_id?: string
+          referred_client_id?: string
+          referrer_reward_id?: string | null
+          referrer_reward_issued_at?: string | null
+          referrer_rewarded?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_conversions_referral_link_id_fkey"
+            columns: ["referral_link_id"]
+            isOneToOne: false
+            referencedRelation: "referral_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_links: {
+        Row: {
+          campaign_name: string | null
+          created_at: string | null
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          organization_id: string
+          referee_reward_description: string | null
+          referee_reward_value: number | null
+          referral_code: string
+          referrer_client_id: string | null
+          referrer_reward_description: string | null
+          referrer_reward_value: number | null
+          referrer_user_id: string | null
+          reward_type: string | null
+          terms_conditions: string | null
+          uses: number | null
+        }
+        Insert: {
+          campaign_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          organization_id: string
+          referee_reward_description?: string | null
+          referee_reward_value?: number | null
+          referral_code: string
+          referrer_client_id?: string | null
+          referrer_reward_description?: string | null
+          referrer_reward_value?: number | null
+          referrer_user_id?: string | null
+          reward_type?: string | null
+          terms_conditions?: string | null
+          uses?: number | null
+        }
+        Update: {
+          campaign_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          organization_id?: string
+          referee_reward_description?: string | null
+          referee_reward_value?: number | null
+          referral_code?: string
+          referrer_client_id?: string | null
+          referrer_reward_description?: string | null
+          referrer_reward_value?: number | null
+          referrer_user_id?: string | null
+          reward_type?: string | null
+          terms_conditions?: string | null
+          uses?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       refund_records: {
         Row: {
           client_id: string | null
@@ -7054,6 +7279,59 @@ export type Database = {
             foreignKeyName: "refund_records_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rent_late_fee_config: {
+        Row: {
+          auto_apply: boolean | null
+          created_at: string | null
+          daily_fee_amount: number | null
+          grace_period_days: number | null
+          id: string
+          late_fee_amount: number | null
+          late_fee_percentage: number | null
+          late_fee_type: string | null
+          max_late_fee: number | null
+          organization_id: string
+          send_reminder_days: number[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_apply?: boolean | null
+          created_at?: string | null
+          daily_fee_amount?: number | null
+          grace_period_days?: number | null
+          id?: string
+          late_fee_amount?: number | null
+          late_fee_percentage?: number | null
+          late_fee_type?: string | null
+          max_late_fee?: number | null
+          organization_id: string
+          send_reminder_days?: number[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_apply?: boolean | null
+          created_at?: string | null
+          daily_fee_amount?: number | null
+          grace_period_days?: number | null
+          id?: string
+          late_fee_amount?: number | null
+          late_fee_percentage?: number | null
+          late_fee_type?: string | null
+          max_late_fee?: number | null
+          organization_id?: string
+          send_reminder_days?: number[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_late_fee_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -7162,6 +7440,149 @@ export type Database = {
           },
         ]
       }
+      rental_stations: {
+        Row: {
+          amenities: string[] | null
+          created_at: string | null
+          id: string
+          is_available: boolean | null
+          location_id: string
+          monthly_rate: number | null
+          notes: string | null
+          organization_id: string
+          station_name: string
+          station_number: number | null
+          station_type: string | null
+          updated_at: string | null
+          weekly_rate: number | null
+        }
+        Insert: {
+          amenities?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_available?: boolean | null
+          location_id: string
+          monthly_rate?: number | null
+          notes?: string | null
+          organization_id: string
+          station_name: string
+          station_number?: number | null
+          station_type?: string | null
+          updated_at?: string | null
+          weekly_rate?: number | null
+        }
+        Update: {
+          amenities?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_available?: boolean | null
+          location_id?: string
+          monthly_rate?: number | null
+          notes?: string | null
+          organization_id?: string
+          station_name?: string
+          station_number?: number | null
+          station_type?: string | null
+          updated_at?: string | null
+          weekly_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_stations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renter_commission_statements: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          booth_renter_id: string
+          commission_rate: number
+          created_at: string | null
+          deduction_notes: string | null
+          deductions: number | null
+          id: string
+          line_items: Json | null
+          net_payout: number
+          organization_id: string
+          paid_at: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          period_end: string
+          period_start: string
+          statement_pdf_url: string | null
+          status: string | null
+          total_commission: number
+          total_retail_sales: number
+          total_service_revenue: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          booth_renter_id: string
+          commission_rate: number
+          created_at?: string | null
+          deduction_notes?: string | null
+          deductions?: number | null
+          id?: string
+          line_items?: Json | null
+          net_payout?: number
+          organization_id: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end: string
+          period_start: string
+          statement_pdf_url?: string | null
+          status?: string | null
+          total_commission?: number
+          total_retail_sales?: number
+          total_service_revenue?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          booth_renter_id?: string
+          commission_rate?: number
+          created_at?: string | null
+          deduction_notes?: string | null
+          deductions?: number | null
+          id?: string
+          line_items?: Json | null
+          net_payout?: number
+          organization_id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end?: string
+          period_start?: string
+          statement_pdf_url?: string | null
+          status?: string | null
+          total_commission?: number
+          total_retail_sales?: number
+          total_service_revenue?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renter_commission_statements_booth_renter_id_fkey"
+            columns: ["booth_renter_id"]
+            isOneToOne: false
+            referencedRelation: "booth_renter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renter_commission_statements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       renter_onboarding_completions: {
         Row: {
           booth_renter_id: string
@@ -7201,11 +7622,66 @@ export type Database = {
           },
         ]
       }
+      renter_onboarding_progress: {
+        Row: {
+          booth_renter_id: string
+          completed_at: string | null
+          created_at: string | null
+          document_url: string | null
+          id: string
+          is_complete: boolean | null
+          notes: string | null
+          task_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          booth_renter_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          document_url?: string | null
+          id?: string
+          is_complete?: boolean | null
+          notes?: string | null
+          task_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          booth_renter_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          document_url?: string | null
+          id?: string
+          is_complete?: boolean | null
+          notes?: string | null
+          task_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renter_onboarding_progress_booth_renter_id_fkey"
+            columns: ["booth_renter_id"]
+            isOneToOne: false
+            referencedRelation: "booth_renter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renter_onboarding_progress_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "renter_onboarding_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       renter_onboarding_tasks: {
         Row: {
           created_at: string | null
           description: string | null
           display_order: number | null
+          document_required: boolean | null
           document_template_id: string | null
           form_template_id: string | null
           id: string
@@ -7213,6 +7689,7 @@ export type Database = {
           link_url: string | null
           organization_id: string
           required: boolean | null
+          task_order: number | null
           task_type: string | null
           title: string
           updated_at: string | null
@@ -7221,6 +7698,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           display_order?: number | null
+          document_required?: boolean | null
           document_template_id?: string | null
           form_template_id?: string | null
           id?: string
@@ -7228,6 +7706,7 @@ export type Database = {
           link_url?: string | null
           organization_id: string
           required?: boolean | null
+          task_order?: number | null
           task_type?: string | null
           title: string
           updated_at?: string | null
@@ -7236,6 +7715,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           display_order?: number | null
+          document_required?: boolean | null
           document_template_id?: string | null
           form_template_id?: string | null
           id?: string
@@ -7243,6 +7723,7 @@ export type Database = {
           link_url?: string | null
           organization_id?: string
           required?: boolean | null
+          task_order?: number | null
           task_type?: string | null
           title?: string
           updated_at?: string | null
@@ -7253,6 +7734,62 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renter_payment_methods: {
+        Row: {
+          autopay_days_before_due: number | null
+          autopay_enabled: boolean | null
+          booth_renter_id: string
+          card_brand: string | null
+          card_exp_month: number | null
+          card_exp_year: number | null
+          card_last4: string | null
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          autopay_days_before_due?: number | null
+          autopay_enabled?: boolean | null
+          booth_renter_id: string
+          card_brand?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          card_last4?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          autopay_days_before_due?: number | null
+          autopay_enabled?: boolean | null
+          booth_renter_id?: string
+          card_brand?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          card_last4?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          stripe_customer_id?: string
+          stripe_payment_method_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renter_payment_methods_booth_renter_id_fkey"
+            columns: ["booth_renter_id"]
+            isOneToOne: false
+            referencedRelation: "booth_renter_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -7798,6 +8335,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      scheduled_rent_changes: {
+        Row: {
+          applied: boolean | null
+          applied_at: string | null
+          contract_id: string
+          created_at: string | null
+          created_by: string | null
+          current_rent_amount: number
+          effective_date: string
+          id: string
+          new_rent_amount: number
+          notes: string | null
+          notification_sent: boolean | null
+          notification_sent_at: string | null
+          reason: string | null
+        }
+        Insert: {
+          applied?: boolean | null
+          applied_at?: string | null
+          contract_id: string
+          created_at?: string | null
+          created_by?: string | null
+          current_rent_amount: number
+          effective_date: string
+          id?: string
+          new_rent_amount: number
+          notes?: string | null
+          notification_sent?: boolean | null
+          notification_sent_at?: string | null
+          reason?: string | null
+        }
+        Update: {
+          applied?: boolean | null
+          applied_at?: string | null
+          contract_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_rent_amount?: number
+          effective_date?: string
+          id?: string
+          new_rent_amount?: number
+          notes?: string | null
+          notification_sent?: boolean | null
+          notification_sent_at?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_rent_changes_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "booth_rental_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_category_colors: {
         Row: {
@@ -8352,6 +8945,57 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      station_assignments: {
+        Row: {
+          assigned_by: string | null
+          assigned_date: string
+          booth_renter_id: string
+          created_at: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          station_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_date?: string
+          booth_renter_id: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          station_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_date?: string
+          booth_renter_id?: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          station_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "station_assignments_booth_renter_id_fkey"
+            columns: ["booth_renter_id"]
+            isOneToOne: false
+            referencedRelation: "booth_renter_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "station_assignments_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "rental_stations"
             referencedColumns: ["id"]
           },
         ]
