@@ -4827,6 +4827,53 @@ export type Database = {
           },
         ]
       }
+      platform_import_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entity_type: string
+          field_mappings: Json
+          id: string
+          is_default: boolean | null
+          organization_id: string | null
+          source_system: string
+          transformations: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entity_type: string
+          field_mappings?: Json
+          id?: string
+          is_default?: boolean | null
+          organization_id?: string | null
+          source_system: string
+          transformations?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entity_type?: string
+          field_mappings?: Json
+          id?: string
+          is_default?: boolean | null
+          organization_id?: string | null
+          source_system?: string
+          transformations?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_import_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_invitations: {
         Row: {
           accepted_at: string | null
@@ -6834,6 +6881,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      testimonials: {
+        Row: {
+          author: string
+          created_at: string
+          created_by: string | null
+          display_order: number | null
+          id: string
+          is_visible: boolean | null
+          organization_id: string | null
+          rating: number
+          text: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          organization_id?: string | null
+          rating?: number
+          text: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          organization_id?: string | null
+          rating?: number
+          text?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_comments: {
         Row: {
