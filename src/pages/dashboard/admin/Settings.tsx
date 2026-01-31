@@ -79,6 +79,7 @@ import { RoleAccessConfigurator } from '@/components/dashboard/settings/RoleAcce
 import { SmsTemplatesManager } from '@/components/dashboard/SmsTemplatesManager';
 import { FormsTemplatesContent } from '@/components/dashboard/settings/FormsTemplatesContent';
 import { MetricsGlossaryContent } from '@/components/dashboard/settings/MetricsGlossaryContent';
+import { LoyaltySettingsContent } from '@/components/dashboard/settings/LoyaltySettingsContent';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
@@ -1276,19 +1277,7 @@ export default function Settings() {
 
           {activeCategory === 'role-access' && <RoleAccessConfigurator />}
 
-          {activeCategory === 'loyalty' && (
-            <Card className="p-6">
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Gift className="w-12 h-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Configure your loyalty program, reward tiers, and gift card designs.
-                </p>
-                <Button onClick={() => window.location.href = '/dashboard/settings/loyalty'}>
-                  Open Loyalty & Rewards
-                </Button>
-              </div>
-            </Card>
-          )}
+          {activeCategory === 'loyalty' && <LoyaltySettingsContent />}
         </div>
       </DashboardLayout>
     );
