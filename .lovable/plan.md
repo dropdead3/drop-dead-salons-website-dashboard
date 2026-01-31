@@ -1,175 +1,268 @@
 
-## Dark Mode Color Fix Plan
+## Location Seats Model - Self-Service Capacity Management
 
-This plan addresses multiple dashboard components that have incorrect colors in dark mode due to hardcoded light colors, low-opacity backgrounds, and missing dark mode variants.
-
----
-
-### Issues Identified
-
-Based on the screenshot and code analysis, the following elements have incorrect colors in dark mode:
-
-| Component | Issue | Location |
-|-----------|-------|----------|
-| Select Dropdowns | `bg-background` not properly inheriting dark theme | All select triggers on dashboard |
-| Announcements Filter | Select trigger appears washed out | `AnnouncementsBento.tsx:98` |
-| Analytics Filter Bar | Location and date selects appear faded | `AnalyticsFilterBar.tsx:70, 95` |
-| Sales Overview Icon | `bg-primary/10` too faint on dark background | `AggregateSalesCard.tsx:274` |
-| Hiring Capacity Badge | `text-black` hardcoded for medium priority | `HiringCapacityCard.tsx:40` |
-| Schedule Month View | Hardcoded light backgrounds (`bg-green-50`, `bg-slate-50`, etc.) | `MonthView.tsx:132-137` |
+This plan transforms the location billing model from "platform admin adds locations" to a **seat-based system** where:
+1. Platform admin allocates location seats to organizations
+2. Business owners/admins fill those seats with actual location data in their Settings
+3. Business users can self-service add more seats when needed
 
 ---
 
-### Root Cause
+### Current State
 
-The dashboard uses scoped dark mode via a `.dark` class on a wrapper div in `DashboardLayout.tsx`. While CSS variables are properly defined for `.dark` mode in `index.css`, some components use:
-
-1. **Hardcoded colors** (e.g., `text-black`, `bg-white`, `bg-green-50`)
-2. **Low opacity overlays** that become invisible on dark backgrounds (e.g., `bg-primary/10`)
-3. **Light-only Tailwind color utilities** without dark mode variants
-
----
-
-### Solution Approach
-
-Replace hardcoded and light-only colors with:
-- **CSS variable-based colors** that adapt to theme (e.g., `bg-muted`, `bg-accent`)
-- **Dark mode variants** where specific colors are needed (e.g., `bg-green-50 dark:bg-green-950`)
-- **Higher opacity values** for overlays on dark backgrounds (e.g., `bg-primary/10` to `bg-primary/15` or use `bg-accent`)
+| Component | Current Behavior |
+|-----------|------------------|
+| Platform Admin → Locations Tab | Placeholder: "Location management coming soon" |
+| Business Dashboard → Location Settings | Allows unlimited location creation (no seat enforcement) |
+| Billing Configuration | Tracks `included_locations` + `additional_locations_purchased` but doesn't enforce |
+| Self-Service Upgrade | Does not exist for business users |
 
 ---
 
-### Changes by File
+### Target Architecture
 
-#### 1. `src/components/dashboard/AggregateSalesCard.tsx`
-**Line 274**: Change icon background from `bg-primary/10` to a theme-aware color
-
-```tsx
-// Before
-<div className="w-10 h-10 bg-primary/10 flex items-center justify-center rounded-lg">
-
-// After  
-<div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+```text
+PLATFORM ADMIN                         BUSINESS OWNER/ADMIN
++-------------------------+            +---------------------------+
+| Account Billing Tab     |            | Settings → Locations      |
+| - Set included seats    |            | - See "X of Y seats used" |
+| - Set per-location fee  |            | - Add locations (if seats |
+| - View utilization      |            |   available)              |
++-------------------------+            | - "Add More Seats" button |
+                                       +---------------------------+
+                                                    |
+                                                    v
+                                       +---------------------------+
+                                       | Add Location Seats Dialog |
+                                       | - Show current vs new cost|
+                                       | - Payment confirmation    |
+                                       | - Audit trail logged      |
+                                       +---------------------------+
 ```
 
 ---
 
-#### 2. `src/components/dashboard/HiringCapacityCard.tsx`
-**Lines 38-40**: Replace hardcoded `text-white` and `text-black` with foreground variables
+### Implementation Summary
 
-```tsx
-// Before
-case 'high':
-  return 'bg-orange-500 text-white';
-case 'medium':
-  return 'bg-chart-4 text-black';
+#### Phase 1: Platform Admin - Seat Allocation View
+Update the Locations tab in Account Detail to show seat allocation instead of location CRUD:
+- Display current seat allocation (included + purchased)
+- Show utilization: "2 of 3 seats filled"
+- Link to Billing tab to adjust seats
+- Read-only list of locations the org has created (for visibility)
 
-// After
-case 'high':
-  return 'bg-orange-500 text-orange-50';
-case 'medium':
-  return 'bg-chart-4 text-chart-4-foreground dark:text-background';
-```
+#### Phase 2: Business Dashboard - Seat Enforcement
+Update `LocationsSettingsContent.tsx` to:
+- Display capacity bar: "2 of 3 location seats used"
+- Block "Add Location" button when at capacity
+- Show "Need more locations? Add seats" prompt
+- Trigger upgrade dialog when user wants more
 
-Since `chart-4` doesn't have a foreground variable, we'll use `text-foreground` with a dark mode override:
-
-```tsx
-case 'medium':
-  return 'bg-chart-4 text-foreground dark:text-background';
-```
-
----
-
-#### 3. `src/components/dashboard/schedule/MonthView.tsx`
-**Lines 132-137**: Add dark mode variants for appointment status backgrounds
-
-```tsx
-// Before
-apt.status === 'confirmed' && 'border-l-green-500 bg-green-50',
-apt.status === 'booked' && 'border-l-slate-400 bg-slate-50',
-apt.status === 'checked_in' && 'border-l-blue-500 bg-blue-50',
-apt.status === 'completed' && 'border-l-purple-500 bg-purple-50',
-apt.status === 'cancelled' && 'border-l-gray-300 bg-gray-50 opacity-60',
-apt.status === 'no_show' && 'border-l-red-500 bg-red-50',
-
-// After
-apt.status === 'confirmed' && 'border-l-green-500 bg-green-50 dark:bg-green-950/50',
-apt.status === 'booked' && 'border-l-slate-400 bg-slate-50 dark:bg-slate-900/50',
-apt.status === 'checked_in' && 'border-l-blue-500 bg-blue-50 dark:bg-blue-950/50',
-apt.status === 'completed' && 'border-l-purple-500 bg-purple-50 dark:bg-purple-950/50',
-apt.status === 'cancelled' && 'border-l-gray-300 bg-gray-50 dark:bg-gray-900/50 opacity-60',
-apt.status === 'no_show' && 'border-l-red-500 bg-red-50 dark:bg-red-950/50',
-```
+#### Phase 3: Self-Service Seat Purchase Dialog
+Create a new dialog for business users to purchase additional location seats:
+- Show current cost breakdown
+- Preview new monthly cost after adding seats
+- Confirm payment method (Stripe integration placeholder)
+- Log the change to `billing_changes` table
 
 ---
 
-#### 4. `src/components/dashboard/AnnouncementsBento.tsx`
-**Line 98**: Ensure SelectTrigger uses proper border for visibility in dark mode
+### Component Changes
 
-```tsx
-// Before
-<SelectTrigger className="h-7 w-[130px] text-xs">
+#### 1. Platform Admin: Locations Tab Update
+**File:** `src/pages/dashboard/platform/AccountDetail.tsx`
 
-// After
-<SelectTrigger className="h-7 w-[130px] text-xs border-border">
+Transform the Locations tab from "coming soon" to a seat allocation view:
+
+```text
++-------------------------------------------------------+
+| LOCATION SEATS                                        |
++-------------------------------------------------------+
+| Allocated Seats: 3 (1 base + 2 purchased)            |
+| Filled Seats: 2 of 3                                 |
+| [===========>--------] 67%                           |
+|                                                       |
+| Filled Locations:                                    |
+| +-------------------------------------------------+  |
+| | Maple Avenue Salon    | 123 Maple Ave, Austin  |  |
+| | Downtown Studio       | 456 Main St, Austin    |  |
+| +-------------------------------------------------+  |
+|                                                       |
+| [Adjust Seats in Billing →]                          |
++-------------------------------------------------------+
 ```
 
+Changes:
+- Fetch actual locations for the organization
+- Use existing capacity metrics from `useOrganizationCapacity`
+- Display read-only location list
+- Link to Billing tab for seat adjustments
+
 ---
 
-#### 5. `src/components/dashboard/AnalyticsFilterBar.tsx`
-**Lines 70 and 95**: Add explicit border styling for better dark mode visibility
+#### 2. Business Dashboard: Capacity-Aware Location Settings
+**File:** `src/components/dashboard/settings/LocationsSettingsContent.tsx`
 
-```tsx
-// Line 70 - Before
-<SelectTrigger className="h-9 w-auto min-w-[180px] text-sm">
+Add capacity awareness:
 
-// Line 70 - After
-<SelectTrigger className="h-9 w-auto min-w-[180px] text-sm border-border">
-
-// Line 95 - Before  
-<SelectTrigger className="h-9 w-auto min-w-[160px] text-sm">
-
-// Line 95 - After
-<SelectTrigger className="h-9 w-auto min-w-[160px] text-sm border-border">
+```text
++-------------------------------------------------------+
+| ALL LOCATIONS                                         |
+| Add, edit, and manage salon locations                |
+|                                                       |
+| +---------------------------------------------------+|
+| | [====>------] 2 of 3 seats used | [+ Add Seat]   ||
+| +---------------------------------------------------+|
+|                                                       |
+| [+ Add Location] (disabled if at capacity)           |
++-------------------------------------------------------+
 ```
 
+Changes:
+- Import and use capacity data from organization billing
+- Show capacity bar with utilization
+- Conditionally disable "Add Location" button when `remaining === 0`
+- Add "Add More Seats" button that opens upgrade dialog
+- Toast message when trying to add at capacity: "You've used all your location seats. Add more to continue."
+
 ---
 
-#### 6. `src/components/ui/select.tsx` (Optional Global Fix)
-If the individual component fixes aren't sufficient, update the base SelectTrigger to use a more visible border in dark mode:
+#### 3. New Component: Add Location Seats Dialog
+**File:** `src/components/dashboard/settings/AddLocationSeatsDialog.tsx`
 
-**Line 20**: Ensure border is visible
+Self-service upgrade flow:
 
-```tsx
-// Before
-"flex h-10 w-full items-center justify-between rounded-full border border-input bg-background px-4 py-2 text-sm..."
-
-// After (ensure border-input variable is properly defined for dark mode)
-"flex h-10 w-full items-center justify-between rounded-full border border-input bg-background px-4 py-2 text-sm..."
+```text
++-------------------------------------------------------+
+| ADD LOCATION SEATS                                    |
++-------------------------------------------------------+
+| Current Plan: Professional                            |
+| Included Locations: 1                                 |
+| Additional Seats: 2 × $49/mo = $98/mo                |
+|                                                       |
+| How many seats to add?                               |
+| [-] 1 [+]                                            |
+|                                                       |
+| NEW MONTHLY COST:                                     |
+| Base Plan           $299/mo                          |
+| Location Add-Ons    $147/mo (+$49)                   |
+| ─────────────────────────────                        |
+| Total               $446/mo                          |
+|                                                       |
+| [ ] I agree to the updated billing terms             |
+|                                                       |
+| [Cancel]                    [Confirm & Add Seats]    |
++-------------------------------------------------------+
 ```
 
-The `border-input` class uses `hsl(var(--input))` which should be `0 0% 12%` in dark mode - this should be visible. If still too faint, we can adjust the `--input` variable in `index.css` for dark mode.
+Features:
+- Quantity selector for new seats
+- Shows current vs. projected cost
+- Agreement checkbox
+- On confirm: updates `organization_billing.additional_locations_purchased`
+- Logs change to `billing_changes` with type `add_locations`
+- Future: Stripe integration for actual payment
 
 ---
 
-### Files to Modify
+#### 4. New Hook: Business Capacity Data
+**File:** `src/hooks/useBusinessCapacity.ts`
 
-| File | Changes |
-|------|---------|
-| `src/components/dashboard/AggregateSalesCard.tsx` | Line 274: Icon background |
-| `src/components/dashboard/HiringCapacityCard.tsx` | Lines 38-40: Badge text colors |
-| `src/components/dashboard/schedule/MonthView.tsx` | Lines 132-137: Status backgrounds |
-| `src/components/dashboard/AnnouncementsBento.tsx` | Line 98: SelectTrigger border |
-| `src/components/dashboard/AnalyticsFilterBar.tsx` | Lines 70, 95: SelectTrigger borders |
+A simplified hook for business users (wraps existing capacity logic):
+
+```typescript
+interface BusinessCapacity {
+  locations: {
+    total: number;
+    used: number;
+    remaining: number;
+    isUnlimited: boolean;
+  };
+  users: {
+    total: number;
+    used: number;
+    remaining: number;
+    isUnlimited: boolean;
+  };
+  canAddLocation: boolean;
+  canAddUser: boolean;
+  perLocationFee: number;
+  perUserFee: number;
+}
+```
+
+This hook:
+- Gets the current user's organization ID
+- Fetches billing config and usage
+- Returns capacity metrics relevant to business decisions
 
 ---
 
-### Testing Checklist
+### Database Considerations
 
-After implementation, verify in dark mode:
-- Dashboard home page loads with correct colors
-- "All" dropdown in Announcements section is visible and readable
-- "All Locations" and "Today" filter dropdowns have proper contrast
-- Sales Overview "$" icon has visible background
-- Hiring Capacity priority badges are readable
-- Schedule Month View appointment indicators have appropriate dark backgrounds
+No schema changes required. The existing structure already supports this model:
+
+| Table | Field | Purpose |
+|-------|-------|---------|
+| `organization_billing` | `included_locations` | Base seats from plan |
+| `organization_billing` | `additional_locations_purchased` | Extra purchased seats |
+| `organization_billing` | `per_location_fee` | Cost per additional seat |
+| `billing_changes` | `change_type = 'add_locations'` | Audit trail for seat purchases |
+
+---
+
+### File Changes Summary
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/pages/dashboard/platform/AccountDetail.tsx` | **Edit** | Transform Locations tab to seat allocation view |
+| `src/components/dashboard/settings/LocationsSettingsContent.tsx` | **Edit** | Add capacity bar, enforce limits, add upgrade button |
+| `src/components/dashboard/settings/AddLocationSeatsDialog.tsx` | **Create** | Self-service seat purchase dialog |
+| `src/hooks/useBusinessCapacity.ts` | **Create** | Business-facing capacity hook |
+
+---
+
+### UX Flow Walkthrough
+
+**Scenario: Business owner wants to add a 4th location but only has 3 seats**
+
+1. Owner navigates to Settings → Locations
+2. Sees capacity bar: "3 of 3 seats used"
+3. "Add Location" button is disabled with tooltip: "All location seats are in use"
+4. Clicks "Add More Seats" button
+5. Dialog opens showing:
+   - Current: 3 seats (1 included + 2 purchased @ $49/mo = $98/mo)
+   - Adding 1 seat → $147/mo in location add-ons
+   - Total monthly cost increases from $397 to $446
+6. Owner checks agreement box and clicks "Confirm & Add Seats"
+7. System updates `organization_billing.additional_locations_purchased` from 2 to 3
+8. Creates `billing_changes` record with type `add_locations`
+9. Toast: "Location seat added! You now have 4 available seats."
+10. "Add Location" button is now enabled
+11. Owner proceeds to add their new location
+
+---
+
+### Future Enhancements
+
+The following would be valuable follow-up work but are not part of this initial implementation:
+
+1. **Stripe Integration**: Connect the "Add Seats" action to actual Stripe subscription modification
+2. **User Seats**: Apply the same pattern to user/team member seats
+3. **Downgrade Protection**: Handle reducing seats when locations already exist
+4. **Self-Service Plan Upgrades**: Let business owners upgrade their entire plan, not just add-ons
+5. **Billing History Page**: Show business owners their billing history and upcoming charges
+
+---
+
+### Technical Notes
+
+1. **Organization Context**: The business dashboard already has organization context via auth. We'll use this to fetch the correct billing configuration.
+
+2. **Optimistic Updates**: The seat purchase should optimistically update UI while the mutation is in flight.
+
+3. **Permission Gating**: The "Add Seats" functionality should be gated to business admin/owner roles only.
+
+4. **Stripe Placeholder**: For now, the confirmation simply updates the database. When Stripe is integrated, this will create a subscription modification.
+
+5. **Concurrency**: The current `additional_locations_purchased` field is a simple counter. For production, consider using a transactional increment to avoid race conditions.
