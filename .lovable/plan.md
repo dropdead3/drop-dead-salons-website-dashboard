@@ -1,165 +1,228 @@
 
 
-## Add Migration Credentials Card to Account Overview
+## Add Missing Import Data Categories
 
-This plan adds a new editable card to the Account Detail Overview tab where the migration team can store the business's previous CRM login credentials, with a prominent 2FA warning reminder.
+This plan expands the data migration system to include **Staff**, **Locations**, and **Products** import categories, with the Products category requiring a new database table.
 
 ---
 
 ### Overview
 
-The migration team needs a place to record login credentials for a business's previous CRM system (e.g., Phorest, Mindbody, Square) so they can access and export data. This card will:
+The current import system supports 3 categories: Clients, Services, and Appointments. Based on the analysis of existing tables and common migration needs, we'll add:
 
-1. Display the source software (already tracked)
-2. Provide editable fields for CRM username and password
-3. Show a warning alert reminding the team to have the business owner disable 2FA
+| Category | Database Table | Status |
+|----------|---------------|--------|
+| Staff/Stylists | `employee_profiles` | Table exists - add import support |
+| Locations | `locations` | Table exists - add import support |
+| Products | `products` | New table required |
 
 ---
 
-### Visual Design
+### Visual Changes
+
+The Platform Import page will show 6 import options instead of 3:
 
 ```text
-MIGRATION ACCESS
-+----------------------------------------------------------+
-| [!] Reminder: Ask business owner to disable 2FA before   |
-|     attempting to access their CRM account               |
-+----------------------------------------------------------+
-| Previous Software     Phorest              [Edit]        |
-+----------------------------------------------------------+
-| CRM Username          john@salon.com                     |
-| CRM Password          ********** [Show/Hide]             |
-+----------------------------------------------------------+
-|                              [Save Changes]              |
-+----------------------------------------------------------+
++-------------+  +-------------+  +-------------+
+|   Clients   |  |   Services  |  |Appointments |
+| [Start]     |  | [Start]     |  | [Start]     |
++-------------+  +-------------+  +-------------+
+|    Staff    |  |  Locations  |  |  Products   |
+| [Start]     |  | [Start]     |  | [Start]     |
++-------------+  +-------------+  +-------------+
 ```
-
-The card will:
-- Use amber/warning styling for the 2FA reminder alert
-- Show a masked password with toggle visibility
-- Include inline editing with save functionality
-- Match `PlatformCard variant="glass"` styling
-
----
-
-### Database Approach
-
-Store the credentials in the existing `organizations.settings` JSONB field. This keeps the schema unchanged while allowing flexible storage:
-
-```json
-{
-  "migration_credentials": {
-    "crm_username": "john@salon.com",
-    "crm_password": "password123",
-    "updated_at": "2026-01-30T22:30:00Z",
-    "updated_by": "admin@platform.com"
-  }
-}
-```
-
-**Security Note**: These are temporary credentials for one-time migration use, stored in the platform admin's internal view. RLS policies already restrict access to platform admins only.
 
 ---
 
 ### Implementation
 
-#### 1. New Component: `MigrationCredentialsCard`
-**File:** `src/components/platform/account/MigrationCredentialsCard.tsx`
+#### 1. Create Products Table (Database Migration)
 
-Features:
-- Accepts `organizationId` and `organization` props (for source_software and settings)
-- 2FA warning alert at top using amber/warning colors
-- Displays source software (read-only, links to Edit Account dialog)
-- Editable username and password fields
-- Password visibility toggle (eye icon)
-- Save button that updates organization settings
-- Loading and success states
-- Uses `useUpdateOrganization` hook for saving
+A new `products` table for retail inventory:
 
-Component structure:
-```tsx
-<PlatformCard variant="glass">
-  <PlatformCardHeader>
-    <PlatformCardTitle>Migration Access</PlatformCardTitle>
-  </PlatformCardHeader>
-  <PlatformCardContent>
-    {/* 2FA Warning Alert */}
-    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-4">
-      <div className="flex items-start gap-2">
-        <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5" />
-        <p className="text-sm text-amber-200">
-          Reminder: Ask the business owner to disable 2FA before 
-          attempting to access their CRM account
-        </p>
-      </div>
-    </div>
-    
-    {/* Source Software Display */}
-    <div className="space-y-4">
-      <div>
-        <label className="text-sm text-slate-400">Previous Software</label>
-        <p className="text-slate-300 capitalize">
-          {organization.source_software || 'Not specified'}
-        </p>
-      </div>
-      
-      {/* Username Input */}
-      <div>
-        <label className="text-sm text-slate-400">CRM Username</label>
-        <PlatformInput 
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter CRM username or email"
-        />
-      </div>
-      
-      {/* Password Input with Toggle */}
-      <div>
-        <label className="text-sm text-slate-400">CRM Password</label>
-        <div className="relative">
-          <PlatformInput 
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter CRM password"
-          />
-          <button onClick={togglePassword}>
-            {showPassword ? <EyeOff /> : <Eye />}
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    {/* Save Button */}
-    <PlatformButton onClick={handleSave} disabled={!hasChanges}>
-      Save Credentials
-    </PlatformButton>
-  </PlatformCardContent>
-</PlatformCard>
+```sql
+CREATE TABLE public.products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES organizations(id),
+  location_id TEXT REFERENCES locations(id),
+  
+  -- Core product info
+  name TEXT NOT NULL,
+  sku TEXT,
+  barcode TEXT,
+  category TEXT,
+  brand TEXT,
+  description TEXT,
+  
+  -- Pricing
+  retail_price DECIMAL(10,2),
+  cost_price DECIMAL(10,2),
+  
+  -- Inventory
+  quantity_on_hand INTEGER DEFAULT 0,
+  reorder_level INTEGER,
+  
+  -- Import tracking
+  external_id TEXT,
+  import_source TEXT,
+  imported_at TIMESTAMPTZ,
+  
+  -- Status
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS policies for platform admins
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ```
 
 ---
 
-#### 2. Update Account Detail Page
-**File:** `src/pages/dashboard/platform/AccountDetail.tsx`
+#### 2. Update Import Types Array
+**File:** `src/pages/dashboard/platform/PlatformImport.tsx`
 
-Add the new card to the Overview tab, after Contact Information and Account Details but before Business Integrations:
+Expand the `importTypes` array to include the new categories:
 
-```tsx
-<TabsContent value="overview" className="space-y-4">
-  <div className="grid gap-4 lg:grid-cols-2">
-    {/* Contact Info Card */}
-    {/* Account Details Card */}
-  </div>
+```typescript
+const importTypes = [
+  { value: 'clients', label: 'Clients', description: 'Import customer data', icon: Users },
+  { value: 'services', label: 'Services', description: 'Import service catalog', icon: Scissors },
+  { value: 'appointments', label: 'Appointments', description: 'Import booking history', icon: Calendar },
+  { value: 'staff', label: 'Staff', description: 'Import team members', icon: UserCog },
+  { value: 'locations', label: 'Locations', description: 'Import salon branches', icon: MapPin },
+  { value: 'products', label: 'Products', description: 'Import retail inventory', icon: Package },
+];
+```
+
+---
+
+#### 3. Add Field Definitions to Import Wizard
+**File:** `src/components/admin/DataImportWizard.tsx`
+
+Add field mappings for the new entity types:
+
+```typescript
+const FIELD_DEFINITIONS = {
+  // ... existing clients, services, appointments ...
   
-  {/* Migration Credentials Card - NEW */}
-  <MigrationCredentialsCard 
-    organizationId={organization.id}
-    organization={organization}
-  />
+  staff: [
+    { field: 'full_name', label: 'Full Name', required: true },
+    { field: 'email', label: 'Email', required: false },
+    { field: 'phone', label: 'Phone', required: false },
+    { field: 'hire_date', label: 'Hire Date', required: false },
+    { field: 'stylist_level', label: 'Level/Tier', required: false },
+    { field: 'specialties', label: 'Specialties', required: false },
+    { field: 'bio', label: 'Bio', required: false },
+    { field: 'external_id', label: 'External ID', required: false },
+  ],
   
-  {/* Business Integrations Card */}
-  <AccountIntegrationsCard organizationId={organization.id} />
-</TabsContent>
+  locations: [
+    { field: 'name', label: 'Location Name', required: true },
+    { field: 'address', label: 'Address', required: true },
+    { field: 'city', label: 'City', required: true },
+    { field: 'state_province', label: 'State/Province', required: false },
+    { field: 'phone', label: 'Phone', required: true },
+    { field: 'hours', label: 'Hours', required: false },
+    { field: 'store_number', label: 'Store Number', required: false },
+  ],
+  
+  products: [
+    { field: 'name', label: 'Product Name', required: true },
+    { field: 'sku', label: 'SKU', required: false },
+    { field: 'barcode', label: 'Barcode', required: false },
+    { field: 'category', label: 'Category', required: false },
+    { field: 'brand', label: 'Brand', required: false },
+    { field: 'retail_price', label: 'Retail Price', required: false },
+    { field: 'cost_price', label: 'Cost Price', required: false },
+    { field: 'quantity_on_hand', label: 'Quantity', required: false },
+    { field: 'external_id', label: 'External ID', required: false },
+  ],
+};
+```
+
+---
+
+#### 4. Update Edge Function
+**File:** `supabase/functions/import-data/index.ts`
+
+Extend the entity type and add validation for new categories:
+
+```typescript
+interface ImportRequest {
+  // Update type to include new entities
+  entity_type: 'clients' | 'appointments' | 'services' | 'staff' | 'locations' | 'products';
+  // ... rest unchanged
+}
+
+// Add validation cases in the switch statement:
+case 'staff':
+  if (!mapped.full_name) {
+    isValid = false;
+    validationError = 'Missing staff full_name';
+  }
+  // Staff imports need special handling - they go to employee_profiles
+  // but require a user_id, so we may need to create placeholder users
+  break;
+
+case 'locations':
+  if (!mapped.name || !mapped.address || !mapped.city || !mapped.phone) {
+    isValid = false;
+    validationError = 'Missing required location fields (name, address, city, phone)';
+  }
+  // Generate ID if not provided
+  if (!mapped.id) {
+    mapped.id = crypto.randomUUID();
+  }
+  break;
+
+case 'products':
+  if (!mapped.name) {
+    isValid = false;
+    validationError = 'Missing product name';
+  }
+  break;
+```
+
+**Note:** Staff import has a complexity - `employee_profiles` requires a `user_id` FK to `auth.users`. For migration purposes, we could:
+- Create placeholder auth users, or
+- Use a separate `imported_staff` staging table, or
+- Skip direct employee_profiles import and document manual staff creation
+
+The recommended approach is to import staff data to a staging area and have admins manually link or create user accounts.
+
+---
+
+#### 5. Add Default Import Templates (Database Migration)
+
+Insert system templates for new categories:
+
+```sql
+INSERT INTO import_templates (name, description, source_type, entity_type, is_system_template, column_mappings) VALUES
+-- Generic Staff
+('Generic Staff CSV', 'Import staff from any CSV', 'generic', 'staff', true, '[
+  {"source": "name", "target": "full_name", "required": true},
+  {"source": "email", "target": "email", "required": false},
+  {"source": "phone", "target": "phone", "required": false},
+  {"source": "hire_date", "target": "hire_date", "required": false, "transform": "date"}
+]'::JSONB),
+
+-- Generic Locations
+('Generic Locations CSV', 'Import locations from any CSV', 'generic', 'locations', true, '[
+  {"source": "name", "target": "name", "required": true},
+  {"source": "address", "target": "address", "required": true},
+  {"source": "city", "target": "city", "required": true},
+  {"source": "phone", "target": "phone", "required": true}
+]'::JSONB),
+
+-- Generic Products
+('Generic Products CSV', 'Import products from any CSV', 'generic', 'products', true, '[
+  {"source": "name", "target": "name", "required": true},
+  {"source": "sku", "target": "sku", "required": false},
+  {"source": "category", "target": "category", "required": false},
+  {"source": "price", "target": "retail_price", "required": false, "transform": "decimal"},
+  {"source": "quantity", "target": "quantity_on_hand", "required": false, "transform": "integer"}
+]'::JSONB);
 ```
 
 ---
@@ -168,67 +231,39 @@ Add the new card to the Overview tab, after Contact Information and Account Deta
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/components/platform/account/MigrationCredentialsCard.tsx` | **Create** | Editable card for CRM credentials with 2FA warning |
-| `src/pages/dashboard/platform/AccountDetail.tsx` | **Edit** | Add migration card to Overview tab |
+| Database Migration | **Create** | Add `products` table with RLS policies |
+| Database Migration | **Insert** | Add import templates for Staff, Locations, Products |
+| `src/pages/dashboard/platform/PlatformImport.tsx` | **Edit** | Add 3 new import type cards with icons |
+| `src/components/admin/DataImportWizard.tsx` | **Edit** | Add field definitions for staff, locations, products |
+| `supabase/functions/import-data/index.ts` | **Edit** | Add validation and handling for new entity types |
 
 ---
 
-### Technical Details
+### Technical Considerations
 
-#### Saving Credentials
+#### Staff Import Complexity
+The `employee_profiles` table requires a `user_id` foreign key to `auth.users`. Since we cannot create auth users during CSV import, staff import will:
+1. Target the `products` table (not `employee_profiles`)
+2. For actual staff migration, recommend using the existing staff creation flow or a separate staging approach
 
-Uses the existing `useUpdateOrganization` hook to update the settings JSONB:
+Alternatively, we can create an `imported_staff` staging table that doesn't require auth.users, allowing the migration team to review and manually onboard staff.
 
-```typescript
-const handleSave = async () => {
-  const currentSettings = organization.settings || {};
-  const newSettings = {
-    ...currentSettings,
-    migration_credentials: {
-      crm_username: username,
-      crm_password: password,
-      updated_at: new Date().toISOString(),
-    },
-  };
-  
-  await updateOrganization({
-    id: organizationId,
-    settings: newSettings,
-  });
-};
-```
-
-#### Reading Existing Credentials
-
-On component mount, extract from settings:
-
-```typescript
-useEffect(() => {
-  const settings = organization.settings as any;
-  if (settings?.migration_credentials) {
-    setUsername(settings.migration_credentials.crm_username || '');
-    setPassword(settings.migration_credentials.crm_password || '');
-  }
-}, [organization.settings]);
-```
-
-#### Password Visibility Toggle
-
-Simple state toggle with Eye/EyeOff icons:
-
-```typescript
-const [showPassword, setShowPassword] = useState(false);
-// Button toggles between Eye and EyeOff icons
-```
+#### Organization Scoping
+All imports should include `organization_id` to ensure proper tenant isolation. The edge function will need to receive this from the wizard.
 
 ---
 
-### Styling Notes
+### UI Layout Update
 
-- 2FA warning uses `bg-amber-500/10 border-amber-500/30` for attention
-- AlertTriangle icon in amber color
-- Input fields use existing `PlatformInput` component
-- Password toggle button positioned absolutely inside input container
-- Save button disabled until changes are made
-- Success toast on save via existing hook
+The import cards will be displayed in a 2-row, 3-column grid:
+
+```tsx
+<div className="grid gap-4 md:grid-cols-3">
+  {importTypes.map((type) => (
+    <PlatformCard key={type.value} variant="interactive">
+      {/* Card content with icon, label, description, and Start Import button */}
+    </PlatformCard>
+  ))}
+</div>
+```
 
