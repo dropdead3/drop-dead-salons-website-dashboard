@@ -1,8 +1,20 @@
 
 
-# Stripe Payment Error Alerting System
+# Stripe Payments Health Dashboard
 
-This plan implements **real-time alerting** for Stripe payment processing errors across all organizations, ensuring platform administrators are notified immediately when payments fail.
+## Why This Makes Sense
+
+**Yes, this feature is highly valuable** for several reasons:
+
+1. **Two-Tier Stripe Integration**: Your system tracks Stripe at both levels:
+   - **Organization Level**: Platform subscriptions (`subscription_status`: active, past_due, cancelled)
+   - **Location Level**: Connect accounts for client payments (`stripe_status`: not_connected, pending, active, issues, suspended)
+
+2. **Real-Time Visibility**: The `stripe-webhook` edge function already captures payment failures - this page surfaces that data proactively
+
+3. **Granular Drill-Down**: Platform admins can identify exactly which location at which organization is having issues, enabling targeted support
+
+4. **Operational Efficiency**: Instead of discovering payment issues reactively through support tickets, you see problems as they occur
 
 ---
 
@@ -10,461 +22,265 @@ This plan implements **real-time alerting** for Stripe payment processing errors
 
 | Component | Purpose |
 |-----------|---------|
-| Stripe Webhook Handler | Receives real-time events from Stripe |
-| Payment Error Notifications | Creates instant platform alerts |
-| Email Alerts | Sends critical errors to platform admins |
-| Payment Issues Dashboard | View and manage payment failures |
-| Notification Type Expansion | Adds `payment_failed` to notification system |
+| Stripe Health Dashboard | `/dashboard/platform/stripe-health` - Central monitoring hub |
+| Organization Subscription Health | Track platform billing status across all orgs |
+| Location Payment Status | Track Stripe Connect health per location |
+| Real-Time Event Feed | Recent payment failures, successes, and issues |
+| Filtering & Drill-Down | Filter by org, location, status, date range |
 
 ---
 
-## Architecture
+## Visual Design
 
 ```text
-+------------------+     Webhook      +----------------------+
-|     Stripe       | ───────────────> | stripe-webhook       |
-|  (payment fails) |                  | Edge Function        |
-+------------------+                  +----------------------+
-                                              │
-                     ┌────────────────────────┼────────────────────────┐
-                     │                        │                        │
-                     ▼                        ▼                        ▼
-          +------------------+    +------------------+    +------------------+
-          | Update org       |    | Create platform  |    | Send email via   |
-          | subscription     |    | notification     |    | Resend           |
-          | status           |    |                  |    |                  |
-          +------------------+    +------------------+    +------------------+
-                                          │
-                                          ▼
-                                +------------------+
-                                | Bell notification|
-                                | + Notifications  |
-                                | page             |
-                                +------------------+
++--------------------------------------------------------------------+
+| Stripe Payments Health                              [Refresh] ●    |
+| Monitor payment processing across all organizations                |
++--------------------------------------------------------------------+
+
++----------------------------+  +----------------------------+
+| PLATFORM SUBSCRIPTIONS     |  | LOCATION PAYMENTS          |
+| ● 24 Active                |  | ● 45 Active                |
+| ⚠ 2 Past Due               |  | ⚠ 3 Issues                 |
+| ○ 1 Trialing               |  | ◐ 8 Pending                |
+|                            |  | ○ 12 Not Connected         |
++----------------------------+  +----------------------------+
+
++--------------------------------------------------------------------+
+| ORGANIZATIONS WITH ISSUES                          [View All]      |
++--------------------------------------------------------------------+
+| ORG NAME         | STATUS      | AMOUNT DUE | LAST ATTEMPT        |
+| ────────────────────────────────────────────────────────────────── |
+| ⚠ Salon ABC      | Past Due    | $299.00    | 2 hours ago    [→] |
+| ⚠ Beauty Co      | Past Due    | $149.00    | 5 hours ago    [→] |
++--------------------------------------------------------------------+
+
++--------------------------------------------------------------------+
+| LOCATIONS WITH PAYMENT ISSUES                      [View All]      |
++--------------------------------------------------------------------+
+| LOCATION         | ORG          | STATUS     | ISSUE              |
+| ────────────────────────────────────────────────────────────────── |
+| ⚠ Downtown       | Salon ABC    | Issues     | Verification needed|
+| ⚠ Westside       | Beauty Co    | Suspended  | Fraud review       |
++--------------------------------------------------------------------+
+
++--------------------------------------------------------------------+
+| RECENT PAYMENT EVENTS                              [Last 24h ▼]    |
++--------------------------------------------------------------------+
+| TIME       | TYPE            | ORG/LOCATION      | DETAILS         |
+| ────────────────────────────────────────────────────────────────── |
+| 12:45 PM   | ● Payment OK    | Salon XYZ         | $299 processed  |
+| 11:30 AM   | ⚠ Payment Failed| Salon ABC         | Card declined   |
+| 10:15 AM   | ● Payout Sent   | Beauty Co         | $1,245.00       |
+| 09:00 AM   | ⚠ Connect Issue | Downtown Location | Needs verify    |
++--------------------------------------------------------------------+
 ```
 
 ---
 
-## Component 1: Stripe Webhook Edge Function
+## Detailed View - Organization Drill-Down
 
-### What Gets Built
-A secure webhook handler that listens for Stripe payment events and triggers immediate alerts.
+When clicking an organization with issues:
 
-### Events to Handle
-| Stripe Event | Action |
-|--------------|--------|
-| `invoice.payment_failed` | Alert + Update org status to `past_due` |
-| `invoice.payment_succeeded` | Clear alerts + Update org status to `active` |
-| `charge.failed` | Alert with decline reason |
-| `customer.subscription.deleted` | Alert + Update org status to `cancelled` |
-| `customer.subscription.updated` | Update org subscription details |
-
-### Edge Function Structure
-```typescript
-// supabase/functions/stripe-webhook/index.ts
-
-Deno.serve(async (req) => {
-  // 1. Verify Stripe signature using STRIPE_WEBHOOK_SECRET
-  const signature = req.headers.get('stripe-signature');
-  const payload = await req.text();
-  
-  // Verify using Web Crypto API
-  const isValid = await verifyStripeSignature(payload, signature, webhookSecret);
-  
-  // 2. Parse event and route to handler
-  const event = JSON.parse(payload);
-  
-  switch (event.type) {
-    case 'invoice.payment_failed':
-      await handlePaymentFailed(event.data.object);
-      break;
-    case 'invoice.payment_succeeded':
-      await handlePaymentSucceeded(event.data.object);
-      break;
-    case 'charge.failed':
-      await handleChargeFailed(event.data.object);
-      break;
-    // ... more handlers
-  }
-  
-  return new Response(JSON.stringify({ received: true }));
-});
-```
-
-### Payment Failed Handler Logic
-```typescript
-async function handlePaymentFailed(invoice) {
-  const customerId = invoice.customer;
-  
-  // 1. Find organization by stripe_customer_id
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('id, name, slug, billing_email')
-    .eq('stripe_customer_id', customerId)
-    .single();
-  
-  // 2. Update organization subscription status
-  await supabase
-    .from('organizations')
-    .update({ subscription_status: 'past_due' })
-    .eq('id', org.id);
-  
-  // 3. Create platform notification (critical severity)
-  await supabase.from('platform_notifications').insert({
-    type: 'payment_failed',
-    severity: 'critical',
-    title: `Payment Failed: ${org.name}`,
-    message: `Invoice ${invoice.id} for $${invoice.amount_due / 100} failed. Reason: ${invoice.last_payment_error?.message || 'Unknown'}`,
-    link: `/dashboard/platform/accounts/${org.slug}`,
-    metadata: {
-      organization_id: org.id,
-      stripe_invoice_id: invoice.id,
-      amount: invoice.amount_due,
-      attempt_count: invoice.attempt_count,
-      next_attempt: invoice.next_payment_attempt,
-    }
-  });
-  
-  // 4. Send email to platform admins
-  await sendPaymentFailedEmail(org, invoice);
-  
-  // 5. Log to subscription_invoices table
-  await supabase.from('subscription_invoices').upsert({
-    organization_id: org.id,
-    stripe_invoice_id: invoice.id,
-    amount: invoice.amount_due / 100,
-    status: 'unpaid',
-    description: `Payment failed: ${invoice.last_payment_error?.message}`,
-  });
-}
-```
-
-### Signature Verification Pattern
-```typescript
-async function verifyStripeSignature(
-  payload: string, 
-  signature: string, 
-  secret: string
-): Promise<boolean> {
-  // Stripe signatures are: t=timestamp,v1=signature
-  const elements = signature.split(',');
-  const timestamp = elements.find(e => e.startsWith('t='))?.slice(2);
-  const sig = elements.find(e => e.startsWith('v1='))?.slice(3);
-  
-  // Construct signed payload (timestamp + payload)
-  const signedPayload = `${timestamp}.${payload}`;
-  
-  // Compute expected signature using HMAC-SHA256
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  
-  const expectedSig = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    encoder.encode(signedPayload)
-  );
-  
-  const expectedHex = Array.from(new Uint8Array(expectedSig))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-  
-  return expectedHex === sig;
-}
-```
-
----
-
-## Component 2: Notification System Enhancement
-
-### Add Payment Failed Notification Type
-Update `usePlatformNotifications.ts`:
-
-```typescript
-export const NOTIFICATION_TYPES = {
-  // ... existing types
-  payment_failed: {
-    label: 'Payment Failures',
-    description: 'When subscription payments fail',
-    defaultChannels: ['in_app', 'email'],
-  },
-  payment_recovered: {
-    label: 'Payment Recovery',
-    description: 'When failed payments are recovered',
-    defaultChannels: ['in_app'],
-  },
-};
-```
-
-### Add Icon Mappings
-```typescript
-const TYPE_ICONS = {
-  // ... existing
-  payment_failed: CreditCard,
-  payment_recovered: CheckCircle,
-};
-```
-
----
-
-## Component 3: Payment Alert Email
-
-### Email Template Design
 ```text
-+------------------------------------------------------------+
-| 🚨 URGENT: Payment Failed                                   |
-+------------------------------------------------------------+
-|                                                             |
-| Hi Platform Team,                                           |
-|                                                             |
-| A subscription payment has failed and requires attention:   |
-|                                                             |
-| ┌─────────────────────────────────────────────────────────┐|
-| │ Organization: Salon ABC                                  │|
-| │ Amount: $299.00                                          │|
-| │ Failed At: January 31, 2026, 2:45 PM MST                │|
-| │ Reason: Card declined (insufficient funds)              │|
-| │ Attempt: 1 of 4                                          │|
-| │ Next Retry: February 3, 2026                             │|
-| └─────────────────────────────────────────────────────────┘|
-|                                                             |
-| [View Account]  [View in Stripe]                            |
-|                                                             |
-+------------------------------------------------------------+
++--------------------------------------------------------------------+
+| Stripe Health: Salon ABC                    [Back to Health] [→]   |
++--------------------------------------------------------------------+
+| SUBSCRIPTION STATUS                                                |
+| Status: ⚠ Past Due                                                 |
+| Amount Owed: $299.00                                               |
+| Last Attempt: Jan 31, 2026 at 2:45 PM                              |
+| Next Retry: Feb 3, 2026                                            |
+| Decline Reason: Card declined (insufficient funds)                 |
+|                                                                    |
+| [Update Payment Method]  [Retry Now]  [Contact Customer]           |
++--------------------------------------------------------------------+
+
+| LOCATION PAYMENT STATUS                                            |
++--------------------------------------------------------------------+
+| LOCATION         | STRIPE STATUS | PAYMENTS ENABLED | LAST PAYOUT |
+| ────────────────────────────────────────────────────────────────── |
+| ● Main Street    | Active        | ✓ Yes            | Yesterday   |
+| ⚠ Downtown       | Issues        | ✗ No             | —           |
+| ○ Westside       | Not Connected | ✗ No             | —           |
++--------------------------------------------------------------------+
 ```
 
 ---
 
-## Component 4: Secrets Required
+## Data Architecture
 
-The following secrets need to be configured:
+### New Hook: useStripePaymentsHealth
 
-| Secret Name | Purpose |
-|-------------|---------|
-| `STRIPE_SECRET_KEY` | API access for lookups |
-| `STRIPE_WEBHOOK_SECRET` | Verify webhook signatures |
-
----
-
-## Component 5: Payment Issues Quick View
-
-### Add to System Health Dashboard
-Extend `SystemHealthCard.tsx` to show:
-- Count of organizations with `past_due` status
-- Recent payment failures in last 24h
-- Link to filtered account list
-
-### Add to Notifications Page
-Add a "Payment Alerts" quick filter tab showing only `payment_failed` and `payment_recovered` notifications.
-
----
-
-## Implementation Details
-
-### File Changes Summary
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `supabase/functions/stripe-webhook/index.ts` | **Create** | Webhook handler |
-| `src/hooks/usePlatformNotifications.ts` | **Edit** | Add payment_failed type |
-| `src/pages/dashboard/platform/Notifications.tsx` | **Edit** | Add payment icon |
-| `src/components/platform/layout/PlatformNotificationBell.tsx` | **Edit** | Add payment icon |
-| `src/components/platform/overview/SystemHealthCard.tsx` | **Edit** | Show payment issues |
-| `supabase/config.toml` | **Edit** | Add webhook function config |
-
----
-
-## Database Changes
-
-No schema changes required. The existing tables support this:
-
-- `organizations.subscription_status` - Already has `past_due` value
-- `platform_notifications` - Supports new `payment_failed` type
-- `subscription_invoices` - Logs individual invoice events
-
----
-
-## Edge Function: stripe-webhook
-
-### Full Implementation
 ```typescript
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
-};
-
-// Stripe signature verification
-async function verifyStripeSignature(
-  payload: string,
-  signature: string,
-  secret: string
-): Promise<boolean> {
-  if (!secret) {
-    console.warn("STRIPE_WEBHOOK_SECRET not configured");
-    return false;
-  }
-
-  const elements = signature.split(',');
-  const timestamp = elements.find(e => e.startsWith('t='))?.slice(2);
-  const sig = elements.find(e => e.startsWith('v1='))?.slice(3);
-
-  if (!timestamp || !sig) return false;
-
-  // Check timestamp freshness (within 5 minutes)
-  const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp)) > 300) {
-    console.error("Webhook timestamp too old");
-    return false;
-  }
-
-  const signedPayload = `${timestamp}.${payload}`;
-  const encoder = new TextEncoder();
-  
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-
-  const expected = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    encoder.encode(signedPayload)
-  );
-
-  const expectedHex = Array.from(new Uint8Array(expected))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-
-  return expectedHex === sig;
+interface StripePaymentsHealth {
+  subscriptions: {
+    active: number;
+    pastDue: number;
+    trialing: number;
+    cancelled: number;
+    total: number;
+  };
+  locations: {
+    active: number;
+    pending: number;
+    issues: number;
+    suspended: number;
+    notConnected: number;
+    total: number;
+  };
+  atRiskOrganizations: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    subscription_status: string;
+    billing_email: string | null;
+    lastInvoice?: {
+      amount: number;
+      status: string;
+      created_at: string;
+    };
+  }>;
+  locationsWithIssues: Array<{
+    id: string;
+    name: string;
+    organization_name: string;
+    organization_slug: string;
+    stripe_status: string;
+    stripe_account_id: string | null;
+  }>;
+  recentEvents: Array<{
+    id: string;
+    type: 'payment_failed' | 'payment_succeeded' | 'payout' | 'connect_issue';
+    organization_name: string;
+    location_name?: string;
+    amount?: number;
+    message: string;
+    created_at: string;
+  }>;
 }
+```
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+### Data Sources
 
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+1. **Organization Subscriptions**: Query `organizations` table for `subscription_status`
+2. **Location Payment Status**: Query `locations` table for `stripe_status`
+3. **Recent Events**: Query `platform_notifications` where type IN ('payment_failed', 'payment_recovered')
+4. **Invoice History**: Query `subscription_invoices` for failed/pending invoices
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const resend = resendApiKey ? new Resend(resendApiKey) : null;
+---
 
-    // Get raw body and signature
-    const payload = await req.text();
-    const signature = req.headers.get("stripe-signature") || "";
+## Real-Time Updates
 
-    // Verify signature
-    if (!await verifyStripeSignature(payload, signature, webhookSecret)) {
-      console.error("Invalid Stripe webhook signature");
-      return new Response(JSON.stringify({ error: "Invalid signature" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+Enable real-time subscriptions for immediate visibility:
+
+```typescript
+// Subscribe to platform_notifications for payment events
+const channel = supabase
+  .channel('stripe-health')
+  .on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'platform_notifications',
+      filter: 'type=in.(payment_failed,payment_recovered)',
+    },
+    (payload) => {
+      // Refetch health data
+      queryClient.invalidateQueries(['stripe-payments-health']);
     }
-
-    const event = JSON.parse(payload);
-    console.log(`Stripe webhook: ${event.type}`, event.id);
-
-    // Route to appropriate handler
-    switch (event.type) {
-      case "invoice.payment_failed":
-        await handlePaymentFailed(supabase, resend, event.data.object);
-        break;
-        
-      case "invoice.payment_succeeded":
-        await handlePaymentSucceeded(supabase, event.data.object);
-        break;
-        
-      case "charge.failed":
-        await handleChargeFailed(supabase, event.data.object);
-        break;
-        
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(supabase, resend, event.data.object);
-        break;
-        
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(supabase, event.data.object);
-        break;
-        
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
-    }
-
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-
-  } catch (error) {
-    console.error("Webhook error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-});
-
-// Handler implementations would follow...
+  )
+  .subscribe();
 ```
 
 ---
 
-## Stripe Dashboard Configuration
+## Implementation Plan
 
-After deploying, configure the webhook in Stripe:
+### Files to Create
 
-1. **Endpoint URL**: `https://vciqmwzgfjxtzagaxgnh.supabase.co/functions/v1/stripe-webhook`
+| File | Purpose |
+|------|---------|
+| `src/pages/dashboard/platform/StripeHealth.tsx` | Main health dashboard page |
+| `src/hooks/useStripePaymentsHealth.ts` | Data fetching hook with aggregations |
+| `src/components/platform/stripe/StripeHealthSummary.tsx` | Summary cards component |
+| `src/components/platform/stripe/AtRiskOrgTable.tsx` | Organizations with billing issues |
+| `src/components/platform/stripe/LocationIssuesTable.tsx` | Locations with Connect issues |
+| `src/components/platform/stripe/PaymentEventFeed.tsx` | Recent payment events timeline |
 
-2. **Events to subscribe**:
-   - `invoice.payment_failed`
-   - `invoice.payment_succeeded`
-   - `charge.failed`
-   - `customer.subscription.deleted`
-   - `customer.subscription.updated`
+### Files to Edit
 
-3. **Copy Webhook Secret** to secrets as `STRIPE_WEBHOOK_SECRET`
-
----
-
-## Testing Strategy
-
-### Manual Testing
-1. Use Stripe Test Mode with test cards
-2. `4000000000000341` - Attaching card fails
-3. `4000000000009995` - Insufficient funds decline
-4. Verify notification appears in bell within seconds
-5. Verify email received
-
-### Edge Cases
-- Organization not found for customer_id (log warning, don't fail)
-- Duplicate webhook calls (idempotent using invoice_id)
-- Signature verification failure (return 401)
+| File | Change |
+|------|--------|
+| `src/components/platform/layout/PlatformSidebar.tsx` | Add nav link with CreditCard icon |
+| `src/App.tsx` | Add route for `/dashboard/platform/stripe-health` |
 
 ---
 
-## Security Considerations
+## Database Requirements
 
-1. **Signature Verification**: All webhooks verified via HMAC-SHA256
-2. **Timestamp Tolerance**: Max 5-minute age for webhook events
-3. **Service Role Key**: Used for database updates (not exposed)
-4. **RLS Bypass**: Service role bypasses RLS for notification inserts
-5. **Audit Trail**: All payment events logged to `subscription_invoices`
+**No schema changes required** - all data exists:
+
+- `organizations.subscription_status` - Platform billing health
+- `locations.stripe_status` - Connect account health
+- `platform_notifications` - Payment event stream
+- `subscription_invoices` - Invoice history
+
+---
+
+## Sidebar Navigation
+
+Add to `PlatformSidebar.tsx`:
+
+```typescript
+{ 
+  href: '/dashboard/platform/stripe-health', 
+  label: 'Payments Health', 
+  icon: CreditCard,
+  platformRoles: ['platform_owner', 'platform_admin', 'platform_support']
+}
+```
+
+Position: Between "System Health" and "Notifications" for logical grouping of monitoring tools.
+
+---
+
+## Key Metrics Displayed
+
+### Subscription Health (Organization Level)
+- Active subscriptions count
+- Past due count (critical alert if > 0)
+- Trialing count
+- Cancelled count
+- Total revenue at risk (sum of past_due amounts)
+
+### Location Payments Health
+- Active Connect accounts
+- Pending verification
+- Accounts with issues
+- Suspended accounts
+- Not connected locations
+
+### Event Timeline
+- Payment failures (with decline reasons)
+- Payment recoveries (when retries succeed)
+- Payout events (optional, if tracked)
+- Connect status changes
+
+---
+
+## Filter Options
+
+```typescript
+interface StripeHealthFilters {
+  subscriptionStatus?: ('active' | 'past_due' | 'trialing' | 'cancelled')[];
+  locationStatus?: ('active' | 'pending' | 'issues' | 'suspended' | 'not_connected')[];
+  organizationId?: string;
+  dateRange?: 'today' | '7d' | '30d' | 'all';
+  showOnlyIssues?: boolean;
+}
+```
 
 ---
 
@@ -472,11 +288,25 @@ After deploying, configure the webhook in Stripe:
 
 | Component | Complexity | Lines |
 |-----------|------------|-------|
-| stripe-webhook edge function | Medium | ~300 |
-| Notification type additions | Low | ~30 |
-| Icon updates | Low | ~10 |
-| System health enhancement | Low | ~50 |
-| **Total** | | **~390 lines** |
+| StripeHealth.tsx (main page) | Medium | ~300 |
+| useStripePaymentsHealth.ts | Medium | ~200 |
+| StripeHealthSummary.tsx | Low | ~100 |
+| AtRiskOrgTable.tsx | Low | ~120 |
+| LocationIssuesTable.tsx | Low | ~120 |
+| PaymentEventFeed.tsx | Low | ~100 |
+| Sidebar + routing updates | Low | ~20 |
+| **Total** | | **~960 lines** |
 
-This implementation provides immediate visibility into payment issues across all organizations, enabling rapid response to revenue-impacting events.
+---
+
+## Benefits
+
+1. **Proactive Issue Detection**: See payment problems before customers complain
+2. **Revenue Protection**: Quickly identify and resolve billing issues
+3. **Granular Visibility**: Drill down from organization to specific location
+4. **Real-Time Awareness**: Live updates when payment events occur
+5. **Operational Efficiency**: One central view for all payment health metrics
+6. **Reduced Support Load**: Platform team can proactively reach out to customers
+
+This feature complements the existing System Health dashboard by providing specialized, deep visibility into the payment processing layer of your multi-tenant platform.
 
