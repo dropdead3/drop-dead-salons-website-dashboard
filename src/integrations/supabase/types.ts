@@ -3971,6 +3971,56 @@ export type Database = {
           },
         ]
       }
+      loyalty_analytics_daily: {
+        Row: {
+          active_members: number | null
+          analytics_date: string
+          id: string
+          loyalty_attributed_revenue: number | null
+          new_enrollments: number | null
+          organization_id: string
+          points_earned: number | null
+          points_expired: number | null
+          points_redeemed: number | null
+          redemption_value: number | null
+          tier_upgrades: number | null
+        }
+        Insert: {
+          active_members?: number | null
+          analytics_date: string
+          id?: string
+          loyalty_attributed_revenue?: number | null
+          new_enrollments?: number | null
+          organization_id: string
+          points_earned?: number | null
+          points_expired?: number | null
+          points_redeemed?: number | null
+          redemption_value?: number | null
+          tier_upgrades?: number | null
+        }
+        Update: {
+          active_members?: number | null
+          analytics_date?: string
+          id?: string
+          loyalty_attributed_revenue?: number | null
+          new_enrollments?: number | null
+          organization_id?: string
+          points_earned?: number | null
+          points_expired?: number | null
+          points_redeemed?: number | null
+          redemption_value?: number | null
+          tier_upgrades?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_analytics_daily_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_program_settings: {
         Row: {
           bonus_rules: Json | null
@@ -5546,6 +5596,7 @@ export type Database = {
           phorest_client_id: string | null
           phorest_staff_id: string | null
           quantity: number | null
+          sale_classification: string | null
           stylist_user_id: string | null
           total_amount: number
           transaction_date: string
@@ -5565,6 +5616,7 @@ export type Database = {
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
           quantity?: number | null
+          sale_classification?: string | null
           stylist_user_id?: string | null
           total_amount: number
           transaction_date: string
@@ -5584,6 +5636,7 @@ export type Database = {
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
           quantity?: number | null
+          sale_classification?: string | null
           stylist_user_id?: string | null
           total_amount?: number
           transaction_date?: string
@@ -6448,6 +6501,252 @@ export type Database = {
           week_number?: number
         }
         Relationships: []
+      }
+      promotion_redemptions: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          discount_applied: number | null
+          final_amount: number | null
+          id: string
+          items_discounted: Json | null
+          location_id: string | null
+          organization_id: string
+          original_amount: number | null
+          promo_code_used: string | null
+          promotion_id: string | null
+          staff_user_id: string | null
+          transaction_date: string | null
+          transaction_id: string | null
+          voucher_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          discount_applied?: number | null
+          final_amount?: number | null
+          id?: string
+          items_discounted?: Json | null
+          location_id?: string | null
+          organization_id: string
+          original_amount?: number | null
+          promo_code_used?: string | null
+          promotion_id?: string | null
+          staff_user_id?: string | null
+          transaction_date?: string | null
+          transaction_id?: string | null
+          voucher_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          discount_applied?: number | null
+          final_amount?: number | null
+          id?: string
+          items_discounted?: Json | null
+          location_id?: string | null
+          organization_id?: string
+          original_amount?: number | null
+          promo_code_used?: string | null
+          promotion_id?: string | null
+          staff_user_id?: string | null
+          transaction_date?: string | null
+          transaction_id?: string | null
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_redemptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_redemptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_redemptions_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_redemptions_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotional_services: {
+        Row: {
+          auto_deactivate: boolean | null
+          created_at: string | null
+          deactivated_at: string | null
+          expires_at: string
+          id: string
+          organization_id: string
+          original_price: number | null
+          original_service_id: string | null
+          promotion_id: string | null
+          promotional_price: number | null
+          service_id: string
+        }
+        Insert: {
+          auto_deactivate?: boolean | null
+          created_at?: string | null
+          deactivated_at?: string | null
+          expires_at: string
+          id?: string
+          organization_id: string
+          original_price?: number | null
+          original_service_id?: string | null
+          promotion_id?: string | null
+          promotional_price?: number | null
+          service_id: string
+        }
+        Update: {
+          auto_deactivate?: boolean | null
+          created_at?: string | null
+          deactivated_at?: string | null
+          expires_at?: string
+          id?: string
+          organization_id?: string
+          original_price?: number | null
+          original_service_id?: string | null
+          promotion_id?: string | null
+          promotional_price?: number | null
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotional_services_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotional_services_original_service_id_fkey"
+            columns: ["original_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotional_services_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotional_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          applicable_category: string[] | null
+          applicable_service_ids: string[] | null
+          applies_to: string | null
+          created_at: string | null
+          created_by: string | null
+          current_usage_count: number | null
+          description: string | null
+          discount_max_amount: number | null
+          discount_value: number | null
+          excluded_service_ids: string[] | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          minimum_purchase: number | null
+          name: string
+          organization_id: string
+          promo_code: string | null
+          promotion_type: string
+          starts_at: string
+          target_audience: string | null
+          target_client_ids: string[] | null
+          target_loyalty_tiers: string[] | null
+          updated_at: string | null
+          usage_limit: number | null
+          usage_per_client: number | null
+        }
+        Insert: {
+          applicable_category?: string[] | null
+          applicable_service_ids?: string[] | null
+          applies_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_usage_count?: number | null
+          description?: string | null
+          discount_max_amount?: number | null
+          discount_value?: number | null
+          excluded_service_ids?: string[] | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          minimum_purchase?: number | null
+          name: string
+          organization_id: string
+          promo_code?: string | null
+          promotion_type: string
+          starts_at?: string
+          target_audience?: string | null
+          target_client_ids?: string[] | null
+          target_loyalty_tiers?: string[] | null
+          updated_at?: string | null
+          usage_limit?: number | null
+          usage_per_client?: number | null
+        }
+        Update: {
+          applicable_category?: string[] | null
+          applicable_service_ids?: string[] | null
+          applies_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_usage_count?: number | null
+          description?: string | null
+          discount_max_amount?: number | null
+          discount_value?: number | null
+          excluded_service_ids?: string[] | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          minimum_purchase?: number | null
+          name?: string
+          organization_id?: string
+          promo_code?: string | null
+          promotion_type?: string
+          starts_at?: string
+          target_audience?: string | null
+          target_client_ids?: string[] | null
+          target_loyalty_tiers?: string[] | null
+          updated_at?: string | null
+          usage_limit?: number | null
+          usage_per_client?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_subscriptions: {
         Row: {
@@ -8289,6 +8588,114 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers: {
+        Row: {
+          code: string
+          expires_at: string | null
+          free_service_id: string | null
+          id: string
+          is_active: boolean | null
+          is_redeemed: boolean | null
+          issued_at: string | null
+          issued_by: string | null
+          issued_to_client_id: string | null
+          issued_to_email: string | null
+          issued_to_name: string | null
+          notes: string | null
+          organization_id: string
+          promotion_id: string | null
+          redeemed_at: string | null
+          redeemed_by_client_id: string | null
+          redeemed_transaction_id: string | null
+          valid_from: string | null
+          value: number | null
+          value_type: string | null
+          voucher_type: string
+        }
+        Insert: {
+          code: string
+          expires_at?: string | null
+          free_service_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_redeemed?: boolean | null
+          issued_at?: string | null
+          issued_by?: string | null
+          issued_to_client_id?: string | null
+          issued_to_email?: string | null
+          issued_to_name?: string | null
+          notes?: string | null
+          organization_id: string
+          promotion_id?: string | null
+          redeemed_at?: string | null
+          redeemed_by_client_id?: string | null
+          redeemed_transaction_id?: string | null
+          valid_from?: string | null
+          value?: number | null
+          value_type?: string | null
+          voucher_type: string
+        }
+        Update: {
+          code?: string
+          expires_at?: string | null
+          free_service_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_redeemed?: boolean | null
+          issued_at?: string | null
+          issued_by?: string | null
+          issued_to_client_id?: string | null
+          issued_to_email?: string | null
+          issued_to_name?: string | null
+          notes?: string | null
+          organization_id?: string
+          promotion_id?: string | null
+          redeemed_at?: string | null
+          redeemed_by_client_id?: string | null
+          redeemed_transaction_id?: string | null
+          valid_from?: string | null
+          value?: number | null
+          value_type?: string | null
+          voucher_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_free_service_id_fkey"
+            columns: ["free_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_issued_to_client_id_fkey"
+            columns: ["issued_to_client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_redeemed_by_client_id_fkey"
+            columns: ["redeemed_by_client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
             referencedColumns: ["id"]
           },
         ]

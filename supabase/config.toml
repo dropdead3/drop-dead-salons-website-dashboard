@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.backup-archival]
 verify_jwt = false
+
+[functions.expire-promotional-services]
+verify_jwt = false
