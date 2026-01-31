@@ -95,7 +95,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
             
             {/* Location Filter Dropdown */}
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="h-7 w-[130px] text-xs">
+              <SelectTrigger className="h-7 w-[130px] text-xs border-border">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>

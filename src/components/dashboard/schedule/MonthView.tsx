@@ -129,12 +129,12 @@ export function MonthView({
                             'text-[10px] px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-80',
                             STATUS_DOT_COLORS[apt.status].replace('bg-', 'bg-opacity-20 bg-'),
                             'border-l-2',
-                            apt.status === 'confirmed' && 'border-l-green-500 bg-green-50',
-                            apt.status === 'booked' && 'border-l-slate-400 bg-slate-50',
-                            apt.status === 'checked_in' && 'border-l-blue-500 bg-blue-50',
-                            apt.status === 'completed' && 'border-l-purple-500 bg-purple-50',
-                            apt.status === 'cancelled' && 'border-l-gray-300 bg-gray-50 opacity-60',
-                            apt.status === 'no_show' && 'border-l-red-500 bg-red-50',
+                          apt.status === 'confirmed' && 'border-l-green-500 bg-green-50 dark:bg-green-950/50',
+                          apt.status === 'booked' && 'border-l-slate-400 bg-slate-50 dark:bg-slate-900/50',
+                          apt.status === 'checked_in' && 'border-l-blue-500 bg-blue-50 dark:bg-blue-950/50',
+                          apt.status === 'completed' && 'border-l-purple-500 bg-purple-50 dark:bg-purple-950/50',
+                          apt.status === 'cancelled' && 'border-l-gray-300 bg-gray-50 dark:bg-gray-900/50 opacity-60',
+                          apt.status === 'no_show' && 'border-l-red-500 bg-red-50 dark:bg-red-950/50',
                           )}
                           onClick={(e) => {
                             e.stopPropagation();

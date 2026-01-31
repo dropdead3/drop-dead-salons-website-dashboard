@@ -35,9 +35,9 @@ function getPriorityBadgeClass(level: 'critical' | 'high' | 'medium' | 'low'): s
     case 'critical':
       return 'bg-destructive text-destructive-foreground';
     case 'high':
-      return 'bg-orange-500 text-white';
+      return 'bg-orange-500 text-orange-50';
     case 'medium':
-      return 'bg-chart-4 text-black';
+      return 'bg-chart-4 text-foreground dark:text-background';
     case 'low':
       return 'bg-primary/10 text-primary';
   }
