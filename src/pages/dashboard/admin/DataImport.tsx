@@ -3,13 +3,10 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Upload, 
   FileSpreadsheet, 
-  CheckCircle2, 
-  AlertCircle, 
   ArrowRight,
   Database,
   Users,
@@ -20,9 +17,8 @@ import {
   Loader2
 } from 'lucide-react';
 import { DataImportWizard } from '@/components/admin/DataImportWizard';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { ImportHistoryCard } from '@/components/admin/ImportHistoryCard';
+import { useImportJobs } from '@/hooks/useImportJobs';
 import { cn } from '@/lib/utils';
 
 // Source system configurations
@@ -84,34 +80,12 @@ export default function DataImport() {
   const [wizardOpen, setWizardOpen] = useState(false);
 
   // Fetch import history
-  const { data: importJobs = [], isLoading: loadingJobs } = useQuery({
-    queryKey: ['import-jobs'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('import_jobs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: importJobs = [], isLoading: loadingJobs } = useImportJobs({ limit: 20 });
 
   const handleStartImport = (source: string, dataType: string) => {
     setSelectedSource(source);
     setSelectedDataType(dataType);
     setWizardOpen(true);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-500';
-      case 'processing': return 'bg-blue-500';
-      case 'failed': return 'bg-red-500';
-      case 'pending': return 'bg-amber-500';
-      default: return 'bg-muted';
-    }
   };
 
   return (
@@ -258,7 +232,7 @@ export default function DataImport() {
                   Recent Imports
                 </CardTitle>
                 <CardDescription>
-                  View the status and results of previous data imports
+                  View the status and results of previous data imports. You can rollback imports within 30 days.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -273,62 +247,9 @@ export default function DataImport() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {importJobs.map((job) => {
-                      const progressPercent = job.total_rows ? Math.round((job.processed_rows / job.total_rows) * 100) : 0;
-                      
-                      return (
-                        <div
-                          key={job.id}
-                          className="flex items-center justify-between p-4 border rounded-lg"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={cn("w-3 h-3 rounded-full", getStatusColor(job.status))} />
-                            <div>
-                              <p className="font-medium capitalize">
-                                {job.entity_type} from {job.source_type}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {format(new Date(job.created_at), 'MMM d, yyyy h:mm a')}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            {job.status === 'processing' && (
-                              <div className="w-32">
-                                <Progress value={progressPercent} className="h-2" />
-                                <p className="text-xs text-muted-foreground mt-1 text-right">
-                                  {progressPercent}%
-                                </p>
-                              </div>
-                            )}
-                            {job.status === 'completed' && (
-                              <div className="text-right">
-                                <div className="flex items-center gap-2 text-green-600">
-                                  <CheckCircle2 className="w-4 h-4" />
-                                  <span className="text-sm font-medium">
-                                    {job.success_count} imported
-                                  </span>
-                                </div>
-                                {job.error_count > 0 && (
-                                  <p className="text-xs text-amber-600">
-                                    {job.error_count} failed
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                            {job.status === 'failed' && (
-                              <div className="flex items-center gap-2 text-red-600">
-                                <AlertCircle className="w-4 h-4" />
-                                <span className="text-sm">Failed</span>
-                              </div>
-                            )}
-                            <Badge variant="outline" className="capitalize">
-                              {job.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {importJobs.map((job) => (
+                      <ImportHistoryCard key={job.id} job={job} showRollback={true} />
+                    ))}
                   </div>
                 )}
               </CardContent>

@@ -14,6 +14,7 @@ interface ImportRequest {
   organization_id?: string;
   data: Record<string, any>[];
   column_mappings?: Record<string, string>;
+  dry_run?: boolean; // Validate only, don't insert data
 }
 
 interface ColumnMapping {
@@ -79,7 +80,7 @@ serve(async (req) => {
     }
 
     const importData: ImportRequest = await req.json();
-    const { template_id, source_type, entity_type, location_id, organization_id, data, column_mappings } = importData;
+    const { template_id, source_type, entity_type, location_id, organization_id, data, column_mappings, dry_run } = importData;
     
     // Determine target table for entity type (staff goes to imported_staff staging table)
     const targetTable = entity_type === 'staff' ? 'imported_staff' : entity_type;
@@ -121,9 +122,10 @@ serve(async (req) => {
         entity_type,
         location_id,
         total_rows: data.length,
-        status: 'processing',
+        status: dry_run ? 'dry_run' : 'processing',
         started_at: new Date().toISOString(),
         created_by: userId,
+        is_dry_run: dry_run || false,
       })
       .select()
       .single();
@@ -152,6 +154,7 @@ serve(async (req) => {
         mapped.external_id = mapped.external_id || null;
         mapped.import_source = source_type || 'csv';
         mapped.imported_at = new Date().toISOString();
+        mapped.import_job_id = jobId; // Link record to job for rollback
 
         // Add organization if provided
         if (organization_id) {
@@ -221,6 +224,12 @@ serve(async (req) => {
           continue;
         }
 
+        // For dry run, just validate without inserting
+        if (dry_run) {
+          successCount++;
+          continue;
+        }
+
         // Insert into appropriate table
         const { error: insertError } = await supabase
           .from(targetTable)
@@ -256,11 +265,19 @@ serve(async (req) => {
       }
     }
 
+    // Determine final status
+    let finalStatus = 'completed';
+    if (dry_run) {
+      finalStatus = 'dry_run';
+    } else if (errorCount > 0 && successCount === 0) {
+      finalStatus = 'failed';
+    }
+
     // Update job with final results
     await supabase
       .from('import_jobs')
       .update({
-        status: errorCount > 0 && successCount === 0 ? 'failed' : 'completed',
+        status: finalStatus,
         processed_rows: data.length,
         success_count: successCount,
         error_count: errorCount,
@@ -270,22 +287,26 @@ serve(async (req) => {
         completed_at: new Date().toISOString(),
         summary: {
           total: data.length,
-          imported: successCount,
+          imported: dry_run ? 0 : successCount,
+          would_import: dry_run ? successCount : undefined,
           skipped: skipCount,
           failed: errorCount,
+          is_dry_run: dry_run || false,
         },
       })
       .eq('id', jobId);
 
-    console.log(`Import completed: ${successCount} success, ${errorCount} errors, ${skipCount} skipped`);
+    console.log(`Import ${dry_run ? '(dry run) ' : ''}completed: ${successCount} ${dry_run ? 'validated' : 'success'}, ${errorCount} errors, ${skipCount} skipped`);
 
     return new Response(
       JSON.stringify({
         success: true,
         job_id: jobId,
+        dry_run: dry_run || false,
         summary: {
           total: data.length,
-          imported: successCount,
+          imported: dry_run ? 0 : successCount,
+          would_import: dry_run ? successCount : undefined,
           skipped: skipCount,
           failed: errorCount,
         },

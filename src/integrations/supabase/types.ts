@@ -250,6 +250,7 @@ export type Database = {
           end_time: string
           external_id: string | null
           id: string
+          import_job_id: string | null
           import_source: string | null
           imported_at: string | null
           location_id: string | null
@@ -281,6 +282,7 @@ export type Database = {
           end_time: string
           external_id?: string | null
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           location_id?: string | null
@@ -312,6 +314,7 @@ export type Database = {
           end_time?: string
           external_id?: string | null
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           location_id?: string | null
@@ -337,6 +340,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "import_jobs"
             referencedColumns: ["id"]
           },
           {
@@ -1055,6 +1065,7 @@ export type Database = {
           external_id: string | null
           first_name: string
           id: string
+          import_job_id: string | null
           import_source: string | null
           imported_at: string | null
           is_active: boolean | null
@@ -1078,6 +1089,7 @@ export type Database = {
           external_id?: string | null
           first_name: string
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
@@ -1101,6 +1113,7 @@ export type Database = {
           external_id?: string | null
           first_name?: string
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
@@ -1118,6 +1131,13 @@ export type Database = {
           visit_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "clients_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "import_jobs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "clients_location_id_fkey"
             columns: ["location_id"]
@@ -2530,8 +2550,11 @@ export type Database = {
           file_name: string | null
           file_size: number | null
           id: string
+          is_dry_run: boolean | null
           location_id: string | null
           processed_rows: number | null
+          rolled_back_at: string | null
+          rolled_back_by: string | null
           skip_count: number | null
           source_type: string
           started_at: string | null
@@ -2553,8 +2576,11 @@ export type Database = {
           file_name?: string | null
           file_size?: number | null
           id?: string
+          is_dry_run?: boolean | null
           location_id?: string | null
           processed_rows?: number | null
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
           skip_count?: number | null
           source_type: string
           started_at?: string | null
@@ -2576,8 +2602,11 @@ export type Database = {
           file_name?: string | null
           file_size?: number | null
           id?: string
+          is_dry_run?: boolean | null
           location_id?: string | null
           processed_rows?: number | null
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
           skip_count?: number | null
           source_type?: string
           started_at?: string | null
@@ -2663,6 +2692,7 @@ export type Database = {
           full_name: string
           hire_date: string | null
           id: string
+          import_job_id: string | null
           import_source: string | null
           imported_at: string | null
           linked_at: string | null
@@ -2683,6 +2713,7 @@ export type Database = {
           full_name: string
           hire_date?: string | null
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           linked_at?: string | null
@@ -2703,6 +2734,7 @@ export type Database = {
           full_name?: string
           hire_date?: string | null
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           linked_at?: string | null
@@ -2716,6 +2748,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "imported_staff_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "import_jobs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "imported_staff_location_id_fkey"
             columns: ["location_id"]
@@ -3157,6 +3196,7 @@ export type Database = {
           hours: string | null
           hours_json: Json | null
           id: string
+          import_job_id: string | null
           is_active: boolean | null
           lunch_minutes: number | null
           major_crossroads: string | null
@@ -3192,6 +3232,7 @@ export type Database = {
           hours?: string | null
           hours_json?: Json | null
           id: string
+          import_job_id?: string | null
           is_active?: boolean | null
           lunch_minutes?: number | null
           major_crossroads?: string | null
@@ -3227,6 +3268,7 @@ export type Database = {
           hours?: string | null
           hours_json?: Json | null
           id?: string
+          import_job_id?: string | null
           is_active?: boolean | null
           lunch_minutes?: number | null
           major_crossroads?: string | null
@@ -3245,6 +3287,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "locations_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "import_jobs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "locations_organization_id_fkey"
             columns: ["organization_id"]
@@ -4903,6 +4952,7 @@ export type Database = {
           description: string | null
           external_id: string | null
           id: string
+          import_job_id: string | null
           import_source: string | null
           imported_at: string | null
           is_active: boolean | null
@@ -4924,6 +4974,7 @@ export type Database = {
           description?: string | null
           external_id?: string | null
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
@@ -4945,6 +4996,7 @@ export type Database = {
           description?: string | null
           external_id?: string | null
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
@@ -4958,6 +5010,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "import_jobs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_location_id_fkey"
             columns: ["location_id"]
@@ -6000,6 +6059,7 @@ export type Database = {
           duration_minutes: number
           external_id: string | null
           id: string
+          import_job_id: string | null
           import_source: string | null
           imported_at: string | null
           is_active: boolean | null
@@ -6021,6 +6081,7 @@ export type Database = {
           duration_minutes?: number
           external_id?: string | null
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
@@ -6042,6 +6103,7 @@ export type Database = {
           duration_minutes?: number
           external_id?: string | null
           id?: string
+          import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
@@ -6055,6 +6117,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "services_import_job_id_fkey"
+            columns: ["import_job_id"]
+            isOneToOne: false
+            referencedRelation: "import_jobs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "services_location_id_fkey"
             columns: ["location_id"]
