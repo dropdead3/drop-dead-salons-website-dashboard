@@ -282,7 +282,20 @@ export default function AccountDetail() {
                     <span className="text-slate-300">{organization.primary_contact_phone}</span>
                   </div>
                 )}
-                {!organization.primary_contact_email && !organization.primary_contact_phone && (
+                {organization.website_url && (
+                  <div className="flex items-center gap-3">
+                    <ExternalLink className="h-4 w-4 text-violet-400" />
+                    <a 
+                      href={organization.website_url.startsWith('http') ? organization.website_url : `https://${organization.website_url}`}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-violet-400 hover:text-violet-300 hover:underline transition-colors"
+                    >
+                      {organization.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                    </a>
+                  </div>
+                )}
+                {!organization.primary_contact_email && !organization.primary_contact_phone && !organization.website_url && (
                   <p className="text-slate-500 text-sm">No contact information provided</p>
                 )}
               </PlatformCardContent>
@@ -343,19 +356,6 @@ export default function AccountDetail() {
                   <Building2 className="h-4 w-4 text-slate-500" />
                   <span className="text-slate-300">Plan: <span className="capitalize">{organization.subscription_tier || 'Standard'}</span></span>
                 </div>
-                {organization.website_url && (
-                  <div className="flex items-center gap-3">
-                    <ExternalLink className="h-4 w-4 text-violet-400" />
-                    <a 
-                      href={organization.website_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-violet-400 hover:text-violet-300 hover:underline transition-colors"
-                    >
-                      {organization.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                    </a>
-                  </div>
-                )}
                 
                 {/* Contract Term Information - Always visible for quick view */}
                 <div className="flex items-center gap-3">
