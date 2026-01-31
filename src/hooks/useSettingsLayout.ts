@@ -21,6 +21,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   dayrate: '#F97316',    // Orange (chair rental)
   'role-access': '#8B5CF6', // Purple (Shield icon theme)
   forms: '#0EA5E9',      // Sky blue (Forms & Agreements)
+  loyalty: '#F59E0B',    // Amber/Gold (Loyalty & Rewards)
 };
 
 // Section groups for organized layout
@@ -28,7 +29,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['business', 'locations', 'schedule', 'dayrate', 'forms', 'levels', 'onboarding', 'handbooks'],
+    categories: ['business', 'locations', 'schedule', 'dayrate', 'forms', 'levels', 'onboarding', 'handbooks', 'loyalty'],
   },
   {
     id: 'team',
