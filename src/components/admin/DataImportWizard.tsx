@@ -49,7 +49,11 @@ interface DataImportWizardProps {
   onOpenChange: (open: boolean) => void;
   sourceType: string;
   dataType: string;
+  organizationId?: string;
 }
+
+// Entity types that require location selection for data isolation
+const LOCATION_REQUIRED_TYPES = ['clients', 'appointments', 'staff', 'products'];
 
 // Field definitions for each data type
 const FIELD_DEFINITIONS: Record<string, { field: string; label: string; required: boolean }[]> = {
@@ -138,9 +142,12 @@ export function DataImportWizard({
   onOpenChange,
   sourceType,
   dataType,
+  organizationId,
 }: DataImportWizardProps) {
   const queryClient = useQueryClient();
-  const { data: locations } = useLocations();
+  const { data: locations } = useLocations(organizationId);
+  
+  const requiresLocation = LOCATION_REQUIRED_TYPES.includes(dataType);
   
   const [step, setStep] = useState<WizardStep>('upload');
   const [file, setFile] = useState<File | null>(null);
@@ -281,10 +288,11 @@ export function DataImportWizard({
       const { data, error } = await supabase.functions.invoke('import-data', {
         body: {
           source_type: sourceType,
-          data_type: dataType,
-          records: transformedData,
+          entity_type: dataType,
+          data: transformedData,
           location_id: selectedLocationId || undefined,
-          field_mapping: fieldMapping,
+          organization_id: organizationId,
+          column_mappings: fieldMapping,
         },
       });
 
@@ -340,23 +348,47 @@ export function DataImportWizard({
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Assign to Location (optional)
+                Assign to Location {requiresLocation ? '(required)' : '(optional)'}
+                {requiresLocation && <span className="text-destructive ml-1">*</span>}
               </Label>
               <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
-                <SelectTrigger>
+                <SelectTrigger className={cn(
+                  requiresLocation && !selectedLocationId && "border-destructive"
+                )}>
                   <SelectValue placeholder="Select a location..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No specific location</SelectItem>
+                  {!requiresLocation && (
+                    <SelectItem value="">No specific location</SelectItem>
+                  )}
                   {locations?.map(loc => (
                     <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                All imported records will be associated with this location
-              </p>
+              {requiresLocation && !selectedLocationId ? (
+                <p className="text-xs text-destructive">
+                  Location is required for {dataType} imports to maintain data isolation
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  All imported records will be associated with this location
+                </p>
+              )}
             </div>
+
+            {/* Continue button for upload step */}
+            {file && csvData.length > 0 && (
+              <div className="flex justify-end pt-4">
+                <Button
+                  onClick={() => setStep('mapping')}
+                  disabled={requiresLocation && !selectedLocationId}
+                >
+                  Continue to Mapping
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            )}
           </div>
         );
 

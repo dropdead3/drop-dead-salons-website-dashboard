@@ -189,6 +189,7 @@ export default function PlatformImport() {
           onOpenChange={setWizardOpen}
           sourceType={selectedOrg.source_software || 'csv'}
           dataType={selectedDataType}
+          organizationId={selectedOrgId}
         />
       )}
     </PlatformPageContainer>
