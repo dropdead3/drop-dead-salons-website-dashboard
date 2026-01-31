@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { FileText, Download, TrendingUp, DollarSign } from 'lucide-react';
 import { useState } from 'react';
 import { useBoothRenter } from '@/hooks/useBoothRenters';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RenterCommissions() {
   const { user } = useAuth();

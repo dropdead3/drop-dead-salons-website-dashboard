@@ -1,4 +1,4 @@
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useBoothRenter } from '@/hooks/useBoothRenters';
 import { useRenterPaymentMethods } from '@/hooks/useRenterPaymentMethods';
 import { useRenterYTDCommissions } from '@/hooks/useCommissionStatements';
