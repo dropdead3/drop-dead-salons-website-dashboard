@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ import {
   Loader2,
   MapPin,
   X,
+  FlaskConical,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -155,12 +157,15 @@ export function DataImportWizard({
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const [isDryRun, setIsDryRun] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importResult, setImportResult] = useState<{
     total: number;
     imported: number;
+    would_import?: number;
     failed: number;
     errors: string[];
+    is_dry_run?: boolean;
   } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -172,6 +177,7 @@ export function DataImportWizard({
     setCsvHeaders([]);
     setCsvData([]);
     setFieldMapping({});
+    setIsDryRun(false);
     setImportProgress(0);
     setImportResult(null);
     setIsProcessing(false);
@@ -293,16 +299,19 @@ export function DataImportWizard({
           location_id: selectedLocationId || undefined,
           organization_id: organizationId,
           column_mappings: fieldMapping,
+          dry_run: isDryRun,
         },
       });
 
       if (error) throw error;
 
       setImportResult({
-        total: data.total || transformedData.length,
-        imported: data.imported || 0,
-        failed: data.failed || 0,
-        errors: data.errors || [],
+        total: data.summary?.total || transformedData.length,
+        imported: data.summary?.imported || 0,
+        would_import: data.summary?.would_import,
+        failed: data.summary?.failed || 0,
+        errors: data.errors?.map((e: any) => `Row ${e.row}: ${e.error}`) || [],
+        is_dry_run: data.dry_run || isDryRun,
       });
       setImportProgress(100);
       setStep('complete');
@@ -311,7 +320,11 @@ export function DataImportWizard({
       queryClient.invalidateQueries({ queryKey: [dataType] });
       queryClient.invalidateQueries({ queryKey: ['import-jobs'] });
 
-      toast.success(`Successfully imported ${data.imported} records`);
+      if (isDryRun) {
+        toast.success(`Dry run complete: ${data.summary?.would_import || 0} records would be imported`);
+      } else {
+        toast.success(`Successfully imported ${data.summary?.imported || 0} records`);
+      }
     } catch (error: any) {
       toast.error('Import failed: ' + error.message);
       setStep('preview');
@@ -481,9 +494,27 @@ export function DataImportWizard({
               </Table>
             </ScrollArea>
 
-            <div className="p-4 bg-muted rounded-lg">
+            {/* Dry Run Toggle */}
+            <div className="p-4 bg-muted rounded-lg space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FlaskConical className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <Label htmlFor="dry-run" className="font-medium">Dry Run (Validate Only)</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Preview what will be imported without making changes
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="dry-run"
+                  checked={isDryRun}
+                  onCheckedChange={setIsDryRun}
+                />
+              </div>
+              
               <p className="text-sm">
-                <strong>{csvData.length}</strong> total records will be imported to{' '}
+                <strong>{csvData.length}</strong> total records will be {isDryRun ? 'validated' : 'imported'} to{' '}
                 <strong className="capitalize">{dataType}</strong>
                 {selectedLocationId && locations && (
                   <> at <strong>{locations.find(l => l.id === selectedLocationId)?.name}</strong></>
@@ -498,7 +529,9 @@ export function DataImportWizard({
           <div className="py-12 text-center space-y-6">
             <Loader2 className="w-16 h-16 mx-auto animate-spin text-primary" />
             <div>
-              <p className="text-lg font-medium mb-2">Importing your data...</p>
+              <p className="text-lg font-medium mb-2">
+                {isDryRun ? 'Validating your data...' : 'Importing your data...'}
+              </p>
               <p className="text-sm text-muted-foreground">
                 Please don't close this window
               </p>
@@ -508,20 +541,38 @@ export function DataImportWizard({
         );
 
       case 'complete':
+        const isDryRunResult = importResult?.is_dry_run;
         return (
           <div className="py-8 text-center space-y-6">
-            {importResult?.failed === 0 ? (
+            {isDryRunResult ? (
+              <FlaskConical className="w-16 h-16 mx-auto text-blue-500" />
+            ) : importResult?.failed === 0 ? (
               <CheckCircle2 className="w-16 h-16 mx-auto text-green-500" />
             ) : (
               <AlertCircle className="w-16 h-16 mx-auto text-amber-500" />
             )}
             <div>
-              <p className="text-lg font-medium mb-2">Import Complete</p>
+              <p className="text-lg font-medium mb-2">
+                {isDryRunResult ? 'Dry Run Complete' : 'Import Complete'}
+              </p>
+              {isDryRunResult && (
+                <Badge variant="secondary" className="mb-3">
+                  <FlaskConical className="w-3 h-3 mr-1" />
+                  No data was imported
+                </Badge>
+              )}
               <div className="flex items-center justify-center gap-6 text-sm">
-                <span className="text-green-600">
-                  <CheckCircle2 className="w-4 h-4 inline mr-1" />
-                  {importResult?.imported} imported
-                </span>
+                {isDryRunResult ? (
+                  <span className="text-blue-600">
+                    <CheckCircle2 className="w-4 h-4 inline mr-1" />
+                    {importResult?.would_import || 0} would be imported
+                  </span>
+                ) : (
+                  <span className="text-green-600">
+                    <CheckCircle2 className="w-4 h-4 inline mr-1" />
+                    {importResult?.imported} imported
+                  </span>
+                )}
                 {importResult?.failed && importResult.failed > 0 && (
                   <span className="text-red-600">
                     <X className="w-4 h-4 inline mr-1" />
@@ -530,6 +581,12 @@ export function DataImportWizard({
                 )}
               </div>
             </div>
+
+            {isDryRunResult && (importResult?.would_import || 0) > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Ready to import? Run again with dry run disabled.
+              </p>
+            )}
 
             {importResult?.errors && importResult.errors.length > 0 && (
               <ScrollArea className="h-32 border rounded-lg p-3 text-left">
