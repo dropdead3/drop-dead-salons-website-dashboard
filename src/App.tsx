@@ -95,6 +95,8 @@ import Transactions from "./pages/dashboard/Transactions";
 import Inventory from "./pages/dashboard/Inventory";
 import Register from "./pages/dashboard/Register";
 import LoyaltyProgram from "./pages/dashboard/settings/LoyaltyProgram";
+import BoothRenters from "./pages/dashboard/admin/BoothRenters";
+import RentPayments from "./pages/dashboard/admin/RentPayments";
 
 // Platform Admin pages
 import PlatformOverview from "./pages/dashboard/platform/Overview";
@@ -223,6 +225,8 @@ const App = () => (
                       <Route path="/dashboard/inventory" element={<ProtectedRoute requiredPermission="manage_inventory"><Inventory /></ProtectedRoute>} />
                       <Route path="/dashboard/register" element={<ProtectedRoute requiredPermission="process_retail_sales"><Register /></ProtectedRoute>} />
                       <Route path="/dashboard/settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/rent-payments" element={<ProtectedRoute requiredPermission="manage_rent_payments"><RentPayments /></ProtectedRoute>} />
 
                       {/* Platform Admin routes - nested under PlatformLayout with sidebar */}
                       <Route path="/dashboard/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
