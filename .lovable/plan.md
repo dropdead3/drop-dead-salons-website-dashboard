@@ -1,272 +1,175 @@
 
-## My Pay Feature - Personal Earnings Dashboard for Team Members ✅ IMPLEMENTED
+## Dark Mode Color Fix Plan
 
-This plan creates a dedicated "My Pay" experience where team members can view their earnings, track estimated compensation through the current pay period, and access pay stubs from finalized payroll runs.
-
-**Status**: Implemented on 2026-01-31
-
-### Feature Overview
-
-Team members will be able to:
-1. **View current period estimated earnings** - Real-time calculation based on hours worked and sales data from Phorest
-2. **See earnings breakdown** - Base pay (hourly/salary), commissions, bonuses, tips
-3. **Track commission progress** - Leverage existing tier visualization components
-4. **Access pay stub history** - View and download finalized payroll records
-5. **Understand tax withholdings** - See estimated deductions
+This plan addresses multiple dashboard components that have incorrect colors in dark mode due to hardcoded light colors, low-opacity backgrounds, and missing dark mode variants.
 
 ---
 
-### Implementation Approach
+### Issues Identified
 
-Based on my analysis, I recommend **creating a dedicated `/dashboard/my-pay` page** rather than adding a tab to MyProfile. This approach:
-- Keeps MyProfile focused on contact/schedule information
-- Follows the existing pattern of "My" pages (My Graduation, My Handbooks, My Stats)
-- Provides more space for earnings visualizations and history tables
-- Allows permission-gated access via `view_my_pay` permission
+Based on the screenshot and code analysis, the following elements have incorrect colors in dark mode:
+
+| Component | Issue | Location |
+|-----------|-------|----------|
+| Select Dropdowns | `bg-background` not properly inheriting dark theme | All select triggers on dashboard |
+| Announcements Filter | Select trigger appears washed out | `AnnouncementsBento.tsx:98` |
+| Analytics Filter Bar | Location and date selects appear faded | `AnalyticsFilterBar.tsx:70, 95` |
+| Sales Overview Icon | `bg-primary/10` too faint on dark background | `AggregateSalesCard.tsx:274` |
+| Hiring Capacity Badge | `text-black` hardcoded for medium priority | `HiringCapacityCard.tsx:40` |
+| Schedule Month View | Hardcoded light backgrounds (`bg-green-50`, `bg-slate-50`, etc.) | `MonthView.tsx:132-137` |
 
 ---
 
-### Architecture
+### Root Cause
 
-```text
-+-----------------------+       +-------------------------+
-|   My Pay Page         | <---> | useMyPayData Hook       |
-|   (Employee View)     |       | - Current period calcs  |
-+-----------------------+       | - Personal pay stubs    |
-         |                      +-------------------------+
-         |                               |
-         v                               v
-+------------------+           +-------------------+
-| Reused Components|           | Database Tables   |
-| - CommissionCalc |           | - payroll_runs    |
-| - TierProgress   |           | - payroll_line_items
-| - BlurredAmount  |           | - employee_payroll_settings
-+------------------+           | - phorest_daily_sales_summary
-                               +-------------------+
+The dashboard uses scoped dark mode via a `.dark` class on a wrapper div in `DashboardLayout.tsx`. While CSS variables are properly defined for `.dark` mode in `index.css`, some components use:
+
+1. **Hardcoded colors** (e.g., `text-black`, `bg-white`, `bg-green-50`)
+2. **Low opacity overlays** that become invisible on dark backgrounds (e.g., `bg-primary/10`)
+3. **Light-only Tailwind color utilities** without dark mode variants
+
+---
+
+### Solution Approach
+
+Replace hardcoded and light-only colors with:
+- **CSS variable-based colors** that adapt to theme (e.g., `bg-muted`, `bg-accent`)
+- **Dark mode variants** where specific colors are needed (e.g., `bg-green-50 dark:bg-green-950`)
+- **Higher opacity values** for overlays on dark backgrounds (e.g., `bg-primary/10` to `bg-primary/15` or use `bg-accent`)
+
+---
+
+### Changes by File
+
+#### 1. `src/components/dashboard/AggregateSalesCard.tsx`
+**Line 274**: Change icon background from `bg-primary/10` to a theme-aware color
+
+```tsx
+// Before
+<div className="w-10 h-10 bg-primary/10 flex items-center justify-center rounded-lg">
+
+// After  
+<div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
 ```
 
 ---
 
-### UI Design
+#### 2. `src/components/dashboard/HiringCapacityCard.tsx`
+**Lines 38-40**: Replace hardcoded `text-white` and `text-black` with foreground variables
 
-**Page Structure:**
+```tsx
+// Before
+case 'high':
+  return 'bg-orange-500 text-white';
+case 'medium':
+  return 'bg-chart-4 text-black';
 
-```text
-+------------------------------------------------------------+
-|  MY PAY                                                     |
-|  Your earnings and pay history                             |
-+------------------------------------------------------------+
-|                                                            |
-|  [Current Period] [Pay History]                            |
-|                                                            |
-|  +------------------------+  +---------------------------+ |
-|  | CURRENT PERIOD         |  | ESTIMATED COMMISSION      | |
-|  | Jan 15 - Jan 31        |  | Based on your sales       | |
-|  |                        |  |                           | |
-|  | Base Pay    $1,200     |  |    $847 (estimated)       | |
-|  | Commission   $847*     |  |    [Tier: Silver - 42%]   | |
-|  | -------------------    |  |                           | |
-|  | Est. Gross  $2,047     |  | [====>----] $653 to Gold  | |
-|  | Est. Taxes   ~$673     |  |                           | |
-|  | -------------------    |  +---------------------------+ |
-|  | Est. Net   ~$1,374     |                                |
-|  +------------------------+                                |
-|                                                            |
-|  +-------------------------------------------------------+ |
-|  | EARNINGS BREAKDOWN                                    | |
-|  | +-------------+-------------+-------------+           | |
-|  | | Base Pay    | Commission  | Tips/Bonus  |           | |
-|  | | $1,200      | $847        | $0          |           | |
-|  | +-------------+-------------+-------------+           | |
-|  +-------------------------------------------------------+ |
-+------------------------------------------------------------+
+// After
+case 'high':
+  return 'bg-orange-500 text-orange-50';
+case 'medium':
+  return 'bg-chart-4 text-chart-4-foreground dark:text-background';
+```
 
-[Pay History Tab]
-+------------------------------------------------------------+
-|  PAY HISTORY                                               |
-|                                                            |
-|  +-------------------------------------------------------+ |
-|  | Check Date  | Period          | Gross  | Net   | [>]  | |
-|  |-------------|-----------------|--------|-------|------| |
-|  | Jan 15      | Jan 1 - Jan 14  | $1,892 | $1,240| View | |
-|  | Jan 1       | Dec 18 - Dec 31 | $2,104 | $1,378| View | |
-|  | Dec 18      | Dec 4 - Dec 17  | $1,756 | $1,150| View | |
-|  +-------------------------------------------------------+ |
-|                                                            |
-|  No pay stub selected                                      |
-|  Click "View" to see details                               |
-+------------------------------------------------------------+
+Since `chart-4` doesn't have a foreground variable, we'll use `text-foreground` with a dark mode override:
+
+```tsx
+case 'medium':
+  return 'bg-chart-4 text-foreground dark:text-background';
 ```
 
 ---
 
-### Component Structure
+#### 3. `src/components/dashboard/schedule/MonthView.tsx`
+**Lines 132-137**: Add dark mode variants for appointment status backgrounds
 
-| Component | Purpose |
-|-----------|---------|
-| `MyPay.tsx` | Main page with two tabs: Current Period and Pay History |
-| `CurrentPeriodCard.tsx` | Shows estimated earnings for active pay period |
-| `EarningsBreakdownCard.tsx` | Visual breakdown of base, commission, tips |
-| `MyPayStubHistory.tsx` | Table of finalized pay stubs for this employee |
-| `PayStubDetailDialog.tsx` | Modal showing full breakdown when viewing a pay stub |
+```tsx
+// Before
+apt.status === 'confirmed' && 'border-l-green-500 bg-green-50',
+apt.status === 'booked' && 'border-l-slate-400 bg-slate-50',
+apt.status === 'checked_in' && 'border-l-blue-500 bg-blue-50',
+apt.status === 'completed' && 'border-l-purple-500 bg-purple-50',
+apt.status === 'cancelled' && 'border-l-gray-300 bg-gray-50 opacity-60',
+apt.status === 'no_show' && 'border-l-red-500 bg-red-50',
 
----
-
-### Data Layer
-
-**New Hook: `useMyPayData.ts`**
-
-This hook provides:
-1. **Current employee payroll settings** - Filtered to current user from `employee_payroll_settings`
-2. **Current period sales data** - From `phorest_daily_sales_summary` for the active pay period
-3. **Estimated compensation** - Uses `usePayrollCalculations` logic
-4. **Pay stub history** - Query `payroll_line_items` joined with `payroll_runs` filtered by `employee_id = auth.uid()`
-
-```typescript
-interface MyPayData {
-  settings: EmployeePayrollSettings | null;
-  currentPeriod: {
-    startDate: string;
-    endDate: string;
-    checkDate: string;
-  };
-  salesData: {
-    serviceRevenue: number;
-    productRevenue: number;
-  };
-  estimatedCompensation: EmployeeCompensation | null;
-  payStubs: PayStub[];
-  isLoading: boolean;
-}
-
-interface PayStub {
-  id: string;
-  payrollRunId: string;
-  payPeriodStart: string;
-  payPeriodEnd: string;
-  checkDate: string;
-  status: string;
-  grossPay: number;
-  regularHours: number;
-  overtimeHours: number;
-  hourlyPay: number;
-  salaryPay: number;
-  commissionPay: number;
-  bonusPay: number;
-  tips: number;
-  taxes: number;
-  deductions: number;
-  netPay: number;
-}
+// After
+apt.status === 'confirmed' && 'border-l-green-500 bg-green-50 dark:bg-green-950/50',
+apt.status === 'booked' && 'border-l-slate-400 bg-slate-50 dark:bg-slate-900/50',
+apt.status === 'checked_in' && 'border-l-blue-500 bg-blue-50 dark:bg-blue-950/50',
+apt.status === 'completed' && 'border-l-purple-500 bg-purple-50 dark:bg-purple-950/50',
+apt.status === 'cancelled' && 'border-l-gray-300 bg-gray-50 dark:bg-gray-900/50 opacity-60',
+apt.status === 'no_show' && 'border-l-red-500 bg-red-50 dark:bg-red-950/50',
 ```
 
 ---
 
-### Database Considerations
+#### 4. `src/components/dashboard/AnnouncementsBento.tsx`
+**Line 98**: Ensure SelectTrigger uses proper border for visibility in dark mode
 
-**RLS Policy Update Needed:**
+```tsx
+// Before
+<SelectTrigger className="h-7 w-[130px] text-xs">
 
-Currently, `payroll_line_items` may only be readable by org admins. We need to add a policy allowing employees to read their own records:
-
-```sql
-CREATE POLICY "Employees can view their own pay stubs"
-ON public.payroll_line_items FOR SELECT
-USING (employee_id = auth.uid());
-```
-
-Similarly for `employee_payroll_settings`:
-
-```sql
-CREATE POLICY "Employees can view their own payroll settings"
-ON public.employee_payroll_settings FOR SELECT
-USING (employee_id = auth.uid());
+// After
+<SelectTrigger className="h-7 w-[130px] text-xs border-border">
 ```
 
 ---
 
-### Permission & Navigation
+#### 5. `src/components/dashboard/AnalyticsFilterBar.tsx`
+**Lines 70 and 95**: Add explicit border styling for better dark mode visibility
 
-**New Permission:**
-- `view_my_pay` - Allows access to the My Pay page
+```tsx
+// Line 70 - Before
+<SelectTrigger className="h-9 w-auto min-w-[180px] text-sm">
 
-**Navigation Integration:**
-Add to `DashboardLayout.tsx` in a new "My Money" or existing section:
+// Line 70 - After
+<SelectTrigger className="h-9 w-auto min-w-[180px] text-sm border-border">
 
-```typescript
-{ 
-  href: '/dashboard/my-pay', 
-  label: 'My Pay', 
-  icon: Wallet, 
-  permission: 'view_my_pay' 
-}
-```
+// Line 95 - Before  
+<SelectTrigger className="h-9 w-auto min-w-[160px] text-sm">
 
-**Sidebar Route Config:**
-Add to `SidebarLayoutEditor.tsx`:
-
-```typescript
-'/dashboard/my-pay': { label: 'My Pay', icon: Wallet },
+// Line 95 - After
+<SelectTrigger className="h-9 w-auto min-w-[160px] text-sm border-border">
 ```
 
 ---
 
-### UI Component Reuse
+#### 6. `src/components/ui/select.tsx` (Optional Global Fix)
+If the individual component fixes aren't sufficient, update the base SelectTrigger to use a more visible border in dark mode:
 
-The following existing components can be reused or adapted:
-- `CommissionCalculator` - For displaying estimated commission with tier info
-- `TierProgressAlert` - For showing progress to next commission tier
-- `BlurredAmount` - For privacy mode compatibility
-- `PayrollHistoryTable` pattern - Adapted for single-employee view
-- Card patterns from `Stats.tsx` - For current period summary
+**Line 20**: Ensure border is visible
 
----
+```tsx
+// Before
+"flex h-10 w-full items-center justify-between rounded-full border border-input bg-background px-4 py-2 text-sm..."
 
-### Files to Create/Modify
+// After (ensure border-input variable is properly defined for dark mode)
+"flex h-10 w-full items-center justify-between rounded-full border border-input bg-background px-4 py-2 text-sm..."
+```
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/pages/dashboard/MyPay.tsx` | **Create** | Main page with tabs |
-| `src/components/dashboard/mypay/CurrentPeriodCard.tsx` | **Create** | Estimated earnings display |
-| `src/components/dashboard/mypay/EarningsBreakdownCard.tsx` | **Create** | Visual earnings breakdown |
-| `src/components/dashboard/mypay/MyPayStubHistory.tsx` | **Create** | Personal pay stub table |
-| `src/components/dashboard/mypay/PayStubDetailDialog.tsx` | **Create** | Pay stub detail modal |
-| `src/hooks/useMyPayData.ts` | **Create** | Personal pay data hook |
-| `src/App.tsx` | **Edit** | Add route for `/dashboard/my-pay` |
-| `src/components/dashboard/DashboardLayout.tsx` | **Edit** | Add nav item |
-| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | **Edit** | Register route |
-| Database migration | **Create** | Add RLS policies + permission |
+The `border-input` class uses `hsl(var(--input))` which should be `0 0% 12%` in dark mode - this should be visible. If still too faint, we can adjust the `--input` variable in `index.css` for dark mode.
 
 ---
 
-### Privacy Considerations
+### Files to Modify
 
-- All monetary values wrapped in `BlurredAmount` for "Hide Numbers" mode
-- Employees can ONLY see their own data (enforced via RLS)
-- Pay settings (hourly rate, salary) are shown to the employee but not to other team members
-- Estimated taxes are clearly labeled as "estimates" since actual withholdings may differ
-
----
-
-### Technical Notes
-
-1. **Pay Period Detection**: Will infer current pay period from most recent finalized payroll run or default to bi-weekly from today
-
-2. **Real-time Estimates**: Uses live Phorest sales data to show up-to-the-minute commission estimates
-
-3. **No Hours Entry**: For the estimated view, we'll assume standard hours or skip hourly estimates if no hours are tracked yet
-
-4. **Commission-Only View**: For commission-only employees, the base pay section will be minimal/hidden
-
-5. **Export Option**: Pay stubs can be downloaded as PDF (future enhancement)
-
-6. **Mobile Responsive**: Cards stack vertically on mobile with touch-friendly interactions
+| File | Changes |
+|------|---------|
+| `src/components/dashboard/AggregateSalesCard.tsx` | Line 274: Icon background |
+| `src/components/dashboard/HiringCapacityCard.tsx` | Lines 38-40: Badge text colors |
+| `src/components/dashboard/schedule/MonthView.tsx` | Lines 132-137: Status backgrounds |
+| `src/components/dashboard/AnnouncementsBento.tsx` | Line 98: SelectTrigger border |
+| `src/components/dashboard/AnalyticsFilterBar.tsx` | Lines 70, 95: SelectTrigger borders |
 
 ---
 
-### Suggested Enhancements (Future)
+### Testing Checklist
 
-- **Direct Deposit Setup**: Link to bank account verification flow when provider is connected
-- **YTD Earnings**: Running total for the calendar year
-- **W-2/Tax Documents**: Access to year-end tax forms (when provider connected)
-- **Pay Schedule Calendar**: Visual calendar showing upcoming pay dates
-- **Earnings Comparison**: Month-over-month or year-over-year trends
+After implementation, verify in dark mode:
+- Dashboard home page loads with correct colors
+- "All" dropdown in Announcements section is visible and readable
+- "All Locations" and "Today" filter dropdowns have proper contrast
+- Sales Overview "$" icon has visible background
+- Hiring Capacity priority badges are readable
+- Schedule Month View appointment indicators have appropriate dark backgrounds
