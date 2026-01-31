@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Building2, Upload, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { 
+  Building2, 
+  Upload, 
+  AlertCircle, 
+  FileSpreadsheet,
+  Users,
+  Scissors,
+  Calendar,
+  UserCog,
+  MapPin,
+  Package,
+  LucideIcon,
+} from 'lucide-react';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { DataImportWizard } from '@/components/admin/DataImportWizard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -23,10 +35,20 @@ import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 
-const importTypes = [
-  { value: 'clients', label: 'Clients', description: 'Import customer data' },
-  { value: 'services', label: 'Services', description: 'Import service catalog' },
-  { value: 'appointments', label: 'Appointments', description: 'Import appointment history' },
+interface ImportType {
+  value: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}
+
+const importTypes: ImportType[] = [
+  { value: 'clients', label: 'Clients', description: 'Import customer data', icon: Users },
+  { value: 'services', label: 'Services', description: 'Import service catalog', icon: Scissors },
+  { value: 'appointments', label: 'Appointments', description: 'Import booking history', icon: Calendar },
+  { value: 'staff', label: 'Staff', description: 'Import team members', icon: UserCog },
+  { value: 'locations', label: 'Locations', description: 'Import salon branches', icon: MapPin },
+  { value: 'products', label: 'Products', description: 'Import retail inventory', icon: Package },
 ];
 
 export default function PlatformImport() {
@@ -117,33 +139,36 @@ export default function PlatformImport() {
             </PlatformCardHeader>
             <PlatformCardContent>
               <div className="grid gap-4 md:grid-cols-3">
-                {importTypes.map((type) => (
-                  <PlatformCard 
-                    key={type.value} 
-                    variant="interactive"
-                    className="cursor-pointer"
-                  >
-                    <PlatformCardHeader className="pb-2">
-                      <PlatformCardTitle className="text-base flex items-center gap-2">
-                        <FileSpreadsheet className="h-4 w-4 text-violet-400" />
-                        {type.label}
-                      </PlatformCardTitle>
-                      <PlatformCardDescription className="text-xs">
-                        {type.description}
-                      </PlatformCardDescription>
-                    </PlatformCardHeader>
-                    <PlatformCardContent>
-                      <PlatformButton 
-                        className="w-full" 
-                        size="sm"
-                        onClick={() => handleStartImport(type.value)}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Start Import
-                      </PlatformButton>
-                    </PlatformCardContent>
-                  </PlatformCard>
-                ))}
+                {importTypes.map((type) => {
+                  const IconComponent = type.icon;
+                  return (
+                    <PlatformCard 
+                      key={type.value} 
+                      variant="interactive"
+                      className="cursor-pointer"
+                    >
+                      <PlatformCardHeader className="pb-2">
+                        <PlatformCardTitle className="text-base flex items-center gap-2">
+                          <IconComponent className="h-4 w-4 text-violet-400" />
+                          {type.label}
+                        </PlatformCardTitle>
+                        <PlatformCardDescription className="text-xs">
+                          {type.description}
+                        </PlatformCardDescription>
+                      </PlatformCardHeader>
+                      <PlatformCardContent>
+                        <PlatformButton 
+                          className="w-full" 
+                          size="sm"
+                          onClick={() => handleStartImport(type.value)}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Start Import
+                        </PlatformButton>
+                      </PlatformCardContent>
+                    </PlatformCard>
+                  );
+                })}
               </div>
             </PlatformCardContent>
           </PlatformCard>

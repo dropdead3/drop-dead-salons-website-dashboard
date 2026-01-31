@@ -97,6 +97,38 @@ const FIELD_DEFINITIONS: Record<string, { field: string; label: string; required
     { field: 'payment_method', label: 'Payment Method', required: false },
     { field: 'external_id', label: 'External ID', required: false },
   ],
+  staff: [
+    { field: 'full_name', label: 'Full Name', required: true },
+    { field: 'email', label: 'Email', required: false },
+    { field: 'phone', label: 'Phone', required: false },
+    { field: 'hire_date', label: 'Hire Date', required: false },
+    { field: 'stylist_level', label: 'Level/Tier', required: false },
+    { field: 'specialties', label: 'Specialties', required: false },
+    { field: 'bio', label: 'Bio', required: false },
+    { field: 'external_id', label: 'External ID', required: false },
+  ],
+  locations: [
+    { field: 'name', label: 'Location Name', required: true },
+    { field: 'address', label: 'Address', required: true },
+    { field: 'city', label: 'City', required: true },
+    { field: 'state_province', label: 'State/Province', required: false },
+    { field: 'phone', label: 'Phone', required: true },
+    { field: 'hours', label: 'Hours', required: false },
+    { field: 'store_number', label: 'Store Number', required: false },
+    { field: 'external_id', label: 'External ID', required: false },
+  ],
+  products: [
+    { field: 'name', label: 'Product Name', required: true },
+    { field: 'sku', label: 'SKU', required: false },
+    { field: 'barcode', label: 'Barcode', required: false },
+    { field: 'category', label: 'Category', required: false },
+    { field: 'brand', label: 'Brand', required: false },
+    { field: 'retail_price', label: 'Retail Price', required: false },
+    { field: 'cost_price', label: 'Cost Price', required: false },
+    { field: 'quantity_on_hand', label: 'Quantity', required: false },
+    { field: 'description', label: 'Description', required: false },
+    { field: 'external_id', label: 'External ID', required: false },
+  ],
 };
 
 type WizardStep = 'upload' | 'mapping' | 'preview' | 'importing' | 'complete';
