@@ -1,0 +1,264 @@
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { DollarSign, Users, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+
+interface RentRevenueTabProps {
+  organizationId: string;
+}
+
+export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
+  // Fetch rent revenue stats
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['rent-revenue-stats', organizationId],
+    queryFn: async () => {
+      // Get all rent payments for the last 12 months
+      const startDate = format(subMonths(new Date(), 11), 'yyyy-MM-01');
+      
+      const { data: payments } = await supabase
+        .from('rent_payments' as any)
+        .select('amount, late_fee_amount, paid_at, due_date, status')
+        .eq('organization_id', organizationId)
+        .gte('due_date', startDate);
+
+      // Get active booth renters count
+      const { data: renters } = await supabase
+        .from('booth_renter_profiles' as any)
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('status', 'active');
+
+      // Calculate stats
+      const now = new Date();
+      const currentMonth = format(now, 'yyyy-MM');
+      
+      let totalCollected = 0;
+      let totalExpected = 0;
+      let currentMonthCollected = 0;
+      let currentMonthExpected = 0;
+      let overdueAmount = 0;
+      let overdueCount = 0;
+      let lateFees = 0;
+
+      const monthlyData = new Map<string, { collected: number; expected: number; late_fees: number }>();
+
+      ((payments || []) as any[]).forEach((payment: any) => {
+        const monthKey = format(new Date(payment.due_date), 'yyyy-MM');
+        const amount = payment.amount || 0;
+        const lateFee = payment.late_fee_amount || 0;
+
+        const existing = monthlyData.get(monthKey) || { collected: 0, expected: 0, late_fees: 0 };
+        existing.expected += amount;
+
+        if (payment.status === 'paid') {
+          existing.collected += amount;
+          totalCollected += amount;
+          lateFees += lateFee;
+        }
+
+        if (payment.status === 'overdue') {
+          overdueAmount += amount;
+          overdueCount++;
+        }
+
+        totalExpected += amount;
+        monthlyData.set(monthKey, existing);
+
+        if (monthKey === currentMonth) {
+          currentMonthExpected += amount;
+          if (payment.status === 'paid') {
+            currentMonthCollected += amount;
+          }
+        }
+      });
+
+      // Convert to array for chart
+      const chartData = Array.from(monthlyData.entries())
+        .map(([month, data]) => ({
+          month: format(new Date(month + '-01'), 'MMM'),
+          collected: data.collected,
+          expected: data.expected,
+          late_fees: data.late_fees,
+        }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+
+      const collectionRate = totalExpected > 0 ? (totalCollected / totalExpected) * 100 : 0;
+
+      return {
+        totalCollected,
+        totalExpected,
+        currentMonthCollected,
+        currentMonthExpected,
+        collectionRate,
+        overdueAmount,
+        overdueCount,
+        lateFees,
+        activeRenters: (renters || []).length,
+        chartData,
+      };
+    },
+    enabled: !!organizationId,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="grid grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-24 bg-muted rounded-lg" />
+          ))}
+        </div>
+        <div className="h-64 bg-muted rounded-lg" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">MTD Collected</p>
+                <p className="text-2xl font-bold">
+                  ${(stats?.currentMonthCollected || 0).toFixed(0)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  of ${(stats?.currentMonthExpected || 0).toFixed(0)} expected
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-green-500/10">
+                <DollarSign className="h-5 w-5 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Collection Rate</p>
+                <p className="text-2xl font-bold">
+                  {(stats?.collectionRate || 0).toFixed(1)}%
+                </p>
+                <Progress value={stats?.collectionRate || 0} className="h-2 mt-2" />
+              </div>
+              <div className="p-3 rounded-full bg-blue-500/10">
+                <CheckCircle className="h-5 w-5 text-blue-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Overdue</p>
+                <p className="text-2xl font-bold text-red-500">
+                  ${(stats?.overdueAmount || 0).toFixed(0)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {stats?.overdueCount || 0} payments
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-red-500/10">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Active Renters</p>
+                <p className="text-2xl font-bold">{stats?.activeRenters || 0}</p>
+                <p className="text-xs text-muted-foreground">
+                  ${(stats?.lateFees || 0).toFixed(0)} in late fees
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-purple-500/10">
+                <Users className="h-5 w-5 text-purple-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Revenue Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Rent Revenue Trend</CardTitle>
+          <CardDescription>Monthly collected vs expected rent</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={stats?.chartData || []}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="month" className="text-xs" />
+                <YAxis className="text-xs" tickFormatter={(v) => `$${v}`} />
+                <Tooltip 
+                  formatter={(value: number) => `$${value.toFixed(2)}`}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="expected" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fill="hsl(var(--muted))" 
+                  strokeWidth={2}
+                  name="Expected"
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="collected" 
+                  stroke="hsl(var(--primary))" 
+                  fill="hsl(var(--primary))" 
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                  name="Collected"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* YTD Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Year-to-Date Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-4 rounded-lg bg-muted">
+              <p className="text-sm text-muted-foreground">Total Collected</p>
+              <p className="text-3xl font-bold">${(stats?.totalCollected || 0).toFixed(0)}</p>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-muted">
+              <p className="text-sm text-muted-foreground">Total Expected</p>
+              <p className="text-3xl font-bold">${(stats?.totalExpected || 0).toFixed(0)}</p>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-muted">
+              <p className="text-sm text-muted-foreground">Late Fees Collected</p>
+              <p className="text-3xl font-bold">${(stats?.lateFees || 0).toFixed(0)}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
