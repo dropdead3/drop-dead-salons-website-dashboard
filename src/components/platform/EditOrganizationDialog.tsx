@@ -49,6 +49,7 @@ const editFormSchema = z.object({
   legal_name: z.string().optional().nullable(),
   business_type: z.enum(['salon', 'spa', 'esthetics', 'barbershop', 'med_spa', 'wellness', 'other']),
   logo_url: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
+  website_url: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
   
   // Account Status
   status: z.enum(['pending', 'active', 'suspended', 'churned']),
@@ -138,6 +139,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
       legal_name: organization.legal_name || '',
       business_type: organization.business_type || 'salon',
       logo_url: organization.logo_url || '',
+      website_url: organization.website_url || '',
       status: organization.status || 'pending',
       onboarding_stage: organization.onboarding_stage || 'new',
       subscription_tier: organization.subscription_tier || 'standard',
@@ -158,6 +160,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
         legal_name: organization.legal_name || '',
         business_type: organization.business_type || 'salon',
         logo_url: organization.logo_url || '',
+        website_url: organization.website_url || '',
         status: organization.status || 'pending',
         onboarding_stage: organization.onboarding_stage || 'new',
         subscription_tier: organization.subscription_tier || 'standard',
@@ -187,6 +190,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
         legal_name: values.legal_name || null,
         business_type: values.business_type as BusinessType,
         logo_url: values.logo_url || null,
+        website_url: values.website_url || null,
         status: values.status,
         onboarding_stage: values.onboarding_stage,
         subscription_tier: values.subscription_tier,
@@ -311,24 +315,45 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="logo_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-slate-300">Logo URL</FormLabel>
-                      <FormControl>
-                        <PlatformInput 
-                          placeholder="https://..." 
-                          {...field} 
-                          value={field.value || ''} 
-                          autoCapitalize="none"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red-400" />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="logo_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-300">Logo URL</FormLabel>
+                        <FormControl>
+                          <PlatformInput 
+                            placeholder="https://..." 
+                            {...field} 
+                            value={field.value || ''} 
+                            autoCapitalize="none"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-red-400" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="website_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-300">Website URL</FormLabel>
+                        <FormControl>
+                          <PlatformInput 
+                            placeholder="https://..." 
+                            {...field} 
+                            value={field.value || ''} 
+                            autoCapitalize="none"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-red-400" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               {/* Account Status Section */}
