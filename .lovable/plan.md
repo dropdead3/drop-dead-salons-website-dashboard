@@ -1,115 +1,166 @@
 
-## Add Integrations Status Card to Platform Overview
 
-This plan adds a new card to the Platform Overview page showing a summary of integration status across all business accounts.
+## Add Integrations Status Card to Account Overview Tab
+
+This plan adds a new "Business Integrations" card to the Account Detail Overview tab, allowing platform admins to quickly see which integrations a specific business has connected and running inside their dashboard.
 
 ---
 
 ### Overview
 
-The Platform Overview currently displays stats for accounts, locations, and migrations. We'll add a new "Integrations Health" card that shows:
-- How many businesses have each integration connected
-- Connection status summary (connected, issues, not configured)
-- Quick link to the Integrations settings page
+The Platform Admin's Account Detail page currently shows Contact Information and Account Details cards on the Overview tab. We'll add a third card that displays the real-time status of integrations configured by the business:
+
+- Phorest (POS/booking system)
+- Payroll (Gusto or QuickBooks)
+
+This gives platform admins instant visibility into the business's integration health without having to impersonate or dig through settings.
 
 ---
 
 ### Visual Design
 
 ```text
-+-------------------------------------------------------+
-| INTEGRATIONS HEALTH                        [See All →] |
-+-------------------------------------------------------+
-| [===] Phorest        1 connected     ● Healthy       |
-| [💳] Payroll         0 connected     ○ Not configured |
-| [📄] PandaDoc        5 documents     ● Active        |
-+-------------------------------------------------------+
-| Total: 1 of 3 integrations active                     |
-+-------------------------------------------------------+
+OVERVIEW TAB LAYOUT:
++---------------------------+---------------------------+
+|   CONTACT INFORMATION     |     ACCOUNT DETAILS       |
+|   - Email                 |   - Account #             |
+|   - Phone                 |   - Created Date          |
++---------------------------+---------------------------+
+|         BUSINESS INTEGRATIONS                         |
++---------+--------------------------+------------------+
+| [Icon]  | Phorest                  | ● Connected      |
+|         | 2 branches, 8 staff      |                  |
++---------+--------------------------+------------------+
+| [Icon]  | Payroll - QuickBooks     | ○ Not Connected  |
+|         | --                       |                  |
++---------+--------------------------+------------------+
 ```
 
-The card will follow the existing platform design system:
-- Dark slate background with violet accents
-- Consistent with `PlatformActivityFeed` and `PlatformLiveAnalytics` card styling
-- Status indicators with color-coded badges
+The card will:
+- Follow the existing `PlatformCard variant="glass"` styling
+- Show integration name, icon, and connection status badge
+- Include quick stats (e.g., mapped branches, staff count for Phorest)
+- Display "Not Connected" for integrations not yet set up
+
+---
+
+### Data Sources
+
+For each organization, we'll query:
+
+| Integration | Table | Connection Criteria |
+|-------------|-------|---------------------|
+| **Phorest** | `locations` + `phorest_staff_mapping` | Has locations with `phorest_branch_id` + active staff mappings |
+| **Payroll** | `payroll_connections` | `connection_status = 'connected'` |
 
 ---
 
 ### Implementation
 
-#### 1. New Hook: `usePlatformIntegrationStats`
-**File:** `src/hooks/usePlatformIntegrationStats.ts`
+#### 1. New Hook: `useOrganizationIntegrations`
+**File:** `src/hooks/useOrganizationIntegrations.ts`
 
-A hook to aggregate integration status across all organizations:
+A hook that fetches integration status for a specific organization ID:
 
 ```typescript
-interface IntegrationStat {
-  id: string;
-  name: string;
-  icon: LucideIcon;
-  connectedOrgs: number;
-  status: 'healthy' | 'issues' | 'not_configured';
-  details?: string;
-}
-
-interface PlatformIntegrationStats {
-  integrations: IntegrationStat[];
-  totalActive: number;
-  totalAvailable: number;
+interface OrganizationIntegrationStatus {
+  phorest: {
+    connected: boolean;
+    branchCount: number;
+    staffMappingCount: number;
+  };
+  payroll: {
+    connected: boolean;
+    provider: 'gusto' | 'quickbooks' | null;
+    connectedAt: string | null;
+  };
 }
 ```
 
-Data sources:
-- **Phorest**: Count organizations with `source_software = 'phorest'` that have active staff mappings
-- **Payroll**: Count `payroll_connections` where `connection_status = 'connected'`
-- **PandaDoc**: Count total documents and check webhook activity
+The hook will:
+- Accept an `organizationId` parameter (not rely on context)
+- Query locations table for branches with `phorest_branch_id`
+- Join to count active staff mappings per branch
+- Query payroll_connections for this specific org
+- Return structured status object
 
 ---
 
-#### 2. New Component: `PlatformIntegrationsCard`
-**File:** `src/components/platform/overview/PlatformIntegrationsCard.tsx`
+#### 2. New Component: `AccountIntegrationsCard`
+**File:** `src/components/platform/account/AccountIntegrationsCard.tsx`
 
-A compact card showing integration health at a glance:
+A card component that displays integration status:
 
-- Header with title and "See All" link to `/dashboard/platform/settings`
-- List of integrations with:
-  - Icon (from platform integrations config)
-  - Name
-  - Connected count or document count
-  - Status badge (Healthy/Issues/Not configured)
-- Footer showing summary (e.g., "2 of 3 integrations active")
+Features:
+- Uses the `PlatformCard variant="glass"` styling to match existing cards
+- Displays each integration as a row with:
+  - Icon (from lucide-react or platform integrations config)
+  - Integration name
+  - Status badge (Connected/Not Connected)
+  - Quick stats or "--" if not connected
+- Skeleton loading state
+- Empty state message if no integrations are even partially configured
 
-Styling follows existing patterns:
-- `rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6`
-- Status badges use `PlatformBadge` component with appropriate variants
-- Skeleton loading state matching other cards
+Layout:
+```tsx
+<PlatformCard variant="glass">
+  <PlatformCardHeader>
+    <PlatformCardTitle>Business Integrations</PlatformCardTitle>
+  </PlatformCardHeader>
+  <PlatformCardContent>
+    {/* Phorest row */}
+    <div className="flex items-center justify-between py-3 border-b border-slate-700/50">
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-slate-700/50">
+          <BookOpen className="h-4 w-4 text-violet-400" />
+        </div>
+        <div>
+          <p className="font-medium text-white">Phorest</p>
+          <p className="text-sm text-slate-400">
+            {connected ? `${branchCount} branches, ${staffCount} staff` : '--'}
+          </p>
+        </div>
+      </div>
+      <PlatformBadge variant={connected ? 'success' : 'default'}>
+        {connected ? 'Connected' : 'Not Connected'}
+      </PlatformBadge>
+    </div>
+    {/* Payroll row */}
+    ...
+  </PlatformCardContent>
+</PlatformCard>
+```
 
 ---
 
-#### 3. Update Platform Overview Layout
-**File:** `src/pages/dashboard/platform/Overview.tsx`
+#### 3. Update Account Detail Overview Tab
+**File:** `src/pages/dashboard/platform/AccountDetail.tsx`
 
-Add the new integrations card alongside the Quick Actions card:
+Add the new integrations card to the Overview tab content:
 
-Current layout:
-```text
-[Live Analytics (2/3 width)] [Quick Actions (1/3 width)]
-[Activity Feed (full width)]
+Current layout (lines 264-404):
+```tsx
+<TabsContent value="overview" className="space-y-4">
+  <div className="grid gap-4 lg:grid-cols-2">
+    {/* Contact Info Card */}
+    {/* Account Details Card */}
+  </div>
+</TabsContent>
 ```
 
-New layout option A (add to existing row):
-```text
-[Live Analytics (2/3 width)] [Quick Actions (1/3 width)]
-[Integrations Card (1/2)]    [Activity Feed (1/2)]
+Updated layout:
+```tsx
+<TabsContent value="overview" className="space-y-4">
+  <div className="grid gap-4 lg:grid-cols-2">
+    {/* Contact Info Card */}
+    {/* Account Details Card */}
+  </div>
+  {/* Full-width Integrations Card */}
+  <AccountIntegrationsCard organizationId={organization.id} />
+</TabsContent>
 ```
 
-New layout option B (stack with Quick Actions):
-```text
-[Live Analytics (2/3 width)] [Quick Actions + Integrations stacked (1/3 width)]
-[Activity Feed (full width)]
-```
-
-Recommended: Option B - Stack the Integrations card below Quick Actions in the right column, maintaining visual balance.
+Alternatively, if we want it in the 2-column grid, we could place it below Contact Info and have it span one column.
 
 ---
 
@@ -117,69 +168,51 @@ Recommended: Option B - Stack the Integrations card below Quick Actions in the r
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/hooks/usePlatformIntegrationStats.ts` | **Create** | Hook to aggregate integration status across orgs |
-| `src/components/platform/overview/PlatformIntegrationsCard.tsx` | **Create** | Compact integration health overview card |
-| `src/pages/dashboard/platform/Overview.tsx` | **Edit** | Add integrations card to the layout |
+| `src/hooks/useOrganizationIntegrations.ts` | **Create** | Hook to fetch integration status for a specific org |
+| `src/components/platform/account/AccountIntegrationsCard.tsx` | **Create** | Card component showing integration status |
+| `src/pages/dashboard/platform/AccountDetail.tsx` | **Edit** | Add integrations card to Overview tab |
 
 ---
 
-### Technical Details
+### Technical Notes
 
-#### Data Queries
+1. **Organization Context**: Unlike business dashboard hooks that use context, this hook accepts an `organizationId` prop since platform admins view different organizations without switching context.
+
+2. **Query Optimization**: We'll batch the Phorest and Payroll queries using Promise.all for efficient loading.
+
+3. **Skeleton States**: The card will show skeleton placeholders while loading to maintain UI consistency.
+
+4. **Future Extensibility**: The hook and component are designed to easily add more integrations (PandaDoc, Stripe, Twilio) when they become available at the business level.
+
+5. **Icon Choice**: 
+   - Phorest: Calendar or BookOpen icon (represents booking system)
+   - Payroll: DollarSign icon (matches existing platform integrations config)
+
+---
+
+### Sample Query Logic
 
 ```typescript
-// Phorest - check organizations with active staff mappings
-const { count: phorestOrgs } = await supabase
-  .from('phorest_staff_mapping')
-  .select('phorest_branch_id', { count: 'exact', head: true })
-  .eq('is_active', true);
+// Phorest: Check locations with branch IDs and count staff mappings
+const { data: phorestData } = await supabase
+  .from('locations')
+  .select(`
+    id,
+    phorest_branch_id,
+    phorest_staff_mapping!inner(id, is_active)
+  `)
+  .eq('organization_id', organizationId)
+  .not('phorest_branch_id', 'is', null);
 
-// Payroll - count connected organizations
-const { count: payrollOrgs } = await supabase
+const branchCount = new Set(phorestData?.map(l => l.phorest_branch_id)).size;
+const staffCount = phorestData?.flatMap(l => l.phorest_staff_mapping)
+  .filter(m => m.is_active).length || 0;
+
+// Payroll: Check connection status
+const { data: payrollData } = await supabase
   .from('payroll_connections')
-  .select('organization_id', { count: 'exact', head: true })
-  .eq('connection_status', 'connected');
-
-// PandaDoc - count documents and check recency
-const { data: pandaDocs, count: pandaDocCount } = await supabase
-  .from('pandadoc_documents')
-  .select('id, created_at', { count: 'exact' })
-  .order('created_at', { ascending: false })
-  .limit(1);
+  .select('provider, connection_status, connected_at')
+  .eq('organization_id', organizationId)
+  .maybeSingle();
 ```
 
-#### Status Logic
-
-| Integration | Healthy | Issues | Not Configured |
-|-------------|---------|--------|----------------|
-| Phorest | Has active mappings | Has mappings but inactive | No mappings |
-| Payroll | `connection_status = 'connected'` | `connection_status = 'error'` | No connection record |
-| PandaDoc | Documents exist + recent webhook | Documents exist but stale | No documents |
-
----
-
-### Skeleton Loading
-
-The component will include a proper skeleton state:
-
-```tsx
-<div className="space-y-3">
-  {[...Array(3)].map((_, i) => (
-    <div key={i} className="flex items-center gap-3">
-      <Skeleton className="h-8 w-8 rounded-lg bg-slate-700/50" />
-      <Skeleton className="h-4 flex-1 bg-slate-700/50" />
-      <Skeleton className="h-5 w-16 rounded-full bg-slate-700/50" />
-    </div>
-  ))}
-</div>
-```
-
----
-
-### Future Enhancements
-
-This initial implementation covers the overview. Future work could include:
-- Click-through to see which specific organizations have each integration
-- Real-time status checking via edge function health checks
-- Alert badges when integrations have errors
-- Sync health indicators (last successful sync time)
