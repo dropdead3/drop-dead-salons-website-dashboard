@@ -122,7 +122,7 @@ export default function AccountDetail() {
                 <Building2 className="h-6 w-6 text-violet-400" />
               )}
             </div>
-            <PlatformBadge variant={statusColors[organization.status || 'pending']}>
+            <PlatformBadge variant={statusColors[organization.status || 'pending']} className="capitalize">
               {organization.status}
             </PlatformBadge>
             <PlatformButton variant="secondary" onClick={() => navigate(`/dashboard/platform/import?org=${organization.id}`)}>
