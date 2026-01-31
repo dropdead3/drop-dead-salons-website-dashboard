@@ -1321,6 +1321,54 @@ export type Database = {
           },
         ]
       }
+      client_loyalty_points: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          current_points: number
+          id: string
+          lifetime_points: number
+          organization_id: string
+          tier: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          current_points?: number
+          id?: string
+          lifetime_points?: number
+          organization_id: string
+          tier?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          current_points?: number
+          id?: string
+          lifetime_points?: number
+          organization_id?: string
+          tier?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_loyalty_points_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_loyalty_points_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_notes: {
         Row: {
           client_id: string
@@ -2668,18 +2716,159 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_card_orders: {
+        Row: {
+          card_design: string
+          card_number_prefix: string | null
+          card_stock: string | null
+          custom_logo_url: string | null
+          custom_message: string | null
+          delivered_at: string | null
+          estimated_delivery: string | null
+          id: string
+          notes: string | null
+          ordered_at: string | null
+          ordered_by: string
+          organization_id: string
+          quantity: number
+          shipped_at: string | null
+          shipping_address: Json
+          shipping_method: string | null
+          status: string | null
+          total_price: number | null
+          tracking_number: string | null
+          unit_price: number | null
+        }
+        Insert: {
+          card_design: string
+          card_number_prefix?: string | null
+          card_stock?: string | null
+          custom_logo_url?: string | null
+          custom_message?: string | null
+          delivered_at?: string | null
+          estimated_delivery?: string | null
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          ordered_by: string
+          organization_id: string
+          quantity: number
+          shipped_at?: string | null
+          shipping_address: Json
+          shipping_method?: string | null
+          status?: string | null
+          total_price?: number | null
+          tracking_number?: string | null
+          unit_price?: number | null
+        }
+        Update: {
+          card_design?: string
+          card_number_prefix?: string | null
+          card_stock?: string | null
+          custom_logo_url?: string | null
+          custom_message?: string | null
+          delivered_at?: string | null
+          estimated_delivery?: string | null
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          ordered_by?: string
+          organization_id?: string
+          quantity?: number
+          shipped_at?: string | null
+          shipping_address?: Json
+          shipping_method?: string | null
+          status?: string | null
+          total_price?: number | null
+          tracking_number?: string | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_orders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_card_settings: {
+        Row: {
+          card_accent_color: string | null
+          card_background_color: string | null
+          card_logo_url: string | null
+          card_text_color: string | null
+          created_at: string | null
+          default_expiration_months: number | null
+          id: string
+          include_qr_code: boolean | null
+          include_terms: boolean | null
+          organization_id: string
+          print_template: string | null
+          suggested_amounts: number[] | null
+          terms_text: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          card_accent_color?: string | null
+          card_background_color?: string | null
+          card_logo_url?: string | null
+          card_text_color?: string | null
+          created_at?: string | null
+          default_expiration_months?: number | null
+          id?: string
+          include_qr_code?: boolean | null
+          include_terms?: boolean | null
+          organization_id: string
+          print_template?: string | null
+          suggested_amounts?: number[] | null
+          terms_text?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          card_accent_color?: string | null
+          card_background_color?: string | null
+          card_logo_url?: string | null
+          card_text_color?: string | null
+          created_at?: string | null
+          default_expiration_months?: number | null
+          id?: string
+          include_qr_code?: boolean | null
+          include_terms?: boolean | null
+          organization_id?: string
+          print_template?: string | null
+          suggested_amounts?: number[] | null
+          terms_text?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_cards: {
         Row: {
           assigned_client_id: string | null
+          card_type: string | null
           code: string
           created_at: string | null
           created_by: string | null
           current_balance: number
+          custom_message: string | null
+          design_template: string | null
           expires_at: string | null
           id: string
           initial_amount: number
           is_active: boolean | null
           organization_id: string
+          physical_card_id: string | null
+          printed_at: string | null
           purchaser_email: string | null
           purchaser_name: string | null
           recipient_email: string | null
@@ -2687,15 +2876,20 @@ export type Database = {
         }
         Insert: {
           assigned_client_id?: string | null
+          card_type?: string | null
           code: string
           created_at?: string | null
           created_by?: string | null
           current_balance: number
+          custom_message?: string | null
+          design_template?: string | null
           expires_at?: string | null
           id?: string
           initial_amount: number
           is_active?: boolean | null
           organization_id: string
+          physical_card_id?: string | null
+          printed_at?: string | null
           purchaser_email?: string | null
           purchaser_name?: string | null
           recipient_email?: string | null
@@ -2703,15 +2897,20 @@ export type Database = {
         }
         Update: {
           assigned_client_id?: string | null
+          card_type?: string | null
           code?: string
           created_at?: string | null
           created_by?: string | null
           current_balance?: number
+          custom_message?: string | null
+          design_template?: string | null
           expires_at?: string | null
           id?: string
           initial_amount?: number
           is_active?: boolean | null
           organization_id?: string
+          physical_card_id?: string | null
+          printed_at?: string | null
           purchaser_email?: string | null
           purchaser_name?: string | null
           recipient_email?: string | null
@@ -3765,6 +3964,115 @@ export type Database = {
           },
           {
             foreignKeyName: "locations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_program_settings: {
+        Row: {
+          bonus_rules: Json | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          minimum_redemption_points: number | null
+          organization_id: string
+          points_expiration_days: number | null
+          points_expire: boolean | null
+          points_per_dollar: number | null
+          points_to_dollar_ratio: number | null
+          product_multiplier: number | null
+          program_name: string | null
+          service_multiplier: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          bonus_rules?: Json | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          minimum_redemption_points?: number | null
+          organization_id: string
+          points_expiration_days?: number | null
+          points_expire?: boolean | null
+          points_per_dollar?: number | null
+          points_to_dollar_ratio?: number | null
+          product_multiplier?: number | null
+          program_name?: string | null
+          service_multiplier?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          bonus_rules?: Json | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          minimum_redemption_points?: number | null
+          organization_id?: string
+          points_expiration_days?: number | null
+          points_expire?: boolean | null
+          points_per_dollar?: number | null
+          points_to_dollar_ratio?: number | null
+          product_multiplier?: number | null
+          program_name?: string | null
+          service_multiplier?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_program_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_tiers: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          minimum_lifetime_points: number
+          organization_id: string
+          perks: string[] | null
+          points_multiplier: number | null
+          sort_order: number | null
+          tier_key: string
+          tier_name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          minimum_lifetime_points?: number
+          organization_id: string
+          perks?: string[] | null
+          points_multiplier?: number | null
+          sort_order?: number | null
+          tier_key: string
+          tier_name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          minimum_lifetime_points?: number
+          organization_id?: string
+          perks?: string[] | null
+          points_multiplier?: number | null
+          sort_order?: number | null
+          tier_key?: string
+          tier_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_tiers_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -5621,6 +5929,60 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      points_transactions: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          organization_id: string
+          points: number
+          reference_id: string | null
+          reference_type: string | null
+          transaction_type: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          organization_id: string
+          points: number
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          organization_id?: string
+          points?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "points_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
