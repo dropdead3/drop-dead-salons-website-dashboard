@@ -1,155 +1,99 @@
 
-# Add Sort Functionality to Command Center "By Location" Table
+# Show All Locations in "By Location" Table (Even with Zero Sales)
 
-## Overview
-Add clickable sort headers to the "By Location" table in the Command Center's `AggregateSalesCard` component. Users will be able to sort locations by clicking any column header (Revenue, Services, Products, Transactions, Avg Ticket). Default sort will be **Revenue (highest to lowest)**.
+## Problem
+When filtering to "Today" (or any date range), locations without sales data are completely omitted from the "By Location" table. Users expect to see **all active locations** listed, with $0 values shown for those with no sales activity.
 
-## Current State
-- The location table in `AggregateSalesCard.tsx` (lines 500-580) displays location data without any sorting controls
-- Data is rendered directly from the `locationData` array returned by `useSalesByLocation` hook
-- The codebase has established patterns for sortable tables in:
-  - `OperationalMetrics.tsx` - Uses `handleSort` and `getSortIcon` helpers
-  - `CampaignPerformanceTable.tsx` - Similar pattern with `useMemo` for sorted data
+## Root Cause
+In `useSalesByLocation` hook (`src/hooks/useSalesData.ts`), locations are only added to the results when iterating over appointment records. If a location has no appointments in the date range, it never gets initialized and is excluded from the final array.
 
-## Implementation Approach
-
-### 1. Add Sort State and Types
-Add state variables and type definitions to track current sort field and direction:
-
+**Current Logic (problematic):**
 ```
-+------------------------------------------------------------------+
-|  Type: SortField = 'name' | 'totalRevenue' | 'serviceRevenue' |  |
-|                    'productRevenue' | 'totalTransactions' |      |
-|                    'avgTicket'                                   |
-|  Type: SortDirection = 'asc' | 'desc'                           |
-|  Default: sortField = 'totalRevenue', sortDirection = 'desc'     |
-+------------------------------------------------------------------+
+1. Fetch all locations
+2. Fetch appointments for date range
+3. Loop through appointments → only locations WITH appointments get added
+4. Return results (missing locations with zero sales)
 ```
 
-### 2. Add Sort Logic Functions
-Following the existing pattern from `OperationalMetrics.tsx`:
+## Solution
+Pre-populate the `byLocation` object with **all active locations** (with zero values) before processing appointments. This ensures every location appears in the table.
 
-- **`handleSort(field)`**: Toggle direction if same field, otherwise switch to new field with `desc` default
-- **`getSortIcon(field)`**: Return `ArrowUpDown` (neutral), `ArrowUp` (asc), or `ArrowDown` (desc)
-
-### 3. Create Sorted Data with useMemo
-Create a `sortedLocationData` array that applies the sort before rendering:
-
+**Fixed Logic:**
 ```
-const sortedLocationData = useMemo(() => {
-  if (!locationData) return [];
-  return [...locationData].sort((a, b) => {
-    let aVal, bVal;
-    if (sortField === 'avgTicket') {
-      aVal = a.totalTransactions > 0 ? a.totalRevenue / a.totalTransactions : 0;
-      bVal = b.totalTransactions > 0 ? b.totalRevenue / b.totalTransactions : 0;
-    } else if (sortField === 'name') {
-      return sortDirection === 'asc' 
-        ? a.name.localeCompare(b.name) 
-        : b.name.localeCompare(a.name);
-    } else {
-      aVal = a[sortField] ?? 0;
-      bVal = b[sortField] ?? 0;
-    }
-    return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-  });
-}, [locationData, sortField, sortDirection]);
+1. Fetch active locations (is_active = true)
+2. Pre-populate byLocation with ALL locations (zero values)
+3. Fetch appointments for date range
+4. Loop through appointments → add revenue to existing entries
+5. Return results (all locations included)
 ```
 
-### 4. Update Table Headers with Sort Controls
-Transform static headers into clickable buttons with sort icons:
+## Implementation Details
 
-**Before:**
-```tsx
-<TableHead className="font-display text-xs text-center">Revenue</TableHead>
+### File: `src/hooks/useSalesData.ts`
+
+**Change 1: Filter to active locations only (Line 360-362)**
+```typescript
+// Before
+const { data: locations } = await supabase
+  .from('locations')
+  .select('id, name');
+
+// After
+const { data: locations } = await supabase
+  .from('locations')
+  .select('id, name, is_active')
+  .eq('is_active', true);
 ```
 
-**After:**
-```tsx
-<TableHead className="font-display text-xs text-center">
-  <button 
-    onClick={() => handleSort('totalRevenue')}
-    className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
-  >
-    Revenue {getSortIcon('totalRevenue')}
-  </button>
-</TableHead>
+**Change 2: Pre-populate all locations with zero values (Line 379-380)**
+```typescript
+// Aggregate by location - PRE-POPULATE all locations with zero values
+const byLocation: Record<string, any> = {};
+
+// Initialize all active locations with zero values
+locations?.forEach(loc => {
+  byLocation[loc.id] = {
+    location_id: loc.id,
+    name: loc.name || 'Unknown Location',
+    totalRevenue: 0,
+    serviceRevenue: 0,
+    productRevenue: 0,
+    totalServices: 0,
+    totalProducts: 0,
+    totalTransactions: 0,
+  };
+});
 ```
 
-### Sortable Columns
-| Column | Sort Field | Notes |
-|--------|------------|-------|
-| Location | `name` | Alphabetical sort |
-| Revenue | `totalRevenue` | **Default sort (desc)** |
-| Services | `serviceRevenue` | Numeric sort |
-| Products | `productRevenue` | Numeric sort |
-| Transactions | `totalTransactions` | Numeric sort |
-| Avg Ticket | `avgTicket` | Calculated field (revenue/transactions) |
-| Trend | *Not sortable* | Visual sparkline only |
+**Change 3: Simplify appointment loop (Lines 381-400)**
+```typescript
+// Now just add to existing entries (all locations already initialized)
+data?.forEach(apt => {
+  const key = apt.location_id || 'Unknown';
+  if (byLocation[key]) {
+    byLocation[key].totalRevenue += Number(apt.total_price) || 0;
+    byLocation[key].serviceRevenue += Number(apt.total_price) || 0;
+    byLocation[key].totalServices += 1;
+    byLocation[key].totalTransactions += 1;
+  }
+  // Skip appointments for inactive/unknown locations
+});
+```
 
-### 5. Update Table Body Rendering
-Change from `locationData.map()` to `sortedLocationData.map()`.
+## Result After Fix
+| Location | Revenue | Services | Products | Transactions | Avg Ticket |
+|----------|---------|----------|----------|--------------|------------|
+| Val Vista Lakes | $480 | $480 | $0 | 6 | $80 |
+| North Mesa | $0 | $0 | $0 | 0 | $0 |
+| Gilbert | $0 | $0 | $0 | 0 | $0 |
 
 ## File Changes Summary
-
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/AggregateSalesCard.tsx` | Add sort state, types, handlers, getSortIcon, useMemo for sorted data, update table headers |
-
-## Technical Details
-
-### New Imports Required
-```tsx
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { useMemo } from 'react'; // Already imported as part of useState
-```
-
-### State Additions (around line 78)
-```tsx
-// Location table sorting
-type LocationSortField = 'name' | 'totalRevenue' | 'serviceRevenue' | 'productRevenue' | 'totalTransactions' | 'avgTicket';
-type SortDirection = 'asc' | 'desc';
-
-const [locationSortField, setLocationSortField] = useState<LocationSortField>('totalRevenue');
-const [locationSortDirection, setLocationSortDirection] = useState<SortDirection>('desc');
-```
-
-### Handler Functions (after existing handlers)
-```tsx
-const handleLocationSort = (field: LocationSortField) => {
-  if (locationSortField === field) {
-    setLocationSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-  } else {
-    setLocationSortField(field);
-    setLocationSortDirection('desc');
-  }
-};
-
-const getLocationSortIcon = (field: LocationSortField) => {
-  if (locationSortField !== field) {
-    return <ArrowUpDown className="w-3 h-3 text-muted-foreground" />;
-  }
-  return locationSortDirection === 'asc' 
-    ? <ArrowUp className="w-3 h-3 text-primary" />
-    : <ArrowDown className="w-3 h-3 text-primary" />;
-};
-```
-
-## UI Preview
-```
-+------------------------------------------------------------------+
-| LOCATION [↕]  REVENUE [↓]  TREND  SERVICES [↕]  PRODUCTS [↕] ... |
-+------------------------------------------------------------------+
-| Val Vista     $2,105       ~~~    $2,105        $0          ...  |
-| North Mesa    $1,565       ~~~    $1,565        $0          ...  |
-+------------------------------------------------------------------+
-
-[↓] = Currently sorted descending (primary color)
-[↕] = Sortable but not active (muted color)
-```
+| `src/hooks/useSalesData.ts` | Modify `useSalesByLocation` to filter active locations and pre-populate all with zero values |
 
 ## Edge Cases Handled
-- **Empty data**: `sortedLocationData` returns empty array, same as before
-- **Null values**: Uses `?? 0` fallback for numeric comparisons
-- **Avg Ticket calculation**: Handles division by zero with ternary check
-- **String sorting**: Uses `localeCompare()` for location names
+- **New locations**: Will appear immediately with $0 if marked as `is_active = true`
+- **Inactive locations**: Will not appear (excluded by filter)
+- **Unknown location IDs in appointments**: Skipped (won't create phantom entries)
+- **Sorting**: Still works - locations with $0 will sort to bottom when sorted by revenue descending
