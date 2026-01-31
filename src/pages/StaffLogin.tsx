@@ -19,12 +19,29 @@ import { z } from 'zod';
 import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 const emailSchema = z.string().trim().email({ message: 'Please enter a valid email address' });
 
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
+
+// Helper to get custom landing page for a user
+async function getCustomLandingPage(userId: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('custom_landing_page')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (error) return null;
+    return data?.custom_landing_page || null;
+  } catch {
+    return null;
+  }
+}
 
 export default function StaffLogin() {
   const [isLogin, setIsLogin] = useState(true);
@@ -59,6 +76,7 @@ export default function StaffLogin() {
     }
   }, [invitation, isLogin]);
 
+  // Default landing page (can be overridden by location.state)
   const from = location.state?.from?.pathname || '/dashboard';
 
   const showPasswordMatchToast = useCallback((matches: boolean) => {
@@ -118,7 +136,18 @@ export default function StaffLogin() {
             description: error.message,
           });
         } else {
-          navigate(from, { replace: true });
+          // Check for custom landing page preference
+          const { data: { user: loggedInUser } } = await supabase.auth.getUser();
+          let landingPage = from;
+          
+          if (loggedInUser) {
+            const customLanding = await getCustomLandingPage(loggedInUser.id);
+            if (customLanding) {
+              landingPage = customLanding;
+            }
+          }
+          
+          navigate(landingPage, { replace: true });
         }
       } else {
         if (password !== confirmPassword) {

@@ -33,6 +33,7 @@ import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
+import { CustomLandingPageBanner } from '@/components/dashboard/CustomLandingPageBanner';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
 import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
@@ -967,6 +968,9 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
       )}>
         <PlatformContextBanner />
       </div>
+
+      {/* Custom Landing Page Banner */}
+      <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />
 
       {/* Desktop Top Bar */}
       <div className={cn(
