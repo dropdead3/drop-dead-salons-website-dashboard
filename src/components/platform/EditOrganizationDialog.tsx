@@ -48,8 +48,8 @@ const editFormSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Lowercase letters, numbers, and hyphens only'),
   legal_name: z.string().optional().nullable(),
   business_type: z.enum(['salon', 'spa', 'esthetics', 'barbershop', 'med_spa', 'wellness', 'other']),
-  logo_url: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
-  website_url: z.string().url('Invalid URL').optional().nullable().or(z.literal('')),
+  logo_url: z.string().optional().nullable().or(z.literal('')),
+  website_url: z.string().optional().nullable().or(z.literal('')),
   
   // Account Status
   status: z.enum(['pending', 'active', 'suspended', 'churned']),
