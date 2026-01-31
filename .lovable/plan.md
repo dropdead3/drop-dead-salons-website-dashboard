@@ -1,229 +1,171 @@
 
 
-## Add Missing Import Data Categories
+## Add Organization Context & Location Filtering to Import Flow
 
-This plan expands the data migration system to include **Staff**, **Locations**, and **Products** import categories, with the Products category requiring a new database table.
+This plan ensures proper multi-tenant data isolation during imports by passing organization context through the import flow and filtering locations to only show those belonging to the selected organization.
 
 ---
 
 ### Overview
 
-The current import system supports 3 categories: Clients, Services, and Appointments. Based on the analysis of existing tables and common migration needs, we'll add:
-
-| Category | Database Table | Status |
-|----------|---------------|--------|
-| Staff/Stylists | `employee_profiles` | Table exists - add import support |
-| Locations | `locations` | Table exists - add import support |
-| Products | `products` | New table required |
+| Issue | Solution |
+|-------|----------|
+| Organization ID not passed to edge function | Add `organizationId` prop and include in API call |
+| Locations show all orgs' locations | Filter `useLocations()` by `organizationId` |
+| Location optional for client/appointment imports | Make location required for entity types needing isolation |
 
 ---
 
 ### Visual Changes
 
-The Platform Import page will show 6 import options instead of 3:
-
+**Before:**
 ```text
-+-------------+  +-------------+  +-------------+
-|   Clients   |  |   Services  |  |Appointments |
-| [Start]     |  | [Start]     |  | [Start]     |
-+-------------+  +-------------+  +-------------+
-|    Staff    |  |  Locations  |  |  Products   |
-| [Start]     |  | [Start]     |  | [Start]     |
-+-------------+  +-------------+  +-------------+
+Location Selection:
+┌──────────────────────────────────────┐
+│ Assign to Location (optional)        │
+│ [Select a location...           ▼]   │
+│ • No specific location               │
+│ • Location A (Org 1)                 │
+│ • Location B (Org 2) ← Wrong org!    │
+└──────────────────────────────────────┘
+```
+
+**After:**
+```text
+Location Selection:
+┌──────────────────────────────────────┐
+│ ⚠ Assign to Location (required)      │
+│ [Select a location...           ▼]   │
+│ • Location A (Org 1 only)            │
+│ • Location B (Org 1 only)            │
+└──────────────────────────────────────┘
+Note: Only shows locations for selected org
 ```
 
 ---
 
 ### Implementation
 
-#### 1. Create Products Table (Database Migration)
-
-A new `products` table for retail inventory:
-
-```sql
-CREATE TABLE public.products (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  location_id TEXT REFERENCES locations(id),
-  
-  -- Core product info
-  name TEXT NOT NULL,
-  sku TEXT,
-  barcode TEXT,
-  category TEXT,
-  brand TEXT,
-  description TEXT,
-  
-  -- Pricing
-  retail_price DECIMAL(10,2),
-  cost_price DECIMAL(10,2),
-  
-  -- Inventory
-  quantity_on_hand INTEGER DEFAULT 0,
-  reorder_level INTEGER,
-  
-  -- Import tracking
-  external_id TEXT,
-  import_source TEXT,
-  imported_at TIMESTAMPTZ,
-  
-  -- Status
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- RLS policies for platform admins
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-```
-
----
-
-#### 2. Update Import Types Array
+#### 1. Update Platform Import Page
 **File:** `src/pages/dashboard/platform/PlatformImport.tsx`
 
-Expand the `importTypes` array to include the new categories:
+Pass `organizationId` to the wizard when opened:
 
 ```typescript
-const importTypes = [
-  { value: 'clients', label: 'Clients', description: 'Import customer data', icon: Users },
-  { value: 'services', label: 'Services', description: 'Import service catalog', icon: Scissors },
-  { value: 'appointments', label: 'Appointments', description: 'Import booking history', icon: Calendar },
-  { value: 'staff', label: 'Staff', description: 'Import team members', icon: UserCog },
-  { value: 'locations', label: 'Locations', description: 'Import salon branches', icon: MapPin },
-  { value: 'products', label: 'Products', description: 'Import retail inventory', icon: Package },
-];
+<DataImportWizard
+  open={wizardOpen}
+  onOpenChange={setWizardOpen}
+  sourceType={selectedOrg.source_software || 'csv'}
+  dataType={selectedDataType}
+  organizationId={selectedOrgId}  // NEW: Pass org ID
+/>
 ```
 
 ---
 
-#### 3. Add Field Definitions to Import Wizard
+#### 2. Update DataImportWizard Component
 **File:** `src/components/admin/DataImportWizard.tsx`
 
-Add field mappings for the new entity types:
-
+**a) Add `organizationId` prop:**
 ```typescript
-const FIELD_DEFINITIONS = {
-  // ... existing clients, services, appointments ...
-  
-  staff: [
-    { field: 'full_name', label: 'Full Name', required: true },
-    { field: 'email', label: 'Email', required: false },
-    { field: 'phone', label: 'Phone', required: false },
-    { field: 'hire_date', label: 'Hire Date', required: false },
-    { field: 'stylist_level', label: 'Level/Tier', required: false },
-    { field: 'specialties', label: 'Specialties', required: false },
-    { field: 'bio', label: 'Bio', required: false },
-    { field: 'external_id', label: 'External ID', required: false },
-  ],
-  
-  locations: [
-    { field: 'name', label: 'Location Name', required: true },
-    { field: 'address', label: 'Address', required: true },
-    { field: 'city', label: 'City', required: true },
-    { field: 'state_province', label: 'State/Province', required: false },
-    { field: 'phone', label: 'Phone', required: true },
-    { field: 'hours', label: 'Hours', required: false },
-    { field: 'store_number', label: 'Store Number', required: false },
-  ],
-  
-  products: [
-    { field: 'name', label: 'Product Name', required: true },
-    { field: 'sku', label: 'SKU', required: false },
-    { field: 'barcode', label: 'Barcode', required: false },
-    { field: 'category', label: 'Category', required: false },
-    { field: 'brand', label: 'Brand', required: false },
-    { field: 'retail_price', label: 'Retail Price', required: false },
-    { field: 'cost_price', label: 'Cost Price', required: false },
-    { field: 'quantity_on_hand', label: 'Quantity', required: false },
-    { field: 'external_id', label: 'External ID', required: false },
-  ],
+interface DataImportWizardProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  sourceType: string;
+  dataType: string;
+  organizationId?: string;  // NEW
+}
+```
+
+**b) Filter locations by organization:**
+```typescript
+const { data: locations } = useLocations(organizationId);
+```
+
+**c) Define which entity types require location:**
+```typescript
+const LOCATION_REQUIRED_TYPES = ['clients', 'appointments', 'staff', 'products'];
+
+const requiresLocation = LOCATION_REQUIRED_TYPES.includes(dataType);
+```
+
+**d) Update location selector UI:**
+```typescript
+<Label className="flex items-center gap-2">
+  <MapPin className="w-4 h-4" />
+  Assign to Location {requiresLocation ? '(required)' : '(optional)'}
+  {requiresLocation && <span className="text-red-500">*</span>}
+</Label>
+
+<Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+  <SelectTrigger className={cn(
+    requiresLocation && !selectedLocationId && "border-destructive"
+  )}>
+    <SelectValue placeholder="Select a location..." />
+  </SelectTrigger>
+  <SelectContent>
+    {!requiresLocation && (
+      <SelectItem value="">No specific location</SelectItem>
+    )}
+    {locations?.map(loc => (
+      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+
+{requiresLocation && !selectedLocationId && (
+  <p className="text-xs text-destructive">
+    Location is required for {dataType} imports to maintain data isolation
+  </p>
+)}
+```
+
+**e) Validate location before proceeding:**
+```typescript
+const canProceed = () => {
+  if (requiresLocation && !selectedLocationId) return false;
+  return file !== null;
 };
+
+// In upload step navigation:
+<Button 
+  onClick={() => setStep('mapping')} 
+  disabled={!canProceed()}
+>
+  Continue
+</Button>
+```
+
+**f) Include organizationId in edge function call:**
+```typescript
+const { data, error } = await supabase.functions.invoke('import-data', {
+  body: {
+    source_type: sourceType,
+    entity_type: dataType,  // Fix: was data_type
+    data: transformedData,   // Fix: was records
+    location_id: selectedLocationId || undefined,
+    organization_id: organizationId,  // NEW
+    column_mappings: fieldMapping,     // Fix: was field_mapping
+  },
+});
 ```
 
 ---
 
-#### 4. Update Edge Function
+#### 3. Edge Function Already Handles Organization
 **File:** `supabase/functions/import-data/index.ts`
 
-Extend the entity type and add validation for new categories:
-
+The edge function already accepts and uses `organization_id`:
 ```typescript
-interface ImportRequest {
-  // Update type to include new entities
-  entity_type: 'clients' | 'appointments' | 'services' | 'staff' | 'locations' | 'products';
-  // ... rest unchanged
+const { organization_id, location_id, data } = importData;
+
+// Add organization if provided
+if (organization_id) {
+  mapped.organization_id = organization_id;
 }
-
-// Add validation cases in the switch statement:
-case 'staff':
-  if (!mapped.full_name) {
-    isValid = false;
-    validationError = 'Missing staff full_name';
-  }
-  // Staff imports need special handling - they go to employee_profiles
-  // but require a user_id, so we may need to create placeholder users
-  break;
-
-case 'locations':
-  if (!mapped.name || !mapped.address || !mapped.city || !mapped.phone) {
-    isValid = false;
-    validationError = 'Missing required location fields (name, address, city, phone)';
-  }
-  // Generate ID if not provided
-  if (!mapped.id) {
-    mapped.id = crypto.randomUUID();
-  }
-  break;
-
-case 'products':
-  if (!mapped.name) {
-    isValid = false;
-    validationError = 'Missing product name';
-  }
-  break;
 ```
 
-**Note:** Staff import has a complexity - `employee_profiles` requires a `user_id` FK to `auth.users`. For migration purposes, we could:
-- Create placeholder auth users, or
-- Use a separate `imported_staff` staging table, or
-- Skip direct employee_profiles import and document manual staff creation
-
-The recommended approach is to import staff data to a staging area and have admins manually link or create user accounts.
-
----
-
-#### 5. Add Default Import Templates (Database Migration)
-
-Insert system templates for new categories:
-
-```sql
-INSERT INTO import_templates (name, description, source_type, entity_type, is_system_template, column_mappings) VALUES
--- Generic Staff
-('Generic Staff CSV', 'Import staff from any CSV', 'generic', 'staff', true, '[
-  {"source": "name", "target": "full_name", "required": true},
-  {"source": "email", "target": "email", "required": false},
-  {"source": "phone", "target": "phone", "required": false},
-  {"source": "hire_date", "target": "hire_date", "required": false, "transform": "date"}
-]'::JSONB),
-
--- Generic Locations
-('Generic Locations CSV', 'Import locations from any CSV', 'generic', 'locations', true, '[
-  {"source": "name", "target": "name", "required": true},
-  {"source": "address", "target": "address", "required": true},
-  {"source": "city", "target": "city", "required": true},
-  {"source": "phone", "target": "phone", "required": true}
-]'::JSONB),
-
--- Generic Products
-('Generic Products CSV', 'Import products from any CSV', 'generic', 'products', true, '[
-  {"source": "name", "target": "name", "required": true},
-  {"source": "sku", "target": "sku", "required": false},
-  {"source": "category", "target": "category", "required": false},
-  {"source": "price", "target": "retail_price", "required": false, "transform": "decimal"},
-  {"source": "quantity", "target": "quantity_on_hand", "required": false, "transform": "integer"}
-]'::JSONB);
-```
+No changes needed to the edge function - it's already prepared for this.
 
 ---
 
@@ -231,39 +173,48 @@ INSERT INTO import_templates (name, description, source_type, entity_type, is_sy
 
 | File | Action | Description |
 |------|--------|-------------|
-| Database Migration | **Create** | Add `products` table with RLS policies |
-| Database Migration | **Insert** | Add import templates for Staff, Locations, Products |
-| `src/pages/dashboard/platform/PlatformImport.tsx` | **Edit** | Add 3 new import type cards with icons |
-| `src/components/admin/DataImportWizard.tsx` | **Edit** | Add field definitions for staff, locations, products |
-| `supabase/functions/import-data/index.ts` | **Edit** | Add validation and handling for new entity types |
+| `src/pages/dashboard/platform/PlatformImport.tsx` | **Edit** | Add `organizationId` prop to wizard |
+| `src/components/admin/DataImportWizard.tsx` | **Edit** | Accept org prop, filter locations, require location for certain types, fix API payload keys |
 
 ---
 
-### Technical Considerations
+### Data Flow Diagram
 
-#### Staff Import Complexity
-The `employee_profiles` table requires a `user_id` foreign key to `auth.users`. Since we cannot create auth users during CSV import, staff import will:
-1. Target the `products` table (not `employee_profiles`)
-2. For actual staff migration, recommend using the existing staff creation flow or a separate staging approach
-
-Alternatively, we can create an `imported_staff` staging table that doesn't require auth.users, allowing the migration team to review and manually onboard staff.
-
-#### Organization Scoping
-All imports should include `organization_id` to ensure proper tenant isolation. The edge function will need to receive this from the wizard.
-
----
-
-### UI Layout Update
-
-The import cards will be displayed in a 2-row, 3-column grid:
-
-```tsx
-<div className="grid gap-4 md:grid-cols-3">
-  {importTypes.map((type) => (
-    <PlatformCard key={type.value} variant="interactive">
-      {/* Card content with icon, label, description, and Start Import button */}
-    </PlatformCard>
-  ))}
-</div>
+```text
+PlatformImport.tsx                 DataImportWizard.tsx              Edge Function
+      │                                    │                              │
+      │ selectedOrgId ─────────────────────┤                              │
+      │                                    │                              │
+      │                                    │ useLocations(orgId)          │
+      │                                    │──────────────────────────────│
+      │                                    │ ← locations for this org     │
+      │                                    │                              │
+      │                                    │ User selects location        │
+      │                                    │                              │
+      │                                    │ invoke('import-data', {      │
+      │                                    │   organization_id: orgId,    │──►│
+      │                                    │   location_id: locId,        │   │
+      │                                    │   data: [...],               │   │
+      │                                    │ })                           │   │
+      │                                    │                              │   │
+      │                                    │                              │ INSERT INTO clients
+      │                                    │                              │ (organization_id, location_id, ...)
 ```
+
+---
+
+### Technical Notes
+
+**Entity types requiring location:**
+- `clients` - Client base is per-location
+- `appointments` - Appointments happen at a specific location
+- `staff` - Staff assigned to locations
+- `products` - Inventory tracked per-location
+
+**Entity types where location is optional:**
+- `services` - Service catalog is typically org-wide
+- `locations` - You're importing the locations themselves
+
+**API Payload Fix:**
+The current wizard uses incorrect keys (`data_type`, `records`, `field_mapping`). The edge function expects (`entity_type`, `data`, `column_mappings`). This will be corrected as part of this implementation.
 
