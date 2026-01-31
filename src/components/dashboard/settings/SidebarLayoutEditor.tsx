@@ -74,6 +74,7 @@ import {
   ChevronsDown,
   ChevronsUp,
   Flag,
+  Wallet,
 } from 'lucide-react';
 import {
   useSidebarLayout,
@@ -102,6 +103,7 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/my-graduation': { label: 'My Graduation', icon: GraduationCap },
   '/dashboard/stats': { label: 'My Stats', icon: BarChart3 },
   '/dashboard/my-clients': { label: 'My Clients', icon: Users },
+  '/dashboard/my-pay': { label: 'My Pay', icon: Wallet },
   '/dashboard/admin/sales': { label: 'Sales Dashboard', icon: DollarSign },
   '/dashboard/admin/operational-analytics': { label: 'Operational Analytics', icon: BarChart3 },
   '/dashboard/assistant-schedule': { label: 'Assistant Schedule', icon: Users },

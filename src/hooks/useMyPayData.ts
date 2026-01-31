@@ -1,0 +1,217 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { usePayrollCalculations, EmployeeCompensation } from './usePayrollCalculations';
+import { EmployeePayrollSettings, PayType } from './useEmployeePayrollSettings';
+import { startOfMonth, endOfMonth, format, subDays, addDays } from 'date-fns';
+
+export interface PayStub {
+  id: string;
+  payrollRunId: string;
+  payPeriodStart: string;
+  payPeriodEnd: string;
+  checkDate: string;
+  status: string;
+  grossPay: number;
+  regularHours: number;
+  overtimeHours: number;
+  hourlyPay: number;
+  salaryPay: number;
+  commissionPay: number;
+  bonusPay: number;
+  tips: number;
+  taxes: number;
+  deductions: number;
+  netPay: number;
+}
+
+export interface CurrentPeriod {
+  startDate: string;
+  endDate: string;
+  checkDate: string;
+}
+
+export interface MyPayData {
+  settings: EmployeePayrollSettings | null;
+  currentPeriod: CurrentPeriod;
+  salesData: {
+    serviceRevenue: number;
+    productRevenue: number;
+  };
+  estimatedCompensation: EmployeeCompensation | null;
+  payStubs: PayStub[];
+  isLoading: boolean;
+  error: Error | null;
+}
+
+function inferCurrentPayPeriod(): CurrentPeriod {
+  const today = new Date();
+  const dayOfMonth = today.getDate();
+  
+  // Bi-weekly assumption: 1st-15th, 16th-end of month
+  let startDate: Date;
+  let endDate: Date;
+  
+  if (dayOfMonth <= 15) {
+    startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    endDate = new Date(today.getFullYear(), today.getMonth(), 15);
+  } else {
+    startDate = new Date(today.getFullYear(), today.getMonth(), 16);
+    endDate = endOfMonth(today);
+  }
+  
+  // Check date is typically 5 business days after period end
+  const checkDate = addDays(endDate, 5);
+  
+  return {
+    startDate: format(startDate, 'yyyy-MM-dd'),
+    endDate: format(endDate, 'yyyy-MM-dd'),
+    checkDate: format(checkDate, 'yyyy-MM-dd'),
+  };
+}
+
+export function useMyPayData(): MyPayData {
+  const { user } = useAuth();
+  const { selectedOrganization } = useOrganizationContext();
+  const organizationId = selectedOrganization?.id;
+  const { calculateEmployeeCompensation, getWeeksInPeriod } = usePayrollCalculations();
+
+  const currentPeriod = inferCurrentPayPeriod();
+
+  // Fetch employee's payroll settings
+  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
+    queryKey: ['my-payroll-settings', user?.id, organizationId],
+    queryFn: async () => {
+      if (!user?.id || !organizationId) return null;
+      
+      const { data, error } = await supabase
+        .from('employee_payroll_settings')
+        .select(`
+          *,
+          employee:employee_profiles!employee_payroll_settings_employee_id_fkey(
+            user_id,
+            full_name,
+            display_name,
+            photo_url,
+            email,
+            is_active
+          )
+        `)
+        .eq('employee_id', user.id)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as EmployeePayrollSettings | null;
+    },
+    enabled: !!user?.id && !!organizationId,
+  });
+
+  // Fetch current period sales data for commission calculation
+  const { data: salesData, isLoading: salesLoading } = useQuery({
+    queryKey: ['my-sales-data', user?.id, currentPeriod.startDate, currentPeriod.endDate],
+    queryFn: async () => {
+      if (!user?.id) return { serviceRevenue: 0, productRevenue: 0 };
+      
+      const { data, error } = await supabase
+        .from('phorest_daily_sales_summary')
+        .select('service_revenue, product_revenue')
+        .eq('user_id', user.id)
+        .gte('summary_date', currentPeriod.startDate)
+        .lte('summary_date', currentPeriod.endDate);
+      
+      if (error) throw error;
+      
+      // Aggregate sales
+      const totals = (data || []).reduce(
+        (acc, row) => ({
+          serviceRevenue: acc.serviceRevenue + (Number(row.service_revenue) || 0),
+          productRevenue: acc.productRevenue + (Number(row.product_revenue) || 0),
+        }),
+        { serviceRevenue: 0, productRevenue: 0 }
+      );
+      
+      return totals;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch pay stub history
+  const { data: payStubs, isLoading: stubsLoading } = useQuery({
+    queryKey: ['my-pay-stubs', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('payroll_line_items')
+        .select(`
+          id,
+          payroll_run_id,
+          gross_pay,
+          regular_hours,
+          overtime_hours,
+          hourly_pay,
+          salary_pay,
+          commission_pay,
+          bonus_pay,
+          tips,
+          employee_taxes,
+          employee_deductions,
+          net_pay,
+          payroll_run:payroll_runs!payroll_line_items_payroll_run_id_fkey(
+            pay_period_start,
+            pay_period_end,
+            check_date,
+            status
+          )
+        `)
+        .eq('employee_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      return (data || []).map((item): PayStub => ({
+        id: item.id,
+        payrollRunId: item.payroll_run_id,
+        payPeriodStart: (item.payroll_run as any)?.pay_period_start || '',
+        payPeriodEnd: (item.payroll_run as any)?.pay_period_end || '',
+        checkDate: (item.payroll_run as any)?.check_date || '',
+        status: (item.payroll_run as any)?.status || 'unknown',
+        grossPay: Number(item.gross_pay) || 0,
+        regularHours: Number(item.regular_hours) || 0,
+        overtimeHours: Number(item.overtime_hours) || 0,
+        hourlyPay: Number(item.hourly_pay) || 0,
+        salaryPay: Number(item.salary_pay) || 0,
+        commissionPay: Number(item.commission_pay) || 0,
+        bonusPay: Number(item.bonus_pay) || 0,
+        tips: Number(item.tips) || 0,
+        taxes: Number(item.employee_taxes) || 0,
+        deductions: Number(item.employee_deductions) || 0,
+        netPay: Number(item.net_pay) || 0,
+      }));
+    },
+    enabled: !!user?.id,
+  });
+
+  // Calculate estimated compensation for current period
+  const estimatedCompensation = settings && salesData
+    ? calculateEmployeeCompensation(
+        settings,
+        { employeeId: user?.id || '', regularHours: 80, overtimeHours: 0 }, // Default to standard 80hrs for estimate
+        { employeeId: user?.id || '', ...salesData },
+        undefined,
+        getWeeksInPeriod(currentPeriod.startDate, currentPeriod.endDate)
+      )
+    : null;
+
+  return {
+    settings: settings || null,
+    currentPeriod,
+    salesData: salesData || { serviceRevenue: 0, productRevenue: 0 },
+    estimatedCompensation,
+    payStubs: payStubs || [],
+    isLoading: settingsLoading || salesLoading || stubsLoading,
+    error: settingsError as Error | null,
+  };
+}
