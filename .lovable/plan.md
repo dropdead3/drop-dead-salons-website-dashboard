@@ -1,171 +1,280 @@
 
 
-## Add Organization Context & Location Filtering to Import Flow
+## Import Error Recovery & Rollback System
 
-This plan ensures proper multi-tenant data isolation during imports by passing organization context through the import flow and filtering locations to only show those belonging to the selected organization.
+This plan adds comprehensive error recovery capabilities to the data import system, allowing the platform team to safely re-import data after correcting mistakes.
 
 ---
 
-### Overview
+### Current State Analysis
 
-| Issue | Solution |
-|-------|----------|
-| Organization ID not passed to edge function | Add `organizationId` prop and include in API call |
-| Locations show all orgs' locations | Filter `useLocations()` by `organizationId` |
-| Location optional for client/appointment imports | Make location required for entity types needing isolation |
+**What exists today:**
+| Feature | Status |
+|---------|--------|
+| Import job tracking (`import_jobs` table) | Exists - records job status, errors, counts |
+| Data lineage fields (`external_id`, `import_source`, `imported_at`) | Exists on all importable tables |
+| Rollback/undo functionality | Does NOT exist |
+| Dry run/preview mode | Does NOT exist |
+| Re-import capability | Does NOT exist |
+
+**The Problem:**
+If an import has mapping mistakes or bad data, there's currently no way to:
+1. Preview what will be imported before committing
+2. Roll back/delete all records from a specific import
+3. Re-run an import with corrected data
+
+---
+
+### Proposed Features
+
+#### 1. Import Job ID Tracking (Critical Foundation)
+
+Add an `import_job_id` column to all importable tables to enable precise rollback.
+
+**Why needed:** Currently records only have `import_source` and `imported_at`, which isn't precise enough. Two imports on the same day would be indistinguishable.
+
+**Tables to update:**
+- `clients`
+- `services`
+- `appointments`
+- `products`
+- `locations`
+- `imported_staff`
+
+```sql
+ALTER TABLE clients ADD COLUMN import_job_id UUID REFERENCES import_jobs(id);
+ALTER TABLE services ADD COLUMN import_job_id UUID REFERENCES import_jobs(id);
+-- etc.
+```
+
+---
+
+#### 2. Dry Run / Preview Mode
+
+Add a "Validate Only" option to the import wizard that:
+- Runs all validation logic
+- Returns counts and errors
+- Does NOT insert any data
+
+**Benefits:**
+- Catch field mapping errors before importing
+- See exactly what will be imported
+- Identify validation failures upfront
+
+**UI Addition:**
+```text
+┌─────────────────────────────────────┐
+│ Import Options                      │
+│                                     │
+│ [●] Import data (live)              │
+│ [○] Dry run (validate only)         │
+│                                     │
+│ Dry run will validate your data and │
+│ show what would be imported without │
+│ making any changes.                 │
+└─────────────────────────────────────┘
+```
+
+---
+
+#### 3. Rollback Functionality
+
+Add ability to delete all records from a specific import job.
+
+**New edge function: `rollback-import`**
+```typescript
+// DELETE FROM clients WHERE import_job_id = ?
+// DELETE FROM services WHERE import_job_id = ?
+// etc.
+```
+
+**Safety features:**
+- Confirmation dialog with record counts
+- Only allow rollback within 30 days
+- Mark job as "rolled_back" status
+- Log who performed the rollback
+
+---
+
+#### 4. Re-Import Workflow
+
+Enable running a corrected import after rollback.
+
+**Options:**
+1. **Rollback + Re-import**: Delete old data, import fresh
+2. **Upsert mode**: Update existing records by `external_id`, insert new ones
+
+For upsert mode, the edge function would:
+```typescript
+// If external_id exists, UPDATE
+// If external_id doesn't exist, INSERT
+const { error } = await supabase
+  .from(targetTable)
+  .upsert(mapped, { onConflict: 'external_id,organization_id' });
+```
 
 ---
 
 ### Visual Changes
 
-**Before:**
+#### Import History (Enhanced)
+
 ```text
-Location Selection:
-┌──────────────────────────────────────┐
-│ Assign to Location (optional)        │
-│ [Select a location...           ▼]   │
-│ • No specific location               │
-│ • Location A (Org 1)                 │
-│ • Location B (Org 2) ← Wrong org!    │
-└──────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│ Recent Imports                                                      │
+├────────────────────────────────────────────────────────────────────┤
+│ ● Clients from phorest          Jan 30, 2026 2:15 PM               │
+│   ✓ 156 imported, 3 failed                   [View] [Rollback]     │
+│                                                                     │
+│ ● Services from csv             Jan 30, 2026 1:45 PM               │
+│   ✓ 45 imported                              [View] [Rollback]     │
+│                                                                     │
+│ ○ Clients from phorest          Jan 29, 2026 10:00 AM              │
+│   ↩ Rolled back by admin@...                 [View] [Re-import]    │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
-**After:**
+#### Rollback Confirmation Dialog
+
 ```text
-Location Selection:
-┌──────────────────────────────────────┐
-│ ⚠ Assign to Location (required)      │
-│ [Select a location...           ▼]   │
-│ • Location A (Org 1 only)            │
-│ • Location B (Org 1 only)            │
-└──────────────────────────────────────┘
-Note: Only shows locations for selected org
+┌────────────────────────────────────────────────────────────┐
+│ ⚠ Confirm Rollback                                          │
+│                                                             │
+│ This will permanently delete 156 client records that were  │
+│ imported on Jan 30, 2026 at 2:15 PM.                        │
+│                                                             │
+│ Organization: Salon XYZ                                     │
+│ Location: Downtown Branch                                   │
+│                                                             │
+│ This action cannot be undone.                               │
+│                                                             │
+│                    [Cancel]    [Confirm Rollback]           │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ### Implementation
 
-#### 1. Update Platform Import Page
-**File:** `src/pages/dashboard/platform/PlatformImport.tsx`
+#### Phase 1: Database Schema Updates
 
-Pass `organizationId` to the wizard when opened:
+**File: Database Migration**
 
-```typescript
-<DataImportWizard
-  open={wizardOpen}
-  onOpenChange={setWizardOpen}
-  sourceType={selectedOrg.source_software || 'csv'}
-  dataType={selectedDataType}
-  organizationId={selectedOrgId}  // NEW: Pass org ID
-/>
+Add `import_job_id` to all importable tables:
+
+```sql
+-- Add import_job_id to enable precise rollback
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
+ALTER TABLE services ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
+ALTER TABLE imported_staff ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
+
+-- Add rollback tracking to import_jobs
+ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS rolled_back_at TIMESTAMPTZ;
+ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS rolled_back_by UUID REFERENCES auth.users(id);
+
+-- Create indexes for efficient rollback queries
+CREATE INDEX IF NOT EXISTS idx_clients_import_job ON clients(import_job_id);
+CREATE INDEX IF NOT EXISTS idx_services_import_job ON services(import_job_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_import_job ON appointments(import_job_id);
+CREATE INDEX IF NOT EXISTS idx_products_import_job ON products(import_job_id);
+CREATE INDEX IF NOT EXISTS idx_locations_import_job ON locations(import_job_id);
+CREATE INDEX IF NOT EXISTS idx_imported_staff_import_job ON imported_staff(import_job_id);
 ```
 
 ---
 
-#### 2. Update DataImportWizard Component
-**File:** `src/components/admin/DataImportWizard.tsx`
+#### Phase 2: Update Import Edge Function
 
-**a) Add `organizationId` prop:**
+**File: `supabase/functions/import-data/index.ts`**
+
+Add dry run mode and include job ID in records:
+
 ```typescript
-interface DataImportWizardProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  sourceType: string;
-  dataType: string;
-  organizationId?: string;  // NEW
+interface ImportRequest {
+  // ... existing fields
+  dry_run?: boolean;  // NEW: validate only, don't insert
 }
-```
 
-**b) Filter locations by organization:**
-```typescript
-const { data: locations } = useLocations(organizationId);
-```
+// In the processing loop:
+mapped.import_job_id = jobId;  // NEW: link record to job
 
-**c) Define which entity types require location:**
-```typescript
-const LOCATION_REQUIRED_TYPES = ['clients', 'appointments', 'staff', 'products'];
-
-const requiresLocation = LOCATION_REQUIRED_TYPES.includes(dataType);
-```
-
-**d) Update location selector UI:**
-```typescript
-<Label className="flex items-center gap-2">
-  <MapPin className="w-4 h-4" />
-  Assign to Location {requiresLocation ? '(required)' : '(optional)'}
-  {requiresLocation && <span className="text-red-500">*</span>}
-</Label>
-
-<Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
-  <SelectTrigger className={cn(
-    requiresLocation && !selectedLocationId && "border-destructive"
-  )}>
-    <SelectValue placeholder="Select a location..." />
-  </SelectTrigger>
-  <SelectContent>
-    {!requiresLocation && (
-      <SelectItem value="">No specific location</SelectItem>
-    )}
-    {locations?.map(loc => (
-      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-    ))}
-  </SelectContent>
-</Select>
-
-{requiresLocation && !selectedLocationId && (
-  <p className="text-xs text-destructive">
-    Location is required for {dataType} imports to maintain data isolation
-  </p>
-)}
-```
-
-**e) Validate location before proceeding:**
-```typescript
-const canProceed = () => {
-  if (requiresLocation && !selectedLocationId) return false;
-  return file !== null;
-};
-
-// In upload step navigation:
-<Button 
-  onClick={() => setStep('mapping')} 
-  disabled={!canProceed()}
->
-  Continue
-</Button>
-```
-
-**f) Include organizationId in edge function call:**
-```typescript
-const { data, error } = await supabase.functions.invoke('import-data', {
-  body: {
-    source_type: sourceType,
-    entity_type: dataType,  // Fix: was data_type
-    data: transformedData,   // Fix: was records
-    location_id: selectedLocationId || undefined,
-    organization_id: organizationId,  // NEW
-    column_mappings: fieldMapping,     // Fix: was field_mapping
-  },
-});
+// NEW: Skip actual insert if dry run
+if (dry_run) {
+  // Just validate, don't insert
+  successCount++;
+  continue;
+}
 ```
 
 ---
 
-#### 3. Edge Function Already Handles Organization
-**File:** `supabase/functions/import-data/index.ts`
+#### Phase 3: Create Rollback Edge Function
 
-The edge function already accepts and uses `organization_id`:
+**File: `supabase/functions/rollback-import/index.ts`**
+
+New edge function to delete records by job ID:
+
 ```typescript
-const { organization_id, location_id, data } = importData;
+interface RollbackRequest {
+  job_id: string;
+}
 
-// Add organization if provided
-if (organization_id) {
-  mapped.organization_id = organization_id;
+// 1. Verify job exists and is eligible for rollback
+// 2. Delete records from appropriate table based on entity_type
+// 3. Update job status to 'rolled_back'
+// 4. Return summary of deleted records
+```
+
+---
+
+#### Phase 4: Update DataImportWizard
+
+**File: `src/components/admin/DataImportWizard.tsx`**
+
+Add dry run toggle and result preview:
+
+```typescript
+const [isDryRun, setIsDryRun] = useState(false);
+
+// In upload step, add toggle:
+<div className="flex items-center gap-2">
+  <Switch checked={isDryRun} onCheckedChange={setIsDryRun} />
+  <Label>Dry run (validate only)</Label>
+</div>
+
+// In API call:
+body: {
+  ...existing,
+  dry_run: isDryRun,
 }
 ```
 
-No changes needed to the edge function - it's already prepared for this.
+---
+
+#### Phase 5: Add Rollback UI to Import History
+
+**Files:**
+- `src/pages/dashboard/platform/PlatformImport.tsx` (add history section)
+- `src/pages/dashboard/admin/DataImport.tsx` (enhance history)
+
+Add rollback button to each job with confirmation dialog:
+
+```typescript
+<AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button variant="destructive" size="sm">
+      <Undo className="w-4 h-4 mr-1" />
+      Rollback
+    </Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    {/* Confirmation with record count */}
+  </AlertDialogContent>
+</AlertDialog>
+```
 
 ---
 
@@ -173,48 +282,80 @@ No changes needed to the edge function - it's already prepared for this.
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/pages/dashboard/platform/PlatformImport.tsx` | **Edit** | Add `organizationId` prop to wizard |
-| `src/components/admin/DataImportWizard.tsx` | **Edit** | Accept org prop, filter locations, require location for certain types, fix API payload keys |
+| Database Migration | **Create** | Add `import_job_id` to tables, rollback tracking to jobs |
+| `supabase/functions/import-data/index.ts` | **Edit** | Add dry_run mode, include job_id in records |
+| `supabase/functions/rollback-import/index.ts` | **Create** | New edge function for rollback |
+| `src/components/admin/DataImportWizard.tsx` | **Edit** | Add dry run toggle |
+| `src/pages/dashboard/platform/PlatformImport.tsx` | **Edit** | Add import history with rollback buttons |
+| `src/pages/dashboard/admin/DataImport.tsx` | **Edit** | Add rollback buttons to history |
 
 ---
 
-### Data Flow Diagram
+### Data Flow for Rollback
 
 ```text
-PlatformImport.tsx                 DataImportWizard.tsx              Edge Function
-      │                                    │                              │
-      │ selectedOrgId ─────────────────────┤                              │
-      │                                    │                              │
-      │                                    │ useLocations(orgId)          │
-      │                                    │──────────────────────────────│
-      │                                    │ ← locations for this org     │
-      │                                    │                              │
-      │                                    │ User selects location        │
-      │                                    │                              │
-      │                                    │ invoke('import-data', {      │
-      │                                    │   organization_id: orgId,    │──►│
-      │                                    │   location_id: locId,        │   │
-      │                                    │   data: [...],               │   │
-      │                                    │ })                           │   │
-      │                                    │                              │   │
-      │                                    │                              │ INSERT INTO clients
-      │                                    │                              │ (organization_id, location_id, ...)
+User clicks "Rollback"
+        │
+        ▼
+┌─────────────────────┐
+│ Confirmation Dialog │
+│ "Delete 156 clients │
+│  from this import?" │
+└─────────────────────┘
+        │ Confirm
+        ▼
+┌─────────────────────────────────────┐
+│ Edge Function: rollback-import      │
+│                                     │
+│ 1. Fetch job (verify exists)        │
+│ 2. Check job.entity_type            │
+│ 3. DELETE FROM clients              │
+│    WHERE import_job_id = job.id     │
+│ 4. UPDATE import_jobs               │
+│    SET status = 'rolled_back',      │
+│        rolled_back_at = now()       │
+│ 5. Return { deleted_count: 156 }    │
+└─────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────┐
+│ Success Toast       │
+│ "156 records deleted│
+│  Import rolled back"│
+└─────────────────────┘
 ```
 
 ---
 
-### Technical Notes
+### Technical Considerations
 
-**Entity types requiring location:**
-- `clients` - Client base is per-location
-- `appointments` - Appointments happen at a specific location
-- `staff` - Staff assigned to locations
-- `products` - Inventory tracked per-location
+#### Rollback Eligibility Rules
+- Only allow rollback for jobs with status `completed` or `failed`
+- Consider time limit (e.g., 30 days) to prevent accidental deletion of old data
+- Platform admins only (not salon admins)
 
-**Entity types where location is optional:**
-- `services` - Service catalog is typically org-wide
-- `locations` - You're importing the locations themselves
+#### Upsert Mode Considerations
+For re-imports where you want to UPDATE existing + INSERT new:
+- Requires unique constraint on `(external_id, organization_id)`
+- More complex but avoids needing rollback first
+- Can be added as Phase 2 enhancement
 
-**API Payload Fix:**
-The current wizard uses incorrect keys (`data_type`, `records`, `field_mapping`). The edge function expects (`entity_type`, `data`, `column_mappings`). This will be corrected as part of this implementation.
+#### Foreign Key Constraints
+When rolling back appointments, check for related records:
+- Appointment → Client relationship
+- Consider CASCADE or preventing rollback if dependencies exist
+
+---
+
+### Implementation Priority
+
+| Priority | Feature | Effort |
+|----------|---------|--------|
+| 1 | Add `import_job_id` tracking | Low |
+| 2 | Dry run / preview mode | Medium |
+| 3 | Rollback functionality | Medium |
+| 4 | Rollback UI + confirmation | Medium |
+| 5 | Upsert mode for re-imports | Higher (optional) |
+
+This provides a complete error recovery system while maintaining data integrity and audit trails.
 
