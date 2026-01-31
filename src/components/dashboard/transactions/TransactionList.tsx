@@ -1,0 +1,228 @@
+import { useState } from 'react';
+import { format } from 'date-fns';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { 
+  MoreHorizontal, 
+  ArrowUpDown, 
+  RotateCcw, 
+  Eye,
+  Package,
+  Scissors
+} from 'lucide-react';
+import { TransactionItem } from '@/hooks/useTransactions';
+import { cn } from '@/lib/utils';
+
+interface TransactionListProps {
+  transactions: TransactionItem[];
+  isLoading: boolean;
+  onRefund: (transaction: TransactionItem) => void;
+  onViewDetails?: (transaction: TransactionItem) => void;
+}
+
+type SortField = 'transaction_date' | 'client_name' | 'item_name' | 'total_amount';
+type SortDirection = 'asc' | 'desc';
+
+export function TransactionList({ 
+  transactions, 
+  isLoading, 
+  onRefund,
+  onViewDetails 
+}: TransactionListProps) {
+  const [sortField, setSortField] = useState<SortField>('transaction_date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    let comparison = 0;
+    switch (sortField) {
+      case 'transaction_date':
+        comparison = new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+        break;
+      case 'client_name':
+        comparison = (a.client_name || '').localeCompare(b.client_name || '');
+        break;
+      case 'item_name':
+        comparison = (a.item_name || '').localeCompare(b.item_name || '');
+        break;
+      case 'total_amount':
+        comparison = (Number(a.total_amount) || 0) - (Number(b.total_amount) || 0);
+        break;
+    }
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="-ml-3 h-8 font-medium hover:bg-transparent"
+      onClick={() => handleSort(field)}
+    >
+      {children}
+      <ArrowUpDown className={cn(
+        "ml-1 h-3 w-3",
+        sortField === field ? "text-primary" : "text-muted-foreground"
+      )} />
+    </Button>
+  );
+
+  if (isLoading) {
+    return (
+      <Card className="overflow-hidden">
+        <div className="p-4 space-y-3">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      </Card>
+    );
+  }
+
+  if (transactions.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="font-medium text-lg mb-2">No transactions found</h3>
+        <p className="text-muted-foreground text-sm">
+          Try adjusting your filters or search query
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[100px]">
+                <SortHeader field="transaction_date">Date</SortHeader>
+              </TableHead>
+              <TableHead className="min-w-[150px]">
+                <SortHeader field="client_name">Client</SortHeader>
+              </TableHead>
+              <TableHead className="min-w-[200px]">
+                <SortHeader field="item_name">Item</SortHeader>
+              </TableHead>
+              <TableHead className="w-[100px]">Type</TableHead>
+              <TableHead className="w-[100px] text-right">
+                <SortHeader field="total_amount">Amount</SortHeader>
+              </TableHead>
+              <TableHead className="w-[120px]">Location</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead className="w-[60px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedTransactions.map((transaction) => (
+              <TableRow key={transaction.id}>
+                <TableCell className="font-medium text-sm">
+                  {format(new Date(transaction.transaction_date), 'MMM d, yyyy')}
+                </TableCell>
+                <TableCell>
+                  <span className="font-medium">{transaction.client_name || 'Walk-in'}</span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {transaction.item_type === 'service' ? (
+                      <Scissors className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    ) : (
+                      <Package className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <span className="truncate">{transaction.item_name}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={cn(
+                    "capitalize",
+                    transaction.item_type === 'service' && "border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950 dark:text-blue-400",
+                    transaction.item_type === 'product' && "border-green-300 text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-400"
+                  )}>
+                    {transaction.item_type}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  ${(Number(transaction.total_amount) || 0).toFixed(2)}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {transaction.branch_name || '-'}
+                </TableCell>
+                <TableCell>
+                  {transaction.refund_status ? (
+                    <Badge variant={
+                      transaction.refund_status === 'completed' ? 'destructive' :
+                      transaction.refund_status === 'pending' ? 'secondary' : 'outline'
+                    }>
+                      {transaction.refund_status === 'completed' ? 'Refunded' :
+                       transaction.refund_status === 'pending' ? 'Pending' : 
+                       transaction.refund_status}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50 dark:bg-green-950 dark:text-green-400">
+                      Paid
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {onViewDetails && (
+                        <DropdownMenuItem onClick={() => onViewDetails(transaction)}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                      )}
+                      {!transaction.refund_status && (
+                        <DropdownMenuItem 
+                          onClick={() => onRefund(transaction)}
+                          className="text-amber-600"
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Process Refund
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="border-t p-3 text-sm text-muted-foreground">
+        Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
+      </div>
+    </Card>
+  );
+}

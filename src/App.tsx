@@ -91,6 +91,7 @@ import Payroll from "./pages/dashboard/admin/Payroll";
 import PayrollCallback from "./pages/dashboard/admin/PayrollCallback";
 import HelpCenter from "./pages/dashboard/HelpCenter";
 import MyPay from "./pages/dashboard/MyPay";
+import Transactions from "./pages/dashboard/Transactions";
 
 // Platform Admin pages
 import PlatformOverview from "./pages/dashboard/platform/Overview";
@@ -215,6 +216,7 @@ const App = () => (
                       <Route path="/dashboard/admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/payroll" element={<ProtectedRoute requiredPermission="manage_payroll"><Payroll /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/payroll/callback" element={<ProtectedRoute requiredPermission="manage_payroll"><PayrollCallback /></ProtectedRoute>} />
+                      <Route path="/dashboard/transactions" element={<ProtectedRoute requiredPermission="view_transactions"><Transactions /></ProtectedRoute>} />
 
                       {/* Platform Admin routes - nested under PlatformLayout with sidebar */}
                       <Route path="/dashboard/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>

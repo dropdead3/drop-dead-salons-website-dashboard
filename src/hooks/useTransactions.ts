@@ -1,0 +1,139 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface TransactionItem {
+  id: string;
+  transaction_id: string;
+  transaction_date: string;
+  phorest_client_id: string | null;
+  client_name: string | null;
+  item_type: string;
+  item_name: string;
+  item_category: string | null;
+  quantity: number | null;
+  unit_price: number | null;
+  total_amount: number | null;
+  phorest_staff_id: string | null;
+  location_id: string | null;
+  branch_name: string | null;
+  refund_status?: string | null;
+  refund_type?: string | null;
+  refund_amount?: number | null;
+}
+
+export interface TransactionFilters {
+  startDate?: string;
+  endDate?: string;
+  locationId?: string;
+  itemType?: string;
+  clientSearch?: string;
+  limit?: number;
+}
+
+export function useTransactions(filters: TransactionFilters = {}) {
+  return useQuery({
+    queryKey: ['transactions', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('phorest_transaction_items')
+        .select('*')
+        .order('transaction_date', { ascending: false });
+
+      // Apply filters
+      if (filters.startDate) {
+        query = query.gte('transaction_date', filters.startDate);
+      }
+      if (filters.endDate) {
+        query = query.lte('transaction_date', filters.endDate);
+      }
+      if (filters.locationId) {
+        query = query.eq('location_id', filters.locationId);
+      }
+      if (filters.itemType && filters.itemType !== 'all') {
+        query = query.eq('item_type', filters.itemType);
+      }
+      if (filters.clientSearch) {
+        query = query.ilike('client_name', `%${filters.clientSearch}%`);
+      }
+      if (filters.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Fetch refund status for each transaction
+      const transactionIds = [...new Set(data?.map(t => t.transaction_id) || [])];
+      
+      let refundMap: Record<string, { status: string; type: string; amount: number }> = {};
+      if (transactionIds.length > 0) {
+        const { data: refunds } = await supabase
+          .from('refund_records')
+          .select('original_transaction_id, status, refund_type, refund_amount')
+          .in('original_transaction_id', transactionIds);
+        
+        refunds?.forEach(r => {
+          refundMap[r.original_transaction_id] = {
+            status: r.status,
+            type: r.refund_type,
+            amount: Number(r.refund_amount) || 0
+          };
+        });
+      }
+
+      // Merge refund info
+      return (data || []).map(item => ({
+        ...item,
+        refund_status: refundMap[item.transaction_id]?.status || null,
+        refund_type: refundMap[item.transaction_id]?.type || null,
+        refund_amount: refundMap[item.transaction_id]?.amount || null,
+      })) as TransactionItem[];
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useTransactionsByClient(clientId: string | null) {
+  return useQuery({
+    queryKey: ['client-transactions', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      
+      const { data, error } = await supabase
+        .from('phorest_transaction_items')
+        .select('*')
+        .eq('phorest_client_id', clientId)
+        .order('transaction_date', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch refund records for these transactions
+      const transactionIds = [...new Set(data?.map(t => t.transaction_id) || [])];
+      let refundMap: Record<string, { status: string; type: string; amount: number }> = {};
+      
+      if (transactionIds.length > 0) {
+        const { data: refunds } = await supabase
+          .from('refund_records')
+          .select('original_transaction_id, status, refund_type, refund_amount')
+          .in('original_transaction_id', transactionIds);
+        
+        refunds?.forEach(r => {
+          refundMap[r.original_transaction_id] = {
+            status: r.status,
+            type: r.refund_type,
+            amount: Number(r.refund_amount) || 0
+          };
+        });
+      }
+
+      return (data || []).map(item => ({
+        ...item,
+        refund_status: refundMap[item.transaction_id]?.status || null,
+        refund_type: refundMap[item.transaction_id]?.type || null,
+        refund_amount: refundMap[item.transaction_id]?.amount || null,
+      })) as TransactionItem[];
+    },
+    enabled: !!clientId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
