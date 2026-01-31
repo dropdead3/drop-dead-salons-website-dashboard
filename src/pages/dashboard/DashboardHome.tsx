@@ -30,6 +30,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
+import { TrialCountdownBanner } from '@/components/dashboard/TrialCountdownBanner';
 import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
 import { useViewAs } from '@/contexts/ViewAsContext';
@@ -229,6 +230,9 @@ export default function DashboardHome() {
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Trial Countdown Banner - visible when organization is in trial */}
+        <TrialCountdownBanner />
 
         {/* Today's Birthday Banner - visible to all */}
         <TodaysBirthdayBanner />
