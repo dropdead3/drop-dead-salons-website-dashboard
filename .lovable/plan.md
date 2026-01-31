@@ -1,361 +1,326 @@
 
 
-## Import Error Recovery & Rollback System
+## Self-Service User Seats for Super Admins
 
-This plan adds comprehensive error recovery capabilities to the data import system, allowing the platform team to safely re-import data after correcting mistakes.
-
----
-
-### Current State Analysis
-
-**What exists today:**
-| Feature | Status |
-|---------|--------|
-| Import job tracking (`import_jobs` table) | Exists - records job status, errors, counts |
-| Data lineage fields (`external_id`, `import_source`, `imported_at`) | Exists on all importable tables |
-| Rollback/undo functionality | Does NOT exist |
-| Dry run/preview mode | Does NOT exist |
-| Re-import capability | Does NOT exist |
-
-**The Problem:**
-If an import has mapping mistakes or bad data, there's currently no way to:
-1. Preview what will be imported before committing
-2. Roll back/delete all records from a specific import
-3. Re-run an import with corrected data
+This plan enables business organization super admins to purchase additional user seats through a self-service flow, mirroring the existing location seats model.
 
 ---
 
-### Proposed Features
+### Overview
 
-#### 1. Import Job ID Tracking (Critical Foundation)
-
-Add an `import_job_id` column to all importable tables to enable precise rollback.
-
-**Why needed:** Currently records only have `import_source` and `imported_at`, which isn't precise enough. Two imports on the same day would be indistinguishable.
-
-**Tables to update:**
-- `clients`
-- `services`
-- `appointments`
-- `products`
-- `locations`
-- `imported_staff`
-
-```sql
-ALTER TABLE clients ADD COLUMN import_job_id UUID REFERENCES import_jobs(id);
-ALTER TABLE services ADD COLUMN import_job_id UUID REFERENCES import_jobs(id);
--- etc.
-```
+| Current State | Proposed State |
+|--------------|----------------|
+| User capacity calculated but not enforced | Capacity bar shows usage + "Add Seat" button |
+| Invite button always enabled | Invite disabled at capacity with upgrade prompt |
+| No `useAddUserSeats` hook | New hook for self-service seat purchases |
+| No Add User Seats dialog | New dialog matching location seats UX |
 
 ---
 
-#### 2. Dry Run / Preview Mode
+### What Gets Built
 
-Add a "Validate Only" option to the import wizard that:
-- Runs all validation logic
-- Returns counts and errors
-- Does NOT insert any data
+#### 1. User Capacity Bar Component
+A new `UserCapacityBar.tsx` component (similar to `LocationCapacityBar.tsx`) that:
+- Shows used vs total user seats with progress bar
+- Displays "At capacity" / "Near capacity" badges
+- Has "Add Seat" button for super admins
+- Only visible to super admins
 
-**Benefits:**
-- Catch field mapping errors before importing
-- See exactly what will be imported
-- Identify validation failures upfront
+#### 2. Add User Seats Dialog
+A new `AddUserSeatsDialog.tsx` component (matching `AddLocationSeatsDialog.tsx`) that:
+- Shows current plan summary with included users
+- Quantity selector for seats to add
+- Real-time cost breakdown showing:
+  - Base plan price
+  - Current add-on cost
+  - New add-on cost with increase highlighted
+- Agreement checkbox with billing terms
+- Proration info note
 
-**UI Addition:**
-```text
-┌─────────────────────────────────────┐
-│ Import Options                      │
-│                                     │
-│ [●] Import data (live)              │
-│ [○] Dry run (validate only)         │
-│                                     │
-│ Dry run will validate your data and │
-│ show what would be imported without │
-│ making any changes.                 │
-└─────────────────────────────────────┘
-```
+#### 3. useAddUserSeats Hook
+Extend `useBusinessCapacity.ts` with a new hook that:
+- Fetches current billing record
+- Updates `additional_users_purchased` field
+- Logs change to `billing_changes` table with type `add_users`
+- Returns success with new seat count
 
----
+#### 4. Capacity Enforcement on Invite
+Update `InviteStaffDialog.tsx` to:
+- Check `canAddUser` from capacity hook
+- Show upgrade prompt when at capacity
+- Disable invite button with clear messaging
 
-#### 3. Rollback Functionality
-
-Add ability to delete all records from a specific import job.
-
-**New edge function: `rollback-import`**
-```typescript
-// DELETE FROM clients WHERE import_job_id = ?
-// DELETE FROM services WHERE import_job_id = ?
-// etc.
-```
-
-**Safety features:**
-- Confirmation dialog with record counts
-- Only allow rollback within 30 days
-- Mark job as "rolled_back" status
-- Log who performed the rollback
-
----
-
-#### 4. Re-Import Workflow
-
-Enable running a corrected import after rollback.
-
-**Options:**
-1. **Rollback + Re-import**: Delete old data, import fresh
-2. **Upsert mode**: Update existing records by `external_id`, insert new ones
-
-For upsert mode, the edge function would:
-```typescript
-// If external_id exists, UPDATE
-// If external_id doesn't exist, INSERT
-const { error } = await supabase
-  .from(targetTable)
-  .upsert(mapped, { onConflict: 'external_id,organization_id' });
-```
+#### 5. Settings Page Integration
+Update the "Users" category in `Settings.tsx` to:
+- Import and use the capacity hook
+- Show `UserCapacityBar` above team members list
+- Only show for super admins
+- Connect to Add Seats dialog
 
 ---
 
 ### Visual Changes
 
-#### Import History (Enhanced)
-
+**Before (Team Members section):**
 ```text
-┌────────────────────────────────────────────────────────────────────┐
-│ Recent Imports                                                      │
-├────────────────────────────────────────────────────────────────────┤
-│ ● Clients from phorest          Jan 30, 2026 2:15 PM               │
-│   ✓ 156 imported, 3 failed                   [View] [Rollback]     │
-│                                                                     │
-│ ● Services from csv             Jan 30, 2026 1:45 PM               │
-│   ✓ 45 imported                              [View] [Rollback]     │
-│                                                                     │
-│ ○ Clients from phorest          Jan 29, 2026 10:00 AM              │
-│   ↩ Rolled back by admin@...                 [View] [Re-import]    │
-└────────────────────────────────────────────────────────────────────┘
++------------------------------------------+
+| TEAM MEMBERS                              |
+| Manage team members and access levels     |
++------------------------------------------+
+| Leadership                                |
+|   [User 1] [Role selector] [Remove]       |
+|   [User 2] [Role selector] [Remove]       |
++------------------------------------------+
 ```
 
-#### Rollback Confirmation Dialog
-
+**After (with Capacity Bar):**
 ```text
-┌────────────────────────────────────────────────────────────┐
-│ ⚠ Confirm Rollback                                          │
-│                                                             │
-│ This will permanently delete 156 client records that were  │
-│ imported on Jan 30, 2026 at 2:15 PM.                        │
-│                                                             │
-│ Organization: Salon XYZ                                     │
-│ Location: Downtown Branch                                   │
-│                                                             │
-│ This action cannot be undone.                               │
-│                                                             │
-│                    [Cancel]    [Confirm Rollback]           │
-└────────────────────────────────────────────────────────────┘
++------------------------------------------+
+| TEAM MEMBERS                              |
+| Manage team members and access levels     |
++------------------------------------------+
+| [=====-------------] 5 of 10 seats used   |
+| [Near capacity]              [Add Seat]   |
++------------------------------------------+
+| Leadership                                |
+|   [User 1] [Role selector] [Remove]       |
++------------------------------------------+
+```
+
+**Add User Seats Dialog:**
+```text
++------------------------------------------+
+| [icon] Add User Seats                     |
+|        Expand your team capacity          |
++------------------------------------------+
+| Current plan              Professional    |
+| Included users            5               |
+| Additional seats          2 x $10 = $20   |
++------------------------------------------+
+| How many seats to add?                    |
+|        [-]  3  [+]                        |
+|        $10 per seat per month             |
++------------------------------------------+
+| NEW MONTHLY COST                          |
+| Base plan                      $199/mo    |
+| User add-ons      $50/mo (+$30)           |
+| ──────────────────────────────            |
+| Total                          $249/mo    |
++------------------------------------------+
+| [x] I agree to updated billing terms.     |
+|     My cost will increase by $30.         |
++------------------------------------------+
+| [!] Prorated for current billing period   |
++------------------------------------------+
+|              [Cancel] [Confirm & Add]     |
++------------------------------------------+
 ```
 
 ---
 
-### Implementation
+### Implementation Details
 
-#### Phase 1: Database Schema Updates
-
-**File: Database Migration**
-
-Add `import_job_id` to all importable tables:
-
-```sql
--- Add import_job_id to enable precise rollback
-ALTER TABLE clients ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
-ALTER TABLE services ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
-ALTER TABLE appointments ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
-ALTER TABLE locations ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
-ALTER TABLE imported_staff ADD COLUMN IF NOT EXISTS import_job_id UUID REFERENCES import_jobs(id);
-
--- Add rollback tracking to import_jobs
-ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS rolled_back_at TIMESTAMPTZ;
-ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS rolled_back_by UUID REFERENCES auth.users(id);
-
--- Create indexes for efficient rollback queries
-CREATE INDEX IF NOT EXISTS idx_clients_import_job ON clients(import_job_id);
-CREATE INDEX IF NOT EXISTS idx_services_import_job ON services(import_job_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_import_job ON appointments(import_job_id);
-CREATE INDEX IF NOT EXISTS idx_products_import_job ON products(import_job_id);
-CREATE INDEX IF NOT EXISTS idx_locations_import_job ON locations(import_job_id);
-CREATE INDEX IF NOT EXISTS idx_imported_staff_import_job ON imported_staff(import_job_id);
-```
-
----
-
-#### Phase 2: Update Import Edge Function
-
-**File: `supabase/functions/import-data/index.ts`**
-
-Add dry run mode and include job ID in records:
-
-```typescript
-interface ImportRequest {
-  // ... existing fields
-  dry_run?: boolean;  // NEW: validate only, don't insert
-}
-
-// In the processing loop:
-mapped.import_job_id = jobId;  // NEW: link record to job
-
-// NEW: Skip actual insert if dry run
-if (dry_run) {
-  // Just validate, don't insert
-  successCount++;
-  continue;
-}
-```
-
----
-
-#### Phase 3: Create Rollback Edge Function
-
-**File: `supabase/functions/rollback-import/index.ts`**
-
-New edge function to delete records by job ID:
-
-```typescript
-interface RollbackRequest {
-  job_id: string;
-}
-
-// 1. Verify job exists and is eligible for rollback
-// 2. Delete records from appropriate table based on entity_type
-// 3. Update job status to 'rolled_back'
-// 4. Return summary of deleted records
-```
-
----
-
-#### Phase 4: Update DataImportWizard
-
-**File: `src/components/admin/DataImportWizard.tsx`**
-
-Add dry run toggle and result preview:
-
-```typescript
-const [isDryRun, setIsDryRun] = useState(false);
-
-// In upload step, add toggle:
-<div className="flex items-center gap-2">
-  <Switch checked={isDryRun} onCheckedChange={setIsDryRun} />
-  <Label>Dry run (validate only)</Label>
-</div>
-
-// In API call:
-body: {
-  ...existing,
-  dry_run: isDryRun,
-}
-```
-
----
-
-#### Phase 5: Add Rollback UI to Import History
-
-**Files:**
-- `src/pages/dashboard/platform/PlatformImport.tsx` (add history section)
-- `src/pages/dashboard/admin/DataImport.tsx` (enhance history)
-
-Add rollback button to each job with confirmation dialog:
-
-```typescript
-<AlertDialog>
-  <AlertDialogTrigger asChild>
-    <Button variant="destructive" size="sm">
-      <Undo className="w-4 h-4 mr-1" />
-      Rollback
-    </Button>
-  </AlertDialogTrigger>
-  <AlertDialogContent>
-    {/* Confirmation with record count */}
-  </AlertDialogContent>
-</AlertDialog>
-```
-
----
-
-### File Changes Summary
+#### File Changes Summary
 
 | File | Action | Description |
 |------|--------|-------------|
-| Database Migration | **Create** | Add `import_job_id` to tables, rollback tracking to jobs |
-| `supabase/functions/import-data/index.ts` | **Edit** | Add dry_run mode, include job_id in records |
-| `supabase/functions/rollback-import/index.ts` | **Create** | New edge function for rollback |
-| `src/components/admin/DataImportWizard.tsx` | **Edit** | Add dry run toggle |
-| `src/pages/dashboard/platform/PlatformImport.tsx` | **Edit** | Add import history with rollback buttons |
-| `src/pages/dashboard/admin/DataImport.tsx` | **Edit** | Add rollback buttons to history |
+| `src/hooks/useBusinessCapacity.ts` | **Edit** | Add `useAddUserSeats` hook |
+| `src/components/dashboard/settings/UserCapacityBar.tsx` | **Create** | Capacity visualization |
+| `src/components/dashboard/settings/AddUserSeatsDialog.tsx` | **Create** | Self-service upgrade dialog |
+| `src/pages/dashboard/admin/Settings.tsx` | **Edit** | Add capacity bar to Users section |
+| `src/components/dashboard/InviteStaffDialog.tsx` | **Edit** | Add capacity enforcement |
 
 ---
 
-### Data Flow for Rollback
+#### 1. useAddUserSeats Hook
 
-```text
-User clicks "Rollback"
-        │
-        ▼
-┌─────────────────────┐
-│ Confirmation Dialog │
-│ "Delete 156 clients │
-│  from this import?" │
-└─────────────────────┘
-        │ Confirm
-        ▼
-┌─────────────────────────────────────┐
-│ Edge Function: rollback-import      │
-│                                     │
-│ 1. Fetch job (verify exists)        │
-│ 2. Check job.entity_type            │
-│ 3. DELETE FROM clients              │
-│    WHERE import_job_id = job.id     │
-│ 4. UPDATE import_jobs               │
-│    SET status = 'rolled_back',      │
-│        rolled_back_at = now()       │
-│ 5. Return { deleted_count: 156 }    │
-└─────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────────┐
-│ Success Toast       │
-│ "156 records deleted│
-│  Import rolled back"│
-└─────────────────────┘
+Add to `src/hooks/useBusinessCapacity.ts`:
+
+```typescript
+export function useAddUserSeats() {
+  const { data: profile } = useEmployeeProfile();
+  const organizationId = profile?.organization_id;
+
+  const addSeats = async (seatsToAdd: number) => {
+    if (!organizationId) throw new Error('No organization found');
+
+    // Get current billing record
+    const { data: billing, error: fetchError } = await supabase
+      .from('organization_billing')
+      .select('id, additional_users_purchased')
+      .eq('organization_id', organizationId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const currentSeats = billing.additional_users_purchased ?? 0;
+    const newSeats = currentSeats + seatsToAdd;
+
+    // Update the billing record
+    const { error: updateError } = await supabase
+      .from('organization_billing')
+      .update({ additional_users_purchased: newSeats })
+      .eq('id', billing.id);
+
+    if (updateError) throw updateError;
+
+    // Log the change to audit table
+    await supabase.from('billing_changes').insert({
+      organization_id: organizationId,
+      change_type: 'add_users',  // Uses existing enum value
+      previous_value: { additional_users_purchased: currentSeats },
+      new_value: { additional_users_purchased: newSeats },
+      notes: `Added ${seatsToAdd} user seat(s)`,
+    });
+
+    return { previousSeats: currentSeats, newSeats };
+  };
+
+  return { addSeats, organizationId };
+}
 ```
 
 ---
 
-### Technical Considerations
+#### 2. UserCapacityBar Component
 
-#### Rollback Eligibility Rules
-- Only allow rollback for jobs with status `completed` or `failed`
-- Consider time limit (e.g., 30 days) to prevent accidental deletion of old data
-- Platform admins only (not salon admins)
+Create `src/components/dashboard/settings/UserCapacityBar.tsx`:
 
-#### Upsert Mode Considerations
-For re-imports where you want to UPDATE existing + INSERT new:
-- Requires unique constraint on `(external_id, organization_id)`
-- More complex but avoids needing rollback first
-- Can be added as Phase 2 enhancement
-
-#### Foreign Key Constraints
-When rolling back appointments, check for related records:
-- Appointment → Client relationship
-- Consider CASCADE or preventing rollback if dependencies exist
+- Mirror structure of `LocationCapacityBar.tsx`
+- Use `Users` icon instead of `MapPin`
+- Display user seats used vs total
+- Show utilization progress bar
+- "At capacity" / "Near capacity" badges
+- "Add Seat" button triggers dialog
 
 ---
 
-### Implementation Priority
+#### 3. AddUserSeatsDialog Component
 
-| Priority | Feature | Effort |
-|----------|---------|--------|
-| 1 | Add `import_job_id` tracking | Low |
-| 2 | Dry run / preview mode | Medium |
-| 3 | Rollback functionality | Medium |
-| 4 | Rollback UI + confirmation | Medium |
-| 5 | Upsert mode for re-imports | Higher (optional) |
+Create `src/components/dashboard/settings/AddUserSeatsDialog.tsx`:
 
-This provides a complete error recovery system while maintaining data integrity and audit trails.
+- Mirror structure of `AddLocationSeatsDialog.tsx`
+- Use `Users` icon
+- Calculate costs using `perUserFee` and `additionalUsersPurchased`
+- Show base users from plan
+- Quantity selector with +/- buttons
+- Cost breakdown with increase highlighted
+- Agreement checkbox
+- Proration info note
+- Submit triggers `useAddUserSeats` mutation
+
+---
+
+#### 4. Settings Page Integration
+
+Update the "Users" category in `Settings.tsx`:
+
+```typescript
+// Add imports
+import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
+import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
+import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
+
+// Add state
+const [isAddUserSeatsOpen, setIsAddUserSeatsOpen] = useState(false);
+const capacity = useBusinessCapacity();
+
+// In the 'users' category render:
+{activeCategory === 'users' && (
+  <Card>
+    <CardHeader>
+      <CardTitle>TEAM MEMBERS</CardTitle>
+      <CardDescription>Manage team members and access levels.</CardDescription>
+    </CardHeader>
+    <CardContent>
+      {/* Add capacity bar for super admins */}
+      {profile?.is_super_admin && !capacity.isLoading && (
+        <div className="mb-6">
+          <UserCapacityBar 
+            capacity={capacity} 
+            onAddSeats={() => setIsAddUserSeatsOpen(true)} 
+          />
+        </div>
+      )}
+      
+      {/* Existing team members list */}
+      ...
+    </CardContent>
+  </Card>
+)}
+
+{/* Add dialog */}
+<AddUserSeatsDialog
+  open={isAddUserSeatsOpen}
+  onOpenChange={setIsAddUserSeatsOpen}
+  capacity={capacity}
+/>
+```
+
+---
+
+#### 5. Invite Dialog Enforcement
+
+Update `InviteStaffDialog.tsx`:
+
+```typescript
+// Add import
+import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
+
+// In component
+const capacity = useBusinessCapacity();
+const canInvite = capacity.canAddUser || capacity.isLoading;
+
+// Update trigger button
+<DialogTrigger asChild>
+  <Button 
+    className="gap-2" 
+    disabled={!canInvite}
+    title={!canInvite ? 'User seats at capacity' : undefined}
+  >
+    <UserPlus className="h-4 w-4" />
+    Invite Staff
+  </Button>
+</DialogTrigger>
+
+// Add capacity warning in dialog content when at limit
+{!capacity.canAddUser && !capacity.users.isUnlimited && (
+  <Alert variant="destructive" className="mb-4">
+    <AlertCircle className="h-4 w-4" />
+    <AlertDescription>
+      You've reached your user seat limit. 
+      Contact your organization admin to add more seats.
+    </AlertDescription>
+  </Alert>
+)}
+```
+
+---
+
+### Access Control
+
+- **Capacity bar visible to**: Super admins only (`profile?.is_super_admin`)
+- **Add seats button**: Super admins only
+- **Invite enforcement**: All users (disabled when at capacity for everyone)
+- **RLS protection**: `organization_billing` table already has proper RLS for updates
+
+---
+
+### Technical Notes
+
+**Why no database changes needed:**
+- `organization_billing.additional_users_purchased` column already exists
+- `billing_changes` table already supports `add_users` change type
+- `useOrganizationCapacity` already calculates user capacity correctly
+- `useBusinessCapacity` already exposes `canAddUser`, `perUserFee`, etc.
+
+**Billing flow:**
+1. Super admin clicks "Add Seat" button
+2. Dialog shows current plan + cost projection
+3. Super admin selects quantity and agrees to terms
+4. On confirm:
+   - `additional_users_purchased` incremented in `organization_billing`
+   - Change logged to `billing_changes` for audit
+   - Query cache invalidated to refresh UI
+5. Invite button becomes enabled (if it was disabled)
 
