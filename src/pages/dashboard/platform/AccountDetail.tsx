@@ -236,10 +236,10 @@ export default function AccountDetail() {
             Users
           </TabsTrigger>
           <TabsTrigger 
-            value="imports"
+            value="migration"
             className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white"
           >
-            Imports
+            Migration
           </TabsTrigger>
           <TabsTrigger 
             value="billing"
@@ -404,8 +404,6 @@ export default function AccountDetail() {
             </PlatformCard>
           </div>
 
-          {/* Migration Credentials Card */}
-          <MigrationCredentialsCard organizationId={organization.id} organization={organization} />
 
           {/* Business Integrations Card */}
           <AccountIntegrationsCard organizationId={organization.id} />
@@ -432,7 +430,11 @@ export default function AccountDetail() {
           </PlatformCard>
         </TabsContent>
 
-        <TabsContent value="imports">
+        <TabsContent value="migration" className="space-y-4">
+          {/* Migration Credentials Card */}
+          <MigrationCredentialsCard organizationId={organization.id} organization={organization} />
+
+          {/* Import History Card */}
           <PlatformCard variant="glass">
             <PlatformCardHeader className="flex flex-row items-center justify-between">
               <PlatformCardTitle>Import History</PlatformCardTitle>
