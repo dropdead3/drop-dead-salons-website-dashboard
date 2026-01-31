@@ -56,6 +56,7 @@ import {
   Settings2,
   FileCheck,
   Plus,
+  Gift,
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -112,7 +113,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | 'forms' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | 'forms' | 'loyalty' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -768,6 +769,12 @@ export default function Settings() {
       description: 'Client agreements & waivers',
       icon: FileCheck,
     },
+    loyalty: {
+      id: 'loyalty',
+      label: 'Loyalty & Rewards',
+      description: 'Points, tiers & gift cards',
+      icon: Gift,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -1268,6 +1275,20 @@ export default function Settings() {
           {activeCategory === 'dayrate' && <DayRateSettingsContent />}
 
           {activeCategory === 'role-access' && <RoleAccessConfigurator />}
+
+          {activeCategory === 'loyalty' && (
+            <Card className="p-6">
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Gift className="w-12 h-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  Configure your loyalty program, reward tiers, and gift card designs.
+                </p>
+                <Button onClick={() => window.location.href = '/dashboard/settings/loyalty'}>
+                  Open Loyalty & Rewards
+                </Button>
+              </div>
+            </Card>
+          )}
         </div>
       </DashboardLayout>
     );
