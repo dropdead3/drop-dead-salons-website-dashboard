@@ -23,6 +23,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { QueueCard } from './operations/QueueCard';
 import { WalkInDialog } from './operations/WalkInDialog';
 import { CheckoutSummarySheet } from './schedule/CheckoutSummarySheet';
+import { EditAppointmentDialog } from './schedule/EditAppointmentDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -44,6 +45,8 @@ export function TodaysQueueSection({
   const [internalLocationId, setInternalLocationId] = useState<string>('all');
   const [checkoutAppointment, setCheckoutAppointment] = useState<QueueAppointment | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [editAppointment, setEditAppointment] = useState<QueueAppointment | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const locationId = externalLocationId ?? internalLocationId;
@@ -82,10 +85,8 @@ export function TodaysQueueSection({
   };
 
   const handleEdit = (appointment: QueueAppointment) => {
-    // For now, show a toast - could open an edit dialog in the future
-    toast.info(`Edit appointment for ${appointment.client_name || 'Walk-in'}`, {
-      description: 'Edit functionality coming soon',
-    });
+    setEditAppointment(appointment);
+    setEditDialogOpen(true);
   };
 
   const handleDelete = async (appointmentId: string) => {
@@ -328,6 +329,16 @@ export function TodaysQueueSection({
           locationPhone={(selectedLocation as any)?.phone}
         />
       )}
+
+      {/* Edit Appointment Dialog */}
+      <EditAppointmentDialog
+        appointment={editAppointment}
+        open={editDialogOpen}
+        onOpenChange={(open) => {
+          setEditDialogOpen(open);
+          if (!open) setEditAppointment(null);
+        }}
+      />
     </>
   );
 }

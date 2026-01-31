@@ -23,7 +23,8 @@ import {
   LayoutDashboard,
   RefreshCw,
   XCircle,
-  ExternalLink
+  ExternalLink,
+  Settings,
 } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { logPlatformAction } from '@/hooks/useOrganizations';
@@ -31,6 +32,9 @@ import { useOrganizationWithStats, type OrganizationWithStats } from '@/hooks/us
 import { EditOrganizationDialog } from '@/components/platform/EditOrganizationDialog';
 import { AccountIntegrationsCard } from '@/components/platform/account/AccountIntegrationsCard';
 import { MigrationCredentialsCard } from '@/components/platform/account/MigrationCredentialsCard';
+import { AccountUsersTab } from '@/components/platform/account/AccountUsersTab';
+import { AccountSettingsTab } from '@/components/platform/account/AccountSettingsTab';
+import { AccountImportHistoryTab } from '@/components/platform/account/AccountImportHistoryTab';
 import { BillingConfigurationPanel } from '@/components/platform/billing/BillingConfigurationPanel';
 import { AccountNotesSection } from '@/components/platform/notes/AccountNotesSection';
 import { format, parseISO, isBefore, startOfDay } from 'date-fns';
@@ -259,6 +263,7 @@ export default function AccountDetail() {
             value="settings"
             className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 hover:text-white"
           >
+            <Settings className="h-4 w-4 mr-2" />
             Settings
           </TabsTrigger>
         </TabsList>
@@ -414,41 +419,15 @@ export default function AccountDetail() {
         </TabsContent>
 
         <TabsContent value="users">
-          <PlatformCard variant="glass">
-            <PlatformCardHeader className="flex flex-row items-center justify-between">
-              <PlatformCardTitle>Team Members</PlatformCardTitle>
-              <PlatformButton size="sm">
-                <Users className="h-4 w-4 mr-2" />
-                Add User
-              </PlatformButton>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <p className="text-slate-500 text-center py-8">
-                User management coming soon
-              </p>
-            </PlatformCardContent>
-          </PlatformCard>
+          <AccountUsersTab organizationId={organization.id} organizationName={organization.name} />
         </TabsContent>
 
         <TabsContent value="migration" className="space-y-4">
           {/* Migration Credentials Card */}
           <MigrationCredentialsCard organizationId={organization.id} organization={organization} />
 
-          {/* Import History Card */}
-          <PlatformCard variant="glass">
-            <PlatformCardHeader className="flex flex-row items-center justify-between">
-              <PlatformCardTitle>Import History</PlatformCardTitle>
-              <PlatformButton size="sm" onClick={() => navigate(`/dashboard/platform/import?org=${organization.id}`)}>
-                <Upload className="h-4 w-4 mr-2" />
-                New Import
-              </PlatformButton>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <p className="text-slate-500 text-center py-8">
-                No imports yet for this organization
-              </p>
-            </PlatformCardContent>
-          </PlatformCard>
+          {/* Import History */}
+          <AccountImportHistoryTab organizationId={organization.id} />
         </TabsContent>
 
         <TabsContent value="billing">
@@ -467,16 +446,7 @@ export default function AccountDetail() {
         </TabsContent>
 
         <TabsContent value="settings">
-          <PlatformCard variant="glass">
-            <PlatformCardHeader>
-              <PlatformCardTitle>Organization Settings</PlatformCardTitle>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <p className="text-slate-500 text-center py-8">
-                Settings configuration coming soon
-              </p>
-            </PlatformCardContent>
-          </PlatformCard>
+          <AccountSettingsTab organizationId={organization.id} />
         </TabsContent>
       </Tabs>
 

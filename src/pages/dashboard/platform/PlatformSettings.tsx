@@ -4,6 +4,7 @@ import { PlatformTeamManager } from '@/components/platform/PlatformTeamManager';
 import { PlatformAppearanceTab } from '@/components/platform/settings/PlatformAppearanceTab';
 import { PlatformIntegrationsTab } from '@/components/platform/settings/PlatformIntegrationsTab';
 import { PlatformAccountTab } from '@/components/platform/settings/PlatformAccountTab';
+import { PlatformSecurityTab } from '@/components/platform/settings/PlatformSecurityTab';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { cn } from '@/lib/utils';
 import {
@@ -82,22 +83,7 @@ export default function PlatformSettings() {
         </TabsContent>
 
         <TabsContent value="security">
-          <PlatformCard variant="glass">
-            <PlatformCardHeader>
-              <PlatformCardTitle className="flex items-center gap-2">
-                <Shield className={cn('h-5 w-5', isDark ? 'text-violet-400' : 'text-violet-600')} />
-                Security Settings
-              </PlatformCardTitle>
-              <PlatformCardDescription>
-                Configure authentication and access controls
-              </PlatformCardDescription>
-            </PlatformCardHeader>
-            <PlatformCardContent>
-              <p className={cn('text-sm', isDark ? 'text-slate-500' : 'text-slate-400')}>
-                Security settings coming soon...
-              </p>
-            </PlatformCardContent>
-          </PlatformCard>
+          <PlatformSecurityTab />
         </TabsContent>
 
         <TabsContent value="templates">
