@@ -16,6 +16,9 @@ import {
   Info,
   ChevronRight,
   Clock,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
@@ -32,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -77,6 +80,12 @@ export function AggregateSalesCard({
   const navigate = useNavigate();
   const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
   const { hideNumbers } = useHideNumbers();
+
+  // Location table sorting
+  type LocationSortField = 'name' | 'totalRevenue' | 'serviceRevenue' | 'productRevenue' | 'totalTransactions' | 'avgTicket';
+  type SortDirection = 'asc' | 'desc';
+  const [locationSortField, setLocationSortField] = useState<LocationSortField>('totalRevenue');
+  const [locationSortDirection, setLocationSortDirection] = useState<SortDirection>('desc');
 
   // Use external if provided, otherwise internal
   const dateRange = externalDateRange ?? internalDateRange;
@@ -200,6 +209,45 @@ export function AggregateSalesCard({
     if (!trendData || !locationId) return [];
     return trendData.byLocation?.[locationId] || [];
   };
+
+  // Location sort handlers
+  const handleLocationSort = (field: LocationSortField) => {
+    if (locationSortField === field) {
+      setLocationSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setLocationSortField(field);
+      setLocationSortDirection('desc');
+    }
+  };
+
+  const getLocationSortIcon = (field: LocationSortField) => {
+    if (locationSortField !== field) {
+      return <ArrowUpDown className="w-3 h-3 text-muted-foreground" />;
+    }
+    return locationSortDirection === 'asc' 
+      ? <ArrowUp className="w-3 h-3 text-primary" />
+      : <ArrowDown className="w-3 h-3 text-primary" />;
+  };
+
+  // Sorted location data
+  const sortedLocationData = useMemo(() => {
+    if (!locationData) return [];
+    return [...locationData].sort((a, b) => {
+      let aVal: number, bVal: number;
+      if (locationSortField === 'avgTicket') {
+        aVal = a.totalTransactions > 0 ? a.totalRevenue / a.totalTransactions : 0;
+        bVal = b.totalTransactions > 0 ? b.totalRevenue / b.totalTransactions : 0;
+      } else if (locationSortField === 'name') {
+        return locationSortDirection === 'asc' 
+          ? a.name.localeCompare(b.name) 
+          : b.name.localeCompare(a.name);
+      } else {
+        aVal = a[locationSortField] ?? 0;
+        bVal = b[locationSortField] ?? 0;
+      }
+      return locationSortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+  }, [locationData, locationSortField, locationSortDirection]);
 
   // Export CSV
   const handleExportCSV = () => {
@@ -505,23 +553,65 @@ export function AggregateSalesCard({
             <h3 className="font-display text-xs tracking-wide text-muted-foreground">BY LOCATION</h3>
           </div>
           
-          {locationData && locationData.length > 0 ? (
+          {sortedLocationData && sortedLocationData.length > 0 ? (
             <div className="rounded-lg border overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="font-display text-xs">Location</TableHead>
-                    <TableHead className="font-display text-xs text-center">Revenue</TableHead>
+                    <TableHead className="font-display text-xs">
+                      <button 
+                        onClick={() => handleLocationSort('name')}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        Location {getLocationSortIcon('name')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-display text-xs text-center">
+                      <button 
+                        onClick={() => handleLocationSort('totalRevenue')}
+                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
+                      >
+                        Revenue {getLocationSortIcon('totalRevenue')}
+                      </button>
+                    </TableHead>
                     <TableHead className="font-display text-xs text-center hidden md:table-cell w-[120px]">Trend</TableHead>
-                    <TableHead className="font-display text-xs text-center hidden sm:table-cell">Services</TableHead>
-                    <TableHead className="font-display text-xs text-center hidden sm:table-cell">Products</TableHead>
-                    <TableHead className="font-display text-xs text-center hidden md:table-cell">Transactions</TableHead>
-                    <TableHead className="font-display text-xs text-center">Avg Ticket</TableHead>
+                    <TableHead className="font-display text-xs text-center hidden sm:table-cell">
+                      <button 
+                        onClick={() => handleLocationSort('serviceRevenue')}
+                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
+                      >
+                        Services {getLocationSortIcon('serviceRevenue')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-display text-xs text-center hidden sm:table-cell">
+                      <button 
+                        onClick={() => handleLocationSort('productRevenue')}
+                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
+                      >
+                        Products {getLocationSortIcon('productRevenue')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-display text-xs text-center hidden md:table-cell">
+                      <button 
+                        onClick={() => handleLocationSort('totalTransactions')}
+                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
+                      >
+                        Transactions {getLocationSortIcon('totalTransactions')}
+                      </button>
+                    </TableHead>
+                    <TableHead className="font-display text-xs text-center">
+                      <button 
+                        onClick={() => handleLocationSort('avgTicket')}
+                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
+                      >
+                        Avg Ticket {getLocationSortIcon('avgTicket')}
+                      </button>
+                    </TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {locationData.map((location, idx) => {
+                  {sortedLocationData.map((location, idx) => {
                     const avgTicket = location.totalTransactions > 0 
                       ? location.totalRevenue / location.totalTransactions 
                       : 0;
