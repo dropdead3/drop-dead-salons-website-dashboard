@@ -1,99 +1,152 @@
 
+## My Pay Feature - Personal Earnings Dashboard for Team Members
 
-## Native Payroll Run Functionality for Super Admins
-
-This plan implements a complete payroll run wizard that allows super admins to natively run payroll from their dashboards, calculate employee compensation including commissions, and track payroll history - all without requiring a connected provider (Gusto/QuickBooks).
+This plan creates a dedicated "My Pay" experience where team members can view their earnings, track estimated compensation through the current pay period, and access pay stubs from finalized payroll runs.
 
 ---
 
-### Overview
+### Feature Overview
 
-The system will enable account owners and super admins to:
-1. **Create payroll runs** with a step-by-step wizard
-2. **Auto-calculate compensation** based on employee settings (hourly, salary, commission)
-3. **Pull commission data** from existing Phorest sales data
-4. **Review and approve** payroll before finalizing
-5. **Save payroll runs** to the database for history and reporting
-6. **Export payroll reports** for external processing
+Team members will be able to:
+1. **View current period estimated earnings** - Real-time calculation based on hours worked and sales data from Phorest
+2. **See earnings breakdown** - Base pay (hourly/salary), commissions, bonuses, tips
+3. **Track commission progress** - Leverage existing tier visualization components
+4. **Access pay stub history** - View and download finalized payroll records
+5. **Understand tax withholdings** - See estimated deductions
+
+---
+
+### Implementation Approach
+
+Based on my analysis, I recommend **creating a dedicated `/dashboard/my-pay` page** rather than adding a tab to MyProfile. This approach:
+- Keeps MyProfile focused on contact/schedule information
+- Follows the existing pattern of "My" pages (My Graduation, My Handbooks, My Stats)
+- Provides more space for earnings visualizations and history tables
+- Allows permission-gated access via `view_my_pay` permission
 
 ---
 
 ### Architecture
 
 ```text
-+-------------------+       +-------------------+       +-------------------+
-|  Run Payroll      |       | Local Database    |       | Phorest Sales     |
-|  Wizard (UI)      | <---> | payroll_runs +    | <---- | Data (Commission  |
-|                   |       | payroll_line_items|       | Calculation)      |
-+-------------------+       +-------------------+       +-------------------+
++-----------------------+       +-------------------------+
+|   My Pay Page         | <---> | useMyPayData Hook       |
+|   (Employee View)     |       | - Current period calcs  |
++-----------------------+       | - Personal pay stubs    |
+         |                      +-------------------------+
+         |                               |
+         v                               v
++------------------+           +-------------------+
+| Reused Components|           | Database Tables   |
+| - CommissionCalc |           | - payroll_runs    |
+| - TierProgress   |           | - payroll_line_items
+| - BlurredAmount  |           | - employee_payroll_settings
++------------------+           | - phorest_daily_sales_summary
+                               +-------------------+
 ```
 
-Since API keys are not yet configured, the system will:
-- Store payroll runs locally in the database
-- Calculate all compensation based on `employee_payroll_settings`
-- Pull commission data from `phorest_daily_sales_summary`
-- Generate exportable reports for manual processing via external systems
+---
+
+### UI Design
+
+**Page Structure:**
+
+```text
++------------------------------------------------------------+
+|  MY PAY                                                     |
+|  Your earnings and pay history                             |
++------------------------------------------------------------+
+|                                                            |
+|  [Current Period] [Pay History]                            |
+|                                                            |
+|  +------------------------+  +---------------------------+ |
+|  | CURRENT PERIOD         |  | ESTIMATED COMMISSION      | |
+|  | Jan 15 - Jan 31        |  | Based on your sales       | |
+|  |                        |  |                           | |
+|  | Base Pay    $1,200     |  |    $847 (estimated)       | |
+|  | Commission   $847*     |  |    [Tier: Silver - 42%]   | |
+|  | -------------------    |  |                           | |
+|  | Est. Gross  $2,047     |  | [====>----] $653 to Gold  | |
+|  | Est. Taxes   ~$673     |  |                           | |
+|  | -------------------    |  +---------------------------+ |
+|  | Est. Net   ~$1,374     |                                |
+|  +------------------------+                                |
+|                                                            |
+|  +-------------------------------------------------------+ |
+|  | EARNINGS BREAKDOWN                                    | |
+|  | +-------------+-------------+-------------+           | |
+|  | | Base Pay    | Commission  | Tips/Bonus  |           | |
+|  | | $1,200      | $847        | $0          |           | |
+|  | +-------------+-------------+-------------+           | |
+|  +-------------------------------------------------------+ |
++------------------------------------------------------------+
+
+[Pay History Tab]
++------------------------------------------------------------+
+|  PAY HISTORY                                               |
+|                                                            |
+|  +-------------------------------------------------------+ |
+|  | Check Date  | Period          | Gross  | Net   | [>]  | |
+|  |-------------|-----------------|--------|-------|------| |
+|  | Jan 15      | Jan 1 - Jan 14  | $1,892 | $1,240| View | |
+|  | Jan 1       | Dec 18 - Dec 31 | $2,104 | $1,378| View | |
+|  | Dec 18      | Dec 4 - Dec 17  | $1,756 | $1,150| View | |
+|  +-------------------------------------------------------+ |
+|                                                            |
+|  No pay stub selected                                      |
+|  Click "View" to see details                               |
++------------------------------------------------------------+
+```
 
 ---
 
-### Changes Summary
+### Component Structure
 
-| Area | Files | Action |
-|------|-------|--------|
-| Components | `RunPayrollWizard.tsx` | **Create** - Multi-step payroll wizard |
-| Components | `PayPeriodStep.tsx` | **Create** - Date selection step |
-| Components | `EmployeeHoursStep.tsx` | **Create** - Hours entry step |
-| Components | `CommissionStep.tsx` | **Create** - Commission review step |
-| Components | `ReviewStep.tsx` | **Create** - Final review before submission |
-| Components | `PayrollSummaryCard.tsx` | **Create** - Summary statistics |
-| Hooks | `usePayrollCalculations.ts` | **Create** - Compensation calculation logic |
-| Hooks | `usePayroll.ts` | **Edit** - Add local payroll creation mutation |
-| Pages | `Payroll.tsx` | **Edit** - Integrate wizard and add navigation link |
-| DashboardLayout | `DashboardLayout.tsx` | **Edit** - Add Payroll nav item |
+| Component | Purpose |
+|-----------|---------|
+| `MyPay.tsx` | Main page with two tabs: Current Period and Pay History |
+| `CurrentPeriodCard.tsx` | Shows estimated earnings for active pay period |
+| `EarningsBreakdownCard.tsx` | Visual breakdown of base, commission, tips |
+| `MyPayStubHistory.tsx` | Table of finalized pay stubs for this employee |
+| `PayStubDetailDialog.tsx` | Modal showing full breakdown when viewing a pay stub |
 
 ---
 
-### Component Details
+### Data Layer
 
-#### 1. `RunPayrollWizard.tsx` (New)
+**New Hook: `useMyPayData.ts`**
 
-A multi-step wizard with the following flow:
-
-**Step 1: Select Pay Period**
-- Choose pay period start/end dates with date picker
-- Select check date (when employees get paid)
-- Display current pay schedule info
-
-**Step 2: Enter Hours**
-- List all active employees with payroll settings
-- For hourly employees: Input regular hours and overtime hours
-- For salaried employees: Show calculated period salary
-- Skip option for commission-only employees
-
-**Step 3: Review Commissions**
-- Auto-fetch sales data from `phorest_daily_sales_summary` for the pay period
-- Calculate commissions using `useCommissionTiers` hook
-- Display breakdown by employee with service and product commissions
-- Allow manual adjustments
-
-**Step 4: Add Bonuses/Adjustments**
-- Optional one-time bonuses per employee
-- Tips entry if applicable
-- Deductions or adjustments
-
-**Step 5: Review and Submit**
-- Display full summary with all employees
-- Show gross pay, estimated taxes, net pay per employee
-- Total payroll cost breakdown
-- Confirm and save to database
-
-#### 2. `usePayrollCalculations.ts` (New)
-
-Centralized calculation logic:
+This hook provides:
+1. **Current employee payroll settings** - Filtered to current user from `employee_payroll_settings`
+2. **Current period sales data** - From `phorest_daily_sales_summary` for the active pay period
+3. **Estimated compensation** - Uses `usePayrollCalculations` logic
+4. **Pay stub history** - Query `payroll_line_items` joined with `payroll_runs` filtered by `employee_id = auth.uid()`
 
 ```typescript
-interface EmployeeCompensation {
-  employeeId: string;
+interface MyPayData {
+  settings: EmployeePayrollSettings | null;
+  currentPeriod: {
+    startDate: string;
+    endDate: string;
+    checkDate: string;
+  };
+  salesData: {
+    serviceRevenue: number;
+    productRevenue: number;
+  };
+  estimatedCompensation: EmployeeCompensation | null;
+  payStubs: PayStub[];
+  isLoading: boolean;
+}
+
+interface PayStub {
+  id: string;
+  payrollRunId: string;
+  payPeriodStart: string;
+  payPeriodEnd: string;
+  checkDate: string;
+  status: string;
+  grossPay: number;
   regularHours: number;
   overtimeHours: number;
   hourlyPay: number;
@@ -101,179 +154,70 @@ interface EmployeeCompensation {
   commissionPay: number;
   bonusPay: number;
   tips: number;
-  grossPay: number;
-  estimatedTaxes: number;
-  estimatedDeductions: number;
+  taxes: number;
+  deductions: number;
   netPay: number;
 }
-
-function calculateEmployeeCompensation(
-  settings: EmployeePayrollSettings,
-  hours: { regular: number; overtime: number },
-  salesData: SalesData[],
-  bonus?: number,
-  tips?: number
-): EmployeeCompensation
 ```
 
-**Calculation Rules:**
-- **Hourly**: `(regularHours * hourlyRate) + (overtimeHours * hourlyRate * 1.5)`
-- **Salary**: `(annualSalary / 52) * weeksInPeriod` or `/26` for bi-weekly
-- **Commission**: Use existing `calculateCommission()` from `useCommissionTiers`
-- **Tax Estimates**: Apply standard withholding percentages (federal ~22%, state ~5%, FICA 7.65%)
+---
 
-#### 3. Commission Integration
+### Database Considerations
 
-Fetch and aggregate sales data for the pay period:
+**RLS Policy Update Needed:**
+
+Currently, `payroll_line_items` may only be readable by org admins. We need to add a policy allowing employees to read their own records:
+
+```sql
+CREATE POLICY "Employees can view their own pay stubs"
+ON public.payroll_line_items FOR SELECT
+USING (employee_id = auth.uid());
+```
+
+Similarly for `employee_payroll_settings`:
+
+```sql
+CREATE POLICY "Employees can view their own payroll settings"
+ON public.employee_payroll_settings FOR SELECT
+USING (employee_id = auth.uid());
+```
+
+---
+
+### Permission & Navigation
+
+**New Permission:**
+- `view_my_pay` - Allows access to the My Pay page
+
+**Navigation Integration:**
+Add to `DashboardLayout.tsx` in a new "My Money" or existing section:
 
 ```typescript
-// Query phorest_daily_sales_summary for pay period
-const { data: salesData } = useQuery({
-  queryKey: ['payroll-sales', payPeriodStart, payPeriodEnd],
-  queryFn: async () => {
-    const { data } = await supabase
-      .from('phorest_daily_sales_summary')
-      .select('user_id, service_revenue, product_revenue, summary_date')
-      .gte('summary_date', payPeriodStart)
-      .lte('summary_date', payPeriodEnd);
-    return data;
-  }
-});
-
-// Aggregate by employee
-const employeeSales = aggregateSalesByEmployee(salesData);
-
-// Calculate commissions
-employees.forEach(emp => {
-  const sales = employeeSales[emp.employee_id];
-  const commission = calculateCommission(sales.serviceRevenue, sales.productRevenue);
-});
+{ 
+  href: '/dashboard/my-pay', 
+  label: 'My Pay', 
+  icon: Wallet, 
+  permission: 'view_my_pay' 
+}
 ```
 
----
-
-### Local Payroll Run Creation
-
-Since providers are not connected, payroll runs will be saved locally:
+**Sidebar Route Config:**
+Add to `SidebarLayoutEditor.tsx`:
 
 ```typescript
-// usePayroll.ts - new mutation
-const createLocalPayrollRun = useMutation({
-  mutationFn: async (data: {
-    payPeriodStart: string;
-    payPeriodEnd: string;
-    checkDate: string;
-    lineItems: EmployeeCompensation[];
-  }) => {
-    // Calculate totals
-    const totals = calculatePayrollTotals(data.lineItems);
-    
-    // Insert payroll run
-    const { data: payrollRun, error: runError } = await supabase
-      .from('payroll_runs')
-      .insert({
-        organization_id: organizationId,
-        provider: connection?.provider || 'gusto', // default provider
-        pay_period_start: data.payPeriodStart,
-        pay_period_end: data.payPeriodEnd,
-        check_date: data.checkDate,
-        status: 'draft', // stays draft until provider is connected
-        total_gross_pay: totals.grossPay,
-        total_employer_taxes: totals.employerTaxes,
-        total_employee_deductions: totals.deductions,
-        total_net_pay: totals.netPay,
-        employee_count: data.lineItems.length,
-      })
-      .select()
-      .single();
-    
-    // Insert line items
-    const lineItemsToInsert = data.lineItems.map(item => ({
-      payroll_run_id: payrollRun.id,
-      employee_id: item.employeeId,
-      gross_pay: item.grossPay,
-      regular_hours: item.regularHours,
-      overtime_hours: item.overtimeHours,
-      hourly_pay: item.hourlyPay,
-      salary_pay: item.salaryPay,
-      commission_pay: item.commissionPay,
-      bonus_pay: item.bonusPay,
-      tips: item.tips,
-      employee_taxes: item.estimatedTaxes,
-      net_pay: item.netPay,
-    }));
-    
-    await supabase.from('payroll_line_items').insert(lineItemsToInsert);
-    
-    return payrollRun;
-  },
-});
+'/dashboard/my-pay': { label: 'My Pay', icon: Wallet },
 ```
 
 ---
 
-### UI Flow and Wizard Steps
+### UI Component Reuse
 
-**Step Progress Indicator:**
-```text
-[1 Pay Period] ── [2 Hours] ── [3 Commissions] ── [4 Adjustments] ── [5 Review]
-     ●              ○             ○                   ○                 ○
-```
-
-**Pay Period Step:**
-- Calendar date pickers for start/end
-- Presets: "Last 2 weeks", "Last month", "Current pay period"
-- Check date defaults to 5 business days after period end
-
-**Hours Entry Step:**
-- Table with employee avatars, names, pay types
-- Input fields for regular and overtime hours
-- Running total of wages displayed
-- Bulk actions: "Apply standard hours to all"
-
-**Commission Step:**
-- Auto-populated from Phorest sales data
-- Tier progression visualization (same as existing `CommissionCalculator`)
-- Manual override capability with change reason
-
-**Review Step:**
-- Full breakdown per employee in expandable rows
-- Company totals: Gross, Taxes, Net
-- Export button for CSV download
-- "Save as Draft" and "Finalize Payroll" buttons
-
----
-
-### Navigation Integration
-
-Add Payroll to admin navigation in `DashboardLayout.tsx`:
-
-```typescript
-const adminOnlyNavItems: NavItem[] = [
-  // ... existing items
-  { 
-    href: '/dashboard/admin/payroll', 
-    label: 'Payroll', 
-    icon: DollarSign, 
-    permission: 'manage_payroll' 
-  },
-];
-```
-
----
-
-### Export Functionality
-
-For organizations without provider connections, provide export options:
-
-**CSV Export:**
-- Employee Name, Hours, Gross Pay, Taxes, Deductions, Net Pay
-- Suitable for import into external payroll systems
-
-**PDF Summary:**
-- Payroll run summary with company totals
-- Individual employee breakdowns
-- Signature lines for approval
+The following existing components can be reused or adapted:
+- `CommissionCalculator` - For displaying estimated commission with tier info
+- `TierProgressAlert` - For showing progress to next commission tier
+- `BlurredAmount` - For privacy mode compatibility
+- `PayrollHistoryTable` pattern - Adapted for single-employee view
+- Card patterns from `Stats.tsx` - For current period summary
 
 ---
 
@@ -281,31 +225,48 @@ For organizations without provider connections, provide export options:
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/components/dashboard/payroll/RunPayrollWizard.tsx` | **Create** | Main wizard component |
-| `src/components/dashboard/payroll/steps/PayPeriodStep.tsx` | **Create** | Date selection step |
-| `src/components/dashboard/payroll/steps/EmployeeHoursStep.tsx` | **Create** | Hours entry table |
-| `src/components/dashboard/payroll/steps/CommissionStep.tsx` | **Create** | Commission review |
-| `src/components/dashboard/payroll/steps/AdjustmentsStep.tsx` | **Create** | Bonuses and adjustments |
-| `src/components/dashboard/payroll/steps/ReviewStep.tsx` | **Create** | Final review |
-| `src/components/dashboard/payroll/PayrollSummaryCard.tsx` | **Create** | Summary stats display |
-| `src/hooks/usePayrollCalculations.ts` | **Create** | Calculation logic |
-| `src/hooks/usePayroll.ts` | **Edit** | Add local creation mutation |
-| `src/pages/dashboard/admin/Payroll.tsx` | **Edit** | Integrate wizard |
+| `src/pages/dashboard/MyPay.tsx` | **Create** | Main page with tabs |
+| `src/components/dashboard/mypay/CurrentPeriodCard.tsx` | **Create** | Estimated earnings display |
+| `src/components/dashboard/mypay/EarningsBreakdownCard.tsx` | **Create** | Visual earnings breakdown |
+| `src/components/dashboard/mypay/MyPayStubHistory.tsx` | **Create** | Personal pay stub table |
+| `src/components/dashboard/mypay/PayStubDetailDialog.tsx` | **Create** | Pay stub detail modal |
+| `src/hooks/useMyPayData.ts` | **Create** | Personal pay data hook |
+| `src/App.tsx` | **Edit** | Add route for `/dashboard/my-pay` |
 | `src/components/dashboard/DashboardLayout.tsx` | **Edit** | Add nav item |
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | **Edit** | Register route |
+| Database migration | **Create** | Add RLS policies + permission |
+
+---
+
+### Privacy Considerations
+
+- All monetary values wrapped in `BlurredAmount` for "Hide Numbers" mode
+- Employees can ONLY see their own data (enforced via RLS)
+- Pay settings (hourly rate, salary) are shown to the employee but not to other team members
+- Estimated taxes are clearly labeled as "estimates" since actual withholdings may differ
 
 ---
 
 ### Technical Notes
 
-1. **Offline-First**: Payroll runs are stored locally first, then can be synced to providers when connected
+1. **Pay Period Detection**: Will infer current pay period from most recent finalized payroll run or default to bi-weekly from today
 
-2. **Tax Estimates**: Uses approximate withholding rates; actual taxes will be calculated by the provider when connected
+2. **Real-time Estimates**: Uses live Phorest sales data to show up-to-the-minute commission estimates
 
-3. **Commission Data**: Relies on synced Phorest data; warns if data appears stale
+3. **No Hours Entry**: For the estimated view, we'll assume standard hours or skip hourly estimates if no hours are tracked yet
 
-4. **Permissions**: Requires `manage_payroll` permission (granted to `super_admin` and `admin`)
+4. **Commission-Only View**: For commission-only employees, the base pay section will be minimal/hidden
 
-5. **Draft Status**: Runs saved without a provider connection stay in "draft" status until submitted through a connected provider
+5. **Export Option**: Pay stubs can be downloaded as PDF (future enhancement)
 
-6. **Animations**: Uses `framer-motion` for step transitions (consistent with existing wizard patterns)
+6. **Mobile Responsive**: Cards stack vertically on mobile with touch-friendly interactions
 
+---
+
+### Suggested Enhancements (Future)
+
+- **Direct Deposit Setup**: Link to bank account verification flow when provider is connected
+- **YTD Earnings**: Running total for the calendar year
+- **W-2/Tax Documents**: Access to year-end tax forms (when provider connected)
+- **Pay Schedule Calendar**: Visual calendar showing upcoming pay dates
+- **Earnings Comparison**: Month-over-month or year-over-year trends
