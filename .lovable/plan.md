@@ -1,698 +1,482 @@
 
 
-# Advanced Platform Operations Suite
+# Stripe Payment Error Alerting System
 
-This comprehensive plan implements **5 advanced platform features** that transform the Platform Admin hub into a full-featured operations center with audit trails, job monitoring, feature management, alerting, and system health visibility.
+This plan implements **real-time alerting** for Stripe payment processing errors across all organizations, ensuring platform administrators are notified immediately when payments fail.
 
 ---
 
 ## Feature Overview
 
-| # | Feature | Location | Priority |
-|---|---------|----------|----------|
-| 1 | Audit Log Explorer | New page + sidebar link | High |
-| 2 | Scheduled Jobs Dashboard | New page + sidebar link | High |
-| 3 | Organization Feature Flags | Account Detail + Settings | Medium |
-| 4 | Platform Notifications Center | New page + real-time alerts | Medium |
-| 5 | System Health Dashboard | Overview page enhancement | High |
+| Component | Purpose |
+|-----------|---------|
+| Stripe Webhook Handler | Receives real-time events from Stripe |
+| Payment Error Notifications | Creates instant platform alerts |
+| Email Alerts | Sends critical errors to platform admins |
+| Payment Issues Dashboard | View and manage payment failures |
+| Notification Type Expansion | Adds `payment_failed` to notification system |
 
 ---
 
-## Feature 1: Audit Log Explorer
+## Architecture
 
-### What Gets Built
-A comprehensive audit trail viewer with advanced filtering, search, export, and drill-down capabilities.
-
-### New Page
-`/dashboard/platform/audit-log` - Full-page explorer
-
-### Components to Create
-- `PlatformAuditLogPage.tsx` - Main page component
-- `AuditLogFilters.tsx` - Filter panel (date range, action type, user, org)
-- `AuditLogTable.tsx` - Paginated data table
-- `AuditLogDetailSheet.tsx` - Slide-over with full JSON details
-
-### Visual Design
 ```text
-+--------------------------------------------------------------------+
-| Audit Log Explorer                        [Export CSV] [Export JSON]|
-+--------------------------------------------------------------------+
-| FILTERS                                                             |
-| Date: [Last 7 Days ▼]  Action: [All ▼]  Org: [All ▼]  User: [All ▼]|
-| Search: [_________________________________] [Apply Filters]         |
-+--------------------------------------------------------------------+
-| ACTION          | USER          | ORG           | TIME       | ▶   |
-| ────────────────|───────────────|───────────────|────────────|─────|
-| ● account_created | John Smith   | Salon A       | 2h ago     | › |
-| ● migration_started| Jane Doe    | Salon B       | 3h ago     | › |
-| ○ settings_updated | System      | Platform      | 5h ago     | › |
-+--------------------------------------------------------------------+
-| Showing 1-50 of 234 entries              [< Previous] [1] [2] [Next >]|
-+--------------------------------------------------------------------+
-```
-
-### Hook Enhancement
-Extend `usePlatformAuditLog`:
-```typescript
-interface AuditLogFilters {
-  dateFrom?: Date;
-  dateTo?: Date;
-  actions?: string[];
-  organizationId?: string;
-  userId?: string;
-  searchQuery?: string;
-  page?: number;
-  pageSize?: number;
-}
-
-function usePlatformAuditLogExplorer(filters: AuditLogFilters)
-```
-
-### Export Functionality
-```typescript
-// CSV/JSON export via client-side generation
-function exportAuditLogs(logs: AuditLogEntry[], format: 'csv' | 'json')
++------------------+     Webhook      +----------------------+
+|     Stripe       | ───────────────> | stripe-webhook       |
+|  (payment fails) |                  | Edge Function        |
++------------------+                  +----------------------+
+                                              │
+                     ┌────────────────────────┼────────────────────────┐
+                     │                        │                        │
+                     ▼                        ▼                        ▼
+          +------------------+    +------------------+    +------------------+
+          | Update org       |    | Create platform  |    | Send email via   |
+          | subscription     |    | notification     |    | Resend           |
+          | status           |    |                  |    |                  |
+          +------------------+    +------------------+    +------------------+
+                                          │
+                                          ▼
+                                +------------------+
+                                | Bell notification|
+                                | + Notifications  |
+                                | page             |
+                                +------------------+
 ```
 
 ---
 
-## Feature 2: Scheduled Jobs Dashboard
+## Component 1: Stripe Webhook Edge Function
 
 ### What Gets Built
-A monitoring dashboard for all edge functions with execution history, error tracking, and manual triggers.
+A secure webhook handler that listens for Stripe payment events and triggers immediate alerts.
 
-### New Page
-`/dashboard/platform/jobs` - Jobs dashboard
+### Events to Handle
+| Stripe Event | Action |
+|--------------|--------|
+| `invoice.payment_failed` | Alert + Update org status to `past_due` |
+| `invoice.payment_succeeded` | Clear alerts + Update org status to `active` |
+| `charge.failed` | Alert with decline reason |
+| `customer.subscription.deleted` | Alert + Update org status to `cancelled` |
+| `customer.subscription.updated` | Update org subscription details |
 
-### Database Schema
-```sql
--- Track edge function executions
-CREATE TABLE IF NOT EXISTS public.edge_function_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  function_name TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('running', 'success', 'error', 'timeout')),
-  started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  completed_at TIMESTAMPTZ,
-  duration_ms INTEGER,
-  error_message TEXT,
-  metadata JSONB DEFAULT '{}',
-  organization_id UUID REFERENCES organizations(id),
-  triggered_by TEXT DEFAULT 'cron' -- 'cron', 'manual', 'webhook'
-);
+### Edge Function Structure
+```typescript
+// supabase/functions/stripe-webhook/index.ts
 
--- Enable RLS
-ALTER TABLE public.edge_function_logs ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Platform admins can view function logs"
-ON public.edge_function_logs FOR SELECT TO authenticated
-USING (public.is_platform_user(auth.uid()));
-
--- Index for efficient querying
-CREATE INDEX idx_edge_function_logs_name_started 
-ON public.edge_function_logs(function_name, started_at DESC);
+Deno.serve(async (req) => {
+  // 1. Verify Stripe signature using STRIPE_WEBHOOK_SECRET
+  const signature = req.headers.get('stripe-signature');
+  const payload = await req.text();
+  
+  // Verify using Web Crypto API
+  const isValid = await verifyStripeSignature(payload, signature, webhookSecret);
+  
+  // 2. Parse event and route to handler
+  const event = JSON.parse(payload);
+  
+  switch (event.type) {
+    case 'invoice.payment_failed':
+      await handlePaymentFailed(event.data.object);
+      break;
+    case 'invoice.payment_succeeded':
+      await handlePaymentSucceeded(event.data.object);
+      break;
+    case 'charge.failed':
+      await handleChargeFailed(event.data.object);
+      break;
+    // ... more handlers
+  }
+  
+  return new Response(JSON.stringify({ received: true }));
+});
 ```
 
-### Components to Create
-- `PlatformJobsPage.tsx` - Main dashboard
-- `JobCard.tsx` - Individual job with status, last run, error rate
-- `JobExecutionHistory.tsx` - Timeline of recent executions
-- `ManualJobTrigger.tsx` - Button + confirmation for manual runs
-
-### Edge Function Categories
+### Payment Failed Handler Logic
 ```typescript
-const JOB_CATEGORIES = {
-  'sync': {
-    label: 'Data Sync',
-    color: 'blue',
-    functions: [
-      'sync-phorest-data',
-      'sync-phorest-services',
-      'sync-callrail-calls',
-    ],
+async function handlePaymentFailed(invoice) {
+  const customerId = invoice.customer;
+  
+  // 1. Find organization by stripe_customer_id
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('id, name, slug, billing_email')
+    .eq('stripe_customer_id', customerId)
+    .single();
+  
+  // 2. Update organization subscription status
+  await supabase
+    .from('organizations')
+    .update({ subscription_status: 'past_due' })
+    .eq('id', org.id);
+  
+  // 3. Create platform notification (critical severity)
+  await supabase.from('platform_notifications').insert({
+    type: 'payment_failed',
+    severity: 'critical',
+    title: `Payment Failed: ${org.name}`,
+    message: `Invoice ${invoice.id} for $${invoice.amount_due / 100} failed. Reason: ${invoice.last_payment_error?.message || 'Unknown'}`,
+    link: `/dashboard/platform/accounts/${org.slug}`,
+    metadata: {
+      organization_id: org.id,
+      stripe_invoice_id: invoice.id,
+      amount: invoice.amount_due,
+      attempt_count: invoice.attempt_count,
+      next_attempt: invoice.next_payment_attempt,
+    }
+  });
+  
+  // 4. Send email to platform admins
+  await sendPaymentFailedEmail(org, invoice);
+  
+  // 5. Log to subscription_invoices table
+  await supabase.from('subscription_invoices').upsert({
+    organization_id: org.id,
+    stripe_invoice_id: invoice.id,
+    amount: invoice.amount_due / 100,
+    status: 'unpaid',
+    description: `Payment failed: ${invoice.last_payment_error?.message}`,
+  });
+}
+```
+
+### Signature Verification Pattern
+```typescript
+async function verifyStripeSignature(
+  payload: string, 
+  signature: string, 
+  secret: string
+): Promise<boolean> {
+  // Stripe signatures are: t=timestamp,v1=signature
+  const elements = signature.split(',');
+  const timestamp = elements.find(e => e.startsWith('t='))?.slice(2);
+  const sig = elements.find(e => e.startsWith('v1='))?.slice(3);
+  
+  // Construct signed payload (timestamp + payload)
+  const signedPayload = `${timestamp}.${payload}`;
+  
+  // Compute expected signature using HMAC-SHA256
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const expectedSig = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(signedPayload)
+  );
+  
+  const expectedHex = Array.from(new Uint8Array(expectedSig))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  
+  return expectedHex === sig;
+}
+```
+
+---
+
+## Component 2: Notification System Enhancement
+
+### Add Payment Failed Notification Type
+Update `usePlatformNotifications.ts`:
+
+```typescript
+export const NOTIFICATION_TYPES = {
+  // ... existing types
+  payment_failed: {
+    label: 'Payment Failures',
+    description: 'When subscription payments fail',
+    defaultChannels: ['in_app', 'email'],
   },
-  'notifications': {
-    label: 'Notifications',
-    color: 'violet',
-    functions: [
-      'send-daily-reminders',
-      'send-birthday-reminders',
-      'check-lead-sla',
-      'send-inactivity-alerts',
-    ],
-  },
-  'snapshots': {
-    label: 'Snapshots & Reports',
-    color: 'emerald',
-    functions: [
-      'record-staffing-snapshot',
-      'update-sales-leaderboard',
-    ],
-  },
-  'maintenance': {
-    label: 'Maintenance',
-    color: 'amber',
-    functions: [
-      'check-expired-assignments',
-      'cleanup-stale-sessions',
-    ],
+  payment_recovered: {
+    label: 'Payment Recovery',
+    description: 'When failed payments are recovered',
+    defaultChannels: ['in_app'],
   },
 };
 ```
 
-### Visual Design
-```text
-+--------------------------------------------------------------------+
-| Scheduled Jobs                                  [Pause All] [Refresh]|
-+--------------------------------------------------------------------+
-| CATEGORY: [All ▼]  STATUS: [All ▼]  Last 24h: 142 runs, 3 errors   |
-+--------------------------------------------------------------------+
-| DATA SYNC                                                           |
-| ┌─────────────────────────────────────────────────────────────────┐ |
-| │ sync-phorest-data                    ● Running (2m ago)         │ |
-| │ Every 15 minutes                     Success rate: 98.5%        │ |
-| │ Last: 12:45 PM (success)             [View History] [Run Now]   │ |
-| └─────────────────────────────────────────────────────────────────┘ |
-| ┌─────────────────────────────────────────────────────────────────┐ |
-| │ sync-phorest-services                ○ Idle                      │ |
-| │ Daily at 6:00 AM                     Success rate: 100%         │ |
-| │ Last: Jan 31 6:00 AM (success)       [View History] [Run Now]   │ |
-| └─────────────────────────────────────────────────────────────────┘ |
-+--------------------------------------------------------------------+
-```
-
-### Manual Trigger Edge Function
+### Add Icon Mappings
 ```typescript
-// supabase/functions/trigger-scheduled-job/index.ts
-// Allows platform admins to manually invoke any registered job
-```
-
----
-
-## Feature 3: Organization Feature Flags
-
-### What Gets Built
-Per-organization feature toggle system that extends the existing `feature_flags` table with org-level overrides.
-
-### Database Schema
-```sql
--- Organization-specific feature flag overrides
-CREATE TABLE IF NOT EXISTS public.organization_feature_flags (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  flag_key TEXT NOT NULL,
-  is_enabled BOOLEAN NOT NULL,
-  override_reason TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  updated_by UUID REFERENCES auth.users(id),
-  UNIQUE(organization_id, flag_key)
-);
-
-ALTER TABLE public.organization_feature_flags ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Platform admins manage org feature flags"
-ON public.organization_feature_flags FOR ALL TO authenticated
-USING (public.is_platform_user(auth.uid()))
-WITH CHECK (public.is_platform_user(auth.uid()));
-```
-
-### Components to Create
-- `AccountFeatureFlagsTab.tsx` - Tab in AccountDetail page
-- `OrgFeatureFlagRow.tsx` - Toggle with override status
-- `FeatureFlagOverrideDialog.tsx` - Add reason for override
-
-### Hook to Create
-```typescript
-// useOrganizationFeatureFlags.ts
-function useOrganizationFeatureFlags(organizationId: string) {
-  // Fetches global flags + org-specific overrides
-  // Returns merged result with override indicators
-}
-
-function useUpdateOrgFeatureFlag() {
-  // Creates/updates org-level override
-}
-```
-
-### Visual Design
-```text
-+------------------------------------------------------------+
-| Feature Flags for Salon A                                   |
-+------------------------------------------------------------+
-| ✓ = Enabled   ○ = Disabled   ⚡ = Override active           |
-+------------------------------------------------------------+
-| FLAG                    | GLOBAL | THIS ORG | OVERRIDE      |
-| ────────────────────────|────────|──────────|───────────────|
-| enable_75_hard          | ✓      | ✓        | -             |
-| enable_client_portal    | ○      | ✓ ⚡     | Beta tester   |
-| enable_online_booking   | ○      | ○        | -             |
-| enable_inventory        | ✓      | ○ ⚡     | Not ready     |
-+------------------------------------------------------------+
-|                               [+ Add Override] [Reset All]  |
-+------------------------------------------------------------+
-```
-
----
-
-## Feature 4: Platform Notifications Center
-
-### What Gets Built
-A centralized notification management system for platform-level events with multi-channel delivery.
-
-### Database Schema
-```sql
--- Platform-level notifications for admins
-CREATE TABLE IF NOT EXISTS public.platform_notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  recipient_id UUID REFERENCES auth.users(id), -- null = all platform users
-  type TEXT NOT NULL, -- 'sync_failure', 'new_account', 'critical_error', 'sla_breach'
-  severity TEXT NOT NULL DEFAULT 'info' CHECK (severity IN ('info', 'warning', 'error', 'critical')),
-  title TEXT NOT NULL,
-  message TEXT NOT NULL,
-  link TEXT,
-  is_read BOOLEAN DEFAULT false,
-  read_at TIMESTAMPTZ,
-  metadata JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Platform notification preferences
-CREATE TABLE IF NOT EXISTS public.platform_notification_preferences (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  notification_type TEXT NOT NULL,
-  in_app_enabled BOOLEAN DEFAULT true,
-  email_enabled BOOLEAN DEFAULT true,
-  slack_enabled BOOLEAN DEFAULT false,
-  UNIQUE(user_id, notification_type)
-);
-
--- RLS
-ALTER TABLE public.platform_notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.platform_notification_preferences ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Platform users see their notifications"
-ON public.platform_notifications FOR SELECT TO authenticated
-USING (
-  public.is_platform_user(auth.uid()) 
-  AND (recipient_id IS NULL OR recipient_id = auth.uid())
-);
-
-CREATE POLICY "Users manage their preferences"
-ON public.platform_notification_preferences FOR ALL TO authenticated
-USING (user_id = auth.uid())
-WITH CHECK (user_id = auth.uid());
-```
-
-### Components to Create
-- `PlatformNotificationsPage.tsx` - Full notification center
-- `PlatformNotificationBell.tsx` - Header bell with badge
-- `PlatformNotificationPanel.tsx` - Slide-over quick view
-- `PlatformNotificationPreferences.tsx` - Settings panel
-
-### Notification Types
-```typescript
-const PLATFORM_NOTIFICATION_TYPES = {
-  sync_failure: {
-    label: 'Sync Failures',
-    description: 'When data syncs fail',
-    defaultChannels: ['in_app', 'email'],
-    icon: AlertCircle,
-    color: 'rose',
-  },
-  new_account: {
-    label: 'New Accounts',
-    description: 'When new organizations are created',
-    defaultChannels: ['in_app'],
-    icon: Building2,
-    color: 'emerald',
-  },
-  critical_error: {
-    label: 'Critical Errors',
-    description: 'System errors requiring attention',
-    defaultChannels: ['in_app', 'email', 'slack'],
-    icon: AlertTriangle,
-    color: 'rose',
-  },
-  sla_breach: {
-    label: 'SLA Breaches',
-    description: 'When response SLAs are exceeded',
-    defaultChannels: ['in_app', 'email'],
-    icon: Clock,
-    color: 'amber',
-  },
-  migration_complete: {
-    label: 'Migration Complete',
-    description: 'When data imports finish',
-    defaultChannels: ['in_app'],
-    icon: CheckCircle,
-    color: 'emerald',
-  },
+const TYPE_ICONS = {
+  // ... existing
+  payment_failed: CreditCard,
+  payment_recovered: CheckCircle,
 };
 ```
 
-### Visual Design - Bell + Panel
-```text
-+------------------------------------+
-| 🔔 (3)                             |
-+------------------------------------+
-         ↓
-+------------------------------------+
-| Notifications                  ●   |
-+------------------------------------+
-| ⚠ sync-phorest-data failed         |
-| Salon A • 5 minutes ago            |
-+------------------------------------+
-| ✓ New account created              |
-| Salon B onboarded • 1 hour ago     |
-+------------------------------------+
-| 🚨 Critical: Database connection   |
-| Platform • 2 hours ago             |
-+------------------------------------+
-| [View All Notifications]           |
-+------------------------------------+
-```
+---
 
-### Slack Integration (Optional)
-```typescript
-// Edge function: send-platform-slack-notification
-// Uses Slack webhook for critical alerts
+## Component 3: Payment Alert Email
+
+### Email Template Design
+```text
++------------------------------------------------------------+
+| 🚨 URGENT: Payment Failed                                   |
++------------------------------------------------------------+
+|                                                             |
+| Hi Platform Team,                                           |
+|                                                             |
+| A subscription payment has failed and requires attention:   |
+|                                                             |
+| ┌─────────────────────────────────────────────────────────┐|
+| │ Organization: Salon ABC                                  │|
+| │ Amount: $299.00                                          │|
+| │ Failed At: January 31, 2026, 2:45 PM MST                │|
+| │ Reason: Card declined (insufficient funds)              │|
+| │ Attempt: 1 of 4                                          │|
+| │ Next Retry: February 3, 2026                             │|
+| └─────────────────────────────────────────────────────────┘|
+|                                                             |
+| [View Account]  [View in Stripe]                            |
+|                                                             |
++------------------------------------------------------------+
 ```
 
 ---
 
-## Feature 5: System Health Dashboard
+## Component 4: Secrets Required
 
-### What Gets Built
-A real-time system health overview integrated into the Platform Overview page showing API health, sync status, and queue depths.
+The following secrets need to be configured:
 
-### Components to Create
-- `SystemHealthCard.tsx` - Overview card for Platform Overview
-- `SystemHealthPage.tsx` - Full detailed health page
-- `HealthStatusIndicator.tsx` - Dot + label component
-- `ServiceHealthRow.tsx` - Individual service status
-
-### Health Metrics to Track
-```typescript
-interface SystemHealth {
-  api: {
-    supabase: 'healthy' | 'degraded' | 'down';
-    phorest: 'healthy' | 'degraded' | 'down';
-    resend: 'healthy' | 'degraded' | 'down';
-    callrail: 'healthy' | 'degraded' | 'down';
-  };
-  sync: {
-    lastPhorestSync: Date | null;
-    phorestSyncStatus: 'success' | 'running' | 'failed';
-    pendingSyncJobs: number;
-  };
-  queues: {
-    pendingImports: number;
-    pendingEmails: number;
-    failedJobs: number;
-  };
-  database: {
-    connectionPool: number; // percentage used
-    activeQueries: number;
-  };
-}
-```
-
-### Edge Function for Health Check
-```typescript
-// supabase/functions/check-system-health/index.ts
-// Pings external services, checks sync status
-// Returns aggregated health status
-// Called every 5 minutes via cron
-```
-
-### Visual Design - Overview Card
-```text
-+------------------------------------------------------------+
-| System Health                              [View Details]   |
-+------------------------------------------------------------+
-| SERVICES                                                    |
-| ● Supabase      Healthy    ● Phorest      Healthy          |
-| ● Resend        Healthy    ● CallRail     Degraded ⚠       |
-+------------------------------------------------------------+
-| SYNC STATUS                                                 |
-| Last Phorest sync: 12 minutes ago (success)                 |
-| Pending jobs: 2                                             |
-+------------------------------------------------------------+
-| QUEUES                                                      |
-| Imports: 0       Emails: 3       Failed: 1 ⚠               |
-+------------------------------------------------------------+
-```
-
-### Visual Design - Full Health Page
-```text
-+--------------------------------------------------------------------+
-| System Health Dashboard                         ● All Systems Go    |
-+--------------------------------------------------------------------+
-| EXTERNAL SERVICES                          Last checked: 2m ago    |
-| ┌──────────────────────────────────────────────────────────────┐   |
-| │ Supabase Database     ● Healthy     Response: 45ms          │   |
-| │ Phorest API           ● Healthy     Response: 234ms         │   |
-| │ Resend Email          ● Healthy     Response: 89ms          │   |
-| │ CallRail API          ○ Degraded    Response: 2450ms ⚠      │   |
-| │ Google Business       ● Healthy     Response: 156ms         │   |
-| └──────────────────────────────────────────────────────────────┘   |
-+--------------------------------------------------------------------+
-| SYNC STATUS                                                        |
-| ┌──────────────────────────────────────────────────────────────┐   |
-| │ Last Phorest Sync      12 minutes ago     ● Success          │   |
-| │ Last CallRail Sync     45 minutes ago     ○ Warning          │   |
-| │ Pending Sync Jobs      2                                     │   |
-| └──────────────────────────────────────────────────────────────┘   |
-+--------------------------------------------------------------------+
-| 24-HOUR METRICS                                                    |
-| [Chart: Uptime timeline with green/yellow/red segments]            |
-+--------------------------------------------------------------------+
-```
+| Secret Name | Purpose |
+|-------------|---------|
+| `STRIPE_SECRET_KEY` | API access for lookups |
+| `STRIPE_WEBHOOK_SECRET` | Verify webhook signatures |
 
 ---
 
-## Implementation Order
+## Component 5: Payment Issues Quick View
 
-### Phase 1: Data Foundation (Features 1, 2)
-1. Create `edge_function_logs` table
-2. Extend `usePlatformAuditLog` with filters
-3. Build `PlatformAuditLogPage` with table + filters
-4. Build `PlatformJobsPage` with job cards
-5. Create `trigger-scheduled-job` edge function
-6. Add logging to existing edge functions
+### Add to System Health Dashboard
+Extend `SystemHealthCard.tsx` to show:
+- Count of organizations with `past_due` status
+- Recent payment failures in last 24h
+- Link to filtered account list
 
-### Phase 2: Feature Management (Feature 3)
-1. Create `organization_feature_flags` table
-2. Build `useOrganizationFeatureFlags` hook
-3. Add `AccountFeatureFlagsTab` to AccountDetail
-4. Connect with existing feature flag system
-
-### Phase 3: Alerting & Monitoring (Features 4, 5)
-1. Create notification tables
-2. Build `PlatformNotificationBell` component
-3. Add to platform header
-4. Create `check-system-health` edge function
-5. Build `SystemHealthCard` for Overview
-6. Build full `SystemHealthPage`
+### Add to Notifications Page
+Add a "Payment Alerts" quick filter tab showing only `payment_failed` and `payment_recovered` notifications.
 
 ---
 
-## File Changes Summary
+## Implementation Details
 
-| File | Action | Feature |
+### File Changes Summary
+
+| File | Action | Purpose |
 |------|--------|---------|
-| `src/pages/dashboard/platform/AuditLog.tsx` | **Create** | 1 |
-| `src/components/platform/audit/AuditLogFilters.tsx` | **Create** | 1 |
-| `src/components/platform/audit/AuditLogTable.tsx` | **Create** | 1 |
-| `src/components/platform/audit/AuditLogDetailSheet.tsx` | **Create** | 1 |
-| `src/hooks/usePlatformAuditLogExplorer.ts` | **Create** | 1 |
-| `src/pages/dashboard/platform/Jobs.tsx` | **Create** | 2 |
-| `src/components/platform/jobs/JobCard.tsx` | **Create** | 2 |
-| `src/components/platform/jobs/JobExecutionHistory.tsx` | **Create** | 2 |
-| `src/hooks/useEdgeFunctionLogs.ts` | **Create** | 2 |
-| `supabase/functions/trigger-scheduled-job/index.ts` | **Create** | 2 |
-| `src/components/platform/account/AccountFeatureFlagsTab.tsx` | **Create** | 3 |
-| `src/hooks/useOrganizationFeatureFlags.ts` | **Create** | 3 |
-| `src/pages/dashboard/platform/Notifications.tsx` | **Create** | 4 |
-| `src/components/platform/layout/PlatformNotificationBell.tsx` | **Create** | 4 |
-| `src/hooks/usePlatformNotifications.ts` | **Create** | 4 |
-| `src/pages/dashboard/platform/SystemHealth.tsx` | **Create** | 5 |
-| `src/components/platform/overview/SystemHealthCard.tsx` | **Create** | 5 |
-| `supabase/functions/check-system-health/index.ts` | **Create** | 5 |
-| `src/pages/dashboard/platform/Overview.tsx` | **Edit** | 5 |
-| `src/components/platform/layout/PlatformSidebar.tsx` | **Edit** | 1, 2, 4, 5 |
-| Database Migration | **Create** | 1, 2, 3, 4 |
+| `supabase/functions/stripe-webhook/index.ts` | **Create** | Webhook handler |
+| `src/hooks/usePlatformNotifications.ts` | **Edit** | Add payment_failed type |
+| `src/pages/dashboard/platform/Notifications.tsx` | **Edit** | Add payment icon |
+| `src/components/platform/layout/PlatformNotificationBell.tsx` | **Edit** | Add payment icon |
+| `src/components/platform/overview/SystemHealthCard.tsx` | **Edit** | Show payment issues |
+| `supabase/config.toml` | **Edit** | Add webhook function config |
 
 ---
 
 ## Database Changes
 
-```sql
--- Feature 2: Edge function execution logs
-CREATE TABLE IF NOT EXISTS public.edge_function_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  function_name TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('running', 'success', 'error', 'timeout')),
-  started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  completed_at TIMESTAMPTZ,
-  duration_ms INTEGER,
-  error_message TEXT,
-  metadata JSONB DEFAULT '{}',
-  organization_id UUID REFERENCES organizations(id),
-  triggered_by TEXT DEFAULT 'cron'
-);
+No schema changes required. The existing tables support this:
 
-CREATE INDEX idx_edge_function_logs_query 
-ON public.edge_function_logs(function_name, started_at DESC);
-
--- Feature 3: Organization feature flag overrides
-CREATE TABLE IF NOT EXISTS public.organization_feature_flags (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  flag_key TEXT NOT NULL,
-  is_enabled BOOLEAN NOT NULL,
-  override_reason TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  updated_by UUID REFERENCES auth.users(id),
-  UNIQUE(organization_id, flag_key)
-);
-
--- Feature 4: Platform notifications
-CREATE TABLE IF NOT EXISTS public.platform_notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  recipient_id UUID REFERENCES auth.users(id),
-  type TEXT NOT NULL,
-  severity TEXT NOT NULL DEFAULT 'info',
-  title TEXT NOT NULL,
-  message TEXT NOT NULL,
-  link TEXT,
-  is_read BOOLEAN DEFAULT false,
-  read_at TIMESTAMPTZ,
-  metadata JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS public.platform_notification_preferences (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  notification_type TEXT NOT NULL,
-  in_app_enabled BOOLEAN DEFAULT true,
-  email_enabled BOOLEAN DEFAULT true,
-  slack_enabled BOOLEAN DEFAULT false,
-  UNIQUE(user_id, notification_type)
-);
-
--- RLS policies for all tables
-ALTER TABLE public.edge_function_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.organization_feature_flags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.platform_notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.platform_notification_preferences ENABLE ROW LEVEL SECURITY;
-
--- Edge function logs - platform users only
-CREATE POLICY "Platform users view function logs"
-ON public.edge_function_logs FOR SELECT TO authenticated
-USING (public.is_platform_user(auth.uid()));
-
-CREATE POLICY "Platform admins insert logs"
-ON public.edge_function_logs FOR INSERT TO authenticated
-WITH CHECK (public.is_platform_user(auth.uid()));
-
--- Org feature flags - platform admins
-CREATE POLICY "Platform admins manage org flags"
-ON public.organization_feature_flags FOR ALL TO authenticated
-USING (public.is_platform_user(auth.uid()))
-WITH CHECK (public.is_platform_user(auth.uid()));
-
--- Platform notifications
-CREATE POLICY "Platform users see notifications"
-ON public.platform_notifications FOR SELECT TO authenticated
-USING (
-  public.is_platform_user(auth.uid()) 
-  AND (recipient_id IS NULL OR recipient_id = auth.uid())
-);
-
-CREATE POLICY "Platform users update read status"
-ON public.platform_notifications FOR UPDATE TO authenticated
-USING (
-  public.is_platform_user(auth.uid()) 
-  AND (recipient_id IS NULL OR recipient_id = auth.uid())
-);
-
--- Notification preferences
-CREATE POLICY "Users manage notification prefs"
-ON public.platform_notification_preferences FOR ALL TO authenticated
-USING (user_id = auth.uid())
-WITH CHECK (user_id = auth.uid());
-```
+- `organizations.subscription_status` - Already has `past_due` value
+- `platform_notifications` - Supports new `payment_failed` type
+- `subscription_invoices` - Logs individual invoice events
 
 ---
 
-## New Sidebar Links
+## Edge Function: stripe-webhook
 
-Add to `PlatformSidebar.tsx`:
+### Full Implementation
 ```typescript
-{ 
-  label: 'Audit Log', 
-  href: '/dashboard/platform/audit-log', 
-  icon: FileText,
-  minLevel: 2  // platform_support+
-},
-{ 
-  label: 'Scheduled Jobs', 
-  href: '/dashboard/platform/jobs', 
-  icon: Clock,
-  minLevel: 2
-},
-{ 
-  label: 'System Health', 
-  href: '/dashboard/platform/health', 
-  icon: Activity,
-  minLevel: 2
-},
-{ 
-  label: 'Notifications', 
-  href: '/dashboard/platform/notifications', 
-  icon: Bell,
-  minLevel: 3  // platform_admin+
-},
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
+};
+
+// Stripe signature verification
+async function verifyStripeSignature(
+  payload: string,
+  signature: string,
+  secret: string
+): Promise<boolean> {
+  if (!secret) {
+    console.warn("STRIPE_WEBHOOK_SECRET not configured");
+    return false;
+  }
+
+  const elements = signature.split(',');
+  const timestamp = elements.find(e => e.startsWith('t='))?.slice(2);
+  const sig = elements.find(e => e.startsWith('v1='))?.slice(3);
+
+  if (!timestamp || !sig) return false;
+
+  // Check timestamp freshness (within 5 minutes)
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp)) > 300) {
+    console.error("Webhook timestamp too old");
+    return false;
+  }
+
+  const signedPayload = `${timestamp}.${payload}`;
+  const encoder = new TextEncoder();
+  
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const expected = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(signedPayload)
+  );
+
+  const expectedHex = Array.from(new Uint8Array(expected))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  return expectedHex === sig;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const resend = resendApiKey ? new Resend(resendApiKey) : null;
+
+    // Get raw body and signature
+    const payload = await req.text();
+    const signature = req.headers.get("stripe-signature") || "";
+
+    // Verify signature
+    if (!await verifyStripeSignature(payload, signature, webhookSecret)) {
+      console.error("Invalid Stripe webhook signature");
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const event = JSON.parse(payload);
+    console.log(`Stripe webhook: ${event.type}`, event.id);
+
+    // Route to appropriate handler
+    switch (event.type) {
+      case "invoice.payment_failed":
+        await handlePaymentFailed(supabase, resend, event.data.object);
+        break;
+        
+      case "invoice.payment_succeeded":
+        await handlePaymentSucceeded(supabase, event.data.object);
+        break;
+        
+      case "charge.failed":
+        await handleChargeFailed(supabase, event.data.object);
+        break;
+        
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(supabase, resend, event.data.object);
+        break;
+        
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(supabase, event.data.object);
+        break;
+        
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (error) {
+    console.error("Webhook error:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
+
+// Handler implementations would follow...
 ```
 
 ---
 
-## Technical Considerations
+## Stripe Dashboard Configuration
 
-### Existing Patterns Used
-- `usePlatformAuditLog` - Extended for explorer
-- `useFeatureFlags` - Pattern for org-level flags
-- Platform UI components (PlatformCard, PlatformBadge)
-- Realtime subscriptions for live updates
+After deploying, configure the webhook in Stripe:
 
-### Performance Optimizations
-- Paginated queries for audit logs (50 per page)
-- Indexed queries on function_name + started_at
-- Stale-while-revalidate for health checks
-- Debounced filter updates
+1. **Endpoint URL**: `https://vciqmwzgfjxtzagaxgnh.supabase.co/functions/v1/stripe-webhook`
 
-### Security Notes
-- All new tables have RLS enabled
-- Platform user checks via `is_platform_user()` function
-- Audit log exports require admin role
-- Health check endpoints are authenticated
+2. **Events to subscribe**:
+   - `invoice.payment_failed`
+   - `invoice.payment_succeeded`
+   - `charge.failed`
+   - `customer.subscription.deleted`
+   - `customer.subscription.updated`
+
+3. **Copy Webhook Secret** to secrets as `STRIPE_WEBHOOK_SECRET`
+
+---
+
+## Testing Strategy
+
+### Manual Testing
+1. Use Stripe Test Mode with test cards
+2. `4000000000000341` - Attaching card fails
+3. `4000000000009995` - Insufficient funds decline
+4. Verify notification appears in bell within seconds
+5. Verify email received
+
+### Edge Cases
+- Organization not found for customer_id (log warning, don't fail)
+- Duplicate webhook calls (idempotent using invoice_id)
+- Signature verification failure (return 401)
+
+---
+
+## Security Considerations
+
+1. **Signature Verification**: All webhooks verified via HMAC-SHA256
+2. **Timestamp Tolerance**: Max 5-minute age for webhook events
+3. **Service Role Key**: Used for database updates (not exposed)
+4. **RLS Bypass**: Service role bypasses RLS for notification inserts
+5. **Audit Trail**: All payment events logged to `subscription_invoices`
 
 ---
 
 ## Estimated Scope
 
-| Feature | Complexity | Estimated Lines |
-|---------|------------|-----------------|
-| Audit Log Explorer | High | ~600 lines |
-| Scheduled Jobs Dashboard | High | ~700 lines |
-| Organization Feature Flags | Medium | ~350 lines |
-| Platform Notifications | High | ~550 lines |
-| System Health Dashboard | Medium | ~450 lines |
-| **Total** | | **~2,650 lines** |
+| Component | Complexity | Lines |
+|-----------|------------|-------|
+| stripe-webhook edge function | Medium | ~300 |
+| Notification type additions | Low | ~30 |
+| Icon updates | Low | ~10 |
+| System health enhancement | Low | ~50 |
+| **Total** | | **~390 lines** |
 
-This comprehensive suite transforms the Platform Admin hub into a true operations center with full visibility into system behavior, audit trails, and proactive alerting.
+This implementation provides immediate visibility into payment issues across all organizations, enabling rapid response to revenue-impacting events.
 
