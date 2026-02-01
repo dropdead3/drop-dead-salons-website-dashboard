@@ -1,100 +1,122 @@
 
-# Plan: Move Rent Payments Inside Renter Hub
+# Dark Mode Compatibility Fixes
 
-## Overview
-Convert the Renter Hub page into a tabbed interface that consolidates booth renter management and rent payment tracking into a single unified hub. This follows the same pattern as the Analytics Hub.
+## Problem Summary
+Several dashboard components use hardcoded light-mode colors (`bg-white`, `bg-zinc-100`, `text-black`, etc.) instead of theme-aware CSS variables. Since the dashboard uses **scoped dark mode** (the `.dark` class is applied to a wrapper div inside `DashboardLayout.tsx`, not the `<html>` element), components that don't use theme-aware colors fail to adapt when dark mode is enabled.
 
-## Changes
+Looking at your screenshot, the **Announcements card** appears with a light/cream background instead of adapting to dark mode. This is a systematic issue affecting multiple components.
 
-### 1. Update BoothRenters.tsx to Tabbed Renter Hub
-Transform the current page into a tabbed layout with two main tabs:
-
-| Tab | Label | Icon | Description |
-|-----|-------|------|-------------|
-| `renters` | Renters | `Users` | Current booth renter management (default) |
-| `payments` | Payments | `Receipt` | Rent payment tracking and recording |
-
-**Structure:**
-```text
-+--------------------------------------------------+
-|  [Store Icon] Renter Hub                         |
-|  Manage booth renters and rent payments          |
-+--------------------------------------------------+
-|  [Renters] [Payments]  <- Tab navigation         |
-+--------------------------------------------------+
-|                                                  |
-|  Tab Content (switches between views)            |
-|                                                  |
-+--------------------------------------------------+
+## Root Cause
+The dashboard applies dark mode via a wrapper:
+```tsx
+// DashboardLayout.tsx (line 1088-1091)
+<div className={cn(resolvedTheme === 'dark' && 'dark', ...)}>
+  <DashboardLayoutInner {...props} />
+</div>
 ```
 
-### 2. Extract Renters Content to Component
-Create a new component `RentersTabContent.tsx` containing:
-- Search and status filters
-- Summary cards (Total, Active, Pending, Monthly Revenue)  
-- Renter cards list
-- Existing dialog handlers (AddRenter, RenterDetail, IssueContract)
+Components using theme-aware colors like `bg-card`, `bg-background`, `text-foreground` work correctly because they reference CSS variables that change when the `.dark` class is present. However, hardcoded colors like `bg-white` or `bg-zinc-100` remain static regardless of theme.
 
-### 3. Extract Payments Content to Component
-Create a new component `PaymentsTabContent.tsx` containing:
-- All logic from current `RentPayments.tsx`
-- Summary cards (Total Due, Collected, Outstanding, Overdue)
-- Payments table with filters
-- Record Payment dialog
+## Components Requiring Fixes
 
-### 4. Update Navigation
-- Remove the standalone "Rent Payments" link from the sidebar
-- Keep only the "Renter Hub" link (already exists)
+### High Priority (Visible on Dashboard Home)
 
-### 5. Update Routing
-- Remove the standalone `/dashboard/admin/rent-payments` route from `App.tsx`
-- The Renter Hub will handle both views internally via tabs
+| Component | File | Issue | Fix |
+|-----------|------|-------|-----|
+| AnnouncementsBento | `src/components/dashboard/AnnouncementsBento.tsx` | Uses `Card` with no issues, but inner elements may lack contrast | Verify `Card` styling and ensure inner text uses `text-foreground` |
+| TodaysBirthdayBanner | `src/components/dashboard/TodaysBirthdayBanner.tsx` | `bg-white/20`, `border-white/50` hardcoded | Replace with `bg-card/20`, `border-border/50` |
+| Select/Dropdown Triggers | Multiple locations | May inherit incorrect backgrounds | Verify `SelectContent` uses `bg-popover` |
 
-## Files to Create
-| File | Purpose |
-|------|---------|
-| `src/components/dashboard/booth-renters/RentersTabContent.tsx` | Extracted renters list and management UI |
-| `src/components/dashboard/booth-renters/PaymentsTabContent.tsx` | Extracted payments tracking UI |
+### Medium Priority (Settings & Management)
 
-## Files to Modify
-| File | Changes |
-|------|---------|
-| `src/pages/dashboard/admin/BoothRenters.tsx` | Convert to tabbed hub layout |
-| `src/components/dashboard/booth-renters/index.ts` | Export new tab components |
-| `src/components/dashboard/DashboardLayout.tsx` | Remove "Rent Payments" nav link |
-| `src/App.tsx` | Remove rent-payments route |
+| Component | File | Issue | Fix |
+|-----------|------|-------|-----|
+| AppointmentDetailSheet | `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Status badges use `bg-slate-100`, `bg-green-100`, etc. | Add dark variants: `dark:bg-slate-800`, `dark:bg-green-900`, etc. |
+| PayrollHistoryTable | `src/components/dashboard/payroll/PayrollHistoryTable.tsx` | Status badges use light colors | Add dark mode variants |
+| Feature Request statuses | `src/hooks/useFeatureRequests.ts` | Hardcoded `bg-slate-100 text-slate-700` | Add dark mode variants |
 
-## Technical Details
+### Lower Priority (Email/Print Previews - Intentionally Light)
 
-### Tab State Management
-Use URL search params for tab persistence (same pattern as AnalyticsHub):
+| Component | File | Note |
+|-----------|------|------|
+| VoucherQRCode | `src/components/dashboard/promotions/VoucherQRCode.tsx` | QR codes need white background for scannability - **keep as-is** |
+| EmailTemplateEditor | `src/components/dashboard/EmailTemplateEditor.tsx` | Email previews simulate light email clients - **keep as-is** |
+| AccountManagement QR Cards | `src/pages/dashboard/admin/AccountManagement.tsx` | Print cards need white for printing - **keep as-is** |
+
+## Implementation Strategy
+
+### Phase 1: Core Dashboard Components
+1. Audit and fix `AnnouncementsBento.tsx` - ensure all text uses theme-aware colors
+2. Fix `TodaysBirthdayBanner.tsx` - replace hardcoded white/transparency classes
+3. Review `Card` component inheritance in all dashboard widgets
+
+### Phase 2: Status Badge System
+Create a centralized status badge utility that handles dark mode:
 ```typescript
-const [searchParams, setSearchParams] = useSearchParams();
-const activeTab = searchParams.get('tab') || 'renters';
-
-const handleTabChange = (value: string) => {
-  setSearchParams({ tab: value });
+// Example pattern for status badges
+const statusConfig = {
+  booked: { 
+    className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' 
+  },
+  confirmed: { 
+    className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+  },
+  // ... etc
 };
 ```
 
-### Shared Organization Context
-Both tabs will use the same `DEFAULT_ORG_ID` constant (to be replaced with organization context in the future).
+### Phase 3: Platform/Admin Components
+Fix platform analytics and settings components that use conditional logic:
+- Replace ternary class switching with Tailwind dark: variants where possible
+- Ensure consistent pattern across `PlatformAnalytics`, `OperationalMetrics`, etc.
 
-### Component Props
-```typescript
-// RentersTabContent
-interface RentersTabContentProps {
-  organizationId: string;
-}
+## Files to Modify
 
-// PaymentsTabContent  
-interface PaymentsTabContentProps {
-  organizationId: string;
-}
+### Dashboard Core (Phase 1)
+- `src/components/dashboard/AnnouncementsBento.tsx`
+- `src/components/dashboard/TodaysBirthdayBanner.tsx`
+- `src/pages/dashboard/admin/TeamBirthdays.tsx`
+
+### Status Badges (Phase 2)
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+- `src/components/dashboard/payroll/PayrollHistoryTable.tsx`
+- `src/hooks/useFeatureRequests.ts`
+
+### Platform Components (Phase 3)
+- `src/components/platform/analytics/AnalyticsOverview.tsx`
+- `src/components/platform/analytics/OperationalMetrics.tsx`
+- `src/components/platform/settings/PlatformAppearanceTab.tsx`
+
+## Technical Notes
+
+### Safe Patterns (Theme-Aware)
+```tsx
+// These work correctly with scoped dark mode:
+className="bg-card text-card-foreground"
+className="bg-background text-foreground"
+className="bg-muted text-muted-foreground"
+className="border-border"
+className="bg-popover text-popover-foreground"
 ```
 
-## Benefits
-- Single entry point for all booth renter operations
-- Cleaner navigation with fewer sidebar items
-- Consistent hub pattern matching Analytics Hub
-- Better UX for admins managing renters and their payments
+### Patterns to Avoid
+```tsx
+// These break in dark mode:
+className="bg-white"
+className="bg-zinc-100"
+className="text-black"
+className="text-zinc-900"
+className="border-gray-200"
+```
+
+### Acceptable Exceptions
+- QR code containers (need white for scanning)
+- Print preview cards (simulate physical output)
+- Email template previews (simulate email client rendering)
+
+## Estimated Scope
+- **Phase 1**: 3 files, ~15 line changes
+- **Phase 2**: 3 files, ~30 line changes (status badge updates)
+- **Phase 3**: 3 files, ~20 line changes
+
+This is a systematic issue that will recur if not addressed with consistent patterns. After these fixes, I recommend establishing a linting rule or code review guideline to flag hardcoded color classes in dashboard components.
