@@ -180,7 +180,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/headshots', label: 'Headshots', icon: Camera, permission: 'manage_settings' },
   { href: '/dashboard/admin/announcements', label: 'Create Announcement', icon: Bell, permission: 'manage_announcements' },
   { href: '/dashboard/admin/changelog', label: 'Changelog Manager', icon: Sparkles, permission: 'manage_announcements' },
-  { href: '/dashboard/admin/booth-renters', label: 'Booth Renters', icon: Store, permission: 'manage_booth_renters' },
+  { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, permission: 'manage_booth_renters' },
   { href: '/dashboard/admin/rent-payments', label: 'Rent Payments', icon: Receipt, permission: 'manage_rent_payments' },
 ];
 
