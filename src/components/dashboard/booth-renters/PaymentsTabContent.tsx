@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRentPayments, useRentPaymentsSummary, useRecordPayment } from '@/hooks/useRentPayments';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Receipt, Search, DollarSign, AlertTriangle, CheckCircle2, Clock, Calendar } from 'lucide-react';
+import { Search, DollarSign, AlertTriangle, CheckCircle2, Clock, Calendar, Receipt } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -28,10 +28,11 @@ const statusIcons: Record<string, React.ReactNode> = {
   waived: <Receipt className="h-4 w-4 text-slate-400" />,
 };
 
-// TODO: Get from organization context when available
-const DEFAULT_ORG_ID = 'drop-dead-salons';
+interface PaymentsTabContentProps {
+  organizationId: string;
+}
 
-export default function RentPayments() {
+export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
@@ -44,13 +45,13 @@ export default function RentPayments() {
   const monthEnd = endOfMonth(now).toISOString().split('T')[0];
 
   const { data: payments, isLoading } = useRentPayments({
-    organizationId: DEFAULT_ORG_ID,
+    organizationId,
     status: statusFilter,
     startDate: monthStart,
     endDate: monthEnd,
   });
 
-  const { data: summary } = useRentPaymentsSummary(DEFAULT_ORG_ID);
+  const { data: summary } = useRentPaymentsSummary(organizationId);
   const recordPayment = useRecordPayment();
 
   const filteredPayments = payments?.filter(payment => {
@@ -90,17 +91,10 @@ export default function RentPayments() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <Receipt className="h-6 w-6 text-primary" />
-            Rent Payment Tracker
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {format(now, 'MMMM yyyy')} rent payments
-          </p>
-        </div>
-      </div>
+      {/* Month indicator */}
+      <p className="text-muted-foreground">
+        {format(now, 'MMMM yyyy')} rent payments
+      </p>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
