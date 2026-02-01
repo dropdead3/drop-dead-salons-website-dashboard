@@ -98,6 +98,13 @@ import LoyaltyProgram from "./pages/dashboard/settings/LoyaltyProgram";
 import BoothRenters from "./pages/dashboard/admin/BoothRenters";
 import RentPayments from "./pages/dashboard/admin/RentPayments";
 
+// Renter Portal pages
+import RenterPortal from "./pages/dashboard/RenterPortal";
+import RenterPayRent from "./pages/dashboard/RenterPayRent";
+import RenterPaymentMethods from "./pages/dashboard/RenterPaymentMethods";
+import RenterCommissions from "./pages/dashboard/RenterCommissions";
+import RenterTaxDocuments from "./pages/dashboard/RenterTaxDocuments";
+
 // Platform Admin pages
 import PlatformOverview from "./pages/dashboard/platform/Overview";
 import PlatformAccounts from "./pages/dashboard/platform/Accounts";
@@ -227,6 +234,13 @@ const App = () => (
                       <Route path="/dashboard/settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/rent-payments" element={<ProtectedRoute requiredPermission="manage_rent_payments"><RentPayments /></ProtectedRoute>} />
+
+                      {/* Renter Portal routes - booth_renter role users can access */}
+                      <Route path="/dashboard/renter/portal" element={<ProtectedRoute><RenterPortal /></ProtectedRoute>} />
+                      <Route path="/dashboard/renter/pay-rent" element={<ProtectedRoute><RenterPayRent /></ProtectedRoute>} />
+                      <Route path="/dashboard/renter/payment-methods" element={<ProtectedRoute><RenterPaymentMethods /></ProtectedRoute>} />
+                      <Route path="/dashboard/renter/commissions" element={<ProtectedRoute><RenterCommissions /></ProtectedRoute>} />
+                      <Route path="/dashboard/renter/tax-documents" element={<ProtectedRoute><RenterTaxDocuments /></ProtectedRoute>} />
 
                       {/* Platform Admin routes - nested under PlatformLayout with sidebar */}
                       <Route path="/dashboard/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>

@@ -16,7 +16,9 @@ import {
   FileText,
   MapPin,
   Calendar as CalendarIcon,
+  Home,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 
@@ -25,15 +27,19 @@ import { SalesTabContent } from '@/components/dashboard/analytics/SalesTabConten
 import { OperationsTabContent } from '@/components/dashboard/analytics/OperationsTabContent';
 import { MarketingTabContent } from '@/components/dashboard/analytics/MarketingTabContent';
 import { ProgramTabContent } from '@/components/dashboard/analytics/ProgramTabContent';
+import { RentRevenueTab } from '@/components/dashboard/analytics/RentRevenueTab';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
 
-const analyticsCategories = [
+const baseCategories = [
   { id: 'sales', label: 'Sales', icon: DollarSign },
   { id: 'operations', label: 'Operations', icon: BarChart3 },
   { id: 'marketing', label: 'Marketing', icon: TrendingUp },
   { id: 'program', label: 'Program', icon: Target },
   { id: 'reports', label: 'Reports', icon: FileText },
 ];
+
+const rentCategory = { id: 'rent', label: 'Rent', icon: Home };
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth' | 'custom';
 
@@ -48,6 +54,14 @@ export default function AnalyticsHub() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'sales';
   const subTab = searchParams.get('subtab') || undefined;
+  const { effectiveOrganization } = useOrganizationContext();
+  const { roles } = useAuth();
+
+  // Add rent tab only for super admins
+  const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
+  const analyticsCategories = isSuperAdmin 
+    ? [...baseCategories, rentCategory] 
+    : baseCategories;
   
   // Location access control
   const { 
@@ -291,6 +305,12 @@ export default function AnalyticsHub() {
           <TabsContent value="reports" className="mt-6">
             <ReportsTabContent filters={filters} />
           </TabsContent>
+
+          {isSuperAdmin && effectiveOrganization?.id && (
+            <TabsContent value="rent" className="mt-6">
+              <RentRevenueTab organizationId={effectiveOrganization.id} />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </DashboardLayout>
