@@ -1084,9 +1084,16 @@ export function DashboardLayout(props: DashboardLayoutProps) {
   // Check if we're on a platform route
   const isPlatformRoute = location.pathname.startsWith('/dashboard/platform');
   
+  // Get color theme from localStorage to apply alongside dark class
+  // This is needed because dark mode CSS selectors use .dark.theme-{color}
+  const colorTheme = typeof window !== 'undefined' 
+    ? localStorage.getItem('dd-color-theme') || 'cream'
+    : 'cream';
+  
   return (
     <div className={cn(
       resolvedTheme === 'dark' && 'dark',
+      `theme-${colorTheme}`,
       isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
     )}>
       <DashboardLayoutInner {...props} />
