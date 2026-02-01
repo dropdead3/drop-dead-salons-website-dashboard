@@ -28,32 +28,32 @@ const statusConfig: Record<string, { label: string; icon: React.ElementType; cla
   draft: {
     label: 'Draft',
     icon: FileText,
-    className: 'bg-slate-100 text-slate-700 border-slate-200',
+    className: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
   },
   submitted: {
     label: 'Submitted',
     icon: Clock,
-    className: 'bg-blue-100 text-blue-700 border-blue-200',
+    className: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800',
   },
   processing: {
     label: 'Processing',
     icon: Loader2,
-    className: 'bg-amber-100 text-amber-700 border-amber-200',
+    className: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800',
   },
   processed: {
     label: 'Processed',
     icon: CheckCircle,
-    className: 'bg-green-100 text-green-700 border-green-200',
+    className: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
   },
   cancelled: {
     label: 'Cancelled',
     icon: XCircle,
-    className: 'bg-slate-100 text-slate-500 border-slate-200',
+    className: 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
   },
   failed: {
     label: 'Failed',
     icon: XCircle,
-    className: 'bg-red-100 text-red-700 border-red-200',
+    className: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800',
   },
 };
 
