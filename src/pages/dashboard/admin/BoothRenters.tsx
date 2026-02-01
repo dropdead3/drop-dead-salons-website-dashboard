@@ -2,6 +2,8 @@ import { useSearchParams } from 'react-router-dom';
 import { Store, Users, Receipt } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RentersTabContent, PaymentsTabContent } from '@/components/dashboard/booth-renters';
+import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
+import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 
 // TODO: Get from organization context when available
 const DEFAULT_ORG_ID = 'drop-dead-salons';
@@ -15,15 +17,16 @@ export default function BoothRenters() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
+    <PlatformPageContainer className="space-y-6">
+      <PlatformPageHeader
+        title="Renter Hub"
+        description="Manage booth renters and rent payments"
+        backTo="/dashboard"
+        backLabel="Back to Dashboard"
+        actions={
           <Store className="h-6 w-6 text-primary" />
-          Renter Hub
-        </h1>
-        <p className="text-muted-foreground mt-1">Manage booth renters and rent payments</p>
-      </div>
+        }
+      />
 
       {/* Tabbed Navigation */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -46,6 +49,6 @@ export default function BoothRenters() {
           <PaymentsTabContent organizationId={DEFAULT_ORG_ID} />
         </TabsContent>
       </Tabs>
-    </div>
+    </PlatformPageContainer>
   );
 }
