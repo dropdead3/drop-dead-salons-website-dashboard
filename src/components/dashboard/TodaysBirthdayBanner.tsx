@@ -36,18 +36,18 @@ export function TodaysBirthdayBanner() {
                 className={cn(
                   "flex items-center gap-2 backdrop-blur-sm rounded-full pl-1 pr-3 py-1",
                   isViewingAsUser && person.isCurrentUser 
-                    ? "bg-white/40 ring-2 ring-white shadow-lg" 
-                    : "bg-white/20"
+                    ? "bg-background/40 ring-2 ring-background shadow-lg" 
+                    : "bg-background/20"
                 )}
               >
                 <Avatar className={cn(
                   "w-6 h-6 border-2",
                   isViewingAsUser && person.isCurrentUser 
-                    ? "border-white" 
-                    : "border-white/30"
+                    ? "border-background" 
+                    : "border-background/30"
                 )}>
                   <AvatarImage src={person.photo_url || undefined} />
-                  <AvatarFallback className="bg-white/20 text-white text-xs">
+                  <AvatarFallback className="bg-background/20 text-background text-xs">
                     {(person.display_name || person.full_name)?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>

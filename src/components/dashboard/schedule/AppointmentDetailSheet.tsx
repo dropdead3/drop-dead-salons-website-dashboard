@@ -70,12 +70,12 @@ const STATUS_CONFIG: Record<AppointmentStatus, {
   label: string;
   icon: React.ElementType;
 }> = {
-  booked: { bg: 'bg-slate-100', text: 'text-slate-700', label: 'Booked', icon: Calendar },
-  confirmed: { bg: 'bg-green-100', text: 'text-green-800', label: 'Confirmed', icon: CheckCircle },
-  checked_in: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Checked In', icon: UserCheck },
-  completed: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Completed', icon: CheckCircle },
-  cancelled: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Cancelled', icon: XCircle },
-  no_show: { bg: 'bg-red-100', text: 'text-red-800', label: 'No Show', icon: AlertTriangle },
+  booked: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-700 dark:text-slate-300', label: 'Booked', icon: Calendar },
+  confirmed: { bg: 'bg-green-100 dark:bg-green-900/50', text: 'text-green-800 dark:text-green-300', label: 'Confirmed', icon: CheckCircle },
+  checked_in: { bg: 'bg-blue-100 dark:bg-blue-900/50', text: 'text-blue-800 dark:text-blue-300', label: 'Checked In', icon: UserCheck },
+  completed: { bg: 'bg-purple-100 dark:bg-purple-900/50', text: 'text-purple-800 dark:text-purple-300', label: 'Completed', icon: CheckCircle },
+  cancelled: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400', label: 'Cancelled', icon: XCircle },
+  no_show: { bg: 'bg-red-100 dark:bg-red-900/50', text: 'text-red-800 dark:text-red-300', label: 'No Show', icon: AlertTriangle },
 };
 
 const STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
