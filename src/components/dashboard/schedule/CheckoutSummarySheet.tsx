@@ -16,18 +16,21 @@ import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import type { BusinessSettings } from '@/hooks/useBusinessSettings';
+import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
+import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
 
 interface CheckoutSummarySheetProps {
   appointment: PhorestAppointment | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (tipAmount: number, rebooked: boolean) => void;
+  onConfirm: (tipAmount: number, rebooked: boolean, promoResult?: PromoValidationResult | null) => void;
   isUpdating?: boolean;
   taxRate: number;
   businessSettings: BusinessSettings | null;
   locationName: string;
   locationAddress?: string;
   locationPhone?: string;
+  organizationId?: string;
 }
 
 const TIP_PRESETS = [
@@ -48,16 +51,20 @@ export function CheckoutSummarySheet({
   locationName,
   locationAddress,
   locationPhone,
+  organizationId,
 }: CheckoutSummarySheetProps) {
   const [tipAmount, setTipAmount] = useState<number>(0);
   const [customTip, setCustomTip] = useState<string>('');
   const [rebooked, setRebooked] = useState<boolean>(false);
+  const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
 
   if (!appointment) return null;
 
   const subtotal = appointment.total_price || 0;
-  const tax = subtotal * taxRate;
-  const checkoutTotal = subtotal + tax;
+  const discount = appliedPromo?.calculated_discount || 0;
+  const discountedSubtotal = subtotal - discount;
+  const tax = discountedSubtotal * taxRate;
+  const checkoutTotal = discountedSubtotal + tax;
   const grandTotal = checkoutTotal + tipAmount;
 
   // Calculate duration
@@ -272,11 +279,12 @@ export function CheckoutSummarySheet({
   };
 
   const handleConfirm = () => {
-    onConfirm(tipAmount, rebooked);
+    onConfirm(tipAmount, rebooked, appliedPromo);
     // Reset state for next use
     setTipAmount(0);
     setCustomTip('');
     setRebooked(false);
+    setAppliedPromo(null);
   };
 
   return (
@@ -358,6 +366,28 @@ export function CheckoutSummarySheet({
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-medium">${subtotal.toFixed(2)}</span>
               </div>
+              
+              {/* Promo Code Section */}
+              {organizationId && (
+                <div className="py-2">
+                  <PromoCodeInput
+                    organizationId={organizationId}
+                    subtotal={subtotal}
+                    clientId={appointment.phorest_client_id}
+                    onPromoApplied={setAppliedPromo}
+                    appliedPromo={appliedPromo}
+                  />
+                </div>
+              )}
+
+              {/* Show discount if applied */}
+              {discount > 0 && (
+                <div className="flex justify-between text-primary">
+                  <span>Discount</span>
+                  <span className="font-medium">-${discount.toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tax ({(taxRate * 100).toFixed(1)}%)</span>
                 <span className="font-medium">${tax.toFixed(2)}</span>
