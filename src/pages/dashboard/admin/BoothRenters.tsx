@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useBoothRenters } from '@/hooks/useBoothRenters';
+import { useBoothRenters, type BoothRenterProfile } from '@/hooks/useBoothRenters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Store, Plus, Search, Building2, DollarSign, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { AddRenterDialog, RenterDetailSheet, IssueContractDialog } from '@/components/dashboard/booth-renters';
 
 const statusColors: Record<string, string> = {
   active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -22,8 +23,22 @@ const DEFAULT_ORG_ID = 'drop-dead-salons';
 export default function BoothRenters() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
+  const [selectedRenter, setSelectedRenter] = useState<BoothRenterProfile | null>(null);
   
   const { data: renters, isLoading } = useBoothRenters(DEFAULT_ORG_ID);
+
+  const handleViewRenter = (renter: BoothRenterProfile) => {
+    setSelectedRenter(renter);
+    setDetailSheetOpen(true);
+  };
+
+  const handleIssueContract = () => {
+    setDetailSheetOpen(false);
+    setContractDialogOpen(true);
+  };
 
   const filteredRenters = renters?.filter(renter => {
     const matchesSearch = !searchQuery || 
@@ -68,7 +83,7 @@ export default function BoothRenters() {
           </h1>
           <p className="text-muted-foreground mt-1">Manage independent stylists renting space</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setAddDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Renter
         </Button>
@@ -196,14 +211,42 @@ export default function BoothRenters() {
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">View</Button>
-                    <Button variant="outline" size="sm">Payments</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleViewRenter(renter)}>
+                      View
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleViewRenter(renter)}>
+                      Payments
+                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Dialogs */}
+      <AddRenterDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        organizationId={DEFAULT_ORG_ID}
+      />
+
+      <RenterDetailSheet
+        open={detailSheetOpen}
+        onOpenChange={setDetailSheetOpen}
+        renterId={selectedRenter?.id || null}
+        onIssueContract={handleIssueContract}
+      />
+
+      {selectedRenter && (
+        <IssueContractDialog
+          open={contractDialogOpen}
+          onOpenChange={setContractDialogOpen}
+          renterId={selectedRenter.id}
+          renterName={selectedRenter.display_name || selectedRenter.full_name || 'Renter'}
+          organizationId={DEFAULT_ORG_ID}
+        />
       )}
     </div>
   );
