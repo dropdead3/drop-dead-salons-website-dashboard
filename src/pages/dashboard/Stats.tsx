@@ -3,12 +3,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePhorestPerformanceMetrics, usePhorestConnection, useUserPhorestMapping } from '@/hooks/usePhorestSync';
 import { useUserSalesSummary } from '@/hooks/useSalesData';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { format, startOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { 
   TrendingUp,
   Link2,
+  Users,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -22,8 +26,44 @@ import { ServiceMixChart } from '@/components/dashboard/sales/ServiceMixChart';
 import { StylistLocationRevenueChart } from '@/components/dashboard/sales/StylistLocationRevenueChart';
 
 export default function Stats() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const [clientInsightsLocation, setClientInsightsLocation] = useState<string>('all');
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
+  // Check if user is admin/manager
+  const isAdmin = roles.some(role => ['admin', 'super_admin', 'manager'].includes(role));
+
+  // Fetch team members with stylist/stylist_assistant roles (only for admins)
+  const { data: teamMembers } = useQuery({
+    queryKey: ['stats-team-members'],
+    queryFn: async () => {
+      // Get users with stylist or stylist_assistant roles
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('role', ['stylist', 'stylist_assistant']);
+      
+      if (!userRoles?.length) return [];
+      
+      const userIds = [...new Set(userRoles.map(r => r.user_id))];
+      
+      const { data: profiles } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name, photo_url')
+        .in('user_id', userIds)
+        .eq('is_active', true)
+        .order('full_name');
+      
+      return profiles || [];
+    },
+    enabled: isAdmin,
+  });
+
+  // Determine which user's stats to show
+  const effectiveUserId = isAdmin && selectedMemberId ? selectedMemberId : user?.id;
+
+  // Get the selected member's name for display
+  const selectedMember = teamMembers?.find(m => m.user_id === selectedMemberId);
 
   // Date ranges for sales data
   const today = new Date();
@@ -31,20 +71,20 @@ export default function Stats() {
   const monthStart = format(startOfMonth(today), 'yyyy-MM-dd');
   const monthEnd = format(endOfMonth(today), 'yyyy-MM-dd');
 
-  // Phorest data
+  // Phorest data - use effectiveUserId
   const { data: phorestConnection } = usePhorestConnection();
   const { data: phorestMetrics } = usePhorestPerformanceMetrics(weekStart);
-  const { data: userPhorestMapping } = useUserPhorestMapping(user?.id);
+  const { data: userPhorestMapping } = useUserPhorestMapping(effectiveUserId);
 
-  // User sales data for goals and achievements
-  const { data: userWeeklySales } = useUserSalesSummary(user?.id, weekStart, format(today, 'yyyy-MM-dd'));
-  const { data: userMonthlySales } = useUserSalesSummary(user?.id, monthStart, monthEnd);
+  // User sales data for goals and achievements - use effectiveUserId
+  const { data: userWeeklySales } = useUserSalesSummary(effectiveUserId, weekStart, format(today, 'yyyy-MM-dd'));
+  const { data: userMonthlySales } = useUserSalesSummary(effectiveUserId, monthStart, monthEnd);
 
-  // Find current user's Phorest metrics
+  // Find selected user's Phorest metrics - use effectiveUserId
   const myPhorestMetrics = useMemo(() => {
-    if (!phorestMetrics || !user) return null;
-    return phorestMetrics.find((m: any) => m.user_id === user.id);
-  }, [phorestMetrics, user]);
+    if (!phorestMetrics || !effectiveUserId) return null;
+    return phorestMetrics.find((m: any) => m.user_id === effectiveUserId);
+  }, [phorestMetrics, effectiveUserId]);
   
   // Check if user is linked to Phorest (has active mapping)
   const isLinkedToPhorest = !!userPhorestMapping;
@@ -53,16 +93,47 @@ export default function Stats() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="font-display text-3xl lg:text-4xl mb-2">
-              MY STATS
+              {isAdmin ? 'TEAM STATS' : 'MY STATS'}
             </h1>
             <p className="text-muted-foreground font-sans">
-              Track your personal performance metrics.
+              {isAdmin 
+                ? 'View performance metrics for any team member.' 
+                : 'Track your personal performance metrics.'}
             </p>
           </div>
+          
+          {/* Team member selector - only for admins */}
+          {isAdmin && teamMembers && teamMembers.length > 0 && (
+            <Select 
+              value={selectedMemberId || ''} 
+              onValueChange={(value) => setSelectedMemberId(value || null)}
+            >
+              <SelectTrigger className="w-full sm:w-[250px]">
+                <SelectValue placeholder="Select team member..." />
+              </SelectTrigger>
+              <SelectContent>
+                {teamMembers.map((member) => (
+                  <SelectItem key={member.user_id} value={member.user_id}>
+                    {member.display_name || member.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
+
+        {/* Viewing indicator for admins */}
+        {isAdmin && selectedMemberId && selectedMember && (
+          <div className="mb-4 p-3 bg-primary/10 rounded-lg flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" />
+            <span className="text-sm">
+              Viewing stats for <strong>{selectedMember.display_name || selectedMember.full_name}</strong>
+            </span>
+          </div>
+        )}
 
         {/* Performance Content */}
         <div className="space-y-6">
@@ -112,10 +183,10 @@ export default function Stats() {
             )}
 
             {/* Personal Goals & Progress Section */}
-            {user && (
+            {effectiveUserId && (
               <div className="grid gap-6 md:grid-cols-2">
                 <PersonalGoalsCard 
-                  userId={user.id}
+                  userId={effectiveUserId}
                   currentMonthlyRevenue={userMonthlySales?.totalRevenue || 0}
                   currentWeeklyRevenue={userWeeklySales?.totalRevenue || 0}
                 />
@@ -126,13 +197,13 @@ export default function Stats() {
             )}
 
             {/* Performance Visualizations */}
-            {user && isLinkedToPhorest && (
+            {effectiveUserId && isLinkedToPhorest && (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <div className="lg:col-span-2">
-                  <PerformanceTrendChart userId={user.id} weeks={8} />
+                  <PerformanceTrendChart userId={effectiveUserId} weeks={8} />
                 </div>
                 <ClientInsightsCard 
-                  userId={user.id} 
+                  userId={effectiveUserId} 
                   locationId={clientInsightsLocation}
                   onLocationChange={setClientInsightsLocation}
                   showLocationFilter={true}
@@ -141,14 +212,14 @@ export default function Stats() {
             )}
 
             {/* Location Revenue Comparison - for multi-branch stylists */}
-            {user && isLinkedToPhorest && (
-              <StylistLocationRevenueChart userId={user.id} months={3} />
+            {effectiveUserId && isLinkedToPhorest && (
+              <StylistLocationRevenueChart userId={effectiveUserId} months={3} />
             )}
 
             {/* Service Mix */}
-            {user && isLinkedToPhorest && (
+            {effectiveUserId && isLinkedToPhorest && (
               <div className="grid gap-6 md:grid-cols-2">
-                <ServiceMixChart userId={user.id} days={30} />
+                <ServiceMixChart userId={effectiveUserId} days={30} />
                 <SalesAchievements
                   totalRevenue={userMonthlySales?.totalRevenue || 0}
                   serviceRevenue={userMonthlySales?.serviceRevenue || 0}
@@ -159,7 +230,7 @@ export default function Stats() {
             )}
 
             {/* Fallback for non-Phorest users */}
-            {user && !isLinkedToPhorest && (userMonthlySales?.totalRevenue || 0) > 0 && (
+            {effectiveUserId && !isLinkedToPhorest && (userMonthlySales?.totalRevenue || 0) > 0 && (
               <SalesAchievements
                 totalRevenue={userMonthlySales?.totalRevenue || 0}
                 serviceRevenue={userMonthlySales?.serviceRevenue || 0}

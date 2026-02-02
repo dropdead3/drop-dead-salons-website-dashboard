@@ -161,7 +161,7 @@ const baseGetHelpNavItems: NavItem[] = [
 ];
 
 const statsNavItems: NavItem[] = [
-  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
+  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant', 'admin', 'super_admin', 'manager'] },
   { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
   { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
 ];

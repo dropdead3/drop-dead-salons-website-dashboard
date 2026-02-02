@@ -216,6 +216,15 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     };
   }, [location.pathname]);
 
+  // Dynamic label logic for stats page based on user role
+  const getNavLabel = (item: NavItem): string => {
+    if (item.href === '/dashboard/stats') {
+      const isAdminUser = roles.includes('admin') || roles.includes('super_admin') || roles.includes('manager');
+      return isAdminUser ? 'Team Stats' : 'My Stats';
+    }
+    return item.label;
+  };
+
   const NavLink = ({ 
     href, 
     label, 
@@ -228,6 +237,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     badgeCount?: number;
   }) => {
     const isActive = location.pathname === href;
+    // Apply dynamic label logic
+    const displayLabel = href === '/dashboard/stats' ? getNavLabel({ href, label, icon: Icon }) : label;
     
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
@@ -252,7 +263,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         )}
       >
         <Icon className="w-4 h-4 shrink-0" />
-        {!isCollapsed && <span className="flex-1">{label}</span>}
+        {!isCollapsed && <span className="flex-1">{displayLabel}</span>}
         {!isCollapsed && badgeCount !== undefined && badgeCount > 0 && (
           <Badge variant="destructive" className="h-5 min-w-5 flex items-center justify-center text-xs px-1.5">
             {badgeCount > 9 ? '9+' : badgeCount}
@@ -273,7 +284,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             </div>
           </TooltipTrigger>
           <TooltipContent side="right" className="font-sans">
-            {label}
+            {displayLabel}
             {badgeCount !== undefined && badgeCount > 0 && ` (${badgeCount})`}
           </TooltipContent>
         </Tooltip>
