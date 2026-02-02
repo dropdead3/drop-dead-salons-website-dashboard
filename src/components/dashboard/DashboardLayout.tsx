@@ -150,7 +150,7 @@ const growthNavItems: NavItem[] = [
   { href: '/dashboard/program', label: 'New-Client Engine Program', icon: Target, permission: 'access_client_engine' },
   { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell' },
-  { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, permission: 'view_my_graduation' },
+  { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
 ];
 
 // Base get help items - the assistant schedule label is computed dynamically in the component
