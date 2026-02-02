@@ -75,7 +75,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
         )}
 
         <SheetHeader className="pb-4 border-b">
-          <div className="flex items-start gap-4">
+          <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16">
               <AvatarFallback className="font-display text-xl bg-primary/10">
                 {initials}
@@ -104,9 +104,6 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                 )}
               </SheetDescription>
             </div>
-          </div>
-          {/* Ban/Unban Toggle for admins */}
-          <div className="mt-3">
             <BanClientToggle
               clientId={client.id}
               clientName={client.name}
