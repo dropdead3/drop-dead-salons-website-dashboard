@@ -22,7 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
-import { generateMockAppointments, isDemoAppointment } from '@/data/mockAppointments';
+
 
 export default function Schedule() {
   const isMobile = useIsMobile();
@@ -64,7 +64,7 @@ export default function Schedule() {
     confirmationStatus: [],
     leadSources: [],
   });
-  const [demoMode, setDemoMode] = useState(false);
+  
 
   // Set default location when locations load
   useEffect(() => {
@@ -200,31 +200,6 @@ export default function Schedule() {
     ? allStylists 
     : allStylists.filter(s => selectedStaffIds.includes(s.user_id));
 
-  // Generate mock appointments when demo mode is enabled
-  const mockAppointments = useMemo(() => {
-    if (!demoMode) return [];
-    return generateMockAppointments({
-      date: currentDate,
-      stylistIds: allStylists.map(s => s.user_id),
-      locationId: selectedLocation,
-    });
-  }, [demoMode, currentDate, allStylists, selectedLocation]);
-
-  // Combine real and mock appointments for display
-  const displayAppointments = useMemo(() => {
-    return [...appointments, ...mockAppointments];
-  }, [appointments, mockAppointments]);
-
-  // Handle demo mode toggle
-  const handleDemoModeToggle = () => {
-    const newMode = !demoMode;
-    setDemoMode(newMode);
-    if (newMode) {
-      toast.success('Demo mode enabled - showing sample appointments');
-    } else {
-      toast.info('Demo mode disabled');
-    }
-  };
   // Auto-switch to agenda view on mobile
   useEffect(() => {
     if (isMobile && view !== 'agenda') {
@@ -319,8 +294,6 @@ export default function Schedule() {
             canCreate={canCreate}
             calendarFilters={calendarFilters}
             onCalendarFiltersChange={setCalendarFilters}
-            demoMode={demoMode}
-            onDemoModeToggle={handleDemoModeToggle}
           />
         </div>
 
@@ -335,7 +308,7 @@ export default function Schedule() {
               {view === 'day' && (
                 <DayView
                   date={currentDate}
-                  appointments={displayAppointments}
+                  appointments={appointments}
                   stylists={displayedStylists}
                   hoursStart={preferences.hours_start}
                   hoursEnd={preferences.hours_end}
@@ -348,7 +321,7 @@ export default function Schedule() {
               {view === 'week' && (
                 <WeekView
                   currentDate={currentDate}
-                  appointments={displayAppointments}
+                  appointments={appointments}
                   hoursStart={preferences.hours_start}
                   hoursEnd={preferences.hours_end}
                   onAppointmentClick={handleAppointmentClick}
@@ -361,7 +334,7 @@ export default function Schedule() {
               {view === 'month' && (
                 <MonthView
                   currentDate={currentDate}
-                  appointments={displayAppointments}
+                  appointments={appointments}
                   onDayClick={handleDayClick}
                   onAppointmentClick={handleAppointmentClick}
                 />
@@ -370,7 +343,7 @@ export default function Schedule() {
               {view === 'agenda' && (
                 <AgendaView
                   currentDate={currentDate}
-                  appointments={displayAppointments}
+                  appointments={appointments}
                   onAppointmentClick={handleAppointmentClick}
                 />
               )}
