@@ -1,234 +1,141 @@
 
-# Client Directory Feature Implementation
+# Blacklisted/Banned Client Warning System
 
 ## Overview
-Transform the "My Clients" page into a comprehensive "Client Directory" with dual-tab functionality:
-- **All Clients**: Available to users with appropriate permissions (admin, manager, super_admin, receptionist)
-- **My Clients**: Default view for stylists showing only their assigned clients
+Implement a comprehensive system to flag clients as blacklisted/banned and display prominent warnings throughout the booking workflow to prevent team members from accidentally scheduling appointments with restricted clients.
 
-The navigation item will move from "Stats & Leaderboard" to directly under "Team Directory" in the Main section.
+## Implementation Approach
 
-## Summary of Changes
+### 1. Database Schema Update
+Add two new columns to the `phorest_clients` table:
 
-### Navigation Updates
-Move the link from the Stats section to the Main section, rename it to "Client Directory", and update permissions to be visible to more roles.
+| Column | Type | Description |
+|--------|------|-------------|
+| `is_banned` | `boolean` | Flag indicating if client is blacklisted (default: false) |
+| `ban_reason` | `text` | Optional explanation for why the client was banned |
+| `banned_at` | `timestamp` | When the ban was applied (for audit trail) |
+| `banned_by` | `uuid` | Who applied the ban (references auth.users) |
 
-### Page Restructure
-Add primary tabs to switch between "All Clients" and "My Clients" views, with the "All Clients" tab locked/disabled for users without permission.
+### 2. Warning Display Locations
 
-### New Filter
-Add a stylist filter dropdown (visible only in All Clients tab) to filter clients by their preferred stylist.
+#### A. Client Directory (List View)
+- Add a red "Banned" badge next to client names in the list
+- Visual indicator: `Ban` icon with red background styling
+- Banned clients sorted last or optionally filterable
+
+#### B. Client Detail Sheet
+- Prominent red alert banner at the top when viewing a banned client's profile
+- Shows ban reason if provided
+- Uses the existing `Alert` component with `destructive` variant
+
+#### C. Booking Wizard - Client Step
+- Red warning badge on client search results for banned clients
+- When a banned client is selected: show a confirmation dialog warning the team member
+- Option to proceed (for edge cases) or go back and select another client
+
+#### D. Quick Booking Popover - Client Selection
+- Same visual indicator in search results
+- Same warning dialog before proceeding
+
+#### E. Register/Checkout - Client Select
+- Warning badge on banned clients in search
+- Alert banner when a banned client is selected
+
+### 3. UI Components
+
+**New Components:**
+- `BannedClientBadge` - Reusable red badge with Ban icon
+- `BannedClientAlert` - Alert banner showing ban status and reason
+- `BannedClientWarningDialog` - Confirmation dialog when booking a banned client
+
+**Example Alert Banner:**
+```
++------------------------------------------------------------------+
+|  ⛔ CLIENT BANNED                                                |
+|  This client has been blacklisted and should not be scheduled.   |
+|  Reason: [Reason text if provided]                               |
++------------------------------------------------------------------+
+```
+
+### 4. Admin Controls
+
+Add ability for authorized users (admin, manager, super_admin) to:
+- Mark a client as banned from the Client Detail Sheet
+- Provide a ban reason
+- Remove the ban status if needed
+
+This will be a simple toggle button in the Client Detail Sheet header, visible only to users with appropriate permissions.
 
 ---
 
 ## Technical Details
 
-### File 1: `src/components/dashboard/DashboardLayout.tsx`
+### Database Migration
+```sql
+-- Add ban-related columns to phorest_clients
+ALTER TABLE phorest_clients
+ADD COLUMN is_banned boolean DEFAULT false,
+ADD COLUMN ban_reason text,
+ADD COLUMN banned_at timestamp with time zone,
+ADD COLUMN banned_by uuid REFERENCES auth.users(id);
 
-**Move nav item from `statsNavItems` to `mainNavItems`**:
-
-```typescript
-// Before (lines 133-137)
-const mainNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
-  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar' },
-  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
-];
-
-// After
-const mainNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
-  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar' },
-  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
-  { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
-];
+-- Create index for efficient filtering
+CREATE INDEX idx_phorest_clients_is_banned ON phorest_clients(is_banned) WHERE is_banned = true;
 ```
 
-**Remove from `statsNavItems`**:
-```typescript
-// Before (lines 161-166)
-const statsNavItems: NavItem[] = [
-  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats' },
-  { href: '/dashboard/my-clients', label: 'My Clients', icon: Users, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
-  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
-];
+### Files to Create
 
-// After - Remove My Clients line
-const statsNavItems: NavItem[] = [
-  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats' },
-  { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
-  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
-];
-```
+| File | Purpose |
+|------|---------|
+| `src/components/dashboard/clients/BannedClientBadge.tsx` | Reusable badge component |
+| `src/components/dashboard/clients/BannedClientAlert.tsx` | Alert banner for detail views |
+| `src/components/dashboard/clients/BannedClientWarningDialog.tsx` | Confirmation dialog |
 
-### File 2: `src/pages/dashboard/MyClients.tsx` (renamed to `ClientDirectory.tsx`)
-
-**Key changes**:
-
-1. **Rename file** to `ClientDirectory.tsx`
-
-2. **Add primary tab state and logic**:
-```typescript
-const [primaryTab, setPrimaryTab] = useState<'all' | 'my'>(canViewAllClients ? 'all' : 'my');
-const [selectedStylist, setSelectedStylist] = useState<string>('all');
-```
-
-3. **Fetch stylists for filter dropdown**:
-```typescript
-const { data: stylists } = useQuery({
-  queryKey: ['employee-profiles-for-filter'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('employee_profiles')
-      .select('user_id, full_name, display_name')
-      .eq('is_active', true)
-      .eq('is_approved', true)
-      .order('full_name');
-    if (error) throw error;
-    return data || [];
-  },
-  enabled: canViewAllClients, // Only fetch if user can see all clients
-});
-```
-
-4. **Update client query to respect primary tab**:
-```typescript
-const { data: clients, isLoading } = useQuery({
-  queryKey: ['client-directory', user?.id, primaryTab, selectedStylist],
-  queryFn: async () => {
-    let query = supabase
-      .from('phorest_clients')
-      .select('*')
-      .order('total_spend', { ascending: false });
-
-    // Filter logic based on primary tab
-    if (primaryTab === 'my' || !canViewAllClients) {
-      // My Clients: only show user's clients
-      query = query.eq('preferred_stylist_id', user?.id);
-    } else if (selectedStylist !== 'all') {
-      // All Clients with stylist filter
-      query = query.eq('preferred_stylist_id', selectedStylist);
-    }
-    // If All Clients with no filter, no preferred_stylist_id constraint
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data;
-  },
-  enabled: !!user?.id,
-});
-```
-
-5. **Add primary tabs UI with lock icon**:
-```typescript
-<Tabs value={primaryTab} onValueChange={(v) => setPrimaryTab(v as 'all' | 'my')}>
-  <TabsList>
-    <TabsTrigger 
-      value="all" 
-      disabled={!canViewAllClients}
-      className="gap-2"
-    >
-      {!canViewAllClients && <Lock className="w-3 h-3" />}
-      All Clients
-    </TabsTrigger>
-    <TabsTrigger value="my">My Clients</TabsTrigger>
-  </TabsList>
-</Tabs>
-```
-
-6. **Add stylist filter dropdown** (only visible in All Clients tab):
-```typescript
-{primaryTab === 'all' && canViewAllClients && stylists && (
-  <Select value={selectedStylist} onValueChange={setSelectedStylist}>
-    <SelectTrigger className="w-full md:w-[200px]">
-      <User className="w-4 h-4 mr-2 text-muted-foreground" />
-      <SelectValue placeholder="All Stylists" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="all">All Stylists</SelectItem>
-      {stylists.map(stylist => (
-        <SelectItem key={stylist.user_id} value={stylist.user_id}>
-          {stylist.display_name || stylist.full_name}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-)}
-```
-
-7. **Update page header**:
-```typescript
-<h1 className="font-display text-3xl lg:text-4xl mb-2">CLIENT DIRECTORY</h1>
-<p className="text-muted-foreground font-sans">
-  {primaryTab === 'all' 
-    ? 'View and manage all salon clients.' 
-    : 'Track your client relationships and identify opportunities.'}
-</p>
-```
-
-### File 3: `src/App.tsx` (or routes configuration)
-
-**Update route path**:
-```typescript
-// Change from
-{ path: 'my-clients', element: <MyClients /> }
-// To
-{ path: 'clients', element: <ClientDirectory /> }
-```
-
-Also add a redirect from `/dashboard/my-clients` to `/dashboard/clients` for backwards compatibility.
-
----
-
-## Permission Matrix
-
-| Role | Sees Nav Link | All Clients Tab | My Clients Tab | Stylist Filter |
-|------|--------------|-----------------|----------------|----------------|
-| Super Admin | Yes | Unlocked | Yes | Yes |
-| Admin | Yes | Unlocked | Yes | Yes |
-| Manager | Yes | Unlocked | Yes | Yes |
-| Receptionist | Yes | Unlocked | Yes | Yes |
-| Stylist | Yes | Locked | Yes (default) | No |
-| Stylist Assistant | Yes | Locked | Yes (default) | No |
-| Booth Renter | Yes | Locked | Yes (default) | No |
-
-## UI Layout
-
-```text
-+------------------------------------------------------------------+
-| CLIENT DIRECTORY                           [Phorest Sync Button] |
-| View and manage all salon clients.                               |
-+------------------------------------------------------------------+
-|                                                                  |
-| [ All Clients ] [ My Clients ]           <- Primary tabs         |
-|                                                                  |
-| [Search...] [Location Filter v] [Stylist Filter v] [VIP|AtRisk] |
-|                                                                  |
-| +--------------------------------------------------------------+ |
-| | Stats Cards (Total, VIP, At Risk, New, Revenue)              | |
-| +--------------------------------------------------------------+ |
-|                                                                  |
-| +--------------------------------------------------------------+ |
-| | Client List                                                  | |
-| +--------------------------------------------------------------+ |
-+------------------------------------------------------------------+
-```
-
-## Files to Modify
+### Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/DashboardLayout.tsx` | Move Client Directory to mainNavItems, remove from statsNavItems |
-| `src/pages/dashboard/MyClients.tsx` | Rename to ClientDirectory.tsx, add primary tabs, add stylist filter |
-| `src/App.tsx` (or router config) | Update route path from `/my-clients` to `/clients`, add redirect |
+| `src/pages/dashboard/ClientDirectory.tsx` | Add banned badge to list items, add "Banned" filter tab |
+| `src/components/dashboard/ClientDetailSheet.tsx` | Add alert banner at top, add ban/unban toggle for admins |
+| `src/components/dashboard/schedule/booking/ClientStep.tsx` | Add banned indicator and warning on selection |
+| `src/components/dashboard/schedule/QuickBookingPopover.tsx` | Add banned indicator in client search results |
+| `src/components/dashboard/register/RegisterClientSelect.tsx` | Add banned warning |
 
-## Implementation Notes
+### Warning Dialog Flow
 
-1. **Backward Compatibility**: A redirect from `/dashboard/my-clients` to `/dashboard/clients` ensures existing bookmarks and links continue to work.
+When a team member selects a banned client for booking:
 
-2. **RLS Compliance**: The existing RLS policies on `phorest_clients`/`clients` tables already handle permission checks at the database level. The frontend filters are for UX optimization.
+1. Show `AlertDialog` with:
+   - Title: "Client is Blacklisted"
+   - Description: Ban reason (if available) + warning message
+   - Actions: "Go Back" (primary) | "Proceed Anyway" (secondary/outlined)
 
-3. **Tab State Persistence**: Consider persisting the selected primary tab in localStorage so users return to their last view.
+2. If they proceed:
+   - Allow booking to continue
+   - Optionally log this override action for audit purposes
 
-4. **Stats Adjustment**: When on "My Clients" tab, stats should only reflect the user's clients. When on "All Clients" with a stylist filter, stats should reflect that stylist's clients.
+### Type Updates
+
+Update the client interface to include:
+```typescript
+interface Client {
+  // ... existing fields
+  is_banned?: boolean;
+  ban_reason?: string | null;
+  banned_at?: string | null;
+  banned_by?: string | null;
+}
+```
+
+---
+
+## Summary
+
+This implementation provides a multi-layered warning system:
+
+1. **Visual Indicators**: Banned clients are immediately identifiable in all lists
+2. **Detail View Alerts**: Clear warning when viewing a banned client's profile
+3. **Booking Guardrails**: Confirmation dialog prevents accidental scheduling
+4. **Admin Controls**: Authorized users can manage ban status
+
+The system is designed to warn but not completely block (for edge cases where management approves an exception), while making it very clear that the client has been flagged.
