@@ -473,11 +473,12 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             if (sectionId === 'adminOnly') {
               shouldShow = (roles.includes('admin') || roles.includes('super_admin')) && filteredItems.length > 0;
             }
-            
-            // Platform section only visible to platform users
-            if (sectionId === 'platform') {
-              shouldShow = isPlatformUser && filteredItems.length > 0;
-            }
+          }
+          
+          // Platform section should NEVER show in org dashboard - 
+          // it has its own dedicated layout at /dashboard/platform/*
+          if (sectionId === 'platform') {
+            shouldShow = false;
           }
           
           if (!shouldShow) return null;
