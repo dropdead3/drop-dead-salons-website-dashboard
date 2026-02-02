@@ -117,8 +117,8 @@ export default function DashboardHome() {
     ? roles.includes('super_admin') || roles.includes('manager')
     : profile?.is_super_admin || roles.includes('super_admin') || roles.includes('manager');
   
-  // Check if user has stylist or stylist_assistant roles (for Quick Actions visibility)
-  const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
+  // Check if user has stylist, stylist_assistant, or booth_renter roles (for Quick Actions visibility)
+  const hasStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant') || roles.includes('booth_renter');
   
   // Check if user has receptionist/operations role
   const isReceptionist = roles.includes('receptionist') || roles.includes('admin');
@@ -126,8 +126,8 @@ export default function DashboardHome() {
   // Front Desk only (for Today's Queue)
   const isFrontDesk = roles.includes('receptionist');
   
-  // Quick Actions should only show for stylists/assistants, or leadership who also have stylist roles
-  const showQuickActions = hasStylistRole || (!isLeadership);
+  // Quick Actions should show for stylists/assistants/booth renters, front desk, or non-leadership roles
+  const showQuickActions = hasStylistRole || isFrontDesk || (!isLeadership);
   
   // Compute analytics filters
   const dateFilters = useMemo(() => getDateRange(dateRange), [dateRange]);
