@@ -22,7 +22,9 @@ import {
   Mail,
   Phone,
   MapPin,
-  ChevronRight
+  ChevronRight,
+  Lock,
+  User
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,8 +36,9 @@ import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
 
 type SortField = 'total_spend' | 'visit_count' | 'last_visit' | 'name';
 type SortDirection = 'asc' | 'desc';
+type PrimaryTab = 'all' | 'my';
 
-export default function MyClients() {
+export default function ClientDirectory() {
   const { user, roles } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('total_spend');
@@ -44,28 +47,53 @@ export default function MyClients() {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
+  const [selectedStylist, setSelectedStylist] = useState<string>('all');
 
   // Determine if user can see all clients (leadership + front desk)
   const canViewAllClients = roles.some(role => 
     ['admin', 'manager', 'super_admin', 'receptionist'].includes(role)
   );
 
+  // Primary tab state - default to 'all' for privileged users, 'my' for others
+  const [primaryTab, setPrimaryTab] = useState<PrimaryTab>(canViewAllClients ? 'all' : 'my');
+
   // Fetch locations for the filter dropdown
   const { data: locations } = useLocations();
 
-  // Fetch clients from the dedicated phorest_clients table
+  // Fetch stylists for the stylist filter dropdown (only if can view all clients)
+  const { data: stylists } = useQuery({
+    queryKey: ['employee-profiles-for-filter'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name')
+        .eq('is_active', true)
+        .eq('is_approved', true)
+        .order('full_name');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: canViewAllClients,
+  });
+
+  // Fetch clients based on primary tab and filters
   const { data: clients, isLoading } = useQuery({
-    queryKey: ['my-clients-full', user?.id, canViewAllClients],
+    queryKey: ['client-directory', user?.id, primaryTab, selectedStylist, canViewAllClients],
     queryFn: async () => {
       let query = supabase
         .from('phorest_clients')
         .select('*')
         .order('total_spend', { ascending: false });
 
-      // Only filter by preferred_stylist_id for stylists
-      if (!canViewAllClients) {
+      // Filter logic based on primary tab
+      if (primaryTab === 'my' || !canViewAllClients) {
+        // My Clients: only show user's clients
         query = query.eq('preferred_stylist_id', user?.id);
+      } else if (selectedStylist !== 'all') {
+        // All Clients with stylist filter
+        query = query.eq('preferred_stylist_id', selectedStylist);
       }
+      // If All Clients with no filter, no preferred_stylist_id constraint
 
       const { data, error } = await query;
       if (error) throw error;
@@ -136,7 +164,7 @@ export default function MyClients() {
       );
     }
 
-    // Tab filter
+    // Tab filter (VIP, At Risk, New)
     if (activeTab === 'vip') {
       filtered = filtered.filter(c => c.is_vip);
     } else if (activeTab === 'at-risk') {
@@ -189,11 +217,13 @@ export default function MyClients() {
     }
   };
 
-  // Stats (filtered by location if selected)
+  // Stats (filtered by location and stylist if selected)
   const stats = useMemo(() => {
-    const clientsForStats = selectedLocation === 'all' 
-      ? processedClients 
-      : processedClients.filter(c => c.location_id === selectedLocation || c.branch_name === selectedLocation);
+    let clientsForStats = processedClients;
+    
+    if (selectedLocation !== 'all') {
+      clientsForStats = clientsForStats.filter(c => c.location_id === selectedLocation || c.branch_name === selectedLocation);
+    }
     
     return {
       total: clientsForStats.length,
@@ -210,12 +240,31 @@ export default function MyClients() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">MY CLIENTS</h1>
+            <h1 className="font-display text-3xl lg:text-4xl mb-2">CLIENT DIRECTORY</h1>
             <p className="text-muted-foreground font-sans">
-              Track your client relationships and identify opportunities.
+              {primaryTab === 'all' 
+                ? 'View and manage all salon clients.' 
+                : 'Track your client relationships and identify opportunities.'}
             </p>
           </div>
           <PhorestSyncButton syncType="clients" />
+        </div>
+
+        {/* Primary Tabs */}
+        <div className="mb-6">
+          <Tabs value={primaryTab} onValueChange={(v) => setPrimaryTab(v as PrimaryTab)}>
+            <TabsList>
+              <TabsTrigger 
+                value="all" 
+                disabled={!canViewAllClients}
+                className="gap-2"
+              >
+                {!canViewAllClients && <Lock className="w-3 h-3" />}
+                All Clients
+              </TabsTrigger>
+              <TabsTrigger value="my">My Clients</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         {/* Stats Cards */}
@@ -276,6 +325,24 @@ export default function MyClients() {
               </SelectContent>
             </Select>
           )}
+
+          {/* Stylist Filter - Only visible in All Clients tab */}
+          {primaryTab === 'all' && canViewAllClients && stylists && stylists.length > 0 && (
+            <Select value={selectedStylist} onValueChange={setSelectedStylist}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <User className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="All Stylists" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stylists</SelectItem>
+                {stylists.map(stylist => (
+                  <SelectItem key={stylist.user_id} value={stylist.user_id}>
+                    {stylist.display_name || stylist.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
@@ -301,6 +368,12 @@ export default function MyClients() {
                   <Badge variant="outline" className="ml-2 font-sans font-normal">
                     <MapPin className="w-3 h-3 mr-1" />
                     {clientLocations.find(l => l.id === selectedLocation)?.name}
+                  </Badge>
+                )}
+                {primaryTab === 'all' && selectedStylist !== 'all' && stylists && (
+                  <Badge variant="outline" className="ml-2 font-sans font-normal">
+                    <User className="w-3 h-3 mr-1" />
+                    {stylists.find(s => s.user_id === selectedStylist)?.display_name || stylists.find(s => s.user_id === selectedStylist)?.full_name}
                   </Badge>
                 )}
               </CardTitle>
@@ -368,7 +441,7 @@ export default function MyClients() {
                     >
                       <Avatar className="w-12 h-12">
                         <AvatarFallback className="font-display text-sm bg-primary/10">
-                          {client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          {client.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       
@@ -421,19 +494,19 @@ export default function MyClients() {
                         {/* Contact info & preferred services */}
                         <div className="flex items-center gap-3 mt-1.5">
                           {client.email && (
-                            <a href={`mailto:${client.email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                            <a href={`mailto:${client.email}`} className="text-xs text-primary hover:underline flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                               <Mail className="w-3 h-3" /> {client.email}
                             </a>
                           )}
                           {client.phone && (
-                            <a href={`tel:${client.phone}`} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
+                            <a href={`tel:${client.phone}`} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                               <Phone className="w-3 h-3" /> {client.phone}
                             </a>
                           )}
                         </div>
                         {client.preferred_services && client.preferred_services.length > 0 && (
                           <div className="flex gap-1 mt-2">
-                            {client.preferred_services.slice(0, 3).map(service => (
+                            {client.preferred_services.slice(0, 3).map((service: string) => (
                               <Badge key={service} variant="secondary" className="text-xs">
                                 {service}
                               </Badge>

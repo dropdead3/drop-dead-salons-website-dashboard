@@ -76,7 +76,7 @@ import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 import AnalyticsHub from "./pages/dashboard/admin/AnalyticsHub";
 import LeadManagement from "./pages/dashboard/admin/LeadManagement";
 import FeatureFlags from "./pages/dashboard/admin/FeatureFlags";
-import MyClients from "./pages/dashboard/MyClients";
+import ClientDirectory from "./pages/dashboard/ClientDirectory";
 import Schedule from "./pages/dashboard/Schedule";
 import AllNotifications from "./pages/dashboard/AllNotifications";
 import Changelog from "./pages/dashboard/Changelog";
@@ -174,7 +174,8 @@ const App = () => (
                       <Route path="/dashboard/assistant-schedule" element={<ProtectedRoute requiredPermission="view_assistant_schedule"><AssistantSchedule /></ProtectedRoute>} />
                       <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
                       <Route path="/dashboard/my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
-                      <Route path="/dashboard/my-clients" element={<ProtectedRoute requiredPermission="view_own_stats"><MyClients /></ProtectedRoute>} />
+                      <Route path="/dashboard/clients" element={<ProtectedRoute requiredPermission="view_clients"><ClientDirectory /></ProtectedRoute>} />
+                      <Route path="/dashboard/my-clients" element={<Navigate to="/dashboard/clients" replace />} />
                       <Route path="/dashboard/my-pay" element={<ProtectedRoute requiredPermission="view_my_pay"><MyPay /></ProtectedRoute>} />
                       <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
                       <Route path="/dashboard/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />

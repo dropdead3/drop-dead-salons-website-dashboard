@@ -134,6 +134,7 @@ const mainNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
   { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar' },
   { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
+  { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
 ];
 
 const housekeepingNavItems: NavItem[] = [
@@ -160,7 +161,6 @@ const baseGetHelpNavItems: NavItem[] = [
 
 const statsNavItems: NavItem[] = [
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats' },
-  { href: '/dashboard/my-clients', label: 'My Clients', icon: Users, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
   { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
 ];
