@@ -1,72 +1,49 @@
 
+# Remove Platform Admin Section from Organization Dashboard
 
-# UI Refinement: Client Detail Sheet Header
+## Problem
 
-## Issues Identified
+The "Platform Admin" navigation section is appearing in the regular organization dashboard sidebar when it should only be accessible via the dedicated Platform Admin Hub (which uses `PlatformLayout` and has its own sidebar at `/dashboard/platform/*`).
 
-Looking at the current layout:
-1. The **Ban Client button** sits awkwardly below the header in its own row, creating visual disconnection
-2. The **client name** uses `items-start` alignment which doesn't vertically center it with the avatar
-3. The overall header feels disjointed with too many visual layers
+The issue occurs because the visibility check for the `platform` section is inside a conditional block that only runs when the Role Access Configurator has no overrides. When configurator overrides exist, the platform section can appear for users who shouldn't see it.
 
-## Proposed Changes
+## Solution
 
-### Layout Restructure
-
-Move the Ban Client toggle to the **right side of the header row**, inline with the avatar and name. This creates a cleaner single-row header with:
-- Avatar on the left
-- Name and badges in the center/flex area
-- Ban action button on the right
-
-### Alignment Fix
-
-Change from `items-start` to `items-center` so the name aligns vertically with the center of the avatar.
+The platform section visibility check should **always** run, regardless of configurator state. This section belongs exclusively to the Platform Admin Hub and should never appear in the organization dashboard.
 
 ---
 
 ## Technical Details
 
-### File: `src/components/dashboard/ClientDetailSheet.tsx`
+### File: `src/components/dashboard/SidebarNavContent.tsx`
 
-**Current structure (lines 77-117):**
-```text
-SheetHeader
-├── div (flex items-start) ← Problem: not centered
-│   ├── Avatar
-│   └── div (name, badges)
-└── div (mt-3) ← Problem: Ban button isolated here
-    └── BanClientToggle
+**Current Logic (lines 466-481):**
+```typescript
+if (!hasConfiguratorOverrides) {
+  if (sectionId === 'manager') { ... }
+  if (sectionId === 'adminOnly') { ... }
+  // Platform section only visible to platform users
+  if (sectionId === 'platform') {
+    shouldShow = isPlatformUser && filteredItems.length > 0;
+  }
+}
 ```
 
-**New structure:**
-```text
-SheetHeader
-└── div (flex items-center) ← Fixed: centered alignment
-    ├── Avatar
-    ├── div (flex-1, name, badges)
-    └── BanClientToggle ← Moved: inline with header
-```
+**Problem**: The platform check is inside the `!hasConfiguratorOverrides` block, so it gets skipped when the configurator has role overrides.
 
-**Key changes:**
-1. Change `items-start` to `items-center` on line 78
-2. Move `BanClientToggle` inside the header flex container (after the name div)
-3. Remove the separate `<div className="mt-3">` wrapper for the ban toggle
+**Fix**: Move the platform section check **outside** the conditional block so it always runs, and change logic to always hide it (since this is the org dashboard, not the platform hub):
 
-### Visual Result
+```typescript
+if (!hasConfiguratorOverrides) {
+  if (sectionId === 'manager') { ... }
+  if (sectionId === 'adminOnly') { ... }
+}
 
-```text
-Before:
-+------------------+
-| [Avatar]  NAME   |
-|           VIP    |
-+------------------+
-| [Ban Client]     |
-+------------------+
-
-After:
-+----------------------------------+
-| [Avatar]  NAME  VIP  [Ban Client]|
-+----------------------------------+
+// Platform section should NEVER show in org dashboard - 
+// it has its own dedicated layout at /dashboard/platform/*
+if (sectionId === 'platform') {
+  shouldShow = false;
+}
 ```
 
 ---
@@ -75,9 +52,8 @@ After:
 
 | Change | Description |
 |--------|-------------|
-| Alignment | Change `items-start` to `items-center` for vertical centering |
-| Ban Button Position | Move inline with header row, positioned on the right |
-| Remove wrapper | Delete the separate `mt-3` div that isolated the ban button |
+| Move platform check | Move outside `hasConfiguratorOverrides` conditional |
+| Simplify logic | Always set `shouldShow = false` for platform section in org dashboard |
+| Result | Platform Admin section never appears in organization sidebar |
 
-This creates a cleaner, more cohesive header that matches professional UI patterns.
-
+This ensures the Platform Admin section only appears in its dedicated layout (`PlatformSidebar`) and never leaks into the organization dashboard, regardless of role configuration or platform user status.
