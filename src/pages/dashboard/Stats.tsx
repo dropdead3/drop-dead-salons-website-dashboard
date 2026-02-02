@@ -1,19 +1,14 @@
 import { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { usePhorestPerformanceMetrics, usePhorestConnection, useUserPhorestMapping } from '@/hooks/usePhorestSync';
 import { useUserSalesSummary } from '@/hooks/useSalesData';
 import { format, startOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { 
   TrendingUp,
   Link2,
-  BarChart3,
-  Trophy
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -25,20 +20,10 @@ import { PerformanceTrendChart } from '@/components/dashboard/sales/PerformanceT
 import { ClientInsightsCard } from '@/components/dashboard/sales/ClientInsightsCard';
 import { ServiceMixChart } from '@/components/dashboard/sales/ServiceMixChart';
 import { StylistLocationRevenueChart } from '@/components/dashboard/sales/StylistLocationRevenueChart';
-import { LeaderboardContent } from '@/components/dashboard/LeaderboardContent';
 
 export default function Stats() {
-  const { user, hasPermission } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'performance';
+  const { user } = useAuth();
   const [clientInsightsLocation, setClientInsightsLocation] = useState<string>('all');
-
-  // Check permission for leaderboard tab
-  const canViewLeaderboard = hasPermission('view_leaderboard');
-
-  const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value });
-  };
 
   // Date ranges for sales data
   const today = new Date();
@@ -74,41 +59,13 @@ export default function Stats() {
               MY STATS
             </h1>
             <p className="text-muted-foreground font-sans">
-              Track your performance and compare with the team.
+              Track your personal performance metrics.
             </p>
           </div>
         </div>
 
-        {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="bg-muted/50">
-            <VisibilityGate 
-              elementKey="stats_performance_tab" 
-              elementName="My Performance" 
-              elementCategory="Page Tabs"
-            >
-              <TabsTrigger value="performance" className="font-display text-xs tracking-wide">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                My Performance
-              </TabsTrigger>
-            </VisibilityGate>
-            {canViewLeaderboard && (
-              <VisibilityGate 
-                elementKey="stats_leaderboard_tab" 
-                elementName="Team Leaderboard" 
-                elementCategory="Page Tabs"
-              >
-                <TabsTrigger value="leaderboard" className="font-display text-xs tracking-wide">
-                  <Trophy className="w-4 h-4 mr-2" />
-                  Team Leaderboard
-                </TabsTrigger>
-              </VisibilityGate>
-            )}
-          </TabsList>
-
-          {/* My Performance Tab */}
-          <TabsContent value="performance" className="space-y-6">
-            {/* Phorest Stats Card (if connected) */}
+        {/* Performance Content */}
+        <div className="space-y-6">
             {myPhorestMetrics && (
               <Card className="p-6 bg-primary/5 border-primary/20">
                 <div className="flex items-center justify-between mb-4">
@@ -260,15 +217,7 @@ export default function Stats() {
                 </p>
               )}
             </Card>
-          </TabsContent>
-
-          {/* Team Leaderboard Tab */}
-          {canViewLeaderboard && (
-            <TabsContent value="leaderboard">
-              <LeaderboardContent />
-            </TabsContent>
-          )}
-        </Tabs>
+        </div>
       </div>
     </DashboardLayout>
   );

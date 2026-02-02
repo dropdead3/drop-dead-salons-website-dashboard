@@ -31,7 +31,7 @@ import PlatformLogin from "./pages/PlatformLogin";
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import Program from "./pages/dashboard/Program";
 import RingTheBell from "./pages/dashboard/RingTheBell";
-// Leaderboard is now part of Stats page
+import Leaderboard from "./pages/dashboard/Leaderboard";
 import Training from "./pages/dashboard/Training";
 import Progress from "./pages/dashboard/Progress";
 import Stats from "./pages/dashboard/Stats";
@@ -164,8 +164,8 @@ const App = () => (
                       <Route path="/dashboard/directory" element={<ProtectedRoute requiredPermission="view_team_directory"><TeamDirectory /></ProtectedRoute>} />
                       <Route path="/dashboard/program" element={<ProtectedRoute requiredPermission="access_client_engine"><Program /></ProtectedRoute>} />
                       <Route path="/dashboard/progress" element={<ProtectedRoute requiredPermission="access_client_engine"><Progress /></ProtectedRoute>} />
-                      <Route path="/dashboard/stats" element={<ProtectedRoute requiredPermission="view_own_stats"><Stats /></ProtectedRoute>} />
-                      <Route path="/dashboard/leaderboard" element={<Navigate to="/dashboard/stats?tab=leaderboard" replace />} />
+<Route path="/dashboard/stats" element={<ProtectedRoute requiredPermission="view_own_stats"><Stats /></ProtectedRoute>} />
+                      <Route path="/dashboard/leaderboard" element={<ProtectedRoute requiredPermission="view_leaderboard"><Leaderboard /></ProtectedRoute>} />
                       <Route path="/dashboard/ring-the-bell" element={<ProtectedRoute requiredPermission="ring_the_bell"><RingTheBell /></ProtectedRoute>} />
                       <Route path="/dashboard/training" element={<ProtectedRoute requiredPermission="view_training"><Training /></ProtectedRoute>} />
                       <Route path="/dashboard/weekly-wins" element={<ProtectedRoute requiredPermission="access_client_engine"><WeeklyWins /></ProtectedRoute>} />
