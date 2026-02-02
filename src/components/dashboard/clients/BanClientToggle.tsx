@@ -111,10 +111,10 @@ export function BanClientToggle({
         </Button>
       ) : (
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => setShowBanDialog(true)}
-          className="gap-2 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/50"
+          className="gap-2 text-red-600 border border-red-500/50 hover:bg-red-50 dark:hover:bg-red-950/50"
         >
           <Ban className="w-4 h-4" />
           Ban Client
