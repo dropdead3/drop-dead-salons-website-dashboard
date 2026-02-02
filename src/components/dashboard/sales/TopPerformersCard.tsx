@@ -39,11 +39,11 @@ const getRankBg = (rank: number) => {
     case 1:
       return 'bg-chart-4/10 border-chart-4/20';
     case 2:
-      return 'bg-muted/50 border-muted-foreground/20';
+      return 'bg-muted/50 dark:bg-card border-muted-foreground/20';
     case 3:
       return 'bg-chart-3/10 border-chart-3/20';
     default:
-      return 'bg-muted/30';
+      return 'bg-muted/30 dark:bg-card';
   }
 };
 
@@ -74,7 +74,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
         <CardContent>
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30 animate-pulse">
+              <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30 dark:bg-card animate-pulse">
                 <div className="w-8 h-8 rounded-full bg-muted" />
                 <div className="flex-1 space-y-1">
                   <div className="h-4 bg-muted rounded w-24" />

@@ -81,7 +81,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
         {displayedClients.map(client => (
           <div 
             key={client.id}
-            className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+            className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 p-4 rounded-lg bg-muted/30 dark:bg-card hover:bg-muted/50 dark:hover:bg-card/80 transition-colors"
           >
             {/* Client Name */}
             <div className="col-span-1 md:col-span-4 flex items-center gap-3">

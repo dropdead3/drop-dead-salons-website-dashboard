@@ -144,7 +144,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                 <div 
                   key={announcement.id}
                   className={cn(
-                    "group relative p-4 bg-muted/50 border-l-4 rounded-r-lg transition-all hover:bg-muted/70",
+                    "group relative p-4 bg-muted/50 dark:bg-card border-l-4 rounded-r-lg transition-all hover:bg-muted/70 dark:hover:bg-card/80",
                     priorityColors[announcement.priority]
                   )}
                 >
@@ -201,7 +201,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
               ))}
             </div>
           ) : (
-            <div className="p-4 bg-muted/50 border-l-4 border-foreground rounded-r-lg">
+            <div className="p-4 bg-muted/50 dark:bg-card border-l-4 border-foreground rounded-r-lg">
               <p className="text-sm font-sans font-medium">Welcome to Drop Dead!</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Complete your onboarding to get started
