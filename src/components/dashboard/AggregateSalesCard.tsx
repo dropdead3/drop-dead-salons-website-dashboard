@@ -392,7 +392,7 @@ export function AggregateSalesCard({
         {/* KPIs with Trends */}
         <div className="lg:col-span-3">
           {/* Hero: Total Revenue with Breakdown */}
-          <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
+          <div className="bg-muted/30 dark:bg-card rounded-lg p-4 sm:p-6">
             {/* Total Revenue - Hero */}
             <div className="text-center mb-4 sm:mb-6">
               <AnimatedBlurredAmount
@@ -433,7 +433,7 @@ export function AggregateSalesCard({
             {/* Services & Products Sub-cards */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {/* Services */}
-              <div className="text-center p-3 sm:p-4 bg-background/50 rounded-lg border border-border/30">
+              <div className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30">
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <Scissors className="w-3.5 h-3.5 text-primary" />
                   <span className="text-xs text-muted-foreground">Services</span>
@@ -447,7 +447,7 @@ export function AggregateSalesCard({
               </div>
               
               {/* Products */}
-              <div className="text-center p-3 sm:p-4 bg-background/50 rounded-lg border border-border/30">
+              <div className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30">
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <ShoppingBag className="w-3.5 h-3.5 text-chart-2" />
                   <span className="text-xs text-muted-foreground">Products</span>
@@ -465,7 +465,7 @@ export function AggregateSalesCard({
           {/* Secondary KPIs Row */}
           <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-4">
             {/* Transactions */}
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
               <div className="flex justify-center mb-2">
                 <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-chart-3" />
               </div>
@@ -480,7 +480,7 @@ export function AggregateSalesCard({
             </div>
             
             {/* Avg Ticket */}
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
               <div className="flex justify-center mb-2">
                 <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-chart-4" />
               </div>
@@ -496,7 +496,7 @@ export function AggregateSalesCard({
             </div>
             
             {/* Rev/Hour */}
-            <div className="text-center p-3 sm:p-4 bg-muted/30 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
               <div className="flex justify-center mb-2">
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-chart-1" />
               </div>
