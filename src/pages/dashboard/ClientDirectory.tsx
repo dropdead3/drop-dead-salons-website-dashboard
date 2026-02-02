@@ -24,8 +24,10 @@ import {
   MapPin,
   ChevronRight,
   Lock,
-  User
+  User,
+  Ban
 } from 'lucide-react';
+import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, differenceInDays } from 'date-fns';
@@ -164,13 +166,15 @@ export default function ClientDirectory() {
       );
     }
 
-    // Tab filter (VIP, At Risk, New)
+    // Tab filter (VIP, At Risk, New, Banned)
     if (activeTab === 'vip') {
       filtered = filtered.filter(c => c.is_vip);
     } else if (activeTab === 'at-risk') {
       filtered = filtered.filter(c => c.isAtRisk);
     } else if (activeTab === 'new') {
       filtered = filtered.filter(c => c.isNew);
+    } else if (activeTab === 'banned') {
+      filtered = filtered.filter(c => c.is_banned);
     }
 
     // Search filter
@@ -228,6 +232,7 @@ export default function ClientDirectory() {
     return {
       total: clientsForStats.length,
       vip: clientsForStats.filter(c => c.is_vip).length,
+      banned: clientsForStats.filter(c => c.is_banned).length,
       atRisk: clientsForStats.filter(c => c.isAtRisk).length,
       newClients: clientsForStats.filter(c => c.isNew).length,
       totalRevenue: clientsForStats.reduce((s, c) => s + Number(c.total_spend || 0), 0),
@@ -354,6 +359,11 @@ export default function ClientDirectory() {
                 <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
               </TabsTrigger>
               <TabsTrigger value="new" className="text-xs">New</TabsTrigger>
+              {stats.banned > 0 && (
+                <TabsTrigger value="banned" className="text-xs text-red-600">
+                  <Ban className="w-3 h-3 mr-1" /> Banned ({stats.banned})
+                </TabsTrigger>
+              )}
             </TabsList>
           </Tabs>
         </div>
@@ -448,17 +458,18 @@ export default function ClientDirectory() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-medium truncate">{client.name}</p>
-                          {client.is_vip && (
+                          {client.is_banned && <BannedClientBadge />}
+                          {client.is_vip && !client.is_banned && (
                             <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 text-xs">
                               <Star className="w-3 h-3 mr-1" /> VIP
                             </Badge>
                           )}
-                          {client.isAtRisk && (
+                          {client.isAtRisk && !client.is_banned && (
                             <Badge variant="destructive" className="text-xs">
                               <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
                             </Badge>
                           )}
-                          {client.isNew && (
+                          {client.isNew && !client.is_banned && (
                             <Badge variant="outline" className="text-xs text-green-600 border-green-300">
                               New
                             </Badge>
