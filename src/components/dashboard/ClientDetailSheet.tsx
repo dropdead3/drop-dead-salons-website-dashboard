@@ -26,6 +26,9 @@ import { cn } from '@/lib/utils';
 import { VisitHistoryTimeline } from './VisitHistoryTimeline';
 import { ClientNotesSection } from './ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
+import { BannedClientAlert } from './clients/BannedClientAlert';
+import { BannedClientBadge } from './clients/BannedClientBadge';
+import { BanClientToggle } from './clients/BanClientToggle';
 
 interface Client {
   id: string;
@@ -43,6 +46,8 @@ interface Client {
   isAtRisk?: boolean;
   isNew?: boolean;
   daysSinceVisit?: number | null;
+  is_banned?: boolean;
+  ban_reason?: string | null;
 }
 
 interface ClientDetailSheetProps {
@@ -62,6 +67,13 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+        {/* Banned Client Alert */}
+        {client.is_banned && (
+          <div className="mb-4">
+            <BannedClientAlert reason={client.ban_reason} />
+          </div>
+        )}
+
         <SheetHeader className="pb-4 border-b">
           <div className="flex items-start gap-4">
             <Avatar className="w-16 h-16">
@@ -72,25 +84,35 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             <div className="flex-1 min-w-0">
               <SheetTitle className="font-display text-xl flex items-center gap-2 flex-wrap">
                 {client.name}
-                {client.is_vip && (
+                {client.is_banned && <BannedClientBadge size="md" />}
+                {client.is_vip && !client.is_banned && (
                   <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
                     <Star className="w-3 h-3 mr-1" /> VIP
                   </Badge>
                 )}
               </SheetTitle>
               <SheetDescription className="flex flex-wrap gap-2 mt-1">
-                {client.isAtRisk && (
+                {client.isAtRisk && !client.is_banned && (
                   <Badge variant="destructive" className="text-xs">
                     <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
                   </Badge>
                 )}
-                {client.isNew && (
+                {client.isNew && !client.is_banned && (
                   <Badge variant="outline" className="text-xs text-green-600 border-green-300">
                     New Client
                   </Badge>
                 )}
               </SheetDescription>
             </div>
+          </div>
+          {/* Ban/Unban Toggle for admins */}
+          <div className="mt-3">
+            <BanClientToggle
+              clientId={client.id}
+              clientName={client.name}
+              isBanned={client.is_banned || false}
+              banReason={client.ban_reason}
+            />
           </div>
         </SheetHeader>
 

@@ -37,6 +37,8 @@ import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor } from '@/utils/categoryColors';
 import { getLevelSlug, getLevelNumber, findLevelBasedPrice } from '@/utils/levelPricing';
 import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
+import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
+import { BannedClientWarningDialog } from '@/components/dashboard/clients/BannedClientWarningDialog';
 
 interface QuickBookingPopoverProps {
   date: Date;
@@ -61,6 +63,8 @@ interface PhorestClient {
   total_spend?: number | null;
   is_vip?: boolean;
   branch_name?: string | null;
+  is_banned?: boolean;
+  ban_reason?: string | null;
 }
 
 type Step = 'service' | 'location' | 'client' | 'stylist' | 'confirm';
@@ -102,6 +106,7 @@ export function QuickBookingPopover({
   const [serviceSearch, setServiceSearch] = useState('');
   const [autoSelectReason, setAutoSelectReason] = useState<'previous' | 'self' | 'highest' | null>(null);
   const [viewingClientProfile, setViewingClientProfile] = useState<PhorestClient | null>(null);
+  const [pendingBannedClient, setPendingBannedClient] = useState<PhorestClient | null>(null);
 
   // Check if a step has valid input (for forward navigation)
   const isStepCompleted = (stepName: Step): boolean => {
@@ -163,7 +168,7 @@ export function QuickBookingPopover({
     queryFn: async () => {
       let query = supabase
         .from('phorest_clients')
-        .select('id, phorest_client_id, name, email, phone, preferred_stylist_id, visit_count, last_visit, total_spend, is_vip, branch_name')
+        .select('id, phorest_client_id, name, email, phone, preferred_stylist_id, visit_count, last_visit, total_spend, is_vip, branch_name, is_banned, ban_reason')
         .order('name')
         .limit(50);
       
@@ -358,6 +363,15 @@ export function QuickBookingPopover({
   };
 
   const handleSelectClient = (client: PhorestClient) => {
+    // Check if client is banned
+    if (client.is_banned) {
+      setPendingBannedClient(client);
+      return;
+    }
+    proceedWithClient(client);
+  };
+
+  const proceedWithClient = (client: PhorestClient) => {
     setSelectedClient(client);
     // Only reset stylist if this is a different client
     if (client.id !== selectedClient?.id) {
@@ -365,6 +379,13 @@ export function QuickBookingPopover({
       setAutoSelectReason(null);
     }
     navigateToStep('stylist');
+  };
+
+  const handleProceedWithBannedClient = () => {
+    if (pendingBannedClient) {
+      proceedWithClient(pendingBannedClient);
+      setPendingBannedClient(null);
+    }
   };
 
   const handleServicesComplete = () => {
@@ -610,7 +631,8 @@ export function QuickBookingPopover({
                             key={client.id}
                             className={cn(
                               'flex items-center gap-2 p-2.5 rounded-lg',
-                              'hover:bg-muted/70 transition-colors'
+                              'hover:bg-muted/70 transition-colors',
+                              client.is_banned && 'border border-destructive/30 bg-destructive/5'
                             )}
                           >
                             <button
@@ -623,7 +645,10 @@ export function QuickBookingPopover({
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm truncate">{client.name}</div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm truncate">{client.name}</span>
+                                  {client.is_banned && <BannedClientBadge />}
+                                </div>
                                 <div className="text-xs text-muted-foreground truncate">
                                   {formatPhone(client.phone) || client.email || 'No contact info'}
                                 </div>
@@ -1231,6 +1256,16 @@ export function QuickBookingPopover({
           });
           setShowNewClientDialog(false);
         }}
+      />
+
+      {/* Banned Client Warning Dialog */}
+      <BannedClientWarningDialog
+        open={!!pendingBannedClient}
+        onOpenChange={(open) => !open && setPendingBannedClient(null)}
+        clientName={pendingBannedClient?.name || ''}
+        banReason={pendingBannedClient?.ban_reason}
+        onProceed={handleProceedWithBannedClient}
+        onCancel={() => setPendingBannedClient(null)}
       />
     </>
   );

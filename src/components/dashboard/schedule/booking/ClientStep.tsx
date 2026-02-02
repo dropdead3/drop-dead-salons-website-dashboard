@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -5,13 +6,20 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Search, UserPlus, Loader2 } from 'lucide-react';
 import { PhorestClient } from './BookingWizard';
 import { cn } from '@/lib/utils';
+import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
+import { BannedClientWarningDialog } from '@/components/dashboard/clients/BannedClientWarningDialog';
+
+interface ExtendedPhorestClient extends PhorestClient {
+  is_banned?: boolean;
+  ban_reason?: string | null;
+}
 
 interface ClientStepProps {
-  clients: PhorestClient[];
+  clients: ExtendedPhorestClient[];
   isLoading: boolean;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onSelectClient: (client: PhorestClient) => void;
+  onSelectClient: (client: ExtendedPhorestClient) => void;
   onNewClient: () => void;
 }
 
@@ -23,6 +31,27 @@ export function ClientStep({
   onSelectClient,
   onNewClient,
 }: ClientStepProps) {
+  const [pendingBannedClient, setPendingBannedClient] = useState<ExtendedPhorestClient | null>(null);
+
+  const handleClientClick = (client: ExtendedPhorestClient) => {
+    if (client.is_banned) {
+      setPendingBannedClient(client);
+    } else {
+      onSelectClient(client);
+    }
+  };
+
+  const handleProceedWithBanned = () => {
+    if (pendingBannedClient) {
+      onSelectClient(pendingBannedClient);
+      setPendingBannedClient(null);
+    }
+  };
+
+  const handleCancelBanned = () => {
+    setPendingBannedClient(null);
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Search bar */}
@@ -78,9 +107,10 @@ export function ClientStep({
                   key={client.id}
                   className={cn(
                     'w-full flex items-center gap-3 p-3 rounded-lg text-left',
-                    'hover:bg-muted/70 active:bg-muted transition-colors'
+                    'hover:bg-muted/70 active:bg-muted transition-colors',
+                    client.is_banned && 'border border-destructive/30 bg-destructive/5'
                   )}
-                  onClick={() => onSelectClient(client)}
+                  onClick={() => handleClientClick(client)}
                 >
                   <Avatar className="h-10 w-10 bg-muted">
                     <AvatarFallback className="text-xs font-medium text-muted-foreground bg-muted">
@@ -88,7 +118,10 @@ export function ClientStep({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{client.name}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm truncate">{client.name}</span>
+                      {client.is_banned && <BannedClientBadge />}
+                    </div>
                     <div className="text-xs text-muted-foreground truncate">
                       {formatPhone(client.phone) || client.email || 'No contact info'}
                     </div>
@@ -99,6 +132,16 @@ export function ClientStep({
           )}
         </div>
       </ScrollArea>
+
+      {/* Banned Client Warning Dialog */}
+      <BannedClientWarningDialog
+        open={!!pendingBannedClient}
+        onOpenChange={(open) => !open && setPendingBannedClient(null)}
+        clientName={pendingBannedClient?.name || ''}
+        banReason={pendingBannedClient?.ban_reason}
+        onProceed={handleProceedWithBanned}
+        onCancel={handleCancelBanned}
+      />
     </div>
   );
 }

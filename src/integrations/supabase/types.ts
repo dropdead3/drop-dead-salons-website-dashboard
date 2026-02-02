@@ -5320,11 +5320,15 @@ export type Database = {
       }
       phorest_clients: {
         Row: {
+          ban_reason: string | null
+          banned_at: string | null
+          banned_by: string | null
           branch_name: string | null
           created_at: string
           email: string | null
           first_visit: string | null
           id: string
+          is_banned: boolean | null
           is_vip: boolean | null
           last_visit: string | null
           lead_source: string | null
@@ -5341,11 +5345,15 @@ export type Database = {
           visit_count: number
         }
         Insert: {
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           branch_name?: string | null
           created_at?: string
           email?: string | null
           first_visit?: string | null
           id?: string
+          is_banned?: boolean | null
           is_vip?: boolean | null
           last_visit?: string | null
           lead_source?: string | null
@@ -5362,11 +5370,15 @@ export type Database = {
           visit_count?: number
         }
         Update: {
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           branch_name?: string | null
           created_at?: string
           email?: string | null
           first_visit?: string | null
           id?: string
+          is_banned?: boolean | null
           is_vip?: boolean | null
           last_visit?: string | null
           lead_source?: string | null

@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { User, X, Search, DollarSign } from 'lucide-react';
 import { useClientSearch } from '@/hooks/useClientsData';
 import { useClientBalance } from '@/hooks/useClientBalances';
+import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
+import { BannedClientAlert } from '@/components/dashboard/clients/BannedClientAlert';
 
 interface RegisterClientSelectProps {
   selectedClientId: string | null;
@@ -12,6 +14,8 @@ interface RegisterClientSelectProps {
   onSelect: (clientId: string | null, clientName: string | null) => void;
   onApplyCredit: (amount: number) => void;
   appliedCredit: number;
+  selectedClientBanned?: boolean;
+  selectedClientBanReason?: string | null;
 }
 
 export function RegisterClientSelect({ 
@@ -19,7 +23,9 @@ export function RegisterClientSelect({
   selectedClientName,
   onSelect, 
   onApplyCredit,
-  appliedCredit 
+  appliedCredit,
+  selectedClientBanned,
+  selectedClientBanReason
 }: RegisterClientSelectProps) {
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -55,8 +61,16 @@ export function RegisterClientSelect({
       <CardContent>
         {selectedClientId ? (
           <div className="space-y-3">
+            {/* Banned Client Alert */}
+            {selectedClientBanned && (
+              <BannedClientAlert reason={selectedClientBanReason} />
+            )}
+            
             <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
-              <span className="font-medium">{selectedClientName}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-medium">{selectedClientName}</span>
+                {selectedClientBanned && <BannedClientBadge />}
+              </div>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClearClient}>
                 <X className="h-4 w-4" />
               </Button>
@@ -111,7 +125,10 @@ export function RegisterClientSelect({
                         onClick={() => handleSelectClient(client)}
                         className="w-full text-left p-2 hover:bg-muted/50 text-sm"
                       >
-                        <p className="font-medium">{client.first_name} {client.last_name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{client.first_name} {client.last_name}</p>
+                          {(client as any).is_banned && <BannedClientBadge />}
+                        </div>
                         {client.email && (
                           <p className="text-xs text-muted-foreground">{client.email}</p>
                         )}
