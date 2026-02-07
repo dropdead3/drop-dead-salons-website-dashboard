@@ -10376,6 +10376,7 @@ export type Database = {
         | "operations_assistant"
         | "super_admin"
         | "booth_renter"
+        | "bookkeeper"
       billing_cycle: "monthly" | "quarterly" | "semi_annual" | "annual"
       billing_status:
         | "draft"
@@ -10575,6 +10576,7 @@ export const Constants = {
         "operations_assistant",
         "super_admin",
         "booth_renter",
+        "bookkeeper",
       ],
       billing_cycle: ["monthly", "quarterly", "semi_annual", "annual"],
       billing_status: [
