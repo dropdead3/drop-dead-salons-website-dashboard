@@ -74,6 +74,7 @@ import DesignSystem from "./pages/dashboard/DesignSystem";
 import ProgramEditor from "./pages/dashboard/admin/ProgramEditor";
 import PhorestSettings from "./pages/dashboard/admin/PhorestSettings";
 import AnalyticsHub from "./pages/dashboard/admin/AnalyticsHub";
+import ManagementHub from "./pages/dashboard/admin/ManagementHub";
 import LeadManagement from "./pages/dashboard/admin/LeadManagement";
 import FeatureFlags from "./pages/dashboard/admin/FeatureFlags";
 import ClientDirectory from "./pages/dashboard/ClientDirectory";
@@ -216,6 +217,7 @@ const App = () => (
                       <Route path="/dashboard/admin/day-rate-settings" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateSettings /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/day-rate-calendar" element={<ProtectedRoute requiredPermission="manage_settings"><DayRateCalendar /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/analytics" element={<ProtectedRoute requiredPermission="view_team_overview"><AnalyticsHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/management" element={<ProtectedRoute requiredPermission="view_team_overview"><ManagementHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/sales" element={<Navigate to="/dashboard/admin/analytics?tab=sales" replace />} />
                       <Route path="/dashboard/admin/operational-analytics" element={<Navigate to="/dashboard/admin/analytics?tab=operations" replace />} />
                       <Route path="/dashboard/admin/staff-utilization" element={<Navigate to="/dashboard/admin/analytics?tab=operations&subtab=staff-utilization" replace />} />

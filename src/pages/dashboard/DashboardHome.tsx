@@ -44,6 +44,7 @@ import { PinnedAnalyticsCard, getDateRange, type AnalyticsFilters, type DateRang
 import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
+import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -351,6 +352,10 @@ function DashboardSections({
 
   // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
+    hub_quicklinks: isLeadership && (
+      <HubQuickLinks />
+    ),
+    
     quick_actions: showQuickActions && (
       <VisibilityGate elementKey="quick_actions">
         <div>
