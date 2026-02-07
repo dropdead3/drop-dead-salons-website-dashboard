@@ -29,7 +29,7 @@ function SectionHeader({
       <div className="relative flex justify-center">
         <div className="bg-background px-6 flex items-center gap-2">
           <Icon className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          <span className="text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">
             {title}
           </span>
         </div>
@@ -75,7 +75,7 @@ export function PayrollProviderHub() {
           <span className="text-sm font-medium">Payroll Integration Hub</span>
         </div>
         
-        <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+        <h2 className="text-3xl md:text-4xl font-medium tracking-tight">
           Select Your Payroll Provider
         </h2>
         

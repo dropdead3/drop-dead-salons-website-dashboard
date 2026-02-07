@@ -62,7 +62,7 @@ export function ProviderCard({
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold truncate">{provider.name}</h3>
+              <h3 className="font-medium truncate">{provider.name}</h3>
               {isComingSoon && (
                 <Badge variant="outline" className="text-amber-600 border-amber-600/30 text-[10px] px-1.5">
                   <Clock className="h-2.5 w-2.5 mr-0.5" />
@@ -138,7 +138,7 @@ export function ProviderCard({
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-bold">{provider.name}</h3>
+              <h3 className="text-lg font-medium">{provider.name}</h3>
               {provider.tier === 'recommended' && isAvailable && (
                 <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 text-[10px]">
                   <Sparkles className="h-2.5 w-2.5 mr-0.5" />
@@ -186,14 +186,14 @@ export function ProviderCard({
         <div className="pt-4 border-t border-border/50">
           <div className="flex items-baseline gap-1">
             <span className="text-xs text-muted-foreground uppercase tracking-wider">From</span>
-            <span className="text-lg font-bold">{provider.pricing.pricingModel}</span>
+            <span className="text-lg font-medium">{provider.pricing.pricingModel}</span>
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex gap-2">
           <Button
-            className="flex-1 font-semibold transition-all duration-300"
+            className="flex-1 font-medium transition-all duration-300"
             style={isAvailable && isHovered ? {
               background: `linear-gradient(135deg, ${provider.gradientFrom}, ${provider.gradientTo})`,
               color: 'white',
