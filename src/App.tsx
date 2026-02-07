@@ -58,6 +58,11 @@ import MyHandbooks from "./pages/dashboard/MyHandbooks";
 import Onboarding from "./pages/dashboard/Onboarding";
 import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
 import ScheduleMeeting from "./pages/dashboard/ScheduleMeeting";
+import ScheduleNewMeeting from "./pages/dashboard/meetings/ScheduleNewMeeting";
+import MyMeetings from "./pages/dashboard/meetings/MyMeetings";
+import CoachRequests from "./pages/dashboard/meetings/CoachRequests";
+import Commitments from "./pages/dashboard/meetings/Commitments";
+import MeetingInbox from "./pages/dashboard/meetings/MeetingInbox";
 import MeetingDetails from "./pages/dashboard/MeetingDetails";
 import MyProfile from "./pages/dashboard/MyProfile";
 import ViewProfile from "./pages/dashboard/ViewProfile";
@@ -188,6 +193,11 @@ const App = () => (
                       <Route path="/dashboard/onboarding" element={<ProtectedRoute requiredPermission="view_onboarding"><Onboarding /></ProtectedRoute>} />
                       <Route path="/dashboard/assistant-schedule" element={<ProtectedRoute requiredPermission="view_assistant_schedule"><AssistantSchedule /></ProtectedRoute>} />
                       <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/new" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleNewMeeting /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/my-meetings" element={<ProtectedRoute requiredPermission="schedule_meetings"><MyMeetings /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/requests" element={<ProtectedRoute requiredPermission="schedule_meetings"><CoachRequests /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/commitments" element={<ProtectedRoute requiredPermission="schedule_meetings"><Commitments /></ProtectedRoute>} />
+                      <Route path="/dashboard/schedule-meeting/inbox" element={<ProtectedRoute requiredPermission="schedule_meetings"><MeetingInbox /></ProtectedRoute>} />
                       <Route path="/dashboard/meeting/:id" element={<ProtectedRoute requiredPermission="schedule_meetings"><MeetingDetails /></ProtectedRoute>} />
                       <Route path="/dashboard/my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
                       <Route path="/dashboard/clients" element={<ProtectedRoute requiredPermission="view_clients"><ClientDirectory /></ProtectedRoute>} />
