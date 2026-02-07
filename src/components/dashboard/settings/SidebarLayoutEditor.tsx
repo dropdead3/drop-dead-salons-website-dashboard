@@ -75,6 +75,7 @@ import {
   ChevronsUp,
   Flag,
   Wallet,
+  ArrowLeftRight,
 } from 'lucide-react';
 import {
   useSidebarLayout,
@@ -129,6 +130,8 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/admin/roles': { label: 'Manage Users & Roles', icon: Shield },
   '/dashboard/admin/settings': { label: 'Settings', icon: Settings },
   '/dashboard/admin/feature-flags': { label: 'Feature Flags', icon: Flag },
+  '/dashboard/shift-swaps': { label: 'Shift Swaps', icon: ArrowLeftRight },
+  '/dashboard/admin/challenges': { label: 'Team Challenges', icon: Trophy },
 };
 
 // Sortable Link Component with cross-section drag support

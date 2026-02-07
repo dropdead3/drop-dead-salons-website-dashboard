@@ -99,6 +99,12 @@ import Register from "./pages/dashboard/Register";
 import LoyaltyProgram from "./pages/dashboard/settings/LoyaltyProgram";
 import BoothRenters from "./pages/dashboard/admin/BoothRenters";
 
+// Team Challenges & Shift Swaps
+import ChallengesDashboard from "./pages/dashboard/admin/ChallengesDashboard";
+import ChallengeDetail from "./pages/dashboard/admin/ChallengeDetail";
+import ShiftSwapMarketplace from "./pages/dashboard/ShiftSwapMarketplace";
+import ShiftSwapApprovals from "./pages/dashboard/admin/ShiftSwapApprovals";
+
 // Renter Portal pages
 import RenterPortal from "./pages/dashboard/RenterPortal";
 import RenterPayRent from "./pages/dashboard/RenterPayRent";
@@ -237,6 +243,14 @@ const App = () => (
                       <Route path="/dashboard/register" element={<ProtectedRoute requiredPermission="process_retail_sales"><Register /></ProtectedRoute>} />
                       <Route path="/dashboard/settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
+                      
+                      {/* Team Challenges routes */}
+                      <Route path="/dashboard/admin/challenges" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengesDashboard /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/challenges/:challengeId" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengeDetail /></ProtectedRoute>} />
+                      
+                      {/* Shift Swap routes */}
+                      <Route path="/dashboard/shift-swaps" element={<ProtectedRoute><ShiftSwapMarketplace /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/shift-swaps" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ShiftSwapApprovals /></ProtectedRoute>} />
 
                       {/* Renter Portal routes - booth_renter role users can access */}
                       <Route path="/dashboard/renter/portal" element={<ProtectedRoute><RenterPortal /></ProtectedRoute>} />
