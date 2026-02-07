@@ -1,40 +1,113 @@
 
+# Move Team Stats & Leaderboard to Management Section for Admins
 
-# Widen Dashboard Sidebar
+## Overview
 
-## Problem
+For admin and manager roles, the "Team Stats" and "Team Leaderboard" navigation links will appear under the "Management" section instead of the "Stats & Leaderboard" section. Non-admin users will continue to see "My Stats" and "Team Leaderboard" in the Stats section.
 
-The current sidebar width of 256px (`w-64`) is too narrow to display longer navigation labels like "Meetings & Accountability" without the text wrapping to two lines, as shown in the screenshot.
+---
 
-## Solution
+## Approach
 
-Increase the sidebar width from `w-64` (256px) to `w-72` (288px) to accommodate longer navigation labels on a single line.
+The cleanest approach is to:
+1. Add "Team Stats" and "Team Leaderboard" links to the `managerNavItems` array (visible only to admins/managers)
+2. Update the `statsNavItems` array to exclude admin roles from seeing these items there
+3. Update the default link order configuration to include these links in the manager section
+4. Update sidebar preview for the settings configurator
 
-## Changes Required
+---
+
+## Changes
 
 ### File: `src/components/dashboard/DashboardLayout.tsx`
 
-Update all width references from `w-64` / `pl-64` to `w-72` / `pl-72`:
+**1. Update `statsNavItems` to exclude admin roles from stats/leaderboard:**
 
-| Line | Current | Updated | Purpose |
-|------|---------|---------|---------|
-| 791 | `lg:w-64` | `lg:w-72` | Desktop sidebar expanded width |
-| 825 | `w-64` | `w-72` | Mobile sheet sidebar width |
-| 904 | `lg:pl-64` | `lg:pl-72` | View-as banner left padding |
-| 984 | `lg:pl-64` | `lg:pl-72` | Platform context banner left padding |
-| 995 | `lg:pl-64` | `lg:pl-72` | Desktop top bar left padding |
+```typescript
+const statsNavItems: NavItem[] = [
+  { 
+    href: '/dashboard/stats', 
+    label: 'My Stats', 
+    icon: BarChart3, 
+    permission: 'view_own_stats', 
+    roles: ['stylist', 'stylist_assistant'] // Remove admin, super_admin, manager
+  },
+  { 
+    href: '/dashboard/leaderboard', 
+    label: 'Team Leaderboard', 
+    icon: Trophy, 
+    permission: 'view_leaderboard',
+    roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] // Exclude admins
+  },
+  { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
+];
+```
 
-There are likely additional `pl-64` references in the main content area that also need updating:
+**2. Add Team Stats and Team Leaderboard to `managerNavItems`:**
 
-| Location | Current | Updated | Purpose |
-|----------|---------|---------|---------|
-| Main content wrapper | `lg:pl-64` | `lg:pl-72` | Main content left margin for sidebar |
+```typescript
+const managerNavItems: NavItem[] = [
+  { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
+  { href: '/dashboard/stats', label: 'Team Stats', icon: BarChart3, permission: 'view_all_stats' },
+  { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
+  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
+  { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
+  { href: '/dashboard/admin/payroll', label: 'Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
+  { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, permission: 'manage_booth_renters' },
+];
+```
+
+---
+
+### File: `src/hooks/useSidebarLayout.ts`
+
+**Update `DEFAULT_LINK_ORDER` to include the links in the manager section:**
+
+```typescript
+manager: [
+  '/dashboard/admin/management',
+  '/dashboard/admin/analytics',
+  '/dashboard/stats',           // Add here
+  '/dashboard/leaderboard',     // Add here
+  '/dashboard/directory',
+  '/dashboard/clients',
+  '/dashboard/admin/payroll',
+  '/dashboard/admin/booth-renters',
+],
+```
+
+---
+
+### File: `src/components/dashboard/settings/SidebarPreview.tsx`
+
+**Add route labels for consistency:**
+
+The LINK_CONFIG already has entries for both routes, but we should verify they display correctly.
+
+---
+
+### File: `src/components/dashboard/settings/SidebarLayoutEditor.tsx`
+
+**Add route labels for the editor:**
+
+Ensure the ROUTE_LABELS mapping includes entries for these routes in the manager section context.
+
+---
+
+## Summary of File Changes
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/DashboardLayout.tsx` | Move stats/leaderboard to managerNavItems, restrict from statsNavItems for admin roles |
+| `src/hooks/useSidebarLayout.ts` | Add routes to manager section in DEFAULT_LINK_ORDER |
+| `src/components/dashboard/settings/SidebarPreview.tsx` | Verify route labels (may already be complete) |
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Verify route labels |
+
+---
 
 ## Result
 
-After this change:
-- Sidebar will be 288px wide (32px wider)
-- All navigation labels including "Meetings & Accountability" will fit on a single line
-- No text wrapping in sidebar navigation items
-- Content area will shift accordingly to maintain proper alignment
-
+- **Admin/Manager users**: See "Team Stats" and "Team Leaderboard" under the "Management" section
+- **Stylists/Assistants**: Continue to see "My Stats" and "Team Leaderboard" in the "Stats & Leaderboard" section  
+- **Other roles**: See "Team Leaderboard" in Stats section based on their permissions
