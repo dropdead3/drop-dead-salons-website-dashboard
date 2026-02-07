@@ -59,26 +59,27 @@ export function calculateCapacity(
   plan: SubscriptionPlan | null,
   usage: { locationCount: number; userCount: number }
 ): OrganizationCapacity {
-  // Default empty state
+  // Default empty state - allow unlimited when no billing configured
+  // This provides a graceful fallback during onboarding or for demo purposes
   if (!plan) {
     return {
       locations: {
-        base: 0,
+        base: -1,
         purchased: 0,
-        total: 0,
+        total: -1,
         used: usage.locationCount,
         utilization: 0,
-        remaining: 0,
-        isUnlimited: false,
+        remaining: -1,
+        isUnlimited: true,
       },
       users: {
-        base: 0,
+        base: -1,
         purchased: 0,
-        total: 0,
+        total: -1,
         used: usage.userCount,
         utilization: 0,
-        remaining: 0,
-        isUnlimited: false,
+        remaining: -1,
+        isUnlimited: true,
       },
       isOverLimit: false,
       nearLimit: false,
