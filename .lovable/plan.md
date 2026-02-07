@@ -1,146 +1,186 @@
 
-# Role-Based Visibility for GROWTH Navigation Section
+# Role-Based Training Video Filtering
 
 ## Summary
 
-Configure the GROWTH navigation section so that:
-- **Training** → Visible to Management + Stylists + Stylist Assistants
-- **Program Team Overview** → Visible only to Management (super_admin, admin, manager)
-- **New-Client Engine Program** → Visible only to Stylists + Stylist Assistants
-- **Ring the Bell** → Visible only to Stylists + Stylist Assistants
-- **My Graduation** → Visible only to Stylist Assistants (already configured)
+Enable training videos to be filtered by user roles. Users with multiple roles (e.g., a Manager who is also a Stylist) will see videos targeted at **any** of their roles. The existing `required_for_roles` column on the `training_videos` table will be used to specify which roles should see each video.
+
+---
+
+## How It Works
+
+| Video's `required_for_roles` | User's Roles | Video Visible? |
+|------------------------------|--------------|----------------|
+| `null` or `[]` | Any | Yes (universal) |
+| `['stylist']` | `['manager']` | No |
+| `['stylist']` | `['stylist', 'manager']` | Yes |
+| `['manager', 'admin']` | `['manager']` | Yes |
+| `['stylist', 'stylist_assistant']` | `['stylist_assistant']` | Yes |
 
 ---
 
 ## Implementation Approach
 
-### Option A: Modify Filter Logic + Add Roles (Recommended)
+### 1. Update `TrainingVideo` Interface
 
-Update `filterNavItems` to check **both** permission AND roles when both are specified, then add `roles` restrictions to nav items.
-
-**Current logic:**
-```
-if permission → check permission only
-else if roles → check roles
-else → show to all
-```
-
-**New logic:**
-```
-if permission → check permission
-  if also has roles → also check roles (must have both)
-else if roles → check roles
-else → show to all
-```
-
-### Changes
-
-#### 1. Update `filterNavItems` function
-
-Modify the function to respect both `permission` AND `roles` when both are specified:
+Add the `required_for_roles` field to the TypeScript interface:
 
 ```typescript
-const filterNavItems = (items: NavItem[]) => {
-  return items.filter(item => {
-    // Check platform role restriction first (uses hierarchy)
-    if (item.platformRoles && item.platformRoles.length > 0) {
-      const hasRequiredPlatformRole = item.platformRoles.some(
-        role => hasPlatformRoleOrHigher(role)
-      );
-      if (!hasRequiredPlatformRole) return false;
-    }
-    
-    // Check permission if specified
-    let hasRequiredPermission = true;
-    if (item.permission) {
-      hasRequiredPermission = hasPermission(item.permission);
-    }
-    
-    // Check roles if specified
-    let hasRequiredRole = true;
-    if (item.roles && item.roles.length > 0) {
-      hasRequiredRole = item.roles.some(role => roles.includes(role));
-    }
-    
-    // Must have both permission (if specified) AND role (if specified)
-    return hasRequiredPermission && hasRequiredRole;
-  });
-};
+interface TrainingVideo {
+  id: string;
+  title: string;
+  description: string | null;
+  video_url: string | null;
+  category: string;
+  duration_minutes: number | null;
+  order_index: number;
+  required_for_roles: string[] | null;  // NEW
+}
 ```
 
-#### 2. Update `growthNavItems` array
+### 2. Import User Roles from AuthContext
+
+The `Training.tsx` component already imports `useAuth`. Extract the user's roles:
 
 ```typescript
-const growthNavItems: NavItem[] = [
-  // Training - visible to management + stylists + stylist assistants
-  { 
-    href: '/dashboard/training', 
-    label: 'Training', 
-    icon: Video, 
-    permission: 'view_training',
-    roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant']
-  },
-  // New-Client Engine Program - only stylists + stylist assistants
-  { 
-    href: '/dashboard/program', 
-    label: 'New-Client Engine Program', 
-    icon: Target, 
-    permission: 'access_client_engine',
-    roles: ['stylist', 'stylist_assistant']
-  },
-  // Program Team Overview - only management (permission already restricts this)
-  { 
-    href: '/dashboard/admin/team', 
-    label: 'Program Team Overview', 
-    icon: Users, 
-    permission: 'view_team_overview',
-    roles: ['super_admin', 'admin', 'manager']
-  },
-  // Ring the Bell - only stylists + stylist assistants
-  { 
-    href: '/dashboard/ring-the-bell', 
-    label: 'Ring the Bell', 
-    icon: Bell, 
-    permission: 'ring_the_bell',
-    roles: ['stylist', 'stylist_assistant']
-  },
-  // My Graduation - only stylist assistants (already configured)
-  { 
-    href: '/dashboard/my-graduation', 
-    label: 'My Graduation', 
-    icon: GraduationCap, 
-    permission: 'view_my_graduation', 
-    roles: ['stylist_assistant'] 
-  },
-];
+const { user, roles: userRoles } = useAuth();
+```
+
+### 3. Filter Videos by Role
+
+After fetching videos, filter to only include those matching the user's roles:
+
+```typescript
+// Filter videos by user's roles
+const roleFilteredVideos = videos.filter(video => {
+  // If no roles specified, show to everyone
+  if (!video.required_for_roles || video.required_for_roles.length === 0) {
+    return true;
+  }
+  // Show if user has at least one matching role
+  return video.required_for_roles.some(role => userRoles.includes(role));
+});
+```
+
+### 4. Update Category Filtering
+
+Apply category filter on top of role-filtered videos:
+
+```typescript
+const filteredVideos = selectedCategory === 'all' 
+  ? roleFilteredVideos 
+  : roleFilteredVideos.filter(v => v.category === selectedCategory);
+```
+
+### 5. Update Progress Calculation
+
+Calculate progress based on role-filtered videos (not all videos):
+
+```typescript
+const completedCount = progress.filter(p => 
+  p.completed_at && roleFilteredVideos.some(v => v.id === p.video_id)
+).length;
+const totalCount = roleFilteredVideos.length;
 ```
 
 ---
 
-## Role Visibility Summary
+## User Experience
 
-| Link | super_admin | admin | manager | stylist | stylist_assistant |
-|------|-------------|-------|---------|---------|-------------------|
-| Training | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Program Team Overview | ✓ | ✓ | ✓ | ✗ | ✗ |
-| New-Client Engine Program | ✗ | ✗ | ✗ | ✓ | ✓ |
-| Ring the Bell | ✗ | ✗ | ✗ | ✓ | ✓ |
-| My Graduation | ✗ | ✗ | ✗ | ✗ | ✓ |
+**For a Stylist:**
+- Sees videos with `required_for_roles` containing `'stylist'` OR `null`/empty
+- Progress shows X/Y where Y = stylist-relevant videos only
+
+**For a Manager who is also a Stylist:**
+- Sees videos for both `'manager'` AND `'stylist'` roles
+- Sees universal videos (no role restriction)
+- Progress reflects total relevant videos for both roles
+
+**For a Super Admin:**
+- Sees ALL videos regardless of role restrictions (has access to everything)
 
 ---
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/components/dashboard/DashboardLayout.tsx` | Update `filterNavItems` function to check both permission AND roles; update `growthNavItems` array with role restrictions |
+| File | Changes |
+|------|---------|
+| `src/pages/dashboard/Training.tsx` | Add role filtering, update interface, fix progress calculation |
+
+---
+
+## Code Changes
+
+### Updated `Training.tsx` Component
+
+```typescript
+// 1. Update interface
+interface TrainingVideo {
+  id: string;
+  title: string;
+  description: string | null;
+  video_url: string | null;
+  category: string;
+  duration_minutes: number | null;
+  order_index: number;
+  required_for_roles: string[] | null;
+}
+
+// 2. Extract roles from auth context
+const { user, roles: userRoles } = useAuth();
+
+// 3. Memoize role-filtered videos
+const roleFilteredVideos = useMemo(() => {
+  return videos.filter(video => {
+    // Super admins see everything
+    if (userRoles.includes('super_admin')) return true;
+    
+    // If no roles specified, show to everyone
+    if (!video.required_for_roles || video.required_for_roles.length === 0) {
+      return true;
+    }
+    
+    // Show if user has at least one matching role
+    return video.required_for_roles.some(role => 
+      userRoles.includes(role as any)
+    );
+  });
+}, [videos, userRoles]);
+
+// 4. Apply category filter on role-filtered videos
+const filteredVideos = selectedCategory === 'all' 
+  ? roleFilteredVideos 
+  : roleFilteredVideos.filter(v => v.category === selectedCategory);
+
+// 5. Fix progress calculation
+const completedCount = progress.filter(p => 
+  p.completed_at && roleFilteredVideos.some(v => v.id === p.video_id)
+).length;
+const totalCount = roleFilteredVideos.length;
+```
 
 ---
 
 ## Technical Notes
 
-1. **Dual Check Logic**: The updated filter ensures that if BOTH `permission` and `roles` are specified, the user must satisfy BOTH conditions. This prevents permission-only bypass.
+1. **Super Admin Override**: Super admins will see all training videos regardless of role restrictions
 
-2. **Backward Compatibility**: Items that only have `permission` OR only have `roles` will continue to work as before.
+2. **Null/Empty Handling**: Videos with `required_for_roles` set to `null` or empty array `[]` are treated as universal (visible to all)
 
-3. **Super Admin Override**: Note that super_admin is explicitly included in the roles arrays where they should have access. This ensures super admins see what they need to see.
+3. **Progress Accuracy**: The progress bar only counts videos the user can see, so a Stylist with 5/10 completed reflects their 10 relevant videos, not the total 50 in the system
+
+4. **Category + Role**: Both filters stack - a Stylist viewing "Technique" category only sees technique videos that are also role-visible to them
+
+5. **No Database Changes**: This uses the existing `required_for_roles` column that's already in the database
+
+---
+
+## Setting Up Role-Specific Training
+
+Admins can populate the `required_for_roles` field when adding/editing training videos:
+
+- **Management Training**: `['super_admin', 'admin', 'manager']`
+- **Stylist Training**: `['stylist']`
+- **Assistant Training**: `['stylist_assistant']`
+- **Universal (Everyone)**: Leave `null` or empty `[]`
+- **Multiple Roles**: `['stylist', 'stylist_assistant']`
