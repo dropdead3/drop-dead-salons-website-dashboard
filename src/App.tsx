@@ -105,6 +105,11 @@ import ChallengeDetail from "./pages/dashboard/admin/ChallengeDetail";
 import ShiftSwapMarketplace from "./pages/dashboard/ShiftSwapMarketplace";
 import ShiftSwapApprovals from "./pages/dashboard/admin/ShiftSwapApprovals";
 
+// Phase 3: Points, Huddles, Training Enhancements
+import RewardShop from "./pages/dashboard/RewardShop";
+import PointsConfig from "./pages/dashboard/admin/PointsConfig";
+import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
+
 // Renter Portal pages
 import RenterPortal from "./pages/dashboard/RenterPortal";
 import RenterPayRent from "./pages/dashboard/RenterPayRent";
@@ -251,6 +256,11 @@ const App = () => (
                       {/* Shift Swap routes */}
                       <Route path="/dashboard/shift-swaps" element={<ProtectedRoute><ShiftSwapMarketplace /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/shift-swaps" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ShiftSwapApprovals /></ProtectedRoute>} />
+                      
+                      {/* Phase 3: Points Economy, Daily Huddle routes */}
+                      <Route path="/dashboard/rewards" element={<ProtectedRoute><RewardShop /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/points-config" element={<ProtectedRoute requiredPermission="manage_settings"><PointsConfig /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/daily-huddle" element={<ProtectedRoute requiredPermission="manage_announcements"><DailyHuddle /></ProtectedRoute>} />
 
                       {/* Renter Portal routes - booth_renter role users can access */}
                       <Route path="/dashboard/renter/portal" element={<ProtectedRoute><RenterPortal /></ProtectedRoute>} />

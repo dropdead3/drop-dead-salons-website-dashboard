@@ -26,6 +26,8 @@ import {
   Video,
   Trophy,
   ArrowLeftRight,
+  MessageSquare,
+  Coins,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -301,6 +303,24 @@ export default function ManagementHub() {
             title="Changelog Manager"
             description="Document platform updates and releases"
             colorClass="bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/daily-huddle"
+            icon={MessageSquare}
+            title="Daily Huddle"
+            description="Create pre-shift notes and daily goals"
+            colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
+          />
+        </CategorySection>
+
+        {/* Points & Rewards */}
+        <CategorySection title="Points & Rewards">
+          <ManagementCard
+            href="/dashboard/admin/points-config"
+            icon={Coins}
+            title="Points & Rewards"
+            description="Configure point rules and manage reward catalog"
+            colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
           />
         </CategorySection>
       </div>
