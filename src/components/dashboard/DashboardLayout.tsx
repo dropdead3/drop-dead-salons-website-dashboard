@@ -188,7 +188,6 @@ const managerNavItems: NavItem[] = [
 const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
   { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
-  { href: '/dashboard/admin/feature-flags', label: 'Feature Flags', icon: Flag, permission: 'manage_settings' },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 

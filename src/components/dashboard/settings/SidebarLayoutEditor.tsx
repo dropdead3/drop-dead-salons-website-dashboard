@@ -131,7 +131,6 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/admin/accounts': { label: 'Invitations & Approvals', icon: UserPlus },
   '/dashboard/admin/roles': { label: 'Manage Users & Roles', icon: Shield },
   '/dashboard/admin/settings': { label: 'Settings', icon: Settings },
-  '/dashboard/admin/feature-flags': { label: 'Feature Flags', icon: Flag },
   '/dashboard/shift-swaps': { label: 'Shift Swaps', icon: ArrowLeftRight },
   '/dashboard/admin/challenges': { label: 'Team Challenges', icon: Trophy },
   '/dashboard/rewards': { label: 'Rewards', icon: Gift },
