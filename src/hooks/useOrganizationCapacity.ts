@@ -57,11 +57,12 @@ export function useOrganizationUsage(organizationId: string | undefined) {
 export function calculateCapacity(
   billing: OrganizationBilling | null,
   plan: SubscriptionPlan | null,
-  usage: { locationCount: number; userCount: number }
+  usage: { locationCount: number; userCount: number },
+  isInternal?: boolean
 ): OrganizationCapacity {
-  // Default empty state - allow unlimited when no billing configured
-  // This provides a graceful fallback during onboarding or for demo purposes
-  if (!plan) {
+  // Internal organizations or those without a plan get unlimited capacity
+  // This provides a graceful fallback during onboarding or for platform-owned orgs
+  if (isInternal || !plan) {
     return {
       locations: {
         base: -1,
