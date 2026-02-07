@@ -19,6 +19,7 @@ const meetingTypes: Record<string, string> = {
   coaching: 'Coaching Session',
   check_in: 'Check-in',
   feedback: 'Feedback Review',
+  sas: 'Success Alignment Session (SAS)',
   other: 'Other',
 };
 
